@@ -21,6 +21,9 @@ lst = os.listdir(pathin + var)
 
 print ' Number of data files: ',len(lst)
 
+
+
+
 # target grid
 fileg='/work/guilyardi/metrics_cmip/obs/tos/UKMETOFFICE-HadISST-v1-1/ac/tos_pcmdi-metrics_Omon_UKMETOFFICE-HadISST-v1-1_198002-200501-clim.nc'
 g   = cdm.open(fileg)
