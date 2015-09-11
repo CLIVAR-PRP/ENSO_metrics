@@ -56,11 +56,9 @@ nYears = nTime / 12  # number of years
  # init array
 dataAC = npy.ma.ones([12], dtype='float32')*0.
 for m in range(12):
-  print m
   d = dataR[m::12] # select indices for month m every 12 months
   dataAC[m]   = mv.average(d) # average along time axis
 
-print dataAC
   # Note: can be replace by [::12] directly in mv.average
 
 # Remove mean annual cycle from data to obtain interannual anomalies
