@@ -52,14 +52,14 @@ def EnsoAmpl (sstfile, varname, ninobox):
     # define ninobox
     if ninobox =='nino3':
         #nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
-        latBox = [-5,5]
-        lonBox = [-150,-90]
+        latBox1 = -5  ; latBox2 = 5
+        lonBox1 = -150; lonBox2 = -90
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
     #print nbox
     # Read SST in box and average
     #sst = fi(varname, nbox)
-    sst = fi(varname, latitude=(-5,5), longitude=(-150,-90))
+    sst = fi(varname, latitude=(latBox1,latBox2), longitude=(lonBox1,lonBox2))
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
 
     # Compute anomaly wrt annual cycle and average
