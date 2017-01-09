@@ -44,6 +44,10 @@ def EnsoAmpl (sstfile, varname, ninobox):
     ssth = fi[varname] # Create variable handle
     # Number of months and years
     timN = ssth.shape[0]
+    lon  = ssth.getLongitude()
+    lat  = ssth.getLatitude()
+    print lon,lat
+
     yearN = timN / 12
 
     # define ninobox
