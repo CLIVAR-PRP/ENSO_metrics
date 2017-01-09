@@ -51,7 +51,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
 
     # define ninobox
     if ninobox =='nino3':
-        nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(210.,270.))
+        nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
 
