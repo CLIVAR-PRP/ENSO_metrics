@@ -10,9 +10,9 @@ import MV2 as mv
 # These procedures have file names as inputs and metric as output
 #
 
-def EnsoAmpl (sstfile, varname, ninobox):
+def EnsoAmpl (sstfile, sstname, ninobox):
     '''
-    The EnsoAmpl() function compute the standard deviation in a ninobox
+    The EnsoAmpl() function compute the SST standard deviation in a ninobox
 
     Author:    Eric Guilyardi : Eric.Guilyardi@locean-ipsl.upmc.fr
     Co-author:
@@ -21,17 +21,17 @@ def EnsoAmpl (sstfile, varname, ninobox):
 
     Inputs:
     ------
-    - sstfile    - time/lat/lon array using Omon values
-    - varname    - name of sst variable (tos, ts)
+    - sstfile    - time/lat/lon SST array using Omon values
+    - sstname    - name of sst variable (tos, ts)
     - ninobox    - name of box ('nino3','nino3.4')
 
     Output:
     - amplMetric dict:
-        - name, value, units, method, nyears, ref
+        - name, value, units, method, nyears, ref, varname
 
     Notes:
     -----
-    - could add error calculation
+    - TODO: add error calculation to stddev (function of nyears)
 
     '''
     cdm.setAutoBounds('on')
@@ -40,11 +40,11 @@ def EnsoAmpl (sstfile, varname, ninobox):
     Name   = 'ENSO amplitude'
     Units  = 'C'
     Method = 'Standard deviation of SST in '+ninobox
-    Ref    = 'using CDAT calculation'
+    Ref    = 'Using CDAT std dev calculation'
 
     # Open file and get time dimension
     fi = cdm.open(sstfile)
-    ssth = fi[varname] # Create variable handle
+    ssth = fi[sstname] # Create variable handle
     # Number of months and years
     timN = ssth.shape[0]
     yearN = timN / 12
@@ -53,13 +53,13 @@ def EnsoAmpl (sstfile, varname, ninobox):
     if ninobox =='nino3':
         #nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
         latBox1 = -5  ; latBox2 = 5
-        lonBox1 = -150; lonBox2 = -90
+        lonBox1 = 210; lonBox2 = 270
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
     #print nbox
     # Read SST in box and average
     #sst = fi(varname, nbox)
-    sst = fi(varname, latitude=(latBox1,latBox2), longitude=(lonBox1,lonBox2))
+    sst = fi(sstname, latitude=(latBox1,latBox2), longitude=(lonBox1,lonBox2))
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
 
     # Compute anomaly wrt annual cycle and average
@@ -71,9 +71,60 @@ def EnsoAmpl (sstfile, varname, ninobox):
     sstStd = statistics.std(sstAnom)
 
     # Create output
-    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'ref':Ref, 'nyears':yearN}
+    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, 'varname':sstname}
 
     return amplMetric
+
+def EnsoMu (sstfile, tauxfile, sstname, tauxname):
+    '''
+    The EnsoMu() function compute the regression of nino4 tauxA over nino3 sstA
+
+    Author:    Eric Guilyardi : Eric.Guilyardi@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon Jan  9 11:05:18 CET 2017
+
+    Inputs:
+    ------
+    - sstfile    - time/lat/lon SST array using Omon values
+    - tauxfile   - time/lat/lon Taux array using Omon values
+    - sstname    - name of sst variable (tos, ts)
+    - ninobox    - name of box ('nino3','nino3.4')
+
+    Output:
+    - amplMetric dict:
+        - name, value, units, method, nyears, ref, varname
+
+    Notes:
+    -----
+    - TODO: add error calculation to stddev (function of nyears)
+
+    '''
+    cdm.setAutoBounds('on')
+
+    # Define metric attributes
+    Name   = 'Bjerknes feedback (mu)'
+    Units  = '10-3 N/m2/C'
+    Method = 'Regression of nino4 tauxA over nino3 sstA'
+    Ref    = 'Using CDAT regression calculation'
+
+    # Open file and get time dimension
+    fi = cdm.open(sstfile)
+    ssth = fi[sstname] # Create variable handle
+    # Number of months and years
+    timN = ssth.shape[0]
+    yearN = timN / 12
+
+    # define nino boxes
+
+    latn31 = -5  ; latn32 = 5
+    lonn31 = 210; lonn32 = 270
+
+    latn41 = -5  ; latn42 = 5
+    lonn41 = 160; lonn42 = 210
+
+
+
 
 def computeAnom(var1d, nYears):
     '''
