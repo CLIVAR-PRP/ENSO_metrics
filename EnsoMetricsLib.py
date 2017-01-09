@@ -63,6 +63,6 @@ def EnsoAmpl (sstfile, varname, ninobox):
     sstStd = statistics.std(sstAnom)
 
     # Create output
-    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, ref:Ref}
+    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'ref':Ref}
 
     return amplMetric
