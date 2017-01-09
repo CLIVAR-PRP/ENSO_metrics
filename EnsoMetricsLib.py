@@ -52,12 +52,13 @@ def EnsoAmpl (sstfile, varname, ninobox):
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
 
-    # Read SST in box
+    # Read SST in box and average
     sst = fi(varname, nbox)
-    cdu.setTimeBoundsMonthly(sst)
+    sstAveBox = cdu.averager(cdu.averager(sst,axis='1'), axis='2').squeeze()
 
     # Compute anomaly wrt annual cycle and average
-    sstAnom = cdu.ANNUALCYCLE.departures(cdu.averager(sst,axis='xy', weight='generate'))
+    cdu.setTimeBoundsMonthly(sst)
+    sstAnom = cdu.ANNUALCYCLE.departures(sstAveBox)
 
     # Compute standard deviation
     sstStd = statistics.std(sstAnom)
