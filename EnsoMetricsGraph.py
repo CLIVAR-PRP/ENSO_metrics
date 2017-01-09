@@ -12,8 +12,7 @@ def EnsoMetricsTable(metrics, figName):
     ax.yaxis.set_visible(False)
     colLabels=("Model", "ENSO Amplitude", "Mu")
     the_table = ax.table(cellText=metrics,
-          colLabels=colLabels,
-          loc='center')
+          colLabels=colLabels,loc='center')
     plt.savefig(figName+'.gif')
 
     #colLabels=("Model", "ENSO Amplitude", "Mu")
