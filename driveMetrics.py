@@ -24,15 +24,25 @@ else:
     sys.exit('Unknown hostname')
 
 # Variable name and nino box
-varName = 'tos'
+sstName = 'tos'
 ninoBox = 'nino3'
+tauxName= 'tauuo'
 
 sstFile = baseDir+'/tos/tos_Omon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+tauxFile = baseDir+'/tauuo/tauuo_Omon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 
 print sstFile
 
 # Call metrics calculation
-ensoAmpl = EnsoAmpl(sstFile, varName, ninoBox)
+
+# ENSO Amplitude
+ensoAmpl = EnsoAmpl(sstFile, sstName, ninoBox)
 
 print ensoAmpl['name']+':',ensoAmpl['value'],'('+ensoAmpl['units']+')'
 print ensoAmpl['method']+' - (', ensoAmpl['nyears'],' years)'
+
+# Mu
+ensoMu = EnsoMu(sstFile, tauxFile, sstName, tauxName)
+
+print ensoMu['name']+':',ensoMu['value'],'('+ensoMu['units']+')'
+print ensoMu['method']+' - (', ensoMu['nyears'],' years)', ensoMu['intercept']

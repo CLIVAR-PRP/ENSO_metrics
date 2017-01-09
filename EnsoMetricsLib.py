@@ -53,7 +53,7 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     if ninobox =='nino3':
         #nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
         latBox1 = -5  ; latBox2 = 5
-        lonBox1 = 210; lonBox2 = 270
+        lonBox1 = 210 ; lonBox2 = 270
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
     #print nbox
@@ -61,8 +61,9 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     #sst = fi(varname, nbox)
     sst = fi(sstname, latitude=(latBox1,latBox2), longitude=(lonBox1,lonBox2))
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
+    fi.close()
 
-    # Compute anomaly wrt annual cycle and average
+    # Compute anomaly wrt annual cycle
     #cdu.setTimeBoundsMonthly(sstAveBox)
     #sstAnom = cdu.ANNUALCYCLE.departures(sstAveBox)
     sstAnom = computeAnom(sstAveBox.data, yearN)
@@ -109,21 +110,37 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
     Ref    = 'Using CDAT regression calculation'
 
     # Open file and get time dimension
-    fi = cdm.open(sstfile)
-    ssth = fi[sstname] # Create variable handle
+    fsst = cdm.open(sstfile)
+    ftaux = cdm.open(tauxfile)
+    ssth = fsst[sstname] # Create variable handle
     # Number of months and years
     timN = ssth.shape[0]
     yearN = timN / 12
 
     # define nino boxes
-
     latn31 = -5  ; latn32 = 5
-    lonn31 = 210; lonn32 = 270
-
+    lonn31 = 210 ; lonn32 = 270
     latn41 = -5  ; latn42 = 5
-    lonn41 = 160; lonn42 = 210
+    lonn41 = 160 ; lonn42 = 210
 
+    # Read SST and Taux in boxes and average
+    sst = fsst(sstname, latitude=(latn31,latn32), longitude=(lonn31,lonn32))
+    sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
 
+    taux = ftaux(tauxname, latitude=(latn41,latn42), longitude=(lonn41,lonn42))
+    tauxAveBox = cdu.averager(taux,axis='12',weights=cdu.area_weights(sst)).squeeze()
+
+    # Compute anomaly wrt annual cycle
+    sstAnom  = computeAnom(sstAveBox.data, yearN)
+    tauxAnom = computeAnom(tauxAveBox.data, yearN)
+
+    # Compute regression
+    muSlope,muIntercept = statistics.linearregression(tauxAnom, x = sstAnom)#, error = 1, probability = 1)
+
+    # Create output
+    muMetric = {'name':Name, 'value':muSlope, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, 'varname':[sstname,tauxname], 'intercept':muIntercept}
+
+    return muMetric
 
 def computeAnom(var1d, nYears):
     '''
