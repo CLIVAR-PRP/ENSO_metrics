@@ -26,6 +26,7 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     - ninobox    - name of box ('nino3','nino3.4')
 
     Output:
+    ------
     - amplMetric dict:
         - name, value, units, method, nyears, ref, varname
 
@@ -93,8 +94,9 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
     - ninobox    - name of box ('nino3','nino3.4')
 
     Output:
-    - amplMetric dict:
-        - name, value, units, method, nyears, ref, varname
+    ------
+    - muMetric dict:
+        - name, value, units, method, nyears, ref, varname, intercept, nonlinearity
 
     Notes:
     -----
@@ -134,11 +136,23 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
     sstAnom  = computeAnom(sstAveBox.data, yearN)
     tauxAnom = computeAnom(tauxAveBox.data, yearN)
 
-    # Compute regression
+    # Compute regression (all points)
     muSlope,muIntercept = statistics.linearregression(tauxAnom, x = sstAnom)#, error = 1, probability = 1)
 
+    # Compute regression (positive/negative anomalies - El Nino/ La Nina) and nonlinearity
+    idxplus = npy.argwhere (sstAnom >= 0.)
+    muSlopePlus,muInterceptPlus = statistics.linearregression(tauxAnom(idxplus), x = sstAnom(idxplus))#, error = 1, probability = 1)
+    idxneg = npy.argwhere (sstAnom <= 0.)
+    muSlopeNeg,muInterceptNeg   = statistics.linearregression(tauxAnom(idxneg), x = sstAnom(idxneg))#, error = 1, probability = 1)
+
+    # Change units
+    muSlope     = muSlope / 1000.
+    muSlopePlus = muSlopePlus / 1000.
+    muSlopeNeg  = muSlopeNeg / 1000.
+
     # Create output
-    muMetric = {'name':Name, 'value':muSlope, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, 'varname':[sstname,tauxname], 'intercept':muIntercept}
+    muMetric = {'name':Name, 'value':muSlope, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, \
+               'varname':[sstname,tauxname], 'intercept':muIntercept, 'nonlinearity':muSlopeNeg-muSlopePlus}
 
     return muMetric
 

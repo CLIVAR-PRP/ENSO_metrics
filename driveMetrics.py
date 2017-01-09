@@ -46,4 +46,5 @@ ensoMu = EnsoMu(sstFile, tauxFile, sstName, tauxName)
 
 print ensoMu['name']+':',ensoMu['value'],'('+ensoMu['units']+')'
 print ensoMu['method']+' - (', ensoMu['nyears'],' years)', ensoMu['intercept']
+print 'Nonlinearity:',ensoMu['nonlinearity'],'('+ensoMu['units']+')'
 
