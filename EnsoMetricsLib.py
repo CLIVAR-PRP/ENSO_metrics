@@ -56,7 +56,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
         lonBox = [-150,-90]
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
-    print nbox
+    #print nbox
     # Read SST in box and average
     #sst = fi(varname, nbox)
     sst = fi(varname, latitude=latBox, longitude=lonBox)
