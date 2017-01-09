@@ -141,9 +141,9 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
 
     # Compute regression (positive/negative anomalies - El Nino/ La Nina) and nonlinearity
     idxplus = npy.argwhere (sstAnom >= 0.)
-    muSlopePlus,muInterceptPlus = statistics.linearregression(tauxAnom(idxplus), x = sstAnom(idxplus))#, error = 1, probability = 1)
+    muSlopePlus,muInterceptPlus = statistics.linearregression(tauxAnom[idxplus], x = sstAnom[idxplus])#, error = 1, probability = 1)
     idxneg = npy.argwhere (sstAnom <= 0.)
-    muSlopeNeg,muInterceptNeg   = statistics.linearregression(tauxAnom(idxneg), x = sstAnom(idxneg))#, error = 1, probability = 1)
+    muSlopeNeg,muInterceptNeg   = statistics.linearregression(tauxAnom[idxneg], x = sstAnom[idxneg])#, error = 1, probability = 1)
 
     # Change units
     muSlope     = muSlope / 1000.
