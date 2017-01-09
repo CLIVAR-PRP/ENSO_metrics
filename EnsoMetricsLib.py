@@ -54,7 +54,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
         nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
-
+    print nbox
     # Read SST in box and average
     sst = fi(varname, nbox)
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
@@ -82,6 +82,6 @@ def computeAnom(var1d, nYears):
     for m in range(12):
         d = var1d[m::12] # select indices for month m every 12 months
         varAC[m]   = mv.average(d) # average along time axis
-    print varAC
+    print varAC-273.15
     varInter = var1d - npy.tile(varAC, nYears) # compute anomaly
     return varInter
