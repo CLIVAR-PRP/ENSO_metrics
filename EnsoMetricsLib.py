@@ -20,7 +20,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
 
     Inputs:
     ------
-    - sstfile    - time/lat/lon array
+    - sstfile    - time/lat/lon array using Omon values
     - varname    - name of sst variable (tos, ts)
     - ninobox    - name of box ('nino3','nino3.4')
 
