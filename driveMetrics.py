@@ -34,7 +34,6 @@ print sstFile
 
 # Call metrics calculation
 ensoAmpl = EnsoAmpl(sstFile, varName, ninoBox)
-print ensoAmpl
 
-print ensoAmpl.name+':'+ensoAmpl.value+'('++ensoAmpl.units+')'
-print ensoAmpl.method
+print ensoAmpl['name']+':'+ensoAmpl['value']+'('++ensoAmpl['units']+')'
+print ensoAmpl['method']
