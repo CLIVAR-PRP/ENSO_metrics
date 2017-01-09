@@ -56,8 +56,8 @@ def EnsoAmpl (sstfile, varname, ninobox):
     sst = fi(varname, nbox)
     cdu.setTimeBoundsMonthly(sst)
 
-    # Compute mean annual cycle
-    sstAnom = cdu.ANNUALCYCLE.departures(sst)
+    # Compute anomaly wrt annual cycle and average
+    sstAnom = cdu.ANNUALCYCLE.departures(cdu.average(sst))
 
     # Compute standard deviation
     sstStd = statistics.std(sstAnom)
