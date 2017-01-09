@@ -1,5 +1,6 @@
 import sys,socket
 from EnsoMetricsLib import EnsoAmpl, EnsoMu
+from EnsoMetricsGraph import EnsoMetricsTable
 import numpy as npy
 #
 # Wrapper of EnsoMetricsLib for testing
@@ -48,3 +49,10 @@ print ensoMu['name']+':',ensoMu['value'],'('+ensoMu['units']+')'
 print ensoMu['method']+' - (', ensoMu['nyears'],' years)', ensoMu['intercept']
 print 'Nonlinearity:',ensoMu['nonlinearity'],'('+ensoMu['units']+')'
 
+EnsoMetrics =[{'col1':'IPSL-CM5A-LR','col2':ensoAmpl,'col3':ensoMu},
+              {'col1':'IPSL-CM5A-MR','col2':ensoAmpl*2.,'col3':ensoMu*2}]
+
+# -> ecrit dans/update/ajoute a fichier json avec Custom name
+
+# Generate plot
+fig=EnsoMetricsTable(EnsoMetrics, 'EnsoMetrics')
