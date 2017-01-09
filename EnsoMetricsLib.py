@@ -128,7 +128,7 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
 
     taux = ftaux(tauxname, latitude=(latn41,latn42), longitude=(lonn41,lonn42))
-    tauxAveBox = cdu.averager(taux,axis='12',weights=cdu.area_weights(sst)).squeeze()
+    tauxAveBox = cdu.averager(taux,axis='12',weights=cdu.area_weights(taux)).squeeze()
 
     # Compute anomaly wrt annual cycle
     sstAnom  = computeAnom(sstAveBox.data, yearN)
