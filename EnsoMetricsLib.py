@@ -1,4 +1,5 @@
 import cdms2 as cdm
+import numpy as npy
 import cdutil as cdu
 from genutil import statistics
 from cdms2.selectors import Selector
@@ -59,10 +60,9 @@ def EnsoAmpl (sstfile, varname, ninobox):
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
 
     # Compute anomaly wrt annual cycle and average
-    sstAC = mv.average(sstAveBox[:12],axis=0)
-    print sstAC
-    cdu.setTimeBoundsMonthly(sstAveBox)
-    sstAnom = cdu.ANNUALCYCLE.departures(sstAveBox)
+    #cdu.setTimeBoundsMonthly(sstAveBox)
+    #sstAnom = cdu.ANNUALCYCLE.departures(sstAveBox)
+    sstAnom = computeAnom(sstAveBox, yearN)
 
     # Compute standard deviation
     sstStd = statistics.std(sstAnom)
@@ -71,3 +71,16 @@ def EnsoAmpl (sstfile, varname, ninobox):
     amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'ref':Ref, 'nyears':yearN}
 
     return amplMetric
+
+def computeAnom(var1d, nYears):
+    '''
+    Compute internannual anomaly of 1D time serie as cdu.ANNUALCYCLE.departures complains about units
+    :param var:
+    :return:
+    '''
+    varAC = npy.ma.ones([12], dtype='float32')*0.
+    for m in range(12):
+        d = var1d[m::12] # select indices for month m every 12 months
+        varAC[m]   = mv.average(d) # average along time axis
+    varInter = var1d - npy.tile(varAC, nYears) # compute anomaly
+    return varInter
