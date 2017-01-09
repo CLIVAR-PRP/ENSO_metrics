@@ -13,7 +13,8 @@ def EnsoMetricsTable(metrics, figName):
     colLabels=("Model", "ENSO Amplitude", "Mu")
     the_table = ax.table(cellText=metrics,
           colLabels=colLabels,loc='center')
-    plt.savefig(figName+'.gif')
+    plt.show()
+    #plt.savefig(figName+'.jpeg')
 
     #colLabels=("Model", "ENSO Amplitude", "Mu")
     #nrows, ncols = len(clust_data)+1, len(colLables)
