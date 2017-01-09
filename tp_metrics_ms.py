@@ -1,6 +1,6 @@
-#!/usr/local/uvcdat/latest/bin/python
+#!/Users/ericg/Projets/CMIP/Metrics/Metrics/bin/python
+##!/usr/local/uvcdat/latest/bin/python
 
-##!/Users/ericg/Projets/CMIP/Metrics/Metrics/bin/python
 # run with python -i to stay in python
 
 import cdms2 as cdm
@@ -67,10 +67,10 @@ for l in range(10):
 
   f.close()
 
-#  aavg.id=var
+#  aavg.id=var/Users/ericg/Projets/CMIP/Metrics/Metrics/
 #  g=cdm.open(mod+"_out.nc","w+")
 #  g.write(aavg)
-  g.close()
+g.close()
 
 
 
