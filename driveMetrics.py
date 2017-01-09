@@ -1,6 +1,5 @@
 import sys,socket
 from EnsoMetricsLib import EnsoAmpl, EnsoMu
-from EnsoMetricsGraph import EnsoMetricsTable
 import numpy as npy
 #
 # Wrapper of EnsoMetricsLib for testing
@@ -55,4 +54,4 @@ EnsoMetrics =[{'col1':'IPSL-CM5A-LR','col2':ensoAmpl,'col3':ensoMu},
 # -> ecrit dans/update/ajoute a fichier json avec Custom name
 
 # Generate plot
-fig=EnsoMetricsTable(EnsoMetrics, 'EnsoMetrics')
+#fig=EnsoMetricsTable(EnsoMetrics, 'EnsoMetrics')
