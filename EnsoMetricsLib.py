@@ -146,9 +146,9 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
     muSlopeNeg,muInterceptNeg   = statistics.linearregression(tauxAnom[idxneg], x = sstAnom[idxneg])#, error = 1, probability = 1)
 
     # Change units
-    muSlope     = muSlope / 1000.
-    muSlopePlus = muSlopePlus / 1000.
-    muSlopeNeg  = muSlopeNeg / 1000.
+    muSlope     = muSlope * 1000.
+    muSlopePlus = muSlopePlus * 1000.
+    muSlopeNeg  = muSlopeNeg * 1000.
 
     # Create output
     muMetric = {'name':Name, 'value':muSlope, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, \
