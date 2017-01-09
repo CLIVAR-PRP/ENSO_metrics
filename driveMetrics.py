@@ -36,4 +36,4 @@ print sstFile
 ensoAmpl = EnsoAmpl(sstFile, varName, ninoBox)
 
 print ensoAmpl['name']+':',ensoAmpl['value'],'('+ensoAmpl['units']+')'
-print ensoAmpl['method'], ensoAmpl['nyears']
+print ensoAmpl['method']+'- (', ensoAmpl['nyears']+' years)'

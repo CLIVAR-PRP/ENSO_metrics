@@ -82,5 +82,6 @@ def computeAnom(var1d, nYears):
     for m in range(12):
         d = var1d[m::12] # select indices for month m every 12 months
         varAC[m]   = mv.average(d) # average along time axis
+    print varAC
     varInter = var1d - npy.tile(varAC, nYears) # compute anomaly
     return varInter
