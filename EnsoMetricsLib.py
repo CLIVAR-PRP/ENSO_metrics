@@ -54,7 +54,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
 
     # Read SST in box and average
     sst = fi(varname, nbox)
-    sstAveBox = cdu.averager(cdu.averager(sst,axis='x'), axis='y').squeeze()
+    sstAveBox = cdu.averager(cdu.averager(sst,axis='1'), axis='2').squeeze()
 
     # Compute anomaly wrt annual cycle and average
     cdu.setTimeBoundsMonthly(sst)
