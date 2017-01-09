@@ -59,7 +59,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
     #print nbox
     # Read SST in box and average
     #sst = fi(varname, nbox)
-    sst = fi(varname, latitude=latBox, longitude=lonBox)
+    sst = fi(varname, latitude=(-5,5), longitude=(-150,-90))
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
 
     # Compute anomaly wrt annual cycle and average
