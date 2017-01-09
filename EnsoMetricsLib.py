@@ -26,7 +26,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
 
     Output:
     - amplMetric dict:
-        - name, value, units, method, ref
+        - name, value, units, method, nyears, ref
 
     Notes:
     -----
@@ -44,10 +44,6 @@ def EnsoAmpl (sstfile, varname, ninobox):
     ssth = fi[varname] # Create variable handle
     # Number of months and years
     timN = ssth.shape[0]
-    lon  = ssth.getLongitude()
-    lat  = ssth.getLatitude()
-    print lon,lat
-
     yearN = timN / 12
 
     # define ninobox
@@ -58,7 +54,7 @@ def EnsoAmpl (sstfile, varname, ninobox):
 
     # Read SST in box and average
     sst = fi(varname, nbox)
-    sstAveBox = cdu.averager(cdu.averager(sst,axis='1'), axis='2').squeeze()
+    sstAveBox = cdu.averager(sst,axis='xy',weights=cdu.area_weights(sst)).squeeze()
 
     # Compute anomaly wrt annual cycle and average
     cdu.setTimeBoundsMonthly(sst)
@@ -68,6 +64,6 @@ def EnsoAmpl (sstfile, varname, ninobox):
     sstStd = statistics.std(sstAnom)
 
     # Create output
-    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'ref':Ref}
+    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'ref':Ref, 'nyears':yearN}
 
     return amplMetric
