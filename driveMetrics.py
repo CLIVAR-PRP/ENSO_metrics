@@ -1,13 +1,13 @@
 import sys,socket
 from EnsoMetricsLib import EnsoAmpl
+import numpy as npy
 #
 # Wrapper of EnsoMetricsLib for testing
 #
+# Numpy initialisation
+npy.set_printoptions(precision=2)
 
 # Define model and simulation
-model = 'IPSL-CM5-LR'
-simu = 'historical'
-
 
 # define where we are working
 hostname = socket.gethostname()
@@ -27,7 +27,6 @@ else:
 varName = 'tos'
 ninoBox = 'nino3'
 
-
 sstFile = baseDir+'/tos/tos_Omon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 
 print sstFile
@@ -36,4 +35,4 @@ print sstFile
 ensoAmpl = EnsoAmpl(sstFile, varName, ninoBox)
 
 print ensoAmpl['name']+':',ensoAmpl['value'],'('+ensoAmpl['units']+')'
-print ensoAmpl['method']+'- (', ensoAmpl['nyears'],' years)'
+print ensoAmpl['method']+' - (', ensoAmpl['nyears'],' years)'
