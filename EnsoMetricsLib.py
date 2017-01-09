@@ -33,6 +33,8 @@ def EnsoAmpl (sstfile, varname, ninobox):
     - could add error calculation
 
     '''
+    cdm.setAutoBounds('on')
+
     # Define metric attributes
     Name   = 'ENSO amplitude'
     Units  = 'C'
