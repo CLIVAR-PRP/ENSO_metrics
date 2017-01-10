@@ -52,15 +52,15 @@ def EnsoAmpl (sstfile, sstname, ninobox):
 
     # define ninobox
     if ninobox =='nino3':
-        nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
-        #latBox1 = -5  ; latBox2 = 5
-        #lonBox1 = 210 ; lonBox2 = 270
+        #nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
+        latBox1 = -5  ; latBox2 = 5
+        lonBox1 = 210 ; lonBox2 = 270
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
-    print nbox
+    #print nbox
     # Read SST in box and average
-    sst = fi(sstname, nbox)
-    #sst = fi(sstname, latitude=(latBox1,latBox2), longitude=(lonBox1,lonBox2))
+    #sst = fi(sstname, nbox)
+    sst = fi(sstname, latitude=(latBox1,latBox2), longitude=(lonBox1,lonBox2))
     sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
     fi.close()
 
