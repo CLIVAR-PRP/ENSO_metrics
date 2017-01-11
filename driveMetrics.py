@@ -17,8 +17,12 @@ elif 'waippo.local' in hostname:
     baseDir = '/Volumes/hciclad/data/Density_binning/'
 elif 'private.ipsl.fr' in hostname:
     baseDir = '/prodigfs/project/CMIP5/main/IPSL/IPSL-CM5A-LR/historical/mon/atmos/Amon/r1i1p1/latest'
+    sstFile = baseDir+'/ts/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+    tauxFile = baseDir+'/tauu/tauu_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 elif 'crunchy.llnl.gov' in hostname:
-    baseDir = '/work/guilyardi/'
+    baseDir = '/cmip5_css02/data/cmip5/output1/IPSL/IPSL-CM5A-LR/historical/mon/atmos/Amon/r1i1p1'
+    sstFile = baseDir+'/ts/1/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+    tauxFile = baseDir+'/tauu/1/tauu_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 else:
     print hostname
     sys.exit('Unknown hostname')
@@ -30,8 +34,6 @@ sstName = 'ts'
 ninoBox = 'nino3'
 tauxName= 'tauu'
 
-sstFile = baseDir+'/ts/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
-tauxFile = baseDir+'/tauu/tauu_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 
 print sstFile
 
