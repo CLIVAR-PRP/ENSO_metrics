@@ -4,6 +4,7 @@ import numpy as npy
 import cdutil as cdu
 from genutil import statistics
 from cdms2.selectors import Selector
+from monthly_variability_statistics import interannual_variabilty_std_annual_cycle_removed
 import MV2 as mv
 
 #
@@ -37,8 +38,8 @@ def EnsoAmpl (sstfile, sstname, ninobox):
 
     '''
     cdm.setAutoBounds('on')
-    lib = 'monthly_variability_statistics.py'
-    execfile(os.path.join('./',lib))
+    #lib = 'monthly_variability_statistics.py'
+    #execfile(os.path.join('./',lib))
 
     # Define metric attributes
     Name   = 'ENSO amplitude'
