@@ -38,7 +38,7 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     '''
     cdm.setAutoBounds('on')
     lib = 'monthly_variability_statistics.py'
-    execfile(os.path.join('../',lib))
+    execfile(os.path.join('./',lib))
 
     # Define metric attributes
     Name   = 'ENSO amplitude'
