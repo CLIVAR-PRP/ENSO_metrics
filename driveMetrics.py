@@ -16,7 +16,7 @@ if 'locean-ipsl.upmc.fr' in hostname:
 elif 'waippo.local' in hostname:
     baseDir = '/Volumes/hciclad/data/Density_binning/'
 elif 'private.ipsl.fr' in hostname:
-    baseDir = '/prodigfs/project/CMIP5/main/IPSL/IPSL-CM5A-LR/historical/mon/ocean/Omon/r1i1p1/latest'
+    baseDir = '/prodigfs/project/CMIP5/main/IPSL/IPSL-CM5A-LR/historical/mon/atmos/Amon/r1i1p1/latest'
 elif 'crunchy.llnl.gov' in hostname:
     baseDir = '/work/guilyardi/'
 else:
@@ -24,12 +24,12 @@ else:
     sys.exit('Unknown hostname')
 
 # Variable name and nino box
-sstName = 'tos'
+sstName = 'ts'
 ninoBox = 'nino3'
-tauxName= 'tauuo'
+tauxName= 'tauu'
 
-sstFile = baseDir+'/tos/tos_Omon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
-tauxFile = baseDir+'/tauuo/tauuo_Omon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+sstFile = baseDir+'/ts/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+tauxFile = baseDir+'/tauu/tauu_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 
 print sstFile
 
