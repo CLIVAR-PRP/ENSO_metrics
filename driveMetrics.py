@@ -23,6 +23,8 @@ else:
     print hostname
     sys.exit('Unknown hostname')
 
+# source activate PMP
+
 # Variable name and nino box
 sstName = 'ts'
 ninoBox = 'nino3'
