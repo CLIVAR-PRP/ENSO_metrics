@@ -37,7 +37,10 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     - TODO: add error calculation to stddev (function of nyears)
 
     '''
+    # Temp corrections for cdms2 to find the right axis
     cdm.setAutoBounds('on')
+    cdm.axis.latitude_aliases.append("lon")
+    cdm.axis.longitude_aliases.append("lat")
     #lib = 'monthly_variability_statistics.py'
     #execfile(os.path.join('./',lib))
 

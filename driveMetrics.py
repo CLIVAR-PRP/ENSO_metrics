@@ -31,8 +31,8 @@ else:
 
 # Variable name and nino box
 sstName = 'ts'
-ninoBox = 'nino3'
 tauxName= 'tauu'
+ninoBox = 'nino3'
 
 
 print sstFile
@@ -55,7 +55,3 @@ print 'Nonlinearity:',ensoMu['nonlinearity'],'('+ensoMu['units']+')'
 EnsoMetrics =[{'col1':'IPSL-CM5A-LR','col2':ensoAmpl,'col3':ensoMu},
               {'col1':'IPSL-CM5A-MR','col2':ensoAmpl*2.,'col3':ensoMu*2}]
 
-# -> ecrit dans/update/ajoute a fichier json avec Custom name
-
-# Generate plot
-#fig=EnsoMetricsTable(EnsoMetrics, 'EnsoMetrics')
