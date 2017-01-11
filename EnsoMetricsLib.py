@@ -1,3 +1,4 @@
+import os
 import cdms2 as cdm
 import numpy as npy
 import cdutil as cdu
@@ -36,6 +37,8 @@ def EnsoAmpl (sstfile, sstname, ninobox):
 
     '''
     cdm.setAutoBounds('on')
+    lib = 'monthly_variability_statistics.py'
+    execfile(os.path.join('../',lib))
 
     # Define metric attributes
     Name   = 'ENSO amplitude'
@@ -66,7 +69,7 @@ def EnsoAmpl (sstfile, sstname, ninobox):
 
     # Compute anomaly wrt annual cycle
     #cdu.setTimeBoundsMonthly(sstAveBox)
-    sstAnom = cdu.ANNUALCYCLE.departures(sstAveBox)
+    sstAnom = interannual_variabilty_std_annual_cycle_removed(sstAveBox)
     #sstAnom = computeAnom(sstAveBox.data, yearN)
 
     # Compute standard deviation
