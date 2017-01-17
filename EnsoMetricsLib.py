@@ -73,11 +73,11 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     # Compute anomaly wrt annual cycle
     #cdu.setTimeBoundsMonthly(sstAveBox)
     sstAnom = interannual_variabilty_std_annual_cycle_removed(sstAveBox)
-    print sstAnom.shape
+    print sstAnom
     #sstAnom = computeAnom(sstAveBox.data, yearN)
 
     # Compute standard deviation
-    sstStd = statistics.std(sstAnom)
+    sstStd = sstAnom
 
     # Create output
     amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, 'varname':sstname}
