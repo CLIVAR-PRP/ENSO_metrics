@@ -143,6 +143,7 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
 
     return muMetric
 
+
 def computeAnom(var1d, nYears):
     '''
     Compute internannual anomaly of 1D time serie as cdu.ANNUALCYCLE.departures complains about units
