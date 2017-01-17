@@ -24,7 +24,7 @@ def get_slope_linear_regression(y,x):
    return(float(slope))
 
 def get_slope_linear_regression_from_anomaly(y,x,sign_x):
-   import cdutil, genutil
+   import cdutil, genutil, numpy
    y_area_avg = cdutil.averager(y,axis='xy')
    x_area_avg = cdutil.averager(x,axis='xy')
    x_area_avg_anom = cdutil.ANNUALCYCLE.departures(x_area_avg)
@@ -32,10 +32,10 @@ def get_slope_linear_regression_from_anomaly(y,x,sign_x):
    if sign_x == 0:
       results = genutil.statistics.linearregression(y_area_avg_anom,x=x_area_avg_anom)
    elif sign_x == 1:
-      idxplus = npy.argwhere (x_area_avg_anom >= 0.)
+      idxplus = numpy.argwhere (x_area_avg_anom >= 0.)
       results = genutil.statistics.linearregression(y_area_avg_anom[idxplus],x=x_area_avg_anom[idxplus])
    elif sign_x == -1:
-      idxneg = npy.argwhere (x_area_avg_anom <= 0.)
+      idxneg = numpy.argwhere (x_area_avg_anom <= 0.)
       results = genutil.statistics.linearregression(y_area_avg_anom[idxneg],x=x_area_avg_anom[idxneg])
    slope, intercept = results
    return(float(slope))

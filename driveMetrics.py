@@ -43,13 +43,13 @@ print sstFile
 ensoAmpl = EnsoAmpl(sstFile, sstName, ninoBox)
 
 print ensoAmpl['name']+':',ensoAmpl['value'],'('+ensoAmpl['units']+')'
-print ensoAmpl['method']+' - (', ensoAmpl['nyears'],' years)'
+print ensoAmpl['method']+' - (', ensoAmpl['nyears'],'years)'
 
 # Mu
 ensoMu = EnsoMu(sstFile, tauxFile, sstName, tauxName)
 
 print ensoMu['name']+':',ensoMu['value'],'('+ensoMu['units']+')'
-print ensoMu['method']+' - (', ensoMu['nyears'],' years)', ensoMu['intercept']
+print ensoMu['method']+' - (', ensoMu['nyears'],' years)'
 print 'Nonlinearity:',ensoMu['nonlinearity'][0],'('+ensoMu['units']+')'
 
 #EnsoMetrics =[{'col1':'IPSL-CM5A-LR','col2':ensoAmpl,'col3':ensoMu},
