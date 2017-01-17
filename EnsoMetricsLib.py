@@ -66,7 +66,7 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     fi.close()
 
     # Average, in box, compute anomaly wrt annual cycle and std dev
-    sstStd = interannual_variabilty_std_annual_cycle_removed(sstAveBox)
+    sstStd = interannual_variabilty_std_annual_cycle_removed(sst)
 
     # Create output
     amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, 'varname':sstname}
