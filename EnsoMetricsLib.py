@@ -4,7 +4,7 @@ import numpy as npy
 import cdutil as cdu
 from genutil import statistics
 from cdms2.selectors import Selector
-from monthly_variability_statistics import interannual_variabilty_std_annual_cycle_removed
+from monthly_variability_statistics import *
 import MV2 as mv
 
 #
@@ -32,6 +32,9 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     - amplMetric dict:
         - name, value, units, method, nyears, ref, varname
 
+    Method:
+    -------
+    - uses interannual_variabilty_std_annual_cycle_removed.py from PCMDI monthly_variability_statistics library
     Notes:
     -----
     - TODO: add error calculation to stddev (function of nyears)
@@ -39,8 +42,6 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     '''
     # Temp corrections for cdms2 to find the right axis
     cdm.setAutoBounds('on')
-    #lib = 'monthly_variability_statistics.py'
-    #execfile(os.path.join('./',lib))
 
     # Define metric attributes
     Name   = 'ENSO amplitude'
@@ -58,26 +59,14 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     # define ninobox
     if ninobox =='nino3':
         nbox = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
-        #latBox1 = -5  ; latBox2 = 5
-        #lonBox1 = 210 ; lonBox2 = 270
     else:
         print '!!! ninobox not defined in EnsoAmpl', ninobox
-    #print nbox
-    # Read SST in box and average
+    # Read SST in box
     sst = fi(sstname, nbox)
-    #sst = fi(sstname, latitude=(latBox1,latBox2), longitude=(lonBox1,lonBox2))
-    #sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
-    sstAveBox = sst
     fi.close()
 
-    # Compute anomaly wrt annual cycle
-    #cdu.setTimeBoundsMonthly(sstAveBox)
-    sstAnom = interannual_variabilty_std_annual_cycle_removed(sstAveBox)
-    print sstAnom
-    #sstAnom = computeAnom(sstAveBox.data, yearN)
-
-    # Compute standard deviation
-    sstStd = sstAnom
+    # Average, in box, compute anomaly wrt annual cycle and std dev
+    sstStd = interannual_variabilty_std_annual_cycle_removed(sstAveBox)
 
     # Create output
     amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, 'varname':sstname}
