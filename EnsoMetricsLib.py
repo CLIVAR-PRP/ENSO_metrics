@@ -34,7 +34,8 @@ def EnsoAmpl (sstfile, sstname, ninobox):
 
     Method:
     -------
-    - uses interannual_variabilty_std_annual_cycle_removed.py from PCMDI monthly_variability_statistics library
+    - uses tools from PCMDI monthly_variability_statistics library
+
     Notes:
     -----
     - TODO: add error calculation to stddev (function of nyears)
@@ -94,6 +95,10 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
     - muMetric dict:
         - name, value, units, method, nyears, ref, varname, intercept, nonlinearity
 
+    Method:
+    -------
+    - uses tools from PCMDI monthly_variability_statistics library
+
     Notes:
     -----
     - TODO: add error calculation to stddev (function of nyears)
@@ -115,31 +120,17 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
     timN = ssth.shape[0]
     yearN = timN / 12
 
-    # define nino boxes
-    latn31 = -5  ; latn32 = 5
-    lonn31 = 210 ; lonn32 = 270
-    latn41 = -5  ; latn42 = 5
-    lonn41 = 160 ; lonn42 = 210
+    # Read SST and Taux in boxes
+    n3box = cdu.region.domain(latitude=(-5.,5.),longitude=(-150,-90))
+    sst = fsst(sstname, n3box)
 
-    # Read SST and Taux in boxes and average
-    sst = fsst(sstname, latitude=(latn31,latn32), longitude=(lonn31,lonn32))
-    sstAveBox = cdu.averager(sst,axis='12',weights=cdu.area_weights(sst)).squeeze()
+    n4box = cdu.region.domain(latitude=(-5.,5.),longitude=(160,210))
+    taux = ftaux(tauxname, n4box)
 
-    taux = ftaux(tauxname, latitude=(latn41,latn42), longitude=(lonn41,lonn42))
-    tauxAveBox = cdu.averager(taux,axis='12',weights=cdu.area_weights(taux)).squeeze()
-
-    # Compute anomaly wrt annual cycle
-    sstAnom  = computeAnom(sstAveBox.data, yearN)
-    tauxAnom = computeAnom(tauxAveBox.data, yearN)
-
-    # Compute regression (all points)
-    muSlope,muIntercept = statistics.linearregression(tauxAnom, x = sstAnom)#, error = 1, probability = 1)
-
-    # Compute regression (positive/negative anomalies - El Nino/ La Nina) and nonlinearity
-    idxplus = npy.argwhere (sstAnom >= 0.)
-    muSlopePlus,muInterceptPlus = statistics.linearregression(tauxAnom[idxplus], x = sstAnom[idxplus])#, error = 1, probability = 1)
-    idxneg = npy.argwhere (sstAnom <= 0.)
-    muSlopeNeg,muInterceptNeg   = statistics.linearregression(tauxAnom[idxneg], x = sstAnom[idxneg])#, error = 1, probability = 1)
+    # Average and compute regression of interannual anomaly
+    muSlope = get_slope_linear_regression_from_anomaly(taux,sst, 0) # (all points)
+    muSlopePlus = get_slope_linear_regression_from_anomaly(taux,sst, 1) # (positive SSTA = El Nino)
+    muSlopeNeg = get_slope_linear_regression_from_anomaly(taux,sst, -1) # (negative SSTA = La Nina)
 
     # Change units
     muSlope     = muSlope * 1000.
@@ -148,7 +139,7 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
 
     # Create output
     muMetric = {'name':Name, 'value':muSlope, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, \
-               'varname':[sstname,tauxname], 'intercept':muIntercept, 'nonlinearity':muSlopeNeg-muSlopePlus}
+               'varname':[sstname,tauxname], 'nonlinearity':muSlopeNeg-muSlopePlus}
 
     return muMetric
 
