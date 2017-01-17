@@ -43,7 +43,7 @@ print sstFile
 ensoAmpl = EnsoAmpl(sstFile, sstName, ninoBox)
 
 print ensoAmpl['name']+':',ensoAmpl['value'],'('+ensoAmpl['units']+')'
-print ensoAmpl['method']+' - (', ensoAmpl['nyears'],'years)'
+print ' defined as',ensoAmpl['method']+' - (', ensoAmpl['nyears'],'years)'
 
 # Mu
 ensoMu = EnsoMu(sstFile, tauxFile, sstName, tauxName)
