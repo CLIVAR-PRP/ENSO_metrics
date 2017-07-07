@@ -3,8 +3,10 @@ from EnsoMetricsLib import EnsoAmpl, EnsoMu
 import numpy as npy
 #
 # Wrapper of EnsoMetricsLib for testing
+# >source activate 2.10
 #
 # Numpy initialisation
+
 npy.set_printoptions(precision=2)
 
 # Define model and simulation
@@ -12,9 +14,17 @@ npy.set_printoptions(precision=2)
 # define where we are working
 hostname = socket.gethostname()
 if 'locean-ipsl.upmc.fr' in hostname:
-    baseDir = '/Volumes/hciclad/data/Density_binning/'
+    baseDir = '/Volumes/prodigfs/project/CMIP5/main/IPSL/IPSL-CM5A-LR/historical/mon/atmos/Amon/r1i1p1/latest'
+    sstFile = baseDir+'/ts/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+    tauxFile = baseDir+'/tauu/tauu_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 elif 'waippo.local' in hostname:
-    baseDir = '/Volumes/hciclad/data/Density_binning/'
+    baseDir = '/Volumes/prodigfs/project/CMIP5/main/IPSL/IPSL-CM5A-LR/historical/mon/atmos/Amon/r1i1p1/latest'
+    sstFile = baseDir+'/ts/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+    tauxFile = baseDir+'/tauu/tauu_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+elif '.canalip.upmc.fr' in hostname:
+    baseDir = '/Volumes/prodigfs/project/CMIP5/main/IPSL/IPSL-CM5A-LR/historical/mon/atmos/Amon/r1i1p1/latest'
+    sstFile = baseDir+'/ts/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
+    tauxFile = baseDir+'/tauu/tauu_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
 elif 'private.ipsl.fr' in hostname:
     baseDir = '/prodigfs/project/CMIP5/main/IPSL/IPSL-CM5A-LR/historical/mon/atmos/Amon/r1i1p1/latest'
     sstFile = baseDir+'/ts/ts_Amon_IPSL-CM5A-LR_historical_r1i1p1_185001-200512.nc'
@@ -32,6 +42,7 @@ else:
 # Variable name and nino box
 sstName = 'ts'
 tauxName= 'tauu'
+
 ninoBox = 'nino3'
 
 

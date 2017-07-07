@@ -1,6 +1,7 @@
 #
 # Use matplotlib to create a metrics table
-#
+# >source activate 2.10
+
 import matplotlib.pyplot as plt
 
 
