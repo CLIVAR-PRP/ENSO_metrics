@@ -19,7 +19,7 @@ def defCollection(MC=True):
 def metricReqs(VOR=True):
     var_obs_requirements = {
         'EnsoAmpl':{'nbvar':1,'var_names':['sst'],'ref_obs':['HadiSST1.1']},
-        'EnsoMu':{'nbvar':2,'var_names':['sst','taux'],'ref_obs':['HadiSST1.1','ERAint']},
+        'EnsoMu':{'nbvar':2,'var_names':['sst','taux'],'ref_obs':['HadiSST1.1','ERA-interim']},
     }
     if VOR:
         return var_obs_requirements
@@ -28,10 +28,11 @@ def metricReqs(VOR=True):
 
 # list of reference observation (var name in file and file name)
 # TODO: how to deal with several files ? use wild card * ? use obs4mips code/link ?
+# TODO: how to deal with references which are not in obs4mips ?
 def ref_obs(RO=True):
     reference_obs_file = {
-        'HadiSST1.1':{'sst':{'var_name':'tos','file_name':'<file_name_sst>'},'sie':{'var_name':'seaIce','file_name':'<file_name_sie>'}},
-        'ERAint':{'taux':{'var_name':'tauu','file_name':'<file_name_tauu>'}},
+        'HadiSST1.1':{'sst':{'var_name':'tos','file_name':'<file_name_sst>','source':'see <ENSO RF web site>'},'sie':{'var_name':'seaIce','file_name':'<file_name_sie>','source':'other'}},
+        'ERA-interim':{'taux':{'var_name':'tauu','file_name':'<file_name_tauu>','source':'Obs4MIPS:<link>'}},
     }
     if RO:
         return reference_obs_file
