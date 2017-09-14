@@ -11,6 +11,9 @@ import MV2 as mv
 # Libray to compute ENSO metrics
 # These procedures have file names as inputs and metric as output
 #
+def Ensoampln3 (sstfile, sstname):
+    ensoampl = Ensoampl(sstfile,sstname, nino3)
+    return ensoampl
 
 def EnsoAmpl (sstfile, sstname, ninobox):
     '''
@@ -70,7 +73,7 @@ def EnsoAmpl (sstfile, sstname, ninobox):
     sstStd = interannual_variabilty_std_annual_cycle_removed(sst)
 
     # Create output
-    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, 'varname':sstname}
+    amplMetric = {'name':Name, 'value':sstStd, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref}
 
     return amplMetric
 
@@ -139,7 +142,7 @@ def EnsoMu (sstfile, tauxfile, sstname, tauxname):
 
     # Create output
     muMetric = {'name':Name, 'value':muSlope, 'units':Units, 'method':Method, 'nyears':yearN, 'ref':Ref, \
-               'varname':[sstname,tauxname], 'nonlinearity':muSlopeNeg-muSlopePlus}
+                'nonlinearity':muSlopeNeg-muSlopePlus}
 
     return muMetric
 
