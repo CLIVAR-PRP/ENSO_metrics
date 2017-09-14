@@ -9,7 +9,7 @@ def defCollection(MC=True):
     metrics_collection = {
         'MC1':{'long_name':'Metrics collection Q1','list_of_metrics':['EnsoAmpl','EnsoMu'],
                'description':'Describe which science question this collection is about'},
-}
+    }
     if MC:
         return metrics_collection
     else:

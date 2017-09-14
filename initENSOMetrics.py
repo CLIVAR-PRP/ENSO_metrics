@@ -1,14 +1,16 @@
 # Initialisation of ENSO metrics parameters
 #
-# name of variables in model data files {'internal_name','var_name in file'}
+# name of variables in model data files 'internal_name','var_name in file'
+# currently set up as standard CMIP short_name
 def vars_names:
     var_names = {
-    {'sst','tos'},
-    {'taux','tauuo'},
+    'sst':'tos',
+    'taux':'tauuo',
     #...
     }
     return var_names
 
+#
 # list of reference observation (var name in file and file name)
 # TODO: how to deal with several files ? use wild card * ? use obs4mips code/link ?
 # TODO: how to deal with references which are not in obs4mips ?
