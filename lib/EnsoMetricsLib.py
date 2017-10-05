@@ -4,7 +4,7 @@ import numpy as npy
 import cdutil as cdu
 from genutil import statistics
 from cdms2.selectors import Selector
-from monthly_variability_statistics import *
+from monthly_variability_statistics import  interannual_variabilty_std_annual_cycle_removed, get_slope_linear_regression_from_anomaly 
 import MV2 as mv
 
 #

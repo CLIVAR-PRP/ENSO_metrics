@@ -1,5 +1,5 @@
 import sys,socket
-from EnsoMetricsLib import EnsoAmpl, EnsoMu
+from EnsoMetrics import EnsoAmpl, EnsoMu
 import numpy as npy
 #
 # Wrapper of EnsoMetricsLib for testing

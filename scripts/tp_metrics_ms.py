@@ -81,7 +81,3 @@ g.close()
 # import genutil (local dev)
 # dir(genutil) doc for completion
 # select: from genutil import statistics
-
-
-
-

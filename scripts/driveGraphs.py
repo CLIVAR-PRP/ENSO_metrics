@@ -1,5 +1,5 @@
 
-from EnsoMetricsGraph import EnsoMetricsTable
+from EnsoMetrics import EnsoMetricsTable
 
 Models =['IPSL-CM5A-LR','IPSL-CM5A-MR']
 EnsoMetrics =[[0.82,4.1],
