@@ -1,0 +1,22 @@
+os:
+    - linux
+    - osx
+dist: trusty
+sudo: false
+before_install:
+- if [ "$TRAVIS_OS_NAME" = "linux" ]; then wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; fi
+- export PATH="$HOME/miniconda/bin:$PATH"
+- bash miniconda.sh -b -p $HOME/miniconda
+- conda config --set always_yes yes --set changeps1 no
+- conda update -y -q conda
+script:
+- conda install -c uvcdat/label/nightly -c conda-forge -c uvcdat genutil nose image-compare flake8 matplotlib
+- export UVCDAT_ANONYMOUS_LOG=False
+- echo $TRAVIS_BRANCH
+- export TRAVIS_PR_BRANCH=$TRAVIS_BRANCH
+- echo $TRAVIS_EVENT_TYPE
+- echo $TRAVIS_PULL_REQUEST
+- python setup.py install
+- python run_tests.py -v2 -n2
+after_success:
+    - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then conda install conda-build && conda install anaconda-client && bash ci-support/conda_upload.sh ; fi

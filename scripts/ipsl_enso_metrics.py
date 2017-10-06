@@ -75,7 +75,3 @@ print '  ', file, var,' Standard deviation = ',dataStd
 
 
 f.close()
-
-
-
-
