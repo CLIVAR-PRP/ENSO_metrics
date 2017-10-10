@@ -23,6 +23,7 @@ modnames = ['ACCESS1-0', 'ACCESS1-3',
             'MPI-ESM-LR', 'MPI-ESM-MR', 
             'inmcm4'
            ]
+
 modnames = ['IPSL-CM5A-LR']
 
 # Variables
@@ -33,7 +34,7 @@ tauxName= 'tauu'
 # Output
 #-------------------------------------------------
 outpathdata = '.' # e.g. '/user/directory/output/nc'
-outpathjsons = '.' # e.g. '/user/directory/output/json'
+outpathjson = '.' # e.g. '/user/directory/output/json'
 outnamejson = 'test.json'
 
 #=================================================
