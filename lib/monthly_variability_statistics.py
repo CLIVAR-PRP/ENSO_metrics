@@ -22,7 +22,11 @@ def get_slope_linear_regression_from_anomaly(y, x, sign_x, return_intercept=Fals
 	elif sign_x == -1:
 		idxneg  = numpy.nonzero(x_area_avg_anom <= 0.)
 		results = genutil.statistics.linearregression(y_area_avg_anom[idxneg], x=x_area_avg_anom[idxneg], error=1)
-	slope, intercept, stderr = results
+	slope_intercept, std_errors = results
+        slope = slope_intercept[0]
+        intercept = slope_intercept[1]
+        stderr = std_errors[0] 
+        #print slope, intercept, stderr
 	if   return_intercept==False and return_stderr==False:
 		return float(slope)
 	elif return_intercept==True  and return_stderr==False:
@@ -91,12 +95,12 @@ def MatchTimeDimension(a, b):
         a_sliced = a(time = (stime_adjust, etime_adjust))
         b_sliced = b(time = (stime_adjust, etime_adjust))
 
-        print a.shape, b.shape
-        print a.getTime().asComponentTime()[0], a.getTime().asComponentTime()[-1]
-        print b.getTime().asComponentTime()[0], b.getTime().asComponentTime()[-1]
+        #print a.shape, b.shape
+        #print a.getTime().asComponentTime()[0], a.getTime().asComponentTime()[-1]
+        #print b.getTime().asComponentTime()[0], b.getTime().asComponentTime()[-1]
 
-        print a_sliced.shape, b_sliced.shape
-        print a_sliced.getTime().asComponentTime()[0], a_sliced.getTime().asComponentTime()[-1]
-        print b_sliced.getTime().asComponentTime()[0], b_sliced.getTime().asComponentTime()[-1]
+        #print a_sliced.shape, b_sliced.shape
+        #print a_sliced.getTime().asComponentTime()[0], a_sliced.getTime().asComponentTime()[-1]
+        #print b_sliced.getTime().asComponentTime()[0], b_sliced.getTime().asComponentTime()[-1]
 
         return(a_sliced, b_sliced)
