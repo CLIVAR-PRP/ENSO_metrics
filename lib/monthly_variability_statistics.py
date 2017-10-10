@@ -1,4 +1,5 @@
 import cdutil, genutil, numpy, cdtime
+from calendar import monthrange
 
 
 def interannual_variabilty_std_annual_cycle_removed(d):
@@ -81,10 +82,21 @@ def MatchTimeDimension(a, b):
         stime = max(stime1, stime2)
         etime = min(etime1, etime2)
 
+	# Get last day of last month of etime
+        etime_day = monthrange(etime.year, etime.month)[-1]
+
         stime_adjust = cdtime.comptime(stime.year, stime.month, 1) 
-        etime_adjust = cdtime.comptime(etime.year, etime.month, 31) 
+        etime_adjust = cdtime.comptime(etime.year, etime.month, etime_day) 
 
         a_sliced = a(time = (stime_adjust, etime_adjust))
         b_sliced = b(time = (stime_adjust, etime_adjust))
+
+        print a.shape, b.shape
+        print a.getTime().asComponentTime()[0], a.getTime().asComponentTime()[-1]
+        print b.getTime().asComponentTime()[0], b.getTime().asComponentTime()[-1]
+
+        print a_sliced.shape, b_sliced.shape
+        print a_sliced.getTime().asComponentTime()[0], a_sliced.getTime().asComponentTime()[-1]
+        print b_sliced.getTime().asComponentTime()[0], b_sliced.getTime().asComponentTime()[-1]
 
         return(a_sliced, b_sliced)
