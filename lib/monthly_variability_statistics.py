@@ -81,8 +81,8 @@ def MatchTimeDimension(a, b):
         stime = max(stime1, stime2)
         etime = min(etime1, etime2)
 
-        stime_adjust = cdtime.comptime(stime.year, stime.mon, 1) 
-        etime_adjust = cdtime.comptime(etime.year, etime.mon, 31) 
+        stime_adjust = cdtime.comptime(stime.year, stime.month, 1) 
+        etime_adjust = cdtime.comptime(etime.year, etime.month, 31) 
 
         a_sliced = a(time = (stime_adjust, etime_adjust))
         b_sliced = b(time = (stime_adjust, etime_adjust))
