@@ -1,0 +1,118 @@
+{
+    "DISCLAIMER": "USER-NOTICE: The results in this file were produced with the PMP v1.1 (https://github.com/PCMDI/pcmdi_metrics). They are for research purposes only. They are subject to ongoing quality control and change as the PMP software advances, interpolation methods are modified, observational data sets are updated, problems with model data are corrected, etc. Use of these results for research (presentation, publications, etc.) should reference: Gleckler, P. J., C. Doutriaux, P. J. Durack, K. E. Taylor, Y. Zhang, and D. N. Williams, E. Mason, and J. Servonnat (2016), A more powerful reality test for climate models, Eos, 97, doi:10.1029/2016EO051663. If any problems are uncovered in using these results please contact the PMP development team at pcmdi-metrics@llnl.gov\n",
+    "REFERENCE": "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z",
+    "RESULTS": {
+        "IPSL-CM5A-LR": {
+            "EnsoAmpl": {
+                "input_data": [
+                    "/work/cmip5/historical/atm/mo/ts/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.ts.ver-1.latestX.xml"
+                ],
+                "method": "Standard deviation of SSTA in nino3",
+                "name": "ENSO amplitude",
+                "nyears": 156,
+                "ref": "Using CDAT std dev calculation",
+                "units": "C",
+                "value": 0.8140212374612439,
+                "value_error": 0.06517385895640071
+            },
+            "EnsoMu": {
+                "input_data": [
+                    "/work/cmip5/historical/atm/mo/ts/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.ts.ver-1.latestX.xml",
+                    "/work/cmip5/historical/atm/mo/tauu/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.tauu.ver-1.latestX.xml"
+                ],
+                "method": "Regression of nino3 tauxA over nino3 sstA",
+                "name": "Bjerknes feedback (mu)",
+                "nonlinearity": 0.5350190930629786,
+                "nonlinearity_error": 0.6026732421216585,
+                "nyears": 156,
+                "ref": "Using CDAT regression calculation",
+                "units": "10-3 N/m2/C",
+                "value": 1.4713503441098026,
+                "value_error": 0.12526770687180755
+            }
+        },
+        "obs": {
+            "EnsoAmpl": {
+                "input_data": [
+                    "/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc"
+                ],
+                "method": "Standard deviation of SSTA in nino3",
+                "name": "ENSO amplitude",
+                "nyears": 142,
+                "ref": "Using CDAT std dev calculation",
+                "units": "C",
+                "value": 0.7868009320493219,
+                "value_error": 0.06602686748662509
+            },
+            "EnsoMu": {
+                "input_data": [
+                    "/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc",
+                    "/clim_obs/obs/atm/mo/tauu/ERAINT/tauu_ERAINT_198901-200911.nc"
+                ],
+                "method": "Regression of nino3 tauxA over nino3 sstA",
+                "name": "Bjerknes feedback (mu)",
+                "nonlinearity": -5.478981685800266,
+                "nonlinearity_error": 2.1106914480760732,
+                "nyears": 20,
+                "ref": "Using CDAT regression calculation",
+                "units": "10-3 N/m2/C",
+                "value": 1.884865686316876,
+                "value_error": 0.4826854619065169
+            }
+        }
+    },
+    "json_structure": [
+        "model",
+        "metric",
+        "item",
+        "value or description"
+    ],
+    "json_version": 3.0,
+    "provenance": {
+        "commandLine": "driver_enso_metrics.py -p my_Param.py",
+        "conda": {
+            "DefaultEnvironment": "/export_backup/lee1043/anaconda2/envs/pmp_nightly",
+            "IsPrivate": "False",
+            "Platform": "linux-64",
+            "PythonVersion": "2.7.13.final.0",
+            "RootEnvironment": "/export_backup/lee1043/anaconda2  (writable)",
+            "Version": "4.3.24",
+            "buildVersion": "not installed",
+            "envVersion": "4.3.24"
+        },
+        "date": "2017-10-10 15:32:27",
+        "openGL": {
+            "GLX": {
+                "client": {},
+                "server": {}
+            }
+        },
+        "osAccess": false,
+        "packages": {
+            "CDP": "2017.09.07",
+            "PMP": "1.1.2.2017.06.30.19.40.66ce8fec99c4e1d404dc0e5f25d4e6f8e6339f66",
+            "PMPObs": null,
+            "blas": null,
+            "cdms": "2.12",
+            "cdtime": "2.12",
+            "cdutil": "2.12",
+            "clapack": "3.2.1",
+            "esmf": "7.0.0",
+            "esmpy": "7.0.0",
+            "genutil": "2.12",
+            "lapack": "3.6.1",
+            "matplotlib": "2.0.2",
+            "mesalib": null,
+            "numpy": "1.13.1",
+            "python": "2.7.13",
+            "vcs": "2.12.2017.09.13.00.29.5669624a25139ad2e19e4af8b921d0571338375d",
+            "vtk": "7.1.0.2.12"
+        },
+        "platform": {
+            "Name": "crunchy.llnl.gov",
+            "OS": "Linux",
+            "Version": "2.6.32-696.3.1.el6.x86_64"
+        },
+        "userId": "lee1043"
+    }
+}
