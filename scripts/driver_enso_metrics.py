@@ -48,17 +48,17 @@ for mod in models:
     print ' ----- ', mod,' ---------------------'
   
     if mod == 'obs':
-        sstFile = param.sstObsPath 
-        tauxFile = param.tauxObsPath
-
         sstName = param.sstNameObs
         tauxName = param.tauxNameObs
-    else:
-        sstFile = (param.modpath.replace('MOD', mod)).replace('VAR',sstName) ## Will need land mask out at some point...!
-        tauxFile = (param.modpath.replace('MOD', mod)).replace('VAR',tauxName)
 
+        sstFile = param.sstObsPath 
+        tauxFile = param.tauxObsPath
+    else:
         sstName = param.sstName
         tauxName = param.tauxName
+
+        sstFile = (param.modpath.replace('MOD', mod)).replace('VAR',sstName) ## Will need land mask out at some point...!
+        tauxFile = (param.modpath.replace('MOD', mod)).replace('VAR',tauxName)
 
     print sstFile
     print tauxFile
