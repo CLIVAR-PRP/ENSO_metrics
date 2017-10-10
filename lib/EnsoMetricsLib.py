@@ -659,10 +659,10 @@ def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1
         metric_val = {'name': metric_mod['name'], 'metric': val1, 'metric_error': val1_err, \
                       'comment': "The metric is the ratio value_model / value_observations", \
                       'model': modelName,
-                      'nyears_model': metric['nyears_model', 'value_model':v1, 'value_error_model':err1, \
+                      'nyears_model': metric['nyears_model'], 'value_model':v1, 'value_error_model':err1, \
                                       'observations':obsName, 'nyears_observations':metric['nyears_obs'],
                                       'value_observations':v2, 'value_error_observations':err2, \
-                                      'units':metric_mod['units'], 'method':metric_mod['method'],
+                                      'units':metric_mod['units'], 'method':metric_mod['method'], \
                                       'ref':metric_mod['ref']}
         try:
             metric_mod['nonlinearity']
