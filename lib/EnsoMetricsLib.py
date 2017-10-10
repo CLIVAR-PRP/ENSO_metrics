@@ -1,5 +1,5 @@
 import cdms2
-from cdutil
+import cdutil
 from genutil.statistics import std
 from genutil.statistics import rms
 import MV2
