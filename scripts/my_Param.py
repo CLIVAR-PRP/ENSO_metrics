@@ -40,8 +40,6 @@ outnamejson = 'test.json'
 #=================================================
 # Output
 #-------------------------------------------------
-# Metrics
-metrics = ['EnsoAmpl', 'EnsoMu']
-
-# Variable name and nino box
-ninoBox = 'nino3'
+# Metrics Collection
+metricsCollection = 'MC1'
+#metrics = ['EnsoAmpl', 'EnsoMu']

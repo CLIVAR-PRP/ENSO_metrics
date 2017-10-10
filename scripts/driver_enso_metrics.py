@@ -14,19 +14,24 @@ from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 import collections
 from collections import defaultdict
 
+from EnsoMetrics.EnsoCollectionsLib import *
 from EnsoMetrics.EnsoMetricsLib import EnsoAmpl, EnsoMu
 from EnsoMetrics.pmpParser import ReadOptions
 
-#########################################################
+#=================================================
+# Collect user defined options
+#-------------------------------------------------
 param = ReadOptions()
 
-metrics = param.metrics
-ninoBox = param.ninoBox
+#=================================================
+# User input option
+#-------------------------------------------------
+mcdict = defCollection(param.metricsCollection)
+metrics = mcdict['list_of_metrics']
 
-print metrics
-print ninoBox
-##########################################################
-
+#=================================================
+# Prepare loop iteration
+#-------------------------------------------------
 # Setup where to output resulting ---
 try:
     os.mkdir(param.outpathjson)
@@ -70,10 +75,13 @@ for mod in models:
             print metric
 
             if metric == 'EnsoAmpl':
-                tmp_dict = EnsoAmpl(sstFile, sstName, ninoBox)
+                nBox = mcdict['dict_of_regions'][metric]['sst']
+                tmp_dict = EnsoAmpl(sstFile, sstName, nBox)
                 tmp_dict['input_data'] = [sstFile]
             elif metric == 'EnsoMu':
-                tmp_dict = EnsoMu(sstFile, tauxFile, sstName, tauxName, ninoBox, ninoBox)
+                sstBox = mcdict['dict_of_regions'][metric]['sst']
+                tauxBox = mcdict['dict_of_regions'][metric]['taux']
+                tmp_dict = EnsoMu(sstFile, tauxFile, sstName, tauxName, sstBox, tauxBox)
                 tmp_dict['input_data'] = [sstFile, tauxFile]
         
             enso_stat_dic[mod][metric] = tmp_dict

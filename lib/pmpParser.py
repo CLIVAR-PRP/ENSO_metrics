@@ -37,6 +37,11 @@ def ReadOptions():
                    dest='metrics',
                    help="List of metrics")
     
+    P.add_argument("--metricsCollection",
+                   type=str,
+                   dest='metricsCollection',
+                   help="Metrics Collection e.g. MC1, MC2, etc")
+
     P.add_argument("--sstName",
                    type=str,
                    dest='sstName',
@@ -63,11 +68,6 @@ def ReadOptions():
                    type=str,
                    dest='tauuObsPath',
                    help="Directory path to obs monthly tauu field")
-    
-    P.add_argument("--ninoBox",
-                   type=str,
-                   dest='ninoBox',
-                   help="Nino index region to analyze")
     
     param = P.get_parameter()
 
