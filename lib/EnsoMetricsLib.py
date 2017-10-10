@@ -457,14 +457,16 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
     # Number of years
     yearN = sst.shape[0] / 12
     # Average and compute regression of interannual anomaly
+
+    # temporary block to make it run (return_stderr was turned off)
     muSlope = get_slope_linear_regression_from_anomaly(taux, sst, 0, return_stderr=True)  # (all points)
     muSlopePos = get_slope_linear_regression_from_anomaly(taux, sst, 1, return_stderr=True)  # (positive SSTA = El Nino)
     muSlopeNeg = get_slope_linear_regression_from_anomaly(taux, sst, -1,
                                                           return_stderr=True)  # (negative SSTA = La Nina)
     # Change units
-    muSlope = muSlope * 1000.
-    muSlopePos = muSlopePos * 1000.
-    muSlopeNeg = muSlopeNeg * 1000.
+    muSlope = MV2.multiply(muSlope, 1000.)
+    muSlopePos = MV2.multiply(muSlopePos, 1000.)
+    muSlopeNeg = MV2.multiply(muSlopeNeg, 1000.)
     # Create output
     muMetric = {'name': Name, 'value': muSlope[0], 'value_error': muSlope[1], \
                 'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
