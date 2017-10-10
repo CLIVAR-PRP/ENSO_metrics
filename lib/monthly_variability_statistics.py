@@ -1,4 +1,4 @@
-import cdutil, genutil, numpy
+import cdutil, genutil, numpy, cdtime
 
 
 def interannual_variabilty_std_annual_cycle_removed(d):
@@ -66,3 +66,25 @@ def get_axis_base_dataset(var, reg, path): # to be called from Atm Feedback driv
 	# Get area averaged and annual cycle removed 1-D time series
 	reg_timeseries_area_avg_anom = get_area_avg_annual_cycle_removed(reg_timeseries)
 	return(reg_timeseries_area_avg_anom)
+
+
+def MatchTimeDimension(a, b):
+	cdutil.setTimeBoundsMonthly(a)
+	cdutil.setTimeBoundsMonthly(b)
+
+	stime1 = a.getTime().asComponentTime()[0]
+	etime1 = a.getTime().asComponentTime()[-1]
+
+	stime2 = b.getTime().asComponentTime()[0]
+	etime2 = b.getTime().asComponentTime()[-1]
+
+        stime = max(stime1, stime2)
+        etime = min(etime1, etime2)
+
+        stime_adjust = cdtime.comptime(stime.year, stime.mon, 1) 
+        etime_adjust = cdtime.comptime(etime.year, etime.mon, 31) 
+
+        a_sliced = a(time = (stime_adjust, etime_adjust))
+        b_sliced = b(time = (stime_adjust, etime_adjust))
+
+        return(a_sliced, b_sliced)

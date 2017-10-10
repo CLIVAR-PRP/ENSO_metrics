@@ -449,6 +449,11 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
     taux = ReadAndSelectRegion(tauxfile, tauxname, tauxbox)
+
+    # Match time if different between sst and taux
+    if sst.shape[0] != taux.shape[0]: 
+        sst, taux = MatchTimeDimension(sst, taux) 
+
     # Number of years
     yearN = sst.shape[0] / 12
     # Average and compute regression of interannual anomaly
