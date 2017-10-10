@@ -1,18 +1,17 @@
 #!/usr/bin/env python
-
-#import logging
-#LOG_LEVEL = logging.INFO
-#logging.basicConfig(level=LOG_LEVEL)
-
+#=================================================
+# Dependencies
+#-------------------------------------------------
 import cdms2
-import copy
-import sys
-import os
-import json
-import pcmdi_metrics
-from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 import collections
+import copy
+import json
+import os
+import pcmdi_metrics
+import sys
+
 from collections import defaultdict
+from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 
 from EnsoMetrics.EnsoCollectionsLib import *
 from EnsoMetrics.EnsoMetricsLib import *
