@@ -111,6 +111,6 @@ def ReferenceRegions(AR=True):
         'nino4':  {'long_name':'Niño 4',  'latitude':( -5., 5.),'longitude':(160.,210.)},\
     }
     if AR:
-        return dict_reference_regions
-    else:
         return dict_reference_regions[AR]
+    else:
+        return dict_reference_regions
