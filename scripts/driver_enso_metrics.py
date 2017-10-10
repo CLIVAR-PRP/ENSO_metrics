@@ -13,8 +13,9 @@ import pcmdi_metrics
 from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 import collections
 from collections import defaultdict
-from EnsoMetricsLib import EnsoAmpl, EnsoMu
-from pmpParser import ReadOptions
+
+from EnsoMetrics.EnsoMetricsLib import EnsoAmpl, EnsoMu
+from EnsoMetrics.pmpParser import ReadOptions
 
 #########################################################
 param = ReadOptions()
@@ -72,7 +73,7 @@ for mod in models:
                 tmp_dict = EnsoAmpl(sstFile, sstName, ninoBox)
                 tmp_dict['input_data'] = [sstFile]
             elif metric == 'EnsoMu':
-                tmp_dict = EnsoMu(sstFile, tauxFile, sstName, tauxName)
+                tmp_dict = EnsoMu(sstFile, tauxFile, sstName, tauxName, ninoBox, ninoBox)
                 tmp_dict['input_data'] = [sstFile, tauxFile]
         
             enso_stat_dic[mod][metric] = tmp_dict
