@@ -175,6 +175,10 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox):
     The EnsoAlphaLwr() function computes the regression of nino3 lwrA (net surface longwave radiation anomalies)
     over nino3 sstA
 
+    The net surface longwave radiation is not a CMIP5 variable.
+    Either the user computes it and sends the filename and the varname or he feeds into swrfile and swrname of this
+    function a list() of downward and upward radiations files and variable names (CMIP5: rlds and rlus)
+
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
     Co-author:
 
@@ -183,9 +187,9 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox):
     Inputs:
     ------
     - sstfile   - time/lat/lon SST array using Omon values
-    - lwrfile   - time/lat/lon LWR array using Omon values
+    - lwrfile   - time/lat/lon LWR array using Omon values (may be a list of files)
     - sstname   - name of sst variable (tos, ts)
-    - lwrname   - name of lwr variable (lwr, rlds - rlus)
+    - lwrname   - name of lwr variable (lwr, rlds - rlus) (may be a list of variables)
     - sstbox    - name of box ('nino3') for sst
     - lwrbox    - name of box ('nino3') for lwr
 
@@ -206,7 +210,12 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox):
     Ref = 'Using CDAT regression calculation'
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
-    lwr = ReadAndSelectRegion(lwrfile, lwrname, lwrbox)
+    if isinstance(lwrfile, basestring):
+        lwr = ReadAndSelectRegion(lwrfile, lwrname, lwrbox)
+    elif isinstance(lwrfile, list):
+        rlds = ReadAndSelectRegion(lwrfile[0], lwrname[0], lwrbox)
+        rlus = ReadAndSelectRegion(lwrfile[1], lwrname[1], lwrbox)
+        lwr = rlds - rlus
     # Number of years
     yearN = sst.shape[0] / 12
     # Average and compute regression of interannual anomaly
@@ -228,6 +237,10 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox):
     The EnsoAlphaSwr() function computes the regression of nino3 swrA (net surface shortwave radiation anomalies)
     over nino3 sstA
 
+    The net surface shortwave radiation is not a CMIP5 variable.
+    Either the user computes it and sends the filename and the varname or he feeds into swrfile and swrname of this
+    function a list() of downward and upward radiations files and variable names (CMIP5: rsds and rsus)
+
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
     Co-author:
 
@@ -236,9 +249,9 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox):
     Inputs:
     ------
     - sstfile   - time/lat/lon SST array using Omon values
-    - swrfile   - time/lat/lon SWR array using Omon values
+    - swrfile   - time/lat/lon SWR array using Omon values (may be a list of files)
     - sstname   - name of sst variable (tos, ts)
-    - swrname   - name of swr variable (swr, rss, rsds - rsus)
+    - swrname   - name of swr variable (swr, rss, rsds - rsus) (may be a list of variables)
     - sstbox    - name of box ('nino3') for sst
     - swrbox    - name of box ('nino3') for swr
 
@@ -259,7 +272,12 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox):
     Ref = 'Using CDAT regression calculation'
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
-    swr = ReadAndSelectRegion(swrfile, swrname, swrbox)
+    if isinstance(swrfile, basestring):
+        swr = ReadAndSelectRegion(swrfile, swrname, swrbox)
+    elif isinstance(swrfile, list):
+        rsds = ReadAndSelectRegion(swrfile[0], swrname[0], swrbox)
+        rsus = ReadAndSelectRegion(swrfile[1], swrname[1], swrbox)
+        swr = rsds - rsus
     # Number of years
     yearN = sst.shape[0] / 12
     # Average and compute regression of interannual anomaly
@@ -285,6 +303,10 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox):
          - latent heat flux,
          - sensible heat flux
 
+    The total heat flux is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into thffile and thfname of this
+    function a list() of the four needed files and variable names (CMIP5: rsds-rsus, rlds-rlus, hfls, hfss)
+
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
     Co-author:
 
@@ -293,9 +315,9 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox):
     Inputs:
     ------
     - sstfile   - time/lat/lon SST array using Omon values
-    - thffile   - time/lat/lon SWR array using Omon values (may be a list of files)
+    - thffile   - time/lat/lon THF array using Omon values (may be a list of files)
     - sstname   - name of sst variable (tos, ts)
-    - thfname   - name of thf variable (thf, rss) (may be a list of variables)
+    - thfname   - name of thf variable (thf, netflux, thflx, swr + lwr + lhf + shf) (may be a list of variables)
     - sstbox    - name of box ('nino3') for sst
     - thfbox    - name of box ('nino3') for thf
 
