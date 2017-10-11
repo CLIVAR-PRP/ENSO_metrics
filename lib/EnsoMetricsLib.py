@@ -1,5 +1,5 @@
 import cdms2
-from cdutil
+import cdutil
 from genutil.statistics import std
 from genutil.statistics import rms
 import MV2
@@ -449,6 +449,11 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
     taux = ReadAndSelectRegion(tauxfile, tauxname, tauxbox)
+
+    # Match time if different between sst and taux
+    if sst.shape[0] != taux.shape[0]: 
+        sst, taux = MatchTimeDimension(sst, taux) 
+
     # Number of years
     yearN = sst.shape[0] / 12
     # Average and compute regression of interannual anomaly
@@ -457,9 +462,9 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
     muSlopeNeg = get_slope_linear_regression_from_anomaly(taux, sst, -1,
                                                           return_stderr=True)  # (negative SSTA = La Nina)
     # Change units
-    muSlope = muSlope * 1000.
-    muSlopePos = muSlopePos * 1000.
-    muSlopeNeg = muSlopeNeg * 1000.
+    muSlope = MV2.multiply(muSlope, 1000.)
+    muSlopePos = MV2.multiply(muSlopePos, 1000.)
+    muSlopeNeg = MV2.multiply(muSlopeNeg, 1000.)
     # Create output
     muMetric = {'name': Name, 'value': muSlope[0], 'value_error': muSlope[1], \
                 'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
@@ -659,10 +664,10 @@ def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1
         metric_val = {'name': metric_mod['name'], 'metric': val1, 'metric_error': val1_err, \
                       'comment': "The metric is the ratio value_model / value_observations", \
                       'model': modelName,
-                      'nyears_model': metric['nyears_model', 'value_model':v1, 'value_error_model':err1, \
+                      'nyears_model': metric['nyears_model'], 'value_model':v1, 'value_error_model':err1, \
                                       'observations':obsName, 'nyears_observations':metric['nyears_obs'],
                                       'value_observations':v2, 'value_error_observations':err2, \
-                                      'units':metric_mod['units'], 'method':metric_mod['method'],
+                                      'units':metric_mod['units'], 'method':metric_mod['method'], \
                                       'ref':metric_mod['ref']}
         try:
             metric_mod['nonlinearity']
