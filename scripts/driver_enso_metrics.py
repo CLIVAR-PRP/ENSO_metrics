@@ -90,7 +90,7 @@ for mod in models:
                 nBox = mcdict['dict_of_regions'][metric]['sst']
                 tmp_dict = EnsoRMSE(sstFile, sstName, param.sstObsPath, param.sstNameObs, nBox)
                 tmp_dict['input_data'] = [sstFile]
-                enso_stat_dict[mod][metric] = tmp_dict
+                enso_stat_dic[mod][metric] = tmp_dict
 
     else:
     #except:
