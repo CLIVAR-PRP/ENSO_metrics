@@ -67,12 +67,13 @@ for mod in models:
     print sstFile
     print tauxFile
   
-    try:
+    if 1:
+    #try:
         for metric in metrics:
 
             print metric
 
-            if metric == 'EnsoAmpl':
+            if metric in ['EnsoAmpl', 'EnsoSeasonality']:
                 nBox = mcdict['dict_of_regions'][metric]['sst']
                 tmp_dict = EnsoAmpl(sstFile, sstName, nBox)
                 tmp_dict['input_data'] = [sstFile]
@@ -85,7 +86,14 @@ for mod in models:
                 tmp_dict['input_data'] = [sstFile, tauxFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
-    except:
+            if mod != 'obs' and metric == 'EnsoRMSE':
+                nBox = mcdict['dict_of_regions'][metric]['sst']
+                tmp_dict = EnsoRMSE(sstFile, sstName, param.sstObsPath, param.sstNameObs, nBox)
+                tmp_dict['input_data'] = [sstFile]
+                enso_stat_dict[mod][metric] = tmp_dict
+
+    else:
+    #except:
         print 'failed for ', mod
   
 #=================================================
