@@ -520,7 +520,7 @@ def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, ninobox, center
     # Regrid model SST on observation grid
     sst_model = sst_model.regrid(sst_observation.getGrid(), regridTool='regrid2')
     # Average, in box, compute anomaly wrt annual cycle and std dev
-    sstRmse = float(rms(mod_clim_regrid, obs_clim, axis='xy', weights='weighted', centered=centered_rmse))
+    sstRmse = float(rms(sst_model, sst_observation, axis='xy', weights='weighted', centered=centered_rmse))
     # Create output
     rmseMetric = {'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
                   'nyears_model': yearN_model,
