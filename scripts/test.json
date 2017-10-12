@@ -106,7 +106,7 @@
     ],
     "json_version": 3.0,
     "provenance": {
-        "commandLine": "./driver_enso_metrics.py -p my_Param.py",
+        "commandLine": "./PMPdriver_EnsoMetrics.py -p my_Param.py",
         "conda": {
             "DefaultEnvironment": "/export_backup/lee1043/anaconda2/envs/pmp_nightly",
             "IsPrivate": "False",
@@ -117,7 +117,7 @@
             "buildVersion": "not installed",
             "envVersion": "4.3.24"
         },
-        "date": "2017-10-11 17:37:59",
+        "date": "2017-10-12 10:36:21",
         "openGL": {
             "GLX": {
                 "client": {},

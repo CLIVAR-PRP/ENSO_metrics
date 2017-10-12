@@ -13,8 +13,8 @@ import sys
 from collections import defaultdict
 from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 
-from EnsoMetrics.EnsoCollectionsLib import *
-from EnsoMetrics.EnsoMetricsLib import *
+from EnsoMetrics.EnsoCollectionsLib import defCollection 
+from EnsoMetrics.EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoRMSE, EnsoSeasonality
 from EnsoMetrics.pmpParser import ReadOptions
 
 #=================================================
