@@ -151,11 +151,17 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox):
     Units = 'W/m2/C'
     Method = 'Regression of ' + lhfbox + ' lhfA over ' + sstbox + ' sstA'
     Ref = 'Using CDAT regression calculation'
+
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
     lhf = ReadAndSelectRegion(lhffile, lhfname, lhfbox)
+
+    # Unit K to C
+    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+
     # Number of years
     yearN = sst.shape[0] / 12
+
     # Average and compute regression of interannual anomaly
     alphaLhfSlope = get_slope_linear_regression_from_anomaly(lhf, sst, 0, return_stderr=True)  # (all points)
     alphaLhfSlopePos = get_slope_linear_regression_from_anomaly(lhf, sst, 1,
@@ -208,27 +214,36 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox):
     Units = 'W/m2/C'
     Method = 'Regression of ' + lwrbox + ' lwrA over ' + sstbox + ' sstA'
     Ref = 'Using CDAT regression calculation'
+
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
+
+    # Unit K to C
+    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+
     if isinstance(lwrfile, basestring):
         lwr = ReadAndSelectRegion(lwrfile, lwrname, lwrbox)
     elif isinstance(lwrfile, list):
         rlds = ReadAndSelectRegion(lwrfile[0], lwrname[0], lwrbox)
         rlus = ReadAndSelectRegion(lwrfile[1], lwrname[1], lwrbox)
         lwr = rlds - rlus
+
     # Number of years
     yearN = sst.shape[0] / 12
+
     # Average and compute regression of interannual anomaly
     alphaLwrSlope = get_slope_linear_regression_from_anomaly(lwr, sst, 0, return_stderr=True)  # (all points)
     alphaLwrSlopePos = get_slope_linear_regression_from_anomaly(lwr, sst, 1,
                                                                 return_stderr=True)  # (positive SSTA = El Nino)
     alphaLwrSlopeNeg = get_slope_linear_regression_from_anomaly(lwr, sst, -1,
                                                                 return_stderr=True)  # (negative SSTA = La Nina)
+
     # Create output
     alphaLwrMetric = {'name': Name, 'value': alphaLwrSlope[0], 'value_error': alphaLwrSlope[1], \
                       'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
                       'nonlinearity': alphaLwrSlopeNeg[0] - alphaLwrSlopePos[0],
                       'nonlinearity_error': alphaLwrSlopeNeg[1] + alphaLwrSlopePos[1]}
+
     return alphaLwrMetric
 
 
@@ -270,27 +285,36 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox):
     Units = 'W/m2/C'
     Method = 'Regression of ' + swrbox + ' swrA over ' + sstbox + ' sstA'
     Ref = 'Using CDAT regression calculation'
+
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
+
+    # Unit K to C
+    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+
     if isinstance(swrfile, basestring):
         swr = ReadAndSelectRegion(swrfile, swrname, swrbox)
     elif isinstance(swrfile, list):
         rsds = ReadAndSelectRegion(swrfile[0], swrname[0], swrbox)
         rsus = ReadAndSelectRegion(swrfile[1], swrname[1], swrbox)
         swr = rsds - rsus
+
     # Number of years
     yearN = sst.shape[0] / 12
+
     # Average and compute regression of interannual anomaly
     alphaSwrSlope = get_slope_linear_regression_from_anomaly(swr, sst, 0, return_stderr=True)  # (all points)
     alphaSwrSlopePos = get_slope_linear_regression_from_anomaly(swr, sst, 1,
                                                                 return_stderr=True)  # (positive SSTA = El Nino)
     alphaSwrSlopeNeg = get_slope_linear_regression_from_anomaly(swr, sst, -1,
                                                                 return_stderr=True)  # (negative SSTA = La Nina)
+
     # Create output
     alphaSwrMetric = {'name': Name, 'value': alphaSwrSlope[0], 'value_error': alphaSwrSlope[1], \
                       'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
                       'nonlinearity': alphaSwrSlopeNeg[0] - alphaSwrSlopePos[0],
                       'nonlinearity_error': alphaSwrSlopeNeg[1] + alphaSwrSlopePos[1]}
+
     return alphaSwrMetric
 
 
@@ -336,8 +360,13 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox):
     Units = 'W/m2/C'
     Method = 'Regression of ' + thfbox + ' thfA over ' + sstbox + ' sstA'
     Ref = 'Using CDAT regression calculation'
+
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
+
+    # Unit K to C
+    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+
     if isinstance(thffile, basestring):
         thf = ReadAndSelectRegion(thffile, thfname, thfbox)
     elif isinstance(thffile, list):
@@ -353,19 +382,23 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox):
                 thf = tmp[ii]
             else:
                 thf = thf + tmp[ii]
+
     # Number of years
     yearN = sst.shape[0] / 12
+
     # Average and compute regression of interannual anomaly
     alphaSlope = get_slope_linear_regression_from_anomaly(thf, sst, 0, return_stderr=True)  # (all points)
     alphaSlopePos = get_slope_linear_regression_from_anomaly(thf, sst, 1,
                                                              return_stderr=True)  # (positive SSTA = El Nino)
     alphaSlopeNeg = get_slope_linear_regression_from_anomaly(thf, sst, -1,
                                                              return_stderr=True)  # (negative SSTA = La Nina)
+
     # Create output
     alphaMetric = {'name': Name, 'value': alphaSlope[0], 'value_error': alphaSlope[1], \
                    'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
                    'nonlinearity': alphaSlopeNeg[0] - alphaSlopePos[0],
                    'nonlinearity_error': alphaSlopeNeg[1] + alphaSlopePos[1]}
+
     return alphaMetric
 
 
@@ -399,17 +432,26 @@ def EnsoAmpl(sstfile, sstname, ninobox):
     Units = 'C'
     Method = 'Standard deviation of SSTA in ' + ninobox
     Ref = 'Using CDAT std dev calculation'
+
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, ninobox)
+
+    # Unit K to C
+    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+
     # Number of years
     yearN = sst.shape[0] / 12
+
     # Average, in box, compute anomaly wrt annual cycle and std dev
     sstStd = interannual_variabilty_std_annual_cycle_removed(sst)
+
     # Standard Error of the Standard Deviation (function of nyears)
     sstStdErr = sstStd / numpy.sqrt(yearN)
+
     # Create output
     amplMetric = {'name': Name, 'value': sstStd, 'value_error': sstStdErr, 'units': Units, 'method': Method,
                   'nyears': yearN, 'ref': Ref}
+
     return amplMetric
 
 
@@ -446,9 +488,13 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
     Units = '10-3 N/m2/C'
     Method = 'Regression of ' + tauxbox + ' tauxA over ' + sstbox + ' sstA'
     Ref = 'Using CDAT regression calculation'
+
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
     taux = ReadAndSelectRegion(tauxfile, tauxname, tauxbox)
+
+    # Unit K to C
+    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
 
     # Match time if different between sst and taux
     if sst.shape[0] != taux.shape[0]: 
@@ -456,6 +502,7 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
 
     # Number of years
     yearN = sst.shape[0] / 12
+
     # Average and compute regression of interannual anomaly
     muSlope = get_slope_linear_regression_from_anomaly(taux, sst, 0, return_stderr=True)  # (all points)
     muSlopePos = get_slope_linear_regression_from_anomaly(taux, sst, 1, return_stderr=True)  # (positive SSTA = El Nino)
@@ -465,10 +512,12 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
     muSlope = MV2.multiply(muSlope, 1000.)
     muSlopePos = MV2.multiply(muSlopePos, 1000.)
     muSlopeNeg = MV2.multiply(muSlopeNeg, 1000.)
+
     # Create output
     muMetric = {'name': Name, 'value': muSlope[0], 'value_error': muSlope[1], \
                 'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
                 'nonlinearity': muSlopeNeg[0] - muSlopePos[0], 'nonlinearity_error': muSlopeNeg[1] + muSlopePos[1]}
+
     return muMetric
 
 
@@ -519,6 +568,9 @@ def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, ninobox, center
     sst_observation = cdutil.averager(sst_observation, axis='t')
     # Regrid model SST on observation grid
     sst_model = sst_model.regrid(sst_observation.getGrid(), regridTool='regrid2')
+    # Unit K to C
+    if sst_observation.units == 'K': sst_observation = MV2.subtract(sst_observation, 273.15)
+    if sst_model.units == 'K': sst_model = MV2.subtract(sst_model, 273.15)
     # Average, in box, compute anomaly wrt annual cycle and std dev
     sstRmse = float(rms(sst_model, sst_observation, axis='xy', weights='weighted', centered=centered_rmse))
     # Create output
@@ -561,6 +613,8 @@ def EnsoSeasonality(sstfile, sstname, ninobox):
     Ref = 'Using CDAT std dev calculation'
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, ninobox)
+    # Unit K to C
+    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
     # Number of years
     yearN = sst.shape[0] / 12
     # Seasonal ans Spatial average
