@@ -623,12 +623,12 @@ def EnsoSeasonality(sstfile, sstname, ninobox):
     # Compute std dev and ratio
     sst_NDJ_std = std(sst_NDJ)
     sst_MAM_std = std(sst_MAM)
-    ratioStd = sst_NDJ_std / sst_MAM_std
+    ratioStd = float(sst_NDJ_std / sst_MAM_std)
     # Standard Error of the Standard Deviation (function of nyears)
     sst_NDJ_std_err = sst_NDJ_std / numpy.sqrt(yearN - 1)
     sst_MAM_std_err = sst_MAM_std / numpy.sqrt(yearN)
     # The error 'dy' on a division 'y = x/z' is: dy = (z*dx + x*dz) / z2
-    ratio_std_err = (sst_MAM_std * sst_NDJ_std_err + sst_NDJ_std * sst_MAM_std_err) / numpy.square(sst_MAM_std_err)
+    ratio_std_err = float((sst_MAM_std * sst_NDJ_std_err + sst_NDJ_std * sst_MAM_std_err) / numpy.square(sst_MAM_std_err))
     # Create output
     seaMetric = {'name': Name, 'value': ratioStd, 'value_error': ratio_std_err, 'units': Units, 'method': Method,
                  'nyears': yearN, 'ref': Ref}
