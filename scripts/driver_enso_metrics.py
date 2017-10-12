@@ -73,9 +73,15 @@ for mod in models:
 
             print metric
 
-            if metric in ['EnsoAmpl', 'EnsoSeasonality']:
+            if metric == 'EnsoAmpl':
                 nBox = mcdict['dict_of_regions'][metric]['sst']
                 tmp_dict = EnsoAmpl(sstFile, sstName, nBox)
+                tmp_dict['input_data'] = [sstFile]
+                enso_stat_dic[mod][metric] = tmp_dict
+
+            elif metric == 'EnsoSeasonality':
+                nBox = mcdict['dict_of_regions'][metric]['sst']
+                tmp_dict = EnsoSeasonality(sstFile, sstName, nBox)
                 tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
