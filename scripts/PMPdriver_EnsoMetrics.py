@@ -13,8 +13,8 @@ import sys
 from collections import defaultdict
 from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 
-from EnsoMetrics.EnsoCollectionsLib import *
-from EnsoMetrics.EnsoMetricsLib import *
+from EnsoMetrics.EnsoCollectionsLib import defCollection 
+from EnsoMetrics.EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoRMSE, EnsoSeasonality
 from EnsoMetrics.pmpParser import ReadOptions
 
 #=================================================
@@ -78,11 +78,23 @@ for mod in models:
                 tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
+            elif metric == 'EnsoSeasonality':
+                nBox = mcdict['dict_of_regions'][metric]['sst']
+                tmp_dict = EnsoSeasonality(sstFile, sstName, nBox)
+                tmp_dict['input_data'] = [sstFile]
+                enso_stat_dic[mod][metric] = tmp_dict
+
             elif metric == 'EnsoMu':
                 sstBox = mcdict['dict_of_regions'][metric]['sst']
                 tauxBox = mcdict['dict_of_regions'][metric]['taux']
                 tmp_dict = EnsoMu(sstFile, tauxFile, sstName, tauxName, sstBox, tauxBox)
                 tmp_dict['input_data'] = [sstFile, tauxFile]
+                enso_stat_dic[mod][metric] = tmp_dict
+
+            elif metric == 'EnsoRMSE' and mod != 'obs':
+                nBox = mcdict['dict_of_regions'][metric]['sst']
+                tmp_dict = EnsoRMSE(sstFile, sstName, param.sstObsPath, param.sstNameObs, nBox)
+                tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
     except:

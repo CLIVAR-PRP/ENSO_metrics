@@ -4,7 +4,7 @@
 sstObsPath = '/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc'
 tauxObsPath = '/clim_obs/obs/atm/mo/tauu/ERAINT/tauu_ERAINT_198901-200911.nc'
 
-sstNameObs = 'sst'
+sstNameObs = 'sst' # Units C
 tauxNameObs = 'tauu'
 
 #=================================================
@@ -27,7 +27,7 @@ modnames = ['ACCESS1-0', 'ACCESS1-3',
 modnames = ['IPSL-CM5A-LR']
 
 # Variables
-sstName = 'ts'
+sstName = 'ts' # Units K
 tauxName= 'tauu'
 
 #=================================================
