@@ -44,6 +44,6 @@ setup (name = "EnsoMetrics",
        url = "https://github.com/eguil/ENSO_metrics",
        packages = ['EnsoMetrics'],
        package_dir = {'EnsoMetrics': 'lib'},
-       scripts= glob.glob("srcipts/*.py"),
+       scripts= glob.glob("scripts/*.py"),
       )
     
