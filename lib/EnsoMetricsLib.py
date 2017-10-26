@@ -1,111 +1,13 @@
-import cdms2
-import cdutil
-from genutil.statistics import std
-from genutil.statistics import rms
-import MV2
-import numpy
-import sys
+import numpy.sqrt as NUMPYsqrt
+import numpy.square as NUMPYsquare
 
-from EnsoCollectionsLib import *
-from monthly_variability_statistics import *
+# based on uvcdat
+from EnsoToolsLib import CheckUnits,ComputeMultiply,ComputeRms,ComputeStd,SpatialAverage,TimeAverage,ReadAndSelectRegion,SeasonalMean
+from EnsoToolsLib import interannual_variabilty_std_annual_cycle_removed,get_slope_linear_regression_from_anomaly
 
 
-# ---------------------------------------------------------------------------------------------------------------------#
-#
-# Two functions that can be called by the metrics functions
-#
 
 
-# Reads file and selects the given region
-def ReadAndSelectRegion(filename, varname, box):
-    # Temp corrections for cdms2 to find the right axis
-    cdms2.setAutoBounds('on')
-    # Open file and get time dimension
-    fi = cdms2.open(filename)
-    # define ninobox
-    region_ref = ReferenceRegions(box)
-    nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
-    # Read SST in box
-    var = fi(varname, nbox)
-    fi.close()
-    return var
-
-
-# Dictionary of seasons
-sea_dict = dict(JAN=cdutil.JAN, FEB=cdutil.FEB, MAR=cdutil.MAR, APR=cdutil.APR, MAY=cdutil.MAY, JUN=cdutil.JUN, \
-                JUL=cdutil.JUL, AUG=cdutil.AUG, SEP=cdutil.SEP, OCT=cdutil.OCT, NOV=cdutil.NOV, DEC=cdutil.DEC, \
-                JF=cdutil.times.Seasons('JF'), FM=cdutil.times.Seasons('FM'), MA=cdutil.times.Seasons('MA'),
-                AM=cdutil.times.Seasons('AM'), \
-                MJ=cdutil.times.Seasons('MJ'), JJ=cdutil.times.Seasons('JJ'), JA=cdutil.times.Seasons('JA'),
-                AS=cdutil.times.Seasons('AS'), \
-                SO=cdutil.times.Seasons('SO'), ON=cdutil.times.Seasons('ON'), ND=cdutil.times.Seasons('ND'),
-                DJ=cdutil.times.Seasons('DJ'), \
-                JFM=cdutil.times.Seasons('JFM'), FMA=cdutil.times.Seasons('FMA'), MAM=cdutil.MAM, \
-                AMJ=cdutil.times.Seasons('AMJ'), MJJ=cdutil.times.Seasons('MJJ'), JJA=cdutil.JJA, \
-                JAS=cdutil.times.Seasons('JAS'), ASO=cdutil.times.Seasons('ASO'), SON=cdutil.SON, \
-                OND=cdutil.times.Seasons('OND'), NDJ=cdutil.times.Seasons('NDJ'), DJF=cdutil.DJF, \
-                JFMA=cdutil.times.Seasons('JFMA'),FMAM=cdutil.times.Seasons('FMAM'),MAMJ=cdutil.times.Seasons('MAMJ'),\
-                AMJJ=cdutil.times.Seasons('AMJJ'),MJJA=cdutil.times.Seasons('MJJA'),JJAS=cdutil.times.Seasons('JJAS'),\
-                JASO=cdutil.times.Seasons('JASO'),ASON=cdutil.times.Seasons('ASON'),SOND=cdutil.times.Seasons('SOND'),\
-                ONDJ=cdutil.times.Seasons('ONDJ'),NDJF=cdutil.times.Seasons('NDJF'),DJFM=cdutil.times.Seasons('DJFM'))
-
-
-# Computes the given seasonal mean
-def SeasonalMean(tab, season, compute_anom=False):
-    # Temp corrections for cdms2 to find the right axis
-    cdms2.setAutoBounds('on')
-    # Checks if the season has been defined
-    try:
-        tab_sea = sea_dict[season]
-    except:
-        print '	 unknown season: ' + str(season)
-        sys.exit(1)
-    else:
-        if season in ['DJ', 'NDJ', 'DJF', 'ONDJ', 'NDJF', 'NDJF']:
-            # these 'seasons' are between two years
-            #	 if I don't custom 'tab' cdutil will compute half season mean
-            #	 (i.e., for NDJ the first element would be for J only and the last for ND only)
-            time_ax_comp = tab.getTime().asComponentTime()
-            ntime = len(time_ax_comp)
-            if season == 'DJ':
-                for ii in range(ntime):
-                    if time_ax_comp[ii].month == 12: break
-                for jj in range(ntime):
-                    if time_ax_comp[ntime - 1 - jj].month == 1: break
-            elif season == 'NDJ':
-                for ii in range(ntime):
-                    if time_ax_comp[ii].month == 11: break
-                for jj in range(ntime):
-                    if time_ax_comp[ntime - 1 - jj].month == 1: break
-            elif season == 'DJF':
-                for ii in range(ntime):
-                    if time_ax_comp[ii].month == 12: break
-                for jj in range(ntime):
-                    if time_ax_comp[ntime - 1 - jj].month == 2: break
-            elif season == 'ONDJ':
-                for ii in range(ntime):
-                    if time_ax_comp[ii].month == 10: break
-                for jj in range(ntime):
-                    if time_ax_comp[ntime - 1 - jj].month == 1: break
-            elif season == 'NDJF':
-                for ii in range(ntime):
-                    if time_ax_comp[ii].month == 11: break
-                for jj in range(ntime):
-                    if time_ax_comp[ntime - 1 - jj].month == 2: break
-            elif season == 'DJFM':
-                for ii in range(ntime):
-                    if time_ax_comp[ii].month == 12: break
-                for jj in range(ntime):
-                    if time_ax_comp[ntime - 1 - jj].month == 3: break
-            tab = tab[ii:ntime - jj]
-        if compute_anom:
-            tab = sea_dict[season].departures(tab)  # extracts 'season' seasonal anomalies (from climatology)
-        else:
-            tab = sea_dict[season](tab)  # computes the 'season' climatology of a tab
-    return tab
-
-
-# ---------------------------------------------------------------------------------------------------------------------#
 
 
 
@@ -157,7 +59,7 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox):
     lhf = ReadAndSelectRegion(lhffile, lhfname, lhfbox)
 
     # Unit K to C
-    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+    sst = CheckUnits(sst, 'temperature')
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -169,8 +71,8 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox):
     alphaLhfSlopeNeg = get_slope_linear_regression_from_anomaly(lhf, sst, -1,
                                                                 return_stderr=True)  # (negative SSTA = La Nina)
     # Create output
-    alphaLhfMetric = {'name': Name, 'value': alphaLhfSlope[0], 'value_error': alphaLhfSlope[1], \
-                      'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
+    alphaLhfMetric = {'name': Name, 'value': alphaLhfSlope[0], 'value_error': alphaLhfSlope[1],
+                      'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref,
                       'nonlinearity': alphaLhfSlopeNeg[0] - alphaLhfSlopePos[0],
                       'nonlinearity_error': alphaLhfSlopeNeg[1] + alphaLhfSlopePos[1]}
     return alphaLhfMetric
@@ -217,15 +119,16 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox):
 
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
-
-    # Unit K to C
-    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+    sst = CheckUnits(sst, 'temperature')
 
     if isinstance(lwrfile, basestring):
         lwr = ReadAndSelectRegion(lwrfile, lwrname, lwrbox)
+        lwr = CheckUnits(lwr, 'heat flux')
     elif isinstance(lwrfile, list):
         rlds = ReadAndSelectRegion(lwrfile[0], lwrname[0], lwrbox)
+        rlds = CheckUnits(rlds, 'heat flux')
         rlus = ReadAndSelectRegion(lwrfile[1], lwrname[1], lwrbox)
+        rlus = CheckUnits(rlus, 'heat flux')
         lwr = rlds - rlus
 
     # Number of years
@@ -239,8 +142,8 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox):
                                                                 return_stderr=True)  # (negative SSTA = La Nina)
 
     # Create output
-    alphaLwrMetric = {'name': Name, 'value': alphaLwrSlope[0], 'value_error': alphaLwrSlope[1], \
-                      'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
+    alphaLwrMetric = {'name': Name, 'value': alphaLwrSlope[0], 'value_error': alphaLwrSlope[1],
+                      'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref,
                       'nonlinearity': alphaLwrSlopeNeg[0] - alphaLwrSlopePos[0],
                       'nonlinearity_error': alphaLwrSlopeNeg[1] + alphaLwrSlopePos[1]}
 
@@ -288,15 +191,16 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox):
 
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
-
-    # Unit K to C
-    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+    sst = CheckUnits(sst, 'temperature')
 
     if isinstance(swrfile, basestring):
         swr = ReadAndSelectRegion(swrfile, swrname, swrbox)
+        swr = CheckUnits(swr, 'heat flux')
     elif isinstance(swrfile, list):
         rsds = ReadAndSelectRegion(swrfile[0], swrname[0], swrbox)
+        rsds = CheckUnits(rsds, 'heat flux')
         rsus = ReadAndSelectRegion(swrfile[1], swrname[1], swrbox)
+        rsus = CheckUnits(rsus, 'heat flux')
         swr = rsds - rsus
 
     # Number of years
@@ -310,8 +214,8 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox):
                                                                 return_stderr=True)  # (negative SSTA = La Nina)
 
     # Create output
-    alphaSwrMetric = {'name': Name, 'value': alphaSwrSlope[0], 'value_error': alphaSwrSlope[1], \
-                      'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
+    alphaSwrMetric = {'name': Name, 'value': alphaSwrSlope[0], 'value_error': alphaSwrSlope[1],
+                      'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref,
                       'nonlinearity': alphaSwrSlopeNeg[0] - alphaSwrSlopePos[0],
                       'nonlinearity_error': alphaSwrSlopeNeg[1] + alphaSwrSlopePos[1]}
 
@@ -363,14 +267,17 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox):
 
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
-
-    # Unit K to C
-    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+    sst = CheckUnits(sst, 'temperature')
 
     if isinstance(thffile, basestring):
         thf = ReadAndSelectRegion(thffile, thfname, thfbox)
+        thf = CheckUnits(thf, 'heat flux')
     elif isinstance(thffile, list):
-        tmp = [ReadAndSelectRegion(thffile[ii], thfname[ii], thfbox) for ii in range(len(thffile))]
+        tmp = list()
+        for ii in range(len(thffile)):
+            val = ReadAndSelectRegion(thffile[ii], thfname[ii], thfbox)
+            val = CheckUnits(val, 'heat flux')
+            tmp.append(val)
         try:
             del thf
         except:
@@ -394,8 +301,8 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox):
                                                              return_stderr=True)  # (negative SSTA = La Nina)
 
     # Create output
-    alphaMetric = {'name': Name, 'value': alphaSlope[0], 'value_error': alphaSlope[1], \
-                   'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
+    alphaMetric = {'name': Name, 'value': alphaSlope[0], 'value_error': alphaSlope[1],
+                   'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref,
                    'nonlinearity': alphaSlopeNeg[0] - alphaSlopePos[0],
                    'nonlinearity_error': alphaSlopeNeg[1] + alphaSlopePos[1]}
 
@@ -435,9 +342,7 @@ def EnsoAmpl(sstfile, sstname, ninobox):
 
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, ninobox)
-
-    # Unit K to C
-    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+    sst = CheckUnits(sst, 'temperature')
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -446,7 +351,7 @@ def EnsoAmpl(sstfile, sstname, ninobox):
     sstStd = interannual_variabilty_std_annual_cycle_removed(sst)
 
     # Standard Error of the Standard Deviation (function of nyears)
-    sstStdErr = sstStd / numpy.sqrt(yearN)
+    sstStdErr = sstStd / NUMPYsqrt(yearN)
 
     # Create output
     amplMetric = {'name': Name, 'value': sstStd, 'value_error': sstStdErr, 'units': Units, 'method': Method,
@@ -491,14 +396,13 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
 
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, sstbox)
+    sst = CheckUnits(sst, 'temperature')
     taux = ReadAndSelectRegion(tauxfile, tauxname, tauxbox)
-
-    # Unit K to C
-    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+    taux = CheckUnits(taux, 'wind stress')
 
     # Match time if different between sst and taux
     if sst.shape[0] != taux.shape[0]: 
-        sst, taux = MatchTimeDimension(sst, taux) 
+        sst, taux = MatchTimeDimension(sst, taux)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -509,13 +413,12 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox):
     muSlopeNeg = get_slope_linear_regression_from_anomaly(taux, sst, -1,
                                                           return_stderr=True)  # (negative SSTA = La Nina)
     # Change units
-    muSlope = MV2.multiply(muSlope, 1000.)
-    muSlopePos = MV2.multiply(muSlopePos, 1000.)
-    muSlopeNeg = MV2.multiply(muSlopeNeg, 1000.)
-
+    muSlope = ComputeMultiply(muSlope, 1000.)
+    muSlopePos = ComputeMultiply(muSlopePos, 1000.)
+    muSlopeNeg = ComputeMultiply(muSlopeNeg, 1000.)
     # Create output
-    muMetric = {'name': Name, 'value': muSlope[0], 'value_error': muSlope[1], \
-                'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref, \
+    muMetric = {'name': Name, 'value': muSlope[0], 'value_error': muSlope[1],
+                'units': Units, 'method': Method, 'nyears': yearN, 'ref': Ref,
                 'nonlinearity': muSlopeNeg[0] - muSlopePos[0], 'nonlinearity_error': muSlopeNeg[1] + muSlopePos[1]}
 
     return muMetric
@@ -557,22 +460,27 @@ def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, ninobox, center
     Units = 'C'
     Method = 'Spatial root mean square error SST in ' + ninobox
     Ref = 'Using CDAT regriding and rms (uncentered and biased) calculation'
+
     # Read file and select the right region
     sst_model = ReadAndSelectRegion(sstfilemodel, sstnamemodel, ninobox)
+    sst_model = CheckUnits(sst_model, 'temperature')
     sst_observation = ReadAndSelectRegion(sstfileobs, sstnameobs, ninobox)
+    sst_observation = CheckUnits(sst_observation, 'temperature')
+
     # Number of years
     yearN_model = sst_model.shape[0] / 12
     yearN_observation = sst_model.shape[0] / 12
+
     # Time average
-    sst_model = cdutil.averager(sst_model, axis='t')
-    sst_observation = cdutil.averager(sst_observation, axis='t')
+    sst_model = TimeAverage(sst_model)
+    sst_observation = TimeAverage(sst_observation)
+
     # Regrid model SST on observation grid
     sst_model = sst_model.regrid(sst_observation.getGrid(), regridTool='regrid2')
-    # Unit K to C
-    if sst_observation.units == 'K': sst_observation = MV2.subtract(sst_observation, 273.15)
-    if sst_model.units == 'K': sst_model = MV2.subtract(sst_model, 273.15)
+
     # Average, in box, compute anomaly wrt annual cycle and std dev
-    sstRmse = float(rms(sst_model, sst_observation, axis='xy', weights='weighted', centered=centered_rmse))
+    sstRmse = ComputeRms(sst_model, sst_observation, axis='xy', weights='weighted', centered=centered_rmse)
+
     # Create output
     rmseMetric = {'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
                   'nyears_model': yearN_model,
@@ -613,22 +521,27 @@ def EnsoSeasonality(sstfile, sstname, ninobox):
     Ref = 'Using CDAT std dev calculation'
     # Read file and select the right region
     sst = ReadAndSelectRegion(sstfile, sstname, ninobox)
-    # Unit K to C
-    if sst.units == 'K': sst = MV2.subtract(sst, 273.15)
+    sst = CheckUnits(sst, 'temperature')
+
     # Number of years
     yearN = sst.shape[0] / 12
+
     # Seasonal ans Spatial average
-    sst_NDJ = cdutil.averager(SeasonalMean(sst, 'NDJ'), axis='xy')
-    sst_MAM = cdutil.averager(SeasonalMean(sst, 'MAM'), axis='xy')
+    sst_NDJ = SpatialAverage(SeasonalMean(sst, 'NDJ'))
+    sst_MAM = SpatialAverage(SeasonalMean(sst, 'MAM'))
+
     # Compute std dev and ratio
-    sst_NDJ_std = std(sst_NDJ)
-    sst_MAM_std = std(sst_MAM)
+    sst_NDJ_std = ComputeStd(sst_NDJ)
+    sst_MAM_std = ComputeStd(sst_MAM)
     ratioStd = float(sst_NDJ_std / sst_MAM_std)
+
     # Standard Error of the Standard Deviation (function of nyears)
-    sst_NDJ_std_err = sst_NDJ_std / numpy.sqrt(yearN - 1)
-    sst_MAM_std_err = sst_MAM_std / numpy.sqrt(yearN)
+    sst_NDJ_std_err = sst_NDJ_std / NUMPYsqrt(yearN - 1)
+    sst_MAM_std_err = sst_MAM_std / NUMPYsqrt(yearN)
+
     # The error 'dy' on a division 'y = x/z' is: dy = (z*dx + x*dz) / z2
-    ratio_std_err = float((sst_MAM_std * sst_NDJ_std_err + sst_NDJ_std * sst_MAM_std_err) / numpy.square(sst_MAM_std_err))
+    ratio_std_err = float((sst_MAM_std * sst_NDJ_std_err + sst_NDJ_std * sst_MAM_std_err)
+                          / NUMPYsquare(sst_MAM_std_err))
     # Create output
     seaMetric = {'name': Name, 'value': ratioStd, 'value_error': ratio_std_err, 'units': Units, 'method': Method,
                  'nyears': yearN, 'ref': Ref}
@@ -653,19 +566,19 @@ def EnsoSeasonality(sstfile, sstname, ninobox):
 #
 
 
-dict_oneVar_modelAndObs = {'EnsoRMSE': EnsoRMSE, \
+dict_oneVar_modelAndObs = {'EnsoRMSE': EnsoRMSE,
                            }
 
-dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality, \
+dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality,
                }
 
 dict_twoVar = {'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr, 'EnsoAlphaSwr': EnsoAlphaSwr,
-               'EnsoAlphaThf': EnsoAlphaThf, \
-               'EnsoMu': EnsoMu, \
+               'EnsoAlphaThf': EnsoAlphaThf,
+               'EnsoMu': EnsoMu,
                }
 
 
-def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1, obsName, obsFile1, obsVarName1, \
+def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1, obsName, obsFile1, obsVarName1,
                   regionVar1='', regionVar2='', modelFile2='', modelVarName2='', obsFile2='', obsVarName2=''):
     '''
     The ComputeMetric() function computes the given metric for the given model and observations
@@ -699,10 +612,10 @@ def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1
     if metric in dict_oneVar_modelAndObs.keys():
         metric_mod_obs = dict_oneVar_modelAndObs[metric](modelFile1, modelVarName1, obsFile1, obsVarName1, region1)
         metric_val = {'name': metric_mod_obs['name'], 'metric': metric_mod_obs['value'],
-                      'metric_error': metric_mod_obs['value_error'], \
-                      'comment': "The metric is the statistical value between the model and the observations", \
-                      'model': modelName, 'nyears_model': metric_mod_obs['nyears_model'], \
-                      'observations': obsName, 'nyears_observations': metric_mod_obs['nyears_obs'], \
+                      'metric_error': metric_mod_obs['value_error'],
+                      'comment': "The metric is the statistical value between the model and the observations",
+                      'model': modelName, 'nyears_model': metric_mod_obs['nyears_model'],
+                      'observations': obsName, 'nyears_observations': metric_mod_obs['nyears_obs'],
                       'units': metric_mod_obs['units'], 'method': metric_mod_obs['method'], 'ref': Ref}
     else:
         if metric in dict_oneVar.keys():
@@ -714,14 +627,14 @@ def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1
         v1, v2, err1, err2 = metric_mod['value'], metric_obs['value'], metric_mod['value_error'], metric_obs[
             'value_error']
         val1 = metric_mod['value'] / metric_obs['value']
-        val1_err = (v1 * err2 + v2 * err1) / numpy.square(v2)
-        metric_val = {'name': metric_mod['name'], 'metric': val1, 'metric_error': val1_err, \
-                      'comment': "The metric is the ratio value_model / value_observations", \
+        val1_err = (v1 * err2 + v2 * err1) / NUMPYsquare(v2)
+        metric_val = {'name': metric_mod['name'], 'metric': val1, 'metric_error': val1_err,
+                      'comment': "The metric is the ratio value_model / value_observations",
                       'model': modelName,
-                      'nyears_model': metric['nyears_model'], 'value_model':v1, 'value_error_model':err1, \
+                      'nyears_model': metric['nyears_model'], 'value_model':v1, 'value_error_model':err1,
                                       'observations':obsName, 'nyears_observations':metric['nyears_obs'],
-                                      'value_observations':v2, 'value_error_observations':err2, \
-                                      'units':metric_mod['units'], 'method':metric_mod['method'], \
+                                      'value_observations':v2, 'value_error_observations':err2,
+                                      'units':metric_mod['units'], 'method':metric_mod['method'],
                                       'ref':metric_mod['ref']}
         try:
             metric_mod['nonlinearity']
@@ -731,7 +644,7 @@ def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1
             v1, v2 = metric_mod['nonlinearity'], metric_obs['nonlinearity']
             err1, err2 = metric_mod['nonlinearity_error'], metric_obs['nonlinearity_error']
             val2 = metric_mod['value'] / metric_obs['value']
-            val2_err = (v1 * err2 + v2 * err1) / numpy.square(v2)
+            val2_err = (v1 * err2 + v2 * err1) / NUMPYsquare(v2)
             metric_val['nonlinearity_model'], metric_val['nonlinearity_error_model'] = v1, err1
             metric_val['nonlinearity_observations'], metric_val['nonlinearity_error_observations'] = v2, err2
             metric_val['metric_nonlinearity'], metric_val['metric_nonlinearity_error'] = val2, val2_err
