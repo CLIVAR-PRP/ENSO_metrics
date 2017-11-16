@@ -25,49 +25,7 @@ from MV2 import multiply as MV2multiply
 #
 # Set of simple uvcdat functions used in EnsoMetricsLib.py
 #
-def UvcdatRemoveAnnualCycle(tab):
-    """
-    #################################################################################
-    Description:
-    Removes the annual cycle from 'tab' (computes the anomalies with respect to the annual cycle)
-    #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.ANNUALCYCLE.departures)
-    """
-    return cdutil.ANNUALCYCLE.departures(tab)
-
-def UvcdatLinearRegression(y, axis=0, x=None, error=None, probability=None, nointercept=None, noslope=None):
-    """
-    #################################################################################
-    Description:
-    Computes the linear regression of y over x or an axis
-    #################################################################################
-
-    for more information:
-    import genutil
-    help(genutil.statistics.linearregression)
-    """
-    return GENUTILlinearregression(y, axis=axis, x=x, error=error, probability=probability, nointercept=nointercept,
-                                   noslope=noslope)
-
-
-def UvcdatMinimum(tab):
-    """
-    #################################################################################
-    Description:
-    Finds the minimum value of 'tab'
-    #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.minimum)
-    """
-    return float(MV2minimum(tab))
-
-
-def UvcdatMultiply(tab, number):
+def Multiply(tab, number):
     """
     #################################################################################
     Description:
@@ -81,95 +39,7 @@ def UvcdatMultiply(tab, number):
     return MV2multiply(tab, number)
 
 
-def UvcdatRegrid(tab1, tab2, regridTool='regrid2'):
-    """
-    #################################################################################
-    Description:
-    Regrids 'tab1' on 'tab2', both must be a uvcdat masked_array
-    #################################################################################
-
-    :param tab1: masked_array
-        masked_array containing a variable that you want to regrid
-    :param tab2: masked_array
-        masked_array containing a variable from which you want the grid
-    :param regridTool: string, optional
-        name of a tool to regrid, see uvcdat regrid
-    :return tab1: masked_array
-        masked_array of 'tab1' regrided on 'tab2' grid
-    """
-    return tab1.regrid(tab2.getGrid(), regridTool=regridTool)
-
-
-def UvcdatRms(x, y, weights=None, axis=0, centered=0, biased=1):
-    """
-    #################################################################################
-    Description:
-    Computes the root mean square difference between 2 slabs
-    #################################################################################
-
-    for more information:
-    import genutil
-    help(genutil.statistics.rms)
-    """
-    return GENUTILrms(x, y, weights=weights, axis=axis, centered=centered, biased=biased)
-
-
-def UvcdatStd(x, weights=None, axis=0, centered=1, biased=1):
-    """
-    #################################################################################
-    Description:
-    Computes the standard deviation from a slab
-    #################################################################################
-
-    for more information:
-    import genutil
-    help(genutil.statistics.std)
-    """
-    return float(GENUTILstd(x, weights=weights, axis=axis, centered=centered, biased=biased))
-
-
-def UvcdatSubtract(tab, number):
-    """
-    #################################################################################
-    Description:
-    Subtracts 'number' from all elements in 'tab'
-    #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.subtract)
-    """
-    return MV2subtract(tab, number)
-
-
-def UvcdatSpatialAverage(tab):
-    """
-    #################################################################################
-    Description:
-    Function 'cdutil.averager' in the case of spatial average
-    #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.averager)
-    """
-    return cdutil.averager(tab, axis='xy')
-
-
-def UvcdatTimeAverage(tab):
-    """
-    #################################################################################
-    Description:
-    Function 'cdutil.averager' in the case of temporal average
-    #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.averager)
-    """
-    return cdutil.averager(tab, axis='t')
-
-def UvcdatTimeBounds(tab):
+def TimeBounds(tab):
     """
     #################################################################################
     Description:
@@ -187,7 +57,7 @@ def UvcdatTimeBounds(tab):
 #
 # Set of more complex uvcdat functions used in EnsoMetricsLib.py
 #
-def UvcdatCheckTime(tab1, tab2, frequency=None, minimum_length=None, metric_name=''):
+def CheckTime(tab1, tab2, frequency=None, minimum_length=None, metric_name=''):
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
@@ -258,16 +128,16 @@ def UvcdatCheckUnits(tab, var_name, name_in_file, units, return_tab_only=True):
     if var_name in ['temperature']:
         if units == 'K':
             # check if the temperature units is really K
-            if UvcdatMinimum(tab) > 200:
+            if float(MV2minimum(tab)) > 200:
                 # unit change of the temperature: from K to degC
-                tab = UvcdatSubtract(tab, 273.15)
+                tab = MV2subtract(tab, 273.15)
                 units = "degC"
             else:
                 EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, INSPECTstack())
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
                        'degrees C']:
             # check if the temperature units is really degC
-            if UvcdatMinimum(tab) < 50:
+            if float(MV2minimum(tab)) < 50:
                 units = "degC"
             else:
                 EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, INSPECTstack())
@@ -278,7 +148,7 @@ def UvcdatCheckUnits(tab, var_name, name_in_file, units, return_tab_only=True):
             # changes units of the precipitation flux: from kg/(m2.s) to mm/day
             # it must be divided by the density of water = 1000 kg/m3
             #     and multiplied by 1000 (m to mm) and by 60*60*24 (s to day)
-            tab = UvcdatMultiply(tab, 86400)
+            tab = Multiply(tab, 86400)
         elif units == 'mm/day':
             pass
         else:
@@ -291,7 +161,7 @@ def UvcdatCheckUnits(tab, var_name, name_in_file, units, return_tab_only=True):
     elif var_name in ['velocity']:
         if units in ['cm s-1', 'cm/s', 'cm s**-1']:
             # unit change of the velocity: from cm/s to m/s
-            tab = UvcdatMultiply(tab, 1e-2)
+            tab = Multiply(tab, 1e-2)
             units = "m/s"
         elif units in ['m s-1', 'm/s', 'm s**-1', 'm/sec']:
             units = "m/s"
@@ -387,7 +257,7 @@ sea_dict = dict(JAN=cdutil.JAN, FEB=cdutil.FEB, MAR=cdutil.MAR, APR=cdutil.APR, 
                 ONDJ=cdutil.times.Seasons('ONDJ'),NDJF=cdutil.times.Seasons('NDJF'),DJFM=cdutil.times.Seasons('DJFM'))
 
 
-def UvcdatSeasonalMean(tab, season, compute_anom=False):
+def SeasonalMean(tab, season, compute_anom=False):
     """
     #################################################################################
     Description:
@@ -468,7 +338,7 @@ def UvcdatSeasonalMean(tab, season, compute_anom=False):
 #
 # Cet of often used combinations of previous functions
 #
-def UvcdatReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_bnds=None, frequency=None):
+def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_bnds=None, frequency=None):
     """
     #################################################################################
     Description:
@@ -497,38 +367,11 @@ def UvcdatReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, tim
     return tab
 
 
-def UvcdatStandAloneCheckUnits(tab, var_name, name_in_file):
+def TimeAnomaliesStd(tab):
     """
     #################################################################################
     Description:
-    UvcdatCheckUnits in the case where tab is a masked array (uvcdat)
-    Checks the units of the variable and changes it if necessary
-    Works for current/wind velocities, heat flux, precipitation, pressure, temperature, wind stress
-
-    Uses uvcdat
-    #################################################################################
-
-    :param tab: masked_array
-        masked_array containing 'var_name', with many attributes attached (short_name, units,...)
-    :param var_name: string
-        name of the variable included in 'tab'
-    :param name_in_file: string
-        name of the variable in the file (usually the short_name)
-    :return tab: masked_array
-        masked_array with new units
-    """
-    units = tab.units
-    tab, units = UvcdatCheckUnits(tab, var_name, name_in_file, units, return_tab_only=False)
-    tab.units = units
-    tab.name = name_in_file
-    return tab
-
-
-def Uvcdat1dAnomaliesStd(tab):
-    """
-    #################################################################################
-    Description:
-    Combines UvcdatSpatialAverage, UvcdatRemoveAnnualCycle and UvcdatStd
+    Combines cdutil.averager, cdutil.ANNUALCYCLE.departures and genutil.std
     Averages spatially, removes the annual cycle (anomalies with respect to the annual cycle) and computes the standard
     deviation
 
@@ -541,11 +384,11 @@ def Uvcdat1dAnomaliesStd(tab):
         standard deviation (one value) of the masked_array averaged spatially and with the annual cycle removed
     """
     # horizontal average
-    tab = UvcdatSpatialAverage(tab)
+    tab = cdutil.averager(tab, axis='xy')
     # removes annual cycle (anomalies with respect to the annual cycle)
-    tab = UvcdatRemoveAnnualCycle(tab)
+    tab = cdutil.ANNUALCYCLE.departures(tab)
     # computes standard deviation
-    std = UvcdatStd(tab)
+    std = float(GENUTILstd(tab, weights=None, axis=0, centered=1, biased=1))
     return std
 
 
@@ -553,7 +396,7 @@ def UvcdatCustomLinearRegression(y, x, sign_x=0, return_stderr=True):
     """
     #################################################################################
     Description:
-    Custom version of UvcdatLinearRegression
+    Custom version of genutil.linearregression
     This function offers the possibility to compute the linear regression for all points, for values of x>=0, for values
     of x<=0
 
@@ -578,12 +421,12 @@ def UvcdatCustomLinearRegression(y, x, sign_x=0, return_stderr=True):
     y = NParray(y)
     if sign_x == 1:
         idxpos = NPnonzero(x >= 0.)
-        results = UvcdatLinearRegression(y[idxpos], x=x[idxpos], error=1, nointercept=1)
+        results = GENUTILlinearregression(y[idxpos], x=x[idxpos], error=1, nointercept=1)
     elif sign_x == -1:
         idxneg = NPnonzero(x <= 0.)
-        results = UvcdatLinearRegression(y[idxneg], x=x[idxneg], error=1, nointercept=1)
+        results = GENUTILlinearregression(y[idxneg], x=x[idxneg], error=1, nointercept=1)
     else:
-        results = UvcdatLinearRegression(y, x=x, error=1, nointercept=1)
+        results = GENUTILlinearregression(y, x=x, error=1, nointercept=1)
     slope, stderr = results
     if return_stderr:
         return float(slope), float(stderr)
@@ -625,7 +468,7 @@ def UvcdatLinearRegressionAndNonlinearity(y, x, return_stderr=True):
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
 
 
-def Uvcdat1dAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):
+def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):
     """
     #################################################################################
     Description:
@@ -650,17 +493,17 @@ def Uvcdat1dAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=T
         unadjusted standard error of the linear regression of y over x (if return_stderr=True)
     """
     # horizontal average
-    tab1 = UvcdatSpatialAverage(tab1)
-    tab2 = UvcdatSpatialAverage(tab2)
+    tab1 = cdutil.averager(tab1, axis='xy')
+    tab2 = cdutil.averager(tab2, axis='xy')
     # removes annual cycle (anomalies with respect to the annual cycle)
-    tab1 = UvcdatRemoveAnnualCycle(tab1)
-    tab2 = UvcdatRemoveAnnualCycle(tab2)
+    tab1 = cdutil.ANNUALCYCLE.departures(tab1)
+    tab2 = cdutil.ANNUALCYCLE.departures(tab2)
     # computes linear regression of tab2 on tab1 for all values of tab1, for values of tab1>=0, for values of tab1<=0
     lr, lrpos, lrneg = UvcdatLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=return_stderr)
     return lr, lrpos, lrneg
 
 
-def UvcdatSpatialRms(tab, ref, centered=0, regrid_tab_on_ref=True):
+def SpatialRms(tab, ref, centered=0, regrid_tab_on_ref=True):
     """
     #################################################################################
     Description:
@@ -694,11 +537,11 @@ def UvcdatSpatialRms(tab, ref, centered=0, regrid_tab_on_ref=True):
         unadjusted standard error of the linear regression of y over x (if return_stderr=True)
     """
     # Time average
-    tab = UvcdatTimeAverage(tab)
-    ref = UvcdatTimeAverage(ref)
+    tab = cdutil.averager(tab, axis='t')
+    ref = cdutil.averager(ref, axis='t')
     # Regrid model tab on ref grid
     if regrid_tab_on_ref:
-        tab = UvcdatRegrid(tab, ref)
+        tab = tab.regrid(ref.getGrid(), regridTool='regrid2')
     # Computes the root mean square difference
-    rmse = UvcdatRms(tab, ref, axis='xy', weights='weighted', centered=centered)
+    rmse = GENUTILrms(tab, ref, weights='weighted', axis='xy', centered=centered, biased=1)
     return float(rmse)

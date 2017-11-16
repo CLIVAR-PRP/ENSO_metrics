@@ -4,14 +4,14 @@ import numpy.sqrt as NUMPYsqrt
 import numpy.square as NUMPYsquare
 
 # ENSO_metrics package functions:
-from EnsoCollectionsLib import defCollection,metricReqs
+from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoUvcdatToolsLib import UvcdatCheckTime, UvcdatMultiply, UvcdatSeasonalMean, UvcdatTimeBounds,\
-    Uvcdat1dAnomaliesLinearRegressionAndNonlinearity, Uvcdat1dAnomaliesStd, UvcdatReadSelectRegionCheckUnits,\
-    UvcdatSpatialRms
+from EnsoUvcdatToolsLib import CheckTime, Multiply, SeasonalMean, TimeBounds,\
+    TimeAnomaliesLinearRegressionAndNonlinearity, TimeAnomaliesStd, ReadSelectRegionCheckUnits,\
+    SpatialRms
 
 
-#----------------------------------------------------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------------------------------------------------#
 #
 # Library to compute ENSO metrics
 # These functions have file names and variable names as inputs and metric as output
@@ -69,23 +69,23 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, timebounds=
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    sst = UvcdatReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
-                                           frequency=frequency)
-    lhf = UvcdatReadSelectRegionCheckUnits(lhffile, lhfname, 'heat flux', box=lhfbox, time_bnds=timebounds,
-                                           frequency=frequency)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
+                                     frequency=frequency)
+    lhf = ReadSelectRegionCheckUnits(lhffile, lhfname, 'heat flux', box=lhfbox, time_bnds=timebounds,
+                                     frequency=frequency)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lhf = UvcdatCheckTime(sst, lhf, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlphaLhf')
+    sst, lhf = CheckTime(sst, lhf, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlphaLhf') # -> plante
 
     # Number of years
     yearN = sst.shape[0] / 12
 
     # Time period
-    actualtimebounds = UvcdatTimeBounds(sst)
+    actualtimebounds = TimeBounds(sst)
 
     # Averages spatially, removes the annual cycle, computes the linear regression for all points, for SSTA >=0 and
     # for SSTA<=0
-    alphaLhf, alphaLhfPos, alphaLhfNeg = Uvcdat1dAnomaliesLinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
+    alphaLhf, alphaLhfPos, alphaLhfNeg = TimeAnomaliesLinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
 
     # Create output
     alphaLhfMetric = {
@@ -102,9 +102,9 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, timebounds=
     The EnsoAlphaLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
     'sstbox' sstA (usually the regression of nino3 lwrA over nino3 sstA)
 
-    The net surface longwave radiation is not a CMIP5 variable.
+    The net surface longwave radiation is not a CMIP variable.
     Either the user computes it and sends the filename and the varname or he feeds into lwrfile and lwrname of this
-    function a list() of downward and upward radiations files and variable names (CMIP5: rlds and rlus)
+    function a list() of downward and upward radiations files and variable names (CMIP: rlds and rlus)
 
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
     Co-author:
@@ -153,30 +153,30 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, timebounds=
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    sst = UvcdatReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
-                                           frequency=frequency)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
+                                     frequency=frequency)
     if isinstance(lwrfile, list):
-        rlds = UvcdatReadSelectRegionCheckUnits(lwrfile[0], lwrname[0], 'heat flux', box=lwrbox, time_bnds=timebounds,
-                                                frequency=frequency)
-        rlus = UvcdatReadSelectRegionCheckUnits(lwrfile[1], lwrname[1], 'heat flux', box=lwrbox, time_bnds=timebounds,
-                                                frequency=frequency)
+        rlds = ReadSelectRegionCheckUnits(lwrfile[0], lwrname[0], 'heat flux', box=lwrbox, time_bnds=timebounds,
+                                          frequency=frequency)
+        rlus = ReadSelectRegionCheckUnits(lwrfile[1], lwrname[1], 'heat flux', box=lwrbox, time_bnds=timebounds,
+                                          frequency=frequency)
         lwr = rlds - rlus
     else:
-        lwr = UvcdatReadSelectRegionCheckUnits(lwrfile, lwrname, 'heat flux', box=lwrbox, time_bnds=timebounds,
-                                               frequency=frequency)
+        lwr = ReadSelectRegionCheckUnits(lwrfile, lwrname, 'heat flux', box=lwrbox, time_bnds=timebounds,
+                                         frequency=frequency)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lwr = UvcdatCheckTime(sst, lwr, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlphaLwr')
+    sst, lwr = CheckTime(sst, lwr, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlphaLwr')
 
     # Number of years
     yearN = sst.shape[0] / 12
 
     # Time period
-    actualtimebounds = UvcdatTimeBounds(sst)
+    actualtimebounds = TimeBounds(sst)
 
     # Averages spatially, removes the annual cycle, computes the linear regression for all points, for SSTA >=0 and
     # for SSTA<=0
-    alphaLwr, alphaLwrPos, alphaLwrNeg = Uvcdat1dAnomaliesLinearRegressionAndNonlinearity(lwr, sst, return_stderr=True)
+    alphaLwr, alphaLwrPos, alphaLwrNeg = TimeAnomaliesLinearRegressionAndNonlinearity(lwr, sst, return_stderr=True)
 
     # Create output
     alphaLwrMetric = {
@@ -193,9 +193,9 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, timebounds=
     The EnsoAlphaSwr() function computes the regression of 'swrbox' swrA (net surface shortwave radiation anomalies)
     over 'sstbox' sstA (usually the regression of nino3 swrA over nino3 sstA)
 
-    The net surface shortwave radiation is not a CMIP5 variable.
+    The net surface shortwave radiation is not a CMIP variable.
     Either the user computes it and sends the filename and the varname or he feeds into swrfile and swrname of this
-    function a list() of downward and upward radiations files and variable names (CMIP5: rsds and rsus)
+    function a list() of downward and upward radiations files and variable names (CMIP: rsds and rsus)
 
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
     Co-author:
@@ -244,30 +244,30 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, timebounds=
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    sst = UvcdatReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
-                                           frequency=frequency)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
+                                     frequency=frequency)
     if isinstance(swrfile, list):
-        rsds = UvcdatReadSelectRegionCheckUnits(swrfile[0], swrname[0], 'heat flux', box=swrbox, time_bnds=timebounds,
-                                                frequency=frequency)
-        rsus = UvcdatReadSelectRegionCheckUnits(swrfile[1], swrname[1], 'heat flux', box=swrbox, time_bnds=timebounds,
-                                                frequency=frequency)
+        rsds = ReadSelectRegionCheckUnits(swrfile[0], swrname[0], 'heat flux', box=swrbox, time_bnds=timebounds,
+                                          frequency=frequency)
+        rsus = ReadSelectRegionCheckUnits(swrfile[1], swrname[1], 'heat flux', box=swrbox, time_bnds=timebounds,
+                                          frequency=frequency)
         swr = rsds - rsus
     else:
-        swr = UvcdatReadSelectRegionCheckUnits(swrfile, swrname, 'heat flux', box=swrbox, time_bnds=timebounds,
-                                               frequency=frequency)
+        swr = ReadSelectRegionCheckUnits(swrfile, swrname, 'heat flux', box=swrbox, time_bnds=timebounds,
+                                         frequency=frequency)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, swr = UvcdatCheckTime(sst, swr, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlphaSwr')
+    sst, swr = CheckTime(sst, swr, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlphaSwr')
 
     # Number of years
     yearN = sst.shape[0] / 12
 
     # Time period
-    actualtimebounds = UvcdatTimeBounds(sst)
+    actualtimebounds = TimeBounds(sst)
 
     # Averages spatially, removes the annual cycle, computes the linear regression for all points, for SSTA >=0 and
     # for SSTA<=0
-    alphaSwr, alphaSwrPos, alphaSwrNeg = Uvcdat1dAnomaliesLinearRegressionAndNonlinearity(swr, sst, return_stderr=True)
+    alphaSwr, alphaSwrPos, alphaSwrNeg = TimeAnomaliesLinearRegressionAndNonlinearity(swr, sst, return_stderr=True)
 
     # Create output
     alphaSwrMetric = {
@@ -290,7 +290,7 @@ def EnsoAlpha(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=Non
 
     The total heat flux is not always available is models or observations.
     Either the user computes it and sends the filename and the varname or he feeds into thffile and thfname of this
-    function a list() of the four needed files and variable names (CMIP5: rsds-rsus, rlds-rlus, hfls, hfss)
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus, rlds-rlus, hfls, hfss)
 
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
     Co-author:
@@ -339,13 +339,13 @@ def EnsoAlpha(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=Non
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    sst = UvcdatReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
-                                           frequency=frequency)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
+                                     frequency=frequency)
     if isinstance(thffile, list):
         tmp = list()
         for ii in range(len(thffile)):
-            val = UvcdatReadSelectRegionCheckUnits(thffile[ii], thfname[ii], 'heat flux', box=thfbox,
-                                                   time_bnds=timebounds, frequency=frequency)
+            val = ReadSelectRegionCheckUnits(thffile[ii], thfname[ii], 'heat flux', box=thfbox,
+                                             time_bnds=timebounds, frequency=frequency)
             tmp.append(val)
         for ii in range(len(thffile)):
             try:
@@ -355,21 +355,21 @@ def EnsoAlpha(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=Non
             else:
                 thf = thf + tmp[ii]
     else:
-        thf = UvcdatReadSelectRegionCheckUnits(thffile, thfname, 'heat flux', box=thfbox, time_bnds=timebounds,
-                                               frequency=frequency)
+        thf = ReadSelectRegionCheckUnits(thffile, thfname, 'heat flux', box=thfbox, time_bnds=timebounds,
+                                         frequency=frequency)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, thf = UvcdatCheckTime(sst, thf, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlpha')
+    sst, thf = CheckTime(sst, thf, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoAlpha')
 
     # Number of years
     yearN = sst.shape[0] / 12
 
     # Time period
-    actualtimebounds = UvcdatTimeBounds(sst)
+    actualtimebounds = TimeBounds(sst)
 
     # Averages spatially, removes the annual cycle, computes the linear regression for all points, for SSTA >=0 and
     # for SSTA<=0
-    alpha, alphaPos, alphaNeg = Uvcdat1dAnomaliesLinearRegressionAndNonlinearity(thf, sst, return_stderr=True)
+    alpha, alphaPos, alphaNeg = TimeAnomaliesLinearRegressionAndNonlinearity(thf, sst, return_stderr=True)
 
     # Create output
     alphaMetric = {
@@ -425,8 +425,8 @@ def EnsoAmpl(sstfile, sstname, sstbox, timebounds=None, frequency=None, mintimes
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    sst = UvcdatReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
-                                           frequency=frequency)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
+                                     frequency=frequency)
 
     # checks if the time-period fulfills the minimum length criterion
     if mintimesteps is not None:
@@ -437,10 +437,10 @@ def EnsoAmpl(sstfile, sstname, sstbox, timebounds=None, frequency=None, mintimes
     yearN = sst.shape[0] / 12
 
     # Time period
-    actualtimebounds = UvcdatTimeBounds(sst)
+    actualtimebounds = TimeBounds(sst)
 
     # Averages spatially, removes the annual cycle, computes the standard deviation
-    sstStd = Uvcdat1dAnomaliesStd(sst)
+    sstStd = TimeAnomaliesStd(sst)
 
     # Standard Error of the Standard Deviation (function of nyears)
     sstStdErr = sstStd / NUMPYsqrt(yearN)
@@ -505,28 +505,28 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, timebounds=Non
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    sst = UvcdatReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
-                                           frequency=frequency)
-    taux = UvcdatReadSelectRegionCheckUnits(tauxfile, tauxname, 'heat flux', box=tauxbox, time_bnds=timebounds,
-                                            frequency=frequency)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
+                                     frequency=frequency)
+    taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'heat flux', box=tauxbox, time_bnds=timebounds,
+                                      frequency=frequency)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, taux = UvcdatCheckTime(sst, taux, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoMu')
+    sst, taux = CheckTime(sst, taux, frequency=frequency, minimum_length=mintimesteps, metric_name='EnsoMu')
 
     # Number of years
     yearN = sst.shape[0] / 12
 
     # Time period
-    actualtimebounds = UvcdatTimeBounds(sst)
+    actualtimebounds = TimeBounds(sst)
 
     # Averages spatially, removes the annual cycle, computes the linear regression for all points, for SSTA >=0 and
     # for SSTA<=0
-    mu, muPos, muNeg = Uvcdat1dAnomaliesLinearRegressionAndNonlinearity(taux, sst, return_stderr=True)
+    mu, muPos, muNeg = TimeAnomaliesLinearRegressionAndNonlinearity(taux, sst, return_stderr=True)
 
     # Change units
-    mu = [UvcdatMultiply(mu[0], 1000.), UvcdatMultiply(mu[1], 1000.)]
-    muPos = [UvcdatMultiply(muPos[0], 1000.), UvcdatMultiply(muPos[1], 1000.)]
-    muNeg = [UvcdatMultiply(muNeg[0], 1000.), UvcdatMultiply(muNeg[1], 1000.)]
+    mu = [Multiply(mu[0], 1000.), Multiply(mu[1], 1000.)]
+    muPos = [Multiply(muPos[0], 1000.), Multiply(muPos[1], 1000.)]
+    muNeg = [Multiply(muNeg[0], 1000.), Multiply(muNeg[1], 1000.)]
 
     # Create output
     muMetric = {
@@ -596,10 +596,10 @@ def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, timebounds
     Ref = 'Using CDAT regriding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    sst_model = UvcdatReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
-                                                 time_bnds=timeboundsmodel, frequency=frequency)
-    sst_obs = UvcdatReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
-                                               time_bnds=timeboundsobs, frequency=frequency)
+    sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
+                                           time_bnds=timeboundsmodel, frequency=frequency)
+    sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
+                                         time_bnds=timeboundsobs, frequency=frequency)
 
     # checks if the time-period fulfills the minimum length criterion
     if mintimesteps is not None:
@@ -619,12 +619,12 @@ def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, timebounds
     yearN_obs = sst_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmodel = UvcdatTimeBounds(sst_model)
-    actualtimeboundsobs = UvcdatTimeBounds(sst_obs)
+    actualtimeboundsmodel = TimeBounds(sst_model)
+    actualtimeboundsobs = TimeBounds(sst_obs)
 
     # Averages temporally, regrids sst_model on sst_obs grid (if applicable) and computes the root mean square
     # difference
-    sstRmse = UvcdatSpatialRms(sst_model, sst_obs, centered=centered_rmse, regrid_tab_on_ref=regrid_model_on_obs)
+    sstRmse = SpatialRms(sst_model, sst_obs, centered=centered_rmse, regrid_tab_on_ref=regrid_model_on_obs)
 
     # Create output
     rmseMetric = {
@@ -674,8 +674,8 @@ def EnsoSeasonality(sstfile, sstname, box, timebounds=None, frequency=None, mint
     Method = 'Ratio between NDJ and MAM standard deviation ' + box + ' sstA'
     Ref = 'Using CDAT std dev calculation'
     # Read file and select the right region
-    sst = UvcdatReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=box, time_bnds=timebounds,
-                                           frequency=frequency)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=box, time_bnds=timebounds,
+                                     frequency=frequency)
 
     # checks if the time-period fulfills the minimum length criterion
     if mintimesteps is not None:
@@ -686,15 +686,15 @@ def EnsoSeasonality(sstfile, sstname, box, timebounds=None, frequency=None, mint
     yearN = sst.shape[0] / 12
 
     # Time period
-    actualtimebounds = UvcdatTimeBounds(sst)
+    actualtimebounds = TimeBounds(sst)
 
     # Seasonal ans Spatial average
-    sst_NDJ = UvcdatSeasonalMean(sst, 'NDJ', compute_anom=True)
-    sst_MAM = UvcdatSeasonalMean(sst, 'MAM', compute_anom=True)
+    sst_NDJ = SeasonalMean(sst, 'NDJ', compute_anom=True)
+    sst_MAM = SeasonalMean(sst, 'MAM', compute_anom=True)
 
     # Compute std dev and ratio
-    sst_NDJ_std = Uvcdat1dAnomaliesStd(sst_NDJ)
-    sst_MAM_std = Uvcdat1dAnomaliesStd(sst_MAM)
+    sst_NDJ_std = TimeAnomaliesStd(sst_NDJ)
+    sst_MAM_std = TimeAnomaliesStd(sst_MAM)
     ratioStd = float(sst_NDJ_std / sst_MAM_std)
 
     # Standard Error of the Standard Deviation (function of nyears)
@@ -769,7 +769,7 @@ def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1
     mintimesteps = defCollection(MetricCollection)['metrics_parameters']['mintimesteps']
     observed_period = defCollection(MetricCollection)['metrics_parameters']['observed_period']
     modeled_period = defCollection(MetricCollection)['metrics_parameters']['modeled_period']
-    var_names = metricReqs(metric)['var_names']
+    var_names = defCollection(MetricCollection)['metrics_list'][metric]['variables']
     if not regionVar1:
         regionVar1 = dict_regions[var_names[0]]
     if not regionVar2:
