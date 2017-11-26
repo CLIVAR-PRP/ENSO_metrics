@@ -278,7 +278,7 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, timebounds=
     return alphaSwrMetric
 
 
-def EnsoAlpha(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=None, frequency=None, mintimesteps=None):
+def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=None, frequency=None, mintimesteps=None):
     """
     The EnsoAlpha() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 thfA over nino3 sstA)
