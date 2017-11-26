@@ -29,7 +29,6 @@ mcdict = defCollection(param.metricsCollection)
 metrics = mcdict['metrics_list']
 
 metrics.pop('EnsoMu') ### TEST
-metrics.pop('EnsoSeasonality') ### TEST
 #=================================================
 # Prepare loop iteration
 #-------------------------------------------------
