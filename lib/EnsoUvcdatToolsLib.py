@@ -385,8 +385,8 @@ def TimeAnomaliesStd(tab):
     """
     # horizontal average
     tab = cdutil.averager(tab, axis='xy')
-    # removes annual cycle (anomalies with respect to the annual cycle)
-    tab = cdutil.ANNUALCYCLE.departures(tab)
+    ## removes annual cycle (anomalies with respect to the annual cycle)
+    #tab = cdutil.ANNUALCYCLE.departures(tab)
     # computes standard deviation
     std = float(GENUTILstd(tab, weights=None, axis=0, centered=1, biased=1))
     return std
