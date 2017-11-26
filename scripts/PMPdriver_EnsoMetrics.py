@@ -15,7 +15,7 @@ from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 
 from EnsoMetrics.EnsoCollectionsLib import defCollection 
 from EnsoMetrics.EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoRMSE, EnsoSeasonality
-from EnsoMetrics.pmpParser import ReadOptions
+from pmpParser import ReadOptions
 
 #=================================================
 # Collect user defined options
