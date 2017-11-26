@@ -42,4 +42,3 @@ outnamejson = 'test.json'
 #-------------------------------------------------
 # Metrics Collection
 metricsCollection = 'MC1'
-#metrics = ['EnsoAmpl', 'EnsoMu']
