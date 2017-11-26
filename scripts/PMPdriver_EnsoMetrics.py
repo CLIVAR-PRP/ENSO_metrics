@@ -67,38 +67,39 @@ for mod in models:
     print sstFile
     print tauxFile
   
-    try:
+    #try:
+    if 1:
         for metric in metrics:
 
             print metric
 
             if metric == 'EnsoAmpl':
-                nBox = mcdict['dict_of_regions'][metric]['sst']
+                nBox = mcdict['metrics_list'][metric]['regions']['sst']
                 tmp_dict = EnsoAmpl(sstFile, sstName, nBox)
                 tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
             elif metric == 'EnsoSeasonality':
-                nBox = mcdict['dict_of_regions'][metric]['sst']
+                nBox = mcdict['metrics_list'][metric]['regions']['sst']
                 tmp_dict = EnsoSeasonality(sstFile, sstName, nBox)
                 tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
             elif metric == 'EnsoMu':
-                sstBox = mcdict['dict_of_regions'][metric]['sst']
-                tauxBox = mcdict['dict_of_regions'][metric]['taux']
+                sstBox = mcdict['metrics_list'][metric]['regions']['sst']
+                tauxBox = mcdict['metrics_list'][metric]['regions']['taux']
                 tmp_dict = EnsoMu(sstFile, tauxFile, sstName, tauxName, sstBox, tauxBox)
                 tmp_dict['input_data'] = [sstFile, tauxFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
             elif metric == 'EnsoRMSE' and mod != 'obs':
-                nBox = mcdict['dict_of_regions'][metric]['sst']
+                nBox = mcdict['metrics_list'][metric]['regions']['sst']
                 tmp_dict = EnsoRMSE(sstFile, sstName, param.sstObsPath, param.sstNameObs, nBox)
                 tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
-    except:
-        print 'failed for ', mod
+    #except:
+    #    print 'failed for ', mod
   
 #=================================================
 #  OUTPUT METRICS TO JSON FILE
