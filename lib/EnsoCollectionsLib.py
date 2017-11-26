@@ -28,12 +28,12 @@ def defCollection(MC=True):
                     'regions': {'sst': 'tropical_pacific'},
                     'obs_name': {'sst': ['HadISST1.1', 'OISST']},
                 },
-                'EnsoMu': {
+                'EnsoAlphaSwr': {
                     'variables': ['sst','swr'],
                     'regions': {'sst': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'sst': ['HadISST1.1', 'OISST'], 'taux': ['Tropflux','ERA-Interim']},
                 },
-                'EnsoAlphaSwr': {
+                'EnsoMu': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
                     'obs_name': {'sst': ['HadISST1.1', 'OISST'], 'taux': ['Tropflux', 'ERA-Interim']},
