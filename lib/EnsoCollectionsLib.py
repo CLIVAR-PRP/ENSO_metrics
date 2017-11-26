@@ -30,12 +30,12 @@ def defCollection(MC=True):
                 },
                 'EnsoAlphaSwr': {
                     'variables': ['sst','swr'],
-                    'regions': {'sst': 'nino3', 'taux': 'nino4'},
+                    'regions': {'sst': 'nino3', 'swr': 'nino3'},
                     'obs_name': {'sst': ['HadISST1.1', 'OISST'], 'taux': ['Tropflux','ERA-Interim']},
                 },
                 'EnsoMu': {
                     'variables': ['sst', 'taux'],
-                    'regions': {'sst': 'nino3', 'swr': 'nino3'},
+                    'regions': {'sst': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'sst': ['HadISST1.1', 'OISST'], 'taux': ['Tropflux', 'ERA-Interim']},
                 },
             },
