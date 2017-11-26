@@ -1,7 +1,7 @@
 # -*- coding:UTF-8 -*-
 from inspect import stack as INSPECTstack
-import numpy.sqrt as NUMPYsqrt
-import numpy.square as NUMPYsquare
+from numpy import sqrt as NUMPYsqrt
+from numpy import square as NUMPYsquare
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
