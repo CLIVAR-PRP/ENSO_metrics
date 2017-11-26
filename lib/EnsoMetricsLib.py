@@ -688,7 +688,7 @@ def EnsoSeasonality(sstfile, sstname, box, timebounds=None, frequency=None, mint
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Seasonal ans Spatial average
+    # Seasonal and Spatial average
     sst_NDJ = SeasonalMean(sst, 'NDJ', compute_anom=True)
     sst_MAM = SeasonalMean(sst, 'MAM', compute_anom=True)
 
