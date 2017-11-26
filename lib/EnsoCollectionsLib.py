@@ -57,7 +57,7 @@ def defCollection(MC=True):
 # List of metrics requirements (var name and reference obs)
 # def metricReqs(VOR=True):
 #     var_obs_requirements = {
-#         'EnsoAlpha': {'nbvar': 2, 'var_names': ['sst', 'thf'], 'ref_obs': ['Tropflux', 'Tropflux']},
+#         'EnsoAlphaThf': {'nbvar': 2, 'var_names': ['sst', 'thf'], 'ref_obs': ['Tropflux', 'Tropflux']},
 #         'EnsoAlphaLhf': {'nbvar': 2, 'var_names': ['sst', 'lhf'], 'ref_obs': ['Tropflux', 'Tropflux']},
 #         'EnsoAlphaLwr': {'nbvar': 2, 'var_names': ['sst', 'lwr'], 'ref_obs': ['Tropflux', 'Tropflux']},
 #         'EnsoAlphaSwr': {'nbvar': 2, 'var_names': ['sst', 'swr'], 'ref_obs': ['Tropflux', 'Tropflux']},
