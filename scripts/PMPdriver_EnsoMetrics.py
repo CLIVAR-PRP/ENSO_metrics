@@ -26,7 +26,7 @@ param = ReadOptions()
 # User input option
 #-------------------------------------------------
 mcdict = defCollection(param.metricsCollection)
-metrics = mcdict['list_of_metrics']
+metrics = mcdict['metrics_list']
 
 #=================================================
 # Prepare loop iteration
