@@ -507,7 +507,7 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, timebounds=Non
     # Read file and select the right region
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
                                      frequency=frequency)
-    taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'heat flux', box=tauxbox, time_bnds=timebounds,
+    taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'wind stress', box=tauxbox, time_bnds=timebounds,
                                       frequency=frequency)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected

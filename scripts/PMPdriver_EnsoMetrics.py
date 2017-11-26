@@ -28,6 +28,8 @@ param = ReadOptions()
 mcdict = defCollection(param.metricsCollection)
 metrics = mcdict['metrics_list']
 
+metrics.pop('EnsoMu') ### TEST
+metrics.pop('EnsoSeasonality') ### TEST
 #=================================================
 # Prepare loop iteration
 #-------------------------------------------------
@@ -67,7 +69,8 @@ for mod in models:
     print sstFile
     print tauxFile
   
-    try:
+    #try:
+    if 1:
         for metric in metrics:
 
             print metric
@@ -97,9 +100,9 @@ for mod in models:
                 tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
-    except Exception as e: 
-        print 'failed for ', mod
-        print(e)
+    #except Exception as e: 
+    #    print 'failed for ', mod
+    #    print(e)
   
 #=================================================
 #  OUTPUT METRICS TO JSON FILE
