@@ -68,8 +68,7 @@ for mod in models:
     print sstFile
     print tauxFile
   
-    #try:
-    if 1:
+    try:
         for metric in metrics:
 
             print metric
@@ -99,9 +98,9 @@ for mod in models:
                 tmp_dict['input_data'] = [sstFile]
                 enso_stat_dic[mod][metric] = tmp_dict
 
-    #except Exception as e: 
-    #    print 'failed for ', mod
-    #    print(e)
+    except Exception as e: 
+        print 'failed for ', mod
+        print(e)
   
 #=================================================
 #  OUTPUT METRICS TO JSON FILE
