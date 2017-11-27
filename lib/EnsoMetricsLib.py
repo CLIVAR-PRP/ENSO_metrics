@@ -1,7 +1,7 @@
 # -*- coding:UTF-8 -*-
 from inspect import stack as INSPECTstack
-import numpy.sqrt as NUMPYsqrt
-import numpy.square as NUMPYsquare
+from numpy import sqrt as NUMPYsqrt
+from numpy import square as NUMPYsquare
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
@@ -278,9 +278,9 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, timebounds=
     return alphaSwrMetric
 
 
-def EnsoAlpha(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=None, frequency=None, mintimesteps=None):
+def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=None, frequency=None, mintimesteps=None):
     """
-    The EnsoAlpha() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
+    The EnsoAlphaThf() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 thfA over nino3 sstA)
     The total heat flux is the sum of four term:
          - net surface shortwave radiation,
@@ -507,7 +507,7 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, timebounds=Non
     # Read file and select the right region
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, time_bnds=timebounds,
                                      frequency=frequency)
-    taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'heat flux', box=tauxbox, time_bnds=timebounds,
+    taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'wind stress', box=tauxbox, time_bnds=timebounds,
                                       frequency=frequency)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
@@ -688,7 +688,7 @@ def EnsoSeasonality(sstfile, sstname, box, timebounds=None, frequency=None, mint
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Seasonal ans Spatial average
+    # Seasonal and Spatial average
     sst_NDJ = SeasonalMean(sst, 'NDJ', compute_anom=True)
     sst_MAM = SeasonalMean(sst, 'MAM', compute_anom=True)
 
@@ -734,7 +734,7 @@ dict_oneVar_modelAndObs = {'EnsoRMSE': EnsoRMSE,
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality,
                }
 
-dict_twoVar = {'EnsoAlpha': EnsoAlpha, 'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr,
+dict_twoVar = {'EnsoAlphaThf': EnsoAlphaThf, 'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr,
                'EnsoAlphaSwr': EnsoAlphaSwr, 'EnsoMu': EnsoMu,
                }
 

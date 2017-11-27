@@ -7,53 +7,57 @@
                 "input_data": [
                     "/work/cmip5/historical/atm/mo/ts/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.ts.ver-1.latestX.xml"
                 ],
-                "method": "Standard deviation of SSTA in nino3",
+                "method": "Standard deviation of nino3 sstA",
                 "name": "ENSO amplitude",
                 "nyears": 156,
-                "ref": "Using CDAT std dev calculation",
-                "units": "C",
-                "value": 0.814021237461244,
-                "value_error": 0.06517385895640071
-            },
-            "EnsoMu": {
-                "input_data": [
-                    "/work/cmip5/historical/atm/mo/ts/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.ts.ver-1.latestX.xml",
-                    "/work/cmip5/historical/atm/mo/tauu/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.tauu.ver-1.latestX.xml"
-                ],
-                "method": "Regression of nino4 tauxA over nino3 sstA",
-                "name": "Bjerknes feedback (mu)",
-                "nonlinearity": 1.2092940838385169,
-                "nonlinearity_error": 0.7677049506664659,
-                "nyears": 156,
                 "ref": "Using CDAT regression calculation",
-                "units": "10-3 N/m2/C",
-                "value": 4.134103621480406,
-                "value_error": 0.15967254543437304
+                "time_frequency": null,
+                "time_period": [
+                    "1850-1-16 12:0:0.0",
+                    "2005-12-16 12:0:0.0"
+                ],
+                "units": "C",
+                "value": 1.0905825144251295,
+                "value_error": 0.0873164823035029
             },
             "EnsoRMSE": {
                 "input_data": [
                     "/work/cmip5/historical/atm/mo/ts/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.ts.ver-1.latestX.xml"
                 ],
-                "method": "Spatial root mean square error SST in tropical_pacific",
+                "method": "Spatial root mean square error of tropical_pacific sst",
                 "name": "ENSO RMSE",
                 "nyears_model": 156,
-                "nyears_obs": 156,
+                "nyears_observations": 142,
                 "ref": "Using CDAT regriding and rms (uncentered and biased) calculation",
+                "time_frequency": null,
+                "time_period_model": [
+                    "1850-1-16 12:0:0.0",
+                    "2005-12-16 12:0:0.0"
+                ],
+                "time_period_observations": [
+                    "1870-1-1 0:0:0.0",
+                    "2012-11-1 0:0:0.0"
+                ],
                 "units": "C",
-                "value": 1.414184534215217,
+                "value": 1.4141848118311606,
                 "value_error": null
             },
             "EnsoSeasonality": {
                 "input_data": [
                     "/work/cmip5/historical/atm/mo/ts/cmip5.IPSL-CM5A-LR.historical.r1i1p1.mo.atm.Amon.ts.ver-1.latestX.xml"
                 ],
-                "method": "Ratio between NDJ and MAM standard deviation of SSTA in nino3",
+                "method": "Ratio between NDJ and MAM standard deviation nino3 sstA",
                 "name": "ENSO Seasonality",
                 "nyears": 156,
                 "ref": "Using CDAT std dev calculation",
+                "time_frequency": null,
+                "time_period": [
+                    "1850-1-16 12:0:0.0",
+                    "2005-12-16 12:0:0.0"
+                ],
                 "units": "",
-                "value": 0.9693193023889148,
-                "value_error": 24.252579799545586
+                "value": 0.9693193023889142,
+                "value_error": 0.15546525512529213
             }
         },
         "obs": {
@@ -61,40 +65,35 @@
                 "input_data": [
                     "/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc"
                 ],
-                "method": "Standard deviation of SSTA in nino3",
+                "method": "Standard deviation of nino3 sstA",
                 "name": "ENSO amplitude",
                 "nyears": 142,
-                "ref": "Using CDAT std dev calculation",
-                "units": "C",
-                "value": 0.7868009320493219,
-                "value_error": 0.06602686748662509
-            },
-            "EnsoMu": {
-                "input_data": [
-                    "/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc",
-                    "/clim_obs/obs/atm/mo/tauu/ERAINT/tauu_ERAINT_198901-200911.nc"
-                ],
-                "method": "Regression of nino4 tauxA over nino3 sstA",
-                "name": "Bjerknes feedback (mu)",
-                "nonlinearity": 8.265980123765656,
-                "nonlinearity_error": 3.909543765482881,
-                "nyears": 20,
                 "ref": "Using CDAT regression calculation",
-                "units": "10-3 N/m2/C",
-                "value": 14.488138436445253,
-                "value_error": 0.8765541247651075
+                "time_frequency": null,
+                "time_period": [
+                    "1870-1-1 0:0:0.0",
+                    "2012-11-1 0:0:0.0"
+                ],
+                "units": "C",
+                "value": 1.200657284742205,
+                "value_error": 0.10075692110587782
             },
             "EnsoSeasonality": {
                 "input_data": [
                     "/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc"
                 ],
-                "method": "Ratio between NDJ and MAM standard deviation of SSTA in nino3",
+                "method": "Ratio between NDJ and MAM standard deviation nino3 sstA",
                 "name": "ENSO Seasonality",
                 "nyears": 142,
                 "ref": "Using CDAT std dev calculation",
+                "time_frequency": null,
+                "time_period": [
+                    "1870-1-1 0:0:0.0",
+                    "2012-11-1 0:0:0.0"
+                ],
                 "units": "",
-                "value": 1.639115499257348,
-                "value_error": 39.133772014224135
+                "value": 1.6391154992573456,
+                "value_error": 0.27558994376214146
             }
         }
     },
@@ -106,9 +105,9 @@
     ],
     "json_version": 3.0,
     "provenance": {
-        "commandLine": "./PMPdriver_EnsoMetrics.py -p my_Param.py",
+        "commandLine": "PMPdriver_EnsoMetrics.py -p my_Param.py",
         "conda": {
-            "DefaultEnvironment": "/export_backup/lee1043/anaconda2/envs/pmp_nightly",
+            "DefaultEnvironment": "/export_backup/lee1043/anaconda2/envs/pmp_nightly_20171126",
             "IsPrivate": "False",
             "Platform": "linux-64",
             "PythonVersion": "2.7.13.final.0",
@@ -117,7 +116,7 @@
             "buildVersion": "not installed",
             "envVersion": "4.3.24"
         },
-        "date": "2017-10-12 10:36:21",
+        "date": "2017-11-26 14:02:16",
         "openGL": {
             "GLX": {
                 "client": {},
@@ -130,25 +129,25 @@
             "PMP": "1.1.2.2017.06.30.19.40.66ce8fec99c4e1d404dc0e5f25d4e6f8e6339f66",
             "PMPObs": null,
             "blas": null,
-            "cdms": "2.12",
-            "cdtime": "2.12",
-            "cdutil": "2.12",
+            "cdms": "2.12.2017.11.16.19.48.f36649030673df4c29ab183af91f9cb4a0819240",
+            "cdtime": "2017.11.15",
+            "cdutil": "2.12.2017.11.16.21.46.e717f782e07d0a187f2b616a408103af20ceb57f",
             "clapack": "3.2.1",
             "esmf": "7.0.0",
             "esmpy": "7.0.0",
-            "genutil": "2.12",
+            "genutil": "2017.11.15",
             "lapack": "3.6.1",
-            "matplotlib": "2.0.2",
+            "matplotlib": "2.1.0",
             "mesalib": null,
             "numpy": "1.13.1",
-            "python": "2.7.13",
-            "vcs": "2.12.2017.09.13.00.29.5669624a25139ad2e19e4af8b921d0571338375d",
+            "python": "2.7.14",
+            "vcs": "2.12.2017.11.17.16.06.e6137d6f0f6df7e5b673b0e6cbc56c21b3694f72",
             "vtk": "7.1.0.2.12"
         },
         "platform": {
             "Name": "crunchy.llnl.gov",
             "OS": "Linux",
-            "Version": "2.6.32-696.3.1.el6.x86_64"
+            "Version": "2.6.32-696.13.2.el6.x86_64"
         },
         "userId": "lee1043"
     }

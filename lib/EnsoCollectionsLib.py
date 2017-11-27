@@ -28,14 +28,14 @@ def defCollection(MC=True):
                     'regions': {'sst': 'tropical_pacific'},
                     'obs_name': {'sst': ['HadISST1.1', 'OISST']},
                 },
-                'EnsoMu': {
-                    'variables': ['sst','swr'],
-                    'regions': {'sst': 'nino3', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['HadISST1.1', 'OISST'], 'taux': ['Tropflux','ERA-Interim']},
-                },
                 'EnsoAlphaSwr': {
-                    'variables': ['sst', 'taux'],
+                    'variables': ['sst','swr'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
+                    'obs_name': {'sst': ['HadISST1.1', 'OISST'], 'swr': ['Tropflux','Tropflux']},
+                },
+                'EnsoMu': {
+                    'variables': ['sst', 'taux'],
+                    'regions': {'sst': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'sst': ['HadISST1.1', 'OISST'], 'taux': ['Tropflux', 'ERA-Interim']},
                 },
             },
@@ -57,7 +57,7 @@ def defCollection(MC=True):
 # List of metrics requirements (var name and reference obs)
 # def metricReqs(VOR=True):
 #     var_obs_requirements = {
-#         'EnsoAlpha': {'nbvar': 2, 'var_names': ['sst', 'thf'], 'ref_obs': ['Tropflux', 'Tropflux']},
+#         'EnsoAlphaThf': {'nbvar': 2, 'var_names': ['sst', 'thf'], 'ref_obs': ['Tropflux', 'Tropflux']},
 #         'EnsoAlphaLhf': {'nbvar': 2, 'var_names': ['sst', 'lhf'], 'ref_obs': ['Tropflux', 'Tropflux']},
 #         'EnsoAlphaLwr': {'nbvar': 2, 'var_names': ['sst', 'lwr'], 'ref_obs': ['Tropflux', 'Tropflux']},
 #         'EnsoAlphaSwr': {'nbvar': 2, 'var_names': ['sst', 'swr'], 'ref_obs': ['Tropflux', 'Tropflux']},
