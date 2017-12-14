@@ -66,6 +66,7 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, timebounds=
     Name = 'Latent feedback (alpha_lh)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + lhfbox + ' lhfA over ' + sstbox + ' sstA'
+    Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
@@ -90,8 +91,9 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, timebounds=
     # Create output
     alphaLhfMetric = {
         'name': Name, 'value': alphaLhf[0], 'value_error': alphaLhf[1], 'units': Units, 'method': Method,
-        'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds, 'ref': Ref,
-        'nonlinearity': alphaLhfNeg[0] - alphaLhfPos[0], 'nonlinearity_error': alphaLhfNeg[1] + alphaLhfPos[1],
+        'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds,
+        'ref': Ref, 'nonlinearity': alphaLhfNeg[0] - alphaLhfPos[0],
+        'nonlinearity_error': alphaLhfNeg[1] + alphaLhfPos[1],
     }
     return alphaLhfMetric
 
@@ -150,6 +152,7 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, timebounds=
     Name = 'Longwave feedback (alpha_lwr)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + lwrbox + ' lwrA over ' + sstbox + ' sstA'
+    Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
@@ -181,8 +184,9 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, timebounds=
     # Create output
     alphaLwrMetric = {
         'name': Name, 'value': alphaLwr[0], 'value_error': alphaLwr[1], 'units': Units, 'method': Method,
-        'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds, 'ref': Ref,
-        'nonlinearity': alphaLwrNeg[0] - alphaLwrPos[0], 'nonlinearity_error': alphaLwrNeg[1] + alphaLwrPos[1],
+        'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds,
+        'ref': Ref, 'nonlinearity': alphaLwrNeg[0] - alphaLwrPos[0],
+        'nonlinearity_error': alphaLwrNeg[1] + alphaLwrPos[1],
     }
     return alphaLwrMetric
 
@@ -241,6 +245,7 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, timebounds=
     Name = 'Longwave feedback (alpha_swr)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + swrbox + ' swrA over ' + sstbox + ' sstA'
+    Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
@@ -272,8 +277,9 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, timebounds=
     # Create output
     alphaSwrMetric = {
         'name': Name, 'value': alphaSwr[0], 'value_error': alphaSwr[1], 'units': Units, 'method': Method,
-        'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds, 'ref': Ref,
-        'nonlinearity': alphaSwrNeg[0] - alphaSwrPos[0], 'nonlinearity_error': alphaSwrNeg[1] + alphaSwrPos[1],
+        'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds,
+        'ref': Ref, 'nonlinearity': alphaSwrNeg[0] - alphaSwrPos[0],
+        'nonlinearity_error': alphaSwrNeg[1] + alphaSwrPos[1],
     }
     return alphaSwrMetric
 
@@ -336,6 +342,7 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=
     Name = 'Heat flux feedback (alpha)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + thfbox + ' thfA over ' + sstbox + ' sstA'
+    Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
@@ -374,8 +381,8 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox, timebounds=
     # Create output
     alphaMetric = {
         'name': Name, 'value': alpha[0], 'value_error': alpha[1], 'units': Units, 'method': Method,
-        'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds, 'ref': Ref,
-        'nonlinearity': alphaNeg[0] - alphaPos[0], 'nonlinearity_error': alphaNeg[1] + alphaPos[1],
+        'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds,
+        'ref': Ref, 'nonlinearity': alphaNeg[0] - alphaPos[0], 'nonlinearity_error': alphaNeg[1] + alphaPos[1],
     }
     return alphaMetric
 
@@ -502,6 +509,7 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, timebounds=Non
     Name = 'Bjerknes feedback (mu)'
     Units = '10-3 N/m2/C'
     Method = 'Regression of ' + tauxbox + ' tauxA over ' + sstbox + ' sstA'
+    Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
@@ -530,9 +538,9 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, timebounds=Non
 
     # Create output
     muMetric = {
-        'name': Name, 'value': mu[0], 'value_error': mu[1], 'units': Units, 'method': Method, 'nyears': yearN,
-        'time_frequency': frequency, 'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': muNeg[0] - muPos[0],
-        'nonlinearity_error': muNeg[1] + muPos[1],
+        'name': Name, 'value': mu[0], 'value_error': mu[1], 'units': Units, 'method': Method,
+        'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': frequency, 'time_period': actualtimebounds,
+        'ref': Ref, 'nonlinearity': muNeg[0] - muPos[0], 'nonlinearity_error': muNeg[1] + muPos[1],
     }
     return muMetric
 
@@ -825,4 +833,89 @@ def ComputeMetric(MetricCollection, metric, modelName, modelFile1, modelVarName1
             metric_val['nonlinearity_observations'], metric_val['nonlinearity_error_observations'] = v2, err2
             metric_val['metric_nonlinearity'], metric_val['metric_nonlinearity_error'] = val2, val2_err
     return metric_val
+
+
+def ComputeCollection(MetricCollection, dictDatasets):
+    """
+    The ComputeCollection() function computes all the diagnostics / metrics assosiated with the given Metric Collection
+
+    Inputs:
+    ------
+    :param MetricCollection: string
+        name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
+    :param dictDatasets: dict
+        dictionary containing all information needed to compute the Metric Collection for one model and observations
+        it must be like:
+        dictDatasets = {
+            'model': {
+                'modelName': {
+                    'variable1': {'path + filename': 'path_to_file/filename', 'varname': 'variable_name_in_file'},
+                    'variable2': {'path + filename': 'path_to_file/filename', 'varname': 'variable_name_in_file'},
+                    ...
+                },
+            },
+            'observations': {
+                # obsName1 can be 'HadISST' if all variables come from HadISST, or it could be 'ERA-Interim + HadISST'
+                # if the variables come from ERA-Interim AND HadISST,...
+                'obsName1': {
+                    'variable1': {'path + filename': 'path_to_file/filename', 'varname': 'variable_name_in_file'},
+                    'variable2': {'path + filename': 'path_to_file/filename', 'varname': 'variable_name_in_file'},
+                    ...
+                    'variable n': {
+                        'path + filename': ['path_to_file1/filename1', 'path_to_file2/filename2', ...],
+                        'varname': ['variable_name_in_file1', 'variable_name_in_file2', ...],
+                        # this last one is not compulsory if 'obsName1' is defined in
+                        # EnsoCollectionsLib.ReferenceObservations()
+                        'algebric_calculation': [+1,-1,..., '/'],
+
+                    },
+                },
+                'obsName2': {
+                    'variable1': {'path + filename': 'path_to_file/filename', 'varname': 'variable_name_in_file'},
+                    'variable2': {'path + filename': 'path_to_file/filename', 'varname': 'variable_name_in_file'},
+                    ...
+                },
+            },
+    :return: MCvalues: dict
+        name of the Metric Collection, Metrics, value, value_error, units, ...
+        MCvalues = {
+            'MetricCollection': {
+                'information about the MetricCollection': 'descriptions',
+                'metrics': {
+                    'metric1': {
+                        'metric_values': {
+                            'ref_obsName1': {
+                                'value': 'value of the metric',
+                                'value_error': 'estimation of the error on the metric',
+                            },
+                            'ref_obsName2': {'value': val, 'value_error': err},
+                            ...
+                        },
+                        'information about the metric': 'description of how this metric if computed from model and
+                                                        observations values',
+                        'diagnostic': {
+                            'model': {
+                                'value': 'model value of the diagnostic',
+                                'value_error': 'estimation of the error on the diagnostic',
+                                'nyears': 'number of years used for the computation of the diagnostic',
+                                'time_period': 'period used for the computation of the diagnostic',
+                            },
+                            'observations': {
+                                'obsName1': {'value': val, 'value_error': err, 'nyears': ny, 'time_period': bnds},
+                                'obsName2': {'value': val, 'value_error': err, 'nyears': ny, 'time_period': bnds},
+                                ...
+                            },
+                            'units': 'units of the diagnostic', 'method': 'method used to compute the diagnostic',
+                            'time_frequency': 'data frequency used to compute the diagnostic',
+                            'ref': 'reference paper', ...
+                        },
+                    },
+                    'metric2': {
+                        ...
+                    },
+                    ...
+                },
+            },
+        }
+    """
 #----------------------------------------------------------------------------------------------------------------------#

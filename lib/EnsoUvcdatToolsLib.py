@@ -57,7 +57,7 @@ def TimeBounds(tab):
 #
 # Set of more complex uvcdat functions used in EnsoMetricsLib.py
 #
-def CheckTime(tab1, tab2, frequency=None, minimum_length=None, metric_name=''):
+def CheckTime(tab1, tab2, frequency='monthly', minimum_length=None, metric_name=''):
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
@@ -72,22 +72,17 @@ def CheckTime(tab1, tab2, frequency=None, minimum_length=None, metric_name=''):
 
     # defines the period between the two dates
     if frequency == 'daily':
-        stime_adjust = CDTIMEcomptime(stime.year, stime.month, stime.day, 0, 0, 0)
-        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime.day, 23, 59, 59.99)
+        stime_adjust = CDTIMEcomptime(stime.year, stime.month, stime.day, 0, 0, 0.0)
+        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime.day, 23, 59, 60.0)
     elif frequency == 'monthly':
         etime_day = monthrange(etime.year, etime.month)[-1]
-        stime_adjust = CDTIMEcomptime(stime.year, stime.month, stime.day, 0, 0, 0)
-        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime_day, 23, 59, 59.99)
+        stime_adjust = CDTIMEcomptime(stime.year, stime.month, 1, 0, 0, 0.0)
+        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime_day, 23, 59, 60.0)
     elif frequency == 'yearly':
-        stime_adjust = CDTIMEcomptime(stime.year, 1, 1, 0, 0, 0)
-        etime_adjust = CDTIMEcomptime(etime.year, 12, 31, 23, 59, 59.99)
+        stime_adjust = CDTIMEcomptime(stime.year, 1, 1, 0, 0, 0.0)
+        etime_adjust = CDTIMEcomptime(etime.year, 12, 31, 23, 59, 60.0)
     else:
-        if frequency is None:
-            pass
-        else:
-            EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
-        stime_adjust = CDTIMEcomptime(stime.year, stime.month, stime.day, stime.hour, stime.minute, stime.second)
-        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime.day, etime.hour, etime.minute, etime.second)
+        EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
 
     # retains only the time-period common to both tab1 and tab2
     tab1_sliced = tab1(time=(stime_adjust, etime_adjust))

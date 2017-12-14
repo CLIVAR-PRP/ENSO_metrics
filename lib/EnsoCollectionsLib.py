@@ -12,11 +12,18 @@ def defCollection(MC=True):
     metrics_collection = {
         'MC1': {
             'long_name': 'Metrics Collection 1',
-            'metrics_list': {
+            'metrics_list': { # TO BE called "diagnostics_list" ?
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
                     'obs_name': {'sst': ['HadISST1.1','OISST']},
+                    'metric_computation': 'relative_difference', # i.e., (obs-model)/model
+                    # the "science panel" will have to define the "metric", it could be the difference (obs-model), the
+                    # ratio (model/model), the relative difference ([obs-model]/model),...
+
+                    # the portrait plot won't be able to show the "real" metric value because of the normalization (to
+                    # share a common colorbar) but we could dive down on a plot (like Bellenger et al. 2013, Fig. 1)
+                    # showing the metric values and / or the diagnostic values for observations and model
                 },
                 'EnsoSeasonality': {
                     'variables': ['sst'],
@@ -42,7 +49,7 @@ def defCollection(MC=True):
             'common_collection_parameters': {
                 'frequency': 'monthly',
                 'minimum_number_of_time_steps': 324,
-                'observed_period': ('1979-01-01 00:00:00', '2016-12-31 23:59:60.0'),
+#                'observed_period': ('1979-01-01 00:00:00', '2016-12-31 23:59:60.0'),
 #                'modeled_period': ('1979-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
             'description': 'Describe which science question this collection is about',
@@ -75,18 +82,63 @@ def defCollection(MC=True):
 # List of reference observations for each variables
 def ReferenceObservations(VAR=True, DATASET=True):
     dict_ref_obs = {
+        'CFSR': {
+            'source': 'see https://esgf.nccs.nasa.gov/search/create-ip/', # do not use 'source' keyword
+            'file_name': '<varname>' + '_Omon_reanalysis_CFSR_*.nc',
+            'variable_name_in_file': {
+                'ssh': {'varname': 'zos'},
+                'so': {'varname': 'so'},
+                'thetao': {'var_name': 'thetao'},
+                'thf': {'varname': 'hfds'}, # I'm not sure yet if it is the total heat flux
+                'uo': {'varname': 'uo'},
+                'vo': {'varname': 'vo'},
+            },
+        },
         'ERA-Interim': {
-            'source': 'see http://apps.ecmwf.int/datasets/data/interim-full-moda/levtype=sfc/', # do not use 'source' keyword
-            'file_name': '???',
+            'source': 'see https://esgf.nccs.nasa.gov/search/create-ip/', # do not use 'source' keyword
+            'file_name': '<varname>' + '_Amon_reanalysis_IFS-Cy31r2_*.nc',
             'variable_name_in_file': {
                 'lhf':{'varname': 'hfls'},
-                'lwr':{'var_name': 'rls'},
+                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # lwr = rlds - rlus
+                # sometimes lwr is included in the datasets in a variable called 'rls'
+                'lwr':{'var_name': ['rlds', 'rlus'], 'algebric_calculation': [+1, -1]},
+                'pr': {'var_name': 'pr'},
+                'slp': {'var_name': 'psl'},
                 'shf': {'varname': 'hfss'},
-                'sst': {'varname': 'tos'},
-                'swr': {'var_name': 'rss'},
-                'taux': {'varname': 'taux'},
-                # thf: 'algebric_calculation': [+1, +1, +1, +1] if nothing given the variables are summed
-                'thf': {'var_name': ['hfls', 'hfss', 'rls', 'rss']},
+                'sst': {'varname': 'ts'},
+                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # swr = rsds - rsus
+                # sometimes swr is included in the datasets in a variable called 'rss'
+                'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': [+1, -1]},
+                'taux': {'varname': 'tauu'},
+                'tauy': {'varname': 'tauv'},
+                # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
+                # sometimes rls = rlds - rlus and rss = rsds - rsus
+                # sometimes thf is included in the datasets in a variable called 'hfds', 'netflux', 'thflx',...
+                'thf': {
+                    'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
+                    'algebric_calculation': [+1,+1,+1,-1,+1,-1],
+                },
+                'uas': {'varname': 'uas'},
+                'vas': {'varname': 'vas'},
+            },
+        },
+        'GODAS': {
+            'source': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
+            'file_name': '<varname>' + '_Omon_ORAreanalysis_GODAS_*.nc',
+            'variable_name_in_file': {
+                'so': {'varname': 'so'},
+                'thetao': {'var_name': 'thetao'},
+                'uo': {'varname': 'uo'},
+                'vo': {'varname': 'vo'},
+                # many variables are missing from https://www.esrl.noaa.gov/psd/data/gridded/data.godas.html
+                #   taux = uflx, tauy = vflx, thf = thflx
+                #   and
+                #   salt flux = sltfl, Sea Surface Height Relative to Geoid = sshg,
+                #   Geometric Depth Below Sea Surface = dbss_obil, Geometric Depth Below Sea Surface = dbss_obml,
+                #   Geometric vertical velocity (dz/dt) = dzdt
             },
         },
         'HadISST1.1': {
@@ -101,6 +153,16 @@ def ReferenceObservations(VAR=True, DATASET=True):
             'file_name': '<varname>' + '_OISST_L4_AVHRR-only-v2_*-*.nc',
             'variable_name_in_file': {
                 'sst': {'varname': 'sst'},
+            },
+        },
+        'ORAS4': {
+            'source': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
+            'file_name': '<varname>' + '_Omon_ORAreanalysis_ORAS4_*.nc',
+            'variable_name_in_file': {
+                'so': {'varname': 'so'},
+                'thetao': {'var_name': 'thetao'},
+                'uo': {'varname': 'uo'},
+                'vo': {'varname': 'vo'},
             },
         },
         'Tropflux': {
@@ -154,14 +216,15 @@ def ReferenceRegions(AR=True):
 def CmipVariables():
     dict_cmip_variables = {
         'reference':'http://cfconventions.org/Data/cf-standard-names/46/build/cf-standard-name-table.html',
-        'variable_in_file':{
+        'variable_in_file': {
             # line keys:
             # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>, 'cf_unit':'<unit_in_file>'}
 
             # latent heat flux (on ocean grid or ocean points only)
             'lhf': {'varname': 'hfls', 'cf_name': 'surface_upward_latent_heat_flux', 'cf_units': 'W m-2'},
-            # shortwave radiation (on ocean grid or ocean points only)
-            # sometimes the rls = rlds - rlus
+            # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+            # lwr = rlds - rlus
+            # sometimes lwr is included in the datasets in a variable called 'rls'
             'lwr': {
                 'var_name': ['rlds', 'rlus'],
                 'cf_name': ['surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air',],
@@ -170,8 +233,9 @@ def CmipVariables():
             'shf': {'varname': 'hfss', 'cf_name': 'surface_upward_sensible_heat_flux', 'cf_units': 'W m-2'},
             # sea surface temperature (on ocean grid or ocean points only)
             'sst': {'var_name': 'tos', 'cf_name': 'sea_surface_temperature', 'cf_units': 'K'},
-            # shortwave radiation (on ocean grid or ocean points only)
-            # sometimes the rss = rsds - rsus
+            # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+            # swr = rsds - rsus
+            # sometimes swr is included in the datasets in a variable called 'rss'
             'swr': {
                 'var_name': ['rsds', 'rsus'],
                 'cf_name': ['surface_downwelling_shortwave_flux_in_air', 'surface_upwelling_shortwave_flux_in_air'],
@@ -182,7 +246,8 @@ def CmipVariables():
             # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
             # tfh = hfls + hfss + rlds - rlus + rsds - rsus
             # sometimes rls = rlds - rlus and rss = rsds - rsus
-            'tfh':{
+            # sometimes thf is included in the datasets in a variable called 'hfds', 'netflux', 'thflx',...
+            'tfh': {
                 'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
                 'cf_name': ['surface_upward_latent_heat_flux', 'surface_upward_sensible_heat_flux',
                             'surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air',
