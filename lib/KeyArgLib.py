@@ -13,8 +13,8 @@ from EnsoErrorsWarnings import UnknownKeyArg
 def DefaultArgValues(arg):
     default = {
         'detrending': False, 'frequency': None, 'metric_computation': 'difference', 'min_time_steps': None,
-        'normalization': False, 'regridding': False, 'smoothing': False, 'time_bounds': None, 'time_bounds_model': None,
-        'time_bounds_obs': None,
+        'normalization': False, 'project_interpreter': 'CMIP', 'regridding': False, 'smoothing': False,
+        'time_bounds': None, 'time_bounds_model': None, 'time_bounds_obs': None,
     }
     try: default[arg]
     except: UnknownKeyArg(arg, INSPECTstack())
