@@ -82,8 +82,8 @@ list_obs = sorted(list_obs)
 print list_obs
 
 # @jewoo: I am lazy so I am using only one obvervations dataset
-list_obs = ['Tropflux']
-#list_obs = ['IPSL-CM5B-LR']
+#list_obs = ['Tropflux']
+list_obs = ['IPSL-CM5B-LR']
 
 #
 # finding file and variable name in file for each observations dataset
