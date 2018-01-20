@@ -1,8 +1,9 @@
 # -*- coding:UTF-8 -*-
 from calendar import monthrange
+from copy import deepcopy
+from datetime import date
 from inspect import stack as INSPECTstack
 from numpy import array as NParray
-from numpy import array_equal as Narray_equal
 from numpy import exp as NPexp
 from numpy import nonzero as NPnonzero
 from scipy.signal import detrend as SCIPYsignal_detrend
@@ -26,12 +27,14 @@ from genutil.statistics import std as GENUTILstd
 from MV2 import add as MV2add
 from MV2 import arange as MV2arange
 from MV2 import array as MV2array
+from MV2 import average as MV2average
 from MV2 import compress as MV2compress
 from MV2 import divide as MV2divide
 from MV2 import masked_where as MV2masked_where
 from MV2 import minimum as MV2minimum
 from MV2 import multiply as MV2multiply
 from MV2 import subtract as MV2subtract
+from MV2 import sum as MV2sum
 from MV2 import take as MV2take
 from MV2 import where as MV2where
 from MV2 import zeros as MV2zeros
@@ -212,9 +215,182 @@ def OperationSubtract(tab, number_or_tab):
     return MV2subtract(tab, number_or_tab)
 
 
-# Dictionary of averaging methods
+# Dictionary of operations
 dict_operations = {'divide': OperationDivide, 'minus': OperationSubtract, 'multiply': OperationMultiply,
                    'plus': OperationAdd}
+
+
+def RmsHorizontal(tab, ref, centered=0):
+    """
+    #################################################################################
+    Description:
+    genutil.rms applied on two masked_arrays that are on the same grid
+
+    Computes the root mean square difference between tab and ref on horizontal axes (lat and lon)
+
+    Uses uvcdat
+    #################################################################################
+
+    :param tab: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the modeled variable
+    :param ref: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the observed variable
+    :param centered: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :return rmse: float
+        value of root mean square difference
+    """
+    # Computes the root mean square difference
+    try: rmse = GENUTILrms(tab, ref, weights='weighted', axis='xy', centered=centered, biased=1)
+    except:
+        lat_num = get_num_axis(tab, 'latitude')
+        lon_num = get_num_axis(tab, 'longitude')
+        try: rmse = GENUTILrms(tab, ref, weights='weighted', axis=str(lat_num)+str(lon_num), centered=centered, biased=1)
+        except:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal RMS",
+                str().ljust(5) + "cannot perform horizontal RMS",
+                str().ljust(10) + "either lat and lon cannot be found in 'ref' / 'tab'",
+                str().ljust(10) + "or lat and lon are not in the same order in 'ref' and 'tab'",
+                str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
+                str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+    return float(rmse)
+
+
+def RmsMeridional(tab, ref, centered=0):
+    """
+    #################################################################################
+    Description:
+    genutil.rms applied on two masked_arrays that are on the same grid
+
+    Computes the root mean square difference between tab and ref on meridional axis (lat)
+
+    Uses uvcdat
+    #################################################################################
+
+    :param tab: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the modeled variable
+    :param ref: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the observed variable
+    :param centered: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :return rmse: float
+        value of root mean square difference
+    """
+    # Computes the root mean square difference
+    try: rmse = GENUTILrms(tab, ref, weights='weighted', axis='y', centered=centered, biased=1)
+    except:
+        lat_num = get_num_axis(tab, 'latitude')
+        try: rmse = GENUTILrms(tab, ref, weights='weighted', axis=str(lat_num), centered=centered, biased=1)
+        except:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional RMS",
+                str().ljust(5) + "cannot perform meridional RMS",
+                str().ljust(10) + "lat cannot be found in 'ref' / 'tab'",
+                str().ljust(10) + "or lat is not in the same order in 'ref' and 'tab'",
+                str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
+                str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+    return float(rmse)
+
+
+def RmsTemporal(tab, ref, centered=0):
+    """
+    #################################################################################
+    Description:
+    genutil.rms applied on two masked_arrays that are horizontally averaged
+
+    Computes the root mean square difference between tab and ref along time axis
+
+    Uses uvcdat
+    #################################################################################
+
+    :param tab: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the modeled variable
+    :param ref: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the observed variable
+    :param centered: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :return rmse: float
+        value of root mean square difference
+    """
+    # Computes the root mean square difference
+    try:
+        rmse = GENUTILrms(tab, ref, axis='t', centered=centered, biased=1)
+    except:
+        time_num = get_num_axis(tab, 'time')
+        try:
+            rmse = GENUTILrms(tab, ref, axis=str(time_num), centered=centered, biased=1)
+        except:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": temporal RMS",
+                str().ljust(5) + "cannot perform temporal RMS",
+                str().ljust(10) + "time cannot be found in 'ref' / 'tab'",
+                str().ljust(10) + "or time is not in the same order in 'ref' and 'tab'",
+                str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
+                str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+    return float(rmse)
+
+
+def RmsZonal(tab, ref, centered=0):
+    """
+    #################################################################################
+    Description:
+    genutil.rms applied on two masked_arrays that are on the same grid
+
+    Computes the root mean square difference between tab and ref on zonal axis (lon)
+
+    Uses uvcdat
+    #################################################################################
+
+    :param tab: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the modeled variable
+    :param ref: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the observed variable
+    :param centered: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :return rmse: float
+        value of root mean square difference
+    """
+    # Computes the root mean square difference
+    try:
+        rmse = GENUTILrms(tab, ref, weights='weighted', axis='x', centered=centered, biased=1)
+    except:
+        lon_num = get_num_axis(tab, 'longitude')
+        try:
+            rmse = GENUTILrms(tab, ref, weights='weighted', axis=str(lon_num), centered=centered, biased=1)
+        except:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal RMS",
+                str().ljust(5) + "cannot perform zonal RMS",
+                str().ljust(10) + "lon cannot be found in 'ref' / 'tab'",
+                str().ljust(10) + "or lon is not in the same order in 'ref' and 'tab'",
+                str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
+                str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+    return float(rmse)
+
+
+# Dictionary of RMS methods
+dict_rms = {'horizontal': RmsHorizontal, 'meridional': RmsMeridional, 'time': RmsTemporal, 'zonal': RmsZonal}
 
 
 def Std(tab, weights=None, axis=0, centered=1, biased=1):
@@ -393,14 +569,87 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
         return tab, units
 
 
-def Composite(tab, nbr_years_window, list_event_years):
+def Composite(tab, list_event_years, frequency, nbr_years_window=None):
+    # function to fill array with masked value where the data is not available
+    def fill_array(tab, units, freq):
+        y1 = tab.getTime().asComponentTime()[0].year
+        m1 = tab.getTime().asComponentTime()[0].month
+        d1 = tab.getTime().asComponentTime()[0].day
+        tab_out = MV2zeros(nbr_years_window * 12)
+        tab_out = MV2masked_where(tab_out == 0, tab_out)
+        axis = CDMS2createAxis(MV2array(range(len(tab_out)), dtype='int32'), id='time')
+        axis.units = units
+        tab_out.setAxis(0, axis)
+        for ii in range(len(tab)):
+            y2 = tab.getTime().asComponentTime()[ii].year
+            m2 = tab.getTime().asComponentTime()[ii].month
+            d2 = tab.getTime().asComponentTime()[ii].day
+            if freq == 'yearly':
+                if y2 == y1:
+                    tab_out[ii:ii + len(tab)] = deepcopy(tab)
+                    break
+            elif freq == 'monthly':
+                if y2 == y1 and m2 == m1:
+                    tab_out[ii:ii + len(tab)] = deepcopy(tab)
+                    break
+            elif freq == 'daily':
+                if y2 == y1 and m2 == m1 and d2 == d1:
+                    tab_out[ii:ii + len(tab)] = deepcopy(tab)
+                    break
+        return tab_out
+    # compute composite
     composite = list()
     for yy in list_event_years:
-        timebnds = (str(yy - ((nbr_years_window / 2) - 1)) + '-01-01 00:00:00.0',
-                    str(yy + (nbr_years_window / 2)) + '-12-31  23:59:60.0')
-        composite.append(tab(time=timebnds))
-    composite = MV2array(composite)
+        if nbr_years_window is None:
+            yy1, yy2 = yy, yy
+        else:
+            # first and last years of the window
+            yy1, yy2 = yy - ((nbr_years_window / 2) - 1), yy + (nbr_years_window / 2)
+        # create time bounds from 'first and last years of the window'
+        timebnds = (str(yy1) + '-01-01 00:00:00.0', str(yy2) + '-12-31  23:59:60.0')
+        # select the right time period in the given tab
+        tmp1 = tab(time=timebnds)
+        if nbr_years_window is not None:
+            # sometimes there is some errors with 'time=timebnds'
+            # if the time slice selected has the right length: do nothing
+            # else: fill the beginning / end of the time series by masked values (done by the function 'fill_array')
+            if frequency == 'yearly':
+                length = nbr_years_window
+                units = 'years since ' + timebnds[0]
+                units_out = 'years since 0001-07-02 12:00:00'
+            elif frequency == 'monthly':
+                length = nbr_years_window * 12
+                units = 'months since ' + timebnds[0]
+                units_out = 'months since 0001-01-15 12:00:00'
+            elif frequency == 'daily':
+                date1 = date(yy1, 01, 01)
+                date2 = date(yy2, 12, 31)
+                length = (date2 - date1).days
+                units = 'days since ' + timebnds[0]
+                units_out = 'days since 0001-01-01 12:00:00'
+            if len(tmp1) == length:
+                tmp2 = deepcopy(tmp1)
+            else:
+                tmp2 = fill_array(tmp1, units, frequency)
+        else:
+            units_out = 'months since 0001-01-15 12:00:00'
+            if len(tmp1) == 1:
+                tmp2 = deepcopy(tmp1)
+            else:
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": axis length",
+                    str().ljust(5) + "as 'nbr_years_window' is not defined, the composite length should be 1, not: "
+                    + str(len(tmp1))
+                ]
+                EnsoErrorsWarnings.MyError(list_strings)
+        # save the selected time slice
+        composite.append(tmp2)
+    # average the selected events to create the composite
+    # mask values are not taken into account
+    composite = MV2average(MV2array(composite), axis=0)
+    # axis list
     axis0 = CDMS2createAxis(MV2array(range(len(composite)), dtype='int32'), id='time')
+    axis0.units = units_out
     if tab.shape > 1:
         axes = [axis0] + tab.getAxisList()[1:]
     else:
@@ -456,7 +705,7 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True):
     # Indices of the events
     ids = MV2compress(condition, indices)
     # Events years
-    return MV2take(list_years, ids, axis=0)
+    return list(MV2take(list_years, ids, axis=0))
 
 
 def Detrend(tab, info, axis=0, method='linear', bp=0):
@@ -650,6 +899,15 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             # read file
             tab = fi(varname, nbox, time=time_bounds)
     fi.close()
+    if time_bounds is not None:
+        # sometimes the time boundaries are wrong, even with 'time=time_bounds'
+        # this section checks if one time step has not been included by error at the beginning or the end of the time
+        # series
+        if isinstance(time_bounds[0], basestring):
+            if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
+                tab = tab[1:]
+            if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
+                tab = tab[:-1]
     if frequency is None:  # no frequency given
         pass
     elif frequency == 'daily':
@@ -763,14 +1021,18 @@ def SmoothGaussian(tab, axis=0, window=5):
     for ii in range(window):
         ii = ii - degree + 1
         frac = ii / float(window)
-        gauss = 1 / (NPexp((4 * (frac)) ** 2))
-        weightGauss.append(gauss)
+        gauss = float(1 / (NPexp((4 * (frac)) ** 2)))
+        ww = MV2zeros(new_tab.shape[1:])
+        ww.fill(gauss)
+        weightGauss.append(ww)
+    weightGauss = MV2array(weightGauss)
 
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
-    smoothed_tab = smoothed_tab[:len(tab) - window + 1]
+    smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
+    sum_weight = MV2sum(weightGauss, axis=0)
     for ii in range(len(smoothed_tab)):
-        smoothed_tab[ii] = sum(MV2array(new_tab[ii:ii + window]) * weightGauss) / float(window)
+        smoothed_tab[ii] = MV2sum(MV2array(new_tab[ii:ii + window]) * weightGauss * weightGauss, axis=0) / sum_weight
 
     # Axes list
     axes0 = new_tab[(window / 2):len(new_tab) - (window / 2)].getAxisList()[0]
@@ -782,7 +1044,7 @@ def SmoothGaussian(tab, axis=0, window=5):
 
     # Reorder to the input order
     for ii in range(axis):
-        smoothed_tab.reorder(newOrder)
+        smoothed_tab = smoothed_tab.reorder(newOrder)
     return smoothed_tab
 
 
@@ -826,7 +1088,7 @@ def SmoothSquare(tab, axis=0, window=5):
 
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
-    smoothed_tab = smoothed_tab[:len(tab) - window + 1]
+    smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
     for ii in range(len(smoothed_tab)):
         smoothed_tab[ii] = sum(new_tab[ii:ii + window]) / float(window)
 
@@ -840,7 +1102,7 @@ def SmoothSquare(tab, axis=0, window=5):
 
     # Reorder to the input order
     for ii in range(axis):
-        smoothed_tab.reorder(newOrder)
+        smoothed_tab = smoothed_tab.reorder(newOrder)
     return smoothed_tab
 
 
@@ -887,15 +1149,18 @@ def SmoothTriangle(tab, axis=0, window=5):
 
     # Create the weight array (triangle)
     weight = list()
-    for ii in range(1, 2 * degree):
-        weight.append(degree - abs(degree - ii))
+    for ii in range(0, (2 * degree)+1):
+        ww = MV2zeros(new_tab.shape[1:])
+        ww.fill(float(1 + degree - abs(degree - ii)))
+        weight.append(ww)
     weight = MV2array(weight)
 
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
-    smoothed_tab = smoothed_tab[:len(tab) - window + 1]
+    smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
+    sum_weight = MV2sum(weight, axis=0)
     for ii in range(len(smoothed_tab)):
-        smoothed_tab[ii] = sum(MV2array(new_tab[ii:ii + window]) * weight) / float(sum(weight))
+        smoothed_tab[ii] = MV2sum(MV2array(new_tab[ii:ii + window]) * weight, axis=0) / sum_weight
 
     # Axes list
     axes0 = new_tab[(window / 2):len(new_tab) - (window / 2)].getAxisList()[0]
@@ -907,7 +1172,7 @@ def SmoothTriangle(tab, axis=0, window=5):
 
     # Reorder to the input order
     for ii in range(axis):
-        smoothed_tab.reorder(newOrder)
+        smoothed_tab = smoothed_tab.reorder(newOrder)
     return smoothed_tab
 
 
@@ -1217,7 +1482,7 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
 
 
-def PrePocessTS(tab, info, average=False, compute_anom=False, **kwargs):
+def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom:
         tab = cdutil.ANNUALCYCLE.departures(tab)
@@ -1242,16 +1507,21 @@ def PrePocessTS(tab, info, average=False, compute_anom=False, **kwargs):
         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
     # horizontal average
     if average is not False:
-        try: dict_average[average]
-        except:
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": averaging method",
-                str().ljust(5) + "unkwown averaging method (axis): " + str(average),
-                str().ljust(10) + "known averaging method: " + str(sorted(dict_average.keys())),
-            ]
-            EnsoErrorsWarnings.MyError(list_strings)
+        if isinstance(average, basestring):
+            try: dict_average[average]
+            except:
+                EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+            else:
+                tab = dict_average[average](tab)
+        elif isinstance(average, list):
+            for av in average:
+                try: dict_average[av]
+                except:
+                    EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+                else:
+                    tab = dict_average[av](tab)
         else:
-            tab = dict_average[average](tab)
+            EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info
 
 
@@ -1291,54 +1561,6 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
     tab.name = varname
     tab.units = units
     return tab
-
-
-def SpatialRms(tab, ref, centered=0):
-    """
-    #################################################################################
-    Description:
-    genutil.rms applied on two masked_arrays (i.e., the annual cycle is not removed, the temporal average is not
-    computed) that are on the same grid
-
-    Averages temporally and computes the root mean square difference between tab and ref
-
-    Uses uvcdat
-    #################################################################################
-
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the modeled variable
-    :param ref: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the observed variable
-    :param centered: int, optional
-        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
-        set to 1. NOTE: Most other statistic functions return a centered statistic by default
-    :return rmse: float
-        value of root mean square difference
-    """
-    # Time average
-    if 't' in tab.getOrder():
-        tab = dict_average['time'](tab)
-    if 't' in ref.getOrder():
-        ref = dict_average['time'](ref)
-    # Computes the root mean square difference
-    try: rmse = GENUTILrms(tab, ref, weights='weighted', axis='xy', centered=centered, biased=1)
-    except:
-        lat_num = get_num_axis(tab, 'latitude')
-        lon_num = get_num_axis(tab, 'longitude')
-        try: rmse = GENUTILrms(tab, ref, weights='weighted', axis=str(lat_num)+str(lon_num), centered=centered, biased=1)
-        except:
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": spatial RMS",
-                str().ljust(5) + "cannot perform spatial RMS",
-                str().ljust(10) + "either lat and lon cannot be found in 'ref' / 'tab'",
-                str().ljust(10) + "or lat and lon are not in the same order in 'ref' and 'tab'",
-                str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
-                str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
-            ]
-            EnsoErrorsWarnings.MyError(list_strings)
-    return float(rmse)
 
 
 def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):
