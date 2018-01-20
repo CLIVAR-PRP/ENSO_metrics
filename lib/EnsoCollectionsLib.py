@@ -86,13 +86,50 @@ def defCollection(MC=True):
         },
         'MC2': {
             'long_name': 'Metrics Collection 2',
-            'metrics_list': {  # TO BE called "diagnostics_list" ?
-                'EnsoCompositeTS': {
+            'metrics_list': {
+                'EnsoLatRMSE': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'OISST']},
+                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                },
+                'EnsoLonRMSE': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'OISST']},
+                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                },
+                'NinaCompositeTS': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'OISST']},
                     'nbr_years_window': 6,
-                    'event_definition': {'season': 'DEC', 'threshold': 0.75},
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                },
+                'NinoCompositeTS': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'OISST']},
+                    'nbr_years_window': 6,
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                },
+                'NinaCompositeLon': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific'},
+                    'obs_name': {'sst': ['HadISST', 'OISST']},
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                },
+                'NinoCompositeLon': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific'},
+                    'obs_name': {'sst': ['HadISST', 'OISST']},
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
                 },
             },
             'common_collection_parameters': {
@@ -176,6 +213,13 @@ def ReferenceObservations(DATASET=True):
                 'vas': {'var_name': 'vas'},
             },
         },
+        'ERSSTv5': {
+            'source': 'see https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/netcdf/',
+            'file_name': 'ersst.v5.' + '<YYYYMM>' + '.nc',
+            'variable_name_in_file': {
+                'sst': {'var_name': 'sst'},
+            },
+        },
         'GODAS': {
             'source': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
             'file_name': '<var_name>' + '_Omon_ORAreanalysis_GODAS_*.nc',
@@ -197,6 +241,15 @@ def ReferenceObservations(DATASET=True):
             'file_name': 'HadISST_' + '<var_name>' + '.nc',
             'variable_name_in_file': {
                 'sst': {'var_name': 'sst'},
+            },
+        },
+        'OAFlux': {
+            'source': 'see ftp://ftp.whoi.edu/pub/science/oaflux/data_v3/monthly/turbulence/',
+            'file_name': '<???>' + '_oaflux_*.nc',
+            'variable_name_in_file': {
+                'lhf': {'var_name': 'lhtfl'},
+                'shf': {'var_name': 'shtfl'},
+                'sst': {'var_name': 'tmpsf'},
             },
         },
         'OISST': {
@@ -254,6 +307,7 @@ def ReferenceRegions(AR=True):
         'nino3': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (210., 270.)},
         'nino3.4': {'long_name': 'Niño 3.4', 'latitude': (-5., 5.), 'longitude': (190., 240.)},
         'nino4': {'long_name': 'Niño 4', 'latitude': (-5., 5.), 'longitude': (160., 210.)},
+        'nino3_reduced': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (220., 250.)},
     }
     if AR:
         return dict_reference_regions[AR]
