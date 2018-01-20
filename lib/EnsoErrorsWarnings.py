@@ -225,6 +225,29 @@ def UnlikelyUnits(var_name, name_in_file, units, inspect_stack):
     MyError(list_strings)
     return
 
+def UnknownAveraging(average, known_average, inspect_stack):
+    """
+    #################################################################################
+    Description:
+    Function 'MyError' in the case of unknown frequency
+    Prints strings
+    #################################################################################
+
+    :param average: string
+        averaging method (axis) (should by horizontal, meridional, temporal or zonal)
+    :param known_average: string
+        list of defined averaging method (axis)
+    :param inspect_stack: array
+        list of information about the program/module/line,... created using inspect.stack()
+    :return:
+    """
+    list_strings = ["ERROR" + MessageFormating(inspect_stack) + ": averaging method",
+                    str().ljust(5) + "unkwown averaging method (axis): " + str(average),
+                    str().ljust(10) + "known averaging method: " + str(sorted(known_average)),
+                    ]
+    MyError(list_strings)
+    return
+
 
 def UnknownFrequency(frequency, inspect_stack):
     """
