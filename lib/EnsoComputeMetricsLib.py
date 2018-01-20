@@ -6,8 +6,8 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu,\
-    EnsoRMSE, EnsoSeasonality
+from EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoLatRMSE,\
+    EnsoLonRMSE, EnsoMu, EnsoRMSE, EnsoSeasonality, NinaCompositeTS, NinoCompositeTS
 from KeyArgLib import DefaultArgValues
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -51,7 +51,8 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
 #
 # Computation of the metric
 #
-dict_oneVar_modelAndObs = {'EnsoRMSE': EnsoRMSE,}
+dict_oneVar_modelAndObs = {'EnsoRMSE': EnsoRMSE, 'EnsoLatRMSE':EnsoLatRMSE, 'EnsoLonRMSE':EnsoLonRMSE,
+                           'NinaCompositeTS': NinaCompositeTS, 'NinoCompositeTS': NinoCompositeTS}
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality,}
 
@@ -87,9 +88,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     # common_collection_parameters
     keyarg = dict()
     for arg in dict_mc['common_collection_parameters'].keys():
-        keyarg[arg] =  dict_mc['common_collection_parameters'][arg]
+        keyarg[arg] = dict_mc['common_collection_parameters'][arg]
     for arg in dict_mc['metrics_list'][metric].keys():
-        keyarg[arg] =  dict_mc['metrics_list'][metric][arg]
+        keyarg[arg] = dict_mc['metrics_list'][metric][arg]
     # if 'metric_computation' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its
     # default value
     try:
@@ -136,6 +137,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         },
                     },
                 }
+                if 'events_model' in diagnostic1.keys():
+                    dict_diagnostic['model']['events'] = diagnostic1['events_model']
+                if 'events_observations' in diagnostic1.keys():
+                    dict_diagnostic['observations'][obs]['events'] = diagnostic1['events_observations']
             else:
                 # next rounds in the obs loop
                 # information about the model have already been saved: information about the observations are saved
