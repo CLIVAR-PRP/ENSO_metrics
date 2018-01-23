@@ -49,7 +49,7 @@ def find_xml_obs(obs,frequency, variable):
 
 
 # metric collection
-mc_name = 'MC1'
+mc_name = 'MC2'
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -81,9 +81,6 @@ for metric in list_metric:
 list_obs = sorted(list_obs)
 print list_obs
 
-# @jewoo: I am lazy so I am using only one obvervations dataset
-#list_obs = ['Tropflux']
-list_obs = ['IPSL-CM5B-LR']
 
 #
 # finding file and variable name in file for each observations dataset
@@ -91,8 +88,7 @@ list_obs = ['IPSL-CM5B-LR']
 dict_obs = dict()
 for obs in list_obs:
     # @jewoo: be sure to add your datasets to EnsoCollectionsLib.ReferenceObservations if needed
-#    dict_var = ReferenceObservations(obs)['variable_name_in_file']
-    dict_var = CmipVariables()['variable_name_in_file']
+    dict_var = ReferenceObservations(obs)['variable_name_in_file']
     dict_obs[obs] = dict()
     for var in list_variables:
         #
@@ -116,8 +112,7 @@ for obs in list_obs:
             # finding file for 'obs', 'var'
             #
             # @jewoo: pretty easy as I have all variables in one file
-#            file_name = find_xml_obs(obs, frequency, variable)
-            file_name = find_xml_cmip(obs, project, experiment, ensemble, frequency, realm, var0)
+            file_name = find_xml_obs(obs, frequency, var0)
             # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
                 list_files = list()
@@ -128,7 +123,7 @@ for obs in list_obs:
             dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file}
 
 # models
-list_models = ['CNRM-CM5']
+list_models = ['IPSL-CM5B-LR']
 #
 # finding file and variable name in file for each observations dataset
 #
