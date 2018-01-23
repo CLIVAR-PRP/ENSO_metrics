@@ -810,9 +810,9 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, **kwargs):
     return muMetric
 
 
-def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
+def EnsoRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
     """
-    The EnsoRMSE() function computes the SST spatial root mean square error (RMSE) in a 'box' (usually the tropical
+    The EnsoRmse() function computes the SST spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
 
     Inputs:
@@ -898,21 +898,21 @@ def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_r
 
     # Read file and select the right region
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
-                                           time_bnds=kwargs['time_bounds_model'], **kwargs)
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
-                                         time_bnds=kwargs['time_bounds_obs'], **kwargs)
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
         mini = kwargs['min_time_steps']
         if len(sst_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoRMSE: the modeled time-period is too short: " + str(len(sst_model))
+                            str().ljust(5) + "EnsoRmse: the modeled time-period is too short: " + str(len(sst_model))
                             + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoRMSE: the observed time-period is too short: " + str(len(sst_model))
+                            str().ljust(5) + "EnsoRmse: the observed time-period is too short: " + str(len(sst_model))
                             + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -950,9 +950,9 @@ def EnsoRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_r
     return rmseMetric
 
 
-def EnsoLatRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
+def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
     """
-    The EnsoLatRMSE() function computes the SST meridional (latitude) root mean square error (RMSE) in a 'box'
+    The EnsoLatRmse() function computes the SST meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3_reduced')
 
     Inputs:
@@ -1038,21 +1038,21 @@ def EnsoLatRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Read file and select the right region
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
-                                           time_bnds=kwargs['time_bounds_model'], **kwargs)
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
-                                         time_bnds=kwargs['time_bounds_obs'], **kwargs)
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
         mini = kwargs['min_time_steps']
         if len(sst_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoLatRMSE: the modeled time-period is too short: " + str(len(sst_model))
+                            str().ljust(5) + "EnsoLatRmse: the modeled time-period is too short: " + str(len(sst_model))
                             + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoLatRMSE: the observed time-period is too short: "
+                            str().ljust(5) + "EnsoLatRmse: the observed time-period is too short: "
                             + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -1079,7 +1079,7 @@ def EnsoLatRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
 
     # Computes the root mean square difference
-    sstRmse = RmsHorizontal(sst_model, sst_obs, centered=centered_rmse)
+    sstRmse = RmsMeridional(sst_model, sst_obs, centered=centered_rmse)
 
     # Create output
     LatRmseMetric = {
@@ -1090,9 +1090,9 @@ def EnsoLatRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     return LatRmseMetric
 
 
-def EnsoLonRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
+def EnsoLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
     """
-    The EnsoLonRMSE() function computes the SST zonal (longitude) root mean square error (RMSE) in a 'box'
+    The EnsoLonRmse() function computes the SST zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
 
     Inputs:
@@ -1178,21 +1178,21 @@ def EnsoLonRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Read file and select the right region
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
-                                           time_bnds=kwargs['time_bounds_model'], **kwargs)
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
-                                         time_bnds=kwargs['time_bounds_obs'], **kwargs)
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
         mini = kwargs['min_time_steps']
         if len(sst_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoLatRMSE: the modeled time-period is too short: " + str(len(sst_model))
+                            str().ljust(5) + "EnsoLonRmse: the modeled time-period is too short: " + str(len(sst_model))
                             + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoLatRMSE: the observed time-period is too short: "
+                            str().ljust(5) + "EnsoLonRmse: the observed time-period is too short: "
                             + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -1219,7 +1219,7 @@ def EnsoLonRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
 
     # Computes the root mean square difference
-    sstRmse = RmsHorizontal(sst_model, sst_obs, centered=centered_rmse)
+    sstRmse = RmsZonal(sst_model, sst_obs, centered=centered_rmse)
 
     # Create output
     LonRmseMetric = {
@@ -1228,6 +1228,846 @@ def EnsoLonRMSE(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
     }
     return LonRmseMetric
+
+
+def EnsoPrRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rmse=0, **kwargs):
+    """
+    The EnsoPrRmse() function computes the PR (precipitation) spatial root mean square error (RMSE) in a 'box' (usually
+    the tropical Pacific)
+
+    Inputs:
+    ------
+    :param prfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemodel: string
+        name of PR variable (pr, precip) in 'prfilemodel'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, prec) in 'prfileobs'
+    :param box: string
+        name of box ('tropical_pacific') for PR
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_model: tuple, optional
+        tuple of the first and last dates to extract from the modeled PR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed PR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return PrRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_model', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO Pr RMSE'
+    Units = 'mm/day'
+    Method = 'Spatial root mean square error of ' + box + ' Pr'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # Read file and select the right region
+    pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=box,
+                                          time_bounds=kwargs['time_bounds_model'], **kwargs)
+    pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
+                                        time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(pr_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrRmse: the modeled time-period is too short: " + str(len(pr_model))
+                            + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(pr_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrRmse: the observed time-period is too short: " + str(len(pr_model))
+                            + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = pr_model.shape[0] / 12
+    yearN_obs = pr_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(pr_model)
+    actualtimeboundsobs = TimeBounds(pr_obs)
+
+    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    # here only the detrending (if applicable) and time averaging are performed
+    pr_model, Method = PreProcessTS(pr_model, Method, average='time', compute_anom=False, **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', average='time', compute_anom=False, **kwargs)
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
+                      'mask', 'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+
+    # Computes the root mean square difference
+    pr_rmse = RmsHorizontal(pr_model, pr_obs, centered=centered_rmse)
+
+    # Create output
+    PrRmseMetric = {
+        'name': Name, 'value': pr_rmse, 'value_error': None, 'units': Units, 'method': Method,
+        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+    }
+    return PrRmseMetric
+
+
+def EnsoPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rmse=0, **kwargs):
+    """
+    The EnsoPrLatRmse() function computes the PR (zonal wind stress) meridional (latitude) root mean square error (RMSE)
+    in a 'box' (usually 'nino3_reduced')
+
+    Inputs:
+    ------
+    :param prfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemodel: string
+        name of PR variable (pr, precip) in 'prfilemodel'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, prec) in 'prfileobs'
+    :param box: string
+        name of box ('nino3_reduced') for PR
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_model: tuple, optional
+        tuple of the first and last dates to extract from the modeled PR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed PR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return PrLatRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_model', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO Pr Meridional RMSE'
+    Units = 'mm/day'
+    Method = 'Meridional root mean square error of ' + box + ' Pr'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # Read file and select the right region
+    pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=box,
+                                          time_bounds=kwargs['time_bounds_model'], **kwargs)
+    pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
+                                        time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(pr_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrLatRmse: the modeled time-period is too short: "
+                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(pr_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrLatRmse: the observed time-period is too short: "
+                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = pr_model.shape[0] / 12
+    yearN_obs = pr_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(pr_model)
+    actualtimeboundsobs = TimeBounds(pr_obs)
+
+    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    # here only the detrending (if applicable) and time averaging are performed
+    pr_model, Method = PreProcessTS(pr_model, Method, average=['time', 'zonal'], compute_anom=False, **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
+                      'mask', 'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+
+    # Computes the root mean square difference
+    pr_rmse = RmsMeridional(pr_model, pr_obs, centered=centered_rmse)
+
+    # Create output
+    PrLatRmseMetric = {
+        'name': Name, 'value': pr_rmse, 'value_error': None, 'units': Units, 'method': Method,
+        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+    }
+    return PrLatRmseMetric
+
+
+def EnsoPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rmse=0, **kwargs):
+    """
+    The EnsoPrLonRmse() function computes the PR (zonal wind stress) zonal (longitude) root mean square error (RMSE) in
+    a 'box' (usually the Equatorial Pacific)
+
+    Inputs:
+    ------
+    :param prfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemodel: string
+        name of PR variable (pr, precip) in 'prfilemodel'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, prec) in 'prfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for PR
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_model: tuple, optional
+        tuple of the first and last dates to extract from the modeled PR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed PR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return PrLonRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_model', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO Pr Zonal RMSE'
+    Units = 'mm/day'
+    Method = 'Meridional root mean square error of ' + box + ' Pr'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # Read file and select the right region
+    pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=box,
+                                          time_bounds=kwargs['time_bounds_model'], **kwargs)
+    pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
+                                        time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(pr_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrLonRmse: the modeled time-period is too short: "
+                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(pr_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrLonRmse: the observed time-period is too short: "
+                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = pr_model.shape[0] / 12
+    yearN_obs = pr_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(pr_model)
+    actualtimeboundsobs = TimeBounds(pr_obs)
+
+    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    # here only the detrending (if applicable) and time averaging are performed
+    pr_model, Method = PreProcessTS(pr_model, Method, average=['time', 'meridional'], compute_anom=False, **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', average=['time', 'meridional'], compute_anom=False, **kwargs)
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
+                      'mask', 'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+
+    # Computes the root mean square difference
+    pr_rmse = RmsZonal(pr_model, pr_obs, centered=centered_rmse)
+
+    # Create output
+    PrLonRmseMetric = {
+        'name': Name, 'value': pr_rmse, 'value_error': None, 'units': Units, 'method': Method,
+        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+    }
+    return PrLonRmseMetric
+
+
+def EnsoTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, centered_rmse=0, **kwargs):
+    """
+    The EnsoTauxRmse() function computes the TAUX (zonal wind stress) spatial root mean square error (RMSE) in a 'box'
+    (usually the tropical Pacific)
+
+    Inputs:
+    ------
+    :param tauxfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled TAUX
+    :param tauxnamemodel: string
+        name of TAUX variable (taux, tauu) in 'tauxfilemodel'
+    :param tauxfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUX
+    :param tauxnameobs: string
+        name of TAUX variable (taux, tauu) in 'tauxfileobs'
+    :param box: string
+        name of box ('tropical_pacific') for TAUX
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_model: tuple, optional
+        tuple of the first and last dates to extract from the modeled TAUX file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed TAUX file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return TauxRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_model', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO Taux RMSE'
+    Units = 'N/m2'
+    Method = 'Spatial root mean square error of ' + box + ' Taux'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # Read file and select the right region
+    taux_model = ReadSelectRegionCheckUnits(tauxfilemodel, tauxnamemodel, 'wind stress', box=box,
+                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
+    taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
+                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(taux_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoTauxRmse: the modeled time-period is too short: "
+                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(taux_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoTauxRmse: the observed time-period is too short: "
+                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = taux_model.shape[0] / 12
+    yearN_obs = taux_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(taux_model)
+    actualtimeboundsobs = TimeBounds(taux_obs)
+
+    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    # here only the detrending (if applicable) and time averaging are performed
+    taux_model, Method = PreProcessTS(taux_model, Method, average='time', compute_anom=False, **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', average='time', compute_anom=False, **kwargs)
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
+                      'mask', 'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+
+    # Computes the root mean square difference
+    taux_rmse = RmsHorizontal(taux_model, taux_obs, centered=centered_rmse)
+
+    # Create output
+    TauxRmseMetric = {
+        'name': Name, 'value': taux_rmse, 'value_error': None, 'units': Units, 'method': Method,
+        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+    }
+    return TauxRmseMetric
+
+
+def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, centered_rmse=0, **kwargs):
+    """
+    The EnsoTauxLatRmse() function computes the TAUX (zonal wind stress) meridional (latitude) root mean square error
+    (RMSE) in a 'box' (usually 'nino3')
+
+    Inputs:
+    ------
+    :param tauxfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled TAUX
+    :param tauxnamemodel: string
+        name of TAUX variable (taux, tauu) in 'tauxfilemodel'
+    :param tauxfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUX
+    :param tauxnameobs: string
+        name of TAUX variable (taux, tauu) in 'tauxfileobs'
+    :param box: string
+        name of box ('nino3') for TAUX
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_model: tuple, optional
+        tuple of the first and last dates to extract from the modeled TAUX file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed TAUX file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return TauxLatRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_model', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO Taux Meridional RMSE'
+    Units = 'N/m2'
+    Method = 'Meridional root mean square error of ' + box + ' Taux'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # Read file and select the right region
+    taux_model = ReadSelectRegionCheckUnits(tauxfilemodel, tauxnamemodel, 'wind stress', box=box,
+                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
+    taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
+                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(taux_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoTauxLatRmse: the modeled time-period is too short: "
+                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(taux_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoTauxLatRmse: the observed time-period is too short: "
+                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = taux_model.shape[0] / 12
+    yearN_obs = taux_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(taux_model)
+    actualtimeboundsobs = TimeBounds(taux_obs)
+
+    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    # here only the detrending (if applicable) and time averaging are performed
+    taux_model, Method = PreProcessTS(taux_model, Method, average=['time', 'zonal'], compute_anom=False, **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
+                      'mask', 'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+
+    # Computes the root mean square difference
+    taux_rmse = RmsMeridional(taux_model, taux_obs, centered=centered_rmse)
+
+    # Create output
+    TauxLatRmseMetric = {
+        'name': Name, 'value': taux_rmse, 'value_error': None, 'units': Units, 'method': Method,
+        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+    }
+    return TauxLatRmseMetric
+
+
+def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, centered_rmse=0, **kwargs):
+    """
+    The EnsoTauxLonRmse() function computes the TAUX (zonal wind stress) zonal (longitude) root mean square error (RMSE)
+    in a 'box' (usually the Equatorial Pacific)
+
+    Inputs:
+    ------
+    :param tauxfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled TAUX
+    :param tauxnamemodel: string
+        name of TAUX variable (taux, tauu) in 'tauxfilemodel'
+    :param tauxfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUX
+    :param tauxnameobs: string
+        name of TAUX variable (taux, tauu) in 'tauxfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for TAUX
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_model: tuple, optional
+        tuple of the first and last dates to extract from the modeled TAUX file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed TAUX file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return TauxLonRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_model', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO Taux Zonal RMSE'
+    Units = 'N/m2'
+    Method = 'Meridional root mean square error of ' + box + ' Taux'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # Read file and select the right region
+    taux_model = ReadSelectRegionCheckUnits(tauxfilemodel, tauxnamemodel, 'wind stress', box=box,
+                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
+    taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
+                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(taux_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoTauxLonRmse: the modeled time-period is too short: "
+                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(taux_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoTauxLonRmse: the observed time-period is too short: "
+                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = taux_model.shape[0] / 12
+    yearN_obs = taux_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(taux_model)
+    actualtimeboundsobs = TimeBounds(taux_obs)
+
+    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    # here only the detrending (if applicable) and time averaging are performed
+    taux_model, Method = PreProcessTS(taux_model, Method, average=['time', 'meridional'], compute_anom=False, **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', average=['time', 'meridional'], compute_anom=False, **kwargs)
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
+                      'mask', 'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+
+    # Computes the root mean square difference
+    taux_rmse = RmsZonal(taux_model, taux_obs, centered=centered_rmse)
+
+    # Create output
+    TauxLonRmseMetric = {
+        'name': Name, 'value': taux_rmse, 'value_error': None, 'units': Units, 'method': Method,
+        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+    }
+    return TauxLonRmseMetric
 
 
 def EnsoSeasonality(sstfile, sstname, box, **kwargs):
@@ -1336,8 +2176,177 @@ def EnsoSeasonality(sstfile, sstname, box, **kwargs):
     return seaMetric
 
 
-def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, region_ev, season_ev, threshold,
-                     centered_rmse=0, **kwargs):
+def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, event_definition, centered_rmse=0,
+                     **kwargs):
+    """
+    The NinaCompositeLon() function computes a zonal composite of La Niña events during the peak of the event
+    SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        Then SSTA > 'threshold' during 'season' are considered as La Niña events
+    Then the zonal SSTA at the peak of the event is composited for each selected event
+
+    Inputs:
+    ------
+    :param sstfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemodel: string
+        name of SST variable (tos, ts) in 'sstfilemodel'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param box: string
+        name of box (e.g. 'nino3') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return NinaLonMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, events_model, events_observations,
+        time_frequency, time_period_model, time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_model',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'Nina Composite Time Series'
+    lat = ReferenceRegions('equatorial_pacific')['latitude']
+    Method = 'Nina events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA '\
+             + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']'
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # ------------------------------------------------
+    # detect events
+    # ------------------------------------------------
+    # Read file and select the right region
+    sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=region_ev,
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
+    sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(sst_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "NinaCompositeLon: the modeled time-period is too short: "
+                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(sst_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "NinaCompositeLon: the observed time-period is too short: "
+                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = sst_model.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(sst_model)
+    actualtimeboundsobs = TimeBounds(sst_obs)
+
+    # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    sst_model, unneeded = PreProcessTS(sst_model, '', average='horizontal', compute_anom=True, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='horizontal', compute_anom=True, **kwargs)
+
+    # Lists event years
+    event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+    event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+
+    # ------------------------------------------------
+    # compute composite
+    # ------------------------------------------------
+    # Read file and select the right region
+    sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
+    sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
+
+    # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    sst_model, Method = PreProcessTS(sst_model, Method, average='meridional', compute_anom=False, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='meridional', compute_anom=False, **kwargs)
+
+    # Seasonal mean
+    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
+    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
+
+    # composites
+    composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
+    composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
+                      'mask', 'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        composite_model, composite_obs, Method = TwoVarRegrid(composite_model, composite_obs, Method,
+                                                              **kwargs['regridding'])
+
+    # Computes the root mean square difference
+    compositeRmse = RmsZonal(composite_model, composite_obs, centered=centered_rmse)
+
+    # Create output
+    NinaLonMetric = {
+        'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
+        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'events_model': event_years_model,
+        'events_observations': event_years_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+    }
+    return NinaLonMetric
+
+
+def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, event_definition, centered_rmse=0,
+                     **kwargs):
     """
     The NinoCompositeLon() function computes a zonal composite of El Niño events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -1356,14 +2365,9 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, re
         name of SST variable (tos, ts) in 'sstfileobs'
     :param box: string
         name of box (e.g. 'nino3') for SST
-    :param region_ev: string
-        region (e.g. 'nino3') where El Niño events are detected
-    :param season_ev: string
-        season (e.g. 'NDJ') or month (e.g. 'DEC') when El Niño events are detected
-    :param threshold: float
-        threshold to exceed to be considered as an El Niño event (e.g. 0.75)
-    :param nbr_years_window: integer
-        number of years used to compute the composite (e.g. 6)
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -1403,6 +2407,10 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, re
         uses tools from uvcdat library
 
     """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_model',
                     'time_bounds_obs']
@@ -1428,21 +2436,21 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, re
     # ------------------------------------------------
     # Read file and select the right region
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=region_ev,
-                                           time_bnds=kwargs['time_bounds_model'], **kwargs)
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
-                                         time_bnds=kwargs['time_bounds_obs'], **kwargs)
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
         mini = kwargs['min_time_steps']
         if len(sst_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "NinoCompositeTS: the modeled time-period is too short: "
+                            str().ljust(5) + "NinoCompositeLon: the modeled time-period is too short: "
                             + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "NinoCompositeTS: the observed time-period is too short: "
+                            str().ljust(5) + "NinoCompositeLon: the observed time-period is too short: "
                             + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -1467,17 +2475,17 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, re
     # ------------------------------------------------
     # Read file and select the right region
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
-                                           time_bnds=kwargs['time_bounds_model'], **kwargs)
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
-                                         time_bnds=kwargs['time_bounds_obs'], **kwargs)
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     sst_model, Method = PreProcessTS(sst_model, Method, average='meridional', compute_anom=False, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', average='meridional', compute_anom=False, **kwargs)
 
     # Seasonal mean
-    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=True)
-    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
+    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
+    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
 
     # composites
     composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
@@ -1490,8 +2498,8 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, re
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-            composite_model, composite_obs, Method = TwoVarRegrid(composite_model, composite_obs, Method,
-                                                                  **kwargs['regridding'])
+        composite_model, composite_obs, Method = TwoVarRegrid(composite_model, composite_obs, Method,
+                                                              **kwargs['regridding'])
 
     # Computes the root mean square difference
     compositeRmse = RmsZonal(composite_model, composite_obs, centered=centered_rmse)
@@ -1506,8 +2514,8 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, re
     return NinoLonMetric
 
 
-def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, region_ev, season_ev, threshold,
-                    nbr_years_window, centered_rmse=0, **kwargs):
+def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, event_definition, nbr_years_window,
+                    centered_rmse=0, **kwargs):
     """
     The NinaCompositeTS() function computes a time composite of La Niña events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -1526,12 +2534,9 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
         name of SST variable (tos, ts) in 'sstfileobs'
     :param box: string
         name of box (e.g. 'nino3') for SST
-    :param region_ev: string
-        region (e.g. 'nino3') where El Niño events are detected
-    :param season_ev: string
-        season (e.g. 'NDJ') or month (e.g. 'DEC') when La Niña events are detected
-    :param threshold: float
-        threshold to exceed to be considered as an La Niña event (e.g. 0.75)
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     usual kwargs:
@@ -1573,6 +2578,10 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
         uses tools from uvcdat library
 
     """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_model',
                     'time_bounds_obs']
@@ -1585,7 +2594,7 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
     # Define metric attributes
     Name = 'Nina Composite Time Series'
     Method = 'Nina events = ' + region_ev + ' sstA < ' + str(threshold) + ' during ' + season_ev + ', time series of '\
-             + nbr_years_window + ' years (centered on events)'
+             + str(nbr_years_window) + ' years (centered on events)'
     if kwargs['normalization']:
         Units = ''
     else:
@@ -1594,9 +2603,9 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
 
     # Read file and select the right region
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=region_ev,
-                                           time_bnds=kwargs['time_bounds_model'], **kwargs)
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
-                                           time_bnds=kwargs['time_bounds_obs'], **kwargs)
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1645,8 +2654,8 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
     return NinaTsMetric
 
 
-def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, region_ev, season_ev, threshold,
-                    nbr_years_window, centered_rmse=0, **kwargs):
+def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, event_definition, nbr_years_window,
+                    centered_rmse=0, **kwargs):
     """
     The NinoCompositeTS() function computes a time composite of El Niño events
     SSTA averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
@@ -1665,12 +2674,9 @@ def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
         name of SST variable (tos, ts) in 'sstfileobs'
     :param box: string
         name of box (e.g. 'nino3') for SST
-    :param region_ev: string
-        region (e.g. 'nino3') where El Niño events are detected
-    :param season_ev: string
-        season (e.g. 'NDJ') or month (e.g. 'DEC') when El Niño events are detected
-    :param threshold: float
-        threshold to exceed to be considered as an El Niño event (e.g. 0.75)
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     usual kwargs:
@@ -1712,6 +2718,10 @@ def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
         uses tools from uvcdat library
 
     """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_model',
                     'time_bounds_obs']
@@ -1724,7 +2734,7 @@ def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
     # Define metric attributes
     Name = 'Nino Composite Time Series'
     Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + ', time series of '\
-             + nbr_years_window + ' years (centered on events)'
+             + str(nbr_years_window) + ' years (centered on events)'
     if kwargs['normalization']:
         Units = ''
     else:
@@ -1733,9 +2743,9 @@ def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, reg
 
     # Read file and select the right region
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=region_ev,
-                                           time_bnds=kwargs['time_bounds_model'], **kwargs)
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
-                                           time_bnds=kwargs['time_bounds_obs'], **kwargs)
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
