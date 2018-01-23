@@ -16,6 +16,7 @@ import EnsoErrorsWarnings
 from EnsoToolsLib import StringInDict
 
 # uvcdat based functions:
+import adamsregrid
 from cdms2 import createAxis as CDMS2createAxis
 from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
@@ -90,6 +91,15 @@ def AverageMeridional(tab):
                 str().ljust(5) + "cannot perform meridional average"
             ]
             EnsoErrorsWarnings.MyError(list_strings)
+    lon = tab.getLongitude()
+    if len(lon.shape) > 1:
+        lonn = CDMS2createAxis(MV2array(lon[0, :]), id='longitude')
+        lonn.units = lon.units
+        lon_num = get_num_axis(tab, 'longitude')
+        try:
+            averaged_tab.setAxis(lon_num, lonn)
+        except:
+            averaged_tab.setAxis(lon_num - 1, lonn)
     return averaged_tab
 
 
@@ -138,6 +148,15 @@ def AverageZonal(tab):
                 str().ljust(5) + "cannot perform zonal average"
             ]
             EnsoErrorsWarnings.MyError(list_strings)
+    lat = tab.getLatitude()
+    if len(lat.shape) > 1:
+        latn = CDMS2createAxis(MV2array(lat[:, 0]), id='latitude')
+        latn.units = lat.units
+        lat_num = get_num_axis(tab, 'latitude')
+        try:
+            averaged_tab.setAxis(lat_num, latn)
+        except:
+            averaged_tab.setAxis(lat_num - 1, latn)
     return averaged_tab
 
 
@@ -286,10 +305,11 @@ def RmsMeridional(tab, ref, centered=0):
         value of root mean square difference
     """
     # Computes the root mean square difference
-    try: rmse = GENUTILrms(tab, ref, weights='weighted', axis='y', centered=centered, biased=1)
+    try: rmse = GENUTILrms(tab, ref, axis='y', centered=centered, biased=1)
     except:
         lat_num = get_num_axis(tab, 'latitude')
-        try: rmse = GENUTILrms(tab, ref, weights='weighted', axis=str(lat_num), centered=centered, biased=1)
+        try:
+            rmse = GENUTILrms(tab, ref, axis=str(lat_num), centered=centered, biased=1)
         except:
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional RMS",
@@ -371,11 +391,11 @@ def RmsZonal(tab, ref, centered=0):
     """
     # Computes the root mean square difference
     try:
-        rmse = GENUTILrms(tab, ref, weights='weighted', axis='x', centered=centered, biased=1)
+        rmse = GENUTILrms(tab, ref, axis='x', centered=centered, biased=1)
     except:
         lon_num = get_num_axis(tab, 'longitude')
         try:
-            rmse = GENUTILrms(tab, ref, weights='weighted', axis=str(lon_num), centered=centered, biased=1)
+            rmse = GENUTILrms(tab, ref, axis=str(lon_num), centered=centered, biased=1)
         except:
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal RMS",
@@ -383,7 +403,7 @@ def RmsZonal(tab, ref, centered=0):
                 str().ljust(10) + "lon cannot be found in 'ref' / 'tab'",
                 str().ljust(10) + "or lon is not in the same order in 'ref' and 'tab'",
                 str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
-                str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
+                str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList()),
             ]
             EnsoErrorsWarnings.MyError(list_strings)
     return float(rmse)
@@ -598,18 +618,15 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
                     break
         return tab_out
     # compute composite
-    composite = list()
-    for yy in list_event_years:
-        if nbr_years_window is None:
-            yy1, yy2 = yy, yy
-        else:
+    if nbr_years_window is not None:
+        composite = list()
+        for yy in list_event_years:
             # first and last years of the window
             yy1, yy2 = yy - ((nbr_years_window / 2) - 1), yy + (nbr_years_window / 2)
-        # create time bounds from 'first and last years of the window'
-        timebnds = (str(yy1) + '-01-01 00:00:00.0', str(yy2) + '-12-31  23:59:60.0')
-        # select the right time period in the given tab
-        tmp1 = tab(time=timebnds)
-        if nbr_years_window is not None:
+            # create time bounds from 'first and last years of the window'
+            timebnds = (str(yy1) + '-01-01 00:00:00.0', str(yy2) + '-12-31  23:59:60.0')
+            # select the right time period in the given tab
+            tmp1 = tab(time=timebnds)
             # sometimes there is some errors with 'time=timebnds'
             # if the time slice selected has the right length: do nothing
             # else: fill the beginning / end of the time series by masked values (done by the function 'fill_array')
@@ -631,30 +648,19 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
                 tmp2 = deepcopy(tmp1)
             else:
                 tmp2 = fill_array(tmp1, units, frequency)
+            # save the selected time slice
+            composite.append(tmp2)
+        composite = MV2average(MV2array(composite), axis=0)
+        # axis list
+        axis0 = CDMS2createAxis(MV2array(range(len(composite)), dtype='int32'), id='time')
+        axis0.units = units_out
+        if tab.shape > 1:
+            axes = [axis0] + tab.getAxisList()[1:]
         else:
-            units_out = 'months since 0001-01-15 12:00:00'
-            if len(tmp1) == 1:
-                tmp2 = deepcopy(tmp1)
-            else:
-                list_strings = [
-                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": axis length",
-                    str().ljust(5) + "as 'nbr_years_window' is not defined, the composite length should be 1, not: "
-                    + str(len(tmp1))
-                ]
-                EnsoErrorsWarnings.MyError(list_strings)
-        # save the selected time slice
-        composite.append(tmp2)
-    # average the selected events to create the composite
-    # mask values are not taken into account
-    composite = MV2average(MV2array(composite), axis=0)
-    # axis list
-    axis0 = CDMS2createAxis(MV2array(range(len(composite)), dtype='int32'), id='time')
-    axis0.units = units_out
-    if tab.shape > 1:
-        axes = [axis0] + tab.getAxisList()[1:]
+            axes = [axis0]
+        composite.setAxisList(axes)
     else:
-        axes = [axis0]
-    composite.setAxisList(axes)
+        composite = MV2average(tab, axis=0)
     return composite
 
 
@@ -898,6 +904,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         else:
             # read file
             tab = fi(varname, nbox, time=time_bounds)
+#            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
     fi.close()
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
@@ -918,6 +925,10 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         cdutil.setTimeBoundsYearly(tab)
     else:
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
+    # remove axis 'level' if its length is 1
+    if tab.getLevel():
+        if len(tab.getLevel()) == 1:
+            tab = tab(squeeze=1)
     return tab
 
 
@@ -931,6 +942,16 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTo
     for more information:
     import cdms2
     help(cdms2.avariable)
+    or (if the case of regridTool='adamsregrid'
+    import adamsregrid
+    To obtain a prescription for making an instance, type
+        adamsregrid.help('Regrid')
+    To acquire instructions on the use of the rgrd function, type
+        adamsregrid.help('rgrd')
+    To look at a general one dimensional example, type
+        adamsregrid.help('OneDexample')
+    To look at a general four dimensional example, type
+        adamsregrid.help('FourDexample')
 
     :param tab_to_regrid: masked_array
         masked_array to regrid (must include a CDMS grid!)
@@ -943,18 +964,19 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTo
     :param mask: array of booleans, optional
         mask of the new grid (either 2-D or the same shape as togrid)
     :param regridTool: string, optional
-        regridding tools (either 'regrid2', 'esmf', 'libcf')
+        regridding tools (either 'regrid2', 'esmf', 'libcf', 'adamsregrid')
         default value is 'esmf'
     :param regridMethod: string, optional
         regridding methods:
-            regridTool='regrid2' -> 'linear'
-            regridTool='esmf'    -> 'conserve', 'linear', 'patch'
-            regridTool='libcf'   -> 'linear'
+            regridTool='regrid2'     -> 'linear'
+            regridTool='esmf'        -> 'conserve', 'linear', 'patch'
+            regridTool='libcf'       -> 'linear'
+            regridTool='adamsregrid' -> 'linear', 'linearLog', 'cubic', 'cubicLog'
         default value is 'linear'
     :return new_tab: masked_array
         tab_to_regrid regridded on newgrid
     """
-    if regridTool not in ['regrid2', 'esmf', 'libcf']:
+    if regridTool not in ['regrid2', 'esmf', 'libcf', 'adamsregrid']:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
             str().ljust(5) + "unknown regridTool: " + str(regridTool),
@@ -970,8 +992,39 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTo
             str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
         ]
         EnsoErrorsWarnings.MyError(list_strings)
-    new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
-                                   regridMethod=regridMethod)
+    if (regridTool == 'adamsregrid' and regridMethod not in ['linear', 'linearLog', 'cubic', 'cubicLog']):
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
+            str().ljust(5) + "unknown regridMethod for this regridTool (" + str(regridMethod) + "): "
+            + str(regridMethod),
+            str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
+        ]
+        EnsoErrorsWarnings.MyError(list_strings)
+    if regridTool in ['regrid2', 'esmf', 'libcf']:
+        new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
+                                       regridMethod=regridMethod)
+    else:
+        axis = tab_to_regrid.getAxis(0)[:]
+        if axis[0] > newgrid.getAxis(0)[0]:
+            axis[0] = newgrid.getAxis(0)[0]
+        if axis[-1] < newgrid.getAxis(0)[-1]:
+            axis[-1] = newgrid.getAxis(0)[-1]
+        if len(tab_to_regrid.shape) == 1:
+            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0)
+        elif len(tab_to_regrid.shape) == 2:
+            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
+                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1)
+        elif len(tab_to_regrid.shape) == 3:
+            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
+                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1,
+                                   tab_to_regrid.getAxis(2)[:], newgrid.getAxis(2)[:], regridMethod, 2)
+        else:
+            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
+                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1,
+                                   tab_to_regrid.getAxis(2)[:], newgrid.getAxis(2)[:], regridMethod, 2,
+                                   tab_to_regrid.getAxis(3)[:], newgrid.getAxis(3)[:], regridMethod, 3)
+        new_tab = MV2array(r.rgrd(tab_to_regrid))
+        new_tab.setAxisList(newgrid.getAxisList())
     return new_tab
 
 
@@ -1169,6 +1222,11 @@ def SmoothTriangle(tab, axis=0, window=5):
     else:
         axes = [axes0]
     smoothed_tab.setAxisList(axes)
+    if tab.getGrid():
+        try:
+            smoothed_tab.setGrid(tab.getGrid())
+        except:
+            pass
 
     # Reorder to the input order
     for ii in range(axis):
@@ -1654,11 +1712,19 @@ def TwoVarRegrid(model, obs, info, model_to_obs=True, obs_to_model=False, model_
     extra_args = set(keyarg) - known_args
     if extra_args:
         EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+    # if regridTool='adamsregrid', the grid is not sent but the masked_array
+    if keyarg['regridTool'] == 'adamsregrid':
+        grid_obs = deepcopy(obs)
+        grid_model = deepcopy(model)
+    else:
+        grid_obs = obs.getGrid()
+        grid_model = model.getGrid()
+    # select case:
     if model_to_obs:
-        model = Regrid(model, obs.getGrid(), **keyarg)
+        model = Regrid(model, grid_obs, **keyarg)
         info = info + ', model regridded to observations'
     elif obs_to_model:
-        obs = Regrid(obs, model.getGrid(), **keyarg)
+        obs = Regrid(obs, grid_model, **keyarg)
         info = info + ', observations regridded to model'
     elif model_and_obs_to_newgrid:
         model = Regrid(model, newgrid, **keyarg)
@@ -1668,12 +1734,18 @@ def TwoVarRegrid(model, obs, info, model_to_obs=True, obs_to_model=False, model_
             try: grid_name = newgrid.name
             except: grid_name = 'newgrid'
         info = info + ', observations and model regridded to ' + str(grid_name)
-    tab = MV2zeros(model.shape)
-    for tt in range(len(tab)):
-        tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
-    model = MV2masked_where(tab.mask, model)
-    tab = MV2zeros(obs.shape)
-    for tt in range(len(tab)):
-        tab[tt] = MV2masked_where(model[0].mask, tab[tt])
-    obs = MV2masked_where(tab.mask, obs)
+    if model.shape == obs.shape:
+        mask = model.mask
+        mask = MV2where(obs.mask, obs.mask, mask)
+        model = MV2masked_where(mask, model)
+        obs = MV2masked_where(mask, obs)
+    else:
+        tab = MV2zeros(model.shape)
+        for tt in range(len(tab)):
+            tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
+        model = MV2masked_where(tab.mask, model)
+        tab = MV2zeros(obs.shape)
+        for tt in range(len(tab)):
+            tab[tt] = MV2masked_where(model[0].mask, tab[tt])
+        obs = MV2masked_where(tab.mask, obs)
     return model, obs, info
