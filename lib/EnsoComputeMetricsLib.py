@@ -6,8 +6,9 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoLatRMSE,\
-    EnsoLonRMSE, EnsoMu, EnsoRMSE, EnsoSeasonality, NinaCompositeTS, NinoCompositeTS
+from EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoLatRmse,\
+    EnsoLonRmse, EnsoMu, EnsoPrLatRmse, EnsoPrLonRmse, EnsoPrRmse, EnsoRmse, EnsoTauxLatRmse, EnsoTauxLonRmse,\
+    EnsoTauxRmse, EnsoSeasonality, NinaCompositeLon, NinoCompositeLon, NinaCompositeTS, NinoCompositeTS
 from KeyArgLib import DefaultArgValues
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -51,8 +52,13 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
 #
 # Computation of the metric
 #
-dict_oneVar_modelAndObs = {'EnsoRMSE': EnsoRMSE, 'EnsoLatRMSE':EnsoLatRMSE, 'EnsoLonRMSE':EnsoLonRMSE,
-                           'NinaCompositeTS': NinaCompositeTS, 'NinoCompositeTS': NinoCompositeTS}
+dict_oneVar_modelAndObs = {
+    'EnsoRmse': EnsoRmse, 'EnsoLatRmse': EnsoLatRmse, 'EnsoLonRmse': EnsoLonRmse,
+    'EnsoPrRmse': EnsoPrRmse, 'EnsoPrLatRmse': EnsoPrLatRmse, 'EnsoPrLonRmse': EnsoPrLonRmse,
+    'EnsoTauxRmse': EnsoTauxRmse, 'EnsoTauxLatRmse': EnsoTauxLatRmse, 'EnsoTauxLonRmse': EnsoTauxLonRmse,
+    'NinaCompositeLon': NinaCompositeLon, 'NinaCompositeTS': NinaCompositeTS,
+    'NinoCompositeLon': NinoCompositeLon, 'NinoCompositeTS': NinoCompositeTS,
+}
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality,}
 
@@ -97,6 +103,18 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         keyarg['metric_computation']
     except:
         keyarg['metric_computation'] = DefaultArgValues('metric_computation')
+    # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
+    # value
+    try:
+        keyarg['time_bounds_model'] = keyarg['modeled_period']
+    except:
+        keyarg['time_bounds_model'] = DefaultArgValues('time_bounds_model')
+    # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
+    # value
+    try:
+        keyarg['time_bounds_obs'] = keyarg['observed_period']
+    except:
+        keyarg['time_bounds_obs'] = DefaultArgValues('time_bounds_obs')
 
     # obsName could be a list if the user wants to compare the model with a set of observations
     # if obsName is just a name (string) it is put in a list
@@ -155,10 +173,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         diag_obs = dict()
 
         # model diagnostic
-        try:
-            keyarg['time_bounds'] = keyarg['time_bounds_model']
-        except:
-            keyarg['time_bounds'] = DefaultArgValues('time_bounds_model')
+        keyarg['time_bounds'] = keyarg['time_bounds_model']
         if metric in dict_oneVar.keys():
             # computes diagnostic that needs only one variable
             diagnostic1 = dict_oneVar[metric](modelFile1, modelVarName1, regionVar1, **keyarg)
@@ -187,10 +202,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             dict_diagnostic['model']['nonlinearity_error'] = diagnostic1['nonlinearity_error']
 
         # observations diag
-        try:
-            keyarg['time_bounds'] = keyarg['time_bounds_obs']
-        except:
-            keyarg['time_bounds'] = DefaultArgValues('time_bounds_obs')
+        keyarg['time_bounds'] = keyarg['time_bounds_obs']
         for ii in range(len(obsName)):
             # sets observations
             obs, tmp_obsFile1, tmp_obsVarName1 = obsName[ii], obsFile1[ii], obsVarName1[ii]
