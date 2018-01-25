@@ -87,14 +87,14 @@ print list_obs
 #
 dict_obs = dict()
 for obs in list_obs:
-    # @jewoo: be sure to add your datasets to EnsoCollectionsLib.ReferenceObservations if needed
+    # @jiwoo: be sure to add your datasets to EnsoCollectionsLib.ReferenceObservations if needed
     dict_var = ReferenceObservations(obs)['variable_name_in_file']
     dict_obs[obs] = dict()
     for var in list_variables:
         #
         # finding variable name in file
         #
-        # @jewoo: correct / adapt the 'varname' in
+        # @jiwoo: correct / adapt the 'varname' in
         # EnsoCollectionsLib.ReferenceObservations(obs)['variable_name_in_file'][var] if it is not correct or if you
         # changed a name in the xml
         # I usually alias the variable names from observations and models in the xml in order to have the same name
@@ -111,7 +111,7 @@ for obs in list_obs:
             #
             # finding file for 'obs', 'var'
             #
-            # @jewoo: pretty easy as I have all variables in one file
+            # @jiwoo: pretty easy as I have all variables in one file
             file_name = find_xml_obs(obs, frequency, var0)
             # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
@@ -132,7 +132,7 @@ dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     dict_mod = {mod: {}}
     # ------------------------------------------------
-    # @jewoo: between these dash the program is a bit ad hoc...
+    # @jiwoo: between these dash the program is a bit ad hoc...
     # it works well for me because I am looking for sst and taux on the ocean grid, and fluxes [lhf, lwr, swr, shf, thf]
     # on the atmosphere grid
     # if you want to use atmosphere only, do not use this or create your own way to find the equivalent between the
@@ -149,7 +149,7 @@ for mod in list_models:
         #
         # finding file for 'mod', 'var'
         #
-        # @jewoo: first try in the realm 'O' (for ocean)
+        # @jiwoo: first try in the realm 'O' (for ocean)
         file_name = find_xml_cmip(mod, project, experiment, ensemble, frequency, realm, var0)
         file = CDMS2open(file_name)
         if isinstance(var_in_file, list):
@@ -161,7 +161,7 @@ for mod in list_models:
         # ------------------------------------------------
         dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
     # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
-    # @jewoo the ComputeCollection function it still on development and it does not read the observations requirement
+    # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
     # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
     # so the function does not take a specific obs to compute the metric so for every obs in 'dict_obs' we must include
     # every variables needed by the metric collection [lhf, lwr, swr, shf, sst, taux, thf] even if its coming from
