@@ -62,9 +62,6 @@ for metric in list_metric:
 list_obs = sorted(list_obs)
 print list_obs
 
-##### TEST
-#list_obs = ['ERA-Interim', 'HadISST', 'Tropflux']
-
 #
 # finding file and variable name in file for each observations dataset
 #
@@ -111,7 +108,7 @@ for obs in list_obs:
                 list_files = file_name
             dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file}
 
-print dict_obs
+print 'jwlee: dict_obs readin end'
 
 #=================================================
 # Loop for Observation and Models 
@@ -119,7 +116,7 @@ print dict_obs
 # Insert observation at the beginning of the loop ---
 list_models = copy.copy(param.modnames)
 #list_models.insert(0,'obs')
-print list_models
+print 'jwlee: list models:', list_models
 
 # Dictionary to save result ---
 def tree(): return defaultdict(tree)
@@ -140,6 +137,9 @@ for mod in list_models:
     # on the atmosphere grid
     # if you want to use atmosphere only, do not use this or create your own way to find the equivalent between the
     # variable name in the program and the variable name in the file
+
+    print 'jwlee: var loop start for model ', mod
+
     for var in list_variables:
         #
         # finding variable name in file
@@ -152,8 +152,6 @@ for mod in list_models:
         #
         # finding file for 'mod', 'var'
         #
-        # @jiwoo: first try in the realm 'O' (for ocean)
-        #file_name = find_xml_cmip(mod, project, experiment, ensemble, frequency, realm, var0)
         file_name = param.modpath.replace('MOD',mod).replace('VAR',var0)
         print mod, var0, file_name
         file = CDMS2open(file_name)
@@ -165,6 +163,9 @@ for mod in list_models:
             list_files = file_name
         # ------------------------------------------------
         dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
+
+    print 'jwlee: var loop end'
+
     # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
     # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
     # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
