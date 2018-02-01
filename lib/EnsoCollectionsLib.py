@@ -173,24 +173,6 @@ def defCollection(MC=True):
         return metrics_collection
 
 
-# List of metrics requirements (var name and reference obs)
-# def metricReqs(VOR=True):
-#     var_obs_requirements = {
-#         'EnsoAlphaThf': {'nbvar': 2, 'var_names': ['sst', 'thf'], 'ref_obs': ['Tropflux', 'Tropflux']},
-#         'EnsoAlphaLhf': {'nbvar': 2, 'var_names': ['sst', 'lhf'], 'ref_obs': ['Tropflux', 'Tropflux']},
-#         'EnsoAlphaLwr': {'nbvar': 2, 'var_names': ['sst', 'lwr'], 'ref_obs': ['Tropflux', 'Tropflux']},
-#         'EnsoAlphaSwr': {'nbvar': 2, 'var_names': ['sst', 'swr'], 'ref_obs': ['Tropflux', 'Tropflux']},
-#         'EnsoAmpl': {'nbvar': 1, 'var_names': ['sst'], 'ref_obs': ['OISST']},
-#         'EnsoMu': {'nbvar': 2, 'var_names': ['sst', 'taux'], 'ref_obs': ['Tropflux', 'Tropflux']},
-#         'EnsoRMSE': {'nbvar': 1, 'var_names': ['sst'], 'ref_obs': ['OISST']},
-#         'EnsoSeasonality': {'nbvar': 1, 'var_names': ['sst'], 'ref_obs': ['OISST']},
-#     }
-#     if VOR:
-#         return var_obs_requirements[VOR]
-#     else:
-#         return var_obs_requirements
-
-
 # List of reference observations for each variables
 def ReferenceObservations(DATASET=True):
     dict_ref_obs = {

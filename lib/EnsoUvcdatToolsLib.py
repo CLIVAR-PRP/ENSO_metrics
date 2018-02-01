@@ -42,6 +42,128 @@ from MV2 import zeros as MV2zeros
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
+def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency=None, **kwargs):
+    """
+    #################################################################################
+    Description:
+    Reads the given 'varname' from the given 'filename' and selects the given 'box'
+
+    Uses cdms2 (uvcdat) to read 'varname' from 'filename' and cdutil (uvcdat) to select the 'box'
+    #################################################################################
+
+    :param filename: string
+        string of the path to the file and name of the file to read
+    :param varname: string
+        name of the variable to read from 'filename'
+    :param box: string
+        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+
+    :return tab: masked_array
+        masked_array containing 'varname' in 'box'
+    """
+    # Temp corrections for cdms2 to find the right axis
+    CDMS2setAutoBounds('on')
+    # Open file and get time dimension
+    fi = CDMS2open(filename)
+    if box is None:  # no box given
+        if time_bounds is None: # no time period given
+            # read file
+            tab = fi(varname)
+        else:  # time period given by the user
+            # read file
+            tab = fi(varname, time=time_bounds)
+    else:  # box given by the user
+        # define box
+        region_ref = ReferenceRegions(box)
+        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        if time_bounds is None:  # no time period given
+            #  read file
+            tab = fi(varname, nbox)
+#            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        else:
+            # read file
+            tab = fi(varname, nbox, time=time_bounds)
+#            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+    fi.close()
+    if time_bounds is not None:
+        # sometimes the time boundaries are wrong, even with 'time=time_bounds'
+        # this section checks if one time step has not been included by error at the beginning or the end of the time
+        # series
+        if isinstance(time_bounds[0], basestring):
+            if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
+                tab = tab[1:]
+            if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
+                tab = tab[:-1]
+    if frequency is None:  # no frequency given
+        pass
+    elif frequency == 'daily':
+        cdutil.setTimeBoundsDaily(tab)
+    elif frequency == 'monthly':
+        cdutil.setTimeBoundsMonthly(tab)
+    elif frequency == 'yearly':
+        cdutil.setTimeBoundsYearly(tab)
+    else:
+        EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
+    # remove axis 'level' if its length is 1
+    if tab.getLevel():
+        if len(tab.getLevel()) == 1:
+            tab = tab(squeeze=1)
+    return tab
+
+
+def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
+    # removes annual cycle (anomalies with respect to the annual cycle)
+    if compute_anom:
+        tab = cdutil.ANNUALCYCLE.departures(tab)
+    # Normalization of the anomalies
+    if kwargs['normalization']:
+        if kwargs['frequency'] is not None:
+            tab = Normalize(tab, kwargs['frequency'])
+            info = info + ', normalized'
+    # Removing linear trend
+    if isinstance(kwargs['detrending'], dict):
+        known_args = {'axis', 'method', 'bp'}
+        extra_args = set(kwargs['detrending']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        tab, info = Detrend(tab, info, **kwargs['detrending'])
+    # Smoothing time series
+    if isinstance(kwargs['smoothing'], dict):
+        known_args = {'axis', 'method', 'window'}
+        extra_args = set(kwargs['smoothing']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        tab, info = Smoothing(tab, info, **kwargs['smoothing'])
+    # horizontal average
+    if average is not False:
+        if isinstance(average, basestring):
+            try: dict_average[average]
+            except:
+                EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+            else:
+                tab = dict_average[average](tab)
+        elif isinstance(average, list):
+            for av in average:
+                try: dict_average[av]
+                except:
+                    EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+                else:
+                    tab = dict_average[av](tab)
+        else:
+            EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+    return tab, info
+# ---------------------------------------------------------------------------------------------------------------------#
+
+
+# ---------------------------------------------------------------------------------------------------------------------#
 #
 # Set of simple uvcdat functions used in EnsoMetricsLib.py
 #
@@ -855,81 +977,81 @@ def Normalize(tab, frequency):
     return tab
 
 
-def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency=None, **kwargs):
-    """
-    #################################################################################
-    Description:
-    Reads the given 'varname' from the given 'filename' and selects the given 'box'
-
-    Uses cdms2 (uvcdat) to read 'varname' from 'filename' and cdutil (uvcdat) to select the 'box'
-    #################################################################################
-
-    :param filename: string
-        string of the path to the file and name of the file to read
-    :param varname: string
-        name of the variable to read from 'filename'
-    :param box: string
-        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
-    :param time_bounds: tuple, optional
-        tuple of the first and last dates to extract from the files (strings)
-        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
-        default value is None
-    :param frequency: string, optional
-        time frequency of the datasets
-        e.g., frequency='monthly'
-        default value is None
-
-    :return tab: masked_array
-        masked_array containing 'varname' in 'box'
-    """
-    # Temp corrections for cdms2 to find the right axis
-    CDMS2setAutoBounds('on')
-    # Open file and get time dimension
-    fi = CDMS2open(filename)
-    if box is None:  # no box given
-        if time_bounds is None: # no time period given
-            # read file
-            tab = fi(varname)
-        else:  # time period given by the user
-            # read file
-            tab = fi(varname, time=time_bounds)
-    else:  # box given by the user
-        # define box
-        region_ref = ReferenceRegions(box)
-        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
-        if time_bounds is None:  # no time period given
-            #  read file
-            tab = fi(varname, nbox)
-#            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
-        else:
-            # read file
-            tab = fi(varname, nbox, time=time_bounds)
-#            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
-    fi.close()
-    if time_bounds is not None:
-        # sometimes the time boundaries are wrong, even with 'time=time_bounds'
-        # this section checks if one time step has not been included by error at the beginning or the end of the time
-        # series
-        if isinstance(time_bounds[0], basestring):
-            if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
-                tab = tab[1:]
-            if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
-                tab = tab[:-1]
-    if frequency is None:  # no frequency given
-        pass
-    elif frequency == 'daily':
-        cdutil.setTimeBoundsDaily(tab)
-    elif frequency == 'monthly':
-        cdutil.setTimeBoundsMonthly(tab)
-    elif frequency == 'yearly':
-        cdutil.setTimeBoundsYearly(tab)
-    else:
-        EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
-    # remove axis 'level' if its length is 1
-    if tab.getLevel():
-        if len(tab.getLevel()) == 1:
-            tab = tab(squeeze=1)
-    return tab
+# def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency=None, **kwargs):
+#     """
+#     #################################################################################
+#     Description:
+#     Reads the given 'varname' from the given 'filename' and selects the given 'box'
+#
+#     Uses cdms2 (uvcdat) to read 'varname' from 'filename' and cdutil (uvcdat) to select the 'box'
+#     #################################################################################
+#
+#     :param filename: string
+#         string of the path to the file and name of the file to read
+#     :param varname: string
+#         name of the variable to read from 'filename'
+#     :param box: string
+#         name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+#     :param time_bounds: tuple, optional
+#         tuple of the first and last dates to extract from the files (strings)
+#         e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+#         default value is None
+#     :param frequency: string, optional
+#         time frequency of the datasets
+#         e.g., frequency='monthly'
+#         default value is None
+#
+#     :return tab: masked_array
+#         masked_array containing 'varname' in 'box'
+#     """
+#     # Temp corrections for cdms2 to find the right axis
+#     CDMS2setAutoBounds('on')
+#     # Open file and get time dimension
+#     fi = CDMS2open(filename)
+#     if box is None:  # no box given
+#         if time_bounds is None: # no time period given
+#             # read file
+#             tab = fi(varname)
+#         else:  # time period given by the user
+#             # read file
+#             tab = fi(varname, time=time_bounds)
+#     else:  # box given by the user
+#         # define box
+#         region_ref = ReferenceRegions(box)
+#         nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#         if time_bounds is None:  # no time period given
+#             #  read file
+#             tab = fi(varname, nbox)
+# #            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#         else:
+#             # read file
+#             tab = fi(varname, nbox, time=time_bounds)
+# #            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#     fi.close()
+#     if time_bounds is not None:
+#         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
+#         # this section checks if one time step has not been included by error at the beginning or the end of the time
+#         # series
+#         if isinstance(time_bounds[0], basestring):
+#             if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
+#                 tab = tab[1:]
+#             if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
+#                 tab = tab[:-1]
+#     if frequency is None:  # no frequency given
+#         pass
+#     elif frequency == 'daily':
+#         cdutil.setTimeBoundsDaily(tab)
+#     elif frequency == 'monthly':
+#         cdutil.setTimeBoundsMonthly(tab)
+#     elif frequency == 'yearly':
+#         cdutil.setTimeBoundsYearly(tab)
+#     else:
+#         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
+#     # remove axis 'level' if its length is 1
+#     if tab.getLevel():
+#         if len(tab.getLevel()) == 1:
+#             tab = tab(squeeze=1)
+#     return tab
 
 
 def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTool='esmf', regridMethod='linear'):
@@ -1540,47 +1662,47 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
 
 
-def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
-    # removes annual cycle (anomalies with respect to the annual cycle)
-    if compute_anom:
-        tab = cdutil.ANNUALCYCLE.departures(tab)
-    # Normalization of the anomalies
-    if kwargs['normalization']:
-        if kwargs['frequency'] is not None:
-            tab = Normalize(tab, kwargs['frequency'])
-            info = info + ', normalized'
-    # Removing linear trend
-    if isinstance(kwargs['detrending'], dict):
-        known_args = {'axis', 'method', 'bp'}
-        extra_args = set(kwargs['detrending']) - known_args
-        if extra_args:
-            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        tab, info = Detrend(tab, info, **kwargs['detrending'])
-    # Smoothing time series
-    if isinstance(kwargs['smoothing'], dict):
-        known_args = {'axis', 'method', 'window'}
-        extra_args = set(kwargs['smoothing']) - known_args
-        if extra_args:
-            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        tab, info = Smoothing(tab, info, **kwargs['smoothing'])
-    # horizontal average
-    if average is not False:
-        if isinstance(average, basestring):
-            try: dict_average[average]
-            except:
-                EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
-            else:
-                tab = dict_average[average](tab)
-        elif isinstance(average, list):
-            for av in average:
-                try: dict_average[av]
-                except:
-                    EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
-                else:
-                    tab = dict_average[av](tab)
-        else:
-            EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
-    return tab, info
+# def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
+#     # removes annual cycle (anomalies with respect to the annual cycle)
+#     if compute_anom:
+#         tab = cdutil.ANNUALCYCLE.departures(tab)
+#     # Normalization of the anomalies
+#     if kwargs['normalization']:
+#         if kwargs['frequency'] is not None:
+#             tab = Normalize(tab, kwargs['frequency'])
+#             info = info + ', normalized'
+#     # Removing linear trend
+#     if isinstance(kwargs['detrending'], dict):
+#         known_args = {'axis', 'method', 'bp'}
+#         extra_args = set(kwargs['detrending']) - known_args
+#         if extra_args:
+#             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+#         tab, info = Detrend(tab, info, **kwargs['detrending'])
+#     # Smoothing time series
+#     if isinstance(kwargs['smoothing'], dict):
+#         known_args = {'axis', 'method', 'window'}
+#         extra_args = set(kwargs['smoothing']) - known_args
+#         if extra_args:
+#             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+#         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
+#     # horizontal average
+#     if average is not False:
+#         if isinstance(average, basestring):
+#             try: dict_average[average]
+#             except:
+#                 EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+#             else:
+#                 tab = dict_average[average](tab)
+#         elif isinstance(average, list):
+#             for av in average:
+#                 try: dict_average[av]
+#                 except:
+#                     EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+#                 else:
+#                     tab = dict_average[av](tab)
+#         else:
+#             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+#     return tab, info
 
 
 def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_bounds=None, frequency=None, **keyarg):
