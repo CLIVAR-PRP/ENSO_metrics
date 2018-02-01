@@ -166,7 +166,7 @@ for mod in list_models:
 
     print 'jwlee: var loop end'
 
-    # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
+    # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
     # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
     # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
     # so the function does not take a specific obs to compute the metric so for every obs in 'dict_obs' we must include
