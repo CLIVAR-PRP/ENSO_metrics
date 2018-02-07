@@ -3,8 +3,10 @@ from inspect import stack as INSPECTstack
 from scipy.signal import detrend as SCIPYsignal_detrend
 
 # ENSO_metrics package functions:
-from lib.EnsoCollectionsLib import ReferenceRegions
-import lib.EnsoErrorsWarnings
+#from lib.EnsoCollectionsLib import ReferenceRegions
+#import lib.EnsoErrorsWarnings
+from EnsoCollectionsLib import ReferenceRegions
+import EnsoErrorsWarnings
 
 # uvcdat based functions:
 import adamsregrid
@@ -46,10 +48,10 @@ def AverageHorizontal(tab, info):
         try: averaged_tab = cdutil.averager(tab, axis=str(lat_num)+str(lon_num))
         except:
             list_strings = [
-                "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
                 str().ljust(5) + "cannot perform horizontal average"
             ]
-            lib.EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.MyError(list_strings)
     info = info + '\n' + str().ljust(5) + "horizontal average: cdutil.averager"
     return averaged_tab, info
 
@@ -71,10 +73,10 @@ def AverageMeridional(tab, info):
         try: averaged_tab = cdutil.averager(tab, axis=str(lat_num))
         except:
             list_strings = [
-                "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional average",
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional average",
                 str().ljust(5) + "cannot perform meridional average"
             ]
-            lib.EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.MyError(list_strings)
     lon = tab.getLongitude()
     if len(lon.shape) > 1:
         lonn = CDMS2createAxis(MV2array(lon[0, :]), id='longitude')
@@ -105,10 +107,10 @@ def AverageTemporal(tab, info):
         try: averaged_tab = cdutil.averager(tab, axis=str(time_num))
         except:
             list_strings = [
-                "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": temporal average",
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": temporal average",
                 str().ljust(5) + "cannot perform temporal average"
             ]
-            lib.EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.MyError(list_strings)
     info = info + '\n' + str().ljust(5) + "temporal average: cdutil.averager"
     return averaged_tab, info
 
@@ -130,10 +132,10 @@ def AverageZonal(tab, info):
         try: averaged_tab = cdutil.averager(tab, axis=str(lon_num))
         except:
             list_strings = [
-                "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal average",
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal average",
                 str().ljust(5) + "cannot perform zonal average"
             ]
-            lib.EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.MyError(list_strings)
     lat = tab.getLatitude()
     if len(lat.shape) > 1:
         latn = CDMS2createAxis(MV2array(lat[:, 0]), id='latitude')
@@ -170,7 +172,7 @@ def ComputeAverage(tab, info, average_dimension=[], **kwargs):
         try:
             dict_average[average_dimension]
         except:
-            lib.EnsoErrorsWarnings.UnknownAveraging(average_dimension, dict_average.keys(), INSPECTstack())
+            EnsoErrorsWarnings.UnknownAveraging(average_dimension, dict_average.keys(), INSPECTstack())
         else:
             tab, info = dict_average[average_dimension](tab, info)
     elif isinstance(average_dimension, list):
@@ -178,28 +180,25 @@ def ComputeAverage(tab, info, average_dimension=[], **kwargs):
             try:
                 dict_average[av]
             except:
-                lib.EnsoErrorsWarnings.UnknownAveraging(average_dimension, dict_average.keys(), INSPECTstack())
+                EnsoErrorsWarnings.UnknownAveraging(average_dimension, dict_average.keys(), INSPECTstack())
             else:
                 tab, info = dict_average[av](tab, info)
     else:
-        lib.EnsoErrorsWarnings.UnknownAveraging(average_dimension, dict_average.keys(), INSPECTstack())
+        EnsoErrorsWarnings.UnknownAveraging(average_dimension, dict_average.keys(), INSPECTstack())
     return tab, info
 
 
-def ComputeDetrend(tab, info, axis=0, method='linear', bp=0, **kwargs):
+def ComputeDetrend(tab, info, method='linear', bp=0, **kwargs):
     """
     #################################################################################
     Description:
-    Removes trend along 'axis' from 'tab'
+    Removes trend along time axis from 'tab'
     #################################################################################
 
     :param tab: array
         tab of data to detrend
     :param info: string
         information about what is done to 'tab'
-    :param axis: int, optional
-        axis along which to detrend the data
-        default value is the first axis (0)
     :param method: string, optional
         detrending method:
         'constant': only the mean of 'tab' is subtracted
@@ -214,16 +213,16 @@ def ComputeDetrend(tab, info, axis=0, method='linear', bp=0, **kwargs):
     """
     if method not in ['linear', 'constant']:
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": method",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": method",
             str().ljust(5) + "unknown method: " + str(method)
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     if method in ['linear', 'constant']:
         axes = tab.getAxisList()
         grid = tab.getGrid()
         mask = tab.mask
-        mean = dict_average['time'](tab)
-        num_axis = GetNumAxis(tab, axis)
+        mean, unneeded = dict_average['time'](tab, '')
+        num_axis = GetNumAxis(tab, 'time')
         new_tab = MV2array(SCIPYsignal_detrend(tab, axis=num_axis, type=method, bp=bp))
         new_tab = new_tab + mean
         new_tab = MV2masked_where(mask, new_tab)
@@ -265,16 +264,16 @@ def ComputeNormalize(tab, info, frequency='monthly', **kwargs):
         info = info + '\n' + str().ljust(5) + "time series normalized by the yearly standard deviation: " + \
                "genutil.statistics.std"
     else:
-        lib.EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
+        EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     if len(tab) % time_steps_per_year != 0:
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": data length",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": data length",
             str().ljust(5) + "the normalization function needs only full years: " +
             str(len(tab) // time_steps_per_year) + " years + " + str(len(tab) % time_steps_per_year),
             str().ljust(10) + "frequency: " + str(frequency) + " (time steps per year = " + str(time_steps_per_year) +
             "), len(dataset) = " + str(len(tab)) + ", so " + str(len(tab) / float(time_steps_per_year)) + " years",
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     # reshape tab like [yy,nb]
     new_tab = list()
     for yy in range(len(tab) / time_steps_per_year):
@@ -289,7 +288,7 @@ def ComputeNormalize(tab, info, frequency='monthly', **kwargs):
     return tab, info
 
 
-def ComputeRegrid(tab_to_regrid, newgrid, newgrid_name, info, missing=None, order=None, mask=None, regridTool='esmf',
+def ComputeRegrid(tab_to_regrid, info, newgrid, missing=None, order=None, mask=None, regridTool='esmf',
                   regridMethod='linear', **kwargs):
     """
     #################################################################################
@@ -350,29 +349,29 @@ def ComputeRegrid(tab_to_regrid, newgrid, newgrid_name, info, missing=None, orde
     # test if regridTool is a good keyword
     if regridTool not in ['regrid2', 'esmf', 'libcf', 'adamsregrid']:
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
             str().ljust(5) + "unknown regridTool: " + str(regridTool),
             str().ljust(10) + "known regridTool: " + str(['regrid2', 'esmf', 'libcf'])
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     # test if regridTool is a good keyword
     if (regridTool == 'esmf' and regridMethod not in ['conserve', 'patch', 'linear']) or \
             (regridTool in ['regrid2', 'libcf'] and regridMethod != 'linear'):
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
             str().ljust(5) + "unknown regridMethod for this regridTool (" + str(regridMethod) + "): "
             + str(regridMethod),
             str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     if (regridTool == 'adamsregrid' and regridMethod not in ['linear', 'linearLog', 'cubic', 'cubicLog']):
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
             str().ljust(5) + "unknown regridMethod for this regridTool (" + str(regridMethod) + "): "
             + str(regridMethod),
             str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     # test the given 'newgrid'
     if isinstance(newgrid, basestring):
         #
@@ -418,8 +417,8 @@ def ComputeRegrid(tab_to_regrid, newgrid, newgrid_name, info, missing=None, orde
     if regridTool in ['regrid2', 'esmf', 'libcf']:
         new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
                                        regridMethod=regridMethod)
-        info = info + '\n' + str().ljust(5) + "regridded toward " + str(newgrid_name) + " using " + str(regridTool) +\
-               " " + str(regridMethod) + ": cdms2"
+        info = info + '\n' + str().ljust(5) + "regridded toward " + str(kwargs['newgrid_name']) + " using "\
+               + str(regridTool) + " " + str(regridMethod) + ": cdms2"
     else:
         axis = tab_to_regrid.getAxis(0)[:]
         if axis[0] > newgrid.getAxis(0)[0]:
@@ -442,8 +441,8 @@ def ComputeRegrid(tab_to_regrid, newgrid, newgrid_name, info, missing=None, orde
                                    tab_to_regrid.getAxis(3)[:], newgrid.getAxis(3)[:], regridMethod, 3)
         new_tab = MV2array(r.rgrd(tab_to_regrid))
         new_tab.setAxisList(newgrid.getAxisList())
-        info = info + '\n' + str().ljust(5) + "regridded toward " + str(newgrid_name) + " using " + str(regridTool) + \
-               " " + str(regridMethod) + ": adamsregrid"
+        info = info + '\n' + str().ljust(5) + "regridded toward " + str(kwargs['newgrid_name']) + " using "\
+               + str(regridTool) + " " + str(regridMethod) + ": adamsregrid"
     return new_tab, info
 
 
@@ -479,11 +478,11 @@ def ComputeSmooth(tab, info, axis=0, window=5, method='triangle', **kwargs):
     try: dict_smooth[method]
     except:
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": smoothing method (running mean)",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": smoothing method (running mean)",
             str().ljust(5) + "unkwown smoothing method: " + str(method),
             str().ljust(10) + "known smoothing method: " + str(sorted(dict_smooth.keys())),
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     info = info + '\n' + str().ljust(5) + "time series smoothized using a " + str(method) + " shaped window of "\
            + str(window) + " points: MV2"
     axis_num = GetNumAxis(tab, axis)
@@ -530,7 +529,7 @@ def CheckUnits(tab, file_name, name_in_file, old_units, new_units):
                     tab = tab - 273.15
                     tab.units = "degC"
             else:
-                lib.EnsoErrorsWarnings.UnlikelyUnits(file_name, name_in_file, old_units, INSPECTstack())
+                EnsoErrorsWarnings.UnlikelyUnits(file_name, name_in_file, old_units, INSPECTstack())
         else:
             # check if the temperature units is really degC
             if float(MV2minimum(tab)) < 50:
@@ -543,7 +542,7 @@ def CheckUnits(tab, file_name, name_in_file, old_units, new_units):
                     tab = tab + 273.15
                     tab.units = "K"
             else:
-                lib.EnsoErrorsWarnings.UnlikelyUnits(file_name, name_in_file, old_units, INSPECTstack())
+                EnsoErrorsWarnings.UnlikelyUnits(file_name, name_in_file, old_units, INSPECTstack())
     elif new_units in precipitations_units and old_units in precipitations_units:
         if old_units in ['kg / (m^2 s^1)', 'kg / (m2 s)', 'kg m-2 s-1', 'kg m**-2 s**-1']:
             if new_units in ['kg / (m^2 s^1)', 'kg / (m2 s)', 'kg m-2 s-1', 'kg m**-2 s**-1']:
@@ -588,20 +587,20 @@ def CheckUnits(tab, file_name, name_in_file, old_units, new_units):
         if old_units not in heat_flux_units and old_units not in precipitations_units \
             and old_units not in pressure_units and old_units not in temperature_units \
                 and old_units not in velocity_units:
-            list_strings = ["ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": units",
+            list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": units",
                             str().ljust(5) + "unknown input units: " + str(old_units)]
-            lib.EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.MyError(list_strings)
         elif new_units not in heat_flux_units and new_units not in precipitations_units \
             and new_units not in pressure_units and new_units not in temperature_units \
                 and new_units not in velocity_units:
-            list_strings = ["ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": units",
+            list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": units",
                             str().ljust(5) + "unknown output units: " + str(new_units)]
-            lib.EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.MyError(list_strings)
         else:
-            list_strings = ["ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": units",
+            list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": units",
                             str().ljust(5) + "tries to change " + str(old_units) + " to " + str(new_units),
                             str().ljust(5) + "this seems impossible / weird / unlikely"]
-            lib.EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.MyError(list_strings)
     return tab
 
 
@@ -646,10 +645,10 @@ def GetNumAxis(tab, name_axis, **kwargs):
                     break
     if num is None:
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": axis",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": axis",
             str().ljust(5) + "cannot find axis named: " + str(name_axis)
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     return num
 
 
@@ -722,7 +721,7 @@ def ReadAndSelectRegion(filename, varname, info, box=None, time_bounds=None, fre
     elif frequency == 'yearly':
         cdutil.setTimeBoundsYearly(tab)
     else:
-        lib.EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
+        EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     # remove axis 'level' if its length is 1
     if tab.getLevel():
         if len(tab.getLevel()) == 1:
@@ -757,16 +756,16 @@ def SmoothTriangle(tab, axis=0, window=5):
     """
     if window % 2 == 0:
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": smoothing window (running mean)",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": smoothing window (running mean)",
             str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     if axis > len(tab.shape)-1:
         list_strings = [
-            "ERROR" + lib.EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": axis",
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": axis",
             str().ljust(5) + "axis number too big: " + str(axis)
         ]
-        lib.EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.MyError(list_strings)
     # Reorder tab in order to put 'axis' in first position
     indices = range(len(tab.shape))
     indices.remove(axis)

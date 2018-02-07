@@ -6,7 +6,7 @@ from DriverPreprocessingUvcdatToolsLib import ComputeAnomalies, ComputeAverage, 
     ComputeRegrid, ComputeSmooth, ReadAndSelectRegion
 
 # ENSO_metrics package functions:
-import lib.EnsoErrorsWarnings
+import EnsoErrorsWarnings
 
 
 dict_processes = {
@@ -15,10 +15,11 @@ dict_processes = {
 }
 
 
-def preprocess(file_name, var_name, preprocessing, region=None, period=None, frequency=None, **keyarg):
+def preprocess(file_name, var_name, preprocessing, region=None, period=None, frequency=None, units=None, **keyarg):
     info = 'Preprocessing:'
     # read 'var_name' in 'file_name' in the given 'region' and 'period'
-    tab, info = ReadAndSelectRegion(file_name, var_name, info, box=region, time_bounds=period, frequency=frequency)
+    tab, info = ReadAndSelectRegion(file_name, var_name, info, box=region, time_bounds=period, frequency=frequency,
+                                    units=units)
     if frequency == "daily":
         Nyears = len(tab) / 365
     elif frequency == "yearly":
@@ -31,8 +32,7 @@ def preprocess(file_name, var_name, preprocessing, region=None, period=None, fre
         print str(num)+' '+str(process)
         if preprocessing[num][process]:
             if process not in dict_processes.keys():
-                lib.EnsoErrorsWarnings.UnknownPreprocessing(process, dict_processes.keys(), INSPECTstack())
-            print '     compute: '+str(num) + ' ' + str(process)+' '+str(preprocessing[num][process])
+                EnsoErrorsWarnings.UnknownPreprocessing(process, dict_processes.keys(), INSPECTstack())
             tab, info = dict_processes[process](tab, info, region=region, period=period, frequency=frequency,
                                                 **preprocessing[num][process])
     return tab, Nyears, info

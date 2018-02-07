@@ -49,7 +49,7 @@ def defCollection(MC=True):
                             'smoothing': False,
                         },
                         5: {
-                            'averaging': ['time'],
+                            'averaging': {'average_dimension': ['time']},
                         },
                         6: {
                             'regridding': {

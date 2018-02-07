@@ -10,8 +10,10 @@ from MV2 import masked_where as MV2masked_where
 from MV2 import where as MV2where
 
 # ENSO_metrics package functions:
-from lib.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
-from lib.EnsoComputeMetricsLib import ComputeMetric
+#from lib.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+#from lib.EnsoComputeMetricsLib import ComputeMetric
+from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+from EnsoComputeMetricsLib import ComputeMetric
 
 import DriverPreprocessing
 xmldir = environ['XMLDIR']
@@ -191,6 +193,7 @@ for mod in list_models:
     # create dictionary to save results for each metric
     dict_metric = dict()
     for metric in list_metric:
+        print str().ljust(5) + str(mod) + ", metric = " +str(metric)
         # read the dictionary of parameters for this metric from 'EnsoCollectionsLib.py'
         dict_param_metric = dict_mc['metrics_list'][metric]
         # list of variables for this metric
@@ -206,6 +209,7 @@ for mod in list_models:
         # ------------------------------------------------
         # loop over variables
         for nvar, var in zip(range(1, len(listvar)+1), listvar):
+            print str().ljust(10) + str(mod) + ", metric = " + str(metric) + ", variable = " + str(var)
             # region for this variable
             region = preprocessing[0]['selection_period_and_region']['regions'][var]
             # wanted units for this variable
@@ -239,6 +243,7 @@ for mod in list_models:
             # compute preprocessing (model)
             tab_mod, Nyears_mod, preprocessing_steps = DriverPreprocessing.preprocess(
                 file_name, var_name, preprocessing, region=region, period=period_mod, frequency=frequency, units=units)
+            print str().ljust(10) + str(mod) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"
             dict_preprocessing_steps[var] = {'model': preprocessing_steps}
             # begin the common mask
             if regridding:
@@ -249,6 +254,7 @@ for mod in list_models:
             list_observations = dict_param_metric['obs_name'][var]
             list_tab_obs, list_Nyears_obs = list(), list()
             for nobs, obs in zip(range(len(list_observations)), list_observations):
+                print str().ljust(15) + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var)
                 # file_name (obs)
                 file_name = dict_obs[obs][var]['path + filename']
                 # var_name (obs)
@@ -262,6 +268,7 @@ for mod in list_models:
                     mask = MV2where(tab_obs.mask, True, mask)
                 list_tab_obs.append(tab_obs)
                 list_Nyears_obs.append(Nyears_obs)
+                print str().ljust(15) + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"
             dict_preprocessing_steps[var] = {'observations': preprocessing_steps}
             # apply the common mask on this variable
             if regridding:
@@ -271,7 +278,7 @@ for mod in list_models:
             # get weights
             weights = CDUTILarea_weights(tab_mod)
             list_AxisList_obs, list_weights_obs = list(), list()
-            list_dict_obs = dict()
+            list_dict_obs = list()
             for nobs in range(len(list_observations)):
                 list_dict_obs.append({
                     'array': list_tab_obs[nobs], 'axes': list_tab_obs[nobs].getAxisList(),
@@ -294,17 +301,16 @@ for mod in list_models:
     # prints the metrics values
     for ii in range (3): print ''
     print str().ljust(5) + str(mod)
-    list_metric = dict_metric[mod]['metrics'].keys()
     for metric in list_metric:
         print str().ljust(10) + str(metric)
-        metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']
-        for ref in metric_dict.keys():
-            print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
-                  + str(metric_dict[ref]['value_error'])
-        raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['observations']
-        for ref in raw_dict.keys():
-            print str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = ' + str(raw_dict[ref]['value']) +\
-                  ', error = ' + str(raw_dict[ref]['value_error'])
-        raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['model']
-        print str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
-                  ', error = ' + str(raw_dict['value_error'])
+        dict_tmp1 = dict_model_metric[mod][metric]['metric_values']
+        for ref in dict_tmp1.keys():
+            print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(dict_tmp1[ref]['value']) + ', error = '\
+                  + str(dict_tmp1[ref]['value_error'])
+        dict_tmp1 = dict_model_metric[mod][metric]['raw_values']['observations']
+        for ref in dict_tmp1.keys():
+            print str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = ' + str(dict_tmp1[ref]['value']) +\
+                  ', error = ' + str(dict_tmp1[ref]['value_error'])
+        dict_tmp1 = dict_model_metric[mod][metric]['raw_values']['model']
+        print str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(dict_tmp1['value']) +\
+                  ', error = ' + str(dict_tmp1['value_error'])

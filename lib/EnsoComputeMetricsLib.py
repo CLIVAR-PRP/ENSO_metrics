@@ -241,7 +241,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelVar1, obsNameVar1, o
         obsNameVar1 = [obsNameVar1]
         obsVar1 = [obsVar1]
     try: kwargs['obsNameVar2']
-    except:
+    except: pass
+    else:
         if isinstance(kwargs['obsNameVar2'], basestring):
             kwargs['obsNameVar2'] = [kwargs['obsNameVar2']]
             kwargs['obsVar2'] = [kwargs['obsVar2']]
@@ -257,7 +258,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelVar1, obsNameVar1, o
             # sets observations
             obs, tab_obs = obsNameVar1[ii], obsVar1[ii]
             # computes the diagnostic/metric
-            diagnostic1 = dict_oneVar_modelAndObs[metric](modelVar1, modelName, obsVar1, obs, **kwargs)
+            diagnostic1 = dict_oneVar_modelAndObs[metric](modelVar1, modelName, tab_obs, obs, **kwargs)
             # puts metric values in its proper dictionary
             dict_metric_val['ref_' + obs] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
             # puts diagnostic values in its proper dictionary
