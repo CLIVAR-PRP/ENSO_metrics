@@ -1,13 +1,19 @@
-from cdms2 import open as CDMS2open
+# -*- coding:UTF-8 -*-
 from os.path import join as join_path
 from os import environ
 from sys import exit
 
-#from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
-#from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
-from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
-from EnsoComputeMetricsLib import ComputeCollection
+# uvcdat based functions:
+from cdms2 import open as CDMS2open
+from cdutil import area_weights as CDUTILarea_weights
+from MV2 import masked_where as MV2masked_where
+from MV2 import where as MV2where
 
+# ENSO_metrics package functions:
+from lib.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+from lib.EnsoComputeMetricsLib import ComputeMetric
+
+import DriverPreprocessing
 xmldir = environ['XMLDIR']
 
 
@@ -49,7 +55,7 @@ def find_xml_obs(obs,frequency, variable):
 
 
 # metric collection
-mc_name = 'MC2'
+mc_name = 'MC1'
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -57,7 +63,13 @@ list_metric = sorted(dict_mc['metrics_list'].keys())
 project = 'CMIP5'
 experiment = 'historical'
 ensemble = 'r1i1p1'
-frequency = 'mon'
+frequency = dict_mc['common_collection_parameters']['frequency']
+if frequency == 'daily':
+    freq = 'day'
+elif frequency == 'monthly':
+    freq = 'mon'
+else:
+    freq = None
 realm = 'O'
 
 # list of variables
@@ -79,6 +91,7 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
+list_obs = ['HadISST'] # just one observational dataset for a start
 print list_obs
 
 
@@ -112,7 +125,7 @@ for obs in list_obs:
             # finding file for 'obs', 'var'
             #
             # @jiwoo: pretty easy as I have all variables in one file
-            file_name = find_xml_obs(obs, frequency, var0)
+            file_name = find_xml_obs(obs, freq, var0)
             # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
                 list_files = list()
@@ -122,12 +135,13 @@ for obs in list_obs:
                 list_files = file_name
             dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file}
 
+
 # models
 list_models = ['IPSL-CM5B-LR']
 #
 # finding file and variable name in file for each observations dataset
 #
-dict_metric = dict()
+dict_model_metric = dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     dict_mod = {mod: {}}
@@ -150,7 +164,7 @@ for mod in list_models:
         # finding file for 'mod', 'var'
         #
         # @jiwoo: first try in the realm 'O' (for ocean)
-        file_name = find_xml_cmip(mod, project, experiment, ensemble, frequency, realm, var0)
+        file_name = find_xml_cmip(mod, project, experiment, ensemble, freq, realm, var0)
         file = CDMS2open(file_name)
         if isinstance(var_in_file, list):
             list_files = list()
@@ -160,16 +174,124 @@ for mod in list_models:
             list_files = file_name
         # ------------------------------------------------
         dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
-    # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
-    # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
-    # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
-    # so the function does not take a specific obs to compute the metric so for every obs in 'dict_obs' we must include
-    # every variables needed by the metric collection [lhf, lwr, swr, shf, sst, taux, thf] even if its coming from
-    # another dataset
-    dictDatasets = {'model': dict_mod, 'observations': dict_obs}
-    # Computes the metric collection
-    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
-    # Prints the metrics values
+    # ------------------------------------------------
+    # @jiwoo:
+    # ok, now we are playing
+    # I propose to put the loop on metrics here, and then do the preprocessing
+    #
+    # As a first step you can use the preprocessing tools that I developed in 'EnsoUvcdatToolsLib.py'
+    # I moved the useful tools in a new file 'DriverPreprocessingUvcdatToolsLib.py' in the 'scripts' directory
+    #
+    # Then you can develop your own tools or use other language / software (like cdo) for the preprocessing
+    # We (me / PCMDI / ESMValTool) will just have to agree on what keyword means what preprocessing
+    #
+    # ------------------------------------------------
+    # loop over metrics
+    #
+    # create dictionary to save results for each metric
+    dict_metric = dict()
+    for metric in list_metric:
+        # read the dictionary of parameters for this metric from 'EnsoCollectionsLib.py'
+        dict_param_metric = dict_mc['metrics_list'][metric]
+        # list of variables for this metric
+        list_var_metric = dict_param_metric['variables']
+        # dictionary of preprocessing for this metric
+        preprocessing = dict_param_metric['preprocessing']
+        # period for model and obs
+        period_mod = preprocessing[0]['selection_period_and_region']['period']['model']
+        period_obs = preprocessing[0]['selection_period_and_region']['period']['observations']
+        # create dictionary to save the array to compute the metric and the preprocessing steps
+        dict_data_to_compute_metric = dict()
+        dict_preprocessing_steps = dict()
+        # ------------------------------------------------
+        # loop over variables
+        for nvar, var in zip(range(1, len(listvar)+1), listvar):
+            # region for this variable
+            region = preprocessing[0]['selection_period_and_region']['regions'][var]
+            # wanted units for this variable
+            units = preprocessing[0]['selection_period_and_region']['units'][var]
+            # file_name (model)
+            file_name = dict_mod[mod][var]['path + filename']
+            # var_name (model)
+            var_name = dict_mod[mod][var]['varname']
+            # var_name (model)
+            # test if a regridding is needed
+            regridding = False
+            for ii in preprocessing.keys():
+                if preprocessing[ii].keys()[0] == 'regridding':
+                    grid = preprocessing[ii]['regridding']['newgrid']
+                    regridding = True
+                    print "grid '" + str(grid) + "' is needed"
+                    # @jiwoo: here begins the hard part...
+                    # this 'grid' is for now the name of a dataset
+                    # either you find the file for this dataset (using find_xml_obs in this program), read any
+                    # variable in the file (using ReadAndSelectRegion defined in 'DriverPreprocessingUvcdatToolsLib.py')
+                    # and retrieve the grid (grid = tab.getGrid()) and put it in the preprocessing dictionary instead of
+                    # the string in 'newgrid' (preprocessing[ii]['regridding']['newgrid'] = grid)
+                    #
+                    # the other choice is to do nothing. In this case grid defined in
+                    # preprocessing[ii]['regridding']['newgrid_name'] will be created and the model / obs data will be
+                    # regridded toward it
+                    #
+                    # the problem (whatever your choice above) is that model and observations will have a different mask
+                    # you will have to create a common mask and apply it later
+                    break
+            # compute preprocessing (model)
+            tab_mod, Nyears_mod, preprocessing_steps = DriverPreprocessing.preprocess(
+                file_name, var_name, preprocessing, region=region, period=period_mod, frequency=frequency, units=units)
+            dict_preprocessing_steps[var] = {'model': preprocessing_steps}
+            # begin the common mask
+            if regridding:
+                mask = tab_mod.mask
+            # ------------------------------------------------
+            # loop over observations and do the same as for the model
+            # list of observations for this metric and this variable
+            list_observations = dict_param_metric['obs_name'][var]
+            list_tab_obs, list_Nyears_obs = list(), list()
+            for nobs, obs in zip(range(len(list_observations)), list_observations):
+                # file_name (obs)
+                file_name = dict_obs[obs][var]['path + filename']
+                # var_name (obs)
+                var_name = dict_obs[obs][var]['varname']
+                # compute preprocessing (obs)
+                tab_obs, Nyears_obs, preprocessing_steps = DriverPreprocessing.preprocess(
+                    file_name, var_name, preprocessing, region=region, period=period_obs, frequency=frequency,
+                    units=units)
+                # continue the common mask
+                if regridding:
+                    mask = MV2where(tab_obs.mask, True, mask)
+                list_tab_obs.append(tab_obs)
+                list_Nyears_obs.append(Nyears_obs)
+            dict_preprocessing_steps[var] = {'observations': preprocessing_steps}
+            # apply the common mask on this variable
+            if regridding:
+                tab_mod = MV2masked_where(mask, tab_mod)
+                for nobs in range(len(list_observations)):
+                    list_tab_obs[nobs] = MV2masked_where(mask, list_tab_obs[nobs])
+            # get weights
+            weights = CDUTILarea_weights(tab_mod)
+            list_AxisList_obs, list_weights_obs = list(), list()
+            list_dict_obs = dict()
+            for nobs in range(len(list_observations)):
+                list_dict_obs.append({
+                    'array': list_tab_obs[nobs], 'axes': list_tab_obs[nobs].getAxisList(),
+                    'area_weights': CDUTILarea_weights(list_tab_obs[nobs]), 'Nyears': list_Nyears_obs[nobs],
+                })
+            # put variables in a dictionary (model & obs)
+            dict_data_to_compute_metric['modelVar' + str(nvar)] = {
+                'array': tab_mod, 'axes': tab_mod.getAxisList(), 'area_weights': weights, 'Nyears': Nyears_mod,
+            }
+            dict_data_to_compute_metric['obsVar' + str(nvar)] = list_dict_obs
+            dict_data_to_compute_metric['obsNameVar' + str(nvar)] = list_observations
+            dict_data_to_compute_metric['regionVar' + str(nvar)] = region
+        # ------------------------------------------------
+        # compute the given metric
+        dict_metric[metric] = ComputeMetric(mc_name, metric, mod, **dict_data_to_compute_metric)
+        dict_metric[metric]['preprocessing_steps'] = dict_preprocessing_steps
+    # ------------------------------------------------
+    # save results for each model
+    dict_model_metric[mod] = dict_metric
+    # prints the metrics values
     for ii in range (3): print ''
     print str().ljust(5) + str(mod)
     list_metric = dict_metric[mod]['metrics'].keys()

@@ -5,9 +5,7 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoLatRmse,\
-    EnsoLonRmse, EnsoMu, EnsoPrLatRmse, EnsoPrLonRmse, EnsoPrRmse, EnsoRmse, EnsoTauxLatRmse, EnsoTauxLonRmse,\
-    EnsoTauxRmse, EnsoSeasonality, NinaCompositeLon, NinoCompositeLon, NinaCompositeTS, NinoCompositeTS
+from EnsoMetricsLib import EnsoRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -181,74 +179,72 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
 #
 # Computation of the metric
 #
-dict_oneVar_modelAndObs = {
-    'EnsoRmse': EnsoRmse, 'EnsoLatRmse': EnsoLatRmse, 'EnsoLonRmse': EnsoLonRmse,
-    'EnsoPrRmse': EnsoPrRmse, 'EnsoPrLatRmse': EnsoPrLatRmse, 'EnsoPrLonRmse': EnsoPrLonRmse,
-    'EnsoTauxRmse': EnsoTauxRmse, 'EnsoTauxLatRmse': EnsoTauxLatRmse, 'EnsoTauxLonRmse': EnsoTauxLonRmse,
-    'NinaCompositeLon': NinaCompositeLon, 'NinaCompositeTS': NinaCompositeTS,
-    'NinoCompositeLon': NinoCompositeLon, 'NinoCompositeTS': NinoCompositeTS,
-}
+dict_oneVar_modelAndObs = {'EnsoRmse': EnsoRmse}
 
-dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality,}
+dict_oneVar = {}
 
-dict_twoVar = {
-    'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr, 'EnsoAlphaShf': EnsoAlphaShf,
-    'EnsoAlphaSwr': EnsoAlphaSwr, 'EnsoAlphaThf': EnsoAlphaThf, 'EnsoMu': EnsoMu,
-}
+dict_twoVar = {}
 
 
-def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsName, obsFile1, obsVarName1,
-                  regionVar1, modelFile2='', modelVarName2='', obsFile2='', obsVarName2='', regionVar2=''):
+def ComputeMetric(metricCollection, metric, modelName, modelVar1, obsNameVar1, obsVar1, **kwargs):
     """
     The ComputeMetric() function computes the given metric for the given model and observations
 
-    :param metricCollection:
-    :param metric:
-    :param modelName:
-    :param modelFile1:
-    :param modelVarName1:
-    :param obsName:
-    :param obsFile1:
-    :param obsVarName1:
-    :param regionVar1:
-    :param regionVar2:
-    :param modelFile2:
-    :param modelVarName2:
-    :param obsFile2:
-    :param obsVarName2:
-    :return:
+    :param metricCollection: string
+        name of the metric collection (from which the given 'metric' is from)
+    :param metric: string
+        name of the metric
+    :param modelName: string
+        name of the model (for which the metric is computed)
+    :param modelVar1: masked_array
+        masked_array of the first modeled variable of the given metric
+    :param obsNameVar1: string or list
+        name of the observations used for this first variable
+        if several observations are used for this variable, 'obsNameVar1' is a list of observations' name
+    :param obsVar1: masked_array or list of masked_array
+        masked_array of the first observed variable of the given metric
+        if several observations are used for this variable, 'obsNameVar1' is a list of observations' masked_array
+    usual kwargs:
+    :param modelVar2: masked_array
+        masked_array of the second modeled variable of the given metric
+    :param obsNameVar2: string or list
+        name of the observations used for this second variable
+        if several observations are used for this variable, 'obsNameVar1' is a list of observations' name
+    :param obsVar2: masked_array or list of masked_array
+        masked_array of the second observed variable of the given metric
+        if several observations are used for this variable, 'obsNameVar1' is a list of observations' masked_array
+
+    :return: dict()
+        dict_metrics = {'name', 'datasets', 'metric_values', 'method_to_compute_metric', 'raw_values', dict_diagnostic}
     """
-    # retrieving keyargs from EnsoCollectionsLib.defCollection
+    # retrieving metric collection dictionary: EnsoCollectionsLib.defCollection
     dict_mc = defCollection(metricCollection)
+    # read the list of variables for the given metric
+    list_variables = dict_mc['metrics_list'][metric]['variables']
+    # read the dictionary of parameters
+    dict_param = defCollection(metricCollection)['common_collection_parameters']
+
     # common_collection_parameters
-    keyarg = dict()
-    for arg in dict_mc['common_collection_parameters'].keys():
-        keyarg[arg] = dict_mc['common_collection_parameters'][arg]
-    for arg in dict_mc['metrics_list'][metric].keys():
-        keyarg[arg] = dict_mc['metrics_list'][metric][arg]
+    kwargs['metric_collection'] = metricCollection
+    for arg in dict_param.keys():
+        kwargs[arg] = dict_param[arg]
     # if 'metric_computation' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its
     # default value
     try:
-        keyarg['metric_computation']
+        kwargs['metric_computation']
     except:
-        keyarg['metric_computation'] = DefaultArgValues('metric_computation')
-    # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
-    # value
-    try:
-        keyarg['time_bounds_model'] = keyarg['modeled_period']
-    except:
-        keyarg['time_bounds_model'] = DefaultArgValues('time_bounds_model')
-    # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
-    # value
-    try:
-        keyarg['time_bounds_obs'] = keyarg['observed_period']
-    except:
-        keyarg['time_bounds_obs'] = DefaultArgValues('time_bounds_obs')
+        kwargs['metric_computation'] = DefaultArgValues('metric_computation')
 
     # obsName could be a list if the user wants to compare the model with a set of observations
     # if obsName is just a name (string) it is put in a list
-    if isinstance(obsName, basestring):
-        obsName = [obsName]
+    if isinstance(obsNameVar1, basestring):
+        obsNameVar1 = [obsNameVar1]
+        obsVar1 = [obsVar1]
+    try: kwargs['obsNameVar2']
+    except:
+        if isinstance(kwargs['obsNameVar2'], basestring):
+            kwargs['obsNameVar2'] = [kwargs['obsNameVar2']]
+            kwargs['obsVar2'] = [kwargs['obsVar2']]
 
     dict_metric_val = dict()
     if metric in dict_oneVar_modelAndObs.keys():
@@ -257,12 +253,11 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         # so the diagnostic is the metric
         #
         description_metric = "The metric is the statistical value between the model and the observations"
-        for ii in range(len(obsName)):
+        for ii in range(len(obsNameVar1)):
             # sets observations
-            obs, tmp_obsFile1, tmp_obsVarName1 = obsName[ii], obsFile1[ii], obsVarName1[ii]
+            obs, tab_obs = obsNameVar1[ii], obsVar1[ii]
             # computes the diagnostic/metric
-            diagnostic1 = dict_oneVar_modelAndObs[metric](
-                modelFile1, modelVarName1, tmp_obsFile1, tmp_obsVarName1, box=regionVar1, **keyarg)
+            diagnostic1 = dict_oneVar_modelAndObs[metric](modelVar1, modelName, obsVar1, obs, **kwargs)
             # puts metric values in its proper dictionary
             dict_metric_val['ref_' + obs] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
             # puts diagnostic values in its proper dictionary
@@ -274,13 +269,11 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 dict_diagnostic = {
                     'model': {
                         'name': modelName, 'value': None, 'value_error': None, 'nyears': diagnostic1['nyears_model'],
-                        'time_period': diagnostic1['time_period_model'],
                     },
                     'observations': {
                         obs: {
                             'name': obs, 'value': None, 'value_error': None,
                             'nyears': diagnostic1['nyears_observations'],
-                            'time_period': diagnostic1['time_period_observations'],
                         },
                     },
                 }
@@ -293,23 +286,21 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 # information about the model have already been saved: information about the observations are saved
                 dict_diagnostic['observations'][obs] = {
                     'name': obs, 'value': None, 'value_error': None, 'nyears': diagnostic1['nyears_observations'],
-                    'time_period': diagnostic1['time_period_observations'],
                 }
+                if 'events_observations' in diagnostic1.keys():
+                    dict_diagnostic['observations'][obs]['events'] = diagnostic1['events_observations']
     else:
         #
         # this part regroups all diagnostics that are computed separately for model and obs
         #
-        diag_obs = dict()
-
         # model diagnostic
-        keyarg['time_bounds'] = keyarg['time_bounds_model']
+        #
         if metric in dict_oneVar.keys():
             # computes diagnostic that needs only one variable
-            diagnostic1 = dict_oneVar[metric](modelFile1, modelVarName1, regionVar1, **keyarg)
+            diagnostic1 = dict_oneVar[metric](modelVar1, modelName, **kwargs)
         elif metric in dict_twoVar.keys():
             # computes diagnostic that needs two variables
-            diagnostic1 = dict_twoVar[metric](modelFile1, modelFile2, modelVarName1, modelVarName2, regionVar1,
-                                              regionVar2, **keyarg)
+            diagnostic1 = dict_twoVar[metric](modelVar1, modelName, kwargs['modelVar2'], **kwargs)
         else:
             diagnostic1 = None
             list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric", str().ljust(5) +
@@ -319,7 +310,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         dict_diagnostic = {
             'model': {
                 'name': modelName, 'value': diagnostic1['value'], 'value_error': diagnostic1['value_error'],
-                'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
+                'nyears': diagnostic1['nyears'],
             },
         }
         try:
@@ -329,41 +320,43 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         else:
             dict_diagnostic['model']['nonlinearity'] = diagnostic1['nonlinearity']
             dict_diagnostic['model']['nonlinearity_error'] = diagnostic1['nonlinearity_error']
-
-        # observations diag
-        keyarg['time_bounds'] = keyarg['time_bounds_obs']
-        for ii in range(len(obsName)):
+        #
+        # observations diagnostic
+        #
+        diag_obs = dict()
+        for ii in range(len(obsNameVar1)):
             # sets observations
-            obs, tmp_obsFile1, tmp_obsVarName1 = obsName[ii], obsFile1[ii], obsVarName1[ii]
-            keyarg['project_interpreter'] = obs
-#            keyarg['project_interpreter'] = 'CMIP'
+            obs1, tab_obs1 = obsNameVar1[ii], obsVar1[ii]
             if metric in dict_oneVar.keys():
-                diag_obs[obs] = dict_oneVar[metric](tmp_obsFile1, tmp_obsVarName1, regionVar1, **keyarg)
+                diag_obs[obs1] = dict_oneVar[metric](tab_obs1, obs1, **kwargs)
             elif metric in dict_twoVar.keys():
-                tmp_obsFile2, tmp_obsVarName2 = obsFile2[ii], obsVarName2[ii]
-                diag_obs[obs] = dict_twoVar[metric](tmp_obsFile1, tmp_obsFile2, tmp_obsVarName1, tmp_obsVarName2,
-                                                    regionVar1, regionVar2, **keyarg)
-            # saves the model diagnostic and the information about the model
+                for jj in range(len(kwargs['obsNameVar2'])):
+                    # sets observations
+                    obs2, tab_obs2 = kwargs['obsNameVar2'][ii], kwargs['obsVar2'][ii]
+                    output_name = list_variables[0] + '_' + str(obs1) + '__' + list_variables[1] + '_' + str(obs2)
+                    diag_obs[output_name] = dict_twoVar[metric](tab_obs1, obs1, tab_obs2, obs2, **kwargs)
+        # saves the model diagnostic and the information about the model
+        for obs in diag_obs.keys():
             try:
                 dict_diagnostic['observations']
             except:
-                # first observations (first round in the obs loop)
+                # first observations (first round in the obs loop
                 dict_diagnostic['observations'] = {
                     obs: {
                         'name': obs, 'value': diag_obs[obs]['value'], 'value_error': diag_obs[obs]['value_error'],
-                        'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
+                        'nyears': diag_obs[obs]['nyears'],
                     },
                 }
             else:
                 # next rounds in the obs loop
                 dict_diagnostic['observations'][obs] = {
                     'name': obs, 'value': diag_obs[obs]['value'], 'value_error': diag_obs[obs]['value_error'],
-                    'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
+                    'nyears': diagnostic1['nyears'],
                 }
             # computes the metric
             metric_val, metric_err, descript = MathMetriComputation(
                 diagnostic1['value'], diagnostic1['value_error'], obs=diag_obs[obs]['value'],
-                obs_err=diag_obs[obs]['value_error'], keyword=keyarg['metric_computation'])
+                obs_err=diag_obs[obs]['value_error'], keyword=kwargs['metric_computation'])
             description_metric = descript
             dict_metric_val['ref_' + str(obs)] = {'value': metric_val, 'value_error': metric_err}
             try:
@@ -376,7 +369,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 dict_diagnostic['observations'][obs]['nonlinearity_error'] = diag_obs[obs]['nonlinearity_error']
                 metric_val, metric_err, string = MathMetriComputation(
                     diagnostic1['nonlinearity'], diagnostic1['nonlinearity_error'], obs=diag_obs[obs]['nonlinearity'],
-                    obs_err=diag_obs[obs]['nonlinearity_error'], keyword=keyarg['metric_computation'])
+                    obs_err=diag_obs[obs]['nonlinearity_error'], keyword=kwargs['metric_computation'])
                 dict_metric_val['ref_' + str(obs)]['nonlinearity'] = metric_val
                 dict_metric_val['ref_' + str(obs)]['nonlinearity_error'] = metric_err
     # finishes to fill the diagnostic dictionary
@@ -393,8 +386,11 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         else:
             dict_diagnostic[key] = diagnostic1[key]
     # creates the output dictionary
+    datasets = [modelName] + obsNameVar1
+    if len(list_variables) > 1:
+        datasets = datasets + kwargs['obsNameVar2']
     dict_metrics = {
-        'name': metric, 'datasets':[modelName] + obsName, 'metric_values': dict_metric_val,
+        'name': metric, 'datasets': datasets, 'metric_values': dict_metric_val,
         'method_to_compute_metric': description_metric, 'raw_values': dict_diagnostic,
     }
     return dict_metrics

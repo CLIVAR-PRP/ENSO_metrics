@@ -176,7 +176,7 @@ def ObjectTypeError(parameter_name, type_parameter, type_parameter_should_be, in
     return
 
 
-def TooShortTimePeriod(metric_name, length, minimum_length, inspect_stack):
+def TooShortTimePeriod(metric_name, length, minimum_length, inspect_stack, info=''):
     """
     #################################################################################
     Description:
@@ -192,16 +192,18 @@ def TooShortTimePeriod(metric_name, length, minimum_length, inspect_stack):
         minimum length of the time axis for the metric to make sens (defined in the metrics collection)
     :param inspect_stack: array
         list of information about the program/module/line,... created using inspect.stack()
+    :param info: string
+        supplementary information about the 'too short time-period' dataset
     :return:
     """
     list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": too short time-period",
-                    str().ljust(5) + str(metric_name) + ": the time-period is too short: " + str(length)
+                    str().ljust(5) + str(metric_name) + ": " + str(info) + " time-period is too short: " + str(length)
                     + " (minimum time-period: " + str(minimum_length) + ")"]
     MyError(list_strings)
     return
 
 
-def UnlikelyUnits(var_name, name_in_file, units, inspect_stack):
+def UnlikelyUnits(file_name, name_in_file, units, inspect_stack):
     """
     #################################################################################
     Description:
@@ -220,16 +222,17 @@ def UnlikelyUnits(var_name, name_in_file, units, inspect_stack):
     :return:
     """
     list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": units",
-                    str().ljust(5) + "the file says that " + str(var_name) + " (" + str(name_in_file)
-                    + ") is in " + str(units) + " but it seems unlikely"]
+                    str().ljust(5) + "the file (" + str(file_name) +") says that " + str(name_in_file) + " is in "
+                    + str(units) + " but it seems unlikely"]
     MyError(list_strings)
     return
+
 
 def UnknownAveraging(average, known_average, inspect_stack):
     """
     #################################################################################
     Description:
-    Function 'MyError' in the case of unknown frequency
+    Function 'MyError' in the case of unknown averaging
     Prints strings
     #################################################################################
 
@@ -285,6 +288,30 @@ def UnknownKeyArg(arg, inspect_stack):
     """
     list_strings = ["ERROR" + MessageFormating(inspect_stack) + ": argument",
                     str().ljust(5) + "unknown argument(s): " + str(arg)]
+    MyError(list_strings)
+    return
+
+
+def UnknownPreprocessing(process, known_process, inspect_stack):
+    """
+    #################################################################################
+    Description:
+    Function 'MyError' in the case of unknown processing
+    Prints strings
+    #################################################################################
+
+    :param process: string
+        processing method
+    :param known_process: string
+        list of defined processing method
+    :param inspect_stack: array
+        list of information about the program/module/line,... created using inspect.stack()
+    :return:
+    """
+    list_strings = ["ERROR" + MessageFormating(inspect_stack) + ": averaging method",
+                    str().ljust(5) + "unkwown averaging method (axis): " + str(process),
+                    str().ljust(10) + "known averaging method: " + str(sorted(known_process)),
+                    ]
     MyError(list_strings)
     return
 
