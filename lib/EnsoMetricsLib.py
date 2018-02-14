@@ -912,7 +912,7 @@ def EnsoRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_r
             EnsoErrorsWarnings.MyError(list_strings)
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoRmse: the observed time-period is too short: " + str(len(sst_model))
+                            str().ljust(5) + "EnsoRmse: the observed time-period is too short: " + str(len(sst_obs))
                             + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -1053,7 +1053,7 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "EnsoLatRmse: the observed time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -1193,7 +1193,7 @@ def EnsoLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "EnsoLonRmse: the observed time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -1332,7 +1332,7 @@ def EnsoPrRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rms
             EnsoErrorsWarnings.MyError(list_strings)
         if len(pr_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoPrRmse: the observed time-period is too short: " + str(len(pr_model))
+                            str().ljust(5) + "EnsoPrRmse: the observed time-period is too short: " + str(len(pr_obs))
                             + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -1473,7 +1473,7 @@ def EnsoPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
         if len(pr_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "EnsoPrLatRmse: the observed time-period is too short: "
-                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(pr_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -1613,7 +1613,7 @@ def EnsoPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
         if len(pr_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "EnsoPrLonRmse: the observed time-period is too short: "
-                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(pr_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -1753,7 +1753,7 @@ def EnsoTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, ce
         if len(taux_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "EnsoTauxRmse: the observed time-period is too short: "
-                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(taux_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -1893,7 +1893,7 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
         if len(taux_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "EnsoTauxLatRmse: the observed time-period is too short: "
-                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(taux_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -2033,7 +2033,7 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
         if len(taux_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "EnsoTauxLonRmse: the observed time-period is too short: "
-                            + str(len(taux_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(taux_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -2282,7 +2282,7 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "NinaCompositeLon: the observed time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -2451,7 +2451,7 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "NinoCompositeLon: the observed time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -2618,7 +2618,7 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, eve
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "NinaCompositeTS: the observed time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
@@ -2758,7 +2758,7 @@ def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, eve
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
                             str().ljust(5) + "NinoCompositeTS: the observed time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
     # Number of years
