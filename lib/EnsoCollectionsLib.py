@@ -159,7 +159,7 @@ def defCollection(MC=True):
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
                 'frequency': 'monthly',
-                'min_time_steps': 324,
+                'min_time_steps': 300,
                 'normalization': False,
                 'observed_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
                 'modeled_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),

@@ -116,25 +116,40 @@ def ComputeCollection(metricCollection, dictDatasets):
         obsName, obsFile1, obsVarName1 = list(), list(), list()
         for obs in dictDatasets['observations'].keys():
             obsName.append(obs)
-            obsFile1.append(dictDatasets['observations'][obs][list_variables[0]]['path + filename'])
-            obsVarName1.append(dictDatasets['observations'][obs][list_variables[0]]['varname'])
+            try: dictDatasets['observations'][obs][list_variables[0]]
+            except: pass
+            else:
+                obsFile1.append(dictDatasets['observations'][obs][list_variables[0]]['path + filename'])
+                obsVarName1.append(dictDatasets['observations'][obs][list_variables[0]]['varname'])
         # same if a second variable is needed
         # this time in the form of a keyarg dictionary
-        arg_var2 = dict()
+        arg_var2 = {'obsFile2': []}
         if len(list_variables) > 1:
             arg_var2['modelFile2'] = dictDatasets['model'][modelName][list_variables[1]]['path + filename']
             arg_var2['modelVarName2'] = dictDatasets['model'][modelName][list_variables[1]]['varname']
             arg_var2['regionVar2'] = dict_regions[list_variables[1]]
             obsFile2, obsVarName2 = list(), list()
             for obs in dictDatasets['observations'].keys():
-                obsFile2.append(dictDatasets['observations'][obs][list_variables[1]]['path + filename'])
-                obsVarName2.append(dictDatasets['observations'][obs][list_variables[1]]['varname'])
+                try: dictDatasets['observations'][obs][list_variables[1]]
+                except: pass
+                else:
+                    obsFile2.append(dictDatasets['observations'][obs][list_variables[1]]['path + filename'])
+                    obsVarName2.append(dictDatasets['observations'][obs][list_variables[1]]['varname'])
             arg_var2['obsFile2'] = obsFile2
             arg_var2['obsVarName2'] = obsVarName2
         # computes the metric
-        dict_collection['metrics'][metric] = ComputeMetric(
-            metricCollection, metric, modelName, modelFile1, modelVarName1, obsName, obsFile1, obsVarName1,
-            dict_regions[list_variables[0]], **arg_var2)
+        if len(obsFile1) == 0 or (len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0):
+            print str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " + str(metric) + \
+                  " not computed"
+            print str().ljust(10) + "reason(s):"
+            if len(obsFile1) == 0:
+                print str().ljust(11) + "no observed " + list_variables[0] + " given"
+            if len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0:
+                print str().ljust(11) + "no observed " + list_variables[1] + " given"
+        else:
+            dict_collection['metrics'][metric] = ComputeMetric(
+                metricCollection, metric, modelName, modelFile1, modelVarName1, obsName, obsFile1, obsVarName1,
+                dict_regions[list_variables[0]], **arg_var2)
     return dict_collection
 # ---------------------------------------------------------------------------------------------------------------------#
 
