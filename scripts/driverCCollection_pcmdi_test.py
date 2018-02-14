@@ -11,7 +11,6 @@ from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 #xmldir = environ['XMLDIR']
 xmldir = 'test'
 
-
 def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
     file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
                           '_glob_' + str(frequency) + '_' + str(realm) + '.xml')
@@ -54,7 +53,8 @@ def find_xml_obs(obs,frequency, variable):
 mc_name = 'MC1'
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
-print 'jwlee: list_metric:', list_metric
+print 'jwlee_debug: mc_name:', mc_name
+print 'jwlee_debug: list_metric:', list_metric
 
 # parameters
 project = 'CMIP5'
@@ -71,8 +71,7 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-#list_variables = ['sst']
-print list_variables
+print 'list_variables:', list_variables
 
 # list of observations
 list_obs = list()
@@ -84,9 +83,8 @@ for metric in list_metric:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
 #list_obs = ['HadISST']
-#list_obs = ['Tropflux']
 list_obs = ['Tropflux']
-print list_obs
+print 'list_obs:', list_obs
 
 ################################################
 obspath = {
@@ -136,25 +134,22 @@ for obs in list_obs:
             if isinstance(var_in_file, list):
                 list_files = list()
                 for var1 in var_in_file:
+                    file_name = obspath[obs].replace('VAR',var1)
                     list_files.append(file_name)
             else:
                 list_files = file_name
             dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file}
 
-print 'jwlee: dict_obs readin end'
-import sys
-#sys.exit()
-
 # models
-print 'jwlee: model start'
 list_models = ['IPSL-CM5B-LR']
+print 'jwlee_debug: model loop start for ', list_models
 #
 # finding file and variable name in file for each observations dataset
 #
 dict_metric = dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
-    print 'jwlee, mod:', mod
+    print 'jwlee_debug, mod:', mod
     dict_mod = {mod: {}}
     # ------------------------------------------------
     # @jiwoo: between these dash the program is a bit ad hoc...
@@ -162,13 +157,14 @@ for mod in list_models:
     # on the atmosphere grid
     # if you want to use atmosphere only, do not use this or create your own way to find the equivalent between the
     # variable name in the program and the variable name in the file
+    print 'jwlee_debug, var loop start'
     for var in list_variables:
-        print 'jwlee, var:', var
+        ###print 'jwlee_debug, var:', var
         #
         # finding variable name in file
         #
         var_in_file = dict_var[var]['var_name']
-        print 'jwlee, var_in_file:', var_in_file
+        ###print 'jwlee_debug, var_in_file:', var_in_file
         if isinstance(var_in_file, list):
             var0 = var_in_file[0]
         else:
@@ -178,7 +174,7 @@ for mod in list_models:
         #
         # @jiwoo: first try in the realm 'O' (for ocean)
         modpath = '/work/lee1043/ESGF/xmls/cmip5/historical/mo/VAR/cmip5.MOD.historical.r1i1p1.mo.VAR.xml'
-        ##file_name = modpath.replace('MOD',mod).replace('VAR',var0)
+        file_name = modpath.replace('MOD',mod).replace('VAR',var0)
         ###file_name = find_xml_cmip(mod, project, experiment, ensemble, frequency, realm, var0)
         ###file = CDMS2open(file_name)
         if isinstance(var_in_file, list):
@@ -188,9 +184,10 @@ for mod in list_models:
                 list_files.append(file_name)
         else:
             list_files = file_name
-        print 'jwlee, list_files:', list_files
+        ###print 'jwlee_debug, list_files:', list_files
         # ------------------------------------------------
         dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
+    print 'jwlee_debug, var loop end'
     # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
     # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
     # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
@@ -199,7 +196,9 @@ for mod in list_models:
     # another dataset
     dictDatasets = {'model': dict_mod, 'observations': dict_obs}
     # Computes the metric collection
+    print 'jwlee_debug, computes metric collection start'
     dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
+    print 'jwlee_debug, computes metric collection end'
     # Prints the metrics values
     for ii in range (3): print ''
     print str().ljust(5) + str(mod)
