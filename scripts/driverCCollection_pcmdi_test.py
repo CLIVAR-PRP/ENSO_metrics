@@ -82,8 +82,14 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-#list_obs = ['HadISST']
-list_obs = ['Tropflux']
+try:
+    list_obs.remove('ERSSTv5')
+except:
+    pass
+try:
+    list_obs.remove('GPCPv2.3')
+except:
+    pass
 print 'list_obs:', list_obs
 
 ################################################
@@ -95,7 +101,6 @@ obspath = {
     'OAFlux': '/work/lee1043/DATA/OAFlux/xmls/OAFlux_VAR_mo.xml',
 }
 ################################################
-
 
 #
 # finding file and variable name in file for each observations dataset
