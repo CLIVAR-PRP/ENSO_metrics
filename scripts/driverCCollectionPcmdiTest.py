@@ -62,7 +62,7 @@ except:
 try:
     list_obs.remove('GPCPv2.3')
 except:
-pass
+    pass
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
