@@ -66,6 +66,20 @@ except:
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
+################################################
+# Below is something should go back to parameter file
+obspath = {
+    'ERA-Interim': '/work/lee1043/DATA/reanalysis/ERAINT/mon/ERA-Interim_VAR_mo.xml',
+    'HadISST': '/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc',
+    'OISST': '/work/lee1043/DATA/OISST/xmls/OISST_tos_mo.xml',
+    'Tropflux': '/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_VAR_mo.xml',
+    'OAFlux': '/work/lee1043/DATA/OAFlux/xmls/OAFlux_VAR_mo.xml',
+}
+
+modpath = '/work/lee1043/ESGF/xmls/cmip5/historical/mo/VAR/cmip5.MOD.historical.r1i1p1.mo.VAR.xml'
+################################################
+
+
 #
 # finding file and variable name in file for each observations dataset
 #
