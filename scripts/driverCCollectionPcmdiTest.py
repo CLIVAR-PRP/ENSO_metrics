@@ -12,49 +12,12 @@ from MV2 import where as MV2where
 # ENSO_metrics package functions:
 #from lib.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 #from lib.EnsoComputeMetricsLib import ComputeMetric
-from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
-from EnsoComputeMetricsLib import ComputeMetric
+#from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+#from EnsoComputeMetricsLib import ComputeMetric
+from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 
 import DriverPreprocessing
-xmldir = environ['XMLDIR']
-
-
-def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
-    file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
-                          '_glob_' + str(frequency) + '_' + str(realm) + '.xml')
-    xml = CDMS2open(file_name)
-    listvar1 = sorted(xml.listvariables())
-    if variable not in listvar1:
-        if realm == 'O':
-            new_realm = 'A'
-        elif realm == 'A':
-            new_realm = 'O'
-        # if var is not in realm 'O' (for ocean), look for it in realm 'A' (for atmosphere)
-        file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
-                              '_glob_' + str(frequency) + '_' + str(new_realm) + '.xml')
-        xml = CDMS2open(file_name)
-        listvar2 = sorted(xml.listvariables())
-        if variable not in listvar2:
-            print '\033[95m' + "CMIP var " + str(variable) + " cannot be found (realm A and O)" + '\033[0m'
-            print '\033[95m' + str().ljust(5) + "file_name = " + str(file_name) + '\033[0m'
-            print '\033[95m' + str().ljust(5) + "variables = " + str(listvar1) + '\033[0m'
-            print '\033[95m' + str().ljust(5) + "AND" + '\033[0m'
-            print '\033[95m' + str().ljust(5) + "variables = " + str(listvar2) + '\033[0m'
-            exit(1)
-    return file_name
-
-
-def find_xml_obs(obs,frequency, variable):
-    file_name = join_path(xmldir, 'obs_' + str(obs) + '_glob_' + str(frequency) + '_O.xml')
-    xml = CDMS2open(file_name)
-    listvar1 = sorted(xml.listvariables())
-    if variable not in listvar1:
-        print '\033[95m' + "obs var " + str(variable) + " cannot be found" + '\033[0m'
-        print '\033[95m' + str().ljust(5) + "file_name = " + str(file_name) + '\033[0m'
-        print '\033[95m' + str().ljust(5) + "variables = " + str(listvar1) + '\033[0m'
-        exit(1)
-    return file_name
-
 
 # metric collection
 mc_name = 'MC1'
@@ -92,6 +55,14 @@ for metric in list_metric:
         for obs in dict_var_obs[var]:
             if obs not in list_obs:
                 list_obs.append(obs)
+try:
+    list_obs.remove('ERSSTv5')
+except:
+    pass
+try:
+    list_obs.remove('GPCPv2.3')
+except:
+pass
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -125,11 +96,13 @@ for obs in list_obs:
             # finding file for 'obs', 'var'
             #
             # @jiwoo: pretty easy as I have all variables in one file
-            file_name = find_xml_obs(obs, freq, var0)
+            ##file_name = find_xml_obs(obs, freq, var0)
+            file_name = obspath[obs].replace('VAR',var0)
             # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
                 list_files = list()
                 for var1 in var_in_file:
+                    file_name = obspath[obs].replace('VAR',var1)
                     list_files.append(file_name)
             else:
                 list_files = file_name
@@ -164,11 +137,13 @@ for mod in list_models:
         # finding file for 'mod', 'var'
         #
         # @jiwoo: first try in the realm 'O' (for ocean)
-        file_name = find_xml_cmip(mod, project, experiment, ensemble, freq, realm, var0)
-        file = CDMS2open(file_name)
+        #file_name = find_xml_cmip(mod, project, experiment, ensemble, freq, realm, var0)
+        #file = CDMS2open(file_name)
+        file_name = modpath.replace('MOD',mod).replace('VAR',var0) 
         if isinstance(var_in_file, list):
             list_files = list()
             for var1 in var_in_file:
+                file_name = modpath.replace('MOD',mod).replace('VAR',var1)
                 list_files.append(file_name)
         else:
             list_files = file_name
