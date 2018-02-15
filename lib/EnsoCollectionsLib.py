@@ -20,7 +20,7 @@ def defCollection(MC=True):
             'metrics_list': {
                 'EnsoRmse': {
                     'variables': ['sst'],
-                    'obs_name': {'sst': ['HadISST']},
+                    'obs_name': {'sst': ['ERSSTv5', 'HadISST']},
                     'preprocessing': {
                         0: {
                             'selection_period_and_region': {

@@ -35,11 +35,11 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
         xml = CDMS2open(file_name)
         listvar2 = sorted(xml.listvariables())
         if variable not in listvar2:
-            print str().ljust(5) + "CMIP var " + str(variable) + " cannot be found (realm A and O)"
-            print str().ljust(10) + "file_name = " + str(file_name)
-            print str().ljust(10) + "variables = " + str(listvar1)
-            print str().ljust(10) + "AND"
-            print str().ljust(10) + "variables = " + str(listvar2)
+            print '\033[95m' + "CMIP var " + str(variable) + " cannot be found (realm A and O)" + '\033[0m'
+            print '\033[95m' + str().ljust(5) + "file_name = " + str(file_name) + '\033[0m'
+            print '\033[95m' + str().ljust(5) + "variables = " + str(listvar1) + '\033[0m'
+            print '\033[95m' + str().ljust(5) + "AND" + '\033[0m'
+            print '\033[95m' + str().ljust(5) + "variables = " + str(listvar2) + '\033[0m'
             exit(1)
     return file_name
 
@@ -49,9 +49,9 @@ def find_xml_obs(obs,frequency, variable):
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
-        print str().ljust(5) + "obs var " + str(variable) + " cannot be found"
-        print str().ljust(10) + "file_name = " + str(file_name)
-        print str().ljust(10) + "variables = " + str(listvar1)
+        print '\033[95m' + "obs var " + str(variable) + " cannot be found" + '\033[0m'
+        print '\033[95m' + str().ljust(5) + "file_name = " + str(file_name) + '\033[0m'
+        print '\033[95m' + str().ljust(5) + "variables = " + str(listvar1) + '\033[0m'
         exit(1)
     return file_name
 
@@ -82,7 +82,7 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-print list_variables
+print '\033[95m' + str(list_variables) + '\033[0m'
 
 # list of observations
 list_obs = list()
@@ -92,9 +92,7 @@ for metric in list_metric:
         for obs in dict_var_obs[var]:
             if obs not in list_obs:
                 list_obs.append(obs)
-list_obs = sorted(list_obs)
-list_obs = ['HadISST'] # just one observational dataset for a start
-print list_obs
+print '\033[95m' + str(list_obs) + '\033[0m'
 
 
 #
@@ -117,7 +115,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print var + " in not available for " + str(obs) + " or unscripted"
+            print '\033[95m' + str(var) + " in not available for " + str(obs) + " or unscripted" + '\033[0m'
         else:
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]
@@ -193,7 +191,7 @@ for mod in list_models:
     # create dictionary to save results for each metric
     dict_metric = dict()
     for metric in list_metric:
-        print str().ljust(5) + str(mod) + ", metric = " +str(metric)
+        print '\033[95m' + str(mod) + ", metric = " + str(metric) + '\033[0m'
         # read the dictionary of parameters for this metric from 'EnsoCollectionsLib.py'
         dict_param_metric = dict_mc['metrics_list'][metric]
         # list of variables for this metric
@@ -209,7 +207,7 @@ for mod in list_models:
         # ------------------------------------------------
         # loop over variables
         for nvar, var in zip(range(1, len(listvar)+1), listvar):
-            print str().ljust(10) + str(mod) + ", metric = " + str(metric) + ", variable = " + str(var)
+            print '\033[95m' + str(mod) + ", metric = " + str(metric) + ", variable = " + str(var) + '\033[0m'
             # region for this variable
             region = preprocessing[0]['selection_period_and_region']['regions'][var]
             # wanted units for this variable
@@ -225,7 +223,7 @@ for mod in list_models:
                 if preprocessing[ii].keys()[0] == 'regridding':
                     grid = preprocessing[ii]['regridding']['newgrid']
                     regridding = True
-                    print "grid '" + str(grid) + "' is needed"
+                    print '\033[95m' + "grid '" + str(grid) + "' is needed" + '\033[0m'
                     # @jiwoo: here begins the hard part...
                     # this 'grid' is for now the name of a dataset
                     # either you find the file for this dataset (using find_xml_obs in this program), read any
@@ -243,7 +241,8 @@ for mod in list_models:
             # compute preprocessing (model)
             tab_mod, Nyears_mod, preprocessing_steps = DriverPreprocessing.preprocess(
                 file_name, var_name, preprocessing, region=region, period=period_mod, frequency=frequency, units=units)
-            print str().ljust(10) + str(mod) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"
+            print '\033[95m' + str(mod) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"\
+                  + '\033[0m'
             dict_preprocessing_steps[var] = {'model': preprocessing_steps}
             # begin the common mask
             if regridding:
@@ -254,7 +253,7 @@ for mod in list_models:
             list_observations = dict_param_metric['obs_name'][var]
             list_tab_obs, list_Nyears_obs = list(), list()
             for nobs, obs in zip(range(len(list_observations)), list_observations):
-                print str().ljust(15) + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var)
+                print '\033[95m' + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var) + '\033[0m'
                 # file_name (obs)
                 file_name = dict_obs[obs][var]['path + filename']
                 # var_name (obs)
@@ -268,7 +267,8 @@ for mod in list_models:
                     mask = MV2where(tab_obs.mask, True, mask)
                 list_tab_obs.append(tab_obs)
                 list_Nyears_obs.append(Nyears_obs)
-                print str().ljust(15) + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"
+                print '\033[95m' + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"\
+                      + '\033[0m'
             dict_preprocessing_steps[var] = {'observations': preprocessing_steps}
             # apply the common mask on this variable
             if regridding:
@@ -300,17 +300,17 @@ for mod in list_models:
     dict_model_metric[mod] = dict_metric
     # prints the metrics values
     for ii in range (3): print ''
-    print str().ljust(5) + str(mod)
+    print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
     for metric in list_metric:
-        print str().ljust(10) + str(metric)
+        print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
         dict_tmp1 = dict_model_metric[mod][metric]['metric_values']
         for ref in dict_tmp1.keys():
-            print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(dict_tmp1[ref]['value']) + ', error = '\
-                  + str(dict_tmp1[ref]['value_error'])
+            print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(dict_tmp1[ref]['value'])\
+                  + ', error = ' + str(dict_tmp1[ref]['value_error']) + '\033[0m'
         dict_tmp1 = dict_model_metric[mod][metric]['raw_values']['observations']
         for ref in dict_tmp1.keys():
-            print str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = ' + str(dict_tmp1[ref]['value']) +\
-                  ', error = ' + str(dict_tmp1[ref]['value_error'])
+            print '\033[95m' + str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = '\
+                  + str(dict_tmp1[ref]['value']) + ', error = ' + str(dict_tmp1[ref]['value_error']) + '\033[0m'
         dict_tmp1 = dict_model_metric[mod][metric]['raw_values']['model']
-        print str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(dict_tmp1['value']) +\
-                  ', error = ' + str(dict_tmp1['value_error'])
+        print '\033[95m' + str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(dict_tmp1['value'])\
+              + ', error = ' + str(dict_tmp1['value_error']) + '\033[0m'
