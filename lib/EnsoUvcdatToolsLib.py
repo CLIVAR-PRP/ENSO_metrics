@@ -1565,10 +1565,10 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
     # average
     if average is not False:
-        print str().ljust(5) + "EnsoUvcdatToolsLib PreProcessTS"
-        print str().ljust(10) + "averaging to perform: " + str(average)
-        print str().ljust(15) + "tab.shape = " + str(tab.shape)
-        print str().ljust(15) + "tab.axes = " + str(tab.getAxisList())
+        print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib PreProcessTS" + '\033[0m'
+        print '\033[93m' + str().ljust(20) + "averaging to perform: " + str(average) + '\033[0m'
+        print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
+        print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
         if isinstance(average, basestring):
             try: dict_average[average]
             except:
@@ -1577,14 +1577,15 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
                 tab = dict_average[average](tab)
         elif isinstance(average, list):
             for av in average:
-                print str().ljust(20) + "perform " + str(av)
+                print '\033[93m' + str().ljust(20) + "perform " + str(av) + '\033[0m'
                 try: dict_average[av]
                 except:
                     EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
                 else:
                     tab = dict_average[av](tab)
-                    print str().ljust(20) + "tab.shape = " + str(tab.shape)
-                    print str().ljust(20) + "tab.axes = " + str(tab.getAxisList())
+                    print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
+                    print '\033[93m' + str().ljust(25) + "tab.axes = "\
+                          + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
         else:
             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info

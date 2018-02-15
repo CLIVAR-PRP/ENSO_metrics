@@ -97,8 +97,14 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
+    print '\033[92m' + str().ljust(10) + "EnsoAlphaLhf" + '\033[0m'
+    print '\033[92m' + str().ljust(15) + "sst var is " + str(sstname) + ", file is " + str(sstfile) + '\033[0m'
+    print '\033[92m' + str().ljust(15) + "lhf var is " + str(lhfname) + ", file is " + str(lhffile) + '\033[0m'
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
     lhf = ReadSelectRegionCheckUnits(lhffile, lhfname, 'heat flux', box=lhfbox, **kwargs)
+    print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.shape = " + str(lhf.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lhf = CheckTime(sst, lhf, metric_name='EnsoAlphaLhf', **kwargs)
@@ -108,26 +114,24 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
 
     # Time period
     actualtimebounds = TimeBounds(sst)
-    print str().ljust(5) + "EnsoAlphaLhf"
-    print str().ljust(10) + "sst var is " + str(sstname) + ", file is " + str(sstfile)
-    print str().ljust(15) + "sst.shape = " + str(sst.shape)
-    print str().ljust(15) + "sst.timebounds = " + str(actualtimebounds)
-    print str().ljust(15) + "sst.axes = " + str(sst.getAxisList())
-    print str().ljust(10) + "lhf var is " + str(lhfname) + ", file is " + str(lhffile)
-    print str().ljust(15) + "lhf.shape = " + str(lhf.shape)
-    print str().ljust(15) + "lhf.timebounds = " + str(TimeBounds(lhf))
-    print str().ljust(15) + "lhf.axes = " + str(lhf.getAxisList())
+    print '\033[92m' + str().ljust(15) + "after CheckTime" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(actualtimebounds) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.shape = " + str(lhf.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
     sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
     lhf, unneeded = PreProcessTS(lhf, Method, average='horizontal', compute_anom=True, **kwargs)
-    print str().ljust(10) + "after PreProcessTS"
-    print str().ljust(15) + "sst.shape = " + str(sst.shape)
-    print str().ljust(15) + "sst.timebounds = " + str(TimeBounds(sst))
-    print str().ljust(15) + "sst.axes = " + str(sst.getAxisList())
-    print str().ljust(15) + "lhf.shape = " + str(lhf.shape)
-    print str().ljust(15) + "lhf.timebounds = " + str(TimeBounds(lhf))
-    print str().ljust(15) + "lhf.axes = " + str(lhf.getAxisList())
+    print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(TimeBounds(sst)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.shape = " + str(lhf.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
 
     # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
     alphaLhf, alphaLhfPos, alphaLhfNeg = LinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
@@ -233,7 +237,7 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, **kwargs):
         for ii in range(len(lwrfile)):
             filename, varname = lwrfile[ii], lwrname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=lwrbox, **kwargs)
-    lwr = MyDerive(kwargs['project_interpreter'], 'lwr', dict_var)
+    lwr = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lwr = CheckTime(sst, lwr, metric_name='EnsoAlphaLwr', **kwargs)
@@ -460,7 +464,7 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, **kwargs):
         for ii in range(len(swrfile)):
             filename, varname = swrfile[ii], swrname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=swrbox, **kwargs)
-    swr = MyDerive(kwargs['project_interpreter'], 'swr', dict_var)
+    swr = MyDerive(kwargs['project_interpreter_var2'], 'swr', dict_var)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, swr = CheckTime(sst, swr, metric_name='EnsoAlphaSwr', **kwargs)
@@ -584,7 +588,7 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox, **kwargs):
         for ii in range(len(thffile)):
             filename, varname = thffile[ii], thfname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=thfbox, **kwargs)
-    thf = MyDerive(kwargs['project_interpreter'], 'thf', dict_var)
+    thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, thf = CheckTime(sst, thf, metric_name='EnsoAlphaThf', **kwargs)
@@ -1053,10 +1057,19 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
+    print '\033[92m' + str().ljust(10) + "EnsoLatRmse" + '\033[0m'
+    print '\033[92m' + str().ljust(15) + "model var is " + str(sstnamemodel) + ", file is "\
+          + str(sstfilemodel) + '\033[0m'
+    print '\033[92m' + str().ljust(15) + "obs var is " + str(sstnameobs) + ", file is " + str(sstfileobs) + '\033[0m'
     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.timebounds = " + str(TimeBounds(sst_model)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1079,27 +1092,16 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     # Time period
     actualtimeboundsmodel = TimeBounds(sst_model)
     actualtimeboundsobs = TimeBounds(sst_obs)
-    print str().ljust(5) + "EnsoLatRmse"
-    print str().ljust(10) + "model var is " + str(sstnamemodel) + ", file is " + str(sstfilemodel)
-    print str().ljust(15) + "model.shape = " + str(sst_model.shape)
-    print str().ljust(15) + "model.timebounds = " + str(actualtimeboundsmodel)
-    print str().ljust(15) + "model.axes = " + str(sst_model.getAxisList())
-    print str().ljust(10) + "obs var is " + str(sstfileobs) + ", file is " + str(sstnameobs)
-    print str().ljust(15) + "obs.shape = " + str(sst_obs.shape)
-    print str().ljust(15) + "obs.timebounds = " + str(actualtimeboundsobs)
-    print str().ljust(15) + "obs.axes = " + str(sst_obs.getAxisList())
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
     sst_model, Method = PreProcessTS(sst_model, Method, average=['time', 'zonal'], compute_anom=False, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
-    print str().ljust(10) + "after PreProcessTS"
-    print str().ljust(15) + "model.shape = " + str(sst_model.shape)
-    print str().ljust(15) + "model.timebounds = " + str(TimeBounds(sst_model))
-    print str().ljust(15) + "model.axes = " + str(sst_model.getAxisList())
-    print str().ljust(15) + "obs.shape = " + str(sst_obs.shape)
-    print str().ljust(15) + "obs.timebounds = " + str(TimeBounds(sst_obs))
-    print str().ljust(15) + "obs.axes = " + str(sst_obs.getAxisList())
+    print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1109,6 +1111,11 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+        print '\033[92m' + str().ljust(15) + "after TwoVarRegrid" + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # Computes the root mean square difference
     sstRmse = RmsMeridional(sst_model, sst_obs, centered=centered_rmse)

@@ -105,6 +105,7 @@ def ComputeCollection(metricCollection, dictDatasets):
     dict_m = dict_mc['metrics_list']
     list_metrics = sorted(dict_m.keys())
     for metric in list_metrics:
+        print '\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m'
         # sets arguments for this metric
         list_variables = dict_m[metric]['variables']
         dict_regions = dict_m[metric]['regions']
@@ -113,12 +114,12 @@ def ComputeCollection(metricCollection, dictDatasets):
         modelFile1 = dictDatasets['model'][modelName][list_variables[0]]['path + filename']
         modelVarName1 = dictDatasets['model'][modelName][list_variables[0]]['varname']
         # observations name(s), file(s), variable(s) name in file(s)
-        obsName, obsFile1, obsVarName1 = list(), list(), list()
+        obsNameVar1, obsFile1, obsVarName1 = list(), list(), list()
         for obs in dictDatasets['observations'].keys():
-            obsName.append(obs)
             try: dictDatasets['observations'][obs][list_variables[0]]
             except: pass
             else:
+                obsNameVar1.append(obs)
                 obsFile1.append(dictDatasets['observations'][obs][list_variables[0]]['path + filename'])
                 obsVarName1.append(dictDatasets['observations'][obs][list_variables[0]]['varname'])
         # same if a second variable is needed
@@ -128,27 +129,29 @@ def ComputeCollection(metricCollection, dictDatasets):
             arg_var2['modelFile2'] = dictDatasets['model'][modelName][list_variables[1]]['path + filename']
             arg_var2['modelVarName2'] = dictDatasets['model'][modelName][list_variables[1]]['varname']
             arg_var2['regionVar2'] = dict_regions[list_variables[1]]
-            obsFile2, obsVarName2 = list(), list()
+            obsNameVar2, obsFile2, obsVarName2 = list(), list(), list()
             for obs in dictDatasets['observations'].keys():
                 try: dictDatasets['observations'][obs][list_variables[1]]
                 except: pass
                 else:
+                    obsNameVar2.append(obs)
                     obsFile2.append(dictDatasets['observations'][obs][list_variables[1]]['path + filename'])
                     obsVarName2.append(dictDatasets['observations'][obs][list_variables[1]]['varname'])
+            arg_var2['obsNameVar2'] = obsNameVar2
             arg_var2['obsFile2'] = obsFile2
             arg_var2['obsVarName2'] = obsVarName2
         # computes the metric
         if len(obsFile1) == 0 or (len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0):
-            print str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " + str(metric) + \
-                  " not computed"
-            print str().ljust(10) + "reason(s):"
+            print '\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric "\
+                  + str(metric) + " not computed" + '\033[0m'
+            print '\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m'
             if len(obsFile1) == 0:
-                print str().ljust(11) + "no observed " + list_variables[0] + " given"
+                print '\033[94m' + str().ljust(11) + "no observed " + list_variables[0] + " given" + '\033[0m'
             if len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0:
-                print str().ljust(11) + "no observed " + list_variables[1] + " given"
+                print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
         else:
             dict_collection['metrics'][metric] = ComputeMetric(
-                metricCollection, metric, modelName, modelFile1, modelVarName1, obsName, obsFile1, obsVarName1,
+                metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], **arg_var2)
     return dict_collection
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -212,8 +215,9 @@ dict_twoVar = {
 }
 
 
-def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsName, obsFile1, obsVarName1,
-                  regionVar1, modelFile2='', modelVarName2='', obsFile2='', obsVarName2='', regionVar2=''):
+def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
+                  regionVar1, modelFile2='', modelVarName2='', obsNameVar2='', obsFile2='', obsVarName2='',
+                  regionVar2=''):
     """
     The ComputeMetric() function computes the given metric for the given model and observations
 
@@ -235,6 +239,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     """
     # retrieving keyargs from EnsoCollectionsLib.defCollection
     dict_mc = defCollection(metricCollection)
+    # read the list of variables for the given metric
+    list_variables = dict_mc['metrics_list'][metric]['variables']
+
     # common_collection_parameters
     keyarg = dict()
     for arg in dict_mc['common_collection_parameters'].keys():
@@ -262,8 +269,19 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
 
     # obsName could be a list if the user wants to compare the model with a set of observations
     # if obsName is just a name (string) it is put in a list
-    if isinstance(obsName, basestring):
-        obsName = [obsName]
+    if isinstance(obsNameVar1, basestring):
+        obsNameVar1 = [obsNameVar1]
+    if isinstance(obsFile1, basestring):
+        obsFile1 = [obsFile1]
+    if isinstance(obsVarName1, basestring):
+        obsVarName1 = [obsVarName1]
+    # Var2, do the same as for Var1
+    if isinstance(obsNameVar2, basestring):
+        obsNameVar2 = [obsNameVar2]
+    if isinstance(obsFile2, basestring):
+        obsFile2 = [obsFile2]
+    if isinstance(obsVarName2, basestring):
+        obsVarName2 = [obsVarName2]
 
     dict_metric_val = dict()
     if metric in dict_oneVar_modelAndObs.keys():
@@ -272,9 +290,11 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         # so the diagnostic is the metric
         #
         description_metric = "The metric is the statistical value between the model and the observations"
-        for ii in range(len(obsName)):
+        for ii in range(len(obsNameVar1)):
             # sets observations
-            obs, tmp_obsFile1, tmp_obsVarName1 = obsName[ii], obsFile1[ii], obsVarName1[ii]
+            obs, tmp_obsFile1, tmp_obsVarName1 = obsNameVar1[ii], obsFile1[ii], obsVarName1[ii]
+            print '\033[94m' + str().ljust(5) + "ComputeMetric: RMSmetric = " + str(modelName) + " and " + str(obs)\
+                  + '\033[0m'
             # computes the diagnostic/metric
             diagnostic1 = dict_oneVar_modelAndObs[metric](
                 modelFile1, modelVarName1, tmp_obsFile1, tmp_obsVarName1, box=regionVar1, **keyarg)
@@ -318,11 +338,15 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
 
         # model diagnostic
         keyarg['time_bounds'] = keyarg['time_bounds_model']
+        keyarg['project_interpreter_var1'] = keyarg['project_interpreter']
         if metric in dict_oneVar.keys():
             # computes diagnostic that needs only one variable
+            print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
             diagnostic1 = dict_oneVar[metric](modelFile1, modelVarName1, regionVar1, **keyarg)
         elif metric in dict_twoVar.keys():
             # computes diagnostic that needs two variables
+            print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
+            keyarg['project_interpreter_var2'] = keyarg['project_interpreter']
             diagnostic1 = dict_twoVar[metric](modelFile1, modelFile2, modelVarName1, modelVarName2, regionVar1,
                                               regionVar2, **keyarg)
         else:
@@ -347,18 +371,24 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
 
         # observations diag
         keyarg['time_bounds'] = keyarg['time_bounds_obs']
-        for ii in range(len(obsName)):
+        for ii in range(len(obsNameVar1)):
             # sets observations
-            obs, tmp_obsFile1, tmp_obsVarName1 = obsName[ii], obsFile1[ii], obsVarName1[ii]
-            keyarg['project_interpreter'] = obs
+            obs1, tmp_obsFile1, tmp_obsVarName1 = obsNameVar1[ii], obsFile1[ii], obsVarName1[ii]
+            keyarg['project_interpreter_var1'] = obs1
 #            keyarg['project_interpreter'] = 'CMIP'
             if metric in dict_oneVar.keys():
-                diag_obs[obs] = dict_oneVar[metric](tmp_obsFile1, tmp_obsVarName1, regionVar1, **keyarg)
+                print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(obs1) + '\033[0m'
+                diag_obs[obs1] = dict_oneVar[metric](tmp_obsFile1, tmp_obsVarName1, regionVar1, **keyarg)
             elif metric in dict_twoVar.keys():
-                tmp_obsFile2, tmp_obsVarName2 = obsFile2[ii], obsVarName2[ii]
-                diag_obs[obs] = dict_twoVar[metric](tmp_obsFile1, tmp_obsFile2, tmp_obsVarName1, tmp_obsVarName2,
-                                                    regionVar1, regionVar2, **keyarg)
-            # saves the model diagnostic and the information about the model
+                for jj in range(len(obsNameVar2)):
+                    obs2, tmp_obsFile2, tmp_obsVarName2 = obsNameVar2[jj], obsFile2[jj], obsVarName2[jj]
+                    output_name = list_variables[0] + '_' + str(obs1) + '__' + list_variables[1] + '_' + str(obs2)
+                    keyarg['project_interpreter_var2'] = obs2
+                    print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) + '\033[0m'
+                    diag_obs[output_name] = dict_twoVar[metric](tmp_obsFile1, tmp_obsFile2, tmp_obsVarName1,
+                                                                tmp_obsVarName2, regionVar1, regionVar2, **keyarg)
+        # saves the model diagnostic and the information about the model
+        for obs in diag_obs.keys():
             try:
                 dict_diagnostic['observations']
             except:
@@ -409,7 +439,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             dict_diagnostic[key] = diagnostic1[key]
     # creates the output dictionary
     dict_metrics = {
-        'name': metric, 'datasets':[modelName] + obsName, 'metric_values': dict_metric_val,
+        'name': metric, 'datasets':[modelName] + obsNameVar1 + obsNameVar2, 'metric_values': dict_metric_val,
         'method_to_compute_metric': description_metric, 'raw_values': dict_diagnostic,
     }
     return dict_metrics

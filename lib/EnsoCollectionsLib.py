@@ -16,7 +16,7 @@ def defCollection(MC=True):
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
-                    'obs_name': {'sst': ['HadISST','OISST']},
+                    'obs_name': {'sst': ['HadISST','Tropflux']},
                     'metric_computation': 'relative_difference', # i.e., (obs-model)/model
                     # the "science panel" will have to define the "metric", it could be the difference (obs-model), the
                     # ratio (model/model), the relative difference ([obs-model]/model),...
@@ -28,49 +28,49 @@ def defCollection(MC=True):
                 'EnsoSeasonality': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'OISST']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
                 'EnsoRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'tropical_pacific'},
-                    'obs_name': {'sst': ['HadISST', 'OISST']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
                 },
                 'EnsoAlphaLhf': {
                     'variables': ['sst','lhf'],
                     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'OISST'], 'lwr': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
                 'EnsoAlphaLwr': {
                     'variables': ['sst', 'lwr'],
                     'regions': {'sst': 'nino3', 'lwr': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'OISST'], 'lwr': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
                 'EnsoAlphaShf': {
                     'variables': ['sst', 'shf'],
                     'regions': {'sst': 'nino3', 'shf': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'OISST'], 'shf': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'shf': ['Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
                 'EnsoAlphaSwr': {
                     'variables': ['sst', 'swr'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'OISST'], 'swr': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'swr': ['Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
                 'EnsoAlphaThf': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'OISST'], 'thf': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'thf': ['Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
                 'EnsoMu': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['HadISST', 'OISST'], 'taux': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'taux': ['Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
             },
@@ -114,13 +114,13 @@ def defCollection(MC=True):
                 'EnsoTauxLatRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'nino3'},
-                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'taux': ['Tropflux']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'EnsoTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
-                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'taux': ['Tropflux']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'NinaCompositeLon': {
@@ -321,7 +321,7 @@ def ReferenceRegions(AR=True):
         'nino3': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (210., 270.)},
         'nino3.4': {'long_name': 'Niño 3.4', 'latitude': (-5., 5.), 'longitude': (190., 240.)},
         'nino4': {'long_name': 'Niño 4', 'latitude': (-5., 5.), 'longitude': (160., 210.)},
-        'nino3_reduced': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (-140., -110.)},
+        'nino3_reduced': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (220., 250.)},
     }
     if AR:
         return dict_reference_regions[AR]

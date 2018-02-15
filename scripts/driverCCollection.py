@@ -27,11 +27,12 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
         xml = CDMS2open(file_name)
         listvar2 = sorted(xml.listvariables())
         if variable not in listvar2:
-            print str().ljust(5) + "CMIP var " + str(variable) + " cannot be found (realm A and O)"
-            print str().ljust(10) + "file_name = " + str(file_name)
-            print str().ljust(10) + "variables = " + str(listvar1)
-            print str().ljust(10) + "AND"
-            print str().ljust(10) + "variables = " + str(listvar2)
+            print '\033[95m' + str().ljust(5) + "CMIP var " + str(variable) +\
+                  " cannot be found (realm A and O)" + '\033[0m'
+            print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
+            print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
+            print '\033[95m' + str().ljust(10) + "AND" + '\033[0m'
+            print '\033[95m' + str().ljust(10) + "variables = " + str(listvar2) + '\033[0m'
             exit(1)
     return file_name
 
@@ -41,9 +42,9 @@ def find_xml_obs(obs,frequency, variable):
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
-        print str().ljust(5) + "obs var " + str(variable) + " cannot be found"
-        print str().ljust(10) + "file_name = " + str(file_name)
-        print str().ljust(10) + "variables = " + str(listvar1)
+        print '\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m'
+        print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
+        print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
         exit(1)
     return file_name
 
@@ -68,7 +69,7 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-print list_variables
+print '\033[95m' + str(list_variables) + '\033[0m'
 
 # list of observations
 list_obs = list()
@@ -79,7 +80,7 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-print list_obs
+print '\033[95m' + str(list_obs) + '\033[0m'
 
 
 #
@@ -102,7 +103,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print var + " in not available for " + str(obs) + " or unscripted"
+            print '\033[95m' + str(var) + " in not available for " + str(obs) + " or unscripted" + '\033[0m'
         else:
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]
@@ -170,19 +171,19 @@ for mod in list_models:
     # Computes the metric collection
     dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
     # Prints the metrics values
-    for ii in range (3): print ''
-    print str().ljust(5) + str(mod)
+    for ii in range(3): print ''
+    print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
     list_metric = dict_metric[mod]['metrics'].keys()
     for metric in list_metric:
-        print str().ljust(10) + str(metric)
+        print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
         metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']
         for ref in metric_dict.keys():
-            print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
-                  + str(metric_dict[ref]['value_error'])
+            print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value'])\
+                  + ', error = ' + str(metric_dict[ref]['value_error']) + '\033[0m'
         raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['observations']
         for ref in raw_dict.keys():
-            print str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = ' + str(raw_dict[ref]['value']) +\
-                  ', error = ' + str(raw_dict[ref]['value_error'])
+            print '\033[95m' + str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = '\
+                  + str(raw_dict[ref]['value']) + ', error = ' + str(raw_dict[ref]['value_error']) + '\033[0m'
         raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['model']
-        print str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
-                  ', error = ' + str(raw_dict['value_error'])
+        print '\033[95m' + str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
+                  ', error = ' + str(raw_dict['value_error']) + '\033[0m'
