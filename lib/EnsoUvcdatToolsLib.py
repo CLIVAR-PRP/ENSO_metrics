@@ -1563,8 +1563,12 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
-    # horizontal average
+    # average
     if average is not False:
+        print str().ljust(5) + "EnsoUvcdatToolsLib PreProcessTS"
+        print str().ljust(10) + "averaging to perform: " + str(average)
+        print str().ljust(15) + "tab.shape = " + str(tab.shape)
+        print str().ljust(15) + "tab.axes = " + str(tab.getAxisList())
         if isinstance(average, basestring):
             try: dict_average[average]
             except:
@@ -1573,11 +1577,14 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
                 tab = dict_average[average](tab)
         elif isinstance(average, list):
             for av in average:
+                print str().ljust(20) + "perform " + str(av)
                 try: dict_average[av]
                 except:
                     EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
                 else:
                     tab = dict_average[av](tab)
+                    print str().ljust(20) + "tab.shape = " + str(tab.shape)
+                    print str().ljust(20) + "tab.axes = " + str(tab.getAxisList())
         else:
             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info

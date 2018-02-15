@@ -108,10 +108,26 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
 
     # Time period
     actualtimebounds = TimeBounds(sst)
+    print str().ljust(5) + "EnsoAlphaLhf"
+    print str().ljust(10) + "sst var is " + str(sstname) + ", file is " + str(sstfile)
+    print str().ljust(15) + "sst.shape = " + str(sst.shape)
+    print str().ljust(15) + "sst.timebounds = " + str(actualtimebounds)
+    print str().ljust(15) + "sst.axes = " + str(sst.getAxisList())
+    print str().ljust(10) + "lhf var is " + str(lhfname) + ", file is " + str(lhffile)
+    print str().ljust(15) + "lhf.shape = " + str(lhf.shape)
+    print str().ljust(15) + "lhf.timebounds = " + str(TimeBounds(lhf))
+    print str().ljust(15) + "lhf.axes = " + str(lhf.getAxisList())
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
     sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
     lhf, unneeded = PreProcessTS(lhf, Method, average='horizontal', compute_anom=True, **kwargs)
+    print str().ljust(10) + "after PreProcessTS"
+    print str().ljust(15) + "sst.shape = " + str(sst.shape)
+    print str().ljust(15) + "sst.timebounds = " + str(TimeBounds(sst))
+    print str().ljust(15) + "sst.axes = " + str(sst.getAxisList())
+    print str().ljust(15) + "lhf.shape = " + str(lhf.shape)
+    print str().ljust(15) + "lhf.timebounds = " + str(TimeBounds(lhf))
+    print str().ljust(15) + "lhf.axes = " + str(lhf.getAxisList())
 
     # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
     alphaLhf, alphaLhfPos, alphaLhfNeg = LinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
@@ -1063,11 +1079,27 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     # Time period
     actualtimeboundsmodel = TimeBounds(sst_model)
     actualtimeboundsobs = TimeBounds(sst_obs)
+    print str().ljust(5) + "EnsoLatRmse"
+    print str().ljust(10) + "model var is " + str(sstnamemodel) + ", file is " + str(sstfilemodel)
+    print str().ljust(15) + "model.shape = " + str(sst_model.shape)
+    print str().ljust(15) + "model.timebounds = " + str(actualtimeboundsmodel)
+    print str().ljust(15) + "model.axes = " + str(sst_model.getAxisList())
+    print str().ljust(10) + "obs var is " + str(sstfileobs) + ", file is " + str(sstnameobs)
+    print str().ljust(15) + "obs.shape = " + str(sst_obs.shape)
+    print str().ljust(15) + "obs.timebounds = " + str(actualtimeboundsobs)
+    print str().ljust(15) + "obs.axes = " + str(sst_obs.getAxisList())
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
     sst_model, Method = PreProcessTS(sst_model, Method, average=['time', 'zonal'], compute_anom=False, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
+    print str().ljust(10) + "after PreProcessTS"
+    print str().ljust(15) + "model.shape = " + str(sst_model.shape)
+    print str().ljust(15) + "model.timebounds = " + str(TimeBounds(sst_model))
+    print str().ljust(15) + "model.axes = " + str(sst_model.getAxisList())
+    print str().ljust(15) + "obs.shape = " + str(sst_obs.shape)
+    print str().ljust(15) + "obs.timebounds = " + str(TimeBounds(sst_obs))
+    print str().ljust(15) + "obs.axes = " + str(sst_obs.getAxisList())
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
