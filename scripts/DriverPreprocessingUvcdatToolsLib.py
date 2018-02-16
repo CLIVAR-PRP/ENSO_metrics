@@ -696,12 +696,12 @@ def ReadAndSelectRegion(filename, varname, info, box=None, time_bounds=None, fre
         nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         if time_bounds is None:  # no time period given
             #  read file
-            tab = fi(varname, nbox)
-#            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#            tab = fi(varname, nbox)
+            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         else:
             # read file
-            tab = fi(varname, nbox, time=time_bounds)
-#            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#            tab = fi(varname, nbox, time=time_bounds)
+            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
     fi.close()
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'

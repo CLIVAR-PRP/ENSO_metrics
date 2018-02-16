@@ -25,6 +25,8 @@ def preprocess(file_name, var_name, preprocessing, region=None, period=None, fre
     print '\033[93m' + str().ljust(10) + "after ReadAndSelectRegion" + '\033[0m'
     print '\033[93m' + str().ljust(15) + "tab.shape = " + str(tab.shape) + '\033[0m'
     print '\033[93m' + str().ljust(15) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
+    print '\033[93m' + str().ljust(15) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
+    print '\033[93m' + str().ljust(15) + "tab.bounds = " + str(tab.getGrid().getBounds()) + '\033[0m'
     print '\033[93m' + str().ljust(15) + "tab.units = " + str(tab.units) + '\033[0m'
     if frequency == "daily":
         Nyears = len(tab) / 365
@@ -43,4 +45,6 @@ def preprocess(file_name, var_name, preprocessing, region=None, period=None, fre
                                                 **preprocessing[num][process])
             print '\033[93m' + str().ljust(15) + "tab.shape = " + str(tab.shape) + '\033[0m'
             print '\033[93m' + str().ljust(15) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
+            print '\033[93m' + str().ljust(15) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
+            print '\033[93m' + str().ljust(15) + "tab.bounds = " + str(tab.getGrid().getBounds()) + '\033[0m'
     return tab, Nyears, info
