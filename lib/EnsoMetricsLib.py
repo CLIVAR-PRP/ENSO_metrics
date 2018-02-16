@@ -1088,8 +1088,14 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.timebounds = " + str(TimeBounds(sst_model)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.longitude = " + str(sst_model.getLongitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.timebounds = " + str(TimeBounds(sst_obs)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.longitude = " + str(sst_obs.getLongitude()) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1119,8 +1125,11 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     sst_obs, unneeded = PreProcessTS(sst_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # Regridding

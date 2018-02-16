@@ -476,6 +476,9 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # retains only the latest start date and the earliest end date
     stime = max(stime1, stime2)
     etime = min(etime1, etime2)
+    print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib CheckTime" + '\033[0m'
+    print '\033[93m' + str().ljust(20) + "start time: " + str(stime) + '\033[0m'
+    print '\033[93m' + str().ljust(20) + "end   time: " + str(etime) + '\033[0m'
 
     # defines the period between the two dates
     if frequency == 'daily':
@@ -494,6 +497,11 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # retains only the time-period common to both tab1 and tab2
     tab1_sliced = tab1(time=(stime_adjust, etime_adjust))
     tab2_sliced = tab2(time=(stime_adjust, etime_adjust))
+    print '\033[93m' + str().ljust(20) + "check if both array are on the same time period" + '\033[0m'
+    print '\033[93m' + str().ljust(20) + "tab1 time: " + str(tab1_sliced.getTime().asComponentTime()[0]) + " to "\
+          + str(tab1_sliced.getTime().asComponentTime()[-1]) + '\033[0m'
+    print '\033[93m' + str().ljust(20) + "tab2 time: " + str(tab2_sliced.getTime().asComponentTime()[0]) + " to " \
+          + str(tab2_sliced.getTime().asComponentTime()[-1]) + '\033[0m'
 
     # checks if the remaining time-period fulfills the minimum length criterion
     if min_time_steps is not None:
@@ -899,12 +907,12 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         if time_bounds is None:  # no time period given
             #  read file
-            tab = fi(varname, nbox)
-#            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#            tab = fi(varname, nbox)
+            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         else:
             # read file
-            tab = fi(varname, nbox, time=time_bounds)
-#            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#            tab = fi(varname, nbox, time=time_bounds)
+            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
     fi.close()
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
@@ -1568,6 +1576,7 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
         print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib PreProcessTS" + '\033[0m'
         print '\033[93m' + str().ljust(20) + "averaging to perform: " + str(average) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
+        print '\033[93m' + str().ljust(25) + "tab.latitude = " + str(tab.getLatitude()) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
         if isinstance(average, basestring):
             try: dict_average[average]
@@ -1584,6 +1593,7 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
                 else:
                     tab = dict_average[av](tab)
                     print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
+                    print '\033[93m' + str().ljust(25) + "tab.latitude = " + str(tab.getLatitude()) + '\033[0m'
                     print '\033[93m' + str().ljust(25) + "tab.axes = "\
                           + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
         else:
