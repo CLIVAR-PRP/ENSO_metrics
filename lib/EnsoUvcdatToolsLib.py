@@ -471,7 +471,7 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib CheckTime" + '\033[0m'
     if metric_name == 'EnsoAlphaLwr':
         print '\033[93m' + str().ljust(20) + "tab1.shape = " + str(tab1.shape) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab1.timebounds " + str(TimeBounds(tab1))
+        print '\033[93m' + str().ljust(20) + "tab1.timebounds " + str(TimeBounds(tab1)) + '\033[0m'
         print '\033[93m' + str().ljust(20) + "tab1.axes = " + str([ax.id for ax in tab1.getAxisList()]) + '\033[0m'
         print '\033[93m' + str().ljust(20) + "tab1, time = " + str(stime1) + " to " + str(etime1) + '\033[0m'
 
@@ -480,7 +480,7 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     etime2 = tab2.getTime().asComponentTime()[-1]
     if metric_name == 'EnsoAlphaLwr':
         print '\033[93m' + str().ljust(20) + "tab2.shape = " + str(tab2.shape) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab2.timebounds " + str(TimeBounds(tab2))
+        print '\033[93m' + str().ljust(20) + "tab2.timebounds " + str(TimeBounds(tab2)) + '\033[0m'
         print '\033[93m' + str().ljust(20) + "tab2.axes = " + str([ax.id for ax in tab2.getAxisList()]) + '\033[0m'
         print '\033[93m' + str().ljust(20) + "tab2, time = " + str(stime2) + " to " + str(etime2) + '\033[0m'
 
@@ -1489,11 +1489,20 @@ def MyDerive(project, internal_variable_name, dict_var):
         dict_obs_var = dict_obs[project]['variable_name_in_file']
         # test if 'internal_variable_name' is defined for this observations dataset
         if internal_variable_name in dict_obs_var.keys():
+            print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib MyDerive" + '\033[0m'
+            print '\033[93m' + str().ljust(20) + "internal variable name " + str(internal_variable_name) + '\033[0m'
             list_var = dict_obs_var[internal_variable_name]['var_name']
             # test if keys in list_var are in 'dict_var'
             StringInDict(list_var, dict_var, INSPECTstack())
             if isinstance(list_var, basestring):
                 # this 'internal_variable_name' is based on one variable
+                print '\033[93m' + str().ljust(20) + "it is already one variable (" + str(list_var)\
+                      + ") in this dataset (" + str(project) + ")" + '\033[0m'
+                print '\033[93m' + str().ljust(20) + "outvar.shape = " + str(dict_var[list_var].shape) + '\033[0m'
+                print '\033[93m' + str().ljust(20) + "outvar.timebounds " + str(TimeBounds(dict_var[list_var]))\
+                      + '\033[0m'
+                print '\033[93m' + str().ljust(20) + "outvar.axes = "\
+                      + str([ax.id for ax in dict_var[list_var].getAxisList()]) + '\033[0m'
                 return dict_var[list_var]
             else:
                 # this 'internal_variable_name' is based on several variables
@@ -1517,6 +1526,12 @@ def MyDerive(project, internal_variable_name, dict_var):
                 outvar.setAxisList(dict_var[list_var[0]].getAxisList())
                 outvar = MV2masked_where(dict_var[list_var[0]].mask, outvar)
                 outvar.setGrid(dict_var[list_var[0]].getGrid())
+                print '\033[93m' + str().ljust(20) + "this variable is computed using " + str(len(list_var))\
+                      + " variables (" + str(list_var) + ") in this dataset (" + str(project) + ")" + '\033[0m'
+                print '\033[93m' + str().ljust(20) + "outvar.shape = " + str(outvar.shape) + '\033[0m'
+                print '\033[93m' + str().ljust(20) + "outvar.timebounds " + str(TimeBounds(outvar)) + '\033[0m'
+                print '\033[93m' + str().ljust(20) + "outvar.axes = " \
+                      + str([ax.id for ax in outvar.getAxisList()]) + '\033[0m'
                 return outvar
     else:
         list_strings = [
