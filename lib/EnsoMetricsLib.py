@@ -248,12 +248,12 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, **kwargs):
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=lwrbox, **kwargs)
             print '\033[92m' + str().ljust(15) + "reading lwr (several files / variables" + '\033[0m'
             print '\033[92m' + str().ljust(20) + varname + ".shape = " + str(dict_var[varname].shape) + '\033[0m'
-            print '\033[92m' + str().ljust(20) + varname + ".timebounds = " + str(TimeBounds(dict_var[varname]))\
+            print '\033[92m' + str().ljust(20) + varname + ".timebounds = " + str(TimeBounds(dict_var[varname])) \
                   + '\033[0m'
-            print '\033[92m' + str().ljust(20) + "varname + .axes = "\
+            print '\033[92m' + str().ljust(20) + varname + ".axes = " \
                   + str([ax.id for ax in dict_var[varname].getAxisList()]) + '\033[0m'
-            print '\033[92m' + str().ljust(20) + varname + ".axesList = " + str(dict_var[lwrname].getAxisList())\
-                  + '\033[0m'
+            print '\033[92m' + str().ljust(20) + varname + ".axesList = " \
+                  + str(dict_var[varname].getAxisList()) + '\033[0m'
     lwr = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
     print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
