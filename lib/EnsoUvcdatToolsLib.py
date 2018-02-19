@@ -468,15 +468,25 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
+    print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib CheckTime" + '\033[0m'
+    if metric_name == 'EnsoAlphaLwr':
+        print '\033[93m' + str().ljust(20) + "tab1.shape = " + str(tab1.shape) + '\033[0m'
+        print '\033[93m' + str().ljust(20) + "tab1.timebounds " + str(TimeBounds(tab1))
+        print '\033[93m' + str().ljust(20) + "tab1.axes = " + str([ax.id for ax in tab1.getAxisList()]) + '\033[0m'
+        print '\033[93m' + str().ljust(20) + "tab1, time = " + str(stime1) + " to " + str(etime1) + '\033[0m'
 
     # gets dates of the first and last the time steps of tab2
     stime2 = tab2.getTime().asComponentTime()[0]
     etime2 = tab2.getTime().asComponentTime()[-1]
+    if metric_name == 'EnsoAlphaLwr':
+        print '\033[93m' + str().ljust(20) + "tab2.shape = " + str(tab2.shape) + '\033[0m'
+        print '\033[93m' + str().ljust(20) + "tab2.timebounds " + str(TimeBounds(tab2))
+        print '\033[93m' + str().ljust(20) + "tab2.axes = " + str([ax.id for ax in tab2.getAxisList()]) + '\033[0m'
+        print '\033[93m' + str().ljust(20) + "tab2, time = " + str(stime2) + " to " + str(etime2) + '\033[0m'
 
     # retains only the latest start date and the earliest end date
     stime = max(stime1, stime2)
     etime = min(etime1, etime2)
-    print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib CheckTime" + '\033[0m'
     print '\033[93m' + str().ljust(20) + "start time: " + str(stime) + '\033[0m'
     print '\033[93m' + str().ljust(20) + "end   time: " + str(etime) + '\033[0m'
 
@@ -1469,6 +1479,9 @@ def MyDerive(project, internal_variable_name, dict_var):
                 for ii in range(1,len(list_var)):
                     var, operator = list_var[ii], list_operator[ii]
                     outvar = dict_operations[operator](outvar, dict_var[var])
+                outvar.setAxisList(dict_var[list_var[0]].getAxisList())
+                outvar = MV2masked_where(dict_var[list_var[0]].mask, outvar)
+                outvar.setGrid(dict_var[list_var[0]].getGrid())
                 return outvar
     # compute 'internal_variable_name' in 'obs' case
     elif project in dict_obs.keys():
@@ -1501,6 +1514,9 @@ def MyDerive(project, internal_variable_name, dict_var):
                 for ii in range(1, len(list_var)):
                     var, operator = list_var[ii], list_operator[ii]
                     outvar = dict_operations[operator](outvar, dict_var[var])
+                outvar.setAxisList(dict_var[list_var[0]].getAxisList())
+                outvar = MV2masked_where(dict_var[list_var[0]].mask, outvar)
+                outvar.setGrid(dict_var[list_var[0]].getGrid())
                 return outvar
     else:
         list_strings = [
