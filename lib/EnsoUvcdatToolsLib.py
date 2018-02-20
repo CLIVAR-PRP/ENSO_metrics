@@ -479,14 +479,14 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # tmp is  0 when time1 = time2
     # tmp is  1 when time1 > time2
     if tmp in [0, -1]:
-        stime = deepcopy(stime2)
+        stime = stime2
     else:
-        stime = deepcopy(stime1)
+        stime = stime1
     tmp = etime1.cmp(etime2)
     if tmp in [0, -1]:
-        etime = deepcopy(etime1)
+        etime = etime1
     else:
-        etime = deepcopy(etime2)
+        etime = etime2
 
     # defines the period between the two dates
     if frequency == 'daily':

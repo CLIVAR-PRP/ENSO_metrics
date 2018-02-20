@@ -216,34 +216,18 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, **kwargs):
     dict_var = dict()
     if isinstance(lwrfile, basestring):
         dict_var[lwrname] = ReadSelectRegionCheckUnits(lwrfile, lwrname, 'heat flux', box=lwrbox, **kwargs)
-        print '\033[92m' + str().ljust(15) + "reading lwr (one file / one variable" + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "lwr.shape = " + str(dict_var[lwrname].shape) + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "lwr.timebounds = " + str(TimeBounds(dict_var[lwrname])) + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "lwr.axes = " + str([ax.id for ax in dict_var[lwrname].getAxisList()]) \
-              + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "lwr.axesList = " + str(dict_var[lwrname].getAxisList()) + '\033[0m'
     else:
         for ii in range(len(lwrfile)):
             filename, varname = lwrfile[ii], lwrname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=lwrbox, **kwargs)
-            print '\033[92m' + str().ljust(15) + "reading lwr (several files / variables" + '\033[0m'
-            print '\033[92m' + str().ljust(20) + varname + ".shape = " + str(dict_var[varname].shape) + '\033[0m'
-            print '\033[92m' + str().ljust(20) + varname + ".timebounds = " + str(TimeBounds(dict_var[varname])) \
-                  + '\033[0m'
-            print '\033[92m' + str().ljust(20) + varname + ".axes = " \
-                  + str([ax.id for ax in dict_var[varname].getAxisList()]) + '\033[0m'
-            print '\033[92m' + str().ljust(20) + varname + ".axesList = " \
-                  + str(dict_var[varname].getAxisList()) + '\033[0m'
     lwr = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
     print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(TimeBounds(sst)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "sst.axesList = " + str(sst.getAxisList()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lwr.shape = " + str(lwr.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lwr.timebounds = " + str(TimeBounds(lwr)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lwr.axes = " + str([ax.id for ax in lwr.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "lwr.axesList = " + str(lwr.getAxisList()) + '\033[0m'
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lwr = CheckTime(sst, lwr, metric_name='EnsoAlphaLwr', **kwargs)
