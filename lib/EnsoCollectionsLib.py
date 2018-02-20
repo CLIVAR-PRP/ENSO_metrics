@@ -13,66 +13,66 @@ def defCollection(MC=True):
         'MC1': {
             'long_name': 'Metrics Collection 1',
             'metrics_list': {
-                # 'EnsoAmpl': {
-                #     'variables': ['sst'],
-                #     'regions': {'sst': 'nino3'},
-                #     'obs_name': {'sst': ['HadISST','Tropflux']},
-                #     'metric_computation': 'relative_difference', # i.e., (obs-model)/model
-                #     # the "science panel" will have to define the "metric", it could be the difference (obs-model), the
-                #     # ratio (model/model), the relative difference ([obs-model]/model),...
-                #
-                #     # the portrait plot will not be able to show the "real" metric value because of the normalization
-                #     # (to share a common colorbar) but we could dive down on a plot (like Bellenger et al. 2013, Fig. 1)
-                #     # showing the metric values and / or the diagnostic values for observations and model
-                # },
-                # 'EnsoSeasonality': {
-                #     'variables': ['sst'],
-                #     'regions': {'sst': 'nino3'},
-                #     'obs_name': {'sst': ['HadISST', 'Tropflux']},
-                #     'metric_computation': 'relative_difference',
-                # },
-                # 'EnsoRmse': {
-                #     'variables': ['sst'],
-                #     'regions': {'sst': 'tropical_pacific'},
-                #     'obs_name': {'sst': ['HadISST', 'Tropflux']},
-                #     'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
-                # },
-                # 'EnsoAlphaLhf': {
-                #     'variables': ['sst','lhf'],
-                #     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
-                #     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
-                #     'metric_computation': 'relative_difference',
-                # },
+                'EnsoAmpl': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux']},
+                    'metric_computation': 'relative_difference', # i.e., (obs-model)/model
+                    # the "science panel" will have to define the "metric", it could be the difference (obs-model), the
+                    # ratio (model/model), the relative difference ([obs-model]/model),...
+
+                    # the portrait plot will not be able to show the "real" metric value because of the normalization
+                    # (to share a common colorbar) but we could dive down on a plot (like Bellenger et al. 2013, Fig. 1)
+                    # showing the metric values and / or the diagnostic values for observations and model
+                },
+                'EnsoSeasonality': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux']},
+                    'metric_computation': 'relative_difference',
+                },
+                'EnsoRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'tropical_pacific'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux']},
+                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                },
+                'EnsoAlphaLhf': {
+                    'variables': ['sst','lhf'],
+                    'regions': {'sst': 'nino3', 'lhf': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
+                    'metric_computation': 'relative_difference',
+                },
                 'EnsoAlphaLwr': {
                     'variables': ['sst', 'lwr'],
                     'regions': {'sst': 'nino3', 'lwr': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
                     'metric_computation': 'relative_difference',
                 },
-                # 'EnsoAlphaShf': {
-                #     'variables': ['sst', 'shf'],
-                #     'regions': {'sst': 'nino3', 'shf': 'nino3'},
-                #     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'shf': ['Tropflux']},
-                #     'metric_computation': 'relative_difference',
-                # },
-                # 'EnsoAlphaSwr': {
-                #     'variables': ['sst', 'swr'],
-                #     'regions': {'sst': 'nino3', 'swr': 'nino3'},
-                #     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'swr': ['Tropflux']},
-                #     'metric_computation': 'relative_difference',
-                # },
-                # 'EnsoAlphaThf': {
-                #     'variables': ['sst', 'thf'],
-                #     'regions': {'sst': 'nino3', 'thf': 'nino3'},
-                #     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'thf': ['Tropflux']},
-                #     'metric_computation': 'relative_difference',
-                # },
-                # 'EnsoMu': {
-                #     'variables': ['sst', 'taux'],
-                #     'regions': {'sst': 'nino3', 'taux': 'nino4'},
-                #     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'taux': ['Tropflux']},
-                #     'metric_computation': 'relative_difference',
-                # },
+                'EnsoAlphaShf': {
+                    'variables': ['sst', 'shf'],
+                    'regions': {'sst': 'nino3', 'shf': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'shf': ['Tropflux']},
+                    'metric_computation': 'relative_difference',
+                },
+                'EnsoAlphaSwr': {
+                    'variables': ['sst', 'swr'],
+                    'regions': {'sst': 'nino3', 'swr': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'swr': ['Tropflux']},
+                    'metric_computation': 'relative_difference',
+                },
+                'EnsoAlphaThf': {
+                    'variables': ['sst', 'thf'],
+                    'regions': {'sst': 'nino3', 'thf': 'nino3'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'thf': ['Tropflux']},
+                    'metric_computation': 'relative_difference',
+                },
+                'EnsoMu': {
+                    'variables': ['sst', 'taux'],
+                    'regions': {'sst': 'nino3', 'taux': 'nino4'},
+                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'taux': ['Tropflux']},
+                    'metric_computation': 'relative_difference',
+                },
             },
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
@@ -90,43 +90,43 @@ def defCollection(MC=True):
                 'EnsoLatRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3_reduced'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'EnsoLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'EnsoPrLatRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'nino3_reduced'},
-                    'obs_name': {'pr': ['ERA-Interim']},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'EnsoPrLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
-                    'obs_name': {'pr': ['ERA-Interim']},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'EnsoTauxLatRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'nino3'},
-                    'obs_name': {'taux': ['ERA-Interim']},
+                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'EnsoTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
-                    'obs_name': {'taux': ['ERA-Interim']},
+                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
                 },
                 'NinaCompositeLon': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},
@@ -134,7 +134,7 @@ def defCollection(MC=True):
                 'NinaCompositeTS': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -142,7 +142,7 @@ def defCollection(MC=True):
                 'NinoCompositeLon': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_to_obs': True, 'regridTool': 'adamsregrid', 'regridMethod': 'linear'},

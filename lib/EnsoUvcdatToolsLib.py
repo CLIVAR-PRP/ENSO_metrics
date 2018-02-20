@@ -468,27 +468,25 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
-    print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib CheckTime" + '\033[0m'
-    if metric_name == 'EnsoAlphaLwr':
-        print '\033[93m' + str().ljust(20) + "tab1.shape = " + str(tab1.shape) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab1.timebounds " + str(TimeBounds(tab1)) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab1.axes = " + str([ax.id for ax in tab1.getAxisList()]) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab1, time = " + str(stime1) + " to " + str(etime1) + '\033[0m'
 
     # gets dates of the first and last the time steps of tab2
     stime2 = tab2.getTime().asComponentTime()[0]
     etime2 = tab2.getTime().asComponentTime()[-1]
-    if metric_name == 'EnsoAlphaLwr':
-        print '\033[93m' + str().ljust(20) + "tab2.shape = " + str(tab2.shape) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab2.timebounds " + str(TimeBounds(tab2)) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab2.axes = " + str([ax.id for ax in tab2.getAxisList()]) + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "tab2, time = " + str(stime2) + " to " + str(etime2) + '\033[0m'
 
     # retains only the latest start date and the earliest end date
-    stime = max(stime1, stime2)
-    etime = min(etime1, etime2)
-    print '\033[93m' + str().ljust(20) + "start time: " + str(stime) + '\033[0m'
-    print '\033[93m' + str().ljust(20) + "end   time: " + str(etime) + '\033[0m'
+    tmp = stime1.cmp(stime2)
+    # tmp is -1 when time1 < time2
+    # tmp is  0 when time1 = time2
+    # tmp is  1 when time1 > time2
+    if tmp in [0, -1]:
+        stime = deepcopy(stime2)
+    else:
+        stime = deepcopy(stime1)
+    tmp = etime1.cmp(etime2)
+    if tmp in [0, -1]:
+        etime = deepcopy(etime1)
+    else:
+        etime = deepcopy(etime2)
 
     # defines the period between the two dates
     if frequency == 'daily':
@@ -507,11 +505,6 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # retains only the time-period common to both tab1 and tab2
     tab1_sliced = tab1(time=(stime_adjust, etime_adjust))
     tab2_sliced = tab2(time=(stime_adjust, etime_adjust))
-    print '\033[93m' + str().ljust(20) + "check if both array are on the same time period" + '\033[0m'
-    print '\033[93m' + str().ljust(20) + "tab1 time: " + str(tab1_sliced.getTime().asComponentTime()[0]) + " to "\
-          + str(tab1_sliced.getTime().asComponentTime()[-1]) + '\033[0m'
-    print '\033[93m' + str().ljust(20) + "tab2 time: " + str(tab2_sliced.getTime().asComponentTime()[0]) + " to " \
-          + str(tab2_sliced.getTime().asComponentTime()[-1]) + '\033[0m'
 
     # checks if the remaining time-period fulfills the minimum length criterion
     if min_time_steps is not None:
@@ -1489,20 +1482,11 @@ def MyDerive(project, internal_variable_name, dict_var):
         dict_obs_var = dict_obs[project]['variable_name_in_file']
         # test if 'internal_variable_name' is defined for this observations dataset
         if internal_variable_name in dict_obs_var.keys():
-            print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib MyDerive" + '\033[0m'
-            print '\033[93m' + str().ljust(20) + "internal variable name " + str(internal_variable_name) + '\033[0m'
             list_var = dict_obs_var[internal_variable_name]['var_name']
             # test if keys in list_var are in 'dict_var'
             StringInDict(list_var, dict_var, INSPECTstack())
             if isinstance(list_var, basestring):
                 # this 'internal_variable_name' is based on one variable
-                print '\033[93m' + str().ljust(20) + "it is already one variable (" + str(list_var)\
-                      + ") in this dataset (" + str(project) + ")" + '\033[0m'
-                print '\033[93m' + str().ljust(20) + "outvar.shape = " + str(dict_var[list_var].shape) + '\033[0m'
-                print '\033[93m' + str().ljust(20) + "outvar.timebounds " + str(TimeBounds(dict_var[list_var]))\
-                      + '\033[0m'
-                print '\033[93m' + str().ljust(20) + "outvar.axes = "\
-                      + str([ax.id for ax in dict_var[list_var].getAxisList()]) + '\033[0m'
                 return dict_var[list_var]
             else:
                 # this 'internal_variable_name' is based on several variables
@@ -1526,12 +1510,6 @@ def MyDerive(project, internal_variable_name, dict_var):
                 outvar.setAxisList(dict_var[list_var[0]].getAxisList())
                 outvar = MV2masked_where(dict_var[list_var[0]].mask, outvar)
                 outvar.setGrid(dict_var[list_var[0]].getGrid())
-                print '\033[93m' + str().ljust(20) + "this variable is computed using " + str(len(list_var))\
-                      + " variables (" + str(list_var) + ") in this dataset (" + str(project) + ")" + '\033[0m'
-                print '\033[93m' + str().ljust(20) + "outvar.shape = " + str(outvar.shape) + '\033[0m'
-                print '\033[93m' + str().ljust(20) + "outvar.timebounds " + str(TimeBounds(outvar)) + '\033[0m'
-                print '\033[93m' + str().ljust(20) + "outvar.axes = " \
-                      + str([ax.id for ax in outvar.getAxisList()]) + '\033[0m'
                 return outvar
     else:
         list_strings = [
@@ -1607,7 +1585,6 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
         print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib PreProcessTS" + '\033[0m'
         print '\033[93m' + str().ljust(20) + "averaging to perform: " + str(average) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
-        print '\033[93m' + str().ljust(25) + "tab.latitude = " + str(tab.getLatitude()) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
         if isinstance(average, basestring):
             try: dict_average[average]
@@ -1624,7 +1601,6 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
                 else:
                     tab = dict_average[av](tab)
                     print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
-                    print '\033[93m' + str().ljust(25) + "tab.latitude = " + str(tab.getLatitude()) + '\033[0m'
                     print '\033[93m' + str().ljust(25) + "tab.axes = "\
                           + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
         else:
