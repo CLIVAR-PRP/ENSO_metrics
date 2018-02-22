@@ -27,10 +27,6 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
 
 modnames = ['IPSL-CM5A-LR']
 
-# Variables
-sstName = 'ts' # Units K
-tauxName= 'tauu'
-
 #=================================================
 # Output
 #-------------------------------------------------
