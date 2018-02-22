@@ -60,6 +60,9 @@ def AverageHorizontal(tab):
     except:
         lat_num = get_num_axis(tab, 'latitude')
         lon_num = get_num_axis(tab, 'longitude')
+        print " AverageHorizontal"
+        print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m'
+        print '\033[93m' + str().ljust(20) + "axes" + str(lat_num)+str(lon_num) + '\033[0m'
         try: averaged_tab = cdutil.averager(tab, axis=str(lat_num)+str(lon_num))
         except:
             list_strings = [
