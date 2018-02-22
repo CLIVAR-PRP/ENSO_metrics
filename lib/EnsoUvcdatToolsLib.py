@@ -62,7 +62,7 @@ def AverageHorizontal(tab):
         lon_num = get_num_axis(tab, 'longitude')
         print " AverageHorizontal"
         print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "axes" + str(lat_num)+str(lon_num) + '\033[0m'
+        print '\033[93m' + str().ljust(20) + "axes = " + str(lat_num)+str(lon_num) + '\033[0m'
         try: averaged_tab = cdutil.averager(tab, axis=str(lat_num)+str(lon_num))
         except:
             list_strings = [
@@ -1589,6 +1589,7 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
         print '\033[93m' + str().ljust(20) + "averaging to perform: " + str(average) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
+        print '\033[93m' + str().ljust(25) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
         if isinstance(average, basestring):
             try: dict_average[average]
             except:
@@ -1606,6 +1607,7 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
                     print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
                     print '\033[93m' + str().ljust(25) + "tab.axes = "\
                           + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
+                    print '\033[93m' + str().ljust(25) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
         else:
             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info

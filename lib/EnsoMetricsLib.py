@@ -97,8 +97,20 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
+    print '\033[92m' + str().ljust(10) + "EnsoAlphaLhf" + '\033[0m'
+    print '\033[92m' + str().ljust(15) + "model var is " + str(sstname) + ", file is " + str(sstfile) + '\033[0m'
+    print '\033[92m' + str().ljust(15) + "obs var is " + str(lhfname) + ", file is " + str(lhffile) + '\033[0m'
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
     lhf = ReadSelectRegionCheckUnits(lhffile, lhfname, 'heat flux', box=lhfbox, **kwargs)
+    print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(TimeBounds(sst)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.grid = " + str(sst.getGrid()) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.shape = " + str(lhf.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.grid = " + str(lhf.getGrid()) + '\033[0m'
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lhf = CheckTime(sst, lhf, metric_name='EnsoAlphaLhf', **kwargs)
@@ -110,6 +122,15 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     actualtimebounds = TimeBounds(sst)
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+    print '\033[92m' + str().ljust(15) + "after CheckTime" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(TimeBounds(sst)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "sst.grid = " + str(sst.getGrid()) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.shape = " + str(lhf.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "lhf.grid = " + str(lhf.getGrid()) + '\033[0m'
     sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
     lhf, unneeded = PreProcessTS(lhf, Method, average='horizontal', compute_anom=True, **kwargs)
 
