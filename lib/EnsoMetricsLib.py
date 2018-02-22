@@ -820,9 +820,12 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, **kwargs):
     mu, muPos, muNeg = LinearRegressionAndNonlinearity(taux, sst, return_stderr=True)
 
     # Change units
-    mu = [OperationMultiply(mu[0], 1000.), OperationMultiply(mu[1], 1000.)]
-    muPos = [OperationMultiply(muPos[0], 1000.), OperationMultiply(muPos[1], 1000.)]
-    muNeg = [OperationMultiply(muNeg[0], 1000.), OperationMultiply(muNeg[1], 1000.)]
+    #mu = [OperationMultiply(mu[0], 1000.), OperationMultiply(mu[1], 1000.)]
+    #muPos = [OperationMultiply(muPos[0], 1000.), OperationMultiply(muPos[1], 1000.)]
+    #muNeg = [OperationMultiply(muNeg[0], 1000.), OperationMultiply(muNeg[1], 1000.)]
+    mu = [mu[0]*1000., mu[1]*1000.]
+    muPos = [muPos[0]*1000., muPos[1]*1000.]
+    muNeg = [muNeg[0]*1000., muNeg[1]*1000.]
 
     # Create output
     muMetric = {
