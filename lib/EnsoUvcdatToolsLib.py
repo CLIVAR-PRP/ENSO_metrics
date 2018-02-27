@@ -549,6 +549,8 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                 tab = dict_operations['minus'](tab, 273.15)
                 units = "degC"
             else:
+                tab = dict_operations['minus'](tab, 273.15)
+                units = "degC"
                 EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, INSPECTstack())
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
                        'degrees C']:
