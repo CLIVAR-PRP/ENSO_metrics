@@ -29,16 +29,15 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
 #modnames = ['BCC-CSM1-1']
 
 #=================================================
-# Output
+# Metrics Collection
 #-------------------------------------------------
-outpathdata = '.' # e.g. '/user/directory/output/nc'
-outpathjson = '.' # e.g. '/user/directory/output/json'
-#outnamejson = 'test_MC1_all.json'
-outnamejson = 'test_MC2_all.json'
+#metricsCollection = 'MC1'
+metricsCollection = 'MC2'
 
 #=================================================
 # Output
 #-------------------------------------------------
-# Metrics Collection
-#metricsCollection = 'MC1'
-metricsCollection = 'MC2'
+outpathdata = '.' # e.g. '/user/directory/output/nc'
+outpathjson = '.' # e.g. '/user/directory/output/json'
+outnamejson = 'test_'+metricsCollection+'_all.json'
+
