@@ -8,8 +8,8 @@ from numpy import square as NUMPYsquare
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
 from EnsoUvcdatToolsLib import CheckTime, Composite, DetectEvents, LinearRegressionAndNonlinearity, MyDerive,\
-    OperationMultiply, PreProcessTS, ReadSelectRegionCheckUnits, RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal,\
-    SeasonalMean, Std, TimeBounds, TwoVarRegrid
+    PreProcessTS, ReadAreaSelectRegion, ReadSelectRegionCheckUnits, RmsHorizontal, RmsMeridional, RmsTemporal,\
+    RmsZonal, SeasonalMean, Std, TimeBounds, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -111,6 +111,24 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.grid = " + str(lhf.getGrid()) + '\033[0m'
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
+    lhf_areacell = ReadAreaSelectRegion(lhfname, box=lhfbox, **kwargs)
+    print '\033[92m' + str().ljust(15) + "after ReadAreaSelectRegion" + '\033[0m'
+    if sst_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No sst_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "sst_areacell.shape = " + str(sst_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "sst_areacell.axes = " + str([ax.id for ax in sst_areacell.getAxisList()])\
+              + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "sst_areacell.grid = " + str(sst_areacell.getGrid()) + '\033[0m'
+    if lhf_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No lhf_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "lhf_areacell.shape = " + str(lhf_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "lhf_areacell.axes = " + str([ax.id for ax in lhf_areacell.getAxisList()])\
+              + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "lhf_areacell.grid = " + str(lhf_areacell.getGrid()) + '\033[0m'
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lhf = CheckTime(sst, lhf, metric_name='EnsoAlphaLhf', **kwargs)
@@ -131,8 +149,8 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.grid = " + str(lhf.getGrid()) + '\033[0m'
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
-    lhf, unneeded = PreProcessTS(lhf, Method, average='horizontal', compute_anom=True, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    lhf, unneeded = PreProcessTS(lhf, Method, areacell=lhf_areacell, average='horizontal', compute_anom=True, **kwargs)
 
     # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
     alphaLhf, alphaLhfPos, alphaLhfNeg = LinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
@@ -249,6 +267,30 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, **kwargs):
     print '\033[92m' + str().ljust(20) + "lwr.shape = " + str(lwr.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lwr.timebounds = " + str(TimeBounds(lwr)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lwr.axes = " + str([ax.id for ax in lwr.getAxisList()]) + '\033[0m'
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
+    if isinstance(lwrfile, basestring):
+        lwr_areacell = ReadAreaSelectRegion(lwrfile, box=lwrbox, **kwargs)
+    else:
+        for ii in range(len(lwrfile)):
+            lwr_areacell = ReadAreaSelectRegion(lwrfile[ii], box=lwrbox, **kwargs)
+            if lwr_areacell is not None:
+               break
+    print '\033[92m' + str().ljust(15) + "after ReadAreaSelectRegion" + '\033[0m'
+    if sst_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No sst_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "sst_areacell.shape = " + str(sst_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "sst_areacell.axes = " + str([ax.id for ax in sst_areacell.getAxisList()]) \
+              + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "sst_areacell.grid = " + str(sst_areacell.getGrid()) + '\033[0m'
+    if lwr_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No lwr_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "lwr_areacell.shape = " + str(lwr_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "lwr_areacell.axes = " + str([ax.id for ax in lwr_areacell.getAxisList()]) \
+              + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "lwr_areacell.grid = " + str(lwr_areacell.getGrid()) + '\033[0m'
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lwr = CheckTime(sst, lwr, metric_name='EnsoAlphaLwr', **kwargs)
@@ -267,8 +309,8 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, **kwargs):
     print '\033[92m' + str().ljust(20) + "lwr.axes = " + str([ax.id for ax in lwr.getAxisList()]) + '\033[0m'
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
-    lwr, unneeded = PreProcessTS(lwr, Method, average='horizontal', compute_anom=True, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    lwr, unneeded = PreProcessTS(lwr, Method, areacell=lwr_areacell, average='horizontal', compute_anom=True, **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(TimeBounds(sst)) + '\033[0m'
@@ -371,6 +413,9 @@ def EnsoAlphaShf(sstfile, shffile, sstname, shfname, sstbox, shfbox, **kwargs):
     # Read file and select the right region
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
     shf = ReadSelectRegionCheckUnits(shffile, shfname, 'heat flux', box=shfbox, **kwargs)
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
+    shf_areacell = ReadAreaSelectRegion(shffile, box=shfbox, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, shf = CheckTime(sst, shf, metric_name='EnsoAlphaShf', **kwargs)
@@ -382,8 +427,8 @@ def EnsoAlphaShf(sstfile, shffile, sstname, shfname, sstbox, shfbox, **kwargs):
     actualtimebounds = TimeBounds(sst)
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
-    shf, unneeded = PreProcessTS(shf, Method, average='horizontal', compute_anom=True, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    shf, unneeded = PreProcessTS(shf, Method, areacell=shf_areacell, average='horizontal', compute_anom=True, **kwargs)
 
     # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
     alphaShf, alphaShfPos, alphaShfNeg = LinearRegressionAndNonlinearity(shf, sst, return_stderr=True)
@@ -490,6 +535,15 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, **kwargs):
             filename, varname = swrfile[ii], swrname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=swrbox, **kwargs)
     swr = MyDerive(kwargs['project_interpreter_var2'], 'swr', dict_var)
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
+    if isinstance(swrfile, basestring):
+        swr_areacell = ReadAreaSelectRegion(swrfile, box=swrbox, **kwargs)
+    else:
+        for ii in range(len(swrfile)):
+            swr_areacell = ReadAreaSelectRegion(swrfile[ii], box=swrbox, **kwargs)
+            if swr_areacell is not None:
+                break
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, swr = CheckTime(sst, swr, metric_name='EnsoAlphaSwr', **kwargs)
@@ -501,8 +555,8 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, **kwargs):
     actualtimebounds = TimeBounds(sst)
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
-    swr, unneeded = PreProcessTS(swr, Method, average='horizontal', compute_anom=True, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    swr, unneeded = PreProcessTS(swr, Method, areacell=swr_areacell, average='horizontal', compute_anom=True, **kwargs)
 
     # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
     alphaSwr, alphaSwrPos, alphaSwrNeg = LinearRegressionAndNonlinearity(swr, sst, return_stderr=True)
@@ -614,6 +668,15 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox, **kwargs):
             filename, varname = thffile[ii], thfname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=thfbox, **kwargs)
     thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
+    if isinstance(thffile, basestring):
+        thf_areacell = ReadAreaSelectRegion(thffile, box=thfbox, **kwargs)
+    else:
+        for ii in range(len(thffile)):
+            thf_areacell = ReadAreaSelectRegion(thffile[ii], box=thfbox, **kwargs)
+            if thf_areacell is not None:
+               break
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, thf = CheckTime(sst, thf, metric_name='EnsoAlphaThf', **kwargs)
@@ -625,8 +688,8 @@ def EnsoAlphaThf(sstfile, thffile, sstname, thfname, sstbox, thfbox, **kwargs):
     actualtimebounds = TimeBounds(sst)
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
-    thf, unneeded = PreProcessTS(thf, Method, average='horizontal', compute_anom=True, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    thf, unneeded = PreProcessTS(thf, Method, areacell=thf_areacell, average='horizontal', compute_anom=True, **kwargs)
 
     # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
     alpha, alphaPos, alphaNeg = LinearRegressionAndNonlinearity(thf, sst, return_stderr=True)
@@ -713,6 +776,8 @@ def EnsoAmpl(sstfile, sstname, sstbox, **kwargs):
 
     # Read file and select the right region
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -726,7 +791,7 @@ def EnsoAmpl(sstfile, sstname, sstbox, **kwargs):
     actualtimebounds = TimeBounds(sst)
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
 
     # Computes the standard deviation
     sstStd = Std(sst)
@@ -823,6 +888,9 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, **kwargs):
     # Read file and select the right region
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
     taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'wind stress', box=tauxbox, **kwargs)
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
+    taux_areacell = ReadAreaSelectRegion(tauxfile, box=tauxbox, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, taux = CheckTime(sst, taux, metric_name='EnsoMu', **kwargs)
@@ -834,8 +902,9 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, **kwargs):
     actualtimebounds = TimeBounds(sst)
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=True, **kwargs)
-    taux, unneeded = PreProcessTS(taux, Method, average='horizontal', compute_anom=True, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    taux, unneeded = PreProcessTS(taux, Method, areacell=taux_areacell, average='horizontal', compute_anom=True,
+                                  **kwargs)
 
     # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
     mu, muPos, muNeg = LinearRegressionAndNonlinearity(taux, sst, return_stderr=True)
@@ -946,6 +1015,9 @@ def EnsoRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_r
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -971,8 +1043,10 @@ def EnsoRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_r
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    sst_model, Method = PreProcessTS(sst_model, Method, average='time', compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='time', compute_anom=False, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='time', compute_anom=False,
+                                     **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
+                                     **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1101,6 +1175,24 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.longitude = " + str(sst_obs.getLongitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
+    print '\033[92m' + str().ljust(15) + "after ReadAreaSelectRegion" + '\033[0m'
+    if model_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No model_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "model_areacell.shape = " + str(model_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model_areacell.axes = "\
+              + str([ax.id for ax in model_areacell.getAxisList()]) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model_areacell.grid = " + str(model_areacell.getGrid()) + '\033[0m'
+    if obs_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No obs_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "obs_areacell.shape = " + str(obs_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs_areacell.axes = "\
+              + str([ax.id for ax in obs_areacell.getAxisList()]) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs_areacell.grid = " + str(obs_areacell.getGrid()) + '\033[0m'
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1126,8 +1218,10 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    sst_model, Method = PreProcessTS(sst_model, Method, average=['time', 'zonal'], compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=['time', 'zonal'],
+                                     compute_anom=False, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time', 'zonal'], compute_anom=False,
+                                     **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
@@ -1270,6 +1364,24 @@ def EnsoLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.longitude = " + str(sst_obs.getLongitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
+    print '\033[92m' + str().ljust(15) + "after ReadAreaSelectRegion" + '\033[0m'
+    if model_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No model_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "model_areacell.shape = " + str(model_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model_areacell.axes = " \
+              + str([ax.id for ax in model_areacell.getAxisList()]) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model_areacell.grid = " + str(model_areacell.getGrid()) + '\033[0m'
+    if obs_areacell is None:
+        print '\033[92m' + str().ljust(20) + "No obs_areacell" + '\033[0m'
+    else:
+        print '\033[92m' + str().ljust(20) + "obs_areacell.shape = " + str(obs_areacell.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs_areacell.axes = " \
+              + str([ax.id for ax in obs_areacell.getAxisList()]) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs_areacell.grid = " + str(obs_areacell.getGrid()) + '\033[0m'
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1295,8 +1407,10 @@ def EnsoLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    sst_model, Method = PreProcessTS(sst_model, Method, average=['time', 'meridional'], compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average=['time', 'meridional'], compute_anom=False, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=['time', 'meridional'],
+                                     compute_anom=False, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time', 'meridional'],
+                                     compute_anom=False, **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
@@ -1424,6 +1538,9 @@ def EnsoPrRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rms
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(prfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(prfileobs, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1449,8 +1566,9 @@ def EnsoPrRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rms
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    pr_model, Method = PreProcessTS(pr_model, Method, average='time', compute_anom=False, **kwargs)
-    pr_obs, unneeded = PreProcessTS(pr_obs, '', average='time', compute_anom=False, **kwargs)
+    pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average='time', compute_anom=False,
+                                    **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1564,6 +1682,9 @@ def EnsoPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(prfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(prfileobs, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1589,8 +1710,10 @@ def EnsoPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    pr_model, Method = PreProcessTS(pr_model, Method, average=['time', 'zonal'], compute_anom=False, **kwargs)
-    pr_obs, unneeded = PreProcessTS(pr_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
+    pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average=['time', 'zonal'],
+                                    compute_anom=False, **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average=['time', 'zonal'], compute_anom=False,
+                                    **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1704,6 +1827,9 @@ def EnsoPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(prfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(prfileobs, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1729,8 +1855,10 @@ def EnsoPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    pr_model, Method = PreProcessTS(pr_model, Method, average=['time', 'meridional'], compute_anom=False, **kwargs)
-    pr_obs, unneeded = PreProcessTS(pr_obs, '', average=['time', 'meridional'], compute_anom=False, **kwargs)
+    pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average=['time', 'meridional'],
+                                    compute_anom=False, **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average=['time', 'meridional'],
+                                    compute_anom=False, **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1844,6 +1972,9 @@ def EnsoTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, ce
                                             time_bounds=kwargs['time_bounds_model'], **kwargs)
     taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
                                           time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(tauxfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(tauxfileobs, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -1869,8 +2000,9 @@ def EnsoTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, ce
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    taux_model, Method = PreProcessTS(taux_model, Method, average='time', compute_anom=False, **kwargs)
-    taux_obs, unneeded = PreProcessTS(taux_obs, '', average='time', compute_anom=False, **kwargs)
+    taux_model, Method = PreProcessTS(taux_model, Method, areacell=model_areacell, average='time', compute_anom=False,
+                                      **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1984,6 +2116,9 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
                                             time_bounds=kwargs['time_bounds_model'], **kwargs)
     taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
                                           time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(tauxfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(tauxfileobs, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -2009,8 +2144,10 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    taux_model, Method = PreProcessTS(taux_model, Method, average=['time', 'zonal'], compute_anom=False, **kwargs)
-    taux_obs, unneeded = PreProcessTS(taux_obs, '', average=['time', 'zonal'], compute_anom=False, **kwargs)
+    taux_model, Method = PreProcessTS(taux_model, Method, areacell=model_areacell, average=['time', 'zonal'],
+                                      compute_anom=False, **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average=['time', 'zonal'],
+                                      compute_anom=False, **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -2124,6 +2261,9 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
                                             time_bounds=kwargs['time_bounds_model'], **kwargs)
     taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
                                           time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(tauxfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(tauxfileobs, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -2149,8 +2289,10 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    taux_model, Method = PreProcessTS(taux_model, Method, average=['time', 'meridional'], compute_anom=False, **kwargs)
-    taux_obs, unneeded = PreProcessTS(taux_obs, '', average=['time', 'meridional'], compute_anom=False, **kwargs)
+    taux_model, Method = PreProcessTS(taux_model, Method, areacell=model_areacell, average=['time', 'meridional'],
+                                      compute_anom=False, **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average=['time', 'meridional'],
+                                      compute_anom=False, **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -2239,6 +2381,8 @@ def EnsoSeasonality(sstfile, sstname, box, **kwargs):
     Ref = 'Using CDAT std dev calculation'
     # Read file and select the right region
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=box, **kwargs)
+    # Read areacell
+    sst_areacell = ReadAreaSelectRegion(sstfile, box=box, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -2253,7 +2397,7 @@ def EnsoSeasonality(sstfile, sstname, box, **kwargs):
     actualtimebounds = TimeBounds(sst)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, average='horizontal', compute_anom=False, **kwargs)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=False, **kwargs)
 
     # Seasonal mean
     sst_NDJ = SeasonalMean(sst, 'NDJ', compute_anom=True)
@@ -2373,6 +2517,9 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=region_ev, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=region_ev, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -2397,8 +2544,10 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
     actualtimeboundsobs = TimeBounds(sst_obs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, unneeded = PreProcessTS(sst_model, '', average='horizontal', compute_anom=True, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='horizontal', compute_anom=True, **kwargs)
+    sst_model, unneeded = PreProcessTS(sst_model, '', areacell=model_areacell, average='horizontal', compute_anom=True,
+                                       **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
 
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
@@ -2412,10 +2561,15 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, average='meridional', compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='meridional', compute_anom=False, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='meridional',
+                                     compute_anom=False, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='meridional', compute_anom=False,
+                                     **kwargs)
 
     # Seasonal mean
     sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
@@ -2542,6 +2696,9 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=region_ev, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=region_ev, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -2566,8 +2723,10 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
     actualtimeboundsobs = TimeBounds(sst_obs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, unneeded = PreProcessTS(sst_model, '', average='horizontal', compute_anom=True, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='horizontal', compute_anom=True, **kwargs)
+    sst_model, unneeded = PreProcessTS(sst_model, '', areacell=model_areacell, average='horizontal', compute_anom=True,
+                                       **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
 
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
@@ -2581,10 +2740,15 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=box, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, average='meridional', compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='meridional', compute_anom=False, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='meridional',
+                                     compute_anom=False, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='meridional', compute_anom=False,
+                                     **kwargs)
 
     # Seasonal mean
     sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
@@ -2709,6 +2873,9 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, eve
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=region_ev, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=region_ev, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -2733,8 +2900,10 @@ def NinaCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, eve
     actualtimeboundsobs = TimeBounds(sst_obs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, average='horizontal', compute_anom=True, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='horizontal', compute_anom=True, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='horizontal',
+                                     compute_anom=True, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
 
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
@@ -2849,6 +3018,9 @@ def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, eve
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    # Read areacell
+    model_areacell = ReadAreaSelectRegion(sstfilemodel, box=region_ev, **kwargs)
+    obs_areacell = ReadAreaSelectRegion(sstfileobs, box=region_ev, **kwargs)
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -2873,8 +3045,10 @@ def NinoCompositeTS(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, eve
     actualtimeboundsobs = TimeBounds(sst_obs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, average='horizontal', compute_anom=True, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', average='horizontal', compute_anom=True, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
 
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)

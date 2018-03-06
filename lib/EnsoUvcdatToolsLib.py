@@ -45,7 +45,7 @@ from MV2 import zeros as MV2zeros
 #
 # Set of simple uvcdat functions used in EnsoMetricsLib.py
 #
-def AverageHorizontal(tab):
+def AverageHorizontal(tab, areacell):
     """
     #################################################################################
     Description:
@@ -56,24 +56,39 @@ def AverageHorizontal(tab):
     import cdutil
     help(cdutil.averager)
     """
-    try: averaged_tab = cdutil.averager(tab, axis='xy')
-    except:
-        lat_num = get_num_axis(tab, 'latitude')
-        lon_num = get_num_axis(tab, 'longitude')
-        print " AverageHorizontal"
-        print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "axes = " + str(lat_num)+str(lon_num) + '\033[0m'
-        try: averaged_tab = cdutil.averager(tab, axis=str(lat_num)+str(lon_num))
+    lat_num = get_num_axis(tab, 'latitude')
+    lon_num = get_num_axis(tab, 'longitude')
+    snum = str(lat_num) + str(lon_num)
+    if areacell is None:
+        try: averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
         except:
+            print " AverageHorizontal"
+            print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m'
+            print '\033[93m' + str().ljust(20) + "axes = " + str(snum) + '\033[0m'
+            try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
+            except:
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
+                    str().ljust(5) + "cdutil.averager cannot perform horizontal average"
+                ]
+                EnsoErrorsWarnings.MyError(list_strings)
+    else:
+        if tab.getGrid().shape != areacell.getGrid().shape:
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
+                str().ljust(5) + "tab (" + str(tab.getGrid().shape) + ") and areacell ("
+                + str(areacell.getGrid().shape) + ") are not on the same grid",
                 str().ljust(5) + "cannot perform horizontal average"
             ]
             EnsoErrorsWarnings.MyError(list_strings)
+        averaged_tab = MV2multiply(tab, areacell)
+        for elt in snum[::-1]:
+            averaged_tab = MV2sum(averaged_tab, axis=int(elt))
+        averaged_tab = averaged_tab / float(MV2sum(areacell))
     return averaged_tab
 
 
-def AverageMeridional(tab):
+def AverageMeridional(tab, areacell):
     """
     #################################################################################
     Description:
@@ -84,16 +99,30 @@ def AverageMeridional(tab):
     import cdutil
     help(cdutil.averager)
     """
-    try: averaged_tab = cdutil.averager(tab, axis='y')
-    except:
-        lat_num = get_num_axis(tab, 'latitude')
-        try: averaged_tab = cdutil.averager(tab, axis=str(lat_num))
+    lat_num = get_num_axis(tab, 'latitude')
+    snum = str(lat_num)
+    if areacell is None:
+        try: averaged_tab = cdutil.averager(tab, axis='y', weights='weighted', action='average')
         except:
+            try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
+            except:
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional average",
+                    str().ljust(5) + "cdutil.averager cannot perform meridional average"
+                ]
+                EnsoErrorsWarnings.MyError(list_strings)
+    else:
+        if tab.getGrid().shape != areacell.getGrid().shape:
             list_strings = [
-                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional average",
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
+                str().ljust(5) + "tab (" + str(tab.getGrid().shape) + ") and areacell ("
+                + str(areacell.getGrid().shape) + ") are not on the same grid",
                 str().ljust(5) + "cannot perform meridional average"
             ]
             EnsoErrorsWarnings.MyError(list_strings)
+        lat_num_area = get_num_axis(areacell, 'latitude')
+        averaged_tab = MV2multiply(tab, areacell)
+        averaged_tab = MV2sum(averaged_tab, axis=lat_num) / MV2sum(areacell, axis=lat_num_area)
     lon = tab.getLongitude()
     if len(lon.shape) > 1:
         lonn = CDMS2createAxis(MV2array(lon[0, :]), id='longitude')
@@ -106,7 +135,7 @@ def AverageMeridional(tab):
     return averaged_tab
 
 
-def AverageTemporal(tab):
+def AverageTemporal(tab, **kwargs):
     """
     #################################################################################
     Description:
@@ -130,7 +159,7 @@ def AverageTemporal(tab):
     return averaged_tab
 
 
-def AverageZonal(tab):
+def AverageZonal(tab, areacell):
     """
     #################################################################################
     Description:
@@ -141,16 +170,30 @@ def AverageZonal(tab):
     import cdutil
     help(cdutil.averager)
     """
-    try: averaged_tab = cdutil.averager(tab, axis='x')
-    except:
-        lon_num = get_num_axis(tab, 'longitude')
-        try: averaged_tab = cdutil.averager(tab, axis=str(lon_num))
+    lon_num = get_num_axis(tab, 'longitude')
+    snum = str(lon_num)
+    if areacell is None:
+        try: averaged_tab = cdutil.averager(tab, axis='x', weights='weighted', action='average')
         except:
+            try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
+            except:
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal average",
+                    str().ljust(5) + "cdutil.averager cannot perform zonal average"
+                ]
+                EnsoErrorsWarnings.MyError(list_strings)
+    else:
+        if tab.getGrid().shape != areacell.getGrid().shape:
             list_strings = [
-                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal average",
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
+                str().ljust(5) + "tab (" + str(tab.getGrid().shape) + ") and areacell ("
+                + str(areacell.getGrid().shape) + ") are not on the same grid",
                 str().ljust(5) + "cannot perform zonal average"
             ]
             EnsoErrorsWarnings.MyError(list_strings)
+        lon_num_area = get_num_axis(areacell, 'longitude')
+        averaged_tab = MV2multiply(tab, areacell)
+        averaged_tab = MV2sum(averaged_tab, axis=lon_num) / MV2sum(areacell, axis=lon_num_area)
     lat = tab.getLatitude()
     if len(lat.shape) > 1:
         latn = CDMS2createAxis(MV2array(lat[:, 0]), id='latitude')
@@ -948,6 +991,54 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     return tab
 
 
+def ReadAreaSelectRegion(filename, box=None, **kwargs):
+    """
+    #################################################################################
+    Description:
+    Reads the given areacell from the given 'filename' and selects the given 'box'
+
+    Uses cdms2 (uvcdat) to read areacell from 'filename' and cdutil (uvcdat) to select the 'box'
+    #################################################################################
+
+    :param filename: string
+        string of the path to the file and name of the file to read
+    :param box: string
+        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+
+    :return area: masked_array
+        masked_array containing areacell in 'box'
+    """
+    # Temp corrections for cdms2 to find the right axis
+    CDMS2setAutoBounds('on')
+    # Open file and get time dimension
+    fi = CDMS2open(filename)
+    if box is None:  # no box given
+        # read file
+        try:
+            areacell = fi('areacella')
+        except:
+            try:
+                areacell = fi('areacello')
+            except:
+                areacell = None
+    else:  # box given by the user
+        # define box
+        region_ref = ReferenceRegions(box)
+        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        # read file
+        try:
+#            areacell = fi('areacella', nbox)
+            areacell = fi('areacella', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        except:
+            try:
+#                areacell = fi('areacello', nbox)
+                areacell = fi('areacello', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            except:
+                areacell = None
+    fi.close()
+    return areacell
+
+
 def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTool='esmf', regridMethod='linear'):
     """
     #################################################################################
@@ -1562,7 +1653,7 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
 
 
-def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
+def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom:
         tab = cdutil.ANNUALCYCLE.departures(tab)
@@ -1597,7 +1688,7 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
             except:
                 EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
             else:
-                tab = dict_average[average](tab)
+                tab = dict_average[average](tab, areacell)
         elif isinstance(average, list):
             for av in average:
                 print '\033[93m' + str().ljust(20) + "perform " + str(av) + '\033[0m'
@@ -1605,7 +1696,7 @@ def PreProcessTS(tab, info, average=False, compute_anom=False, **kwargs):
                 except:
                     EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
                 else:
-                    tab = dict_average[av](tab)
+                    tab = dict_average[av](tab, areacell)
                     print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
                     print '\033[93m' + str().ljust(25) + "tab.axes = "\
                           + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
