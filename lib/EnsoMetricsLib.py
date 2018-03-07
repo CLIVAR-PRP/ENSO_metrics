@@ -113,7 +113,7 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     print '\033[92m' + str().ljust(20) + "lhf.grid = " + str(lhf.getGrid()) + '\033[0m'
     # Read areacell
     sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
-    lhf_areacell = ReadAreaSelectRegion(lhfname, box=lhfbox, **kwargs)
+    lhf_areacell = ReadAreaSelectRegion(lhffile, box=lhfbox, **kwargs)
     print '\033[92m' + str().ljust(15) + "after ReadAreaSelectRegion" + '\033[0m'
     if sst_areacell is None:
         print '\033[92m' + str().ljust(20) + "No sst_areacell" + '\033[0m'

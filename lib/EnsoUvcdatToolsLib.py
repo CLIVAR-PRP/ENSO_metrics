@@ -135,7 +135,7 @@ def AverageMeridional(tab, areacell):
     return averaged_tab
 
 
-def AverageTemporal(tab, **kwargs):
+def AverageTemporal(tab, areacell=''):
     """
     #################################################################################
     Description:
