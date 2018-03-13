@@ -3,7 +3,7 @@ from inspect import stack as INSPECTstack
 
 # ENSO_metrics package 'driver' functions:
 from DriverPreprocessingUvcdatToolsLib import ComputeAnomalies, ComputeAverage, ComputeDetrend, ComputeNormalize,\
-    ComputeRegrid, ComputeSmooth, ReadAndSelectRegion
+    ComputeRegrid, ComputeSmooth, ReadAndSelectRegion, ReadAreaAndSelectRegion
 
 # ENSO_metrics package functions:
 import EnsoErrorsWarnings
@@ -24,7 +24,7 @@ def preprocess(file_name, var_name, preprocessing, file_name_area=None, var_name
     tab, info = ReadAndSelectRegion(file_name, var_name, info, box=region, time_bounds=period, frequency=frequency,
                                     units=units)
     if file_name_area is not None:
-        areacell = ReadAndSelectRegion(file_name_area, var_name_area, box=region)
+        areacell = ReadAreaAndSelectRegion(file_name_area, var_name_area, box=region)
     else:
         areacell = None
     print '\033[93m' + str().ljust(10) + "after ReadAndSelectRegion" + '\033[0m'

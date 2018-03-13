@@ -897,6 +897,64 @@ def ReadAndSelectRegion(filename, varname, info, box=None, time_bounds=None, fre
     return tab, info
 
 
+def ReadAreaSelectRegion(filename, varname=None, box=None, **kwargs):
+    """
+    #################################################################################
+    Description:
+    Reads the given areacell from the given 'filename' and selects the given 'box'
+    Uses cdms2 (uvcdat) to read areacell from 'filename' and cdutil (uvcdat) to select the 'box'
+    #################################################################################
+    :param filename: string
+        string of the path to the file and name of the file to read
+    :param box: string
+        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+    :return area: masked_array
+        masked_array containing areacell in 'box'
+    """
+    # Temp corrections for cdms2 to find the right axis
+    CDMS2setAutoBounds('on')
+    # Open file and get time dimension
+    fi = CDMS2open(filename)
+    if box is None:  # no box given
+        # read file
+        if varname is None:
+            try:
+                areacell = fi('areacella')
+            except:
+                try:
+                    areacell = fi('areacello')
+                except:
+                    areacell = None
+        else:
+            try:
+                areacell = fi(varname)
+            except:
+                areacell = None
+    else:  # box given by the user
+        # define box
+        region_ref = ReferenceRegions(box)
+        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        # read file
+        if varname is None:
+            try:
+#                areacell = fi('areacella', nbox)
+                areacell = fi('areacella', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            except:
+                try:
+#                    areacell = fi('areacello', nbox)
+                    areacell = fi('areacello', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                except:
+                    areacell = None
+        else:
+            try:
+#                areacell = fi('areacello', nbox)
+                areacell = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            except:
+                areacell = None
+    fi.close()
+    return areacell
+
+
 def SmoothTriangle(tab, axis=0, window=5):
     """
     #################################################################################
