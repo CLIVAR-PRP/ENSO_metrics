@@ -15,8 +15,8 @@ from MV2 import where as MV2where
 from DriverPreprocessingUvcdatToolsLib import CheckTime, CommonPeriod, TimeBounds
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import ComputeMetric
-
 import DriverPreprocessing
+
 xmldir = environ['XMLDIR']
 
 
@@ -25,6 +25,7 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
                           '_glob_' + str(frequency) + '_' + str(realm) + '.xml')
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
+    new_realm = deepcopy(realm)
     if variable not in listvar1:
         if realm == 'O':
             new_realm = 'A'
@@ -42,7 +43,13 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
             print '\033[95m' + str().ljust(5) + "AND" + '\033[0m'
             print '\033[95m' + str().ljust(5) + "variables = " + str(listvar2) + '\033[0m'
             exit(1)
-    return file_name
+    if new_realm == 'A':
+        file_name_area = join_path(xmldir, str(model) + '_areacella_fx_' + str(experiment) + '_r0i0p0.nc')
+        var_area = 'areacella'
+    elif realm == 'O':
+        file_name_area = join_path(xmldir, str(model) + '_areacello_fx_' + str(experiment) + '_r0i0p0.nc')
+        var_area = 'areacello'
+    return file_name, file_name_area, var_area
 
 
 def find_xml_obs(obs,frequency, variable):
@@ -157,24 +164,28 @@ for mod in list_models:
         # finding variable name in file
         #
         var_in_file = dict_var[var]['var_name']
-        if isinstance(var_in_file, list):
-            var0 = var_in_file[0]
-        else:
-            var0 = var_in_file
         #
         # finding file for 'mod', 'var'
         #
         # @jiwoo: first try in the realm 'O' (for ocean)
-        file_name = find_xml_cmip(mod, project, experiment, ensemble, freq, realm, var0)
-        file = CDMS2open(file_name)
         if isinstance(var_in_file, list):
-            list_files = list()
+            list_files, list_files_area, list_var_area = list(), list(), list()
             for var1 in var_in_file:
-                list_files.append(file_name)
+                file_var, file_area, var_area = find_xml_cmip(mod, project, experiment, ensemble, freq, realm, var1)
+                list_files.append(file_var)
+                list_files_area.append(file_area)
+                list_var_area.append(var_area)
         else:
-            list_files = file_name
+            list_files, list_files_area, list_var_area = find_xml_cmip(mod, project, experiment, ensemble, freq, realm,
+                                                                       var_in_file)
         # ------------------------------------------------
-        dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
+        # @jiwoo:
+        # I propose to look for the areacell file here and join it to the var file. This way the variable and the
+        # areacell can be in different files
+        # if you don't have the corresponding areacell or if we do not need them (for example, for atmospheric
+        # variables), you can set 'list_files_area' and 'list_var_area' to None
+        dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file,
+                              'path + filename_area': list_files_area, 'varname_area': list_var_area}
     # ------------------------------------------------
     # @jiwoo:
     # ok, now we are playing
@@ -217,6 +228,10 @@ for mod in list_models:
             file_name = dict_mod[mod][var]['path + filename']
             # var_name (model)
             var_name = dict_mod[mod][var]['varname']
+            # file_name_area (model)
+            file_name_area = dict_mod[mod][var]['path + filename_area']
+            # var_name_area (model)
+            var_name_area = dict_mod[mod][var]['varname_area']
             # var_name (model)
             # test if a regridding is needed
             regridding = False
@@ -241,7 +256,8 @@ for mod in list_models:
                     break
             # compute preprocessing (model)
             tab_mod, Nyears_mod, preprocessing_steps = DriverPreprocessing.preprocess(
-                file_name, var_name, preprocessing, region=region, period=period_mod, frequency=frequency, units=units)
+                file_name, var_name, preprocessing, file_name_area=file_name_area, var_name_area=var_name_area,
+                region=region, period=period_mod, frequency=frequency, units=units)
             print '\033[95m' + str(mod) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"\
                   + '\033[0m'
             dict_preprocessing_steps[var] = {'model': preprocessing_steps}
