@@ -5,7 +5,7 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import EnsoRmse
+from EnsoMetricsLib import EnsoRmse, EnsoLatRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -179,7 +179,7 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
 #
 # Computation of the metric
 #
-dict_oneVar_modelAndObs = {'EnsoRmse': EnsoRmse}
+dict_oneVar_modelAndObs = {'EnsoRmse': EnsoRmse, 'EnsoLatRmse': EnsoLatRmse}
 
 dict_oneVar = {}
 

@@ -12,6 +12,7 @@ from MV2 import where as MV2where
 # ENSO_metrics package functions:
 #from lib.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 #from lib.EnsoComputeMetricsLib import ComputeMetric
+from DriverPreprocessingUvcdatToolsLib import CheckTime, CommonPeriod, TimeBounds
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import ComputeMetric
 
@@ -251,7 +252,7 @@ for mod in list_models:
             # loop over observations and do the same as for the model
             # list of observations for this metric and this variable
             list_observations = dict_param_metric['obs_name'][var]
-            list_tab_obs, list_Nyears_obs = list(), list()
+            list_dict_obs = list()
             for nobs, obs in zip(range(len(list_observations)), list_observations):
                 print '\033[95m' + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var) + '\033[0m'
                 # file_name (obs)
@@ -265,8 +266,7 @@ for mod in list_models:
                 # continue the common mask
                 if regridding:
                     mask = MV2where(tab_obs.mask, True, mask)
-                list_tab_obs.append(tab_obs)
-                list_Nyears_obs.append(Nyears_obs)
+                list_dict_obs.append({'array': tab_obs, 'Nyears': Nyears_obs})
                 print '\033[95m' + str(obs) + ", metric = " + str(metric) + ", variable = " + str(var) + ": done"\
                       + '\033[0m'
             dict_preprocessing_steps[var] = {'observations': preprocessing_steps}
@@ -274,23 +274,66 @@ for mod in list_models:
             if regridding:
                 tab_mod = MV2masked_where(mask, tab_mod)
                 for nobs in range(len(list_observations)):
-                    list_tab_obs[nobs] = MV2masked_where(mask, list_tab_obs[nobs])
-            # get weights
-            weights = CDUTILarea_weights(tab_mod)
-            list_AxisList_obs, list_weights_obs = list(), list()
-            list_dict_obs = list()
-            for nobs in range(len(list_observations)):
-                list_dict_obs.append({
-                    'array': list_tab_obs[nobs], 'axes': list_tab_obs[nobs].getAxisList(),
-                    'area_weights': CDUTILarea_weights(list_tab_obs[nobs]), 'Nyears': list_Nyears_obs[nobs],
-                })
+                    list_dict_obs[nobs]['array'] = MV2masked_where(mask, list_dict_obs[nobs]['array'])
             # put variables in a dictionary (model & obs)
-            dict_data_to_compute_metric['modelVar' + str(nvar)] = {
-                'array': tab_mod, 'axes': tab_mod.getAxisList(), 'area_weights': weights, 'Nyears': Nyears_mod,
-            }
+            dict_data_to_compute_metric['modelVar' + str(nvar)] = {'array': tab_mod, 'Nyears': Nyears_mod}
             dict_data_to_compute_metric['obsVar' + str(nvar)] = list_dict_obs
             dict_data_to_compute_metric['obsNameVar' + str(nvar)] = list_observations
             dict_data_to_compute_metric['regionVar' + str(nvar)] = region
+        # ------------------------------------------------
+        # Check if all variables cover the same period
+        if len(listvar) > 0:
+            tab = dict_data_to_compute_metric['modelVar1']['array']
+            if tab.getTime() is not None:
+                #
+                # find the common period of the model variables
+                #
+                time_bounds = TimeBounds(dict_data_to_compute_metric['modelVar1']['array'])
+                for nvar in range(2, len(listvar) + 1):
+                    time_bounds = CommonPeriod(time_bounds, TimeBounds(
+                        dict_data_to_compute_metric['modelVar' + str(nvar)]['array']))
+                # get the model variables during this period
+                for nvar in range(1, len(listvar) + 1):
+                    tab_mod = CheckTime(dict_data_to_compute_metric['modelVar' + str(nvar)]['array'], time_bounds,
+                                        frequency=frequency)
+                    dict_data_to_compute_metric['modelVar' + str(nvar)]['array'] = tab_mod
+                    if frequency == "daily":
+                        Nyears = len(tab_mod) / 365
+                    elif frequency == "yearly":
+                        Nyears = len(tab_mod) / 1
+                    else:
+                        Nyears = len(tab_mod) / 12
+                    dict_data_to_compute_metric['modelVar' + str(nvar)]['Nyears'] = Nyears
+                #
+                # Same for the observations
+                #
+                time_bounds = TimeBounds(dict_data_to_compute_metric['obsVar1'][0]['array'])
+                for nvar in range(1, len(listvar) + 1):
+                    for nobs in range(len(list_observations)):
+                        time_bounds = CommonPeriod(time_bounds, TimeBounds(
+                            dict_data_to_compute_metric['obsVar' + str(nvar)][nobs]['array']))
+                for nvar in range(1, len(listvar) + 1):
+                    for nobs in range(len(list_observations)):
+                        tab_obs = CheckTime(dict_data_to_compute_metric['obsVar' + str(nvar)][nobs]['array'],
+                                            time_bounds, frequency=frequency)
+                        dict_data_to_compute_metric['obsVar' + str(nvar)][nobs]['array'] = tab_obs
+                        if frequency == "daily":
+                            Nyears = len(tab_obs) / 365
+                        elif frequency == "yearly":
+                            Nyears = len(tab_obs) / 1
+                        else:
+                            Nyears = len(tab_obs) / 12
+                        dict_data_to_compute_metric['obsVar' + str(nvar)][nobs]['Nyears'] = Nyears
+        # ------------------------------------------------
+        # get axes and weights
+        for nvar in range(1, len(listvar) + 1):
+            tab_mod = dict_data_to_compute_metric['modelVar' + str(nvar)]['array']
+            dict_data_to_compute_metric['modelVar' + str(nvar)]['axes'] = tab_mod.getAxisList()
+            dict_data_to_compute_metric['modelVar' + str(nvar)]['weights'] = CDUTILarea_weights(tab_mod)
+            for nobs in range(len(list_observations)):
+                tab_obs = dict_data_to_compute_metric['obsVar' + str(nvar)][nobs]['array']
+                dict_data_to_compute_metric['obsVar' + str(nvar)][nobs]['axes'] = tab_obs.getAxisList()
+                dict_data_to_compute_metric['obsVar' + str(nvar)][nobs]['weights'] = CDUTILarea_weights(tab_obs)
         # ------------------------------------------------
         # compute the given metric
         dict_metric[metric] = ComputeMetric(mc_name, metric, mod, **dict_data_to_compute_metric)

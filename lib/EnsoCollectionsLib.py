@@ -60,6 +60,51 @@ def defCollection(MC=True):
                         },
                     },
                 },
+                'EnsoLatRmse': {
+                    'variables': ['sst'],
+                    'obs_name': {'sst': ['ERSSTv5', 'HadISST']},
+                    'preprocessing': {
+                        0: {
+                            'selection_period_and_region': {
+                                'period': {
+                                    'model': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                                    'observations': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                                },
+                                'regions': {
+                                    'sst': 'nino3_reduced',
+                                },
+                                'units': {
+                                    'sst': 'C',
+                                },
+                            },
+                        },
+                        1: {
+                            'anomalies': False
+                        },
+                        2: {
+                            'detrending': {'method': 'linear'},
+                        },
+                        3: {
+                            'normalization': False,
+                        },
+                        4: {
+                            'smoothing': False,
+                        },
+                        5: {
+                            'averaging': {'average_dimension': ['time']},
+                        },
+                        6: {
+                            'regridding': {
+                                'newgrid': 'HadISST', 'newgrid_name': 'generic 1x1deg',
+                                'mask_processing': 'model + observations', 'regridTool': 'esmf',
+                                'regridMethod': 'linear',
+                            },
+                        },
+                        7: {
+                                'averaging': {'average_dimension': ['zonal']},
+                        },
+                    },
+                },
             },
             'description': 'Describe which science question this collection is about',
         },
