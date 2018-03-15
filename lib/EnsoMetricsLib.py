@@ -7,9 +7,9 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
-from EnsoUvcdatToolsLib import CheckTime, Composite, DetectEvents, LinearRegressionAndNonlinearity, MyDerive,\
-    PreProcessTS, ReadAreaSelectRegion, ReadSelectRegionCheckUnits, RmsHorizontal, RmsMeridional, RmsTemporal,\
-    RmsZonal, SeasonalMean, Std, TimeBounds, TwoVarRegrid
+from EnsoUvcdatToolsLib import AverageMeridional, AverageZonal, CheckTime, Composite, DetectEvents,\
+    LinearRegressionAndNonlinearity, MyDerive, PreProcessTS, ReadAreaSelectRegion, ReadSelectRegionCheckUnits,\
+    RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal, SeasonalMean, Std, TimeBounds, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -1218,10 +1218,9 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=['time', 'zonal'],
-                                     compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time', 'zonal'], compute_anom=False,
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=['time'], compute_anom=False,
                                      **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False, **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
@@ -1245,6 +1244,10 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
               + '\033[0m'
         print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
+
+    # Zonal average
+    sst_model = AverageZonal(sst_model)
+    sst_obs = AverageZonal(sst_obs)
 
     # Computes the root mean square difference
     sstRmse = RmsMeridional(sst_model, sst_obs, centered=centered_rmse)
@@ -1407,10 +1410,9 @@ def EnsoLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=['time', 'meridional'],
-                                     compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time', 'meridional'],
-                                     compute_anom=False, **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=['time'], compute_anom=False,
+                                     **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False, **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
@@ -1434,6 +1436,10 @@ def EnsoLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
               + '\033[0m'
         print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
+
+    # Meridional average
+    sst_model = AverageMeridional(sst_model)
+    sst_obs = AverageMeridional(sst_obs)
 
     # Computes the root mean square difference
     sstRmse = RmsZonal(sst_model, sst_obs, centered=centered_rmse)
@@ -1710,10 +1716,9 @@ def EnsoPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average=['time', 'zonal'],
-                                    compute_anom=False, **kwargs)
-    pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average=['time', 'zonal'], compute_anom=False,
+    pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average=['time'], compute_anom=False,
                                     **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False, **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1722,7 +1727,11 @@ def EnsoPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+        composite_model, composite_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+
+    # Zonal average
+    pr_model = AverageZonal(pr_model)
+    pr_obs = AverageZonal(pr_obs)
 
     # Computes the root mean square difference
     pr_rmse = RmsMeridional(pr_model, pr_obs, centered=centered_rmse)
@@ -1855,10 +1864,9 @@ def EnsoPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average=['time', 'meridional'],
-                                    compute_anom=False, **kwargs)
-    pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average=['time', 'meridional'],
-                                    compute_anom=False, **kwargs)
+    pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average=['time'], compute_anom=False,
+                                    **kwargs)
+    pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False, **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -1867,7 +1875,11 @@ def EnsoPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+        composite_model, composite_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+
+    # Meridional average
+    pr_model = AverageMeridional(pr_model)
+    pr_obs = AverageMeridional(pr_obs)
 
     # Computes the root mean square difference
     pr_rmse = RmsZonal(pr_model, pr_obs, centered=centered_rmse)
@@ -2144,10 +2156,10 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    taux_model, Method = PreProcessTS(taux_model, Method, areacell=model_areacell, average=['time', 'zonal'],
+    taux_model, Method = PreProcessTS(taux_model, Method, areacell=model_areacell, average=['time'],
                                       compute_anom=False, **kwargs)
-    taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average=['time', 'zonal'],
-                                      compute_anom=False, **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False,
+                                      **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -2156,7 +2168,11 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+        composite_model, composite_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+
+    # Zonal average
+    taux_model = AverageZonal(taux_model)
+    taux_obs = AverageZonal(taux_obs)
 
     # Computes the root mean square difference
     taux_rmse = RmsMeridional(taux_model, taux_obs, centered=centered_rmse)
@@ -2289,10 +2305,10 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     # here only the detrending (if applicable) and time averaging are performed
-    taux_model, Method = PreProcessTS(taux_model, Method, areacell=model_areacell, average=['time', 'meridional'],
+    taux_model, Method = PreProcessTS(taux_model, Method, areacell=model_areacell, average=['time'],
                                       compute_anom=False, **kwargs)
-    taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average=['time', 'meridional'],
-                                      compute_anom=False, **kwargs)
+    taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False,
+                                      **kwargs)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -2301,7 +2317,11 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+        composite_model, composite_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+
+    # Meridional average
+    taux_model = AverageMeridional(taux_model)
+    taux_obs = AverageMeridional(taux_obs)
 
     # Computes the root mean square difference
     taux_rmse = RmsZonal(taux_model, taux_obs, centered=centered_rmse)
@@ -2566,18 +2586,13 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
     obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='meridional',
-                                     compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='meridional', compute_anom=False,
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=False, compute_anom=False,
                                      **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False, **kwargs)
 
     # Seasonal mean
     sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
     sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
-
-    # composites
-    composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
-    composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -2586,8 +2601,15 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(composite_model, composite_obs, Method,
-                                                              **kwargs['regridding'])
+        composite_model, composite_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+
+    # Meridional average
+    sst_model = AverageMeridional(sst_model)
+    sst_obs = AverageMeridional(sst_obs)
+
+    # composites
+    composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
+    composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
 
     # Computes the root mean square difference
     compositeRmse = RmsZonal(composite_model, composite_obs, centered=centered_rmse)
@@ -2745,18 +2767,13 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
     obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='meridional',
-                                     compute_anom=False, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='meridional', compute_anom=False,
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=False, compute_anom=False,
                                      **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False, **kwargs)
 
     # Seasonal mean
     sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
     sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
-
-    # composites
-    composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
-    composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -2765,8 +2782,15 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(composite_model, composite_obs, Method,
-                                                              **kwargs['regridding'])
+        composite_model, composite_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+
+    # Meridional average
+    sst_model = AverageMeridional(sst_model)
+    sst_obs = AverageMeridional(sst_obs)
+
+    # composites
+    composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
+    composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
 
     # Computes the root mean square difference
     compositeRmse = RmsZonal(composite_model, composite_obs, centered=centered_rmse)

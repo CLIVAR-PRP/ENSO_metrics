@@ -45,7 +45,7 @@ from MV2 import zeros as MV2zeros
 #
 # Set of simple uvcdat functions used in EnsoMetricsLib.py
 #
-def AverageHorizontal(tab, areacell):
+def AverageHorizontal(tab, areacell=None):
     """
     #################################################################################
     Description:
@@ -88,7 +88,7 @@ def AverageHorizontal(tab, areacell):
     return averaged_tab
 
 
-def AverageMeridional(tab, areacell):
+def AverageMeridional(tab, areacell=None):
     """
     #################################################################################
     Description:
@@ -135,7 +135,7 @@ def AverageMeridional(tab, areacell):
     return averaged_tab
 
 
-def AverageTemporal(tab, areacell=''):
+def AverageTemporal(tab, areacell=None):
     """
     #################################################################################
     Description:
@@ -159,7 +159,7 @@ def AverageTemporal(tab, areacell=''):
     return averaged_tab
 
 
-def AverageZonal(tab, areacell):
+def AverageZonal(tab, areacell=None):
     """
     #################################################################################
     Description:
