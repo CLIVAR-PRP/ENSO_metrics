@@ -31,8 +31,8 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
-#metricsCollection = 'MC1'
-metricsCollection = 'MC2'
+metricsCollection = 'MC1'
+#metricsCollection = 'MC2'
 
 #=================================================
 # Output
