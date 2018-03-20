@@ -103,6 +103,10 @@ def MyWarning(list_strings):
     return
 
 
+# ---------------------------------------------------------------------------------------------------------------------#
+#
+# ERRORS
+#
 def MyError(list_strings):
     """
     #################################################################################
@@ -121,6 +125,54 @@ def MyError(list_strings):
     print str().ljust(5) + "%%%%%     -----     %%%%%"
     for ii in range(2): print '' + bcolors.ENDC
     sys_exit(1)
+    return
+
+
+def MismatchShapesError(tab1, tab2, inspect_stack):
+    """
+    #################################################################################
+    Description:
+    Function 'MyError' in the case of array shape error
+    Prints strings and exits
+    #################################################################################
+
+    :param inspect_stack: array
+        list of information about the program/module/line,... created using inspect.stack()
+    :return:
+    """
+    try: name1 = tab1.name
+    except: name1 = 'no_name'
+    try: name2 = tab2.name
+    except: name2 = 'no_name'
+    list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": array shape",
+                    str().ljust(5) + "arrays shapes mismatch: " + str(name1) + " = " + str(tab1.shape) + "', and "
+                    + str(name2) + " = " + str(tab2.shape)]
+    MyError(list_strings)
+    return
+
+
+def ObjectTypeError(parameter_name, type_parameter, type_parameter_should_be, inspect_stack):
+    """
+    #################################################################################
+    Description:
+    Function 'MyError' in the case of object type error
+    Prints strings and exits
+    #################################################################################
+
+    :param parameter_name: string
+        name of a parameter from which the error comes from
+    :param type_parameter: string
+        parameter's type
+    :param type_parameter_should_be: string
+        what the parameter's type should be
+    :param inspect_stack: array
+        list of information about the program/module/line,... created using inspect.stack()
+    :return:
+    """
+    list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": object type",
+                    str().ljust(5) + str(parameter_name) + ": should be '" + str(type_parameter_should_be) + "', not '"
+                    + str(type_parameter) + "'"]
+    MyError(list_strings)
     return
 
 
@@ -143,7 +195,7 @@ def TooShortTimePeriod(metric_name, length, minimum_length, inspect_stack):
     :return:
     """
     list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": too short time-period",
-                    str().ljust(5) + str(metric_name)+ ": the time-period is too short: " + str(length)
+                    str().ljust(5) + str(metric_name) + ": the time-period is too short: " + str(length)
                     + " (minimum time-period: " + str(minimum_length) + ")"]
     MyError(list_strings)
     return
@@ -173,12 +225,35 @@ def UnlikelyUnits(var_name, name_in_file, units, inspect_stack):
     MyError(list_strings)
     return
 
+def UnknownAveraging(average, known_average, inspect_stack):
+    """
+    #################################################################################
+    Description:
+    Function 'MyError' in the case of unknown frequency
+    Prints strings
+    #################################################################################
+
+    :param average: string
+        averaging method (axis) (should by horizontal, meridional, temporal or zonal)
+    :param known_average: string
+        list of defined averaging method (axis)
+    :param inspect_stack: array
+        list of information about the program/module/line,... created using inspect.stack()
+    :return:
+    """
+    list_strings = ["ERROR" + MessageFormating(inspect_stack) + ": averaging method",
+                    str().ljust(5) + "unkwown averaging method (axis): " + str(average),
+                    str().ljust(10) + "known averaging method: " + str(sorted(known_average)),
+                    ]
+    MyError(list_strings)
+    return
+
 
 def UnknownFrequency(frequency, inspect_stack):
     """
     #################################################################################
     Description:
-    Function 'MyWarning' in the case of unknown frequency
+    Function 'MyError' in the case of unknown frequency
     Prints strings
     #################################################################################
 
@@ -188,9 +263,29 @@ def UnknownFrequency(frequency, inspect_stack):
         list of information about the program/module/line,... created using inspect.stack()
     :return:
     """
-    list_strings = ["WARNING" + MessageFormating(inspect_stack) + ": frequency",
+    list_strings = ["ERROR" + MessageFormating(inspect_stack) + ": frequency",
                     str().ljust(5) + "unknown frequency: " + str(frequency)]
-    MyWarning(list_strings)
+    MyError(list_strings)
+    return
+
+
+def UnknownKeyArg(arg, inspect_stack):
+    """
+    #################################################################################
+    Description:
+    Function 'MyError' in the case of unknown argument
+    Prints strings
+    #################################################################################
+
+    :param arg: string
+        argument of a function
+    :param inspect_stack: array
+        list of information about the program/module/line,... created using inspect.stack()
+    :return:
+    """
+    list_strings = ["ERROR" + MessageFormating(inspect_stack) + ": argument",
+                    str().ljust(5) + "unknown argument(s): " + str(arg)]
+    MyError(list_strings)
     return
 
 
@@ -217,3 +312,4 @@ def UnknownUnits(var_name, name_in_file, units, inspect_stack):
                     + ") is in " + str(units)]
     MyError(list_strings)
     return
+# ---------------------------------------------------------------------------------------------------------------------#

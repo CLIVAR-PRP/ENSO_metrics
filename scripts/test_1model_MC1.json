@@ -1,0 +1,704 @@
+{
+    "DISCLAIMER": "USER-NOTICE: The results in this file were produced with the PMP v1.1 (https://github.com/PCMDI/pcmdi_metrics). They are for research purposes only. They are subject to ongoing quality control and change as the PMP software advances, interpolation methods are modified, observational data sets are updated, problems with model data are corrected, etc. Use of these results for research (presentation, publications, etc.) should reference: Gleckler, P. J., C. Doutriaux, P. J. Durack, K. E. Taylor, Y. Zhang, and D. N. Williams, E. Mason, and J. Servonnat (2016), A more powerful reality test for climate models, Eos, 97, doi:10.1029/2016EO051663. If any problems are uncovered in using these results please contact the PMP development team at pcmdi-metrics@llnl.gov\n",
+    "REFERENCE": "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z",
+    "RESULTS": {
+        "model": {
+            "IPSL-CM5A-LR": {
+                "description_of_the_collection": "Describe which science question this collection is about",
+                "metrics": {
+                    "EnsoAlphaLhf": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            "Tropflux"
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_sst_HadISST__lhf_Tropflux": {
+                                "nonlinearity": -1.1688966574346513,
+                                "nonlinearity_error": -0.030424645761404363,
+                                "value": -1.4207846777903779,
+                                "value_error": 0.008717779292157581
+                            },
+                            "ref_sst_Tropflux__lhf_Tropflux": {
+                                "nonlinearity": -1.1709005711440317,
+                                "nonlinearity_error": -0.03836020401829075,
+                                "value": -1.436487720682437,
+                                "value_error": 0.00674775784088507
+                            }
+                        },
+                        "name": "EnsoAlphaLhf",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Regression of nino3 lhfA over nino3 sstA, time series are linearly detrended",
+                            "method_to_compute_nonlinearity": "The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nonlinearity": 1.15195034029502,
+                                "nonlinearity_error": 0.5593473643471534,
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": 3.9949779654055924,
+                                "value_error": 0.11751295017690438
+                            },
+                            "name": "Latent feedback (alpha_lh)",
+                            "observations": {
+                                "sst_HadISST__lhf_Tropflux": {
+                                    "name": "sst_HadISST__lhf_Tropflux",
+                                    "nonlinearity": -6.820444867245091,
+                                    "nonlinearity_error": 2.0831539870003857,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -9.49411462980068,
+                                    "value_error": 0.4759691991297382
+                                },
+                                "sst_Tropflux__lhf_Tropflux": {
+                                    "name": "sst_Tropflux__lhf_Tropflux",
+                                    "nonlinearity": -6.740470980194552,
+                                    "nonlinearity_error": 1.7599796206299931,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -9.152555217726519,
+                                    "value_error": 0.41071527998809415
+                                }
+                            },
+                            "ref": "Using CDAT regression calculation",
+                            "time_frequency": "monthly",
+                            "units": "W/m2/C"
+                        }
+                    },
+                    "EnsoAlphaLwr": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            "Tropflux"
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_sst_HadISST__lwr_Tropflux": {
+                                "nonlinearity": -0.9463163830001463,
+                                "nonlinearity_error": -0.12491433911986514,
+                                "value": -4.346974288329259,
+                                "value_error": -0.4754175846225466
+                            },
+                            "ref_sst_Tropflux__lwr_Tropflux": {
+                                "nonlinearity": -0.9358000500376593,
+                                "nonlinearity_error": -0.15037953987328956,
+                                "value": -3.9523082656505744,
+                                "value_error": -0.3188803042508542
+                            }
+                        },
+                        "name": "EnsoAlphaLwr",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Regression of nino3 lwrA over nino3 sstA, time series are linearly detrended",
+                            "method_to_compute_nonlinearity": "The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nonlinearity": -0.16275637061343406,
+                                "nonlinearity_error": 0.3378098420401814,
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": -3.586953508576011,
+                                "value_error": 0.07096269965662827
+                            },
+                            "name": "Longwave feedback (alpha_lwr)",
+                            "observations": {
+                                "sst_HadISST__lwr_Tropflux": {
+                                    "name": "sst_HadISST__lwr_Tropflux",
+                                    "nonlinearity": -3.031769834247151,
+                                    "nonlinearity_error": 0.7619025217405913,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 1.0717003477091378,
+                                    "value_error": 0.17343063925758676
+                                },
+                                "sst_Tropflux__lwr_Tropflux": {
+                                    "name": "sst_Tropflux__lwr_Tropflux",
+                                    "nonlinearity": -2.5351479356121907,
+                                    "nonlinearity_error": 0.6763952005160798,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 1.2149657778997496,
+                                    "value_error": 0.15526541110254435
+                                }
+                            },
+                            "ref": "Using CDAT regression calculation",
+                            "time_frequency": "monthly",
+                            "units": "W/m2/C"
+                        }
+                    },
+                    "EnsoAlphaShf": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            "Tropflux"
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_sst_HadISST__shf_Tropflux": {
+                                "nonlinearity": -1.085129497089569,
+                                "nonlinearity_error": 0.05133091370812773,
+                                "value": -1.2645652098091347,
+                                "value_error": -0.007501021669413417
+                            },
+                            "ref_sst_Tropflux__shf_Tropflux": {
+                                "nonlinearity": -1.0988621717426623,
+                                "nonlinearity_error": 0.05932968156584835,
+                                "value": -1.2852118020615693,
+                                "value_error": -0.010523589093637015
+                            }
+                        },
+                        "name": "EnsoAlphaShf",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Regression of nino3 shfA over nino3 sstA, time series are linearly detrended",
+                            "method_to_compute_nonlinearity": "The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nonlinearity": -0.1245632290356983,
+                                "nonlinearity_error": 0.09696814509831503,
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": 0.13126812124299825,
+                                "value_error": 0.020490968065800176
+                            },
+                            "name": "Latent feedback (alpha_lh)",
+                            "observations": {
+                                "sst_HadISST__shf_Tropflux": {
+                                    "name": "sst_HadISST__shf_Tropflux",
+                                    "nonlinearity": 1.4632205439277906,
+                                    "nonlinearity_error": 0.25678170750848167,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -0.49616546838376474,
+                                    "value_error": 0.0633840713521507
+                                },
+                                "sst_Tropflux__shf_Tropflux": {
+                                    "name": "sst_Tropflux__shf_Tropflux",
+                                    "nonlinearity": 1.2599685687659758,
+                                    "nonlinearity_error": 0.2247028437558145,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -0.46024785893909487,
+                                    "value_error": 0.05486276726276936
+                                }
+                            },
+                            "ref": "Using CDAT regression calculation",
+                            "time_frequency": "monthly",
+                            "units": "W/m2/C"
+                        }
+                    },
+                    "EnsoAlphaSwr": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            "Tropflux"
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_sst_HadISST__swr_Tropflux": {
+                                "nonlinearity": -0.9653668483142172,
+                                "nonlinearity_error": 0.030888223914049433,
+                                "value": -1.793216541822009,
+                                "value_error": 0.04182749509914786
+                            },
+                            "ref_sst_Tropflux__swr_Tropflux": {
+                                "nonlinearity": -0.9607856813598368,
+                                "nonlinearity_error": 0.034932902376386736,
+                                "value": -1.8480802905622993,
+                                "value_error": 0.04073722598573905
+                            }
+                        },
+                        "name": "EnsoAlphaSwr",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Regression of nino3 swrA over nino3 sstA, time series are linearly detrended",
+                            "method_to_compute_nonlinearity": "The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nonlinearity": 0.586000944764697,
+                                "nonlinearity_error": 0.45412147160280203,
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": 6.21878438474009,
+                                "value_error": 0.09518694861660836
+                            },
+                            "name": "Longwave feedback (alpha_swr)",
+                            "observations": {
+                                "sst_HadISST__swr_Tropflux": {
+                                    "name": "sst_HadISST__swr_Tropflux",
+                                    "nonlinearity": 16.92023151924854,
+                                    "nonlinearity_error": 1.9782903058582835,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -7.839958015065618,
+                                    "value_error": 0.533413931456101
+                                },
+                                "sst_Tropflux__swr_Tropflux": {
+                                    "name": "sst_Tropflux__swr_Tropflux",
+                                    "nonlinearity": 14.943545242795997,
+                                    "nonlinearity_error": 1.7315087415892565,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -7.3327778677852224,
+                                    "value_error": 0.46446543104855337
+                                }
+                            },
+                            "ref": "Using CDAT regression calculation",
+                            "time_frequency": "monthly",
+                            "units": "W/m2/C"
+                        }
+                    },
+                    "EnsoAlphaThf": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            "Tropflux"
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_sst_HadISST__thf_Tropflux": {
+                                "nonlinearity": -0.8299539592548217,
+                                "nonlinearity_error": 0.1319859803497165,
+                                "value": -1.4032622896652405,
+                                "value_error": 0.007050023111996865
+                            },
+                            "ref_sst_Tropflux__thf_Tropflux": {
+                                "nonlinearity": -0.7905982435343514,
+                                "nonlinearity_error": 0.16624502283266582,
+                                "value": -1.4296132656351221,
+                                "value_error": 0.006192858319835763
+                            }
+                        },
+                        "name": "EnsoAlphaThf",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Regression of nino3 thfA over nino3 sstA, time series are linearly detrended",
+                            "method_to_compute_nonlinearity": "The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nonlinearity": 1.4506320063416966,
+                                "nonlinearity_error": 0.6615028719655789,
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": 6.758076883007065,
+                                "value_error": 0.13904652301051867
+                            },
+                            "name": "Heat flux feedback (alpha)",
+                            "observations": {
+                                "sst_HadISST__thf_Tropflux": {
+                                    "name": "sst_HadISST__thf_Tropflux",
+                                    "nonlinearity": 8.530819065146805,
+                                    "nonlinearity_error": 2.731293498505309,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -16.758514386795596,
+                                    "value_error": 0.6377844974635841
+                                },
+                                "sst_Tropflux__thf_Tropflux": {
+                                    "name": "sst_Tropflux__thf_Tropflux",
+                                    "nonlinearity": 6.927506391665181,
+                                    "nonlinearity_error": 2.3407663553703095,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": -15.730605694906114,
+                                    "value_error": 0.5504111587771748
+                                }
+                            },
+                            "ref": "Using CDAT regression calculation",
+                            "time_frequency": "monthly",
+                            "units": "W/m2/C"
+                        }
+                    },
+                    "EnsoAmpl": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            ""
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_HadISST": {
+                                "value": -0.030223019304195214,
+                                "value_error": 0.15902617515126216
+                            },
+                            "ref_Tropflux": {
+                                "value": -0.18320536713781904,
+                                "value_error": 0.19789749441394494
+                            }
+                        },
+                        "name": "EnsoAmpl",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Standard deviation of nino3 sstA, time series are linearly detrended",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": 0.7591532841326252,
+                                "value_error": 0.06078090692161301
+                            },
+                            "name": "ENSO amplitude",
+                            "observations": {
+                                "HadISST": {
+                                    "name": "HadISST",
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 0.7828122333734305,
+                                    "value_error": 0.06569214332935802
+                                },
+                                "Tropflux": {
+                                    "name": "Tropflux",
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 0.9294298145329737,
+                                    "value_error": 0.15077342535484006
+                                }
+                            },
+                            "ref": "Using CDAT regression calculation",
+                            "time_frequency": "monthly",
+                            "units": "C"
+                        }
+                    },
+                    "EnsoMu": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            "Tropflux"
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_sst_HadISST__taux_Tropflux": {
+                                "nonlinearity": -0.7027017843603419,
+                                "nonlinearity_error": 0.4591230655720026,
+                                "value": -0.6492972684131137,
+                                "value_error": 0.028221372524529827
+                            },
+                            "ref_sst_Tropflux__taux_Tropflux": {
+                                "nonlinearity": -0.5397108238439143,
+                                "nonlinearity_error": 0.8645449304550907,
+                                "value": -0.6497939726542836,
+                                "value_error": 0.026672771027110152
+                            }
+                        },
+                        "name": "EnsoMu",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Regression of nino4 tauxA over nino3 sstA, time series are linearly detrended",
+                            "method_to_compute_nonlinearity": "The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nonlinearity": 1.0944896460975793,
+                                "nonlinearity_error": 0.7894029547507183,
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": 5.002435182853178,
+                                "value_error": 0.1657540614057583
+                            },
+                            "name": "Bjerknes feedback (mu)",
+                            "observations": {
+                                "sst_HadISST__taux_Tropflux": {
+                                    "name": "sst_HadISST__taux_Tropflux",
+                                    "nonlinearity": 3.6814538013378506,
+                                    "nonlinearity_error": 3.0300800774838237,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 14.264032561759018,
+                                    "value_error": 0.6752057908137518
+                                },
+                                "sst_Tropflux__taux_Tropflux": {
+                                    "name": "sst_Tropflux__taux_Tropflux",
+                                    "nonlinearity": 2.377830509154606,
+                                    "nonlinearity_error": 2.7511799603797837,
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 14.2842635255814,
+                                    "value_error": 0.6146291385513142
+                                }
+                            },
+                            "ref": "Using CDAT regression calculation",
+                            "time_frequency": "monthly",
+                            "units": "10-3 N/m2/C"
+                        }
+                    },
+                    "EnsoRmse": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            ""
+                        ],
+                        "method_to_compute_metric": "The metric is the statistical value between the model and the observations",
+                        "metric_values": {
+                            "ref_HadISST": {
+                                "value": 3.8871002241138544,
+                                "value_error": null
+                            },
+                            "ref_Tropflux": {
+                                "value": 3.996088049221321,
+                                "value_error": null
+                            }
+                        },
+                        "name": "EnsoRmse",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Spatial root mean square error of tropical_pacific sst, time series are linearly detrended, model regridded to observations",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": null,
+                                "value_error": null
+                            },
+                            "name": "ENSO RMSE",
+                            "observations": {
+                                "HadISST": {
+                                    "name": "HadISST",
+                                    "nyears": 142,
+                                    "time_period": [
+                                        "1870-1-1 0:0:0.0",
+                                        "2012-11-1 0:0:0.0"
+                                    ],
+                                    "value": null,
+                                    "value_error": null
+                                },
+                                "Tropflux": {
+                                    "name": "Tropflux",
+                                    "nyears": 38,
+                                    "time_period": [
+                                        "1979-1-15 0:0:0.0",
+                                        "2017-7-15 12:0:0.0"
+                                    ],
+                                    "value": null,
+                                    "value_error": null
+                                }
+                            },
+                            "ref": "Using CDAT regridding and rms (uncentered and biased) calculation",
+                            "time_frequency": "monthly",
+                            "units": "C"
+                        }
+                    },
+                    "EnsoSeasonality": {
+                        "datasets": [
+                            "IPSL-CM5A-LR",
+                            "HadISST",
+                            "Tropflux",
+                            ""
+                        ],
+                        "method_to_compute_metric": "The metric is the relative difference between model and observations values (M = [model-obs] / obs)",
+                        "metric_values": {
+                            "ref_HadISST": {
+                                "value": -0.4661852377814926,
+                                "value_error": 0.1753684721540487
+                            },
+                            "ref_Tropflux": {
+                                "value": -0.5533630371640164,
+                                "value_error": 0.21751506751939265
+                            }
+                        },
+                        "name": "EnsoSeasonality",
+                        "raw_values": {
+                            "method_to_compute_diagnostic": "Ratio between NDJ and MAM standard deviation nino3 sstA, time series are linearly detrended",
+                            "model": {
+                                "name": "IPSL-CM5A-LR",
+                                "nyears": 156,
+                                "time_period": [
+                                    "1850-1-16 12:0:0.0",
+                                    "2005-12-16 12:0:0.0"
+                                ],
+                                "value": 0.8907206700866493,
+                                "value_error": 0.1428591341151609
+                            },
+                            "name": "ENSO Seasonality",
+                            "observations": {
+                                "HadISST": {
+                                    "name": "HadISST",
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 1.6685950504344595,
+                                    "value_error": 0.28054643880761876
+                                },
+                                "Tropflux": {
+                                    "name": "Tropflux",
+                                    "nyears": 156,
+                                    "time_period": [
+                                        "1850-1-16 12:0:0.0",
+                                        "2005-12-16 12:0:0.0"
+                                    ],
+                                    "value": 1.9942833759904117,
+                                    "value_error": 0.6513736508033522
+                                }
+                            },
+                            "ref": "Using CDAT std dev calculation",
+                            "time_frequency": "monthly",
+                            "units": ""
+                        }
+                    }
+                },
+                "name": "Metrics Collection 1"
+            }
+        },
+        "obs": {
+            "HadISST": {
+                "sst": {
+                    "path + filename": "/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc",
+                    "varname": "sst"
+                }
+            },
+            "Tropflux": {
+                "lhf": {
+                    "path + filename": "/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_lhf_mo.xml",
+                    "varname": "lhf"
+                },
+                "lwr": {
+                    "path + filename": "/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_lwr_mo.xml",
+                    "varname": "lwr"
+                },
+                "shf": {
+                    "path + filename": "/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_shf_mo.xml",
+                    "varname": "shf"
+                },
+                "sst": {
+                    "path + filename": "/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_sst_mo.xml",
+                    "varname": "sst"
+                },
+                "swr": {
+                    "path + filename": "/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_swr_mo.xml",
+                    "varname": "swr"
+                },
+                "taux": {
+                    "path + filename": "/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_taux_mo.xml",
+                    "varname": "taux"
+                },
+                "thf": {
+                    "path + filename": "/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_netflux_mo.xml",
+                    "varname": "netflux"
+                }
+            }
+        }
+    },
+    "json_structure": [
+        "type",
+        "data",
+        "metric",
+        "item",
+        "value or description"
+    ],
+    "json_version": 3.0,
+    "provenance": {
+        "commandLine": "PMPdriver_EnsoMetrics.py -p my_Param.py",
+        "conda": {
+            "DefaultEnvironment": "/export_backup/lee1043/anaconda2/envs/pmp_nightly-20180124",
+            "IsPrivate": "False",
+            "Platform": "linux-64",
+            "PythonVersion": "2.7.13.final.0",
+            "RootEnvironment": "/export_backup/lee1043/anaconda2  (writable)",
+            "Version": "4.3.24",
+            "buildVersion": "not installed",
+            "envVersion": "4.3.24"
+        },
+        "date": "2018-02-21 17:08:02",
+        "openGL": {
+            "GLX": {
+                "client": {},
+                "server": {}
+            }
+        },
+        "osAccess": false,
+        "packages": {
+            "CDP": "2017.09.07",
+            "PMP": "1.1.2.2017.06.30.19.40.66ce8fec99c4e1d404dc0e5f25d4e6f8e6339f66",
+            "PMPObs": null,
+            "blas": null,
+            "cdms": "2.12.2017.11.30.06.06.14b9b9380c14680498a0ba8e9aefb4c84d2756be",
+            "cdtime": "2018.01.24",
+            "cdutil": "2.12.2017.11.16.21.46.e717f782e07d0a187f2b616a408103af20ceb57f",
+            "clapack": "3.2.1",
+            "esmf": "7.0.0",
+            "esmpy": "7.0.0",
+            "genutil": "2017.11.15",
+            "lapack": "3.6.1",
+            "matplotlib": "2.1.2",
+            "mesalib": null,
+            "numpy": "1.13.1",
+            "python": "2.7.14",
+            "vcs": "2.12.2018.01.24.16.21.d67c83aa153d32062df5c20f0c68e5a6f2103e8f",
+            "vtk": "7.1.0.2.12"
+        },
+        "platform": {
+            "Name": "crunchy.llnl.gov",
+            "OS": "Linux",
+            "Version": "2.6.32-696.13.2.el6.x86_64"
+        },
+        "userId": "lee1043"
+    }
+}
