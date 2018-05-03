@@ -350,7 +350,7 @@ def CmipVariables():
             # sensible heat flux (on ocean grid or ocean points only)
             'shf': {'var_name': 'hfss', 'cf_name': 'surface_upward_sensible_heat_flux', 'cf_units': 'W m-2'},
             # sea surface temperature (on ocean grid or ocean points only)
-            'sst': {'var_name': 'tos', 'cf_name': 'sea_surface_temperature', 'cf_units': 'K'},
+            'sst': {'var_name': 'ts', 'cf_name': 'sea_surface_temperature', 'cf_units': 'K'},
             # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
             # swr = rsds - rsus
             # sometimes swr is included in the datasets in a variable called 'rss'
@@ -360,7 +360,7 @@ def CmipVariables():
                 'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']
             },
             # zonal surface wind stress (on ocean grid or ocean points only)
-            'taux': {'var_name': 'tauuo', 'cf_name': 'surface_downward_eastward_stress', 'cf_units': 'Pa'},
+            'taux': {'var_name': 'tauu', 'cf_name': 'surface_downward_eastward_stress', 'cf_units': 'Pa'},
             # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
             # tfh = hfls + hfss + rlds - rlus + rsds - rsus
             # sometimes rls = rlds - rlus and rss = rsds - rsus
