@@ -17,7 +17,7 @@ def defCollection(MC=True):
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux']},
-                    'metric_computation': 'relative_difference', # i.e., (obs-model)/model
+                    'metric_computation': 'difference', # i.e., (obs-model)/model
                     # the "science panel" will have to define the "metric", it could be the difference (obs-model), the
                     # ratio (model/model), the relative difference ([obs-model]/model),...
 
@@ -29,49 +29,50 @@ def defCollection(MC=True):
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux']},
-                    'metric_computation': 'relative_difference',
+                    'metric_computation': 'difference',
                 },
                 'EnsoRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'tropical_pacific'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux']},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'EnsoAlphaLhf': {
                     'variables': ['sst','lhf'],
                     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
-                    'metric_computation': 'relative_difference',
+                    'metric_computation': 'difference',
                 },
                 'EnsoAlphaLwr': {
                     'variables': ['sst', 'lwr'],
                     'regions': {'sst': 'nino3', 'lwr': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
-                    'metric_computation': 'relative_difference',
+                    'metric_computation': 'difference',
                 },
                 'EnsoAlphaShf': {
                     'variables': ['sst', 'shf'],
                     'regions': {'sst': 'nino3', 'shf': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'shf': ['Tropflux']},
-                    'metric_computation': 'relative_difference',
+                    'metric_computation': 'difference',
                 },
                 'EnsoAlphaSwr': {
                     'variables': ['sst', 'swr'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'swr': ['Tropflux']},
-                    'metric_computation': 'relative_difference',
+                    'metric_computation': 'difference',
                 },
                 'EnsoAlphaThf': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'thf': ['Tropflux']},
-                    'metric_computation': 'relative_difference',
+                    'metric_computation': 'difference',
                 },
                 'EnsoMu': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'taux': ['Tropflux']},
-                    'metric_computation': 'relative_difference',
+                    'metric_computation': 'difference',
                 },
             },
             'common_collection_parameters': {
@@ -84,44 +85,50 @@ def defCollection(MC=True):
             },
             'description': 'Describe which science question this collection is about',
         },
-        'MC2': {
-            'long_name': 'Metrics Collection 2',
+        'ENSO perf': {
+            'long_name': 'Metrics Collection for ENSO performance',
             'metrics_list': {
                 'EnsoLatRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3_reduced'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'EnsoLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'EnsoPrLatRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'nino3_reduced'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'EnsoPrLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'EnsoTauxLatRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'nino3'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'EnsoTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'NinaCompositeLon': {
                     'variables': ['sst'],
@@ -129,7 +136,8 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'NinaCompositeTS': {
                     'variables': ['sst'],
@@ -145,7 +153,8 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_to_obs': True, 'regridTool': 'esmf', 'regridMethod': 'linear'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
                 'NinoCompositeTS': {
                     'variables': ['sst'],

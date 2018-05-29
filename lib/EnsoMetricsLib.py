@@ -1050,12 +1050,12 @@ def EnsoRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_r
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
 
     # Computes the root mean square difference
     sstRmse = RmsHorizontal(sst_model, sst_obs, centered=centered_rmse)
@@ -1232,12 +1232,12 @@ def EnsoLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
         print '\033[92m' + str().ljust(15) + "after TwoVarRegrid" + '\033[0m'
         print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()])\
@@ -1424,12 +1424,12 @@ def EnsoLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
         print '\033[92m' + str().ljust(15) + "after TwoVarRegrid" + '\033[0m'
         print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()])\
@@ -1578,12 +1578,12 @@ def EnsoPrRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rms
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
 
     # Computes the root mean square difference
     pr_rmse = RmsHorizontal(pr_model, pr_obs, centered=centered_rmse)
@@ -1722,12 +1722,12 @@ def EnsoPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
 
     # Zonal average
     pr_model = AverageZonal(pr_model)
@@ -1870,12 +1870,12 @@ def EnsoPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, **kwargs['regridding'])
+        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
 
     # Meridional average
     pr_model = AverageMeridional(pr_model)
@@ -2018,12 +2018,12 @@ def EnsoTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, ce
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
 
     # Computes the root mean square difference
     taux_rmse = RmsHorizontal(taux_model, taux_obs, centered=centered_rmse)
@@ -2163,12 +2163,12 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
 
     # Zonal average
     taux_model = AverageZonal(taux_model)
@@ -2312,12 +2312,12 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, **kwargs['regridding'])
+        taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
 
     # Meridional average
     taux_model = AverageMeridional(taux_model)
@@ -2596,12 +2596,12 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
 
     # Meridional average
     sst_model = AverageMeridional(sst_model)
@@ -2777,12 +2777,12 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_to_obs', 'obs_to_model', 'model_and_obs_to_newgrid', 'newgrid', 'missing', 'order',
-                      'mask', 'regridTool', 'regridMethod'}
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
         extra_args = set(kwargs['regridding']) - known_args
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        composite_model, composite_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, **kwargs['regridding'])
+        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
 
     # Meridional average
     sst_model = AverageMeridional(sst_model)

@@ -18,6 +18,9 @@ from EnsoToolsLib import StringInDict
 # uvcdat based functions:
 import adamsregrid
 from cdms2 import createAxis as CDMS2createAxis
+from cdms2 import createRectGrid as CDMS2createRectGrid
+from cdms2 import createUniformLatitudeAxis as CDMS2createUniformLatitudeAxis
+from cdms2 import createUniformLongitudeAxis as CDMS2createUniformLongitudeAxis
 from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
 from cdtime import comptime as CDTIMEcomptime
@@ -32,6 +35,7 @@ from MV2 import average as MV2average
 from MV2 import compress as MV2compress
 from MV2 import divide as MV2divide
 from MV2 import masked_where as MV2masked_where
+from MV2 import maximum as MV2maximum
 from MV2 import minimum as MV2minimum
 from MV2 import multiply as MV2multiply
 from MV2 import subtract as MV2subtract
@@ -39,6 +43,7 @@ from MV2 import sum as MV2sum
 from MV2 import take as MV2take
 from MV2 import where as MV2where
 from MV2 import zeros as MV2zeros
+from regrid2.horizontal import Horizontal as REGRID2horizontal__Horizontal
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -594,14 +599,16 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             else:
                 tab = dict_operations['minus'](tab, 273.15)
                 units = "degC"
-                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, INSPECTstack())
+                minmax = [MV2minimum(tab),MV2maximum(tab)]
+                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, minmax, INSPECTstack())
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
                        'degrees C']:
             # check if the temperature units is really degC
             if float(MV2minimum(tab)) < 50:
                 units = "degC"
             else:
-                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, INSPECTstack())
+                minmax = [MV2minimum(tab), MV2maximum(tab)]
+                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, minmax, units, INSPECTstack())
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
     elif var_name in ['precipitations']:
@@ -1039,7 +1046,8 @@ def ReadAreaSelectRegion(filename, box=None, **kwargs):
     return areacell
 
 
-def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTool='esmf', regridMethod='linear'):
+def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridder='cdms', regridTool='esmf',
+           regridMethod='linear', **kwargs):
     """
     #################################################################################
     Description:
@@ -1070,47 +1078,130 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTo
         axis order (form "tzyx", "tyx", etc.)
     :param mask: array of booleans, optional
         mask of the new grid (either 2-D or the same shape as togrid)
+    :param regridder: string, optional
+        regridders (either 'adamsregrid', 'cdms', 'cdmsHorizontal')
+        default value is 'cdms'
     :param regridTool: string, optional
-        regridding tools (either 'regrid2', 'esmf', 'libcf', 'adamsregrid')
+        only if regrider is set to 'cdms'
+        regridding tools (either 'regrid2', 'esmf', 'libcf')
         default value is 'esmf'
     :param regridMethod: string, optional
-        regridding methods:
-            regridTool='regrid2'     -> 'linear'
-            regridTool='esmf'        -> 'conserve', 'linear', 'patch'
-            regridTool='libcf'       -> 'linear'
-            regridTool='adamsregrid' -> 'linear', 'linearLog', 'cubic', 'cubicLog'
+        regridding methods depend on regridder and regridTool
+        'adamsregrid' -> 'linear', 'linearLog', 'cubic', 'cubicLog'
+        'cdms'
+            regridTool='regrid2' -> 'linear'
+            regridTool='esmf'    -> 'conserve', 'linear', 'patch'
+            regridTool='libcf'   -> 'linear'
+        'cdmsHorizontal' -> None
         default value is 'linear'
+
+    usual kwargs:
+    :param newgrid_name: string, optional
+        if 'newgrid' is not defined (is string) this will be used to create a grid:
+            this string must contain two keywords: the grid type and the resolution (same resolution in lon and lat)
+            grid type  -> 'equalarea', 'gaussian', 'generic', 'uniform'
+            resolution -> '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
+            e.g., newgrid_name='gaussian 1x1deg'
+        default value is 'generic 1x1deg'
+    :param region: string, optional
+        if 'newgrid' is not defined (is string) this will be used to create a grid
+        name of a region, domain where the grid will be defined, must be defined in EnsoCollectionsLib.ReferenceRegions
+
     :return new_tab: masked_array
         tab_to_regrid regridded on newgrid
     """
-    if regridTool not in ['regrid2', 'esmf', 'libcf', 'adamsregrid']:
+    known_args = {'newgrid_name', 'region'}
+    extra_args = set(kwargs) - known_args
+    if extra_args:
+        EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+    # test given arguments
+    known_regridder = ['adamsregrid', 'cdms', 'cdmsHorizontal']
+    if regridder not in known_regridder:
         list_strings = [
-            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
-            str().ljust(5) + "unknown regridTool: " + str(regridTool),
-            str().ljust(10) + "known regridTool: " + str(['regrid2', 'esmf', 'libcf'])
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridder",
+            str().ljust(5) + "unknown regridder: " + str(regridder),
+            str().ljust(10) + "known regridder: " + str(known_regridder)
         ]
         EnsoErrorsWarnings.MyError(list_strings)
-    if (regridTool == 'esmf' and regridMethod not in ['conserve', 'patch', 'linear']) or \
-            (regridTool in ['regrid2', 'libcf'] and regridMethod != 'linear'):
-        list_strings = [
-            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
-            str().ljust(5) + "unknown regridMethod for this regridTool (" + str(regridMethod) + "): "
-            + str(regridMethod),
-            str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
-        ]
-        EnsoErrorsWarnings.MyError(list_strings)
-    if (regridTool == 'adamsregrid' and regridMethod not in ['linear', 'linearLog', 'cubic', 'cubicLog']):
-        list_strings = [
-            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
-            str().ljust(5) + "unknown regridMethod for this regridTool (" + str(regridMethod) + "): "
-            + str(regridMethod),
-            str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
-        ]
-        EnsoErrorsWarnings.MyError(list_strings)
-    if regridTool in ['regrid2', 'esmf', 'libcf']:
-        new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
-                                       regridMethod=regridMethod)
-    else:
+    elif regridder in ['adamsregrid']:
+        if regridder is ['adamsregrid']:
+            list_method = [None, 'linear', 'linearLog', 'cubic', 'cubicLog']
+        else:
+            list_method = [None, 'conservative', 'bilinear', 'bicubic', 'distwgt']
+        if regridMethod not in list_method:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
+                str().ljust(5) + "unknown regridMethod (" + str(regridMethod) + ")",
+                str().ljust(10) + "known regridMethod: " + str(list_method)
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+    elif regridder == 'cdms':
+        if regridTool in ['regrid2', 'libcf']:
+            list_method = [None, 'linear']
+        elif regridTool == 'esmf':
+            list_method = [None, 'conserve', 'linear', 'patch']
+        if (regridTool is not None) and (regridTool not in ['regrid2', 'esmf', 'libcf']):
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
+                str().ljust(5) + "unknown regridTool: " + str(regridTool),
+                str().ljust(10) + "known regridTool: " + str(['regrid2', 'esmf', 'libcf'])
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+        elif regridMethod not in list_method:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
+                str().ljust(5) + "unknown regridMethod (" + str(regridMethod) + ") for this regridTool ("
+                + str(regridTool) + ")",
+                str().ljust(10) + "known regridMethod: " + str(list_method)
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+    # test the given 'newgrid'
+    if isinstance(newgrid, basestring) or newgrid is None:
+        #
+        # newgrid is not a grid, so a grid will be created
+        # to do this, kwargs['newgrid_name'] and kwargs['region'] must be defined
+        #
+        # define the grid type
+        for gtype in ['equalarea', 'gaussian', 'generic', 'uniform']:
+            if gtype in kwargs['newgrid_name']:
+                GridType = gtype
+                break
+        try:
+            GridType
+        except:
+            GridType = 'generic'
+        # define resolution (same resolution in lon and lat)
+        for res in ['0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg']:
+            if res in kwargs['newgrid_name']:
+                if res == '0.25x0.25deg':
+                    GridRes = 0.25
+                elif res == '0.5x0.5deg':
+                    GridRes = 0.5
+                elif res == '1x1deg':
+                    GridRes = 1.
+                else:
+                    GridRes = 2.
+                break
+        try:
+            GridRes
+        except:
+            GridRes = 1.
+        # define bounds of 'region'
+        region_ref = ReferenceRegions(kwargs['region'])
+        lat1, lat2 = region_ref['latitude'][0], region_ref['latitude'][1]
+        lon1, lon2 = region_ref['longitude'][0], region_ref['longitude'][1]
+        # create uniform axis
+        nlat = lat2 - lat1
+        lat = CDMS2createUniformLatitudeAxis(lat1 + (GridRes / 2.), nlat, GridRes)
+        nlon = lon2 - lon1
+        lon = CDMS2createUniformLongitudeAxis(lon1 + (GridRes / 2.), nlon, GridRes)
+        # create grid
+        newgrid = CDMS2createRectGrid(lat, lon, "yx", type=GridType, mask=None)
+        newgrid.id = kwargs['newgrid_name']
+    #
+    # regrid
+    #
+    if regridder == 'adamsregrid':
         axis = tab_to_regrid.getAxis(0)[:]
         if axis[0] > newgrid.getAxis(0)[0]:
             axis[0] = newgrid.getAxis(0)[0]
@@ -1132,6 +1223,14 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTo
                                    tab_to_regrid.getAxis(3)[:], newgrid.getAxis(3)[:], regridMethod, 3)
         new_tab = MV2array(r.rgrd(tab_to_regrid))
         new_tab.setAxisList(newgrid.getAxisList())
+    elif regridder == 'cdms':
+        new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
+                                        regridMethod=regridMethod)
+        if tab_to_regrid.getGrid().shape == newgrid.shape:
+            new_tab = MV2masked_where(tab_to_regrid.mask, new_tab)
+    elif regridder == 'cdmsHorizontal':
+        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid)
+        new_tab = regridFCT(tab_to_regrid)
     return new_tab
 
 
@@ -1801,8 +1900,7 @@ def TimeAnomaliesStd(tab):
     return std
 
 
-def TwoVarRegrid(model, obs, info, model_to_obs=True, obs_to_model=False, model_and_obs_to_newgrid = False,
-                 newgrid=None, **keyarg):
+def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None, **keyarg):
     """
     #################################################################################
     Description:
@@ -1817,58 +1915,86 @@ def TwoVarRegrid(model, obs, info, model_to_obs=True, obs_to_model=False, model_
         observations data
     :param info: string
         information about what was done to 'model' and 'obs'
-    :param model_to_obs: boolean, optional
-        True if you want to regrid model data toward observations data, if you don't want it pass anything but True
-    :param obs_to_model: boolean, optional
-        True if you want to regrid observations data toward model data, if you don't want it pass anything but True
-    :param model_and_obs_to_newgrid: boolean, optional
-        True if you want to regrid model data and observations data toward 'newgrid', if you don't want it pass anything
-        but True
+    :param region: string
+        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+    :param model_orand_obs: integer, optional
+        0 if you want to regrid model data toward observations data
+        1 if you want to regrid observations data toward model data
+        2 if you want to regrid model AND observations data toward 'newgrid'
+        default value = 0
     :param newgrid: CDMS grid
-        grid toward which model data and observations data are regridded if model_and_obs_to_newgrid=True
-    :param keyarg:
-        see EnsoUvcdatToolsLib.Regrid for regridding options
+        grid toward which model data and observations data are regridded if model_orand_obs=2
+
+    usual kwargs:
+    :param newgrid_name: string, optional
+        generates 'newgrid' depending on the given string using cdms2
+        'newgrid_name' must contain a name of a grid type:
+            'equalarea', 'gaussian', 'generic', 'uniform'
+        and a name of a grid resolution:
+            '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
+        default value = 'generic 1x1deg'
+        for more information:
+        import cdms2
+        help(cdms2.createUniformLatitudeAxis)
+        help(cdms2.createUniformLongitudeAxis)
+        help(cdms2.createRectGrid)
+    see EnsoUvcdatToolsLib.Regrid for regridding options
+
     :return: model, obs, info
         model and obs on the same grid, and information about what has been done to 'model' and 'obs'
     """
-    known_args = {'missing', 'order', 'mask', 'regridTool', 'regridMethod'}
+    known_args = {'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool', 'regridMethod'}
     extra_args = set(keyarg) - known_args
     if extra_args:
         EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-    # if regridTool='adamsregrid', the grid is not sent but the masked_array
-    if keyarg['regridTool'] == 'adamsregrid':
+    # if regridder='adamsregrid', the grid is not sent but the masked_array
+    if keyarg['regridder'] == 'adamsregrid':
         grid_obs = deepcopy(obs)
         grid_model = deepcopy(model)
     else:
         grid_obs = obs.getGrid()
         grid_model = model.getGrid()
     # select case:
-    if model_to_obs:
+    if model_orand_obs == 0:
         model = Regrid(model, grid_obs, **keyarg)
         info = info + ', model regridded to observations'
-    elif obs_to_model:
+    elif model_orand_obs == 1:
         obs = Regrid(obs, grid_model, **keyarg)
         info = info + ', observations regridded to model'
-    elif model_and_obs_to_newgrid:
-        model = Regrid(model, newgrid, **keyarg)
-        obs = Regrid(obs, newgrid, **keyarg)
+    elif model_orand_obs == 2:
+        model = Regrid(model, newgrid, region=region, **keyarg)
+        obs = Regrid(obs, newgrid, region=region, **keyarg)
         try: grid_name = newgrid.id
         except:
             try: grid_name = newgrid.name
-            except: grid_name = 'newgrid'
+            except:
+                try: grid_name = keyarg['newgrid_name']
+                except: grid_name = 'newgrid'
         info = info + ', observations and model regridded to ' + str(grid_name)
+    else:
+        info = info + ', observations and model NOT regridded'
     if model.shape == obs.shape:
-        mask = model.mask
-        mask = MV2where(obs.mask, obs.mask, mask)
+        print model.mask.shape
+        if model.mask.shape != ():
+            mask = model.mask
+            if obs.mask.shape != ():
+                mask = MV2where(obs.mask, obs.mask, mask)
+        else:
+            if obs.mask.shape != ():
+                mask = obs.mask
+            else:
+                mask = MV2where(MV2zeros(model.shape)==0, False, True)
         model = MV2masked_where(mask, model)
         obs = MV2masked_where(mask, obs)
     else:
-        tab = MV2zeros(model.shape)
-        for tt in range(len(tab)):
-            tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
-        model = MV2masked_where(tab.mask, model)
-        tab = MV2zeros(obs.shape)
-        for tt in range(len(tab)):
-            tab[tt] = MV2masked_where(model[0].mask, tab[tt])
-        obs = MV2masked_where(tab.mask, obs)
+        if obs[0].mask.shape != ():
+            tab = MV2zeros(model.shape)
+            for tt in range(len(tab)):
+                tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
+            model = MV2masked_where(tab.mask, model)
+        if model[0].mask != ():
+            tab = MV2zeros(obs.shape)
+            for tt in range(len(tab)):
+                tab[tt] = MV2masked_where(model[0].mask, tab[tt])
+            obs = MV2masked_where(tab.mask, obs)
     return model, obs, info

@@ -15,7 +15,7 @@ from KeyArgLib import DefaultArgValues
 #
 # Computation of the metric collection
 #
-def ComputeCollection(metricCollection, dictDatasets):
+def ComputeCollection(metricCollection, dictDatasets, user_regridding={}):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -160,7 +160,7 @@ def ComputeCollection(metricCollection, dictDatasets):
         else:
             dict_collection['metrics'][metric] = ComputeMetric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-                dict_regions[list_variables[0]], **arg_var2)
+                dict_regions[list_variables[0]], user_regridding=user_regridding, **arg_var2)
     return dict_collection
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -225,7 +225,7 @@ dict_twoVar = {
 
 def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                   regionVar1, modelFile2='', modelVarName2='', obsNameVar2='', obsFile2='', obsVarName2='',
-                  regionVar2=''):
+                  regionVar2='', user_regridding={}):
     """
     The ComputeMetric() function computes the given metric for the given model and observations
 
@@ -243,6 +243,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     :param modelVarName2:
     :param obsFile2:
     :param obsVarName2:
+    :param user_regridding:
     :return:
     """
     # retrieving keyargs from EnsoCollectionsLib.defCollection
@@ -274,6 +275,11 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         keyarg['time_bounds_obs'] = keyarg['observed_period']
     except:
         keyarg['time_bounds_obs'] = DefaultArgValues('time_bounds_obs')
+    # if the user gave a specific regridding Tool / method, use it
+    if metric in user_regridding.keys():
+        keyarg['regridding'] = user_regridding[metric]
+    elif 'regridding'in user_regridding.keys():
+        keyarg['regridding'] = user_regridding['regridding']
 
     # obsName could be a list if the user wants to compare the model with a set of observations
     # if obsName is just a name (string) it is put in a list

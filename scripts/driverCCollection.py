@@ -50,7 +50,7 @@ def find_xml_obs(obs,frequency, variable):
 
 
 # metric collection
-mc_name = 'MC1'
+mc_name = 'ENSO perf'
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -59,7 +59,7 @@ project = 'CMIP5'
 experiment = 'historical'
 ensemble = 'r1i1p1'
 frequency = 'mon'
-realm = 'O'
+realm = 'A'
 
 # list of variables
 list_variables = list()
@@ -80,6 +80,7 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
+list_obs = ['Tropflux']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -168,8 +169,14 @@ for mod in list_models:
     # every variables needed by the metric collection [lhf, lwr, swr, shf, sst, taux, thf] even if its coming from
     # another dataset
     dictDatasets = {'model': dict_mod, 'observations': dict_obs}
+    # regridding dictionary
+    dict_regrid = {
+        'regridding': {
+            'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+            'newgrid_name':'generic 1x1deg'},
+    }
     # Computes the metric collection
-    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
+    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid)
     # Prints the metrics values
     for ii in range(3): print ''
     print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'

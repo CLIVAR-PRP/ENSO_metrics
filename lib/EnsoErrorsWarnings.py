@@ -201,7 +201,7 @@ def TooShortTimePeriod(metric_name, length, minimum_length, inspect_stack):
     return
 
 
-def UnlikelyUnits(var_name, name_in_file, units, inspect_stack):
+def UnlikelyUnits(var_name, name_in_file, units, minmax, inspect_stack):
     """
     #################################################################################
     Description:
@@ -215,13 +215,15 @@ def UnlikelyUnits(var_name, name_in_file, units, inspect_stack):
         name of the variable in the file (usually the short_name) that has unlikely units
     :param units: string
         units of the variable
+    :param minmax: list
+        minimum and maximum values of 'var_name'
     :param inspect_stack: array
         list of information about the program/module/line,... created using inspect.stack()
     :return:
     """
     list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": units",
                     str().ljust(5) + "the file says that " + str(var_name) + " (" + str(name_in_file)
-                    + ") is in " + str(units) + " but it seems unlikely"]
+                    + ") is in " + str(units) + " but it seems unlikely (" + str(minmax) + ")"]
     MyError(list_strings)
     return
 
