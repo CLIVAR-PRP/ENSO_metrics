@@ -173,7 +173,7 @@ for mod in list_models:
     dict_regrid = {
         'regridding': {
             'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-            'newgrid_name':'generic 1x1deg'},
+            'newgrid_name': 'generic 1x1deg'},
     }
     # Computes the metric collection
     dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid)

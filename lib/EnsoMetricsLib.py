@@ -910,9 +910,9 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, **kwargs):
     mu, muPos, muNeg = LinearRegressionAndNonlinearity(taux, sst, return_stderr=True)
 
     # Change units
-    mu = [mu[0] * 1000., mu[1] * 1000.]
-    muPos = [muPos[0] * 1000., muPos[1] * 1000.]
-    muNeg = [muNeg[0] * 1000., muNeg[1] * 1000.]
+    mu = [mu[0] * 1e3, mu[1] * 1e3]
+    muPos = [muPos[0] * 1e3, muPos[1] * 1e3]
+    muNeg = [muNeg[0] * 1e3, muNeg[1] * 1e3]
 
     # Create output
     muMetric = {
@@ -1975,7 +1975,7 @@ def EnsoTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, ce
 
     # Define metric attributes
     Name = 'ENSO Taux RMSE'
-    Units = 'N/m2'
+    Units = '*1e3 N/m2'
     Method = 'Spatial root mean square error of ' + box + ' Taux'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
@@ -2026,7 +2026,7 @@ def EnsoTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, ce
         taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
 
     # Computes the root mean square difference
-    taux_rmse = RmsHorizontal(taux_model, taux_obs, centered=centered_rmse)
+    taux_rmse = RmsHorizontal(taux_model, taux_obs, centered=centered_rmse) * 1e3
 
     # Create output
     TauxRmseMetric = {
@@ -2119,7 +2119,7 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Define metric attributes
     Name = 'ENSO Taux Meridional RMSE'
-    Units = 'N/m2'
+    Units = '*1e3 N/m2'
     Method = 'Meridional root mean square error of ' + box + ' Taux'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
@@ -2171,8 +2171,8 @@ def EnsoTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
         taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
 
     # Zonal average
-    taux_model = AverageZonal(taux_model)
-    taux_obs = AverageZonal(taux_obs)
+    taux_model = AverageZonal(taux_model) * 1e3
+    taux_obs = AverageZonal(taux_obs) * 1e3
 
     # Computes the root mean square difference
     taux_rmse = RmsMeridional(taux_model, taux_obs, centered=centered_rmse)
@@ -2268,7 +2268,7 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
 
     # Define metric attributes
     Name = 'ENSO Taux Zonal RMSE'
-    Units = 'N/m2'
+    Units = '* 1e3 N/m2'
     Method = 'Meridional root mean square error of ' + box + ' Taux'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
@@ -2320,8 +2320,8 @@ def EnsoTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
         taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
 
     # Meridional average
-    taux_model = AverageMeridional(taux_model)
-    taux_obs = AverageMeridional(taux_obs)
+    taux_model = AverageMeridional(taux_model) * 1e3
+    taux_obs = AverageMeridional(taux_obs) * 1e3
 
     # Computes the root mean square difference
     taux_rmse = RmsZonal(taux_model, taux_obs, centered=centered_rmse)
