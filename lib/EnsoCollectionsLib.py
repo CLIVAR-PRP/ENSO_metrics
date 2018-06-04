@@ -130,6 +130,35 @@ def defCollection(MC=True):
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
+                'LatPrSeaStdRmse': {
+                    'variables': ['pr'],
+                    'regions': {'pr': 'nino3_reduced'},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'LatSstSeaStdRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3_reduced'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'LonPrSeaStdRmse': {
+                    'variables': ['pr'],
+                    'regions': {'pr': 'equatorial_pacific'},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'LonSstSeaStdRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+
                 'NinaCompositeLon': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},

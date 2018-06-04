@@ -3,6 +3,7 @@ from calendar import monthrange
 from copy import deepcopy
 from datetime import date
 from inspect import stack as INSPECTstack
+from numpy import arange as NParange
 from numpy import array as NParray
 from numpy import exp as NPexp
 from numpy import nonzero as NPnonzero
@@ -21,6 +22,7 @@ from cdms2 import createAxis as CDMS2createAxis
 from cdms2 import createRectGrid as CDMS2createRectGrid
 from cdms2 import createUniformLatitudeAxis as CDMS2createUniformLatitudeAxis
 from cdms2 import createUniformLongitudeAxis as CDMS2createUniformLongitudeAxis
+from cdms2 import createVariable as CDMS2createVariable
 from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
 from cdtime import comptime as CDTIMEcomptime
@@ -496,6 +498,33 @@ def TimeBounds(tab):
 #
 # Set of more complex functions (based on uvcdat) used in EnsoMetricsLib.py
 #
+def annualcycle(tab):
+    """
+    #################################################################################
+    Description:
+    Computes the annual cycle (climatological value of each calendar month) of tab
+    #################################################################################
+
+    :param tab: masked_array
+    :return: tab: array
+        array of the monthly annual cycle
+    """
+    initorder = tab.getOrder()
+    tab = tab.reorder('t...')
+    axes = tab.getAxisList()
+    time_ax = tab.getTime().asComponentTime()
+    months = MV2array(list(tt.month for tt in time_ax))
+    cyc = []
+    for ii in range(12):
+        cyc.append(MV2average(tab.compress(months == (ii + 1), axis=0), axis=0))
+    cyc = MV2array(cyc)
+    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
+    time.units = "months since 0001-01-01"
+    moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
+    moy = moy.reorder(initorder)
+    cdutil.setTimeBoundsMonthly(moy)
+    return moy
+
 def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', **kwargs):
     """
     #################################################################################
@@ -839,7 +868,7 @@ def get_num_axis(tab, name_axis):
         tab of data to normalize by the standard deviation
     :param name_axis: string
         name of an axis
-        e.g., frequency='latitude'
+        e.g., name_axis='latitude'
     :return number: int
         position of the axis named "name_axis"
     """
@@ -1752,10 +1781,12 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
 
 
-def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, **kwargs):
+def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom:
         tab = cdutil.ANNUALCYCLE.departures(tab)
+    elif compute_sea_cycle:
+        tab = annualcycle(tab)
     # Normalization of the anomalies
     if kwargs['normalization']:
         if kwargs['frequency'] is not None:
