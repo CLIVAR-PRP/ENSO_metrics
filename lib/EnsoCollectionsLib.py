@@ -90,7 +90,7 @@ def defCollection(MC=True):
             'metrics_list': {
                 'EnsoLatRmse': {
                     'variables': ['sst'],
-                    'regions': {'sst': 'nino3_reduced'},
+                    'regions': {'sst': 'nino3.3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
@@ -104,7 +104,7 @@ def defCollection(MC=True):
                 },
                 'EnsoPrLatRmse': {
                     'variables': ['pr'],
-                    'regions': {'pr': 'nino3_reduced'},
+                    'regions': {'pr': 'nino3.3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
@@ -118,7 +118,7 @@ def defCollection(MC=True):
                 },
                 'EnsoTauxLatRmse': {
                     'variables': ['taux'],
-                    'regions': {'taux': 'nino3'},
+                    'regions': {'taux': 'nino3_LatExt'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
@@ -132,7 +132,7 @@ def defCollection(MC=True):
                 },
                 'PrSeasonalityLatRmse': {
                     'variables': ['pr'],
-                    'regions': {'pr': 'nino3_reduced'},
+                    'regions': {'pr': 'nino3.3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
@@ -146,7 +146,7 @@ def defCollection(MC=True):
                 },
                 'SstSeasonalityLatRmse': {
                     'variables': ['sst'],
-                    'regions': {'sst': 'nino3_reduced'},
+                    'regions': {'sst': 'nino3.3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
@@ -356,9 +356,10 @@ def ReferenceRegions(AR=True):
         },
         'nino1+2': {'long_name': 'Niño 1+2', 'latitude': (-10., 0.), 'longitude': (270., 280.)},
         'nino3': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (210., 270.)},
+        'nino3_LatExt': {'long_name': 'Niño 3', 'latitude': (-15., 15.), 'longitude': (210., 270.)},
+        'nino3.3_LatExt': {'long_name': 'Niño 3', 'latitude': (-15., 15.), 'longitude': (220., 250.)},
         'nino3.4': {'long_name': 'Niño 3.4', 'latitude': (-5., 5.), 'longitude': (190., 240.)},
         'nino4': {'long_name': 'Niño 4', 'latitude': (-5., 5.), 'longitude': (160., 210.)},
-        'nino3_reduced': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (220., 250.)},
     }
     if AR:
         return dict_reference_regions[AR]
