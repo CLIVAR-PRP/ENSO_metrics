@@ -5,10 +5,12 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoLatRmse,\
-    EnsoLonRmse, EnsoMu, EnsoPrLatRmse, EnsoPrLonRmse, EnsoPrRmse, EnsoRmse, EnsoTauxLatRmse, EnsoTauxLonRmse,\
-    EnsoTauxRmse, EnsoSeasonality, NinaCompositeLon, NinoCompositeLon, NinaCompositeTS, NinoCompositeTS
+from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstRmse, \
+    BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, \
+    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoSeasonality, NinaSstLonRmse, NinaSstTsRmse, NinoSstLonRmse, NinoSstTsRmse, \
+    SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
+
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -208,11 +210,13 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
 # Computation of the metric
 #
 dict_oneVar_modelAndObs = {
-    'EnsoRmse': EnsoRmse, 'EnsoLatRmse': EnsoLatRmse, 'EnsoLonRmse': EnsoLonRmse,
-    'EnsoPrRmse': EnsoPrRmse, 'EnsoPrLatRmse': EnsoPrLatRmse, 'EnsoPrLonRmse': EnsoPrLonRmse,
-    'EnsoTauxRmse': EnsoTauxRmse, 'EnsoTauxLatRmse': EnsoTauxLatRmse, 'EnsoTauxLonRmse': EnsoTauxLonRmse,
-    'NinaCompositeLon': NinaCompositeLon, 'NinaCompositeTS': NinaCompositeTS,
-    'NinoCompositeLon': NinoCompositeLon, 'NinoCompositeTS': NinoCompositeTS,
+    'BiasPrLatRmse': BiasPrLatRmse, 'BiasPrLonRmse': BiasPrLonRmse, 'BiasPrRmse': BiasPrRmse,
+    'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
+    'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
+    'NinaSstTsRmse': NinaSstTsRmse, 'NinaSstLonRmse': NinaSstLonRmse,
+    'NinoSstTsRmse': NinoSstTsRmse, 'NinoSstLonRmse': NinoSstLonRmse,
+    'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
+    'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
 }
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality,}

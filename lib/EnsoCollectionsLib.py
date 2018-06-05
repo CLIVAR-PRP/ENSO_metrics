@@ -31,7 +31,7 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['HadISST', 'Tropflux']},
                     'metric_computation': 'difference',
                 },
-                'EnsoRmse': {
+                'BiasSstRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'tropical_pacific'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux']},
@@ -88,109 +88,108 @@ def defCollection(MC=True):
         'ENSO perf': {
             'long_name': 'Metrics Collection for ENSO performance',
             'metrics_list': {
-                'EnsoLatRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3.3_LatExt'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'EnsoLonRmse': {
+                'BiasSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'EnsoPrLatRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'nino3.3_LatExt'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'EnsoPrLonRmse': {
+                'BiasPrLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'EnsoTauxLatRmse': {
-                    'variables': ['taux'],
-                    'regions': {'taux': 'nino3_LatExt'},
-                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'EnsoTauxLonRmse': {
+                'BiasTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'PrSeasonalityLatRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'nino3.3_LatExt'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'PrSeasonalityLonRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'equatorial_pacific'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'SstSeasonalityLatRmse': {
+                'BiasSstLatRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'SstSeasonalityLonRmse': {
+                'BiasPrLatRmse': {
+                    'variables': ['pr'],
+                    'regions': {'pr': 'nino3.3_LatExt'},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'BiasTauxLatRmse': {
+                    'variables': ['taux'],
+                    'regions': {'taux': 'equatorial_pacific_LatExt'},
+                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'SeasonalSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'NinaCompositeLon': {
+                'SeasonalSstLatRmse': {
                     'variables': ['sst'],
-                    'regions': {'sst': 'equatorial_pacific'},
+                    'regions': {'sst': 'nino3.3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'NinaCompositeTS': {
+                'SeasonalPrLatRmse': {
+                    'variables': ['pr'],
+                    'regions': {'pr': 'nino3.3_LatExt'},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'nbr_years_window': 6,
-                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'metric_computation': 'difference',
                 },
-                'NinoCompositeLon': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'NinoCompositeTS': {
+                'NinoSstTsRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
+                },
+                'NinaSstTsRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'nbr_years_window': 6,
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                },
+                'NinoSstLonRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'NinaSstLonRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
                 },
             },
             'common_collection_parameters': {
@@ -348,6 +347,9 @@ def ReferenceRegions(AR=True):
         'equatorial_pacific': {
             'long_name': 'Equatorial Pacific (EP)', 'latitude': (-5., 5.), 'longitude': (120., 280.),
         },
+        'equatorial_pacific_LatExt': {
+            'long_name': 'Equatorial Pacific extended in latitude', 'latitude': (-15., 15.), 'longitude': (150., 270.),
+        },
         'eastern_equatorial_pacific': {
             'long_name': 'Western Equatorial Pacific (WEP)', 'latitude': (-5., 5.), 'longitude': (205., 280.),
         },
@@ -356,8 +358,8 @@ def ReferenceRegions(AR=True):
         },
         'nino1+2': {'long_name': 'Niño 1+2', 'latitude': (-10., 0.), 'longitude': (270., 280.)},
         'nino3': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (210., 270.)},
-        'nino3_LatExt': {'long_name': 'Niño 3', 'latitude': (-15., 15.), 'longitude': (210., 270.)},
-        'nino3.3_LatExt': {'long_name': 'Niño 3', 'latitude': (-15., 15.), 'longitude': (220., 250.)},
+        'nino3.3_LatExt': {'long_name': 'small Niño 3 extended in latitude', 'latitude': (-15., 15.),
+                           'longitude': (220., 250.)},
         'nino3.4': {'long_name': 'Niño 3.4', 'latitude': (-5., 5.), 'longitude': (190., 240.)},
         'nino4': {'long_name': 'Niño 4', 'latitude': (-5., 5.), 'longitude': (160., 210.)},
     }
