@@ -1785,8 +1785,6 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom:
         tab = cdutil.ANNUALCYCLE.departures(tab)
-    elif compute_sea_cycle:
-        tab = annualcycle(tab)
     # Normalization of the anomalies
     if kwargs['normalization']:
         if kwargs['frequency'] is not None:
@@ -1806,6 +1804,9 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
+    # computes mean annual cycle
+    if compute_sea_cycle:
+        tab = annualcycle(tab)
     # average
     if average is not False:
         print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib PreProcessTS" + '\033[0m'

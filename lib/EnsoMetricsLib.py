@@ -3216,6 +3216,10 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, cente
     pr_model, Method = PreProcessTS(pr_model, Method, compute_sea_cycle=True, **kwargs)
     pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
 
+    # standard deviation computation
+    pr_model = Std(pr_model)
+    pr_obs = Std(pr_obs)
+
     # Regridding
     if isinstance(kwargs['regridding'], dict):
         known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
@@ -3224,10 +3228,6 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, cente
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
-
-    # standard deviation computation
-    pr_model = Std(pr_model)
-    pr_obs = Std(pr_obs)
 
     # Meridional average
     pr_model = AverageZonal(pr_model)
@@ -3366,6 +3366,10 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, cente
     pr_model, Method = PreProcessTS(pr_model, Method, compute_sea_cycle=True, **kwargs)
     pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
 
+    # standard deviation computation
+    pr_model = Std(pr_model)
+    pr_obs = Std(pr_obs)
+
     # Regridding
     if isinstance(kwargs['regridding'], dict):
         known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
@@ -3374,10 +3378,6 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, cente
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
-
-    # standard deviation computation
-    pr_model = Std(pr_model)
-    pr_obs = Std(pr_obs)
 
     # Meridional average
     pr_model = AverageMeridional(pr_model)
@@ -3514,6 +3514,10 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
     sst_model, Method = PreProcessTS(sst_model, Method, compute_sea_cycle=True, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
 
+    # standard deviation computation
+    sst_model = Std(sst_model)
+    sst_obs = Std(sst_obs)
+
     # Regridding
     if isinstance(kwargs['regridding'], dict):
         known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
@@ -3522,10 +3526,6 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-
-    # standard deviation computation
-    sst_model = Std(sst_model)
-    sst_obs = Std(sst_obs)
 
     # Meridional average
     sst_model = AverageZonal(sst_model)
@@ -3664,6 +3664,10 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
     sst_model, Method = PreProcessTS(sst_model, Method, compute_sea_cycle=True, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
 
+    # standard deviation computation
+    sst_model = Std(sst_model)
+    sst_obs = Std(sst_obs)
+
     # Regridding
     if isinstance(kwargs['regridding'], dict):
         known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
@@ -3672,10 +3676,6 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-
-    # standard deviation computation
-    sst_model = Std(sst_model)
-    sst_obs = Std(sst_obs)
 
     # Meridional average
     sst_model = AverageMeridional(sst_model)
