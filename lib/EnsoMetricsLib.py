@@ -2586,13 +2586,13 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, even
     obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=False, compute_anom=False,
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=False, compute_anom=True,
                                      **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=True, **kwargs)
 
     # Seasonal mean
-    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=True)
-    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
+    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
+    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -2767,13 +2767,13 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, even
     obs_areacell = ReadAreaSelectRegion(sstfileobs, box=box, **kwargs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=False, compute_anom=False,
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average=False, compute_anom=True,
                                      **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False, **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=True, **kwargs)
 
     # Seasonal mean
-    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=True)
-    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
+    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
+    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -3069,8 +3069,8 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, event
     actualtimeboundsobs = TimeBounds(sst_obs)
 
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='horizontal', compute_anom=True,
-                                     **kwargs)
+    sst_model, Method = PreProcessTS(sst_model, Method, areacell=model_areacell, average='horizontal',
+                                     compute_anom=True, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
                                      **kwargs)
 
