@@ -404,7 +404,7 @@ def EnsoAlphaShf(sstfile, shffile, sstname, shfname, sstbox, shfbox, **kwargs):
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Latent feedback (alpha_lh)'
+    Name = 'Sensible feedback (alpha_sh)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + shfbox + ' shfA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
@@ -519,7 +519,7 @@ def EnsoAlphaSwr(sstfile, swrfile, sstname, swrname, sstbox, swrbox, **kwargs):
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Longwave feedback (alpha_swr)'
+    Name = 'Shortwave feedback (alpha_swr)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + swrbox + ' swrA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
@@ -2395,7 +2395,7 @@ def EnsoSeasonality(sstfile, sstname, box, **kwargs):
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'ENSO Seasonality'
+    Name = 'ENSO seasonality'
     Units = ''
     Method = 'Ratio between NDJ and MAM standard deviation ' + box + ' sstA'
     Ref = 'Using CDAT std dev calculation'
@@ -2443,10 +2443,10 @@ def EnsoSeasonality(sstfile, sstname, box, **kwargs):
     return seaMetric
 
 
-def LatPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rmse=0, **kwargs):
+def PrSeasonalityLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rmse=0, **kwargs):
     """
-    The LatPrSeaStdRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude) standard deviation
-    root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
+    The PrSeasonalityLatRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude)
+    standard deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
 
     Inputs:
     ------
@@ -2526,7 +2526,7 @@ def LatPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centere
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'PR Meridional Seasonality RMSE'
+    Name = 'PR meridional seasonality RMSE'
     Units = 'mm/day'
     Method = 'Meridional root mean square error of ' + box + ' climatological pr STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -2542,13 +2542,12 @@ def LatPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centere
         mini = kwargs['min_time_steps']
         if len(pr_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LatPrSeaStdRmse: the modeled time-period is too short: " + str(
-                                len(pr_model))
-                            + " (minimum time-period: " + str(mini) + ")"]
+                            str().ljust(5) + "PrSeasonalityLatRmse: the modeled time-period is too short: "
+                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(pr_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LatPrSeaStdRmse: the observed time-period is too short: "
+                            str().ljust(5) + "PrSeasonalityLatRmse: the observed time-period is too short: "
                             + str(len(pr_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -2594,10 +2593,10 @@ def LatPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centere
     return LatRmseMetric
 
 
-def LonPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rmse=0, **kwargs):
+def PrSeasonalityLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rmse=0, **kwargs):
     """
-    The LonPrSeaStdRmse() function computes the climatological (12 months) PR (precipitation) zonal (longitude) standard deviation
-    root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
+    The PrSeasonalityLonRmse() function computes the climatological (12 months) PR (precipitation) zonal (longitude)
+    standard deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
 
     Inputs:
     ------
@@ -2677,7 +2676,7 @@ def LonPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centere
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'PR Zonal Seasonality RMSE'
+    Name = 'PR zonal seasonality RMSE'
     Units = 'mm/day'
     Method = 'Zonal root mean square error of ' + box + ' climatological pr STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -2693,13 +2692,12 @@ def LonPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centere
         mini = kwargs['min_time_steps']
         if len(pr_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LonPrSeaStdRmse: the modeled time-period is too short: " + str(
-                                len(pr_model))
-                            + " (minimum time-period: " + str(mini) + ")"]
+                            str().ljust(5) + "PrSeasonalityLonRmse: the modeled time-period is too short: "
+                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(pr_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LonPrSeaStdRmse: the observed time-period is too short: "
+                            str().ljust(5) + "PrSeasonalityLonRmse: the observed time-period is too short: "
                             + str(len(pr_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -2745,10 +2743,10 @@ def LonPrSeaStdRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centere
     return LonRmseMetric
 
 
-def LatSstSeaStdRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
+def SstSeasonalityLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
     """
-    The LatSstSeaStdRmse() function computes the climatological (12 months) SST meridional (latitude) standard deviation
-    root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
+    The SstSeasonalityLatRmse() function computes the climatological (12 months) SST meridional (latitude) standard
+    deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
 
     Inputs:
     ------
@@ -2826,7 +2824,7 @@ def LatSstSeaStdRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ce
         except: kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'SST Meridional Seasonality RMSE'
+    Name = 'SST meridional seasonality RMSE'
     Units = 'C'
     Method = 'Meridional root mean square error of ' + box + ' climatological sst STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -2842,12 +2840,12 @@ def LatSstSeaStdRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ce
         mini = kwargs['min_time_steps']
         if len(sst_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LatSstSeaStdRmse: the modeled time-period is too short: " + str(len(sst_model))
-                            + " (minimum time-period: " + str(mini) + ")"]
+                            str().ljust(5) + "SstSeasonalityLatRmse: the modeled time-period is too short: "
+                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LatSstSeaStdRmse: the observed time-period is too short: "
+                            str().ljust(5) + "SstSeasonalityLatRmse: the observed time-period is too short: "
                             + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -2893,10 +2891,10 @@ def LatSstSeaStdRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ce
     return LatRmseMetric
 
 
-def LonSstSeaStdRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
+def SstSeasonalityLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centered_rmse=0, **kwargs):
     """
-    The LonSstSeaStdRmse() function computes the climatological (12 months) SST zonal (longitude) standard deviation
-    root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
+    The SstSeasonalityLonRmse() function computes the climatological (12 months) SST zonal (longitude) standard
+    deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
 
     Inputs:
     ------
@@ -2976,7 +2974,7 @@ def LonSstSeaStdRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ce
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'SST Zonal Seasonality RMSE'
+    Name = 'SST zonal seasonality RMSE'
     Units = 'C'
     Method = 'Zonal root mean square error of ' + box + ' climatological sst STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -2992,13 +2990,12 @@ def LonSstSeaStdRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ce
         mini = kwargs['min_time_steps']
         if len(sst_model) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LonSstSeaStdRmse: the modeled time-period is too short: " + str(
-                                len(sst_model))
-                            + " (minimum time-period: " + str(mini) + ")"]
+                            str().ljust(5) + "SstSeasonalityLonRmse: the modeled time-period is too short: "
+                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
         if len(sst_obs) < mini:
             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "LonSstSeaStdRmse: the observed time-period is too short: "
+                            str().ljust(5) + "SstSeasonalityLonRmse: the observed time-period is too short: "
                             + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
             EnsoErrorsWarnings.MyError(list_strings)
 
@@ -3192,8 +3189,8 @@ def NinaCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False, **kwargs)
 
     # Seasonal mean
-    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
-    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
+    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=True)
+    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -3373,8 +3370,8 @@ def NinoCompositeLon(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, ev
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False, **kwargs)
 
     # Seasonal mean
-    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
-    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
+    sst_model = SeasonalMean(sst_model, season_ev, compute_anom=True)
+    sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):

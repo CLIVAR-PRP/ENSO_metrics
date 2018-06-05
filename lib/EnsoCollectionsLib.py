@@ -130,35 +130,34 @@ def defCollection(MC=True):
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'LatPrSeaStdRmse': {
+                'PrSeasonalityLatRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'nino3_reduced'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'LatSstSeaStdRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3_reduced'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'LonPrSeaStdRmse': {
+                'PrSeasonalityLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'LonSstSeaStdRmse': {
+                'SstSeasonalityLatRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3_reduced'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear'},
+                },
+                'SstSeasonalityLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-
                 'NinaCompositeLon': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
@@ -197,7 +196,7 @@ def defCollection(MC=True):
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
                 'frequency': 'monthly',
-                'min_time_steps': 200,
+                'min_time_steps': 204,
                 'normalization': False,
                 'observed_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
                 'modeled_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
@@ -350,10 +349,10 @@ def ReferenceRegions(AR=True):
             'long_name': 'Equatorial Pacific (EP)', 'latitude': (-5., 5.), 'longitude': (120., 280.),
         },
         'eastern_equatorial_pacific': {
-            'long_name': 'Eastern Equatorial Pacific (EEP)', 'latitude': (-5., 5.), 'longitude': (120., 205.),
+            'long_name': 'Western Equatorial Pacific (WEP)', 'latitude': (-5., 5.), 'longitude': (205., 280.),
         },
         'western_equatorial_pacific': {
-            'long_name': 'Western Equatorial Pacific (WEP)', 'latitude': (-5., 5.), 'longitude': (205., 280.),
+            'long_name': 'Eastern Equatorial Pacific (EEP)', 'latitude': (-5., 5.), 'longitude': (120., 205.),
         },
         'nino1+2': {'long_name': 'Niño 1+2', 'latitude': (-10., 0.), 'longitude': (270., 280.)},
         'nino3': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (210., 270.)},
