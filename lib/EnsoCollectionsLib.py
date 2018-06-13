@@ -85,7 +85,7 @@ def defCollection(MC=True):
             },
             'description': 'Describe which science question this collection is about',
         },
-        'ENSO perf': {
+        'ENSO_perf': {
             'long_name': 'Metrics Collection for ENSO performance',
             'metrics_list': {
                 'BiasSstLonRmse': {
