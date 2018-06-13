@@ -221,7 +221,7 @@ disclaimer = open(
 
 if param.metricsCollection == 'MC1':
   reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
-elif param.metricsCollection == 'MC2':
+elif param.metricsCollection == 'ENSO_perf':
   reference = "GFDL..."
 
 metrics_dictionary = collections.OrderedDict()
