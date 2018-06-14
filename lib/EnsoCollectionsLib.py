@@ -150,7 +150,7 @@ def defCollection(MC=True):
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
-                },
+                # },
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3'},

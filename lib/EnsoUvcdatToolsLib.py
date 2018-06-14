@@ -477,7 +477,7 @@ def Std(tab, weights=None, axis=0, centered=1, biased=1):
     import genutil
     help(genutil.statistics.std)
     """
-    return float(GENUTILstd(tab, weights=weights, axis=axis, centered=centered, biased=biased))
+    return GENUTILstd(tab, weights=weights, axis=axis, centered=centered, biased=biased)
 
 
 def TimeBounds(tab):

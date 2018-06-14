@@ -2203,9 +2203,13 @@ def EnsoAmpl(sstfile, sstname, sstbox, **kwargs):
 
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "shape = " + str(sst.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "timebounds = " + str(TimeBounds(sst)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
 
     # Computes the standard deviation
-    sstStd = Std(sst)
+    sstStd = float(Std(sst))
 
     # Standard Error of the Standard Deviation (function of nyears)
     sstStdErr = sstStd / NUMPYsqrt(yearN)
@@ -3234,7 +3238,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, cente
     pr_obs = AverageZonal(pr_obs)
 
     # Computes the root mean square difference
-    prRmse = RmsZonal(pr_model, pr_obs, centered=centered_rmse)
+    prRmse = RmsMeridional(pr_model, pr_obs, centered=centered_rmse)
 
     # Create output
     LatRmseMetric = {
@@ -3513,10 +3517,22 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
     # here only the detrending (if applicable) and time averaging are performed
     sst_model, Method = PreProcessTS(sst_model, Method, compute_sea_cycle=True, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
+    print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.timebounds = " + str(TimeBounds(sst_model)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.timebounds = " + str(TimeBounds(sst_obs)) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # standard deviation computation
     sst_model = Std(sst_model)
     sst_obs = Std(sst_obs)
+    print '\033[92m' + str().ljust(15) + "after Std" + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # Regridding
     if isinstance(kwargs['regridding'], dict):
@@ -3526,13 +3542,19 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
+        print '\033[92m' + str().ljust(15) + "after TwoVarRegrid" + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "model.axes = " +\
+              str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
+        print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # Meridional average
     sst_model = AverageZonal(sst_model)
     sst_obs = AverageZonal(sst_obs)
 
     # Computes the root mean square difference
-    sstRmse = RmsZonal(sst_model, sst_obs, centered=centered_rmse)
+    sstRmse = RmsMeridional(sst_model, sst_obs, centered=centered_rmse)
 
     # Create output
     LatRmseMetric = {
