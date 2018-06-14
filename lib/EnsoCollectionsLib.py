@@ -85,7 +85,7 @@ def defCollection(MC=True):
             },
             'description': 'Describe which science question this collection is about',
         },
-        'ENSO perf': {
+        'ENSO_perf': {
             'long_name': 'Metrics Collection for ENSO performance',
             'metrics_list': {
                 'BiasSstLonRmse': {
@@ -197,6 +197,7 @@ def defCollection(MC=True):
                 'frequency': 'monthly',
                 'min_time_steps': 204,
                 'normalization': False,
+                'project_interpreter': 'CMIP',
                 'observed_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
                 'modeled_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
