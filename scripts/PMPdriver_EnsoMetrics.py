@@ -112,7 +112,7 @@ for obs in list_obs:
                 list_files = file_name
             dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file}
 
-print 'jwlee: dict_obs readin end'
+print 'PMPdriver: dict_obs readin end'
 
 #=================================================
 # Loop for Observation and Models 
@@ -120,7 +120,7 @@ print 'jwlee: dict_obs readin end'
 # Insert observation at the beginning of the loop ---
 list_models = copy.copy(param.modnames)
 #list_models.insert(0,'obs')
-print 'jwlee: list models:', list_models
+print 'PMPdriver: list models:', list_models
 
 # Dictionary to save result ---
 def tree(): return defaultdict(tree)
@@ -144,7 +144,7 @@ for mod in list_models:
         # if you want to use atmosphere only, do not use this or create your own way to find the equivalent between the
         # variable name in the program and the variable name in the file
     
-        print 'jwlee: var loop start for model ', mod
+        print 'PMPdriver: var loop start for model ', mod
     
         for var in list_variables:
             #
@@ -169,7 +169,7 @@ for mod in list_models:
             # ------------------------------------------------
             dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
     
-        print 'jwlee: var loop end'
+        print 'PMPdriver: var loop end'
     
         # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
         # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
@@ -202,7 +202,7 @@ for mod in list_models:
         print 'failed for ', mod
         print(e)
   
-print 'jwlee: model loop end'
+print 'PMPdriver: model loop end'
 
 #=================================================
 #  OUTPUT METRICS TO JSON FILE
