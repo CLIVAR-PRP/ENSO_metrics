@@ -104,7 +104,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print '\033[95m' + str(var) + " in not available for " + str(obs) + " or unscripted" + '\033[0m'
+            print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
         else:
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]

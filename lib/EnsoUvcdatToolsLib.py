@@ -755,6 +755,17 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
             axes = [axis0]
         composite.setAxisList(axes)
     else:
+        time_ax = tab.getTime().asComponentTime() # gets component time of tab
+        list_years = [yy.year for yy in time_ax[:]] # listing years in tab (from component time)
+        indices = MV2arange(tab.size)
+        # creates a tab of 'condition' where True is set when the event is found, False otherwise
+        try:
+            condition = [True if yy in list_event_years else False for yy in list_years]
+        except:
+            list_event_years = [str(yy) for yy in list_event_years]
+            condition = [True if str(yy) in list_event_years else False for yy in list_years]
+        ids = MV2compress(condition, indices) # gets indices of events
+        tab = MV2take(tab, ids, axis=0) # gets events
         composite = MV2average(tab, axis=0)
     return composite
 
@@ -1813,7 +1824,6 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
         print '\033[93m' + str().ljust(20) + "averaging to perform: " + str(average) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
-        print '\033[93m' + str().ljust(25) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
         if isinstance(average, basestring):
             try: dict_average[average]
             except:
@@ -1831,7 +1841,6 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
                     print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
                     print '\033[93m' + str().ljust(25) + "tab.axes = "\
                           + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
-                    print '\033[93m' + str().ljust(25) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
         else:
             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info
@@ -2006,7 +2015,6 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
     else:
         info = info + ', observations and model NOT regridded'
     if model.shape == obs.shape:
-        print model.mask.shape
         if model.mask.shape != ():
             mask = model.mask
             if obs.mask.shape != ():

@@ -261,13 +261,9 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
     print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.timebounds = " + str(TimeBounds(sst_model)) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "model.longitude = " + str(sst_model.getLongitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.timebounds = " + str(TimeBounds(sst_obs)) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.longitude = " + str(sst_obs.getLongitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
     # Read areacell
     model_areacell = ReadAreaSelectRegion(sstfilemodel, box=box, **kwargs)
@@ -279,14 +275,12 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
         print '\033[92m' + str().ljust(20) + "model_areacell.shape = " + str(model_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "model_areacell.axes = "\
               + str([ax.id for ax in model_areacell.getAxisList()]) + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "model_areacell.grid = " + str(model_areacell.getGrid()) + '\033[0m'
     if obs_areacell is None:
         print '\033[92m' + str().ljust(20) + "No obs_areacell" + '\033[0m'
     else:
         print '\033[92m' + str().ljust(20) + "obs_areacell.shape = " + str(obs_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "obs_areacell.axes = "\
               + str([ax.id for ax in obs_areacell.getAxisList()]) + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "obs_areacell.grid = " + str(obs_areacell.getGrid()) + '\033[0m'
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -317,11 +311,8 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False, **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # Regridding
@@ -453,13 +444,9 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
     print '\033[92m' + str().ljust(15) + "after ReadSelectRegionCheckUnits" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.timebounds = " + str(TimeBounds(sst_model)) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "model.longitude = " + str(sst_model.getLongitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.timebounds = " + str(TimeBounds(sst_obs)) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.longitude = " + str(sst_obs.getLongitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
     # Read areacell
     model_areacell = ReadAreaSelectRegion(sstfilemodel, box=box, **kwargs)
@@ -471,14 +458,12 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
         print '\033[92m' + str().ljust(20) + "model_areacell.shape = " + str(model_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "model_areacell.axes = " \
               + str([ax.id for ax in model_areacell.getAxisList()]) + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "model_areacell.grid = " + str(model_areacell.getGrid()) + '\033[0m'
     if obs_areacell is None:
         print '\033[92m' + str().ljust(20) + "No obs_areacell" + '\033[0m'
     else:
         print '\033[92m' + str().ljust(20) + "obs_areacell.shape = " + str(obs_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "obs_areacell.axes = " \
               + str([ax.id for ax in obs_areacell.getAxisList()]) + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "obs_areacell.grid = " + str(obs_areacell.getGrid()) + '\033[0m'
 
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -509,11 +494,8 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=['time'], compute_anom=False, **kwargs)
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.shape = " + str(sst_model.shape) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "model.latitude = " + str(sst_model.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst_model.getAxisList()]) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.shape = " + str(sst_obs.shape) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "obs.latitude = " + str(sst_obs.getLatitude()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "obs.axes = " + str([ax.id for ax in sst_obs.getAxisList()]) + '\033[0m'
 
     # Regridding
@@ -1517,11 +1499,9 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(TimeBounds(sst)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "sst.grid = " + str(sst.getGrid()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.shape = " + str(lhf.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "lhf.grid = " + str(lhf.getGrid()) + '\033[0m'
     # Read areacell
     sst_areacell = ReadAreaSelectRegion(sstfile, box=sstbox, **kwargs)
     lhf_areacell = ReadAreaSelectRegion(lhffile, box=lhfbox, **kwargs)
@@ -1532,14 +1512,12 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
         print '\033[92m' + str().ljust(20) + "sst_areacell.shape = " + str(sst_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "sst_areacell.axes = " + str([ax.id for ax in sst_areacell.getAxisList()])\
               + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "sst_areacell.grid = " + str(sst_areacell.getGrid()) + '\033[0m'
     if lhf_areacell is None:
         print '\033[92m' + str().ljust(20) + "No lhf_areacell" + '\033[0m'
     else:
         print '\033[92m' + str().ljust(20) + "lhf_areacell.shape = " + str(lhf_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "lhf_areacell.axes = " + str([ax.id for ax in lhf_areacell.getAxisList()])\
               + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "lhf_areacell.grid = " + str(lhf_areacell.getGrid()) + '\033[0m'
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lhf = CheckTime(sst, lhf, metric_name='EnsoAlphaLhf', **kwargs)
@@ -1555,11 +1533,9 @@ def EnsoAlphaLhf(sstfile, lhffile, sstname, lhfname, sstbox, lhfbox, **kwargs):
     print '\033[92m' + str().ljust(20) + "sst.shape = " + str(sst.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.timebounds = " + str(TimeBounds(sst)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "sst.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "sst.grid = " + str(sst.getGrid()) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.shape = " + str(lhf.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.timebounds = " + str(TimeBounds(lhf)) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "lhf.axes = " + str([ax.id for ax in lhf.getAxisList()]) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "lhf.grid = " + str(lhf.getGrid()) + '\033[0m'
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     lhf, unneeded = PreProcessTS(lhf, Method, areacell=lhf_areacell, average='horizontal', compute_anom=True, **kwargs)
 
@@ -1694,14 +1670,12 @@ def EnsoAlphaLwr(sstfile, lwrfile, sstname, lwrname, sstbox, lwrbox, **kwargs):
         print '\033[92m' + str().ljust(20) + "sst_areacell.shape = " + str(sst_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "sst_areacell.axes = " + str([ax.id for ax in sst_areacell.getAxisList()]) \
               + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "sst_areacell.grid = " + str(sst_areacell.getGrid()) + '\033[0m'
     if lwr_areacell is None:
         print '\033[92m' + str().ljust(20) + "No lwr_areacell" + '\033[0m'
     else:
         print '\033[92m' + str().ljust(20) + "lwr_areacell.shape = " + str(lwr_areacell.shape) + '\033[0m'
         print '\033[92m' + str().ljust(20) + "lwr_areacell.axes = " + str([ax.id for ax in lwr_areacell.getAxisList()]) \
               + '\033[0m'
-        print '\033[92m' + str().ljust(20) + "lwr_areacell.grid = " + str(lwr_areacell.getGrid()) + '\033[0m'
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lwr = CheckTime(sst, lwr, metric_name='EnsoAlphaLwr', **kwargs)
@@ -2206,7 +2180,7 @@ def EnsoAmpl(sstfile, sstname, sstbox, **kwargs):
     print '\033[92m' + str().ljust(15) + "after PreProcessTS" + '\033[0m'
     print '\033[92m' + str().ljust(20) + "shape = " + str(sst.shape) + '\033[0m'
     print '\033[92m' + str().ljust(20) + "timebounds = " + str(TimeBounds(sst)) + '\033[0m'
-    print '\033[92m' + str().ljust(20) + "model.axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
+    print '\033[92m' + str().ljust(20) + "axes = " + str([ax.id for ax in sst.getAxisList()]) + '\033[0m'
 
     # Computes the standard deviation
     sstStd = float(Std(sst))
