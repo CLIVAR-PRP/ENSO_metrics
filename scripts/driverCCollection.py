@@ -80,7 +80,7 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-list_obs = ['Tropflux']
+list_obs = ['HadISST']#['Tropflux','HadISST']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -194,3 +194,18 @@ for mod in list_models:
         raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['model']
         print '\033[95m' + str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
                   ', error = ' + str(raw_dict['value_error']) + '\033[0m'
+        # dive down
+        if 'dive_down_diag' in dict_metric[mod]['metrics'][metric].keys():
+            dive_down = dict_metric[mod]['metrics'][metric]['dive_down_diag']
+            if 'axis' in dive_down.keys():
+                print '\033[95m' + str().ljust(15) + 'dive down axis: ' + str(dive_down['axis']) + '\033[0m'
+            if 'axisLat' in dive_down.keys():
+                print '\033[95m' + str().ljust(15) + 'dive down axisLat: ' + str(dive_down['axisLat']) + '\033[0m'
+            if 'axisLon' in dive_down.keys():
+                print '\033[95m' + str().ljust(15) + 'dive down axisLon: ' + str(dive_down['axisLon']) + '\033[0m'
+            print '\033[95m' + str().ljust(15) + 'dive down model: ' + str(mod) + ' = ' + str(dive_down['model']) +\
+                  '\033[0m'
+            for ref in dive_down['observations'].keys():
+                print '\033[95m' + str().ljust(15) + 'dive down obs: ' + str(ref) + ' = ' +\
+                      str(dive_down['observations'][ref]) + '\033[0m'
+

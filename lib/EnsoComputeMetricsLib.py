@@ -348,12 +348,32 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     'name': obs, 'value': None, 'value_error': None, 'nyears': diagnostic1['nyears_observations'],
                     'time_period': diagnostic1['time_period_observations'],
                 }
+            # puts dive down diagnostic in its proper dictionary
+            if 'dive_down_diag' in diagnostic1.keys():
+                try:
+                    dict_dive_down
+                except:
+                    # first observations (first round in the obs loop)
+                    # as the diagnostic is the metric, only the information about the model and the observations are saved
+                    dict_dive_down = {
+                        'model': diagnostic1['dive_down_diag']['model'],
+                        'observations': {
+                            obs: diagnostic1['dive_down_diag']['observations']
+                        },
+                    }
+                    for elt in ['axis', 'axisLat', 'axisLon']:
+                        if elt in diagnostic1['dive_down_diag'].keys():
+                            dict_dive_down[elt] = diagnostic1['dive_down_diag'][elt]
+                else:
+                    # next rounds in the obs loop
+                    # information about the model have already been saved: information about the observations are saved
+                    dict_dive_down['observations'][obs] = diagnostic1['dive_down_diag']['observations']
+        units = diagnostic1['units']
     else:
         #
         # this part regroups all diagnostics that are computed separately for model and obs
         #
         diag_obs = dict()
-
         # model diagnostic
         keyarg['time_bounds'] = keyarg['time_bounds_model']
         keyarg['project_interpreter_var1'] = keyarg['project_interpreter']
@@ -379,6 +399,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
             },
         }
+        # puts dive down diagnostic in its proper dictionary
+        if 'dive_down_diag' in diagnostic1.keys():
+            try:
+                dict_dive_down
+            except:
+                # first observations (first round in the obs loop)
+                # as the diagnostic is the metric, only the information about the model and the observations are saved
+                dict_dive_down = {'model': diagnostic1['dive_down_diag']['model']}
         try:
             diagnostic1['nonlinearity']
         except:
@@ -386,7 +414,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         else:
             dict_diagnostic['model']['nonlinearity'] = diagnostic1['nonlinearity']
             dict_diagnostic['model']['nonlinearity_error'] = diagnostic1['nonlinearity_error']
-
         # observations diag
         keyarg['time_bounds'] = keyarg['time_bounds_obs']
         for ii in range(len(obsNameVar1)):
@@ -405,7 +432,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) + '\033[0m'
                     diag_obs[output_name] = dict_twoVar[metric](tmp_obsFile1, tmp_obsFile2, tmp_obsVarName1,
                                                                 tmp_obsVarName2, regionVar1, regionVar2, **keyarg)
-        # saves the model diagnostic and the information about the model
+        # saves the observed diagnostic and the information about the observations
         for obs in diag_obs.keys():
             try:
                 dict_diagnostic['observations']
@@ -442,6 +469,24 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     obs_err=diag_obs[obs]['nonlinearity_error'], keyword=keyarg['metric_computation'])
                 dict_metric_val['ref_' + str(obs)]['nonlinearity'] = metric_val
                 dict_metric_val['ref_' + str(obs)]['nonlinearity_error'] = metric_err
+            # puts dive down diagnostic in its proper dictionary
+            if 'dive_down_diag' in diag_obs[obs].keys():
+                try:
+                    dict_dive_down
+                except:
+                    # first observations (first round in the obs loop)
+                    # as the diagnostic is the metric, only the information about the model and the observations are saved
+                    dict_dive_down = {
+                        'observations': {obs: diag_obs[obs]['dive_down_diag']}
+                    }
+                else:
+                    # next rounds in the obs loop
+                    # information about the model have already been saved: information about the observations are saved
+                    dict_dive_down['observations'][obs] = diag_obs[obs]['dive_down_diag']
+        if keyarg['metric_computation'] in ['ratio', 'relative_difference']:
+            units = ''
+        else:
+            units = diagnostic1['units']
     # finishes to fill the diagnostic dictionary
     list_keys = ['name', 'units', 'time_frequency', 'method_to_compute_diagnostic', 'ref']
     for key in list_keys:
@@ -457,8 +502,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             dict_diagnostic[key] = diagnostic1[key]
     # creates the output dictionary
     dict_metrics = {
-        'name': metric, 'datasets':[modelName] + obsNameVar1 + obsNameVar2, 'metric_values': dict_metric_val,
-        'method_to_compute_metric': description_metric, 'raw_values': dict_diagnostic,
+        'name': metric, 'datasets': [modelName] + obsNameVar1 + obsNameVar2, 'metric_values': dict_metric_val,
+        'method_to_compute_metric': description_metric, 'metric_units': units,'raw_values': dict_diagnostic,
     }
+    if 'dive_down_diag' in diagnostic1.keys():
+        dict_metrics['dive_down_diag'] = dict_dive_down
     return dict_metrics
 # ---------------------------------------------------------------------------------------------------------------------#

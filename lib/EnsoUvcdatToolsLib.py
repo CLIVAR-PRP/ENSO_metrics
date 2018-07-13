@@ -525,6 +525,24 @@ def annualcycle(tab):
     cdutil.setTimeBoundsMonthly(moy)
     return moy
 
+
+def arrayToList(tab):
+    tmp = NParray(MV2where(tab.mask, 1e20, tab))
+    if len(tab.shape)==1:
+        tab_out = list(tmp)
+    elif len(tab.shape)==2:
+        tab_out = [list(tmp[ii]) for ii in range(len(tab))]
+    else:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": bad shape",
+            str().ljust(5) + "cannot transform this array to a list",
+            str().ljust(10) + "the length (" + str(len(tab.shape)) + ") of the shape (" + str(tab.shape) +
+            ") is too large",
+            str().ljust(10) + "it is not programed yet",
+        ]
+        EnsoErrorsWarnings.MyError(list_strings)
+    return tab_out
+
 def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', **kwargs):
     """
     #################################################################################

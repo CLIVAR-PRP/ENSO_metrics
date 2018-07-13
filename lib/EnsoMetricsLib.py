@@ -7,7 +7,7 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
-from EnsoUvcdatToolsLib import AverageMeridional, AverageZonal, CheckTime, Composite, DetectEvents,\
+from EnsoUvcdatToolsLib import arrayToList, AverageMeridional, AverageZonal, CheckTime, Composite, DetectEvents,\
     LinearRegressionAndNonlinearity, MyDerive, PreProcessTS, ReadAreaSelectRegion, ReadSelectRegionCheckUnits,\
     RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal, SeasonalMean, Std, TimeBounds, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
@@ -154,11 +154,16 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, centere
     # Computes the root mean square difference
     sstRmse = RmsHorizontal(sst_model, sst_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(sst_model), 'observations': arrayToList(sst_obs),
+                      'axisLat': list(sst_model.getAxis(0)[:]), 'axisLon': list(sst_model.getAxis(1)[:])}
+
     # Create output
     rmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return rmseMetric
 
@@ -337,11 +342,16 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
     # Computes the root mean square difference
     sstRmse = RmsMeridional(sst_model, sst_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(sst_model), 'observations': arrayToList(sst_obs),
+                      'axis': list(sst_model.getAxis(0)[:])}
+
     # Create output
     LatRmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
 
@@ -520,11 +530,16 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, cent
     # Computes the root mean square difference
     sstRmse = RmsZonal(sst_model, sst_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(sst_model), 'observations': arrayToList(sst_obs),
+                      'axis': list(sst_model.getAxis(0)[:])}
+
     # Create output
     LonRmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
 
@@ -664,11 +679,16 @@ def BiasPrRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_rms
     # Computes the root mean square difference
     pr_rmse = RmsHorizontal(pr_model, pr_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(pr_model), 'observations': arrayToList(pr_obs),
+                      'axisLat': list(pr_model.getAxis(0)[:]), 'axisLon': list(pr_model.getAxis(1)[:])}
+
     # Create output
     PrRmseMetric = {
         'name': Name, 'value': pr_rmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return PrRmseMetric
 
@@ -812,11 +832,16 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
     # Computes the root mean square difference
     pr_rmse = RmsMeridional(pr_model, pr_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(pr_model), 'observations': arrayToList(pr_obs),
+                      'axis': list(pr_model.getAxis(0)[:])}
+
     # Create output
     PrLatRmseMetric = {
         'name': Name, 'value': pr_rmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return PrLatRmseMetric
 
@@ -960,11 +985,16 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, centered_
     # Computes the root mean square difference
     pr_rmse = RmsZonal(pr_model, pr_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(pr_model), 'observations': arrayToList(pr_obs),
+                      'axis': list(pr_model.getAxis(0)[:])}
+
     # Create output
     PrLonRmseMetric = {
         'name': Name, 'value': pr_rmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return PrLonRmseMetric
 
@@ -1104,11 +1134,16 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box, ce
     # Computes the root mean square difference
     taux_rmse = RmsHorizontal(taux_model, taux_obs, centered=centered_rmse) * 1e3
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(taux_model), 'observations': arrayToList(taux_obs),
+                      'axisLat': list(taux_model.getAxis(0)[:]), 'axisLon': list(taux_model.getAxis(1)[:])}
+
     # Create output
     TauxRmseMetric = {
         'name': Name, 'value': taux_rmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return TauxRmseMetric
 
@@ -1253,11 +1288,16 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
     # Computes the root mean square difference
     taux_rmse = RmsMeridional(taux_model, taux_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(taux_model), 'observations': arrayToList(taux_obs),
+                      'axis': list(taux_model.getAxis(0)[:])}
+
     # Create output
     TauxLatRmseMetric = {
         'name': Name, 'value': taux_rmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return TauxLatRmseMetric
 
@@ -1402,11 +1442,16 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxfileobs, tauxnameobs, box,
     # Computes the root mean square difference
     taux_rmse = RmsZonal(taux_model, taux_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(taux_model), 'observations': arrayToList(taux_obs),
+                      'axis': list(taux_model.getAxis(0)[:])}
+
     # Create output
     TauxLonRmseMetric = {
         'name': Name, 'value': taux_rmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return TauxLonRmseMetric
 
@@ -2592,12 +2637,17 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, even
     # Computes the root mean square difference
     compositeRmse = RmsZonal(composite_model, composite_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(composite_model), 'observations': arrayToList(composite_obs),
+                      'axis': list(composite_model.getAxis(0)[:])}
+
     # Create output
     NinaLonMetric = {
         'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'events_model': event_years_model,
         'events_observations': event_years_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return NinaLonMetric
 
@@ -2773,12 +2823,17 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, even
     # Computes the root mean square difference
     compositeRmse = RmsZonal(composite_model, composite_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(composite_model), 'observations': arrayToList(composite_obs),
+                      'axis': list(composite_model.getAxis(0)[:])}
+
     # Create output
     NinoLonMetric = {
         'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'events_model': event_years_model,
         'events_observations': event_years_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return NinoLonMetric
 
@@ -2918,12 +2973,17 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, event
     # Computes the root mean square difference
     compositeRmse = RmsTemporal(composite_model, composite_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(composite_model), 'observations': arrayToList(composite_obs),
+                      'axis': list(composite_model.getAxis(0)[:])}
+
     # Create output
     NinaTsMetric = {
         'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'events_model': event_years_model,
         'events_observations': event_years_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return NinaTsMetric
 
@@ -3063,12 +3123,17 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, event
     # Computes the root mean square difference
     compositeRmse = RmsTemporal(composite_model, composite_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(composite_model), 'observations': arrayToList(composite_obs),
+                      'axis': list(composite_model.getAxis(0)[:])}
+
     # Create output
     NinoTsMetric = {
         'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'events_model': event_years_model,
         'events_observations': event_years_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return NinoTsMetric
 
@@ -3214,11 +3279,16 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, cente
     # Computes the root mean square difference
     prRmse = RmsMeridional(pr_model, pr_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(pr_model), 'observations': arrayToList(pr_obs),
+                      'axis': list(pr_model.getAxis(0)[:])}
+
     # Create output
     LatRmseMetric = {
         'name': Name, 'value': prRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
 
@@ -3364,11 +3434,16 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prfileobs, prnameobs, box, cente
     # Computes the root mean square difference
     prRmse = RmsZonal(pr_model, pr_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(pr_model), 'observations': arrayToList(pr_obs),
+                      'axis': list(pr_model.getAxis(0)[:])}
+
     # Create output
     LonRmseMetric = {
         'name': Name, 'value': prRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
 
@@ -3530,11 +3605,16 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
     # Computes the root mean square difference
     sstRmse = RmsMeridional(sst_model, sst_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(sst_model), 'observations': arrayToList(sst_obs),
+                      'axis': list(sst_model.getAxis(0)[:])}
+
     # Create output
     LatRmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
 
@@ -3680,11 +3760,16 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstfileobs, sstnameobs, box, 
     # Computes the root mean square difference
     sstRmse = RmsZonal(sst_model, sst_obs, centered=centered_rmse)
 
+    # Dive down diagnostic
+    dive_down_diag = {'model': arrayToList(sst_model), 'observations': arrayToList(sst_obs),
+                      'axis': list(sst_model.getAxis(0)[:])}
+
     # Create output
     LonRmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
         'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
 # ---------------------------------------------------------------------------------------------------------------------#
