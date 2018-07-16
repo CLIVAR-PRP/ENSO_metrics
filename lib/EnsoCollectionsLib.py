@@ -364,6 +364,10 @@ def ReferenceRegions(AR=True):
                            'longitude': (220., 250.)},
         'nino3.4': {'long_name': 'Niño 3.4', 'latitude': (-5., 5.), 'longitude': (190., 240.)},
         'nino4': {'long_name': 'Niño 4', 'latitude': (-5., 5.), 'longitude': (160., 210.)},
+        # AR4 refrence regions
+        'ALA': {'long_name': 'Alaska/N.W. Canada', 'latitude': (60., 72.6), 'longitude': (285., 348.)},
+        'CGI': {'long_name': 'Canada/Greenland/Iceland', 'latitude': (60., 72.6), 'longitude': (285., 348.)}
+
     }
     if AR:
         return dict_reference_regions[AR]
