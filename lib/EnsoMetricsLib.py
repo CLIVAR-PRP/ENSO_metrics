@@ -1,15 +1,17 @@
 # -*- coding:UTF-8 -*-
 from copy import deepcopy
 from inspect import stack as INSPECTstack
+from numpy import sign as NUMPYsign
 from numpy import sqrt as NUMPYsqrt
 from numpy import square as NUMPYsquare
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
-from EnsoUvcdatToolsLib import arrayToList, AverageMeridional, AverageZonal, CheckTime, Composite, DetectEvents,\
-    LinearRegressionAndNonlinearity, MyDerive, PreProcessTS, ReadAreaSelectRegion, ReadSelectRegionCheckUnits,\
-    RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal, SeasonalMean, Std, TimeBounds, TwoVarRegrid
+from EnsoUvcdatToolsLib import ArrayOnes, arrayToList, ApplyLandmask, ApplyLandmaskToArea, AverageMeridional,\
+    AverageZonal, CheckTime, Composite, DetectEvents, LinearRegressionAndNonlinearity, MyDerive, PreProcessTS,\
+    ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, RmsAxis, RmsHorizontal, RmsMeridional,\
+    RmsTemporal, RmsZonal, SeasonalMean, Std, TimeBounds, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -2356,6 +2358,417 @@ def EnsoMu(sstfile, tauxfile, sstname, tauxname, sstbox, tauxbox, **kwargs):
         'nonlinearity_error': muNeg[1] + muPos[1],
     }
     return muMetric
+
+
+def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
+                 sstlandmasknamemodel, prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
+                 prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
+                 sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
+                 prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, degug=False,
+                 **kwargs):
+    """
+    The EnsoPrJjaTel() function computes precipitations anomalies associated with El Niño and La Niña events in many AR5
+        reference regions, then precipitations in JJA are composited for each selected event and the difference
+        (El Niño PR - La Niña PR) is computed in each region.
+    The first rmse(observations vs model) is the metric.
+    The second metric is the number of regions where observations and models agree on the sign of the teleconnection
+
+    Inputs:
+    ------
+    :param sstfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemodel: string
+        name of SST variable (tos, ts) in 'sstfilemodel'
+    :param prfilemodel: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemodel: string
+        name of PRvariable (pr) in 'prfilemodel'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, precip) in 'prfileobs'
+    :param box: string
+        name of box (e.g. 'nino3') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param sstareafilemodel: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemodel: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemodel'
+    :param sstlandmaskfilemodel: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemodel: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemodel'
+    :param prareafilemodel: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR areacell
+    :param prareanamemodel: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemodel'
+    :param prlandmaskfilemodel: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR landmask
+    :param prlandmasknamemodel: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemodel'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param prareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR areacell
+    :param prareanameobs: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafileobs'
+    :param prlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR landmask
+    :param prlandmasknameobs: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfileobs'
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoPrTelMetric: dict
+        name, value (rms [NinoPr-NinaPr]), value_error, units, method, value2 (sign agreement [NinoPr-NinaPr]),
+        value_error2, units2, nyears_model, nyears_observations, nina_model, nino_model, nina_observations,
+        nino_observations, time_frequency, time_period_model, time_period_observations, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_model',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'Nino composite minus Nina composite during JJA preceding the events in each region'
+    Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ', Nina events = ' + region_ev + ' sstA < -'\
+             + str(threshold) + ' during ' + season_ev + '; Precipitations associated with El Nino/La Nina' + \
+             'events during the preceding JJA are composited and the difference (El Niño PR - La Niña PR) is' + \
+             'computed in each region'
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'mm/day'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+
+    # ------------------------------------------------
+    # detect events
+    # ------------------------------------------------
+    # Read file and select the right region
+    if degug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoPrJjaTel', 10)
+        dict_debug = {
+            'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs, 'var1': '(model) ' + sstnamemodel,
+            'var2': '(obs) ' + sstnameobs}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files ENSO', 10, **dict_debug)
+    sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=region_ev,
+                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
+    sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
+                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
+    if degug is True:
+        dict_debug = {
+            'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
+            'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+            'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+            'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+    # Read areacell
+    if sstareafilemodel:
+        model_areacell = ReadAreaSelectRegion(sstareafilemodel, areaname=sstareanamemodel, box=region_ev, **kwargs)
+    else:
+        model_areacell = ReadAreaSelectRegion(sstfilemodel, areaname=sstareanamemodel, box=region_ev, **kwargs)
+    if sstareafileobs:
+        obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
+    else:
+        obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
+    if degug is True:
+        dict_debug = {}
+        if model_areacell is not None:
+            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
+            dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
+        if obs_areacell is not None:
+            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
+            dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+
+    # Read landmask
+    if sstlandmaskfilemodel:
+        model_landmask = ReadLandmaskSelectRegion(sstlandmaskfilemodel, landmaskname=sstlandmasknamemodel,
+                                                  box=region_ev, **kwargs)
+    else:
+        model_landmask = ReadLandmaskSelectRegion(sstfilemodel, landmaskname=sstlandmasknamemodel, box=region_ev,
+                                                  **kwargs)
+    if sstlandmaskfileobs:
+        obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs,
+                                                  box=region_ev, **kwargs)
+    else:
+        obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs,
+                                                box=region_ev, **kwargs)
+    if degug is True:
+        dict_debug = {}
+        if model_landmask is not None:
+            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
+            dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
+        if obs_landmask is not None:
+            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
+            dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+    # Apply landmask
+    if model_landmask is not None:
+        sst_model = ApplyLandmask(sst_model, model_landmask, maskland=True, maskocean=False)
+        if model_areacell is None:
+            model_areacell = ArrayOnes(model_landmask, id='areacell')
+        model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=True, maskocean=False)
+        del model_landmask
+    if obs_landmask is not None:
+        sst_obs = ApplyLandmask(sst_obs, obs_landmask, maskland=True, maskocean=False)
+        if obs_areacell is None:
+            obs_areacell = ArrayOnes(obs_landmask, id='areacell')
+        obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=True, maskocean=False)
+        del obs_landmask
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(sst_model) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrJjaTel: the modeled time-period is too short: "
+                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+        if len(sst_obs) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + "EnsoPrJjaTel: the observed time-period is too short: "
+                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN_model = sst_model.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimeboundsmodel = TimeBounds(sst_model)
+    actualtimeboundsobs = TimeBounds(sst_obs)
+
+    # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    sst_model, unneeded = PreProcessTS(sst_model, '', areacell=model_areacell, average='horizontal', compute_anom=True,
+                                       **kwargs)
+    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
+    del model_areacell, obs_areacell
+    if degug is True:
+        dict_debug = {
+            'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
+            'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+            'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+            'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+    # Lists event years
+    nina_years_model = DetectEvents(sst_model, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
+    nino_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+    nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
+    nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+    del sst_model, sst_obs
+    if degug is True:
+        dict_debug = {
+            'nina1': '(model) ' + str(nina_years_model), 'nina2': '(obs) ' + str(nina_years_obs),
+            'nino1': '(model) ' + str(nino_years_model), 'nino2': '(obs) ' + str(nino_years_obs)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+
+    # ------------------------------------------------
+    # compute composite
+    # ------------------------------------------------
+    if degug is True:
+        dict_debug = {
+            'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs, 'var1': '(model) ' + prnamemodel,
+            'var2': '(obs) ' + prnameobs}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files Composite', 10, **dict_debug)
+    # smoothing is not applied
+    if 'smoothing' in kwargs.keys():
+        smooth = deepcopy(kwargs['smoothing'])
+        kwargs['smoothing'] = False
+    if not isinstance(prbox, list):
+        prbox = [prbox]
+    prbox = sorted(prbox, key=str.lower)
+    list_composite_model, list_composite_obs = list(), list()
+    for reg in prbox:
+        if degug is True:
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 10)
+        # Read file and select the right region
+        pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=reg,
+                                              time_bounds=kwargs['time_bounds_model'], **kwargs)
+        pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=reg,
+                                            time_bounds=kwargs['time_bounds_obs'], **kwargs)
+        if degug is True:
+            dict_debug = {
+                'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
+                'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
+                'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+        # Read areacell
+        if prareafilemodel:
+            model_areacell = ReadAreaSelectRegion(prareafilemodel, areaname=prareanamemodel, box=reg, **kwargs)
+        else:
+            model_areacell = ReadAreaSelectRegion(prfilemodel, areaname=prareanamemodel, box=reg, **kwargs)
+        if prareafileobs:
+            obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=reg, **kwargs)
+        else:
+            obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=reg, **kwargs)
+        if degug is True:
+            dict_debug = {}
+            if model_areacell is not None:
+                dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
+                dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
+            if obs_areacell is not None:
+                dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
+                dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+        # Read if the given region is defined as a land region, an oceanic region, or both
+        dict_reg = ReferenceRegions(reg)
+        if 'maskland' in dict_reg.keys():
+            maskland = dict_reg['maskland']
+        else:
+            maskland = False
+        if 'maskocean' in dict_reg.keys():
+            maskocean = dict_reg['maskocean']
+        else:
+            maskocean = False
+
+        # Read landmask
+        if prlandmaskfilemodel:
+            model_landmask = ReadLandmaskSelectRegion(prlandmaskfilemodel, landmaskname=prlandmasknamemodel, box=reg,
+                                                      **kwargs)
+        else:
+            model_landmask = ReadLandmaskSelectRegion(prfilemodel, landmaskname=prlandmasknamemodel, box=reg, **kwargs)
+        if prlandmaskfileobs:
+            obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=reg,
+                                                    **kwargs)
+        else:
+            obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=reg, **kwargs)
+        if degug is True:
+            dict_debug = {}
+            if model_landmask is not None:
+                dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
+                dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
+            if obs_landmask is not None:
+                dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
+                dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+        # Apply landmask
+        if model_landmask is not None:
+            pr_model = ApplyLandmask(pr_model, model_landmask, maskland=maskland, maskocean=maskocean)
+            if model_areacell is None:
+                model_areacell = ArrayOnes(model_landmask, id='areacell')
+            model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=maskland, maskocean=maskocean)
+            del model_landmask
+        if obs_landmask is not None:
+            pr_obs = ApplyLandmask(pr_obs, obs_landmask, maskland=maskland, maskocean=maskocean)
+            if obs_areacell is None:
+                obs_areacell = ArrayOnes(obs_landmask, id='areacell')
+            obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=maskland, maskocean=maskocean)
+            del obs_landmask
+
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average='horizontal',
+                                        compute_anom=False, **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+                                        **kwargs)
+        del model_areacell, obs_areacell
+        if degug is True:
+            dict_debug = {
+                'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
+                'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
+                'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # Seasonal mean
+        pr_model = SeasonalMean(pr_model, 'JJA', compute_anom=False)
+        pr_obs = SeasonalMean(pr_obs, 'JJA', compute_anom=False)
+
+        # composites
+        composite_nina_model = Composite(pr_model, nina_years_model, kwargs['frequency'])
+        composite_nino_model = Composite(pr_model, nino_years_model, kwargs['frequency'])
+        composite_nina_obs = Composite(pr_obs, nina_years_obs, kwargs['frequency'])
+        composite_nino_obs = Composite(pr_obs, nino_years_obs, kwargs['frequency'])
+
+        # list composites
+        list_composite_model.append(float(composite_nino_model-composite_nina_model))
+        list_composite_obs.append(float(composite_nino_obs-composite_nina_obs))
+    if 'smoothing' in kwargs.keys():
+        kwargs['smoothing'] = smooth
+        del smooth
+
+    # Computes the root mean square difference
+    compositeRmse = RmsAxis(list_composite_model, list_composite_obs, centered=centered_rmse)
+
+    # Computes the percentage of regions where observations and model agree on the sign of the teleconnection
+    signAgreement = sum([1. for vmod,vobs in zip(list_composite_model,list_composite_obs)
+                        if NUMPYsign(vmod)==NUMPYsign(vobs)])/len(list_composite_model)
+
+    # Dive down diagnostic
+    dive_down_diag = {'model': list_composite_model, 'observations': list_composite_obs, 'axis': prbox}
+
+    # Create output
+    EnsoPrTelMetric = {
+        'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
+        'value2': signAgreement, 'value_error2': None, 'units2': '%', 'nyears_model': yearN_model,
+        'nyears_observations': yearN_obs, 'nina_model': nina_years_model, 'nino_model': nino_years_model,
+        'nina_observations': nina_years_obs, 'nino_observations': nino_years_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
+    }
+    return EnsoPrTelMetric
 
 
 def EnsoSeasonality(sstfile, sstname, box, **kwargs):

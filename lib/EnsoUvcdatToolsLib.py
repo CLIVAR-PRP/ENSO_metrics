@@ -40,6 +40,7 @@ from MV2 import masked_where as MV2masked_where
 from MV2 import maximum as MV2maximum
 from MV2 import minimum as MV2minimum
 from MV2 import multiply as MV2multiply
+from MV2 import ones as MV2ones
 from MV2 import subtract as MV2subtract
 from MV2 import sum as MV2sum
 from MV2 import take as MV2take
@@ -52,6 +53,34 @@ from regrid2.horizontal import Horizontal as REGRID2horizontal__Horizontal
 #
 # Set of simple uvcdat functions used in EnsoMetricsLib.py
 #
+def ArrayOnes(tab, id='new_variable_ones'):
+    """
+    #################################################################################
+    Description:
+    Create a masked_array filled with ones with the same properties as tab (shape, axes, grid, mask)
+    #################################################################################
+
+    for more information:
+    import MV2
+    help(MV2.ones)
+    """
+    return CDMS2createVariable(MV2ones(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=id)
+
+
+def ArrayZeros(tab, id='new_variable_zeros'):
+    """
+    #################################################################################
+    Description:
+    Create a masked_array filled with zeros with the same properties as tab (shape, axes, grid, mask)
+    #################################################################################
+
+    for more information:
+    import MV2
+    help(MV2.zeros)
+    """
+    return CDMS2createVariable(MV2zeros(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=id)
+
+
 def AverageHorizontal(tab, areacell=None):
     """
     #################################################################################
@@ -292,6 +321,54 @@ dict_operations = {'divide': OperationDivide, 'minus': OperationSubtract, 'multi
                    'plus': OperationAdd}
 
 
+def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
+    """
+    #################################################################################
+    Description:
+    genutil.rms applied on two arrays
+
+    Computes the root mean square difference between tab and ref on the given axis
+
+    Uses uvcdat
+    #################################################################################
+
+    :param tab: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the modeled variable
+    :param ref: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+        usually it is the observed variable
+    :param weights: masked_array, optional
+        weights applied to each grid point
+        default value = None returns equally weighted statistic
+        If you want to compute the weighted statistic, provide weights here
+    :param axis: int or string, optional
+        name ('t', 'x', 'y', 'xy',...) or number (0, 1, 2,...) of the axis over which you want to compute the rms
+        default value = 0 returns statistic computed over the first axis
+    :param centered: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :return rmse: float
+        value of root mean square difference
+    """
+    # Computes the root mean square difference
+    try: rmse = GENUTILrms(tab, ref, weights=weights, axis=axis, centered=centered, biased=biased)
+    except:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": RMS over axis " + str(axis),
+            str().ljust(5) + "cannot perform horizontal RMS",
+            str().ljust(10) + "either lat and lon cannot be found in 'ref' / 'tab'",
+            str().ljust(10) + "or lat and lon are not in the same order in 'ref' and 'tab'",
+            str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
+            str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
+        ]
+        EnsoErrorsWarnings.MyError(list_strings)
+    return rmse
+
+
 def RmsHorizontal(tab, ref, centered=0):
     """
     #################################################################################
@@ -463,7 +540,8 @@ def RmsZonal(tab, ref, centered=0):
 
 
 # Dictionary of RMS methods
-dict_rms = {'horizontal': RmsHorizontal, 'meridional': RmsMeridional, 'time': RmsTemporal, 'zonal': RmsZonal}
+dict_rms = {'axis': RmsAxis, 'horizontal': RmsHorizontal, 'meridional': RmsMeridional, 'time': RmsTemporal,
+            'zonal': RmsZonal}
 
 
 def Std(tab, weights=None, axis=0, centered=1, biased=1):
@@ -524,6 +602,104 @@ def annualcycle(tab):
     moy = moy.reorder(initorder)
     cdutil.setTimeBoundsMonthly(moy)
     return moy
+
+
+def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
+    """
+    #################################################################################
+    Description:
+    Applies the landmask on the given tab
+        if maskland is True, mask where landmask==100
+        if maskocean is True, mask where landmask==0
+    #################################################################################
+
+    :param tab: masked_array
+    :param landmask: masked_array
+    :param maskland: boolean, optional
+        masks land points
+        default value is True
+    :param maskocean: boolean, optional
+        masks ocean points
+        default value is False
+
+    :return: tab: masked_array
+        masked_array where land points and/or ocean points are masked
+    """
+    if maskland is True or maskocean is True:
+        if tab.getGrid().shape != landmask.getGrid().shape:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": applying landmask",
+                str().ljust(5) + "tab (" + str(tab.getGrid().shape) + ") and landmask ("
+                + str(landmask.getGrid().shape) + ") are not on the same grid",
+                str().ljust(5) + "cannot apply landmask"
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+        landmask_nd = MV2zeros(tab.shape)
+        if landmask_nd.shape == landmask.shape:
+            landmask_nd = deepcopy(landmask)
+        else:
+            try:
+                landmask_nd[:] = landmask
+            except:
+                try:
+                    landmask_nd[:, :] = landmask
+                except:
+                    list_strings = [
+                        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": landmask shape",
+                        str().ljust(5) + "tab must be more than 4D and this is not taken into account yet (" +
+                        str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")",
+                        str().ljust(5) + "cannot reshape landmask"
+                    ]
+                    EnsoErrorsWarnings.MyError(list_strings)
+        tab = MV2masked_where(landmask_nd.mask, tab)
+        if maskland:
+            tab = MV2masked_where(landmask_nd==100, tab)
+        if maskocean:
+            tab = MV2masked_where(landmask_nd==0, tab)
+    return tab
+
+def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
+    """
+    #################################################################################
+    Description:
+    Applies the landmask on the given tab
+        if maskland is True, mask where landmask==1 and area=area*(1-landmask) (to weight island and coastal points)
+        if maskocean is True, mask where landmask==0 and area=area*landmask (to weight island and coastal points)
+    #################################################################################
+
+    :param area: masked_array
+        areacell
+    :param landmask: masked_array
+    :param maskland: boolean, optional
+        masks land points and weights island and coastal points
+        default value is True
+    :param maskocean: boolean, optional
+        masks ocean points and weights island and coastal points
+        default value is False
+
+    :return: tab: masked_array
+        masked_array where land points and/or ocean points are masked
+    """
+    if maskland is True or maskocean is True:
+        if area.getGrid().shape != landmask.getGrid().shape:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": applying landmask to areacell",
+                str().ljust(5) + "area (" + str(area.getGrid().shape) + ") and landmask ("
+                + str(landmask.getGrid().shape) + ") are not on the same grid",
+                str().ljust(5) + "cannot apply landmask to areacell"
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+        # if land = 100 instead of 1, divides landmask by 100
+        if MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100:
+            landmask = landmask / 100.
+        area = MV2masked_where(landmask.mask, area)
+        if maskland:
+            area = MV2masked_where(landmask == 1, area)
+            area = MV2multiply(area, 1-landmask)
+        if maskocean:
+            area = MV2masked_where(landmask == 0, area)
+            area = MV2multiply(area, landmask)
+    return area
 
 
 def arrayToList(tab):
@@ -1056,7 +1232,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     return tab
 
 
-def ReadAreaSelectRegion(filename, box=None, **kwargs):
+def ReadAreaSelectRegion(filename, areaname='', box=None, **kwargs):
     """
     #################################################################################
     Description:
@@ -1067,7 +1243,9 @@ def ReadAreaSelectRegion(filename, box=None, **kwargs):
 
     :param filename: string
         string of the path to the file and name of the file to read
-    :param box: string
+    :param areaname: string, optional
+        name of areacell (areacella, areacello,...) in 'filename'
+    :param box: string, optional
         name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
 
     :return area: masked_array
@@ -1080,28 +1258,106 @@ def ReadAreaSelectRegion(filename, box=None, **kwargs):
     if box is None:  # no box given
         # read file
         try:
-            areacell = fi('areacella')
+            areacell = fi(areaname)
         except:
             try:
-                areacell = fi('areacello')
+                areacell = fi('areacell')
             except:
-                areacell = None
+                try:
+                    areacell = fi('areacella')
+                except:
+                    try:
+                        areacell = fi('areacello')
+                    except:
+                        areacell = None
     else:  # box given by the user
         # define box
         region_ref = ReferenceRegions(box)
         nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         # read file
         try:
-#            areacell = fi('areacella', nbox)
-            areacell = fi('areacella', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#            areacell = fi(areaname, nbox)
+            areacell = fi(areaname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         except:
             try:
-#                areacell = fi('areacello', nbox)
-                areacell = fi('areacello', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+#                areacell = fi('areacell', nbox)
+                areacell = fi('areacell', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
             except:
-                areacell = None
+                try:
+#                    areacell = fi('areacella', nbox)
+                    areacell = fi('areacella', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                except:
+                    try:
+#                        areacell = fi('areacello', nbox)
+                        areacell = fi('areacello', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                    except:
+                        areacell = None
     fi.close()
     return areacell
+
+
+def ReadLandmaskSelectRegion(filename, landmaskname='', box=None, **kwargs):
+    """
+    #################################################################################
+    Description:
+    Reads the given landmask from the given 'filename' and selects the given 'box'
+
+    Uses cdms2 (uvcdat) to read areacell from 'filename' and cdutil (uvcdat) to select the 'box'
+    #################################################################################
+
+    :param filename: string
+        string of the path to the file and name of the file to read
+    :param landmaskname: string, optional
+        name of landmask (sftlf, lsmask, landmask,...) in 'filename'
+    :param box: string, optional
+        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+
+    :return area: masked_array
+        masked_array containing landmask in 'box'
+    """
+    # Temp corrections for cdms2 to find the right axis
+    CDMS2setAutoBounds('on')
+    # Open file and get time dimension
+    fi = CDMS2open(filename)
+    if box is None:  # no box given
+        # read file
+        try:
+            landmask = fi(landmaskname)
+        except:
+            try:
+                landmask = fi('landmask')
+            except:
+                try:
+                    landmask = fi('lsmask')
+                except:
+                    try:
+                        landmask = fi('sftlf')
+                    except:
+                        landmask = None
+    else:  # box given by the user
+        # define box
+        region_ref = ReferenceRegions(box)
+        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        # read file
+        try:
+#            landmask = fi(landmaskname, nbox)
+            landmask = fi(landmaskname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        except:
+            try:
+#                landmask = fi('landmask', nbox)
+                landmask = fi('landmask', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            except:
+                try:
+#                    landmask = fi('lsmask', nbox)
+                    landmask = fi('lsmask', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                except:
+                    try:
+#                        landmask = fi('sftlf', nbox)
+                        landmask = fi('sftlf', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                    except:
+                        landmask = None
+    fi.close()
+    return landmask
 
 
 def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridder='cdms', regridTool='esmf',

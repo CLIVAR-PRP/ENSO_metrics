@@ -315,3 +315,76 @@ def UnknownUnits(var_name, name_in_file, units, inspect_stack):
     MyError(list_strings)
     return
 # ---------------------------------------------------------------------------------------------------------------------#
+
+
+# ---------------------------------------------------------------------------------------------------------------------#
+# Just prints
+def DebugMode(color, title, nbr_spaces, axes1='', axes2='', file1='', file2='', nina1='', nina2='', nino1='', nino2='',
+              shape1='', shape2='', time1='', time2='', var1='', var2=''):
+    """
+    #################################################################################
+    Description:
+    Prints strings to ease debugging
+    #################################################################################
+
+    :param color: string
+        color code (e.g. '\033[94m' is blue, '\033[92m' is green)
+    :param title: string
+        name of the section that is printed
+    :param nbr_spaces: int
+        number of leading spaces before printing the title
+    :param axes1: string, optional
+        axis list of variable 1
+    :param axes2: string, optional
+        axis list of variable 2
+    :param file1: string, optional
+        file name of variable 1
+    :param file2: string, optional
+        file name of variable 2
+    :param shape1: string, optional
+        shape of the array containing variable 1
+    :param shape2: string, optional
+        shape of the array containing variable 2
+    :param time1: string, optional
+        time bounds of variable 1
+    :param time2: string, optional
+        time bounds of variable 2
+    :param var1: string, optional
+        variable name 1
+    :param var2: string, optional
+        variable name 2
+    :return:
+    """
+    # first variable
+    print color + str().ljust(nbr_spaces) + title + bcolors.ENDC
+    if file1:
+        print color + str().ljust(nbr_spaces+5) + 'file name 1: ' + file1 + bcolors.ENDC
+    if var1:
+        print color + str().ljust(nbr_spaces+5) + 'variable name 1: ' + var1 + bcolors.ENDC
+    if axes1:
+        print color + str().ljust(nbr_spaces+5) + 'axes list 1: ' + axes1 + bcolors.ENDC
+    if time1:
+        print color + str().ljust(nbr_spaces+5) + 'time bounds 1: ' + time1 + bcolors.ENDC
+    if shape1:
+        print color + str().ljust(nbr_spaces+5) + 'shape 1: ' + shape1 + bcolors.ENDC
+    if nina1:
+        print color + str().ljust(nbr_spaces+5) + 'nina year 1: ' + nina1 + bcolors.ENDC
+    if nino1:
+        print color + str().ljust(nbr_spaces+5) + 'nino year 1: ' + nino1 + bcolors.ENDC
+    # second variable
+    if file2:
+        print color + str().ljust(nbr_spaces+5) + 'file name 2: ' + file2 + bcolors.ENDC
+    if var2:
+        print color + str().ljust(nbr_spaces+5) + 'variable name 2: ' + var2 + bcolors.ENDC
+    if axes2:
+        print color + str().ljust(nbr_spaces+5) + 'axes list 2: ' + axes2 + bcolors.ENDC
+    if time2:
+        print color + str().ljust(nbr_spaces+5) + 'time bounds 2: ' + time2 + bcolors.ENDC
+    if shape2:
+        print color + str().ljust(nbr_spaces+5) + 'shape 2: ' + shape2 + bcolors.ENDC
+    if nina2:
+        print color + str().ljust(nbr_spaces+5) + 'nina year 2: ' + nina2 + bcolors.ENDC
+    if nino2:
+        print color + str().ljust(nbr_spaces+5) + 'nino year 2: ' + nino2 + bcolors.ENDC
+    return
+# ---------------------------------------------------------------------------------------------------------------------#
