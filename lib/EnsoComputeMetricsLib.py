@@ -345,7 +345,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         dict_dive_down_metadata[elt] = diagnostic1['dive_down_diag'][elt]
             # puts diagnostic metadata in its proper dictionary
             dict_diagnostic_metadata['model'] = {
-                'name': modelName, 'nyears': diagnostic1['nyears_observations'],
+                'name': modelName, 'nyears': diagnostic1['nyears_model'],
                 'time_period': diagnostic1['time_period_model'],
             }
             dict_diagnostic_metadata[obs] = {
