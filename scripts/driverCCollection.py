@@ -50,7 +50,7 @@ def find_xml_obs(obs,frequency, variable):
 
 
 # metric collection
-mc_name = 'MC1'#''ENSO_perf'
+mc_name = 'ENSO_perf'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -80,7 +80,7 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-list_obs = ['HadISST']#['Tropflux','HadISST']
+list_obs = ['Tropflux','HadISST']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -180,7 +180,8 @@ for mod in list_models:
     # Prints the metrics values
     for ii in range(3): print ''
     print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
-    list_metric = dict_metric[mod]['metrics'].keys()
+    stop
+    list_metric = dict_metric[mod]['value'].keys()
     for metric in list_metric:
         print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
         metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']

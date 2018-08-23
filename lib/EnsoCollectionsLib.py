@@ -96,62 +96,62 @@ def defCollection(MC=True):
                     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear'},
                 },
-                'BiasPrLonRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'equatorial_pacific'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'BiasTauxLonRmse': {
-                    'variables': ['taux'],
-                    'regions': {'taux': 'equatorial_pacific'},
-                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'BiasSstLatRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3.3_LatExt'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'BiasPrLatRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'nino3.3_LatExt'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'BiasTauxLatRmse': {
-                    'variables': ['taux'],
-                    'regions': {'taux': 'equatorial_pacific_LatExt'},
-                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'SeasonalSstLonRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'SeasonalSstLatRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3.3_LatExt'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'SeasonalPrLatRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'nino3.3_LatExt'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
+                # 'BiasPrLonRmse': {
+                #     'variables': ['pr'],
+                #     'regions': {'pr': 'equatorial_pacific'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'BiasTauxLonRmse': {
+                #     'variables': ['taux'],
+                #     'regions': {'taux': 'equatorial_pacific'},
+                #     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'BiasSstLatRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'nino3.3_LatExt'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'BiasPrLatRmse': {
+                #     'variables': ['pr'],
+                #     'regions': {'pr': 'nino3.3_LatExt'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'BiasTauxLatRmse': {
+                #     'variables': ['taux'],
+                #     'regions': {'taux': 'equatorial_pacific_LatExt'},
+                #     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'SeasonalSstLonRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'equatorial_pacific'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'SeasonalSstLatRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'nino3.3_LatExt'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'SeasonalPrLatRmse': {
+                #     'variables': ['pr'],
+                #     'regions': {'pr': 'nino3.3_LatExt'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
 #                'EnsoAmpl': {
 #                    'variables': ['sst'],
 #                    'regions': {'sst': 'nino3'},
@@ -166,32 +166,32 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
                 },
-                'NinaSstTsRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'nbr_years_window': 6,
-                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                },
-                'NinoSstLonRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
-                'NinaSstLonRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear'},
-                },
+                # 'NinaSstTsRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'nino3'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'nbr_years_window': 6,
+                #     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                # },
+                # 'NinoSstLonRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'equatorial_pacific'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
+                # 'NinaSstLonRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'equatorial_pacific'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear'},
+                # },
             },
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
@@ -205,10 +205,10 @@ def defCollection(MC=True):
             'description': 'Describe which science question this collection is about',
         },
     }
-    if MC:
-        return metrics_collection[MC]
-    else:
+    if MC is True:
         return metrics_collection
+    else:
+        return metrics_collection[MC]
 
 
 # List of reference observations for each variables
@@ -335,10 +335,10 @@ def ReferenceObservations(DATASET=True):
             },
         },
     }
-    if DATASET:
-        return dict_ref_obs[DATASET]
-    else:
+    if DATASET is True:
         return dict_ref_obs
+    else:
+        return dict_ref_obs[DATASET]
 
 
 def ReferenceRegions(AR=True):
@@ -364,15 +364,79 @@ def ReferenceRegions(AR=True):
                            'longitude': (220., 250.)},
         'nino3.4': {'long_name': 'Niño 3.4', 'latitude': (-5., 5.), 'longitude': (190., 240.)},
         'nino4': {'long_name': 'Niño 4', 'latitude': (-5., 5.), 'longitude': (160., 210.)},
-        # AR4 refrence regions
-        'ALA': {'long_name': 'Alaska/N.W. Canada', 'latitude': (60., 72.6), 'longitude': (285., 348.)},
-        'CGI': {'long_name': 'Canada/Greenland/Iceland', 'latitude': (60., 72.6), 'longitude': (285., 348.)}
-
+        # AR5 reference regions
+        'ALA': {'long_name': 'Alaska/N.W. Canada', 'latitude': (60., 72.6), 'longitude': (192., 255.),
+                'maskland': False, 'maskocean': True},
+        # 'AMZ': {'long_name': 'Amazon', 'polygon shaped region, I do not know how to select it'},
+        # 'CAM': {'long_name': 'Central America/Mexico', 'polygon shaped region, I do not know how to select it'},
+        'CAS': {'long_name': 'Central Asia', 'latitude': (30., 50.), 'longitude': (60., 75.), 'maskland': False,
+                'maskocean': True},
+        # 'CEU': {'long_name': 'Central Europe', 'polygon shaped region, I do not know how to select it'},
+        'CGI': {'long_name': 'Canada/Greenland/Iceland', 'latitude': (50., 85.), 'longitude': (255., 350.),
+                'maskland': False, 'maskocean': True},
+        'CNA': {'long_name': 'Central North America', 'latitude': (28.6, 50.), 'longitude': (255., 275.),
+                'maskland': False, 'maskocean': True},
+        'EAF': {'long_name': 'East Africa', 'latitude': (-11.4, 15.), 'longitude': (25., 52.), 'maskland': False,
+                'maskocean': True},
+        'EAS': {'long_name': 'East Asia', 'latitude': (20., 50.), 'longitude': (100., 145.), 'maskland': False,
+                'maskocean': True},
+        'ENA': {'long_name': 'East North America', 'latitude': (25., 50.), 'longitude': (275., 300.), 'maskland': False,
+                'maskocean': True},
+        'MED': {'long_name': 'South Europe/Mediterranean', 'latitude': (30., 45.), 'longitude': (350., 400.),
+                'maskland': False, 'maskocean': True},
+        'NAS': {'long_name': 'North Asia', 'latitude': (50., 70.), 'longitude': (40., 180.), 'maskland': False,
+                'maskocean': True},
+        'NAU': {'long_name': 'North Australia', 'latitude': (-30., -10.), 'longitude': (110., 155.), 'maskland': False,
+                'maskocean': True},
+        'NEB': {'long_name': 'North-East Brazil', 'latitude': (-20., 0.), 'longitude': (310., 326.), 'maskland': False,
+                'maskocean': True},
+        # 'NEU': {'long_name': 'North Europe', 'polygon shaped region, I do not know how to select it'},
+        'SAF': {'long_name': 'Southern Africa', 'latitude': (-35., -11.4), 'longitude': (350., 412.), 'maskland': False,
+                'maskocean': True},
+        'SAH': {'long_name': 'Sahara', 'latitude': (15., 30.), 'longitude': (340., 400.), 'maskland': False,
+                'maskocean': True},
+        # 'SAS': {'long_name': 'South Asia', 'polygon shaped region, I do not know how to select it'},
+        'SAU': {'long_name': 'South Australia/New Zealand', 'latitude': (-50., -30.), 'longitude': (110., 180.),
+                'maskland': False, 'maskocean': True},
+        'SEA': {'long_name': 'Southeast Asia', 'latitude': (-10., 20.), 'longitude': (95., 155.), 'maskland': False,
+                'maskocean': False},
+        # 'SSA': {'long_name': 'Southeastern South America', 'polygon shaped region, I do not know how to select it'},
+        'TIB': {'long_name': 'Tibetan Plateau', 'latitude': (30., 50.), 'longitude': (75., 100.), 'maskland': False,
+                'maskocean': True},
+        'WAF': {'long_name': 'West Africa', 'latitude': (-11.4, 15.), 'longitude': (340., 385.), 'maskland': False,
+                'maskocean': True},
+        'WAS': {'long_name': 'West Asia', 'latitude': (15., 50.), 'longitude': (40., 60.), 'maskland': False,
+                'maskocean': True},
+        'WNA': {'long_name': 'West North America', 'latitude': (28.6, 60.), 'longitude': (230., 255.),
+                'maskland': False, 'maskocean': True},
+        # 'WSA': {'long_name': 'West Coast South America', 'polygon shaped region, I do not know how to select it'},
+        # non-SREX reference regions
+        'ANT': {'long_name': 'Antarctica', 'latitude': (-90., -50.), 'longitude': (0., 360.), 'maskland': False,
+                'maskocean': False},
+        'ARC': {'long_name': 'Arctic', 'latitude': (67.5, 90.), 'longitude': (0., 360.), 'maskland': False,
+                'maskocean': False},
+        # 'CAR': {
+        #     'long_name': 'Caribbean', 'polygon shaped region, I do not know how to select it'
+        # },
+        'NTP': {'long_name': 'Northern Tropical Pacific', 'latitude': (5., 25.), 'longitude': (155., 210.)},
+        'STP': {'long_name': 'Southern Topical Pacific', 'latitude': (-25., -5.), 'longitude': (155., 230.)},
+        'ETP': {'long_name': 'Equatorial Tropical Pacific', 'latitude': (-5., 5.), 'longitude': (155., 210.)},
+        'WIO': {'long_name': 'West Indian Ocean', 'latitude': (-25., 5.), 'longitude': (52., 75.), 'maskland': False,
+                'maskocean': False},
+        # Power and Delage's (2018) oceanic regions
+        'CEP': {'long_name': 'Central Equatorial Pacific', 'latitude': (-5., 5.), 'longitude': (180., 220.),
+                'maskland': True, 'maskocean': False},
+        'CNP': {'long_name': 'Central Northern Tropical Pacific', 'latitude': (5., 15.), 'longitude': (180., 220.),
+                'maskland': True, 'maskocean': False},
+        'CSP': {'long_name': 'Central Southern Tropical Pacific', 'latitude': (-15., -5.), 'longitude': (180., 220.),
+                'maskland': True, 'maskocean': False},
+        'INO': {'long_name': 'Indian Ocean', 'latitude': (-25., 0.), 'longitude': (55., 95.), 'maskland': True,
+                'maskocean': False},
     }
-    if AR:
-        return dict_reference_regions[AR]
-    else:
+    if AR is True:
         return dict_reference_regions
+    else:
+        return dict_reference_regions[AR]
 
 
 def CmipVariables():
@@ -382,6 +446,10 @@ def CmipVariables():
             # line keys:
             # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>, 'cf_unit':'<unit_in_file>'}
 
+            # areacell
+            'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
+            # landmask
+            'landmask': {'var_name': 'sftlf', 'cf_name': 'cell_area', 'cf_units': '1'},
             # latent heat flux (on ocean grid or ocean points only)
             'lhf': {'var_name': 'hfls', 'cf_name': 'surface_upward_latent_heat_flux', 'cf_units': 'W m-2'},
             # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
