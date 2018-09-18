@@ -17,7 +17,7 @@ from KeyArgLib import DefaultArgValues
 #
 # Computation of the metric collection
 #
-def ComputeCollection(metricCollection, dictDatasets, user_regridding={}):
+def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, dive_down=False):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -101,10 +101,14 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}):
         }
     """
     dict_mc = defCollection(metricCollection)
-    dict_collection_metadata = {
+    dict_col_meta = {
         'name': dict_mc['long_name'], 'description_of_the_collection': dict_mc['description'], 'metrics': {},
     }
-    dict_collection_value = dict()
+    dict_col_dd_meta = {
+        'name': dict_mc['long_name'], 'description_of_the_collection': dict_mc['description'], 'metrics': {},
+    }
+    dict_col_valu = dict()
+    dict_col_dd_valu = dict()
     dict_m = dict_mc['metrics_list']
     list_metrics = sorted(dict_m.keys())
     for metric in list_metrics:
@@ -161,11 +165,15 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}):
             if len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0:
                 print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
         else:
-            dict_collection_value[metric], dict_collection_metadata['metrics'][metric] = ComputeMetric(
+            dict_col_valu[metric], dict_col_meta['metrics'][metric], dict_col_dd_valu[metric], \
+            dict_col_dd_meta['metrics'][metric] = ComputeMetric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], user_regridding=user_regridding, **arg_var2)
-
-    return {'value': dict_collection_value, 'metadata': dict_collection_metadata}
+    if dive_down is True:
+        return {'value': dict_col_valu, 'metadata': dict_col_meta},\
+               {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}
+    else:
+        return {'value': dict_col_valu, 'metadata': dict_col_meta}
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -438,6 +446,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     for key in list_keys:
         if key == 'method':
             dict_diagnostic_metadata[key] = diagnostic1['method']
+            dict_dive_down_metadata[key] = diagnostic1['method']
             try:
                 diagnostic1['nonlinearity']
             except:
@@ -446,6 +455,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 dict_diagnostic_metadata['method_nonlinearity'] = diagnostic1['method_nonlinearity']
         else:
             dict_diagnostic_metadata[key] = diagnostic1[key]
+            dict_dive_down_metadata[key] = diagnostic1[key]
     # creates the output dictionaries
     dict_metrics = {
         'metric': dict_metric_val, 'diagnostic': dict_diagnostic,
@@ -469,7 +479,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         'diagnostic': dict_diagnostic_metadata,
     }
     if 'dive_down_diag' in diagnostic1.keys():
-        dict_metrics['dive_down_diagnostic'] = dict_dive_down
-        dict_metadata['dive_down_diagnostic'] = dict_dive_down_metadata
-    return dict_metrics, dict_metadata
+        return dict_metrics, dict_metadata, dict_dive_down, dict_dive_down_metadata
+    else:
+        return dict_metrics, dict_metadata
 # ---------------------------------------------------------------------------------------------------------------------#

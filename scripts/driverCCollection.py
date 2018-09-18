@@ -180,7 +180,6 @@ for mod in list_models:
     # Prints the metrics values
     for ii in range(3): print ''
     print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
-    stop
     list_metric = dict_metric[mod]['value'].keys()
     for metric in list_metric:
         print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
