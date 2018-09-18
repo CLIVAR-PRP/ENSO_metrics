@@ -369,7 +369,7 @@ def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
     return rmse
 
 
-def RmsHorizontal(tab, ref, centered=0):
+def RmsHorizontal(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
@@ -411,7 +411,7 @@ def RmsHorizontal(tab, ref, centered=0):
     return float(rmse)
 
 
-def RmsMeridional(tab, ref, centered=0):
+def RmsMeridional(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
@@ -453,7 +453,7 @@ def RmsMeridional(tab, ref, centered=0):
     return float(rmse)
 
 
-def RmsTemporal(tab, ref, centered=0):
+def RmsTemporal(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
@@ -496,7 +496,7 @@ def RmsTemporal(tab, ref, centered=0):
     return float(rmse)
 
 
-def RmsZonal(tab, ref, centered=0):
+def RmsZonal(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
@@ -2099,11 +2099,15 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
         print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
         if isinstance(average, basestring):
+            print '\033[93m' + str().ljust(20) + "perform " + str(average) + '\033[0m'
             try: dict_average[average]
             except:
                 EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
             else:
                 tab = dict_average[average](tab, areacell)
+                print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
+                print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()])\
+                      + '\033[0m'
         elif isinstance(average, list):
             for av in average:
                 print '\033[93m' + str().ljust(20) + "perform " + str(av) + '\033[0m'

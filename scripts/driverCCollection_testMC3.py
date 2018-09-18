@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_tel'#'MC1'#'ENSO_perf'
+mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -270,17 +270,20 @@ for mod in list_models:
             for ref in dive_down['observations'].keys():
                 print '\033[95m' + str().ljust(15) + 'dive down obs: ' + str(ref) + ' = ' +\
                       str(dive_down['observations'][ref]) + '\033[0m'
-    # Plot
+# Plot
 #if ' ':
 for mod in list_models:
+    from numpy import arange as NUMPYarange
+    from cdms2 import createAxis as CDMS2createAxis
+    from MV2 import array as MV2array
+    from MV2 import masked_where as MV2masked_where
+    from MV2 import maximum as MV2maximum
+    from MV2 import minimum as MV2minimum
+    import plot_frame as PFRAME
+    import plot_functions as PF
+    path_plot = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Plots'
+    list_col = ['black', 'red']
     if mc_name == 'ENSO_tel':
-        from numpy import arange as NUMPYarange
-        from cdms2 import createAxis as CDMS2createAxis
-        from MV2 import array as MV2array
-        from MV2 import maximum as MV2maximum
-        from MV2 import minimum as MV2minimum
-        import plot_frame as PFRAME
-        path_plot = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Plots'
         for metric in list_metric:
             print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
             metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']
@@ -314,7 +317,6 @@ for mod in list_models:
                 print str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2)) +\
                       ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2))
                 list_curve = [tab1, tab2]
-                list_col = ['red', 'black']
                 # strings to write
                 l_w = [m1, m2]
                 l_w_xy = [[97, 100 - (ii + 1) * 6] for ii in range(len(l_w))]
@@ -334,5 +336,92 @@ for mod in list_models:
                                    list_writings_halign=l_w_ha, plot_lines=True, lines_x1x2=lines_x1x2,
                                    lines_y1y2=lines_y1y2, lines_color=lines_colo, path_plus_name_png=name_png,
                                    draw_white_background=True, save_ps=False, bg=1)
-                del l_w, l_w_ha, l_w_si, l_w_xy, lines_colo, lines_x1x2, lines_y1y2, list_curve, list_col, m1,\
+                del l_w, l_w_ha, l_w_si, l_w_xy, lines_colo, lines_x1x2, lines_y1y2, list_curve, m1,\
                     m2, name, name_png, yname
+    elif mc_name == 'ENSO_perf':
+        for metric in list_metric:
+            print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
+            metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']
+            # metric
+            dict_m1 = dict()
+            for ref in metric_dict.keys():
+                dict_m1[ref] = metric_dict[ref]['value']
+            # dive down
+            if 'dive_down_diag' in dict_metric[mod]['metrics'][metric].keys():
+                dive_down = dict_metric[mod]['metrics'][metric]['dive_down_diag']
+                axis_val = dive_down['axis']
+                dive_model = dive_down['model']
+                dict_dive = dict()
+                for ref in dive_down['observations'].keys():
+                    dict_dive['ref_' + ref] = dive_down['observations'][ref]
+            # plot
+            axis = CDMS2createAxis(MV2array(axis_val, dtype='float32'),id='axis')
+            tab1 = MV2array(dive_model)
+            tab1.setAxisList([axis])
+            tab1 = MV2masked_where(tab1>=1e20, tab1)
+            if metric in ['BiasSstLonRmse', 'NinoSstLonRmse', 'SeasonalSstLonRmse']:
+                inc = 30
+                if min(axis_val)<0:
+                    x_axis = [-250, -70]
+                    tmp = [x_axis[0]+10, x_axis[1]-10]
+                    x_dict = dict((ii, str(ii + 360) + 'E') if ii < -180 else (ii, str(abs(ii)) + 'W') for ii in
+                            range(tmp[0], tmp[1] + inc, inc))
+                else:
+                    x_axis = [110, 290]
+                    tmp = [x_axis[0] + 10, x_axis[1] - 10]
+                    x_dict = dict((ii, str(ii) + 'E') if ii < 180 else (ii, str(abs(ii - 360)) + 'W') for ii in
+                                  range(tmp[0], tmp[1] + inc, inc))
+            elif metric in ['NinoSstTsRmse']:
+                x_axis, inc = [-1, len(axis_val)], 1
+                tmp = ['M', 'J', 'S', 'D']
+                x_dict = dict((ii, tmp[(((ii + 1) / 3) % 4) - 1]) if (ii + 1) % 3 == 0 else (ii, '') for ii in
+                              range(x_axis[0], x_axis[1] + inc, inc))
+            for ref in dict_m1.keys():
+                m1 = 'Metric: ' + str("%.2f" % round(dict_m1[ref], 2))
+                tab2 = MV2array(dict_dive[ref])
+                tab2.setAxisList([axis])
+                tab2 = MV2masked_where(tab2 >= 1e20, tab2)
+                print str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2)) +\
+                      ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2))
+                y_axis, y_dict = PF.create_dico([min(MV2minimum(tab1),MV2minimum(tab2)),
+                                                max(MV2maximum(tab1),MV2maximum(tab2))])
+                list_curve = [tab1, tab2]
+                # strings to write
+                l_w = [m1]
+                l_w_xy = [[97, 100 - (ii + 1) * 6] for ii in range(len(l_w))]
+                l_w_si = [30 for ii in range(len(l_w))]
+                l_w_ha = ['right' for ii in range(len(l_w))]
+                # lines to plot
+                lines_y1y2 = [[round(ii, 1), round(ii, 1)] for ii in y_dict.keys() if y_dict[ii] != '' and
+                              round(ii, 1) != 0 and round(ii, 1) not in y_axis]
+                lines_x1x2 = [x_axis for ii in range(len(lines_y1y2))]
+                if metric in ['BiasSstLonRmse', 'NinoSstLonRmse', 'SeasonalSstLonRmse']:
+                    xname = 'longitude'
+                    lines_x1x2 = lines_x1x2 + [[ii, ii] for ii in x_dict.keys() if x_dict[ii] != '' and ii != 0
+                                               and ii not in x_axis]
+                    lines_y1y2 = lines_y1y2 + [y_axis for ii in x_dict.keys() if x_dict[ii] != '' and ii != 0
+                                               and ii not in x_axis]
+                elif metric in ['NinoSstTsRmse']:
+                    xname = 'time'
+                    lines_x1x2 = lines_x1x2 + [[ii, ii] for ii in x_dict.keys() if (ii + 1) % 12 == 0 and ii != 0
+                                               and ii not in x_axis]
+                    lines_y1y2 = lines_y1y2 + [y_axis for ii in x_dict.keys() if (ii + 1) % 12 and ii != 0
+                                               and ii not in x_axis]
+                lines_colo = ['grey' for ii in range(len(lines_y1y2))]
+                name = metric + ' metric (' + mod + ')'
+                print metric, mod, ref
+                name_png = path_plot + '/' + metric + '_' + mod + '_ ' + ref
+                if metric in ['NinoSstLonRmse', 'NinoSstTsRmse', 'SeasonalSstLonRmse']:
+                    yname = 'SSTA (degC)'
+                elif metric in ['BiasSstLonRmse']:
+                    yname = 'SST (degC)'
+                PFRAME.curves_plot(list_curve, list_col=list_col, x_axis=x_axis, x_dico=x_dict, y_axis=y_axis,
+                                   y_dico=y_dict, name_in_xlabel=False, name=name, xname=xname, yname=yname,
+                                   list_writings=l_w, list_writings_pos_xy=l_w_xy, list_writings_size=l_w_si,
+                                   list_writings_halign=l_w_ha, plot_lines=True, lines_x1x2=lines_x1x2,
+                                   lines_y1y2=lines_y1y2, lines_color=lines_colo, path_plus_name_png=name_png,
+                                   draw_white_background=True, save_ps=False, bg=1)
+                del l_w, l_w_ha, l_w_si, l_w_xy, lines_colo, lines_x1x2, lines_y1y2, list_curve, m1,\
+                    name, name_png, xname, yname
+
+
