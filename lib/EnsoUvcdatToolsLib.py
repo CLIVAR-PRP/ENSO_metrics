@@ -17,7 +17,6 @@ import EnsoErrorsWarnings
 from EnsoToolsLib import StringInDict
 
 # uvcdat based functions:
-import adamsregrid
 from cdms2 import createAxis as CDMS2createAxis
 from cdms2 import createRectGrid as CDMS2createRectGrid
 from cdms2 import createUniformLatitudeAxis as CDMS2createUniformLatitudeAxis
@@ -1371,16 +1370,6 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     for more information:
     import cdms2
     help(cdms2.avariable)
-    or (if the case of regridTool='adamsregrid'
-    import adamsregrid
-    To obtain a prescription for making an instance, type
-        adamsregrid.help('Regrid')
-    To acquire instructions on the use of the rgrd function, type
-        adamsregrid.help('rgrd')
-    To look at a general one dimensional example, type
-        adamsregrid.help('OneDexample')
-    To look at a general four dimensional example, type
-        adamsregrid.help('FourDexample')
 
     :param tab_to_regrid: masked_array
         masked_array to regrid (must include a CDMS grid!)
@@ -1393,7 +1382,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     :param mask: array of booleans, optional
         mask of the new grid (either 2-D or the same shape as togrid)
     :param regridder: string, optional
-        regridders (either 'adamsregrid', 'cdms', 'cdmsHorizontal')
+        regridders (either 'cdms', 'cdmsHorizontal')
         default value is 'cdms'
     :param regridTool: string, optional
         only if regrider is set to 'cdms'
@@ -1401,7 +1390,6 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         default value is 'esmf'
     :param regridMethod: string, optional
         regridding methods depend on regridder and regridTool
-        'adamsregrid' -> 'linear', 'linearLog', 'cubic', 'cubicLog'
         'cdms'
             regridTool='regrid2' -> 'linear'
             regridTool='esmf'    -> 'conserve', 'linear', 'patch'
@@ -1429,7 +1417,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     if extra_args:
         EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
     # test given arguments
-    known_regridder = ['adamsregrid', 'cdms', 'cdmsHorizontal']
+    known_regridder = ['cdms', 'cdmsHorizontal']
     if regridder not in known_regridder:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridder",
@@ -1437,18 +1425,6 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
             str().ljust(10) + "known regridder: " + str(known_regridder)
         ]
         EnsoErrorsWarnings.MyError(list_strings)
-    elif regridder in ['adamsregrid']:
-        if regridder is ['adamsregrid']:
-            list_method = [None, 'linear', 'linearLog', 'cubic', 'cubicLog']
-        else:
-            list_method = [None, 'conservative', 'bilinear', 'bicubic', 'distwgt']
-        if regridMethod not in list_method:
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
-                str().ljust(5) + "unknown regridMethod (" + str(regridMethod) + ")",
-                str().ljust(10) + "known regridMethod: " + str(list_method)
-            ]
-            EnsoErrorsWarnings.MyError(list_strings)
     elif regridder == 'cdms':
         if regridTool in ['regrid2', 'libcf']:
             list_method = [None, 'linear']
@@ -1515,29 +1491,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     #
     # regrid
     #
-    if regridder == 'adamsregrid':
-        axis = tab_to_regrid.getAxis(0)[:]
-        if axis[0] > newgrid.getAxis(0)[0]:
-            axis[0] = newgrid.getAxis(0)[0]
-        if axis[-1] < newgrid.getAxis(0)[-1]:
-            axis[-1] = newgrid.getAxis(0)[-1]
-        if len(tab_to_regrid.shape) == 1:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0)
-        elif len(tab_to_regrid.shape) == 2:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
-                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1)
-        elif len(tab_to_regrid.shape) == 3:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
-                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1,
-                                   tab_to_regrid.getAxis(2)[:], newgrid.getAxis(2)[:], regridMethod, 2)
-        else:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
-                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1,
-                                   tab_to_regrid.getAxis(2)[:], newgrid.getAxis(2)[:], regridMethod, 2,
-                                   tab_to_regrid.getAxis(3)[:], newgrid.getAxis(3)[:], regridMethod, 3)
-        new_tab = MV2array(r.rgrd(tab_to_regrid))
-        new_tab.setAxisList(newgrid.getAxisList())
-    elif regridder == 'cdms':
+    if regridder == 'cdms':
         new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
                                         regridMethod=regridMethod)
         if tab_to_regrid.getGrid().shape == newgrid.shape:
@@ -2266,13 +2220,8 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
     extra_args = set(keyarg) - known_args
     if extra_args:
         EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-    # if regridder='adamsregrid', the grid is not sent but the masked_array
-    if keyarg['regridder'] == 'adamsregrid':
-        grid_obs = deepcopy(obs)
-        grid_model = deepcopy(model)
-    else:
-        grid_obs = obs.getGrid()
-        grid_model = model.getGrid()
+    grid_obs = obs.getGrid()
+    grid_model = model.getGrid()
     # select case:
     if model_orand_obs == 0:
         model = Regrid(model, grid_obs, **keyarg)
