@@ -50,7 +50,7 @@ def find_xml_obs(obs,frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_perf'#'MC1'#
+mc_name = 'MC1'#'ENSO_perf'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -80,7 +80,12 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-list_obs = ['Tropflux','HadISST']
+if mc_name == 'MC1':
+    list_obs = ['Tropflux']
+elif mc_name == 'ENSO_perf':
+    list_obs = ['Tropflux','GPCPv2.3']
+elif mc_name == 'ENSO_tel':
+    list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -183,29 +188,8 @@ for mod in list_models:
     list_metric = dict_metric[mod]['value'].keys()
     for metric in list_metric:
         print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
-        metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']
+        metric_dict = dict_metric[mod]['value'][metric]['metric']
         for ref in metric_dict.keys():
-            print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value'])\
+            print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) \
                   + ', error = ' + str(metric_dict[ref]['value_error']) + '\033[0m'
-        raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['observations']
-        for ref in raw_dict.keys():
-            print '\033[95m' + str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = '\
-                  + str(raw_dict[ref]['value']) + ', error = ' + str(raw_dict[ref]['value_error']) + '\033[0m'
-        raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['model']
-        print '\033[95m' + str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
-                  ', error = ' + str(raw_dict['value_error']) + '\033[0m'
-        # dive down
-        if 'dive_down_diag' in dict_metric[mod]['metrics'][metric].keys():
-            dive_down = dict_metric[mod]['metrics'][metric]['dive_down_diag']
-            if 'axis' in dive_down.keys():
-                print '\033[95m' + str().ljust(15) + 'dive down axis: ' + str(dive_down['axis']) + '\033[0m'
-            if 'axisLat' in dive_down.keys():
-                print '\033[95m' + str().ljust(15) + 'dive down axisLat: ' + str(dive_down['axisLat']) + '\033[0m'
-            if 'axisLon' in dive_down.keys():
-                print '\033[95m' + str().ljust(15) + 'dive down axisLon: ' + str(dive_down['axisLon']) + '\033[0m'
-            print '\033[95m' + str().ljust(15) + 'dive down model: ' + str(mod) + ' = ' + str(dive_down['model']) +\
-                  '\033[0m'
-            for ref in dive_down['observations'].keys():
-                print '\033[95m' + str().ljust(15) + 'dive down obs: ' + str(ref) + ' = ' +\
-                      str(dive_down['observations'][ref]) + '\033[0m'
 
