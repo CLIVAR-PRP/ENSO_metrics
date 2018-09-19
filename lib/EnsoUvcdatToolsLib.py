@@ -1185,6 +1185,12 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     CDMS2setAutoBounds('on')
     # Open file and get time dimension
     fi = CDMS2open(filename)
+    # print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib ReadAndSelectRegion" + '\033[0m'
+    # print filename
+    # print varname
+    # print box
+    # print time_bounds
+    # print frequency
     if box is None:  # no box given
         if time_bounds is None: # no time period given
             # read file
@@ -2020,7 +2026,8 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
 
 
-def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, **kwargs):
+def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
+                 **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom:
         tab = cdutil.ANNUALCYCLE.departures(tab)
@@ -2048,31 +2055,29 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
         tab = annualcycle(tab)
     # average
     if average is not False:
-        print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib PreProcessTS" + '\033[0m'
-        print '\033[93m' + str().ljust(20) + "averaging to perform: " + str(average) + '\033[0m'
-        print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
-        print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
+        if debug is True:
+            EnsoErrorsWarnings.DebugMode('\033[93m', "EnsoUvcdatToolsLib PreProcessTS", 15)
+            dict_debug = {'axes1':  str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', "averaging to perform: " + str(average), 20, **dict_debug)
         if isinstance(average, basestring):
-            print '\033[93m' + str().ljust(20) + "perform " + str(average) + '\033[0m'
             try: dict_average[average]
             except:
                 EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
             else:
                 tab = dict_average[average](tab, areacell)
-                print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
-                print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()])\
-                      + '\033[0m'
+                if debug is True:
+                    dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
+                    EnsoErrorsWarnings.DebugMode('\033[92m', "performed " + str(average), 20, **dict_debug)
         elif isinstance(average, list):
             for av in average:
-                print '\033[93m' + str().ljust(20) + "perform " + str(av) + '\033[0m'
                 try: dict_average[av]
                 except:
                     EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
                 else:
                     tab = dict_average[av](tab, areacell)
-                    print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
-                    print '\033[93m' + str().ljust(25) + "tab.axes = "\
-                          + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
+                    if debug is True:
+                        dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
+                        EnsoErrorsWarnings.DebugMode('\033[92m', "performed " + str(av), 20, **dict_debug)
         else:
             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info

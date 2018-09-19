@@ -17,7 +17,7 @@ from KeyArgLib import DefaultArgValues
 #
 # Computation of the metric collection
 #
-def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, degug=False, dive_down=False):
+def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -233,7 +233,7 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, degug=
             dict_col_valu[metric], dict_col_meta['metrics'][metric], dict_col_dd_valu[metric],\
             dict_col_dd_meta['metrics'][metric] = ComputeMetric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-                dict_regions[list_variables[0]], user_regridding=user_regridding, degug=degug, **arg_var2)
+                dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, **arg_var2)
     if dive_down is True:
         return {'value': dict_col_valu, 'metadata': dict_col_meta},\
                {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}
@@ -309,7 +309,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                   obsFileArea1='', obsAreaName1='', obsFileLandmask1='', obsLandmaskName1='',
                   modelFile2='', modelVarName2='', modelFileArea2='', modelAreaName2='', modelFileLandmask2='',
                   modelLandmaskName2='', obsNameVar2='', obsFile2='', obsVarName2='', obsFileArea2='', obsAreaName2='',
-                  obsFileLandmask2='', obsLandmaskName2='', regionVar2='', degug=False, user_regridding={}):
+                  obsFileLandmask2='', obsLandmaskName2='', regionVar2='', debug=False, user_regridding={}):
     """
     The ComputeMetric() function computes the given metric for the given model and observations
 
@@ -403,7 +403,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], box=regionVar1, degug=degug, **keyarg)
+                    obsLandmaskName1[ii], box=regionVar1, debug=debug, **keyarg)
             elif metric in dict_twoVar_modelAndObs.keys():
                 for jj in range(len(obsNameVar2)):
                     output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
@@ -415,7 +415,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         modelFileLandmask2, modelLandmaskName2, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii],
                         obsAreaName1[ii], obsFileLandmask1[ii], obsLandmaskName1[ii], obsFile2[jj], obsVarName2[jj],
                         obsFileArea2[jj], obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar1,
-                        regionVar2, degug=degug, **keyarg)
+                        regionVar2, debug=debug, **keyarg)
         for obs in diagnostic1.keys():
             # puts metric values in its proper dictionary
             dict_metric_val['ref_' + obs] = {
@@ -454,7 +454,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             # computes diagnostic that needs only one variable
             print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
             diagnostic1 = dict_oneVar[metric](modelFile1, modelVarName1, modelFileArea1, modelAreaName1,
-                                              modelFileLandmask1, modelLandmaskName1, regionVar1, degug=degug, **keyarg)
+                                              modelFileLandmask1, modelLandmaskName1, regionVar1, debug=debug, **keyarg)
         elif metric in dict_twoVar.keys():
             # computes diagnostic that needs two variables
             print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
@@ -462,7 +462,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             diagnostic1 = dict_twoVar[metric](
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                 regionVar1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2,
-                modelLandmaskName2, regionVar2, degug=degug, **keyarg)
+                modelLandmaskName2, regionVar2, debug=debug, **keyarg)
         else:
             diagnostic1 = None
             list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric", str().ljust(5) +
@@ -499,7 +499,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 output_name = obs1
                 diag_obs[output_name] = dict_oneVar[metric](
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], regionVar1, degug=degug, **keyarg)
+                    obsLandmaskName1[ii], regionVar1, debug=debug, **keyarg)
             elif metric in dict_twoVar.keys():
                 for jj in range(len(obsNameVar2)):
                     obs2 = obsNameVar2[jj]
@@ -508,8 +508,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) + '\033[0m'
                     diag_obs[output_name] = dict_twoVar[metric](
                         obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                        obsLandmaskName1[ii], obsFile2[jj], obsVarName2[jj], obsFileArea2[jj], obsAreaName2[jj],
-                        obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar1, regionVar2, **keyarg)
+                        obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
+                        obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2, **keyarg)
         for obs in diag_obs.keys():
             # computes the metric
             metric_val, metric_err, description_metric = MathMetriComputation(

@@ -22,7 +22,7 @@ from KeyArgLib import DefaultArgValues
 #
 def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                 sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The BiasSstRmse() function computes the SST spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -61,7 +61,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -131,7 +131,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasSstRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -140,7 +140,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -156,7 +156,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -177,7 +177,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -229,7 +229,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
                                      **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -243,7 +243,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -268,7 +268,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
 
 def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                   sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                   sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The BiasSstLatRmse() function computes the SST meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -307,7 +307,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -377,7 +377,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasSstLatRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -386,7 +386,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -402,7 +402,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -423,7 +423,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -475,7 +475,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                      **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -489,7 +489,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -498,7 +498,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Zonal average
     sst_model = AverageZonal(sst_model)
     sst_obs = AverageZonal(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -523,7 +523,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 
 def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                   sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                   sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The BiasSstLonRmse() function computes the SST zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -562,7 +562,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -632,7 +632,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasSstLonRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -641,7 +641,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -657,7 +657,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -678,7 +678,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -730,7 +730,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                      **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -744,7 +744,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -753,7 +753,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Meridional average
     sst_model = AverageMeridional(sst_model)
     sst_obs = AverageMeridional(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -778,7 +778,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 
 def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel, prlandmasknamemodel,
                prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-               centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+               centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The BiasPrRmse() function computes the PR (precipitation) spatial root mean square error (RMSE) in a 'box' (usually
     the tropical Pacific)
@@ -817,7 +817,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -887,7 +887,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasPrRmse', 10)
         dict_debug = {'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs,
                       'var1': '(model) ' + prnamemodel, 'var2': '(obs) ' + prnameobs}
@@ -896,7 +896,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
@@ -912,7 +912,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
             obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=box, **kwargs)
         else:
             obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=box, **kwargs)
-        if degug is True:
+        if debug is True:
             dict_debug = {}
             if model_areacell is not None:
                 dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -934,7 +934,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
                                                     **kwargs)
         else:
             obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-        if degug is True:
+        if debug is True:
             dict_debug = {}
             if model_landmask is not None:
                 dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -986,7 +986,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
                                     **kwargs)
     pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1000,7 +1000,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1025,7 +1025,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
 
 def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel, prlandmasknamemodel,
                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-                  centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                  centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The BiasPrLatRmse() function computes the PR (zonal wind stress) meridional (latitude) root mean square error (RMSE)
     in a 'box' (usually 'nino3.3_LatExt')
@@ -1064,7 +1064,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -1134,7 +1134,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasPrLatRmse', 10)
         dict_debug = {'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs,
                       'var1': '(model) ' + prnamemodel, 'var2': '(obs) ' + prnameobs}
@@ -1143,7 +1143,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
@@ -1159,7 +1159,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -1180,7 +1180,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -1232,7 +1232,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
                                     **kwargs)
     pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1246,7 +1246,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1255,7 +1255,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     # Zonal average
     pr_model = AverageZonal(pr_model)
     pr_obs = AverageZonal(pr_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1280,7 +1280,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
 
 def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel, prlandmasknamemodel,
                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-                  centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                  centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The BiasPrLonRmse() function computes the PR (zonal wind stress) zonal (longitude) root mean square error (RMSE) in
     a 'box' (usually the Equatorial Pacific)
@@ -1319,7 +1319,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -1389,7 +1389,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasPrLonRmse', 10)
         dict_debug = {'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs,
                       'var1': '(model) ' + prnamemodel, 'var2': '(obs) ' + prnameobs}
@@ -1398,7 +1398,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
@@ -1414,7 +1414,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -1435,7 +1435,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -1487,7 +1487,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
                                     **kwargs)
     pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1501,7 +1501,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1510,7 +1510,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     # Meridional average
     pr_model = AverageMeridional(pr_model)
     pr_obs = AverageMeridional(pr_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -1535,7 +1535,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
 
 def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemodel, tauxlandmaskfilemodel,
                  tauxlandmasknamemodel, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs, tauxlandmaskfileobs,
-                 tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                 tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The BiasTauxRmse() function computes the TAUX (zonal wind stress) spatial root mean square error (RMSE) in a 'box'
     (usually the tropical Pacific)
@@ -1574,7 +1574,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -1644,7 +1644,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasTauxRmse', 10)
         dict_debug = {'file1': '(model) ' + tauxfilemodel, 'file2': '(obs) ' + tauxfileobs,
                       'var1': '(model) ' + tauxnamemodel, 'var2': '(obs) ' + tauxnameobs}
@@ -1653,7 +1653,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
                                             time_bounds=kwargs['time_bounds_model'], **kwargs)
     taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
                                           time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape),
@@ -1669,7 +1669,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
         obs_areacell = ReadAreaSelectRegion(tauxareafileobs, areaname=tauxareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(tauxfileobs, areaname=tauxareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -1691,7 +1691,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
                                                 **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(tauxfileobs, landmaskname=tauxlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -1743,7 +1743,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
                                       **kwargs)
     taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -1757,7 +1757,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -1782,7 +1782,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
 
 def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemodel, tauxlandmaskfilemodel,
                     tauxlandmasknamemodel, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
-                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False,
+                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False,
                     **kwargs):
     """
     The BiasTauxLatRmse() function computes the TAUX (zonal wind stress) meridional (latitude) root mean square error
@@ -1822,7 +1822,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -1892,7 +1892,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasTauxLatRmse', 10)
         dict_debug = {'file1': '(model) ' + tauxfilemodel, 'file2': '(obs) ' + tauxfileobs,
                       'var1': '(model) ' + tauxnamemodel, 'var2': '(obs) ' + tauxnameobs}
@@ -1901,7 +1901,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
                                             time_bounds=kwargs['time_bounds_model'], **kwargs)
     taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
                                           time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape),
@@ -1917,7 +1917,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
         obs_areacell = ReadAreaSelectRegion(tauxareafileobs, areaname=tauxareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(tauxfileobs, areaname=tauxareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -1939,7 +1939,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
                                                 **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(tauxfileobs, landmaskname=tauxlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -1991,7 +1991,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
                                       **kwargs)
     taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -2005,7 +2005,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -2014,7 +2014,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     # Zonal average
     taux_model = AverageZonal(taux_model) * 1e3
     taux_obs = AverageZonal(taux_obs) * 1e3
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -2039,7 +2039,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
 
 def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemodel, tauxlandmaskfilemodel,
                     tauxlandmasknamemodel, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
-                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False,
+                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False,
                     **kwargs):
     """
     The BiasTauxLonRmse() function computes the TAUX (zonal wind stress) zonal (longitude) root mean square error (RMSE)
@@ -2079,7 +2079,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -2149,7 +2149,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'BiasTauxLonRmse', 10)
         dict_debug = {'file1': '(model) ' + tauxfilemodel, 'file2': '(obs) ' + tauxfileobs,
                       'var1': '(model) ' + tauxnamemodel, 'var2': '(obs) ' + tauxnameobs}
@@ -2158,7 +2158,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
                                             time_bounds=kwargs['time_bounds_model'], **kwargs)
     taux_obs = ReadSelectRegionCheckUnits(tauxfileobs, tauxnameobs, 'wind stress', box=box,
                                           time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape),
@@ -2174,7 +2174,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
         obs_areacell = ReadAreaSelectRegion(tauxareafileobs, areaname=tauxareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(tauxfileobs, areaname=tauxareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -2196,7 +2196,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
                                                 **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(tauxfileobs, landmaskname=tauxlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -2248,7 +2248,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
                                       **kwargs)
     taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -2262,7 +2262,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         taux_model, taux_obs, Method = TwoVarRegrid(taux_model, taux_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -2271,7 +2271,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     # Meridional average
     taux_model = AverageMeridional(taux_model) * 1e3
     taux_obs = AverageMeridional(taux_obs) * 1e3
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                       'shape1': '(model) ' + str(taux_model.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
@@ -2295,7 +2295,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
 
 
 def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lhffile, lhfname,
-                 lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, degug=False, **kwargs):
+                 lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, debug=False, **kwargs):
     """
     The EnsoAlphaLhf() function computes the regression of 'lhfbox' lhfA (latent heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 lhfA over nino3 sstA)
@@ -2335,7 +2335,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         name of landmask variable (sftlf, lsmask, landmask) in 'lhflandmaskfile'
     :param lhfbox: string
         name of box (nino3') for LHF
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -2393,14 +2393,14 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoAlphaLhf', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(lhf) ' + lhffile, 'var1': '(sst) ' + sstname,
                       'var2': '(lhf) ' + lhfname}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
     lhf = ReadSelectRegionCheckUnits(lhffile, lhfname, 'heat flux', box=lhfbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
@@ -2416,7 +2416,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         lhf_areacell = ReadAreaSelectRegion(lhfareafile, areaname=lhfareaname, box=lhfbox, **kwargs)
     else:
         lhf_areacell = ReadAreaSelectRegion(lhffile, areaname=lhfareaname, box=lhfbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_areacell is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
@@ -2437,7 +2437,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         lhf_landmask = ReadLandmaskSelectRegion(lhflandmaskfile, landmaskname=lhflandmaskname, box=lhfbox, **kwargs)
     else:
         lhf_landmask = ReadLandmaskSelectRegion(lhffile, landmaskname=lhflandmaskname, box=lhfbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_landmask is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
@@ -2474,7 +2474,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     lhf, unneeded = PreProcessTS(lhf, '', areacell=lhf_areacell, average='horizontal', compute_anom=True, **kwargs)
     del sst_areacell, lhf_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
@@ -2495,7 +2495,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
-                 lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, degug=False, **kwargs):
+                 lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, debug=False, **kwargs):
     """
     The EnsoAlphaLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
     'sstbox' sstA (usually the regression of nino3 lwrA over nino3 sstA)
@@ -2539,7 +2539,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         name of landmask variable (sftlf, lsmask, landmask) in 'lwrlandmaskfile'
     :param lwrbox: string
         name of box (nino3') for LWR
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -2597,7 +2597,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoAlphaLwr', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(lwr) ' + lwrfile, 'var1': '(sst) ' + sstname,
                       'var2': '(lwr) ' + lwrname}
@@ -2611,7 +2611,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             filename, varname = lwrfile[ii], lwrname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=lwrbox, **kwargs)
     lwr = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
@@ -2639,7 +2639,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 lwr_areacell = ReadAreaSelectRegion(lwrfile[ii], areaname=lwrareaname[ii], box=lwrbox, **kwargs)
                 if lwr_areacell is not None:
                     break
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_areacell is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
@@ -2673,7 +2673,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 lwr_landmask = ReadAreaSelectRegion(lwrfile[ii], areaname=lwrlandmaskname[ii], box=lwrbox, **kwargs)
                 if lwr_landmask is not None:
                     break
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_landmask is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
@@ -2710,7 +2710,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     lwr, unneeded = PreProcessTS(lwr, '', areacell=lwr_areacell, average='horizontal', compute_anom=True, **kwargs)
     del sst_areacell, lwr_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
@@ -2731,7 +2731,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, shffile, shfname,
-                 shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, degug=False, **kwargs):
+                 shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, debug=False, **kwargs):
     """
     The EnsoAlphaShf() function computes the regression of 'shfbox' shfA (sensible heat flux anomalies) over 'sstbox'
     sstA (usually the regression of nino3 shfA over nino3 sstA)
@@ -2771,7 +2771,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         name of landmask variable (sftlf, lsmask, landmask) in 'shflandmaskfile'
     :param shfbox: string
         name of box (nino3') for SHF
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -2829,14 +2829,14 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoAlphaShf', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(shf) ' + shffile, 'var1': '(sst) ' + sstname,
                       'var2': '(shf) ' + shfname}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
     shf = ReadSelectRegionCheckUnits(shffile, shfname, 'heat flux', box=shfbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(shf) ' + str([ax.id for ax in shf.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(shf) ' + str(shf.shape),
@@ -2852,7 +2852,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         shf_areacell = ReadAreaSelectRegion(shfareafile, areaname=shfareaname, box=shfbox, **kwargs)
     else:
         shf_areacell = ReadAreaSelectRegion(shffile, areaname=shfareaname, box=shfbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_areacell is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
@@ -2873,7 +2873,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         shf_landmask = ReadLandmaskSelectRegion(shflandmaskfile, landmaskname=shflandmaskname, box=shfbox, **kwargs)
     else:
         shf_landmask = ReadLandmaskSelectRegion(shffile, landmaskname=shflandmaskname, box=shfbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_landmask is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
@@ -2910,7 +2910,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     shf, unneeded = PreProcessTS(shf, '', areacell=shf_areacell, average='horizontal', compute_anom=True, **kwargs)
     del sst_areacell, shf_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(shf) ' + str([ax.id for ax in shf.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(shf) ' + str(shf.shape),
@@ -2931,7 +2931,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, swrfile, swrname,
-                 swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, degug=False, **kwargs):
+                 swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, debug=False, **kwargs):
     """
     The EnsoAlphaSwr() function computes the regression of 'swrbox' swrA (net surface shortwave radiation anomalies)
     over 'sstbox' sstA (usually the regression of nino3 swrA over nino3 sstA)
@@ -2975,7 +2975,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         name of landmask variable (sftlf, lsmask, landmask) in 'swrlandmaskfile'
     :param swrbox: string
         name of box (nino3') for SWR
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -3033,7 +3033,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoAlphaSwr', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(swr) ' + swrfile, 'var1': '(sst) ' + sstname,
                       'var2': '(swr) ' + swrname}
@@ -3047,7 +3047,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             filename, varname = swrfile[ii], swrname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=swrbox, **kwargs)
     swr = MyDerive(kwargs['project_interpreter_var2'], 'swr', dict_var)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(swr) ' + str([ax.id for ax in swr.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(swr) ' + str(swr.shape),
@@ -3075,7 +3075,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 swr_areacell = ReadAreaSelectRegion(swrfile[ii], areaname=swrareaname[ii], box=swrbox, **kwargs)
                 if swr_areacell is not None:
                     break
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_areacell is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
@@ -3109,7 +3109,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 swr_landmask = ReadAreaSelectRegion(swrfile[ii], areaname=swrlandmaskname[ii], box=swrbox, **kwargs)
                 if swr_landmask is not None:
                     break
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_landmask is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
@@ -3146,7 +3146,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     swr, unneeded = PreProcessTS(swr, '', areacell=swr_areacell, average='horizontal', compute_anom=True, **kwargs)
     del sst_areacell, swr_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(swr) ' + str([ax.id for ax in swr.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(swr) ' + str(swr.shape),
@@ -3167,7 +3167,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, thffile, thfname,
-                 thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, degug=False, **kwargs):
+                 thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, debug=False, **kwargs):
     """
     The EnsoAlphaThf() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 thfA over nino3 sstA)
@@ -3216,7 +3216,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         name of landmask variable (sftlf, lsmask, landmask) in 'thflandmaskfile'
     :param thfbox: string
         name of box (nino3') for THF
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -3274,7 +3274,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoAlphaThf', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(thf) ' + thffile, 'var1': '(sst) ' + sstname,
                       'var2': '(thf) ' + thfname}
@@ -3288,7 +3288,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             filename, varname = thffile[ii], thfname[ii]
             dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=thfbox, **kwargs)
     thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
@@ -3316,7 +3316,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 thf_areacell = ReadAreaSelectRegion(thffile[ii], areaname=thfareaname[ii], box=thfbox, **kwargs)
                 if thf_areacell is not None:
                     break
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_areacell is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
@@ -3350,7 +3350,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 thf_landmask = ReadAreaSelectRegion(thffile[ii], areaname=thflandmaskname[ii], box=thfbox, **kwargs)
                 if thf_landmask is not None:
                     break
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_landmask is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
@@ -3387,7 +3387,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True, **kwargs)
     del sst_areacell, thf_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
@@ -3407,7 +3407,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return alphaMetric
 
 
-def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, degug=False,
+def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, debug=False,
              **kwargs):
     """
     The EnsoAmpl() function computes the standard deviation of 'sstbox' sstA (usually the standard deviation of nino3
@@ -3434,7 +3434,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param sstbox: string
         name of box (nino3') for SST
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -3490,12 +3490,12 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoAmpl', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'var1': '(sst) ' + sstname}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
                       'time1': '(sst) ' + str(TimeBounds(sst))}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
@@ -3505,7 +3505,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
         sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
     else:
         sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if degug is True:
+    if debug is True:
         if sst_areacell is not None:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()]),
                           'shape1': '(sst) ' + str(sst_areacell.shape)}
@@ -3516,7 +3516,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
         sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
     else:
         sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
-    if degug is True:
+    if debug is True:
         if sst_landmask is not None:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()]),
                           'shape1': '(sst) ' + str(sst_landmask.shape)}
@@ -3544,7 +3544,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     del sst_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
                       'time1': '(sst) ' + str(TimeBounds(sst))}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
@@ -3564,7 +3564,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
 
 
 def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile, tauxname,
-           tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, degug=False, **kwargs):
+           tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, debug=False, **kwargs):
     """
     The EnsoMu() function computes the regression of 'tauxbox' tauxA (surface downward zonal stress anomalies) over
     'sstbox' sstA (usually the regression of nino4 tauxA over nino3 sstA)
@@ -3604,7 +3604,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
         name of landmask variable (sftlf, lsmask, landmask) in 'tauxlandmaskfile'
     :param tauxbox: string
         name of box (nino4') for TAUX
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -3662,14 +3662,14 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     Ref = 'Using CDAT regression calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoMu', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(taux) ' + tauxfile, 'var1': '(sst) ' + sstname,
                       'var2': '(taux) ' + tauxname}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
     taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'wind stress', box=tauxbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(thf) ' + str([ax.id for ax in taux.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(taux.shape),
@@ -3685,7 +3685,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
         taux_areacell = ReadAreaSelectRegion(tauxareafile, areaname=tauxareaname, box=tauxbox, **kwargs)
     else:
         taux_areacell = ReadAreaSelectRegion(tauxfile, areaname=tauxareaname, box=tauxbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_areacell is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
@@ -3706,7 +3706,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
         taux_landmask = ReadLandmaskSelectRegion(tauxlandmaskfile, landmaskname=tauxlandmaskname, box=tauxbox, **kwargs)
     else:
         taux_landmask = ReadLandmaskSelectRegion(tauxfile, landmaskname=tauxlandmaskname, box=tauxbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if sst_landmask is not None:
             dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
@@ -3743,7 +3743,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
     taux, unneeded = PreProcessTS(taux, '', areacell=taux_areacell, average='horizontal', compute_anom=True, **kwargs)
     del sst_areacell, taux_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                       'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
                       'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
@@ -3772,7 +3772,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
                  sstlandmasknamemodel, prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
                  prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                  sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
-                 prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, degug=False,
+                 prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False,
                  **kwargs):
     """
     The EnsoPrJjaTel() function computes precipitations anomalies associated with El Niño and La Niña events in many AR5
@@ -3912,7 +3912,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     # detect events
     # ------------------------------------------------
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoPrJjaTel', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -3921,7 +3921,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -3936,7 +3936,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -3958,7 +3958,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs,
                                                 box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -4009,7 +4009,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
                                      **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4022,7 +4022,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
     nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
     del sst_model, sst_obs
-    if degug is True:
+    if debug is True:
         dict_debug = {'nina1': '(model) ' + str(nina_years_model), 'nina2': '(obs) ' + str(nina_years_obs),
                       'nino1': '(model) ' + str(nino_years_model), 'nino2': '(obs) ' + str(nino_years_obs)}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -4030,7 +4030,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     # ------------------------------------------------
     # compute composite
     # ------------------------------------------------
-    if degug is True:
+    if debug is True:
         dict_debug = {
             'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs, 'var1': '(model) ' + prnamemodel,
             'var2': '(obs) ' + prnameobs}
@@ -4044,14 +4044,14 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     prbox = sorted(prbox, key=str.lower)
     list_composite_model, list_composite_obs = list(), list()
     for reg in prbox:
-        if degug is True:
+        if debug is True:
             EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 10)
         # Read file and select the right region
         pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=reg,
                                               time_bounds=kwargs['time_bounds_model'], **kwargs)
         pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=reg,
                                             time_bounds=kwargs['time_bounds_obs'], **kwargs)
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
@@ -4066,7 +4066,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
             obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=reg, **kwargs)
         else:
             obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=reg, **kwargs)
-        if degug is True:
+        if debug is True:
             dict_debug = {}
             if model_areacell is not None:
                 dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -4096,7 +4096,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
                                                     **kwargs)
         else:
             obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=reg, **kwargs)
-        if degug is True:
+        if debug is True:
             dict_debug = {}
             if model_landmask is not None:
                 dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -4125,7 +4125,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
         pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
                                         **kwargs)
         del model_areacell, obs_areacell
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
@@ -4150,7 +4150,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
         del smooth
 
     # Computes the root mean square difference
-    compositeRmse = RmsAxis(list_composite_model, list_composite_obs, centered=centered_rmse)
+    compositeRmse = RmsAxis(list_composite_model, list_composite_obs, centered=centered_rmse, biased=biased_rmse)
 
     # Computes the percentage of regions where observations and model agree on the sign of the teleconnection
     signAgreement = sum([1. for vmod,vobs in zip(list_composite_model,list_composite_obs)
@@ -4171,7 +4171,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     return EnsoPrTelMetric
 
 
-def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, degug=False,
+def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, debug=False,
                     **kwargs):
     """
     The EnsoSeasonality() function computes ratio between the November-December-January (NDJ) and March-April-May (MAM)
@@ -4193,7 +4193,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param sstbox: string
         name of box (nino3') for SST
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -4249,12 +4249,12 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     Ref = 'Using CDAT std dev calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoSeasonality', 10)
         dict_debug = {'file1': '(sst) ' + sstfile, 'var1': '(sst) ' + sstname}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
     sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
                       'time1': '(sst) ' + str(TimeBounds(sst))}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
@@ -4264,7 +4264,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
     else:
         sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if degug is True:
+    if debug is True:
         if sst_areacell is not None:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()]),
                           'shape1': '(sst) ' + str(sst_areacell.shape)}
@@ -4275,7 +4275,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
     else:
         sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
-    if degug is True:
+    if debug is True:
         if sst_landmask is not None:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()]),
                           'shape1': '(sst) ' + str(sst_landmask.shape)}
@@ -4304,7 +4304,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
     sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=False, **kwargs)
     del sst_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
                       'time1': '(sst) ' + str(TimeBounds(sst))}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
@@ -4312,7 +4312,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     # Seasonal mean
     sst_NDJ = SeasonalMean(sst, 'NDJ', compute_anom=True)
     sst_MAM = SeasonalMean(sst, 'MAM', compute_anom=True)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(sst_NDJ) ' + str([ax.id for ax in sst_NDJ.getAxisList()]),
                       'shape1': '(sst_NDJ) ' + str(sst_NDJ.shape),
                       'axes2': '(sst_NDJ) ' + str([ax.id for ax in sst_MAM.getAxisList()]),
@@ -4341,7 +4341,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
 
 def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                   sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                   sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The NinaSstLonRmse() function computes a zonal composite of La Niña events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -4385,7 +4385,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -4455,7 +4455,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # detect events
     # ------------------------------------------------
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'NinaSstLonRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -4464,7 +4464,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4479,7 +4479,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -4500,7 +4500,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                                 **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -4551,7 +4551,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
                                      **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4561,7 +4561,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
     event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-    if degug is True:
+    if debug is True:
         dict_debug = {'nina1': '(model) ' + str(event_years_model), 'nina2': '(obs) ' + str(event_years_obs)}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
@@ -4569,7 +4569,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # compute composite
     # ------------------------------------------------
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files Composite', 10, **dict_debug)
@@ -4577,7 +4577,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4592,7 +4592,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -4611,7 +4611,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -4639,7 +4639,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                      **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=True, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4649,7 +4649,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Seasonal mean
     sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
     sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -4663,7 +4663,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -4672,7 +4672,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Meridional average
     sst_model = AverageMeridional(sst_model)
     sst_obs = AverageMeridional(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -4681,7 +4681,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # composites
     composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
     composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in composite_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in composite_obs.getAxisList()]),
                       'shape1': '(model) ' + str(composite_model.shape), 'shape2': '(obs) ' + str(composite_obs.shape)}
@@ -4707,7 +4707,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 
 def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                   sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                   sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The NinoSstLonRmse() function computes a zonal composite of El Niño events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -4751,7 +4751,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -4821,7 +4821,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # detect events
     # ------------------------------------------------
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'NinoSstLonRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -4830,7 +4830,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4845,7 +4845,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -4866,7 +4866,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                                 **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -4917,7 +4917,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
                                      **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4927,7 +4927,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
     event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-    if degug is True:
+    if debug is True:
         dict_debug = {'nino1': '(model) ' + str(event_years_model), 'nino2': '(obs) ' + str(event_years_obs)}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
@@ -4935,7 +4935,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # compute composite
     # ------------------------------------------------
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files Composite', 10, **dict_debug)
@@ -4943,7 +4943,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -4959,7 +4959,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -4978,7 +4978,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -5006,7 +5006,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                                      **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=True, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -5016,7 +5016,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Seasonal mean
     sst_model = SeasonalMean(sst_model, season_ev, compute_anom=False)
     sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=False)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -5030,7 +5030,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -5039,7 +5039,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # Meridional average
     sst_model = AverageMeridional(sst_model)
     sst_obs = AverageMeridional(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -5048,7 +5048,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     # composites
     composite_model = Composite(sst_model, event_years_model, kwargs['frequency'])
     composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in composite_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in composite_obs.getAxisList()]),
                       'shape1': '(model) ' + str(composite_model.shape), 'shape2': '(obs) ' + str(composite_obs.shape)}
@@ -5075,7 +5075,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                   sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                   sstlandmasknameobs, box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1,
-                  degug=False, **kwargs):
+                  debug=False, **kwargs):
     """
     The NinaSstTsRmse() function computes a time composite of La Niña events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -5121,7 +5121,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -5187,7 +5187,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     Ref = 'Using CDAT rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'NinaSstTsRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -5196,7 +5196,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -5212,7 +5212,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -5234,7 +5234,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
                                                 **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -5286,7 +5286,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
                                      **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -5296,14 +5296,14 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
     event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-    if degug is True:
+    if debug is True:
         dict_debug = {'nina1': '(model) ' + str(event_years_model), 'nina2': '(obs) ' + str(event_years_obs)}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
     # composites
     composite_model = Composite(sst_model, event_years_model, kwargs['frequency'], nbr_years_window=nbr_years_window)
     composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in composite_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in composite_obs.getAxisList()]),
                       'shape1': '(model) ' + str(composite_model.shape), 'shape2': '(obs) ' + str(composite_obs.shape)}
@@ -5330,7 +5330,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
 def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                   sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                   sstlandmasknameobs, box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1,
-                  degug=False, **kwargs):
+                  debug=False, **kwargs):
     """
     The NinoSstTsRmse() function computes a time composite of El Niño events
     SSTA averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
@@ -5376,7 +5376,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -5442,7 +5442,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     Ref = 'Using CDAT rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'NinoSstTsRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -5451,7 +5451,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -5467,7 +5467,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -5489,7 +5489,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
                                                 **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=region_ev, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -5541,7 +5541,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
                                      **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -5551,14 +5551,14 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     # Lists event years
     event_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
     event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-    if degug is True:
+    if debug is True:
         dict_debug = {'nino1': '(model) ' + str(event_years_model), 'nino2': '(obs) ' + str(event_years_obs)}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
     # composites
     composite_model = Composite(sst_model, event_years_model, kwargs['frequency'], nbr_years_window=nbr_years_window)
     composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in composite_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in composite_obs.getAxisList()]),
                       'shape1': '(model) ' + str(composite_model.shape), 'shape2': '(obs) ' + str(composite_obs.shape)}
@@ -5584,7 +5584,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
 
 def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
                       prlandmasknamemodel, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
-                      prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                      prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The SeasonalPrLatRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -5623,7 +5623,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -5695,7 +5695,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'SeasonalPrLatRmse', 10)
         dict_debug = {'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs,
                       'var1': '(model) ' + prnamemodel, 'var2': '(obs) ' + prnameobs}
@@ -5704,7 +5704,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
@@ -5720,7 +5720,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -5740,7 +5740,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -5791,7 +5791,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     pr_model, Method = PreProcessTS(pr_model, Method, compute_sea_cycle=True, **kwargs)
     pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -5800,7 +5800,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     # standard deviation computation
     pr_model = Std(pr_model)
     pr_obs = Std(pr_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -5814,7 +5814,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -5823,7 +5823,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     # Zonal average
     pr_model = AverageZonal(pr_model)
     pr_obs = AverageZonal(pr_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -5848,7 +5848,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
 
 def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
                       prlandmasknamemodel, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
-                      prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                      prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The SeasonalPrLonRmse() function computes the climatological (12 months) PR (precipitation) zonal (longitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -5887,7 +5887,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -5959,7 +5959,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'SeasonalPrLonRmse', 10)
         dict_debug = {'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs,
                       'var1': '(model) ' + prnamemodel, 'var2': '(obs) ' + prnameobs}
@@ -5968,7 +5968,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
                                           time_bounds=kwargs['time_bounds_model'], **kwargs)
     pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
@@ -5984,7 +5984,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -6004,7 +6004,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -6055,7 +6055,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     pr_model, Method = PreProcessTS(pr_model, Method, compute_sea_cycle=True, **kwargs)
     pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -6064,7 +6064,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     # standard deviation computation
     pr_model = Std(pr_model)
     pr_obs = Std(pr_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -6078,7 +6078,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -6087,7 +6087,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     # Meridional average
     pr_model = AverageMeridional(pr_model)
     pr_obs = AverageMeridional(pr_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                       'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
@@ -6112,7 +6112,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
 
 def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                        sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                       sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                       sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The SeasonalSstLatRmse() function computes the climatological (12 months) SST meridional (latitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -6151,7 +6151,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -6221,7 +6221,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'SeasonalSstLatRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -6230,7 +6230,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -6246,7 +6246,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -6266,7 +6266,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -6317,7 +6317,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     sst_model, Method = PreProcessTS(sst_model, Method, compute_sea_cycle=True, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -6326,7 +6326,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     # standard deviation computation
     sst_model = Std(sst_model)
     sst_obs = Std(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -6340,7 +6340,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -6349,7 +6349,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     # Zonal average
     sst_model = AverageZonal(sst_model)
     sst_obs = AverageZonal(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -6374,7 +6374,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
 
 def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                        sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                       sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, degug=False, **kwargs):
+                       sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
     """
     The SeasonalSstLonRmse() function computes the climatological (12 months) SST zonal (longitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -6413,7 +6413,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param degug: bolean, optional
+    :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     usual kwargs:
@@ -6485,7 +6485,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
 
     # Read file and select the right region
-    if degug is True:
+    if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', 'SeasonalSstLonRmse', 10)
         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
@@ -6494,7 +6494,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
                                            time_bounds=kwargs['time_bounds_model'], **kwargs)
     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
@@ -6510,7 +6510,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
     else:
         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_areacell is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
@@ -6530,7 +6530,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
     else:
         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if degug is True:
+    if debug is True:
         dict_debug = {}
         if model_landmask is not None:
             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
@@ -6581,7 +6581,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     sst_model, Method = PreProcessTS(sst_model, Method, compute_sea_cycle=True, **kwargs)
     sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
     del model_areacell, obs_areacell
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -6590,7 +6590,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     # standard deviation computation
     sst_model = Std(sst_model)
     sst_obs = Std(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -6604,7 +6604,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
-        if degug is True:
+        if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
@@ -6613,7 +6613,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     # Meridional average
     sst_model = AverageMeridional(sst_model)
     sst_obs = AverageMeridional(sst_obs)
-    if degug is True:
+    if debug is True:
         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
