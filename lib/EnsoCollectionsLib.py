@@ -81,7 +81,7 @@ def defCollection(MC=True):
                 'min_time_steps': 204,
                 'project_interpreter': 'CMIP',
                 'metric_computation': 'difference',
-                'observed_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                'observed_period': ('1980-01-01 00:00:00', '2016-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
                 'modeled_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
             'description': 'Describe which science question this collection is about',

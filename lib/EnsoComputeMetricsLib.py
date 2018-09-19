@@ -229,7 +229,8 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, degug=
                 print '\033[94m' + str().ljust(11) + "no observed " + list_variables[0] + " given" + '\033[0m'
             if len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0:
                 print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
-        else:dict_col_valu[metric], dict_col_meta['metrics'][metric], dict_col_dd_valu[metric], \
+        else:
+            dict_col_valu[metric], dict_col_meta['metrics'][metric], dict_col_dd_valu[metric],\
             dict_col_dd_meta['metrics'][metric] = ComputeMetric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], user_regridding=user_regridding, degug=degug, **arg_var2)
@@ -460,8 +461,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             keyarg['project_interpreter_var2'] = keyarg['project_interpreter']
             diagnostic1 = dict_twoVar[metric](
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
-                modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2, modelLandmaskName2,
-                regionVar1, regionVar2, degug=degug, **keyarg)
+                regionVar1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2,
+                modelLandmaskName2, regionVar2, degug=degug, **keyarg)
         else:
             diagnostic1 = None
             list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric", str().ljust(5) +
@@ -572,5 +573,5 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     if 'dive_down_diag' in diagnostic1.keys():
         return dict_metrics, dict_metadata, dict_dive_down, dict_dive_down_metadata
     else:
-        return dict_metrics, dict_metadata
+        return dict_metrics, dict_metadata, {}, {}
 # ---------------------------------------------------------------------------------------------------------------------#
