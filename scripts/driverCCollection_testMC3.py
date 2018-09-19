@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'MC1'#'ENSO_tel'#'ENSO_perf'#
+mc_name = 'ENSO_perf'#'ENSO_tel'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -111,7 +111,7 @@ if mc_name == 'MC1':
 elif mc_name == 'ENSO_perf':
     list_obs = ['Tropflux','GPCPv2.3']
 elif mc_name == 'ENSO_tel':
-    list_obs = ['Tropflux','GPCPv2.3']
+    list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -211,7 +211,6 @@ for mod in list_models:
         except:
             landmask_in_file = None
         if isinstance(var_in_file, list):
-            list_files = list()
             list_files = [file_name for var1 in var_in_file]
             list_areacell = [file_areacell for var1 in var_in_file]
             list_name_area = [areacell_in_file for var1 in var_in_file]
@@ -223,7 +222,7 @@ for mod in list_models:
             list_name_area = areacell_in_file
             list_landmask = file_landmask
             list_name_land = landmask_in_file
-            dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file,
+        dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file,
                               'path + filename_area': list_areacell, 'areaname': list_name_area,
                               'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
     # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection

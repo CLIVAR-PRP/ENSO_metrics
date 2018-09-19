@@ -387,7 +387,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     dict_dive_down = dict()
     dict_dive_down_metadata = dict()
 
-    if metric in dict_oneVar_modelAndObs.keys():
+    if metric in dict_oneVar_modelAndObs.keys() or dict_twoVar_modelAndObs.keys():
         #
         # this part regroups all diagnostics comparing model and obs (rmse)
         # so the diagnostic is the metric
@@ -420,14 +420,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             # puts metric values in its proper dictionary
             dict_metric_val['ref_' + obs] = {
                 'value': diagnostic1[obs]['value'], 'value_error': diagnostic1[obs]['value_error']}
-            if 'value2' in diagnostic1.keys():
+            if 'value2' in diagnostic1[obs].keys():
                 dict_metric_val['ref_' + obs]['value2'] = diagnostic1[obs]['value2']
                 dict_metric_val['ref_' + obs]['value_error2'] = diagnostic1[obs]['value_error2']
             dict_diagnostic['model'] = {'value': None, 'value_error': None}
             dict_diagnostic[obs] = {'value': None, 'value_error': None}
             if 'dive_down_diag' in diagnostic1[obs].keys():
-                dict_dive_down['model'] = diagnostic1['dive_down_diag']['model']
-                dict_dive_down[obs] = diagnostic1['dive_down_diag']['observations']
+                dict_dive_down['model'] = diagnostic1[obs]['dive_down_diag']['model']
+                dict_dive_down[obs] = diagnostic1[obs]['dive_down_diag']['observations']
                 dict1 = {}
                 for elt in diagnostic1[obs]['dive_down_diag'].keys():
                     if elt not in ['model', 'observations']:
@@ -436,14 +436,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 del dict1
             # puts diagnostic metadata in its proper dictionary
             dict_diagnostic_metadata['model'] = {'name': modelName, 'nyears': diagnostic1[obs]['nyears_model'],
-                                                 'time_period': diagnostic1[obs]['time_period_model']},
+                                                 'time_period': diagnostic1[obs]['time_period_model']}
             dict_diagnostic_metadata[obs] = {'name': obs, 'nyears': diagnostic1[obs]['nyears_model'],
-                                             'time_period': diagnostic1[obs]['time_period_observations']},
+                                             'time_period': diagnostic1[obs]['time_period_observations']}
             if 'events_model' in diagnostic1[obs].keys():
                 dict_diagnostic_metadata['model']['events'] = diagnostic1[obs]['events_model']
                 dict_diagnostic_metadata[obs]['events'] = diagnostic1[obs]['events_observations']
-        del diagnostic1
-        units = diagnostic1['units']
+        units = diagnostic1[obs]['units']
+        diagnostic1 = diagnostic1[obs]
     else:
         #
         # model diagnostic

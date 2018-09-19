@@ -1908,7 +1908,7 @@ def MyDerive(project, internal_variable_name, dict_var):
         EnsoErrorsWarnings.ObjectTypeError('project', 'dictionary', type(dict_var), INSPECTstack())
 
     # get dictionary of observations
-    dict_obs = ReferenceObservations(False)
+    dict_obs = ReferenceObservations()
 
     # compute 'internal_variable_name' in 'CMIP' case
     if 'CMIP' in project:
