@@ -231,20 +231,13 @@ for mod in list_models:
         # Prints the metrics values
         for ii in range (3): print ''
         print str().ljust(5) + str(mod)
-        list_metric = dict_metric[mod]['metrics'].keys()
+        list_metric = dict_metric[mod]['value'].keys()
         for metric in list_metric:
             print str().ljust(10) + str(metric)
-            metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']
+            metric_dict = dict_metric[mod]['value'][metric]['metric']
             for ref in metric_dict.keys():
                 print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
                       + str(metric_dict[ref]['value_error'])
-            raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['observations']
-            for ref in raw_dict.keys():
-                print str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = ' + str(raw_dict[ref]['value']) +\
-                      ', error = ' + str(raw_dict[ref]['value_error'])
-            raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['model']
-            print str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
-                      ', error = ' + str(raw_dict['value_error'])
     
     except Exception as e: 
         print 'failed for ', mod
