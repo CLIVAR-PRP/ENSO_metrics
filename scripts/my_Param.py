@@ -7,12 +7,17 @@ obspath = {
     'OISST': '/work/lee1043/DATA/OISST/xmls/OISST_tos_mo.xml',
     'Tropflux': '/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_VAR_mo.xml',
     'OAFlux': '/work/lee1043/DATA/OAFlux/xmls/OAFlux_VAR_mo.xml',
+    'GPCPv2.3': '/clim_obs/PMPObs/pmpobs1-5-1/atmos/mon/pr/GPCP-2-3/gn/v20180706/pr_mon_GPCP-2-3_BE_gn_197901-201803.nc', 
 }
 
+obspath_lf = {
+    'GPCPv2.3': '/work/lee1043/DATA/GPCP/gpcp_25_lsmask.nc'
+}
 #=================================================
 # Models
 #-------------------------------------------------
 modpath = '/work/lee1043/ESGF/xmls/cmip5/historical/mo/VAR/cmip5.MOD.historical.r1i1p1.mo.VAR.xml'
+modpath_lf = '/work/lee1043/ESGF/xmls/cmip5/fx/fx/sftlf/cmip5.MOD.fx.r0i0p0.fx.sftlf.xml'
 
 modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
             'CanCM4', 'CanESM2', 'CCSM4', 'CESM1-BGC', 'CESM1-CAM5', 'CESM1-FASTCHEM', 'CESM1-WACCM',
@@ -31,8 +36,8 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
-metricsCollection = 'MC1'
-#metricsCollection = 'MC2'
+#metricsCollection = 'MC1'
+metricsCollection = 'ENSO_perf'
 
 #=================================================
 # Output

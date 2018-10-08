@@ -91,7 +91,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print var + " in not available for " + str(obs) + " or unscripted"
+            print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
         else:
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]
@@ -102,15 +102,37 @@ for obs in list_obs:
             #
             # @jiwoo: pretty easy as I have all variables in one file
             file_name = param.obspath[obs].replace('VAR',var0)
+            file_areacell = None ## temporary for now
+            try:
+                file_landmask = param.obspath_lf[obs]
+            except:
+                file_landmask = None
+
+            try:
+                areacell_in_file = dict_var['areacell']['var_name']
+            except:
+                areacell_in_file = None
+            try:
+                landmask_in_file = dict_var['landmask']['var_name']
+            except:
+                landmask_in_file = None
             # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
                 list_files = list()
-                for var1 in var_in_file:
-                    file_name = param.obspath[obs].replace('VAR',var1)
-                    list_files.append(file_name)
+                list_files = [param.obspath[obs].replace('VAR',var1) for var1 in var_in_file]
+                list_areacell = [file_areacell for var1 in var_in_file]
+                list_name_area = [areacell_in_file for var1 in var_in_file]
+                list_landmask = [param.obspath_lf[obs] for var1 in var_in_file]
+                list_name_land = [landmask_in_file for var1 in var_in_file]
             else:
                 list_files = file_name
-            dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file}
+                list_areacell = file_areacell
+                list_name_area = areacell_in_file
+                list_landmask = file_landmask
+                list_name_land = landmask_in_file
+            dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file,
+                                  'path + filename_area': list_areacell, 'areaname': list_name_area,
+                                  'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 print 'PMPdriver: dict_obs readin end'
 
@@ -159,15 +181,33 @@ for mod in list_models:
             # finding file for 'mod', 'var'
             #
             file_name = param.modpath.replace('MOD',mod).replace('VAR',var0)
+            file_areacell = None ## temporary for now
+            file_landmask = param.modpath_lf.replace('MOD',mod)
+            try:
+                areacell_in_file = dict_var['areacell']['var_name']
+            except:
+                areacell_in_file = None
+            try:
+                landmask_in_file = dict_var['landmask']['var_name']
+            except:
+                landmask_in_file = None
+    
             if isinstance(var_in_file, list):
                 list_files = list()
-                for var1 in var_in_file:
-                    file_name = param.modpath.replace('MOD',mod).replace('VAR',var1)
-                    list_files.append(file_name)
+                list_files = [param.modpath.replace('MOD',mod).replace('VAR',var1) for var1 in var_in_file]
+                list_areacell = [file_areacell for var1 in var_in_file]
+                list_name_area = [areacell_in_file for var1 in var_in_file]
+                list_landmask = [param.modpath_lf.replace('MOD',mod) for var1 in var_in_file]
+                list_name_land = [landmask_in_file for var1 in var_in_file]
             else:
                 list_files = file_name
-            # ------------------------------------------------
-            dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
+                list_areacell = file_areacell
+                list_name_area = areacell_in_file
+                list_landmask = file_landmask
+                list_name_land = landmask_in_file
+            dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file,
+                                  'path + filename_area': list_areacell, 'areaname': list_name_area,
+                                  'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
     
         print 'PMPdriver: var loop end'
     
