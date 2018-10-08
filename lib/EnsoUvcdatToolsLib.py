@@ -643,8 +643,6 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                 tab = dict_operations['minus'](tab, 273.15)
                 units = "degC"
             else:
-                tab = dict_operations['minus'](tab, 273.15)
-                units = "degC"
                 minmax = [MV2minimum(tab),MV2maximum(tab)]
                 EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, minmax, INSPECTstack())
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
@@ -1029,7 +1027,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
 #            tab = fi(varname, nbox, time=time_bounds)
             tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
     fi.close()
-    if time_bounds is not None:
+    if time_bounds is not None and not isinstance(time_bounds, slice):
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
         # this section checks if one time step has not been included by error at the beginning or the end of the time
         # series
