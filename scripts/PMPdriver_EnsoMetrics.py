@@ -218,8 +218,16 @@ for mod in list_models:
         # every variables needed by the metric collection [lhf, lwr, swr, shf, sst, taux, thf] even if its coming from
         # another dataset
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
+        # regridding dictionary (only if you want to specify the regridding)
+        dict_regrid = {}
+        # dict_regrid = {
+        #     'regridding': {
+        #         'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+        #         'newgrid_name': 'generic 1x1deg'},
+        # }
         # Computes the metric collection
-        dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
+        dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=param.debug)
+        #dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
         # Prints the metrics values
         for ii in range (3): print ''
         print str().ljust(5) + str(mod)
@@ -263,6 +271,8 @@ if param.metricsCollection == 'MC1':
   reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
 elif param.metricsCollection == 'ENSO_perf':
   reference = "GFDL..."
+elif param.metricsCollection == 'ENSO_tel':
+  reference = "MC3 for ENSO Teleconnection..."
 
 metrics_dictionary = collections.OrderedDict()
 metrics_dictionary["DISCLAIMER"] = disclaimer
