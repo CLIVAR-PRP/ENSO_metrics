@@ -207,6 +207,15 @@ def defCollection(MC=True):
         'ENSO_tel': {
             'long_name': 'Metrics Collection for ENSO teleconnections',
             'metrics_list': {
+                'EnsoPrNdjTel': {
+                    'variables': ['sst', 'pr'],
+                    'regions': {'pr': ['CAS', 'CEP', 'CNA', 'CNP', 'CSP', 'EAF', 'EAS', 'ENA', 'INO', 'MED', 'NAU',
+                                       'NEB', 'SAF', 'SAH', 'SAU', 'SEA', 'TIB', 'WAF', 'WAS', 'WNA'],
+                                'sst': 'nino3'},
+                    'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                },
                 'EnsoPrJjaTel': {
                     'variables': ['sst', 'pr'],
                     'regions': {'pr': ['CAS', 'CEP', 'CNA', 'CNP', 'CSP', 'EAF', 'EAS', 'ENA', 'INO', 'MED', 'NAU',
