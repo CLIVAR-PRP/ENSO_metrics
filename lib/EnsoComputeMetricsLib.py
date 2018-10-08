@@ -7,8 +7,8 @@ from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstRmse, \
     BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, \
-    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrJjaTel, EnsoSeasonality, NinaSstLonRmse, NinaSstTsRmse, NinoSstLonRmse, \
-    NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
+    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrNdjTel, EnsoPrJjaTel, EnsoSeasonality, NinaSstLonRmse, NinaSstTsRmse,\
+    NinoSstLonRmse, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -294,7 +294,7 @@ dict_oneVar_modelAndObs = {
     'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
 }
 
-dict_twoVar_modelAndObs = {'EnsoPrJjaTel': EnsoPrJjaTel}
+dict_twoVar_modelAndObs = {'EnsoPrNdjTel': EnsoPrNdjaTel, 'EnsoPrJjaTel': EnsoPrJjaTel}
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality}
 

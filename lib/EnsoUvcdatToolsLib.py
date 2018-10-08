@@ -995,15 +995,15 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True):
         time_ax = tab.getTime()
         time_ax[:] = time_ax[:] - (time_ax[1] - time_ax[0])
     # Normalization ?
-    if normalization:
-        threshold = threshold * float(GENUTILstd(tab, weights=None, axis=0, centered=1, biased=1))
+    # if normalization is True:
+    #     threshold = threshold * float(GENUTILstd(tab, weights=None, axis=0, centered=1, biased=1))
     # Initialization
     tab_threshold = MV2zeros(tab.shape)
     tab_threshold.fill(threshold)
     list_years = [tab.getTime().asComponentTime()[yy].year for yy in range(len(tab))]
     indices = MV2arange(len(tab))
     # Conditions
-    if nino:
+    if nino is True:
         condition = MV2where(tab > tab_threshold, True, False)
     else:
         condition = MV2where(tab < tab_threshold, True, False)
