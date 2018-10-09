@@ -7,7 +7,7 @@ from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstRmse, \
     BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, \
-    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrMapTaylor, EnsoPrNdjTel, EnsoPrJjaTel, EnsoSeasonality, NinaSstLonRmse,\
+    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap, EnsoSeasonality, NinaSstLonRmse,\
     NinaSstTsRmse, NinoSstLonRmse, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse,\
     SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
@@ -289,6 +289,7 @@ dict_oneVar_modelAndObs = {
     'BiasPrLatRmse': BiasPrLatRmse, 'BiasPrLonRmse': BiasPrLonRmse, 'BiasPrRmse': BiasPrRmse,
     'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
+    'EnsoSstMap': EnsoSstMap,
     'NinaSstTsRmse': NinaSstTsRmse, 'NinaSstLonRmse': NinaSstLonRmse,
     'NinoSstTsRmse': NinoSstTsRmse, 'NinoSstLonRmse': NinoSstLonRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
@@ -296,7 +297,7 @@ dict_oneVar_modelAndObs = {
 }
 
 dict_twoVar_modelAndObs = {
-    'EnsoPrMapTaylor': EnsoPrMapTaylor, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel
+    'EnsoPrMap': EnsoPrMap, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel
 }
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality}
@@ -406,7 +407,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], box=regionVar1, debug=debug, **keyarg)
+                    obsLandmaskName1[ii], regionVar1, debug=debug, **keyarg)
             elif metric in dict_twoVar_modelAndObs.keys():
                 for jj in range(len(obsNameVar2)):
                     output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]

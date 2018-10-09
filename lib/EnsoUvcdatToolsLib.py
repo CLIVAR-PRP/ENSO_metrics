@@ -832,13 +832,11 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     if var_name in ['temperature']:
         if units == 'K':
             # check if the temperature units is really K
-            if float(MV2minimum(tab)) > 200:
+            if float(MV2minimum(tab)) > 150:
                 # unit change of the temperature: from K to degC
                 tab = dict_operations['minus'](tab, 273.15)
                 units = "degC"
             else:
-                tab = dict_operations['minus'](tab, 273.15)
-                units = "degC"
                 minmax = [MV2minimum(tab),MV2maximum(tab)]
                 EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, minmax, INSPECTstack())
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
@@ -1252,6 +1250,9 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     if tab.getLevel():
         if len(tab.getLevel()) == 1:
             tab = tab(squeeze=1)
+    # HadISST has -1000 values... mask them
+    if 'HadISST' in filename or 'hadisst' in filename:
+        tab = MV2masked_where(tab == -1000, tab)
     return tab
 
 
@@ -2070,7 +2071,7 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
     for ii in range(len(tmp)):
         tmp[ii].fill(x[ii])
     tmp = CDMS2createVariable(tmp, mask=y.mask, grid=y.getGrid(), axes=y.getAxisList(), id=x.id)
-    slope, stderr = GENUTILlinearregression(tmp, x=y, error=1, nointercept=1)
+    slope, stderr = GENUTILlinearregression(y, x=tmp, error=1, nointercept=1)
     if return_stderr:
         return slope, stderr
     else:
