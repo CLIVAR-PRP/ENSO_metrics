@@ -380,7 +380,7 @@ def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
             str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())
         ]
         EnsoErrorsWarnings.MyError(list_strings)
-    return rmse
+    return float(rmse)
 
 
 def RmsHorizontal(tab, ref, centered=0, biased=1):
