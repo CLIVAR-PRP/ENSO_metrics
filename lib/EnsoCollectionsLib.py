@@ -207,6 +207,15 @@ def defCollection(MC=True):
         'ENSO_tel': {
             'long_name': 'Metrics Collection for ENSO teleconnections',
             'metrics_list': {
+                # 'EnsoPrMapTaylor': {
+                #     'variables': ['sst', 'pr'],
+                #     'regions': {'pr': 'global', 'sst': 'nino3'},
+                #     'event_definition': {'region_ev': 'nino3', 'season_ev': 'DEC'},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                # },
                 'EnsoPrNdjTel': {
                     'variables': ['sst', 'pr'],
                     'regions': {'pr': ['CAS', 'CEP', 'CNA', 'CNP', 'CSP', 'EAF', 'EAS', 'ENA', 'INO', 'MED', 'NAU',
@@ -377,6 +386,7 @@ def ReferenceObservations(DATASET=True):
 
 def ReferenceRegions(AR=True):
     dict_reference_regions = {
+        'global': {'long_name': 'Global', 'latitude': (-90., 90.), 'longitude': (0., 360.)},
         'tropical_pacific': {
             'long_name': 'Tropical Pacific (TP)', 'latitude': (-30., 30.), 'longitude': (120., 280.),
         },

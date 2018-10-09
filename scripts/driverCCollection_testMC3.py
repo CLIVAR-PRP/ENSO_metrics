@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_tel'#'MC1'#
+mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -177,7 +177,7 @@ list_models = ['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']
 #
 # finding file and variable name in file for each observations dataset
 #
-dict_metric = dict()
+dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     dict_mod = {mod: {}}
@@ -240,7 +240,9 @@ for mod in list_models:
     #         'newgrid_name': 'generic 1x1deg'},
     # }
     # Computes the metric collection
-    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=False)
+    #dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=False)
+    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=False,
+                                         dive_down=True)
     # Prints the metrics values
     for ii in range(3): print ''
     print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
@@ -420,5 +422,72 @@ for mod in list_models:
                                    draw_white_background=True, save_ps=False, bg=1)
                 del l_w, l_w_ha, l_w_si, l_w_xy, lines_colo, lines_x1x2, lines_y1y2, list_curve, m1,\
                     name, name_png, xname, yname
+# Plot
+#if ' ':
+for mod in list_models:
+    from numpy import arange as NUMPYarange
+    from cdms2 import createAxis as CDMS2createAxis
+    from MV2 import array as MV2array
+    from MV2 import masked_where as MV2masked_where
+    from MV2 import maximum as MV2maximum
+    from MV2 import minimum as MV2minimum
+    import plot_frame as PFRAME
+    import plot_functions as PF
+    path_plot = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Plots'
+#if ' ':
+    if mc_name == 'ENSO_tel':
+        for metric in list_metric:
+            if metric in ['EnsoPrMapTaylor']:
+                print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
+                metric_dict = dict_metric[mod]['value'][metric]['metric']
+                # metric
+                dict_m1, dict_m2, dict_m3 = dict(), dict(), dict()
+                for ref in metric_dict.keys():
+                    dict_m1[ref] = metric_dict[ref]['value']
+                    if 'value2' in metric_dict[ref].keys():
+                        dict_m2[ref] = metric_dict[ref]['value2']
+                    if 'value3' in metric_dict[ref].keys():
+                        dict_m3[ref] = metric_dict[ref]['value3']
+                # dive down
+                dive_model = dict_dive[mod]['value'][metric]['model']
+                tmp_dive, tmp_axis = dict(), dict()
+                for ref in dict_dive[mod]['value'][metric].keys():
+                    if ref != 'model':
+                        tmp_dive['ref_' + ref] = dict_dive[mod]['value'][metric][ref]
+                        tmp1 = dict_dive[mod]['metadata']['metrics'][metric][ref]['axisLat']
+                        axis1 = CDMS2createAxis(MV2array(tmp1), id='latitude')
+                        tmp2 = dict_dive[mod]['metadata']['metrics'][metric][ref]['axisLon']
+                        axis2 = CDMS2createAxis(MV2array(tmp2), id='longitude')
+                        tmp_axis['ref_' + ref] = [axis1, axis2]
+                        del axis1, axis2, tmp1, tmp2
+                # plot
+                x_axis, inc = [0, 360], 60
+                x_dict = dict((ii, str(ii) + 'E') if ii <= 180 else (ii, str(abs(ii-360)) + 'W') for ii in
+                              range(x_axis[0], x_axis[1] + inc, inc))
+                y_axis, inc = [-90, 90], 30
+                y_dict = dict((ii, str(abs(ii)) + 'S') if ii < 0 else ((ii, str(ii) + 'N') if ii>0 else (ii, 'Eq')) for
+                              ii in range(y_axis[0], y_axis[1] + inc, inc))
+                dom = (y_axis[0], y_axis[1], x_axis[0], x_axis[1])
+                label_col = MV2array(range(-10,10+1,1))
+                for ref in dict_m1.keys():
+                    tab1 = MV2array(dive_model)
+                    tab1.setAxisList(tmp_axis[ref])
+                    m1 = 'Metric 1: ' + str("%.2f" % round(dict_m1[ref], 2))
+                    m2 = 'Metric 2: ' + str("%.2f" % round(dict_m2[ref], 2))
+                    m3 = 'Metric 3: ' + str("%.2f" % round(dict_m3[ref], 2))
+                    tab2 = MV2array(tmp_dive[ref])
+                    tab2.setAxisList(tmp_axis[ref])
+                    print str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2))\
+                          + ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2))
+                    name = metric + ' metric in Historical (' + mod + ')'
+                    name_png = path_plot + '/' + metric + '_' + mod
+                    PFRAME.plot_my_map(tab1, label_col, dom, white_zero=0, x_dico=x_dict, y_dico=y_dict, name=name,
+                                       path_plus_name_png=name_png, bg=1)
+                    name = metric + ' metric in Historical (' + ref + ')'
+                    name_png = path_plot + '/' + metric + '_' + ref
+                    PFRAME.plot_my_map(tab2, label_col, dom, white_zero=0, x_dico=x_dict, y_dico=y_dict, name=name,
+                                       path_plus_name_png=name_png, bg=1)
+                    del m1, m2, m3, name, name_png, tab1, tab2
+                    stop
 
 

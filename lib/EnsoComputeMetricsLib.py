@@ -7,8 +7,9 @@ from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstRmse, \
     BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, \
-    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrNdjTel, EnsoPrJjaTel, EnsoSeasonality, NinaSstLonRmse, NinaSstTsRmse,\
-    NinoSstLonRmse, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
+    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrMapTaylor, EnsoPrNdjTel, EnsoPrJjaTel, EnsoSeasonality, NinaSstLonRmse,\
+    NinaSstTsRmse, NinoSstLonRmse, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse,\
+    SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -294,7 +295,9 @@ dict_oneVar_modelAndObs = {
     'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
 }
 
-dict_twoVar_modelAndObs = {'EnsoPrNdjTel': EnsoPrNdjaTel, 'EnsoPrJjaTel': EnsoPrJjaTel}
+dict_twoVar_modelAndObs = {
+    'EnsoPrMapTaylor': EnsoPrMapTaylor, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel
+}
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality}
 
@@ -423,6 +426,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             if 'value2' in diagnostic1[obs].keys():
                 dict_metric_val['ref_' + obs]['value2'] = diagnostic1[obs]['value2']
                 dict_metric_val['ref_' + obs]['value_error2'] = diagnostic1[obs]['value_error2']
+            if 'value3' in diagnostic1[obs].keys():
+                dict_metric_val['ref_' + obs]['value3'] = diagnostic1[obs]['value3']
+                dict_metric_val['ref_' + obs]['value_error3'] = diagnostic1[obs]['value_error3']
             dict_diagnostic['model'] = {'value': None, 'value_error': None}
             dict_diagnostic[obs] = {'value': None, 'value_error': None}
             if 'dive_down_diag' in diagnostic1[obs].keys():

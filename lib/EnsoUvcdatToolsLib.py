@@ -26,6 +26,7 @@ from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
 from cdtime import comptime as CDTIMEcomptime
 import cdutil
+from genutil.statistics import correlation as GENUTILcorrelation
 from genutil.statistics import linearregression as GENUTILlinearregression
 from genutil.statistics import rms as GENUTILrms
 from genutil.statistics import std as GENUTILstd
@@ -244,6 +245,20 @@ def AverageZonal(tab, areacell=None):
 # Dictionary of averaging methods
 dict_average = {'horizontal': AverageHorizontal, 'meridional': AverageMeridional, 'time': AverageTemporal,
                 'zonal': AverageZonal}
+
+
+def Correlation(tab, ref, weights=None, axis=0, centered=1, biased=1):
+    """
+    #################################################################################
+    Description:
+    Computes correlation
+    #################################################################################
+
+    for more information:
+    import genutil
+    help(genutil.statistics.correlation)
+    """
+    return GENUTILcorrelation(tab, ref, weights=weights, axis=axis, centered=centered, biased=biased)
 
 
 def OperationAdd(tab, number_or_tab):
@@ -651,10 +666,13 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                     ]
                     EnsoErrorsWarnings.MyError(list_strings)
         tab = MV2masked_where(landmask_nd.mask, tab)
+        # if land = 100 instead of 1, divides landmask by 100
+        if MV2minimum(landmask_nd) == 0 and MV2maximum(landmask_nd) == 100:
+            landmask_nd = landmask_nd / 100.
         if maskland:
-            tab = MV2masked_where(landmask_nd==100, tab)
+            tab = MV2masked_where(landmask_nd == 1, tab)
         if maskocean:
-            tab = MV2masked_where(landmask_nd==0, tab)
+            tab = MV2masked_where(landmask_nd == 0, tab)
     return tab
 
 def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
@@ -2024,6 +2042,39 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
                [float(negative_values[0]), float(negative_values[1])]
     else:
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
+
+
+def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
+    """
+    #################################################################################
+    Description:
+    Custom version of genutil.linearregression
+    This function offers the possibility to compute the linear regression of a time series against a map
+    of x<=0
+
+    Uses uvcdat
+    #################################################################################
+
+    :param y: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+    :param x: masked_array
+        masked_array (uvcdat cdms2) containing 'var_name', with many attributes attached (short_name, units,...)
+    :param return_stderr: boolean, optional
+        default value = True, returns the the unadjusted standard error
+        True if you want the unadjusted standard error, if you don't want it pass anything but true
+    :return slope, stderr: floats
+        slope of the linear regression of y over x
+        unadjusted standard error of the linear regression of y over x (if return_stderr=True)
+    """
+    tmp = MV2zeros(y.shape)
+    for ii in range(len(tmp)):
+        tmp[ii].fill(x[ii])
+    tmp = CDMS2createVariable(tmp, mask=y.mask, grid=y.getGrid(), axes=y.getAxisList(), id=x.id)
+    slope, stderr = GENUTILlinearregression(tmp, x=y, error=1, nointercept=1)
+    if return_stderr:
+        return slope, stderr
+    else:
+        return slope
 
 
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
