@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_tel'#'MC1'#
+mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -173,7 +173,7 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']
+list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['CNRM-CM5','IPSL-CM5B-LR']
 #
 # finding file and variable name in file for each observations dataset
 #
@@ -260,6 +260,7 @@ for mod in list_models:
                 print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + \
                       str(metric_dict[ref]['value3']) + ', error = ' + str(metric_dict[ref]['value_error3']) + '\033[0m'
 # Plot
+stop
 #if ' ':
 for mod in list_models:
     from numpy import arange as NUMPYarange
