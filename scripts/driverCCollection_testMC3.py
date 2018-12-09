@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
+mc_name = 'ENSO_perf'#'ENSO_tel'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -109,7 +109,7 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['HadISST','GPCPv2.3']#['Tropflux','GPCPv2.3']
+    list_obs = ['HadISST']#['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']
 elif mc_name == 'ENSO_tel':
     list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
@@ -156,7 +156,6 @@ for obs in list_obs:
                 landmask_in_file = None
             # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
-                list_files = list()
                 list_files = [file_name for var1 in var_in_file]
                 list_areacell = [file_areacell for var1 in var_in_file]
                 list_name_area = [areacell_in_file for var1 in var_in_file]
@@ -173,7 +172,7 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['CNRM-CM5','IPSL-CM5B-LR']
+list_models = ['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
 #
 # finding file and variable name in file for each observations dataset
 #
@@ -241,8 +240,13 @@ for mod in list_models:
     # }
     # Computes the metric collection
     #dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=False)
-    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid,
-                                                         debug=False, dive_down=True)
+    #dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid,
+    #                                                     debug=False, dive_down=True)
+    netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
+    netcdf_name = '20181119_YANN_PLANTON_' + mc_name + '_' + mod
+    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
+                                                         netcdf_name=netcdf_name)
+    stop
     # Prints the metrics values
     for ii in range(3): print ''
     print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
@@ -260,7 +264,7 @@ for mod in list_models:
                 print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + \
                       str(metric_dict[ref]['value3']) + ', error = ' + str(metric_dict[ref]['value_error3']) + '\033[0m'
 # Plot
-stop
+#stop
 #if ' ':
 for mod in list_models:
     from numpy import arange as NUMPYarange
@@ -375,7 +379,8 @@ for mod in list_models:
                                        draw_white_background=True, save_ps=False, bg=1)
                     del l_w, l_w_ha, l_w_si, l_w_xy, lines_colo, lines_x1x2, lines_y1y2, list_curve, m1,\
                         m2, name, name_png, yname
-            elif metric in ['BiasSstLonRmse', 'SeasonalSstLonRmse', 'NinaSstTsRmse', 'NinoSstTsRmse']:
+            elif metric in ['BiasSstLonRmse', 'BiasSstSkLonRmse', 'SeasonalSstLonRmse', 'NinaSstTsRmse',
+                            'NinoSstTsRmse']:
                 tmp_dive, tmp_axis = dict(), dict()
                 for ref in dict_dive[mod]['value'][metric].keys():
                     if ref != 'model':
@@ -387,7 +392,7 @@ for mod in list_models:
                     tab1 = MV2array(dive_model)
                     tab1.setAxisList([axis])
                     tab1 = MV2masked_where(tab1>=1e20, tab1)
-                    if metric in ['BiasSstLonRmse', 'NinoSstLonRmse', 'SeasonalSstLonRmse']:
+                    if metric in ['BiasSstLonRmse', 'BiasSstSkLonRmse', 'NinoSstLonRmse', 'SeasonalSstLonRmse']:
                         inc = 30
                         if min(axis[:])<0:
                             x_axis = [-250, -70]
@@ -423,7 +428,7 @@ for mod in list_models:
                     lines_y1y2 = [[round(ii, 1), round(ii, 1)] for ii in y_dict.keys() if y_dict[ii] != '' and
                                   round(ii, 1) != 0 and round(ii, 1) not in y_axis]
                     lines_x1x2 = [x_axis for ii in range(len(lines_y1y2))]
-                    if metric in ['BiasSstLonRmse', 'NinoSstLonRmse', 'SeasonalSstLonRmse']:
+                    if metric in ['BiasSstLonRmse', 'BiasSstSkLonRmse', 'NinoSstLonRmse', 'SeasonalSstLonRmse']:
                         xname = 'longitude'
                         lines_x1x2 = lines_x1x2 + [[ii, ii] for ii in x_dict.keys() if x_dict[ii] != '' and ii != 0
                                                    and ii not in x_axis]
@@ -441,7 +446,7 @@ for mod in list_models:
                     name_png = path_plot + '/' + metric + '_' + mod + '_ ' + ref
                     if metric in ['NinoSstLonRmse', 'NinoSstTsRmse', 'SeasonalSstLonRmse']:
                         yname = 'SSTA (degC)'
-                    elif metric in ['BiasSstLonRmse']:
+                    elif metric in ['BiasSstLonRmse', 'BiasSstSkLonRmse']:
                         yname = 'SST (degC)'
                     PFRAME.curves_plot(list_curve, list_col=list_col, x_axis=x_axis, x_dico=x_dict, y_axis=y_axis,
                                        y_dico=y_dict, name_in_xlabel=False, name=name, xname=xname, yname=yname,

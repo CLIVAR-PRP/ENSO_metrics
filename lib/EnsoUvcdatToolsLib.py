@@ -6,8 +6,13 @@ from inspect import stack as INSPECTstack
 from numpy import arange as NParange
 from numpy import array as NParray
 from numpy import exp as NPexp
+from numpy import histogram as NPhistogram
 from numpy import nonzero as NPnonzero
+from numpy import unravel_index as NPunravel_index
+from os.path import isfile as OSpath__isfile
+from os.path import join as OSpath__join
 from scipy.signal import detrend as SCIPYsignal_detrend
+from scipy.stats import skew as SCIPYstats__skew
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import CmipVariables
@@ -719,11 +724,14 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     return area
 
 
-def arrayToList(tab):
-    tmp = NParray(MV2where(tab.mask, 1e20, tab))
-    if len(tab.shape)==1:
+def ArrayToList(tab):
+    if tab.mask.all() is False or tab.mask.all() == False:
+        tmp = NParray(tab)
+    else:
+        tmp = NParray(MV2where(tab.mask, 1e20, tab))
+    if len(tab.shape) == 1:
         tab_out = list(tmp)
-    elif len(tab.shape)==2:
+    elif len(tab.shape) == 2:
         tab_out = [list(tmp[ii]) for ii in range(len(tab))]
     else:
         list_strings = [
@@ -892,8 +900,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     else:
         return tab, units
 
-
-def Composite(tab, list_event_years, frequency, nbr_years_window=None):
+def Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=None):
     # function to fill array with masked value where the data is not available
     def fill_array(tab, units, freq):
         y1 = tab.getTime().asComponentTime()[0].year
@@ -954,14 +961,14 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
                 tmp2 = fill_array(tmp1, units, frequency)
             # save the selected time slice
             composite.append(tmp2)
-        composite = MV2average(MV2array(composite), axis=0)
+        composite = MV2array(composite)
         # axis list
-        axis0 = CDMS2createAxis(MV2array(range(len(composite)), dtype='int32'), id='time')
-        axis0.units = units_out
+        axis0 = CDMS2createAxis(MV2array(list_event_years, dtype='int32'), id='years')
+        axis1 = CDMS2createAxis(MV2array(range(len(composite[0])), dtype='int32'), id='months')
+        axis1.units = units_out
+        axes = [axis0, axis1]
         if tab.shape > 1:
-            axes = [axis0] + tab.getAxisList()[1:]
-        else:
-            axes = [axis0]
+            axes = axes + tab.getAxisList()[1:]
         composite.setAxisList(axes)
     else:
         time_ax = tab.getTime().asComponentTime() # gets component time of tab
@@ -974,9 +981,14 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
             list_event_years = [str(yy) for yy in list_event_years]
             condition = [True if str(yy) in list_event_years else False for yy in list_years]
         ids = MV2compress(condition, indices) # gets indices of events
-        tab = MV2take(tab, ids, axis=0) # gets events
-        composite = MV2average(tab, axis=0)
+        composite = MV2take(tab, ids, axis=0) # gets events
+        axis0 = CDMS2createAxis(MV2array(list_event_years, dtype='int32'), id='years')
+        composite.setAxis(0, axis0)
     return composite
+
+
+def Composite(tab, list_event_years, frequency, nbr_years_window=None):
+    return MV2average(Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=nbr_years_window), axis=0)
 
 
 def DetectEvents(tab, season, threshold, normalization=False, nino=True):
@@ -1077,6 +1089,61 @@ def Detrend(tab, info, axis=0, method='linear', bp=0):
     return new_tab, info
 
 
+def DurationAllEvent(tab, threshold, nino=True):
+    """
+    #################################################################################
+    Description:
+    Duration of Nina or Nino events
+    The duration is the number of consecutive timestep when tab < threshold for La Nina and tab > threshold for El Nino
+
+    Uses CDMS2 (uvcdat) for axes
+    #################################################################################
+
+    :param tab: masked_array
+        masked_array containing a variable from which the events are detected. Most likely SST
+    :param threshold: float
+        threshold to define the events (e.g., 0.75 for El Nino, -0.75 for La Nina)
+    :param nino: boolean, optional
+        True if events are detected if above threshold (El Nino like), if not pass anything but True (La Nina like)
+    :return list_of_years: list
+        list of years including a detected event
+    """
+    tmp = MV2array([DurationEvent(tab[tt], threshold, nino=nino) for tt in range(len(tab))])
+    tmp.setAxis(0, tab.getAxis(0))
+    return tmp
+
+
+def DurationEvent(tab, threshold, nino=True):
+    """
+    #################################################################################
+    Description:
+    Duration of Nina or Nino events
+    The duration is the number of consecutive timestep when tab < threshold for La Nina and tab > threshold for El Nino
+
+    Uses MV2 (uvcdat)
+    #################################################################################
+
+    :param tab: masked_array
+        masked_array containing a variable from which the events are detected. Most likely SST
+    :param threshold: float
+        threshold to define the events (e.g., 0.75 for El Nino, -0.75 for La Nina)
+    :param nino: boolean, optional
+        True if events are detected if above threshold (El Nino like), if not pass anything but True (La Nina like)
+    :return list_of_years: list
+        list of years including a detected event
+    """
+    tmp1 = list(reversed(tab[:len(tab)/2]))
+    tmp2 = list(tab[len(tab)/2:])
+    if nino is True:
+        nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] <= threshold) - 1
+        nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] <= threshold) - 1
+    else:
+        nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] >= threshold) - 1
+        nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] >= threshold) - 1
+    duration = nbr_before + nbr_after
+    return duration
+
+
 def get_num_axis(tab, name_axis):
     """
     #################################################################################
@@ -1118,7 +1185,8 @@ def get_num_axis(tab, name_axis):
     if num is None:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": axis",
-            str().ljust(5) + "cannot find axis named: " + str(name_axis)
+            str().ljust(5) + "cannot find axis named: " + str(name_axis),
+            str().ljust(5) + "axes: " + str(tab.getAxisList()),
         ]
         EnsoErrorsWarnings.MyError(list_strings)
     return num
@@ -1527,6 +1595,72 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     return new_tab
 
 
+def SaveNetcdf(netcdf_path, netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=None, var2_attributes={},
+               var2_name='', var3=None, var3_attributes={}, var3_name='', var4=None, var4_attributes={},
+               var4_name='', global_attributes={}):
+    if OSpath__isfile(OSpath__join(netcdf_path, netcdf_name)) is True:
+        o = CDMS2open(OSpath__join(netcdf_path, netcdf_name), 'a')
+    else:
+        o = CDMS2open(OSpath__join(netcdf_path, netcdf_name), 'w+')
+    if var1 is not None:
+        if var1_name == '':
+            var1_name = var1.id
+        o.write(var1, attributes=var1_attributes, dtype='float32', id=var1_name)
+    if var2 is not None:
+        if var2_name == '':
+            var2_name = var2.id
+        o.write(var2, attributes=var2_attributes, dtype='float32', id=var2_name)
+    if var3 is not None:
+        if var3_name == '':
+            var3_name = var3.id
+        o.write(var3, attributes=var3_attributes, dtype='float32', id=var3_name)
+    if var4 is not None:
+        if var4_name == '':
+            var4_name = var4.id
+        o.write(var4, attributes=var4_attributes, dtype='float32', id=var4_name)
+    for att in global_attributes.keys():
+            o.__setattr__(att, global_attributes[att])
+    o.close()
+    return
+
+
+def SkewnessTemporal(tab):
+    """
+    #################################################################################
+    Description:
+    Computes the skewness along the time axis
+    #################################################################################
+
+    :param tab: masked_array
+    :return: tab: array
+        array of the temporal skewness
+    """
+    tab = tab.reorder('t...')
+    if len(tab.shape) > 4:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too many dimensions",
+            str().ljust(5) + "tab.shape = " + str(tab.shape)
+        ]
+        EnsoErrorsWarnings.MyError(list_strings)
+    elif len(tab.shape) == 1:
+        skew = float(SCIPYstats__skew(tab))
+    else:
+        skew = MV2zeros(tab[0].shape)
+        for ii in range(len(tab[0])):
+            if len(tab[:, ii].shape) > 1:
+                for jj in range(len(tab[0, ii])):
+                    if len(tab[:, ii, jj].shape) > 1:
+                        for kk in range(len(tab[0, ii, jj])):
+                            skew[ii, jj, kk] = SCIPYstats__skew(tab[:, ii, jj, kk])
+                    else:
+                        skew[ii, jj] = SCIPYstats__skew(tab[:, ii, jj])
+            else:
+                skew[ii] = SCIPYstats__skew(tab[:, ii])
+        skew = CDMS2createVariable(skew, axes=tab[0].getAxisList(), grid=tab.getGrid(), mask=tab[0].mask,
+                                   attributes=tab.attributes)
+    return skew
+
+
 def SmoothGaussian(tab, axis=0, window=5):
     """
     #################################################################################
@@ -1837,25 +1971,23 @@ def Smoothing(tab, info, axis=0, window=5, method='triangle'):
     Smooth 'tab' along 'axis' using moving window average based on 'method'
     #################################################################################
 
-    :param tab:
-    :param axis:
-    :param window:
-    :return smoothed_tab: masked_array
-        smoothed data
     :param tab: masked_array
         masked_array to smooth
+    :param info: string
+        information about what was done on tab
     :param axis: integer, optional
         axis along which to smooth the data
         default value is the first axis (0)
     :param window: odd integer, optional
-        number of points used for the triangle moving window average
+        number of points used for the moving window average
         default value is 5
     :param method: string, optional
         smoothing method:
             'gaussian': gaussian shaped window
             'square':   square shaped window
             'triangle': triangle shaped window
-    :return:
+    :return: smoothed_tab: masked_array
+        smoothed data
     """
     try: dict_smooth[method]
     except:
@@ -1874,6 +2006,40 @@ def Smoothing(tab, info, axis=0, window=5, method='triangle'):
 #
 # Cet of often used combinations of previous functions
 #
+def ComputePDF(tab, nbr_bins=10, interval=None, axis_name='axis'):
+    """
+    #################################################################################
+    Description:
+    Computes the PDF of tab based on numpy.histogram using nbr_bins in interval
+    Returns the density (sum of pdf=1.) in each bin
+
+    Uses uvcdat for array and axis
+    #################################################################################
+
+    :param tab: masked_array
+        array for which you would like to compute the PDF
+    :param nbr_bins: int, optional
+        defines the number of equal-width bins in the given range
+        default value = 10
+    :param interval: [float,float], optional
+        The lower and upper range of the bins. Values outside the range are ignored. The first element of the range must
+        be less than or equal to the second.
+        default value = [tab.min(), tab.max()]
+    :param axis_name: string, optional
+        name given to the axis of the pdf, e.g. 'longitude'
+        default value = 'axis'
+
+    :return: pdf: masked_array
+        density (sum of pdf=1.) in each bin, with the center of each bin as axis
+    """
+    tmp = NPhistogram(tab, bins=nbr_bins, range=interval)
+    axis = [(tmp[1][ii] + tmp[1][ii + 1]) / 2. for ii in range(len(tmp[1]) - 1)]
+    pdf = MV2array(tmp[0]) / float(len(tab))
+    axis = CDMS2createAxis(MV2array(axis, dtype='f'), id=axis_name)
+    pdf.setAxis(0, axis)
+    return pdf
+
+
 def CustomLinearRegression(y, x, sign_x=0, return_stderr=True):
     """
     #################################################################################
@@ -1914,6 +2080,70 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True):
         return float(slope), float(stderr)
     else:
         return float(slope)
+
+
+def FindXYMinMax(tab, return_val='both', smooth=False, axis=0, window=5, method='triangle'):
+    """
+    #################################################################################
+    Description:
+    Finds in tab the position (t,x,y,z) of the minimum (return_val='mini') or the maximum (return_val='maxi') or both
+    values (if return_val is neither 'mini' nor 'maxi')
+    Returned position(s) are not the position in tab but in the (t,x,y,z) space defined by tab axes
+
+    Uses uvcdat for smoothing
+    #################################################################################
+
+    :param tab: masked_array
+        array for which you would like to know the position (t,x,y,z) of the minimum and/or the maximum values
+    :param return_val: string, optional
+        'mini' to return the position of the minimum value
+        'maxi' to return the position of the maximum value
+        to return both minimum and maximum values, pass anything else
+        default value = 'both', returns both minimum and maximum values
+    :param smooth: boolean, optional
+        True if you want to smooth tab, if you do not, pass anything but true
+        default value = False, tab is not smoothed
+
+    See function EnsoUvcdatToolsLib.Smoothing
+    :param axis: integer, optional
+        axis along which to smooth the data
+        default value is the first axis (0)
+    :param window: odd integer, optional
+        number of points used for the moving window average
+        default value is 5
+    :param method: string, optional
+        smoothing method:
+            'gaussian': gaussian shaped window
+            'square':   square shaped window
+            'triangle': triangle shaped window
+
+    :return: minimum/maximum position or both minimum and maximum positions, int, float or list
+        position(s) in the (t,x,y,z) space defined by tab axes of the minimum and/or maximum values of tab
+    """
+    if smooth is True:
+        tmp, unneeded = Smoothing(tab, '', axis=axis, window=window, method=method)
+    else:
+        tmp = deepcopy(tab)
+    mini = NPunravel_index(tmp.argmin(), tmp.shape)
+    maxi = NPunravel_index(tmp.argmax(), tmp.shape)
+    list_ax = NParray([tmp.getAxis(ii)[:] for ii in range(len(mini))])
+    axis_min = [list_ax[ii][mini[ii]] for ii in range(len(mini))]
+    axis_max = [list_ax[ii][maxi[ii]] for ii in range(len(mini))]
+    if return_val == 'mini':
+        if len(axis_min) == 1:
+            return axis_min[0]
+        else:
+            return axis_min
+    elif return_val == 'maxi':
+        if len(axis_max) == 1:
+            return axis_max[0]
+        else:
+            return axis_max
+    else:
+        if len(axis_min) == 1 and en(axis_max) == 1:
+            return [axis_min[0], axis_max[0]]
+        else:
+            return [axis_min, axis_max]
 
 
 def MyDerive(project, internal_variable_name, dict_var):

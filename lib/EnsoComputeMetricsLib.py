@@ -5,11 +5,11 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstRmse, \
-    BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf, EnsoAlphaSwr, \
-    EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap, EnsoSeasonality, NinaSstLonRmse,\
-    NinaSstTsRmse, NinoSstLonRmse, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse,\
-    SeasonalSstLonRmse
+from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
+    BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf,\
+    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap, EnsoSeasonality, \
+    NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstTsRmse, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse,\
+    NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -18,7 +18,8 @@ from KeyArgLib import DefaultArgValues
 #
 # Computation of the metric collection
 #
-def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False):
+def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False, netcdf=False,
+                      netcdf_path='', netcdf_name=''):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -59,6 +60,34 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
                     ...
                 },
             },
+        }
+    :param user_regridding: dict, optional
+        regridding parameters selected by the user and not the "climate experts" (i.e. the program)
+        to see parameters:
+        help(EnsoUvcdatToolsLib.TwoVarRegrid)
+        help(EnsoUvcdatToolsLib.Regrid)
+        e.g.:
+        user_regridding = {
+            'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                'newgrid_name': 'generic 1x1deg'},
+        }
+    :param debug: boolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param dive_down: boolean, optional
+        default value = False dive_down are not saved in a dictionary
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_path: string, optional
+        default value = '' NetCDFs are saved where the program is ran
+        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
+    :param netcdf_name: string, optional
+        default value = '' root name of the saved NetCDFs
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+
     :return: MCvalues: dict
         name of the Metric Collection, Metrics, value, value_error, units, ...
         MCvalues = {
@@ -234,7 +263,8 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
             dict_col_valu[metric], dict_col_meta['metrics'][metric], dict_col_dd_valu[metric],\
             dict_col_dd_meta['metrics'][metric] = ComputeMetric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-                dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, **arg_var2)
+                dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
+                netcdf_path=netcdf_path, netcdf_name=netcdf_name, **arg_var2)
     if dive_down is True:
         return {'value': dict_col_valu, 'metadata': dict_col_meta},\
                {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}
@@ -289,9 +319,10 @@ dict_oneVar_modelAndObs = {
     'BiasPrLatRmse': BiasPrLatRmse, 'BiasPrLonRmse': BiasPrLonRmse, 'BiasPrRmse': BiasPrRmse,
     'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
+    'BiasSstSkLonRmse': BiasSstSkLonRmse,
     'EnsoSstMap': EnsoSstMap,
-    'NinaSstTsRmse': NinaSstTsRmse, 'NinaSstLonRmse': NinaSstLonRmse,
-    'NinoSstTsRmse': NinoSstTsRmse, 'NinoSstLonRmse': NinoSstLonRmse,
+    'NinaSstDivRmse':NinaSstDivRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinaSstTsRmse': NinaSstTsRmse,
+    'NinoSstDivRmse':NinoSstDivRmse, 'NinoSstLonRmse': NinoSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
     'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
 }
@@ -300,7 +331,8 @@ dict_twoVar_modelAndObs = {
     'EnsoPrMap': EnsoPrMap, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel
 }
 
-dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality}
+dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality, 'NinaSstDur': NinaSstDur,
+               'NinoSstDur': NinoSstDur}
 
 dict_twoVar = {
     'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr, 'EnsoAlphaShf': EnsoAlphaShf,
@@ -313,25 +345,112 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                   obsFileArea1='', obsAreaName1='', obsFileLandmask1='', obsLandmaskName1='',
                   modelFile2='', modelVarName2='', modelFileArea2='', modelAreaName2='', modelFileLandmask2='',
                   modelLandmaskName2='', obsNameVar2='', obsFile2='', obsVarName2='', obsFileArea2='', obsAreaName2='',
-                  obsFileLandmask2='', obsLandmaskName2='', regionVar2='', debug=False, user_regridding={}):
+                  obsFileLandmask2='', obsLandmaskName2='', regionVar2='', user_regridding={}, debug=False,
+                  netcdf=False, netcdf_path='', netcdf_name=''):
     """
-    The ComputeMetric() function computes the given metric for the given model and observations
+    :param metricCollection: string
+        name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
+    :param metric: string
+        name of a Metric, must be defined in EnsoCollectionsLib.defCollection()
+    :param modelName: string
+        path_to/filename of a model
+    :param modelFile1: string or list of strings
+        model file number 1
+        e.g.: 'model_file.nc' or ['model_file1.nc','model_file2.nc']
+        a list of files is given if a variable is the result of more than one CMIP variable (lwr = rlds - rlus)
+    :param modelVarName1: string or list of strings
+        model variable number 1, must be defined in EnsoCollectionsLib.CmipVariables()
+        e.g.: 'lwr' or ['rlds', 'rlus']
+    :param obsNameVar1: string
+        path_to/filename of the observations for variable number 1, must be defined in
+        EnsoCollectionsLib.ReferenceObservations()
+    :param obsFile1: string or list of strings
+        observations file number 1
+        e.g.: 'observations_file.nc' or ['observations_file1.nc','observations_file2.nc']
+        a list of files is given if a variable is the result of more than one CMIP variable (lwr = rlds - rlus)
+    :param obsVarName1: string or list of strings
+        observations variable number 1, must be defined in EnsoCollectionsLib.ReferenceObservations()
+        e.g.: 'lwr' or ['rlds', 'rlus']
+    :param regionVar1: string
+        name of box ('tropical_pacific') for variable number 1, must be defined in EnsoCollectionsLib.ReferenceRegions()
+    :param modelFileArea1: string, optional
+        path_to/filename of the model areacell for variable number 1
+    :param modelAreaName1: string, optional
+        name the model areacell (e.g. 'areacella' or 'areacello') for variable number 1
+    :param modelFileLandmask1: string, optional
+        path_to/filename of the model landmask for variable number 1
+    :param modelLandmaskName1: string, optional
+        name the model landmask (e.g. 'landmask' or 'sftlf') for variable number 1
+    :param obsFileArea1: string, optional
+        path_to/filename of the observations areacell for variable number 1
+    :param obsAreaName1: string, optional
+        name the observations areacell (e.g. 'areacella' or 'areacello') for variable number 1
+    :param obsFileLandmask1: string, optional
+        path_to/filename of the observations landmask for variable number 1
+    :param obsLandmaskName1: string, optional
+        name the observations landmask (e.g. 'landmask' or 'sftlf') for variable number 1
+    :param modelFile2: string or list of strings, optional
+        model file number 2
+        e.g.: 'model_file.nc' or ['model_file1.nc','model_file2.nc']
+        a list of files is given if a variable is the result of more than one CMIP variable (lwr = rlds - rlus)
+    :param modelVarName2: string or list of strings, optional
+        model variable number 2, must be defined in EnsoCollectionsLib.CmipVariables()
+        e.g.: 'lwr' or ['rlds', 'rlus']
+    :param modelFileArea2: string, optional
+        path_to/filename of the model areacell for variable number 2
+    :param modelAreaName2: string, optional
+        name the model areacell (e.g. 'areacella' or 'areacello') for variable number 2
+    :param modelFileLandmask2: string, optional
+        path_to/filename of the model landmask for variable number 2
+    :param modelLandmaskName2: string, optional
+        name the model landmask (e.g. 'landmask' or 'sftlf') for variable number 2
+    :param obsNameVar2: string, optional
+        path_to/filename of the observations for variable number 2, must be defined in
+        EnsoCollectionsLib.ReferenceObservations()
+    :param obsFile2: string or list of strings, optional
+        observations file number 2
+        e.g.: 'observations_file.nc' or ['observations_file1.nc','observations_file2.nc']
+        a list of files is given if a variable is the result of more than one CMIP variable (lwr = rlds - rlus)
+    :param obsVarName2: string or list of strings, optional
+        observations variable number 2, must be defined in EnsoCollectionsLib.ReferenceObservations()
+        e.g.: 'lwr' or ['rlds', 'rlus']
+    :param obsFileArea2: string, optional
+        path_to/filename of the observations areacell for variable number 2
+    :param obsAreaName2: string, optional
+        name the observations areacell (e.g. 'areacella' or 'areacello') for variable number 2
+    :param obsFileLandmask2: string, optional
+        path_to/filename of the observations landmask for variable number 2
+    :param obsLandmaskName2: string, optional
+        name the observations landmask (e.g. 'landmask' or 'sftlf') for variable number 2
+    :param regionVar2: string
+        name of box ('tropical_pacific') for variable number 2, must be defined in EnsoCollectionsLib.ReferenceRegions()
+    :param user_regridding: dict, optional
+        regridding parameters selected by the user and not the "climate experts" (i.e. the program)
+        to see parameters:
+        help(EnsoUvcdatToolsLib.TwoVarRegrid)
+        help(EnsoUvcdatToolsLib.Regrid)
+        e.g.:
+        user_regridding = {
+            'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                'newgrid_name': 'generic 1x1deg'},
+        }
+    :param debug: boolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param dive_down: boolean, optional
+        default value = False dive_down are not saved in a dictionary
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_path: string, optional
+        default value = '' NetCDFs are saved where the program is ran
+        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
+    :param netcdf_name: string, optional
+        default value = '' root name of the saved NetCDFs
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
 
-    :param metricCollection:
-    :param metric:
-    :param modelName:
-    :param modelFile1:
-    :param modelVarName1:
-    :param obsName:
-    :param obsFile1:
-    :param obsVarName1:
-    :param regionVar1:
-    :param regionVar2:
-    :param modelFile2:
-    :param modelVarName2:
-    :param obsFile2:
-    :param obsVarName2:
-    :param user_regridding:
     :return:
     """
     # retrieving keyargs from EnsoCollectionsLib.defCollection
@@ -391,7 +510,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     dict_dive_down = dict()
     dict_dive_down_metadata = dict()
 
-    if metric in dict_oneVar_modelAndObs.keys() or dict_twoVar_modelAndObs.keys():
+    if metric in dict_oneVar_modelAndObs.keys() or metric in dict_twoVar_modelAndObs.keys():
         #
         # this part regroups all diagnostics comparing model and obs (rmse)
         # so the diagnostic is the metric
@@ -402,16 +521,17 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             # computes the diagnostic/metric
             if metric in dict_oneVar_modelAndObs.keys():
                 output_name = obsNameVar1[ii]
-                print '\033[94m' + str().ljust(5) + "ComputeMetric: RMSmetric, " + metric + " = " + modelName + " and "\
-                      + output_name + '\033[0m'
+                print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " + modelName\
+                      + " and " + output_name + '\033[0m'
                 diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], regionVar1, debug=debug, **keyarg)
+                    obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
+                    netcdf_path=netcdf_path, netcdf_name=netcdf_name, **keyarg)
             elif metric in dict_twoVar_modelAndObs.keys():
                 for jj in range(len(obsNameVar2)):
                     output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
-                    print '\033[94m' + str().ljust(5) + "ComputeMetric: RMSmetric, " + metric + " = " + modelName\
+                    print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " + modelName\
                           + " and " + output_name + '\033[0m'
                     diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
                         modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
@@ -419,7 +539,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         modelFileLandmask2, modelLandmaskName2, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii],
                         obsAreaName1[ii], obsFileLandmask1[ii], obsLandmaskName1[ii], obsFile2[jj], obsVarName2[jj],
                         obsFileArea2[jj], obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar1,
-                        regionVar2, debug=debug, **keyarg)
+                        regionVar2, dataset=output_name, debug=debug, netcdf=netcdf, netcdf_path=netcdf_path,
+                        netcdf_name=netcdf_name, **keyarg)
         for obs in diagnostic1.keys():
             # puts metric values in its proper dictionary
             dict_metric_val['ref_' + obs] = {
@@ -460,8 +581,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         if metric in dict_oneVar.keys():
             # computes diagnostic that needs only one variable
             print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
-            diagnostic1 = dict_oneVar[metric](modelFile1, modelVarName1, modelFileArea1, modelAreaName1,
-                                              modelFileLandmask1, modelLandmaskName1, regionVar1, debug=debug, **keyarg)
+            diagnostic1 = dict_oneVar[metric](
+                modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
+                regionVar1, debug=debug, **keyarg)
         elif metric in dict_twoVar.keys():
             # computes diagnostic that needs two variables
             print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
@@ -516,7 +638,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     diag_obs[output_name] = dict_twoVar[metric](
                         obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                         obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
-                        obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2, **keyarg)
+                        obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2, debug=debug, **keyarg)
         for obs in diag_obs.keys():
             # computes the metric
             metric_val, metric_err, description_metric = MathMetriComputation(
