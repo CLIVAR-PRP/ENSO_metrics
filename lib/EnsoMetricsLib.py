@@ -6432,12 +6432,16 @@ def NinaSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
+    # samples
+    sample_model = Composite_ev_by_ev(sst_model, event_years_model, kwargs['frequency'])
+    sample_obs = Composite_ev_by_ev(sst_obs, event_years_obs, kwargs['frequency'])
+
     # 2.2 find the zonal position of the minimum SSTA for each selected event and compute a pdf
     # longitude of the minimum SSTA for each selected event
-    lon_min_model = [FindXYMinMax(sst_model[tt], return_val='mini', smooth=True, axis=0, window=5, method='triangle')
-                     for tt in range(len(sst_model))]
-    lon_min_obs = [FindXYMinMax(sst_obs[tt], return_val='mini', smooth=True, axis=0, window=5, method='triangle')
-                   for tt in range(len(sst_obs))]
+    lon_min_model = [FindXYMinMax(sample_model[tt], return_val='mini', smooth=True, axis=0, window=5, method='triangle')
+                     for tt in range(len(sample_model))]
+    lon_min_obs = [FindXYMinMax(sample_obs[tt], return_val='mini', smooth=True, axis=0, window=5, method='triangle')
+                   for tt in range(len(sample_obs))]
 
     # compute PDFs
     pdf_model = ComputePDF(lon_min_model, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')
@@ -7737,12 +7741,16 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
+    # samples
+    sample_model = Composite_ev_by_ev(sst_model, event_years_model, kwargs['frequency'])
+    sample_obs = Composite_ev_by_ev(sst_obs, event_years_obs, kwargs['frequency'])
+
     # 2.2 find the zonal position of the minimum SSTA for each selected event and compute a pdf
     # longitude of the minimum SSTA for each selected event
-    lon_min_model = [FindXYMinMax(sst_model[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
-                     for tt in range(len(sst_model))]
-    lon_min_obs = [FindXYMinMax(sst_obs[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
-                   for tt in range(len(sst_model))]
+    lon_min_model = [FindXYMinMax(sample_model[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+                     for tt in range(len(sample_model))]
+    lon_min_obs = [FindXYMinMax(sample_obs[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+                   for tt in range(len(sample_obs))]
 
     # compute PDFs
     pdf_model = ComputePDF(lon_min_model, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')

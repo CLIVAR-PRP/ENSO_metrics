@@ -243,7 +243,7 @@ for mod in list_models:
     #dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid,
     #                                                     debug=False, dive_down=True)
     netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
-    netcdf_name = '20181119_YANN_PLANTON_' + mc_name + '_' + mod
+    netcdf_name = '20181210_YANN_PLANTON_' + mc_name + '_' + mod
     dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
                                                          netcdf_name=netcdf_name)
     stop
