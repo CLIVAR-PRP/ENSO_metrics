@@ -744,6 +744,7 @@ def ArrayToList(tab):
         EnsoErrorsWarnings.MyError(list_strings)
     return tab_out
 
+
 def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', **kwargs):
     """
     #################################################################################
@@ -899,6 +900,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
        return tab
     else:
         return tab, units
+
 
 def Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=None):
     # function to fill array with masked value where the data is not available
