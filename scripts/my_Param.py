@@ -1,3 +1,6 @@
+import datetime
+now = datetime.datetime.now()
+
 #=================================================
 # Observation
 #-------------------------------------------------
@@ -16,8 +19,9 @@ obspath_lf = {
 #=================================================
 # Models
 #-------------------------------------------------
-modpath = '/work/lee1043/ESGF/xmls/cmip5/historical/mo/VAR/cmip5.MOD.historical.r1i1p1.mo.VAR.xml'
-modpath_lf = '/work/lee1043/ESGF/xmls/cmip5/fx/fx/sftlf/cmip5.MOD.fx.r0i0p0.fx.sftlf.xml'
+#modpath = '/work/lee1043/ESGF/xmls/cmip5/historical/mo/VAR/cmip5.MOD.historical.r1i1p1.mo.VAR.xml'
+modpath = '/work/lee1043/ESGF/xmls/cmip5/historical/mon/VAR/cmip5.MOD.historical.r1i1p1.mon.VAR.xml'
+modpath_lf = '/work/lee1043/ESGF/xmls/cmip5/historical/fx/sftlf/cmip5.MOD.historical.r0i0p0.fx.sftlf.xml'
 
 modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
             'CanCM4', 'CanESM2', 'CCSM4', 'CESM1-BGC', 'CESM1-CAM5', 'CESM1-FASTCHEM', 'CESM1-WACCM',
@@ -30,18 +34,25 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
             'MIROC-ESM', 'MIROC-ESM-CHEM', 'MIROC4h', 'MIROC5',
             'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P', 'NorESM1-M', 'NorESM1-ME']
 
-#modnames = ['IPSL-CM5A-LR']
+modnames = ['IPSL-CM5A-LR']
 #modnames = ['BCC-CSM1-1']
 
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
 #metricsCollection = 'MC1'
-metricsCollection = 'ENSO_perf'
+#metricsCollection = 'ENSO_perf'
+metricsCollection = 'ENSO_tel'
 
 #=================================================
 # Output
 #-------------------------------------------------
 outpathdata = '.' # e.g. '/user/directory/output/nc'
 outpathjson = '.' # e.g. '/user/directory/output/json'
-outnamejson = 'test_'+metricsCollection+'_all.json'
+#outnamejson = 'test_'+metricsCollection+'_all.json'
+outnamejson = 'test_'+metricsCollection+'_all_signCorrected_'+now.strftime("%Y%m%d-%H%M")+'.json'
+
+#=================================================
+# Others
+#-------------------------------------------------
+debug = True

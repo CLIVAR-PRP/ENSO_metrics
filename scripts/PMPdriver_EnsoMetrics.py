@@ -152,11 +152,11 @@ enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
 #
 # finding file and variable name in file for each observations dataset
 #
-dict_metric = dict()
+dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
 
-    try:
+    ##try:
 
         dict_mod = {mod: {}}
         # ------------------------------------------------
@@ -226,8 +226,11 @@ for mod in list_models:
         #         'newgrid_name': 'generic 1x1deg'},
         # }
         # Computes the metric collection
-        dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=param.debug)
-        #dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
+        netcdf_path = '/work/lee1043/imsi/result_test/enso_metric'
+        netcdf_name = '20181210_YANN_PLANTON_' + mc_name + '_' + mod
+        #dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=param.debug)
+        dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
+                                                             netcdf_name=netcdf_name)
         # Prints the metrics values
         for ii in range (3): print ''
         print str().ljust(5) + str(mod)
@@ -239,9 +242,9 @@ for mod in list_models:
                 print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
                       + str(metric_dict[ref]['value_error'])
     
-    except Exception as e: 
-        print 'failed for ', mod
-        print(e)
+    ##except Exception as e: 
+        ##print 'failed for ', mod
+        ##print(e)
   
 print 'PMPdriver: model loop end'
 
