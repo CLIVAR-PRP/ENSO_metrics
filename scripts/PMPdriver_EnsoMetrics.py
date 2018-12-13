@@ -2,7 +2,7 @@
 #=================================================
 # Dependencies
 #-------------------------------------------------
-from cdms2 import open as CDMS2open
+from __future__ import print_function
 
 import collections
 import copy
@@ -12,18 +12,24 @@ import pcmdi_metrics
 import sys
 
 from collections import defaultdict
+from genutil import StringConstructor
 from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
-
+from pmpParser import ReadOptions
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
-#from EnsoMetrics.EnsoMetricsLib import EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoRMSE, EnsoSeasonality
-
-from pmpParser import ReadOptions
 
 #=================================================
 # Collect user defined options
 #-------------------------------------------------
 param = ReadOptions()
+
+# Path to model data as string template
+modpath = StringConstructor(param.modpath)
+modpath_lf = StringConstructor(param.modpath_lf)
+
+# Check given model option
+models = param.modnames
+print('models:', models)
 
 #=================================================
 # User input option
@@ -37,7 +43,7 @@ list_metric = sorted(dict_mc['metrics_list'].keys())
 #-------------------------------------------------
 # setup an output directory 
 try:
-    os.mkdir(param.outpathjson)
+    os.mkdir(param.results_dir)
 except BaseException:
     pass
 
@@ -49,7 +55,7 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-print list_variables
+print(list_variables)
 
 # list of observations
 list_obs = list()
@@ -68,7 +74,7 @@ try:
     list_obs.remove('GPCPv2.3')
 except:
     pass
-print list_obs
+print(list_obs)
 
 #
 # finding file and variable name in file for each observations dataset
@@ -91,7 +97,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
+            print('\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m')
         else:
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]
@@ -101,10 +107,10 @@ for obs in list_obs:
             # finding file for 'obs', 'var'
             #
             # @jiwoo: pretty easy as I have all variables in one file
-            file_name = param.obspath[obs].replace('VAR',var0)
+            file_name = param.reference_data_path[obs].replace('VAR',var0)
             file_areacell = None ## temporary for now
             try:
-                file_landmask = param.obspath_lf[obs]
+                file_landmask = param.reference_data_lf_path[obs]
             except:
                 file_landmask = None
 
@@ -119,10 +125,10 @@ for obs in list_obs:
             # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
                 list_files = list()
-                list_files = [param.obspath[obs].replace('VAR',var1) for var1 in var_in_file]
+                list_files = [param.reference_data_path[obs].replace('VAR',var1) for var1 in var_in_file]
                 list_areacell = [file_areacell for var1 in var_in_file]
                 list_name_area = [areacell_in_file for var1 in var_in_file]
-                list_landmask = [param.obspath_lf[obs] for var1 in var_in_file]
+                list_landmask = [param.reference_data_lf_path[obs] for var1 in var_in_file]
                 list_name_land = [landmask_in_file for var1 in var_in_file]
             else:
                 list_files = file_name
@@ -134,15 +140,11 @@ for obs in list_obs:
                                   'path + filename_area': list_areacell, 'areaname': list_name_area,
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
-print 'PMPdriver: dict_obs readin end'
+print('PMPdriver: dict_obs readin end')
 
 #=================================================
-# Loop for Observation and Models 
+# Loop for Models 
 #-------------------------------------------------
-# Insert observation at the beginning of the loop ---
-list_models = copy.copy(param.modnames)
-#list_models.insert(0,'obs')
-print 'PMPdriver: list models:', list_models
 
 # Dictionary to save result ---
 def tree(): return defaultdict(tree)
@@ -154,7 +156,7 @@ enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
 #
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
-for mod in list_models:
+for mod in models:
 
     ##try:
 
@@ -166,7 +168,7 @@ for mod in list_models:
         # if you want to use atmosphere only, do not use this or create your own way to find the equivalent between the
         # variable name in the program and the variable name in the file
     
-        print 'PMPdriver: var loop start for model ', mod
+        print('PMPdriver: var loop start for model ', mod)
     
         for var in list_variables:
             #
@@ -180,9 +182,11 @@ for mod in list_models:
             #
             # finding file for 'mod', 'var'
             #
-            file_name = param.modpath.replace('MOD',mod).replace('VAR',var0)
+            #file_name = param.modpath.replace('MOD',mod).replace('VAR',var0)
+            file_name = modpath(model=mod, realization='r1i1p1', variable=var0)
             file_areacell = None ## temporary for now
-            file_landmask = param.modpath_lf.replace('MOD',mod)
+            #file_landmask = param.modpath_lf.replace('MOD',mod)
+            file_landmask = modpath_lf(model=mod)
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
             except:
@@ -194,10 +198,10 @@ for mod in list_models:
     
             if isinstance(var_in_file, list):
                 list_files = list()
-                list_files = [param.modpath.replace('MOD',mod).replace('VAR',var1) for var1 in var_in_file]
+                list_files = [modpath(model=mod, variable=var1) for var1 in var_in_file]
                 list_areacell = [file_areacell for var1 in var_in_file]
                 list_name_area = [areacell_in_file for var1 in var_in_file]
-                list_landmask = [param.modpath_lf.replace('MOD',mod) for var1 in var_in_file]
+                list_landmask = [modpath_lf(model=mod) for var1 in var_in_file]
                 list_name_land = [landmask_in_file for var1 in var_in_file]
             else:
                 list_files = file_name
@@ -209,7 +213,7 @@ for mod in list_models:
                                   'path + filename_area': list_areacell, 'areaname': list_name_area,
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
     
-        print 'PMPdriver: var loop end'
+        print('PMPdriver: var loop end')
     
         # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
         # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
@@ -226,27 +230,27 @@ for mod in list_models:
         #         'newgrid_name': 'generic 1x1deg'},
         # }
         # Computes the metric collection
-        netcdf_path = '/work/lee1043/imsi/result_test/enso_metric'
-        netcdf_name = '20181210_YANN_PLANTON_' + mc_name + '_' + mod
+        netcdf_path = param.results_dir
+        netcdf_name = StringConstructor(param.netcdf_name)(model=mod) 
         #dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=param.debug)
         dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
                                                              netcdf_name=netcdf_name)
         # Prints the metrics values
-        for ii in range (3): print ''
-        print str().ljust(5) + str(mod)
+        for ii in range (3): print('')
+        print(str().ljust(5) + str(mod))
         list_metric = dict_metric[mod]['value'].keys()
         for metric in list_metric:
-            print str().ljust(10) + str(metric)
+            print(str().ljust(10) + str(metric))
             metric_dict = dict_metric[mod]['value'][metric]['metric']
             for ref in metric_dict.keys():
-                print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
-                      + str(metric_dict[ref]['value_error'])
+                print(str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
+                      + str(metric_dict[ref]['value_error']))
     
     ##except Exception as e: 
-        ##print 'failed for ', mod
+        ##print('failed for ', mod)
         ##print(e)
   
-print 'PMPdriver: model loop end'
+print('PMPdriver: model loop end')
 
 #=================================================
 #  OUTPUT METRICS TO JSON FILE
@@ -254,7 +258,7 @@ print 'PMPdriver: model loop end'
 enso_stat_dic['obs'] = dict_obs
 enso_stat_dic['model'] = dict_metric
 
-OUT = pcmdi_metrics.io.base.Base(os.path.abspath(param.outpathjson), param.outnamejson)
+OUT = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'.json')
 
 disclaimer = open(
     os.path.join(
