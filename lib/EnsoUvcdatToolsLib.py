@@ -1157,9 +1157,9 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
             nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] <= threshold)
         except:
             if all(ii == -9999 for ii in tmp2):
-                nbr_before = 0
+                nbr_after = 0
             elif all(ii > threshold for ii in tmp2):
-                nbr_before = len(tmp2)
+                nbr_after = len(tmp2)
     else:
         try:
             nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] >= threshold)
@@ -1172,9 +1172,9 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
             nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] >= threshold)
         except:
             if all(ii == 9999 for ii in tmp2):
-                nbr_before = 0
+                nbr_after = 0
             elif all(ii < threshold for ii in tmp2):
-                nbr_before = len(tmp2)
+                nbr_after = len(tmp2)
     duration = nbr_before + nbr_after
     if debug is True:
         dict_debug = {'line1': 'duration of the event = ' + str(duration)}
