@@ -1107,6 +1107,9 @@ def DurationAllEvent(tab, threshold, nino=True, debug=False):
         threshold to define the events (e.g., 0.75 for El Nino, -0.75 for La Nina)
     :param nino: boolean, optional
         True if events are detected if above threshold (El Nino like), if not pass anything but True (La Nina like)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     :return list_of_years: list
         list of years including a detected event
     """
@@ -1131,6 +1134,9 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
         threshold to define the events (e.g., 0.75 for El Nino, -0.75 for La Nina)
     :param nino: boolean, optional
         True if events are detected if above threshold (El Nino like), if not pass anything but True (La Nina like)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
     :return list_of_years: list
         list of years including a detected event
     """
