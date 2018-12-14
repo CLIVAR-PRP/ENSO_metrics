@@ -2178,7 +2178,7 @@ def FindXYMinMax(tab, return_val='both', smooth=False, axis=0, window=5, method=
         else:
             return axis_max
     else:
-        if len(axis_min) == 1 and en(axis_max) == 1:
+        if len(axis_min) == 1 and len(axis_max) == 1:
             return [axis_min[0], axis_max[0]]
         else:
             return [axis_min, axis_max]
