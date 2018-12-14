@@ -6444,8 +6444,12 @@ def NinaSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                    for tt in range(len(sample_obs))]
 
     # compute PDFs
-    pdf_model = ComputePDF(lon_min_model, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')
-    pdf_obs = ComputePDF(lon_min_obs, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')
+    if debug is True:
+        dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' + str((lon[1] - lon[0]) / 10)
+                               + '  ;  nbr_bins new = ' + str(int((lon[1] - lon[0]) / 10))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'before ComputePDF', 15, **dict_debug)
+    pdf_model = ComputePDF(lon_min_model, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
+    pdf_obs = ComputePDF(lon_min_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
 
     # Computes the root mean square difference
     pdfRmse = RmsZonal(pdf_model, pdf_obs, centered=centered_rmse, biased=biased_rmse)
@@ -6675,7 +6679,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
     # 2.2 count the number of consecutive month bellow a threshold
-    duration = DurationAllEvent(sample, -0.5, nino=False)
+    duration = DurationAllEvent(sample, -0.5, nino=False, debug=debug)
 
     duration_err = Std(duration) / NUMPYsqrt(len(duration))
     duration_mean = duration.mean()
@@ -7753,6 +7757,10 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                    for tt in range(len(sample_obs))]
 
     # compute PDFs
+    if debug is True:
+        dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' + str((lon[1] - lon[0]) / 10)
+                               + '  ;  nbr_bins new = ' + str(int((lon[1] - lon[0]) / 10))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'before ComputePDF', 15, **dict_debug)
     pdf_model = ComputePDF(lon_min_model, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')
     pdf_obs = ComputePDF(lon_min_obs, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')
 
@@ -7984,7 +7992,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
     # 2.2 count the number of consecutive month bellow a threshold
-    duration = DurationAllEvent(sample, 0.5, nino=True)
+    duration = DurationAllEvent(sample, 0.5, nino=True, debug=debug)
 
     duration_err = Std(duration) / NUMPYsqrt(len(duration))
     duration_mean = duration.mean()

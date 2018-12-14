@@ -1091,7 +1091,7 @@ def Detrend(tab, info, axis=0, method='linear', bp=0):
     return new_tab, info
 
 
-def DurationAllEvent(tab, threshold, nino=True):
+def DurationAllEvent(tab, threshold, nino=True, debug=False):
     """
     #################################################################################
     Description:
@@ -1110,12 +1110,12 @@ def DurationAllEvent(tab, threshold, nino=True):
     :return list_of_years: list
         list of years including a detected event
     """
-    tmp = MV2array([DurationEvent(tab[tt], threshold, nino=nino) for tt in range(len(tab))])
+    tmp = MV2array([DurationEvent(tab[tt], threshold, nino=nino, debug=debug) for tt in range(len(tab))])
     tmp.setAxis(0, tab.getAxis(0))
     return tmp
 
 
-def DurationEvent(tab, threshold, nino=True):
+def DurationEvent(tab, threshold, nino=True, debug=False):
     """
     #################################################################################
     Description:
@@ -1134,14 +1134,30 @@ def DurationEvent(tab, threshold, nino=True):
     :return list_of_years: list
         list of years including a detected event
     """
+    if debug is True:
+        dict_debug = {'line1': 'threshold = ' + str(threshold) + '  ;  nino = ' + str(nino),
+                      'line2': 'tab = ' + str(tab)}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
     tmp1 = list(reversed(tab[:len(tab)/2]))
     tmp2 = list(tab[len(tab)/2:])
     if nino is True:
-        nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] <= threshold) - 1
-        nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] <= threshold) - 1
+        try:
+            nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] <= threshold)
+        except:
+            nbr_before = len(tmp1)
+        try:
+            nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] <= threshold)
+        except:
+            nbr_after = len(tmp2)
     else:
-        nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] >= threshold) - 1
-        nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] >= threshold) - 1
+        try:
+            nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] >= threshold)
+        except:
+            nbr_before = len(tmp1)
+        try:
+            nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] >= threshold)
+        except:
+            nbr_after = len(tmp2)
     duration = nbr_before + nbr_after
     return duration
 
@@ -1271,12 +1287,6 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     CDMS2setAutoBounds('on')
     # Open file and get time dimension
     fi = CDMS2open(filename)
-    # print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib ReadAndSelectRegion" + '\033[0m'
-    # print filename
-    # print varname
-    # print box
-    # print time_bounds
-    # print frequency
     if box is None:  # no box given
         if time_bounds is None: # no time period given
             # read file

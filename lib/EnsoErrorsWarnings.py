@@ -319,8 +319,8 @@ def UnknownUnits(var_name, name_in_file, units, inspect_stack):
 
 # ---------------------------------------------------------------------------------------------------------------------#
 # Just prints
-def DebugMode(color, title, nbr_spaces, axes1='', axes2='', file1='', file2='', nina1='', nina2='', nino1='', nino2='',
-              shape1='', shape2='', time1='', time2='', var1='', var2=''):
+def DebugMode(color, title, nbr_spaces, axes1='', axes2='', file1='', file2='', line1='', line2='', nina1='', nina2='',
+              nino1='', nino2='', shape1='', shape2='', time1='', time2='', var1='', var2=''):
     """
     #################################################################################
     Description:
@@ -341,6 +341,18 @@ def DebugMode(color, title, nbr_spaces, axes1='', axes2='', file1='', file2='', 
         file name of variable 1
     :param file2: string, optional
         file name of variable 2
+    :param line1: string, optional
+        just a line to print 1
+    :param line2: string, optional
+        just a line to print 2
+    :param nina1: string, optional
+        list of nina years 1
+    :param nina2: string, optional
+        list of nina years 2
+    :param nino1: string, optional
+        list of nino years 1
+    :param nino2: string, optional
+        list of nino years 2
     :param shape1: string, optional
         shape of the array containing variable 1
     :param shape2: string, optional
@@ -371,6 +383,8 @@ def DebugMode(color, title, nbr_spaces, axes1='', axes2='', file1='', file2='', 
         print color + str().ljust(nbr_spaces+5) + 'nina year 1: ' + nina1 + bcolors.ENDC
     if nino1:
         print color + str().ljust(nbr_spaces+5) + 'nino year 1: ' + nino1 + bcolors.ENDC
+    if line1:
+        print color + str().ljust(nbr_spaces+5) + line1 + bcolors.ENDC
     # second variable
     if file2:
         print color + str().ljust(nbr_spaces+5) + 'file name 2: ' + file2 + bcolors.ENDC
@@ -386,5 +400,7 @@ def DebugMode(color, title, nbr_spaces, axes1='', axes2='', file1='', file2='', 
         print color + str().ljust(nbr_spaces+5) + 'nina year 2: ' + nina2 + bcolors.ENDC
     if nino2:
         print color + str().ljust(nbr_spaces+5) + 'nino year 2: ' + nino2 + bcolors.ENDC
+    if line2:
+        print color + str().ljust(nbr_spaces+5) + line2 + bcolors.ENDC
     return
 # ---------------------------------------------------------------------------------------------------------------------#
