@@ -109,7 +109,7 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['HadISST']#['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']
+    list_obs = ['Tropflux']#['HadISST']#['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']
 elif mc_name == 'ENSO_tel':
     list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
@@ -172,7 +172,7 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
+list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
 #
 # finding file and variable name in file for each observations dataset
 #
@@ -245,7 +245,7 @@ for mod in list_models:
     netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
     netcdf_name = '20181210_YANN_PLANTON_' + mc_name + '_' + mod
     dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
-                                                         netcdf_name=netcdf_name)
+                                                         netcdf_name=netcdf_name, debug=True)
     stop
     # Prints the metrics values
     for ii in range(3): print ''

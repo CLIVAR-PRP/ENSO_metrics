@@ -1135,30 +1135,50 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
         list of years including a detected event
     """
     if debug is True:
-        dict_debug = {'line1': 'threshold = ' + str(threshold) + '  ;  nino = ' + str(nino),
+        dict_debug = {'line1': 'threshold = ' + str(threshold) + '  ;  nino = ' + str(nino)
+                               + '  ;  len(tab) = ' + str(len(tab)),
                       'line2': 'tab = ' + str(tab)}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
+    if nino is True:
+        tab = MV2where(tab.mask, -9999, tab)
+    else:
+        tab = MV2where(tab.mask, 9999, tab)
     tmp1 = list(reversed(tab[:len(tab)/2]))
     tmp2 = list(tab[len(tab)/2:])
     if nino is True:
         try:
             nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] <= threshold)
         except:
-            nbr_before = len(tmp1)
+            if all(ii == -9999 for ii in tmp1):
+                nbr_before = 0
+            elif all(ii > threshold for ii in tmp1):
+                nbr_before = len(tmp1)
         try:
             nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] <= threshold)
         except:
-            nbr_after = len(tmp2)
+            if all(ii == -9999 for ii in tmp2):
+                nbr_before = 0
+            elif all(ii > threshold for ii in tmp2):
+                nbr_before = len(tmp2)
     else:
         try:
             nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] >= threshold)
         except:
-            nbr_before = len(tmp1)
+            if all(ii == 9999 for ii in tmp1):
+                nbr_before = 0
+            elif all(ii < threshold for ii in tmp1):
+                nbr_before = len(tmp1)
         try:
             nbr_after = next(x[0] for x in enumerate(tmp2) if x[1] >= threshold)
         except:
-            nbr_after = len(tmp2)
+            if all(ii == 9999 for ii in tmp2):
+                nbr_before = 0
+            elif all(ii < threshold for ii in tmp2):
+                nbr_before = len(tmp2)
     duration = nbr_before + nbr_after
+    if debug is True:
+        dict_debug = {'line1': 'duration of the event = ' + str(duration)}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
     return duration
 
 
