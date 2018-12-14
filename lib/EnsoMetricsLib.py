@@ -7761,8 +7761,8 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' + str((lon[1] - lon[0]) / 10)
                                + '  ;  nbr_bins new = ' + str(int((lon[1] - lon[0]) / 10))}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'before ComputePDF', 15, **dict_debug)
-    pdf_model = ComputePDF(lon_min_model, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')
-    pdf_obs = ComputePDF(lon_min_obs, nbr_bins=(lon[1] - lon[0]) / 10, interval=lon, axis_name='longitude')
+    pdf_model = ComputePDF(lon_min_model, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
+    pdf_obs = ComputePDF(lon_min_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
 
     # Computes the root mean square difference
     pdfRmse = RmsZonal(pdf_model, pdf_obs, centered=centered_rmse, biased=biased_rmse)
