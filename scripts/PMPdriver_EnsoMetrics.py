@@ -232,9 +232,13 @@ for mod in models:
         # Computes the metric collection
         netcdf_path = param.results_dir
         netcdf_name = StringConstructor(param.netcdf_name)(model=mod) 
-        #dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=param.debug)
-        dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
-                                                             netcdf_name=netcdf_name)
+        if param.nc_out: 
+            dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
+                                                             netcdf_name=netcdf_name, debug=param.debug)
+        else:
+            dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=False, netcdf_path=netcdf_path,
+                                                             netcdf_name=netcdf_name, debug=param.debug)
+
         # Prints the metrics values
         for ii in range (3): print('')
         print(str().ljust(5) + str(mod))
@@ -287,5 +291,16 @@ OUT.write(
         ',',
         ': '),
     sort_keys=True)
+
+if param.nc_out:
+    OUT2 = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'_dive_down.json')
+    OUT2.write(
+        metrics_dictionary,
+        json_structure=["type", "data", "metric", "item", "value or description"],
+        indent=4,
+        separators=(
+            ',',
+            ': '),
+        sort_keys=True)
 
 sys.exit('done')
