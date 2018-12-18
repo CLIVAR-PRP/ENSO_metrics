@@ -233,13 +233,15 @@ for mod in models:
         netcdf_path = param.results_dir
         netcdf_name = StringConstructor(param.netcdf_name)(model=mod) 
         if param.nc_out: 
-            dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
+            dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, dive_down=True, netcdf=True, 
+                                                             netcdf_path=netcdf_path,
                                                              netcdf_name=netcdf_name, debug=param.debug)
         else:
-            dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=False, netcdf_path=netcdf_path,
+            dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, dive_down=False, netcdf=False, netcdf_path=netcdf_path,
                                                              netcdf_name=netcdf_name, debug=param.debug)
 
         # Prints the metrics values
+        """
         for ii in range (3): print('')
         print(str().ljust(5) + str(mod))
         list_metric = dict_metric[mod]['value'].keys()
@@ -249,7 +251,7 @@ for mod in models:
             for ref in metric_dict.keys():
                 print(str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
                       + str(metric_dict[ref]['value_error']))
-    
+        """
     ##except Exception as e: 
         ##print('failed for ', mod)
         ##print(e)
@@ -293,6 +295,7 @@ OUT.write(
     sort_keys=True)
 
 if param.nc_out:
+    """
     OUT2 = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'_dive_down.json')
     OUT2.write(
         metrics_dictionary,
@@ -302,5 +305,9 @@ if param.nc_out:
             ',',
             ': '),
         sort_keys=True)
+    """
+    json.dump(dict_dive, 
+              open(os.path.join(param.results_dir, param.json_name+'.json'), 'w'),
+              indent=4, separators=(',', ': '))
 
 sys.exit('done')
