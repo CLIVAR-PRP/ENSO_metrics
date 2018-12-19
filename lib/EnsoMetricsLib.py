@@ -6681,7 +6681,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # 2.2 count the number of consecutive month bellow a threshold
     duration = DurationAllEvent(sample, -0.5, nino=False, debug=debug)
 
-    duration_err = Std(duration) / NUMPYsqrt(len(duration))
+    duration_err = float(Std(duration) / NUMPYsqrt(len(duration)))
     duration_mean = duration.mean()
 
     # Dive down diagnostic
@@ -7799,7 +7799,7 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
                nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
     """
-    The NinoSstDurRmse() function computes a duration of El Nino events.
+    The NinoSstDur() function computes a duration of El Nino events.
         1.) detect events
             1.1) SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
             1.2) SSTA < 'threshold' during 'season' are considered as El Nino events
@@ -7994,7 +7994,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # 2.2 count the number of consecutive month bellow a threshold
     duration = DurationAllEvent(sample, 0.5, nino=True, debug=debug)
 
-    duration_err = Std(duration) / NUMPYsqrt(len(duration))
+    duration_err = float(Std(duration) / NUMPYsqrt(len(duration)))
     duration_mean = duration.mean()
 
     # Dive down diagnostic
