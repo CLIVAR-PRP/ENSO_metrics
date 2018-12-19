@@ -269,7 +269,7 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
         return {'value': dict_col_valu, 'metadata': dict_col_meta},\
                {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}
     else:
-        return {'value': dict_col_valu, 'metadata': dict_col_meta}
+        return {'value': dict_col_valu, 'metadata': dict_col_meta}, {}
 # ---------------------------------------------------------------------------------------------------------------------#
 
 

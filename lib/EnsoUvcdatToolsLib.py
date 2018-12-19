@@ -1145,10 +1145,13 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
                                + '  ;  len(tab) = ' + str(len(tab)),
                       'line2': 'tab = ' + str(tab)}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
-    if nino is True:
-        tab = MV2where(tab.mask, -9999, tab)
+    if tab.mask.all() is False or tab.mask.all() == False:
+        pass
     else:
-        tab = MV2where(tab.mask, 9999, tab)
+        if nino is True:
+            tab = MV2where(tab.mask, -9999, tab)
+        else:
+            tab = MV2where(tab.mask, 9999, tab)
     tmp1 = list(reversed(tab[:len(tab)/2]))
     tmp2 = list(tab[len(tab)/2:])
     if nino is True:
