@@ -301,7 +301,7 @@ json.dump(metrics_dictionary,
 if param.nc_out:
     OUT2 = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'_dive_down.json')
     OUT2.write(
-        dict_dive 
+        dict_dive,
         indent=4,
         separators=(
             ',',
