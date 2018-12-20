@@ -285,7 +285,6 @@ metrics_dictionary["DISCLAIMER"] = disclaimer
 metrics_dictionary["REFERENCE"] = reference
 metrics_dictionary["RESULTS"] = enso_stat_dic
 
-"""
 OUT.write(
     metrics_dictionary,
     json_structure=["type", "data", "metric", "item", "value or description"],
@@ -298,13 +297,11 @@ OUT.write(
 json.dump(metrics_dictionary,
               open(os.path.join(param.results_dir, param.json_name+'.json'), 'w'),
               indent=4, separators=(',', ': '))
-
+"""
 if param.nc_out:
-    """
     OUT2 = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'_dive_down.json')
     OUT2.write(
-        metrics_dictionary,
-        json_structure=["type", "data", "metric", "item", "value or description"],
+        dict_dive 
         indent=4,
         separators=(
             ',',
@@ -312,7 +309,8 @@ if param.nc_out:
         sort_keys=True)
     """
     json.dump(dict_dive, 
-              open(os.path.join(param.results_dir, param.json_name+'._dive_down.json'), 'w'),
+              open(os.path.join(param.results_dir, param.json_name+'_dive_down.json'), 'w'),
               indent=4, separators=(',', ': '))
+    """
 
 sys.exit('done')
