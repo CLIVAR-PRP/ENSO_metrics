@@ -31,9 +31,6 @@ modpath_lf = StringConstructor(param.modpath_lf)
 models = param.modnames
 print('models:', models)
 
-#=================================================
-# User input option
-#-------------------------------------------------
 mc_name = param.metricsCollection 
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
@@ -89,12 +86,6 @@ for obs in list_obs:
         #
         # finding variable name in file
         #
-        # @jiwoo: correct / adapt the 'varname' in
-        # EnsoCollectionsLib.ReferenceObservations(obs)['variable_name_in_file'][var] if it is not correct or if you
-        # changed a name in the xml
-        # I usually alias the variable names from observations and models in the xml in order to have the same name
-        # for sst (or any other variable) in every xml. This way I don not need to go through this function to know the
-        # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
             print('\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m')
@@ -103,9 +94,7 @@ for obs in list_obs:
                 var0 = var_in_file[0]
             else:
                 var0 = var_in_file
-            #
             # finding file for 'obs', 'var'
-            #
             # @jiwoo: pretty easy as I have all variables in one file
             file_name = param.reference_data_path[obs].replace('VAR',var0)
             file_areacell = None ## temporary for now
@@ -145,20 +134,16 @@ print('PMPdriver: dict_obs readin end')
 #=================================================
 # Loop for Models 
 #-------------------------------------------------
-
 # Dictionary to save result ---
 def tree(): return defaultdict(tree)
 enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
 
-#######################################################
-#
 # finding file and variable name in file for each observations dataset
-#
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in models:
 
-    ##try:
+    try:
 
         dict_mod = {mod: {}}
         # ------------------------------------------------
@@ -252,9 +237,9 @@ for mod in models:
                 print(str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
                       + str(metric_dict[ref]['value_error']))
         """
-    ##except Exception as e: 
-        ##print('failed for ', mod)
-        ##print(e)
+    except Exception as e: 
+        print('failed for ', mod)
+        print(e)
   
 print('PMPdriver: model loop end')
 
