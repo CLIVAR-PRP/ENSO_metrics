@@ -298,10 +298,15 @@ json.dump(metrics_dictionary,
               open(os.path.join(param.results_dir, param.json_name+'.json'), 'w'),
               indent=4, separators=(',', ': '))
 """
+
+
+
 if param.nc_out:
+    """
     OUT2 = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'_dive_down.json')
     OUT2.write(
         dict_dive,
+        # json_structure=["type", "data", "metric", "item", "value or description"],
         indent=4,
         separators=(
             ',',
@@ -311,6 +316,6 @@ if param.nc_out:
     json.dump(dict_dive, 
               open(os.path.join(param.results_dir, param.json_name+'_dive_down.json'), 'w'),
               indent=4, separators=(',', ': '))
-    """
+    
 
 sys.exit('done')
