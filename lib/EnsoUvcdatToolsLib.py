@@ -3,14 +3,15 @@ from calendar import monthrange
 from copy import deepcopy
 from datetime import date
 from inspect import stack as INSPECTstack
+import ntpath
 from numpy import arange as NParange
 from numpy import array as NParray
 from numpy import exp as NPexp
 from numpy import histogram as NPhistogram
 from numpy import nonzero as NPnonzero
 from numpy import unravel_index as NPunravel_index
+from os.path import isdir as OSpath_isdir
 from os.path import isfile as OSpath__isfile
-from os.path import join as OSpath__join
 from scipy.signal import detrend as SCIPYsignal_detrend
 from scipy.stats import skew as SCIPYstats__skew
 
@@ -1636,13 +1637,19 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     return new_tab
 
 
-def SaveNetcdf(netcdf_path, netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=None, var2_attributes={},
+def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=None, var2_attributes={},
                var2_name='', var3=None, var3_attributes={}, var3_name='', var4=None, var4_attributes={},
                var4_name='', global_attributes={}):
-    if OSpath__isfile(OSpath__join(netcdf_path, netcdf_name)) is True:
-        o = CDMS2open(OSpath__join(netcdf_path, netcdf_name), 'a')
+    if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": given path does not exist",
+            str().ljust(5) + "netcdf_name = " + str(netcdf_name)
+        ]
+        EnsoErrorsWarnings.MyError(list_strings)
+    if OSpath__isfile(netcdf_name) is True:
+        o = CDMS2open(netcdf_name, 'a')
     else:
-        o = CDMS2open(OSpath__join(netcdf_path, netcdf_name), 'w+')
+        o = CDMS2open(netcdf_name, 'w+')
     if var1 is not None:
         if var1_name == '':
             var1_name = var1.id

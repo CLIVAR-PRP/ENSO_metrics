@@ -24,7 +24,7 @@ from KeyArgLib import DefaultArgValues
 def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                 sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                 sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                netcdf_path='', netcdf_name='', **kwargs):
+                netcdf_name='', **kwargs):
     """
     The BiasSstRmse() function computes the SST spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -71,13 +71,10 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -279,7 +276,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=sst_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -296,7 +293,7 @@ def BiasSstRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, 
 def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                   netcdf_path='', netcdf_name='', **kwargs):
+                   netcdf_name='', **kwargs):
     """
     The BiasSstLatRmse() function computes the SST meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -343,13 +340,10 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -560,7 +554,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=sst_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -577,7 +571,7 @@ def BiasSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                   netcdf_path='', netcdf_name='', **kwargs):
+                   netcdf_name='', **kwargs):
     """
     The BiasSstLonRmse() function computes the SST zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -624,13 +618,10 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -841,7 +832,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=sst_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -858,7 +849,7 @@ def BiasSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 def BiasSstSkLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                      sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                      sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                     netcdf_path='', netcdf_name='', **kwargs):
+                     netcdf_name='', **kwargs):
     """
     The BiasSstSkLonRmse() function computes the SST zonal (longitude) skewness and then its root mean square error
     (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -905,13 +896,10 @@ def BiasSstSkLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemo
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -1126,7 +1114,7 @@ def BiasSstSkLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemo
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: LonRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=ske_model, var1_attributes=dict1, var1_name='sstSkew_model',
+        SaveNetcdf(file_name, var1=ske_model, var1_attributes=dict1, var1_name='sstSkew_model',
                    var2_attributes=dict2, var2=ske_obs, var2_name='sstSkew_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -1142,8 +1130,7 @@ def BiasSstSkLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemo
 
 def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel, prlandmasknamemodel,
                prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-               centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='',
-               **kwargs):
+               centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasPrRmse() function computes the PR (precipitation) spatial root mean square error (RMSE) in a 'box' (usually
     the tropical Pacific)
@@ -1190,13 +1177,10 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -1399,7 +1383,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: pr_rmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
+        SaveNetcdf(file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
                    var2_attributes=dict2, var2=pr_obs, var2_name='pr_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -1415,8 +1399,7 @@ def BiasPrRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlan
 
 def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel, prlandmasknamemodel,
                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-                  centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='',
-                  **kwargs):
+                  centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasPrLatRmse() function computes the PR (zonal wind stress) meridional (latitude) root mean square error (RMSE)
     in a 'box' (usually 'nino3.3_LatExt')
@@ -1463,13 +1446,10 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -1680,7 +1660,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: pr_rmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
+        SaveNetcdf(file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
                    var2_attributes=dict2, var2=pr_obs, var2_name='pr_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -1696,8 +1676,7 @@ def BiasPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
 
 def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel, prlandmasknamemodel,
                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-                  centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='',
-                  **kwargs):
+                  centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasPrLonRmse() function computes the PR (zonal wind stress) zonal (longitude) root mean square error (RMSE) in
     a 'box' (usually the Equatorial Pacific)
@@ -1744,13 +1723,10 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -1961,7 +1937,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: pr_rmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
+        SaveNetcdf(file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
                    var2_attributes=dict2, var2=pr_obs, var2_name='pr_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -1978,7 +1954,7 @@ def BiasPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, pr
 def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemodel, tauxlandmaskfilemodel,
                  tauxlandmasknamemodel, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs, tauxlandmaskfileobs,
                  tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                 netcdf_path='', netcdf_name='', **kwargs):
+                 netcdf_name='', **kwargs):
     """
     The BiasTauxRmse() function computes the TAUX (zonal wind stress) spatial root mean square error (RMSE) in a 'box'
     (usually the tropical Pacific)
@@ -2025,13 +2001,10 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -2234,7 +2207,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: taux_rmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=taux_model, var1_attributes=dict1, var1_name='taux_model',
+        SaveNetcdf(file_name, var1=taux_model, var1_attributes=dict1, var1_name='taux_model',
                    var2_attributes=dict2, var2=taux_obs, var2_name='taux_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -2251,7 +2224,7 @@ def BiasTauxRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemo
 def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemodel, tauxlandmaskfilemodel,
                     tauxlandmasknamemodel, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
                     tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='',
-                    debug=False, netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                    debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasTauxLatRmse() function computes the TAUX (zonal wind stress) meridional (latitude) root mean square error
     (RMSE) in a 'box' (usually 'equatorial_pacific_LatExt')
@@ -2298,13 +2271,10 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -2516,7 +2486,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: taux_rmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=taux_model, var1_attributes=dict1, var1_name='taux_model',
+        SaveNetcdf(file_name, var1=taux_model, var1_attributes=dict1, var1_name='taux_model',
                    var2_attributes=dict2, var2=taux_obs, var2_name='taux_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -2533,7 +2503,7 @@ def BiasTauxLatRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
 def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanamemodel, tauxlandmaskfilemodel,
                     tauxlandmasknamemodel, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
                     tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='',
-                    debug=False, netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                    debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasTauxLonRmse() function computes the TAUX (zonal wind stress) zonal (longitude) root mean square error (RMSE)
     in a 'box' (usually the Equatorial Pacific)
@@ -2580,13 +2550,10 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -2798,7 +2765,7 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: taux_rmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=taux_model, var1_attributes=dict1, var1_name='taux_model',
+        SaveNetcdf(file_name, var1=taux_model, var1_attributes=dict1, var1_name='taux_model',
                    var2_attributes=dict2, var2=taux_obs, var2_name='taux_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -6075,7 +6042,7 @@ def EnsoSstMap(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, s
 def NinaSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False,
-                   netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinaSstDivRmse() function computes a zonal minimum of La Nina events during the peak of the event.
         1.) detect events
@@ -6130,13 +6097,10 @@ def NinaSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -6468,7 +6432,7 @@ def NinaSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                  'nina_years': str(event_years_obs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: pdfRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=pdf_model, var1_attributes=dict1, var1_name='pdf_model',
+        SaveNetcdf(file_name, var1=pdf_model, var1_attributes=dict1, var1_name='pdf_model',
                    var2_attributes=dict2, var2=pdf_obs, var2_name='pdf_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -6484,7 +6448,7 @@ def NinaSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 
 
 def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinaSstDurRmse() function computes a duration of La Nina events.
         1.) detect events
@@ -6523,13 +6487,10 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -6696,7 +6657,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: duration_mean,
                  'metric_value_error_' + dataset: duration_err,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=duration, var1_attributes=dict1, var1_name='sst_' + dataset,
+        SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='sst_' + dataset,
                    global_attributes=dict3)
         del dict1, dict3
 
@@ -6712,7 +6673,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False,
-                   netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinaSstLonRmse() function computes a zonal composite of La Nina events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -6764,13 +6725,10 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -7088,7 +7046,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                  'nina_years': str(event_years_obs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: compositeRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=composite_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -7106,7 +7064,7 @@ def NinaSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                   sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                   sstlandmasknameobs, box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1,
-                  dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                  dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinaSstTsRmse() function computes a time composite of La Nina events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -7160,13 +7118,10 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -7370,7 +7325,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
                  'nina_years': str(event_years_obs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: compositeRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=composite_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -7388,7 +7343,7 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
 def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False,
-                   netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstDivRmse() function computes a zonal composite of El Nino events during the peak of the event.
         1.) detect events
@@ -7443,13 +7398,10 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -7781,7 +7733,7 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                  'nino_years': str(event_years_obs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: pdfRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=pdf_model, var1_attributes=dict1, var1_name='pdf_model',
+        SaveNetcdf(file_name, var1=pdf_model, var1_attributes=dict1, var1_name='pdf_model',
                    var2_attributes=dict2, var2=pdf_obs, var2_name='pdf_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -7797,7 +7749,7 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 
 
 def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstDur() function computes a duration of El Nino events.
         1.) detect events
@@ -7836,13 +7788,10 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -8009,7 +7958,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: duration_mean,
                  'metric_value_error_' + dataset: duration_err,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=duration, var1_attributes=dict1, var1_name='sst_' + dataset,
+        SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='sst_' + dataset,
                    global_attributes=dict3)
         del dict1, dict3
 
@@ -8025,7 +7974,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False,
-                   netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstLonRmse() function computes a zonal composite of El Nino events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -8077,13 +8026,10 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -8402,7 +8348,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
                  'nino_years': str(event_years_obs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: compositeRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=composite_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -8420,7 +8366,7 @@ def NinoSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                   sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                   sstlandmasknameobs, box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1,
-                  dataset='', debug=False, netcdf=False, netcdf_path='', netcdf_name='', **kwargs):
+                  dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstTsRmse() function computes a time composite of El Nino events
     SSTA averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
@@ -8474,13 +8420,10 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -8685,7 +8628,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
                  'nino_years': str(event_years_obs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: compositeRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=composite_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=composite_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -8703,7 +8646,7 @@ def NinoSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
 def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
                       prlandmasknamemodel, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
                       prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                      netcdf_path='', netcdf_name='', **kwargs):
+                      netcdf_name='', **kwargs):
     """
     The SeasonalPrLatRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -8750,13 +8693,10 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -8976,7 +8916,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
+        SaveNetcdf(file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
                    var2_attributes=dict2, var2=pr_obs, var2_name='pr_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -8993,7 +8933,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
 def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
                       prlandmasknamemodel, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
                       prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                      netcdf_path='', netcdf_name='', **kwargs):
+                      netcdf_name='', **kwargs):
     """
     The SeasonalPrLonRmse() function computes the climatological (12 months) PR (precipitation) zonal (longitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -9040,13 +8980,10 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -9266,7 +9203,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
+        SaveNetcdf(file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
                    var2_attributes=dict2, var2=pr_obs, var2_name='pr_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -9283,7 +9220,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
 def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                        sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                        sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                      netcdf_path='', netcdf_name='', **kwargs):
+                       netcdf_name='', **kwargs):
     """
     The SeasonalSstLatRmse() function computes the climatological (12 months) SST meridional (latitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -9330,13 +9267,10 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -9554,7 +9488,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=sst_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 
@@ -9571,7 +9505,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
 def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                        sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                        sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                       netcdf_path='', netcdf_name='', **kwargs):
+                       netcdf_name='', **kwargs):
     """
     The SeasonalSstLonRmse() function computes the climatological (12 months) SST zonal (longitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -9618,13 +9552,10 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
-        default value = '' root name of the saved NetCDFs
+        default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -9844,7 +9775,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
         dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
                  'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(netcdf_path, file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
+        SaveNetcdf(file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
                    var2_attributes=dict2, var2=sst_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
         del dict1, dict2, dict3
 

@@ -244,10 +244,10 @@ for mod in list_models:
     #                                                     debug=False, dive_down=True)
     netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
     netcdf_name = '20181210_YANN_PLANTON_' + mc_name + '_' + mod
+    netcdf = join_path(netcdf_path, netcdf_name)
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
     #                                                      netcdf_name=netcdf_name, debug=True, dive_down=True)
-    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
-                                                        netcdf_name=netcdf_name, debug=True)
+    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
     dict_metric[mod]['value'].keys()
     stop
     # Prints the metrics values
