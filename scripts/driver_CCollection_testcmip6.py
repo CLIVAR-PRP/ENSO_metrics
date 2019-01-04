@@ -10,8 +10,8 @@ import sys
 sys.path.insert(0, "/home/yplanton/ENSO_metrics/lib")
 
 # ENSO_metrics package
-from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
-from EnsoComputeMetricsLib import ComputeCollection
+from lib.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+from lib.EnsoComputeMetricsLib import ComputeCollection
 
 # My (YYP) package
 from getfiles_sh_to_py import find_path_and_files
@@ -253,7 +253,7 @@ list_models = ['IPSL-CM6A-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-C
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
-    list_ens = get_ensembles(exp='hist', fre=frequency, mod=mod, pro=project, rea=realm)
+    list_ens = get_ensembles(exp='hist', fre=frequency, mod=mod, pro=project, rea=realm) #toto
     list_ens = list_ens[4:]
     dict_ens, dict_ens_dive = dict(), dict()
     for ens in list_ens:
