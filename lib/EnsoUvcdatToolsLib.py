@@ -726,7 +726,8 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
 
 
 def ArrayToList(tab):
-    if tab.mask.all() is False or tab.mask.all() == False:
+    mask = [tab.mask] if tab.mask is False else ([tab.mask] if tab.mask is True else tab.mask)
+    if all(ii is False for ii in mask) is True:
         tmp = NParray(tab)
     else:
         tmp = NParray(MV2where(tab.mask, 1e20, tab))
@@ -1146,18 +1147,20 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
                                + '  ;  len(tab) = ' + str(len(tab)),
                       'line2': 'tab = ' + str(tab)}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
-    if tab.mask.all() is False or tab.mask.all() == False:
+    mask = [tab.mask] if tab.mask is False else ([tab.mask] if tab.mask is True else tab.mask)
+    if all(ii is False for ii in mask) is True:
         pass
     else:
         if nino is True:
             tab = MV2where(tab.mask, -9999, tab)
         else:
             tab = MV2where(tab.mask, 9999, tab)
+    if debug is True:
+        dict_debug = {'line1': 'after unmasking',
+                      'line2': 'tab = ' + str(tab)}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
     tmp1 = list(reversed(tab[:len(tab)/2]))
     tmp2 = list(tab[len(tab)/2:])
-    print tmp1
-    print ''
-    print tmp2
     if nino is True:
         try:
             nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] <= threshold)

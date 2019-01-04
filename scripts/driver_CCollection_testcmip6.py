@@ -10,8 +10,8 @@ import sys
 sys.path.insert(0, "/home/yplanton/ENSO_metrics/lib")
 
 # ENSO_metrics package
-from lib.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
-from lib.EnsoComputeMetricsLib import ComputeCollection
+from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+from EnsoComputeMetricsLib import ComputeCollection
 
 # My (YYP) package
 from getfiles_sh_to_py import find_path_and_files
