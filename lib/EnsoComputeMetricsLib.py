@@ -565,7 +565,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             # puts diagnostic metadata in its proper dictionary
             dict_diagnostic_metadata['model'] = {'name': modelName, 'nyears': diagnostic1[obs]['nyears_model'],
                                                  'time_period': diagnostic1[obs]['time_period_model']}
-            dict_diagnostic_metadata[obs] = {'name': obs, 'nyears': diagnostic1[obs]['nyears_model'],
+            dict_diagnostic_metadata[obs] = {'name': obs, 'nyears': diagnostic1[obs]['nyears_observations'],
                                              'time_period': diagnostic1[obs]['time_period_observations']}
             if 'events_model' in diagnostic1[obs].keys():
                 dict_diagnostic_metadata['model']['events'] = diagnostic1[obs]['events_model']

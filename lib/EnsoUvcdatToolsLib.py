@@ -1155,6 +1155,9 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
             tab = MV2where(tab.mask, 9999, tab)
     tmp1 = list(reversed(tab[:len(tab)/2]))
     tmp2 = list(tab[len(tab)/2:])
+    print tmp1
+    print ''
+    print tmp2
     if nino is True:
         try:
             nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] <= threshold)
