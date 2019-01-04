@@ -726,7 +726,12 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
 
 
 def ArrayToList(tab):
-    mask = [tab.mask] if tab.mask is False else ([tab.mask] if tab.mask is True else tab.mask)
+    try:
+        len(tab.mask)
+    except:
+        mask = [tab.mask]
+    else:
+        mask = tab.mask
     if all(ii is False for ii in mask) is True:
         tmp = NParray(tab)
     else:
@@ -1142,12 +1147,17 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
     :return list_of_years: list
         list of years including a detected event
     """
+    try:
+        len(tab.mask)
+    except:
+        mask = [tab.mask]
+    else:
+        mask = tab.mask
     if debug is True:
         dict_debug = {'line1': 'threshold = ' + str(threshold) + '  ;  nino = ' + str(nino)
                                + '  ;  len(tab) = ' + str(len(tab)),
-                      'line2': 'tab = ' + str(tab)}
+                      'line2': 'tab = ' + str(tab) + '\nmask = ' + str(mask)}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
-    mask = [tab.mask] if tab.mask is False else ([tab.mask] if tab.mask is True else tab.mask)
     if all(ii is False for ii in mask) is True:
         pass
     else:
