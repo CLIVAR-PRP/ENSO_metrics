@@ -9,10 +9,11 @@ from numpy import square as NUMPYsquare
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
 from EnsoUvcdatToolsLib import ArrayOnes, ArrayToList, ApplyLandmask, ApplyLandmaskToArea, AverageMeridional,\
-    AverageZonal, CheckTime, Composite, Composite_ev_by_ev, ComputePDF, Correlation, DetectEvents, DurationAllEvent,\
-    FindXYMinMax, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, MyDerive, PreProcessTS,\
-    ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, RmsAxis, RmsHorizontal, RmsMeridional,\
-    RmsTemporal, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, Std, TimeBounds, TwoVarRegrid
+    AverageZonal, CheckTime, Composite, Composite_ev_by_ev, ComputePDF, Correlation, DetectEvents, DurationAllEvent, \
+    FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, MyDerive, PreProcessTS,\
+    ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis, RmsHorizontal,\
+    RmsMeridional, RmsTemporal, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, Std, StdMonthly, TimeBounds,\
+    TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -2780,7 +2781,8 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
 
 
 def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lhffile, lhfname,
-                 lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, debug=False, **kwargs):
+                 lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, debug=False, netcdf=False,
+                 netcdf_name='', **kwargs):
     """
     The EnsoAlphaLhf() function computes the regression of 'lhfbox' lhfA (latent heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 lhfA over nino3 sstA)
@@ -2823,6 +2825,13 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -2981,7 +2990,8 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
-                 lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, debug=False, **kwargs):
+                 lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, debug=False, netcdf=False,
+                 netcdf_name='', **kwargs):
     """
     The EnsoAlphaLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
     'sstbox' sstA (usually the regression of nino3 lwrA over nino3 sstA)
@@ -3028,6 +3038,13 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -3218,7 +3235,8 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, shffile, shfname,
-                 shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, debug=False, **kwargs):
+                 shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, debug=False, netcdf=False,
+                 netcdf_name='', **kwargs):
     """
     The EnsoAlphaShf() function computes the regression of 'shfbox' shfA (sensible heat flux anomalies) over 'sstbox'
     sstA (usually the regression of nino3 shfA over nino3 sstA)
@@ -3261,6 +3279,13 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -3419,7 +3444,8 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, swrfile, swrname,
-                 swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, debug=False, **kwargs):
+                 swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, debug=False, netcdf=False,
+                 netcdf_name='', **kwargs):
     """
     The EnsoAlphaSwr() function computes the regression of 'swrbox' swrA (net surface shortwave radiation anomalies)
     over 'sstbox' sstA (usually the regression of nino3 swrA over nino3 sstA)
@@ -3466,6 +3492,13 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -3656,7 +3689,8 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, thffile, thfname,
-                 thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, debug=False, **kwargs):
+                 thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, debug=False, netcdf=False,
+                 netcdf_name='', **kwargs):
     """
     The EnsoAlphaThf() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 thfA over nino3 sstA)
@@ -3708,6 +3742,13 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -3897,8 +3938,8 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return alphaMetric
 
 
-def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, debug=False,
-             **kwargs):
+def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset='',
+             debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoAmpl() function computes the standard deviation of 'sstbox' sstA (usually the standard deviation of nino3
     sstA)
@@ -3924,9 +3965,18 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param sstbox: string
         name of box (nino3') for SST
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -4046,16 +4096,74 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     # Standard Error of the Standard Deviation (function of nyears)
     sstStdErr = sstStd / NUMPYsqrt(yearN)
 
+    # Dive down diagnostic
+    sstStd_monthly = StdMonthly(sst)
+    dive_down_diag = {'model': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
+    if netcdf is True:
+        # additional diagnostic
+        # Read file and select the right region
+        sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box='equatorial_pacific_LatExt', **kwargs)
+        # Read areacell
+        if sstareafile:
+            sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box='equatorial_pacific_LatExt',
+                                                **kwargs)
+        else:
+            sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box='equatorial_pacific_LatExt',
+                                                **kwargs)
+        # Read landmask
+        if sstlandmaskfile:
+            sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname,
+                                                    box='equatorial_pacific_LatExt', **kwargs)
+        else:
+            sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname,
+                                                    box='equatorial_pacific_LatExt', **kwargs)
+        # Apply landmask
+        if sst_landmask is not None:
+            sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
+            if sst_areacell is None:
+                sst_areacell = ArrayOnes(sst_landmask, id='areacell')
+            sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
+            del sst_landmask
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, compute_anom=True, **kwargs)
+        # Regridding
+        if not isinstance(kwargs['regridding'], dict):
+            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                    'newgrid_name': 'generic_1x1deg'}
+        sst = Regrid(sst, None, region='equatorial_pacific_LatExt', **kwargs['regridding'])
+        # Meridional average
+        sst_lon = AverageMeridional(sst(longitude=(-5., 5)))
+        # skewness
+        std_lon = Std(sst_lon)
+        std_map = Std(sst)
+        if ".nc" in netcdf_name:
+            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+        else:
+            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+        dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'diagnostic_value': sstStd, 'diagnostic_value_error': sstStdErr}
+        dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'cell_methods': 'grid: regrid toward generic_1x1deg ; meridional: mean between 5S and 5N'}
+        dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds)}
+        dict4 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                 'frequency': kwargs['frequency']}
+        SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_' + dataset, var2=std_lon,
+                   var2_attributes=dict2, var2_name='sstStd_lon_' + dataset, var3=std_map, var3_attributes=dict3,
+                   var3_name='sstStd_map_' + dataset, global_attributes=dict4)
+        del dict1, dict2, dict3, dict4
+
     # Create output
     amplMetric = {
         'name': Name, 'value': sstStd, 'value_error': sstStdErr, 'units': Units, 'method': Method, 'nyears': yearN,
         'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
     }
     return amplMetric
 
 
 def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile, tauxname,
-           tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, debug=False, **kwargs):
+           tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, debug=False, netcdf=False,
+           netcdf_name='', **kwargs):
     """
     The EnsoMu() function computes the regression of 'tauxbox' tauxA (surface downward zonal stress anomalies) over
     'sstbox' sstA (usually the regression of nino4 tauxA over nino3 sstA)
@@ -4098,6 +4206,13 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -4265,7 +4380,7 @@ def EnsoPrMap(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, ss
               prlandmaskfilemodel, prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs,
               sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs,
               prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0,
-              biased_rmse=1, debug=False, **kwargs):
+              biased_rmse=1, debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoPrMap() function computes precipitation anomalies pattern associated with ENSO on the globe.
     First metric: rmse(observations vs model).
@@ -4339,7 +4454,13 @@ def EnsoPrMap(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, ss
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -4678,7 +4799,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
                  prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                  sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
                  prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False,
-                 **kwargs):
+                 netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoPrJjaTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
         reference regions, then precipitations in JJA are composited for each selected event and the difference
@@ -4750,7 +4871,13 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -5084,7 +5211,7 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
                  prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                  sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
                  prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False,
-                 **kwargs):
+                 netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoPrNdjTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
         reference regions, then precipitations in NDJ are composited for each selected event and the difference
@@ -5156,7 +5283,13 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -5486,7 +5619,7 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
 
 
 def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, debug=False,
-                    **kwargs):
+                    netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoSeasonality() function computes ratio between the November-December-January (NDJ) and March-April-May (MAM)
     average standard deviation of 'sstbox' sstA (usually nino3 sstA)
@@ -5510,6 +5643,13 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -5654,9 +5794,232 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     return seaMetric
 
 
+def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset='',
+                debug=False, netcdf=False, netcdf_name='', **kwargs):
+    """
+    The EnsoSstSkew() function computes the skewness of 'sstbox' sstA (usually the skewness of nino3 sstA)
+
+    Author:	Eric Guilyardi : Eric.Guilyardi@locean-ipsl.upmc.fr
+    Co-author: Yann Planton : yann.planton@locean-ipsl.upmc.fr
+
+    Created on Mon Jan  9 11:05:18 CET 2017
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of SST
+    :param sstname: string
+        name of SST variable (tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param sstbox: string
+        name of box (nino3') for SST
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return skewMetric: dict
+        name, value, value_error, units, method, nyears, time_frequency, time_period, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO skewness'
+    Units = 'C'
+    Method = 'Standard deviation of ' + sstbox + ' sstA'
+    Ref = 'Using CDAT regression calculation'
+    metric = 'EnsoSstSkew'
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        dict_debug = {'file1': '(sst) ' + sstfile, 'var1': '(sst) ' + sstname}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
+    if debug is True:
+        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
+                      'time1': '(sst) ' + str(TimeBounds(sst))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+
+    # Read areacell
+    if sstareafile:
+        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
+    else:
+        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
+    if debug is True:
+        if sst_areacell is not None:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst_areacell.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+
+    # Read landmask
+    if sstlandmaskfile:
+        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
+    else:
+        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
+    if debug is True:
+        if sst_landmask is not None:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst_landmask.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+
+    # Apply landmask
+    if sst_landmask is not None:
+        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
+        if sst_areacell is None:
+            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
+        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
+        del sst_landmask
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        if len(sst) < kwargs['min_time_steps']:
+            EnsoErrorsWarnings.TooShortTimePeriod(metric, len(sst), kwargs['min_time_steps'], INSPECTstack())
+
+    # Number of years
+    yearN = sst.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(sst)
+
+    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+    del sst_areacell
+    if debug is True:
+        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
+                      'time1': '(sst) ' + str(TimeBounds(sst))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+    # Computes the standard deviation
+    sstSke = float(SkewnessTemporal(sst))
+
+    # Standard Error of the Standard Deviation (function of nyears)
+    sstSkeErr = sstSke / NUMPYsqrt(yearN)
+
+    # Dive down diagnostic
+    sstStd_monthly = StdMonthly(sst)
+    dive_down_diag = {'model': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
+    if netcdf is True:
+        # additional diagnostic
+        # Read file and select the right region
+        sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box='equatorial_pacific_LatExt', **kwargs)
+        # Read areacell
+        if sstareafile:
+            sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box='equatorial_pacific_LatExt',
+                                                **kwargs)
+        else:
+            sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box='equatorial_pacific_LatExt',
+                                                **kwargs)
+        # Read landmask
+        if sstlandmaskfile:
+            sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname,
+                                                    box='equatorial_pacific_LatExt', **kwargs)
+        else:
+            sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname,
+                                                    box='equatorial_pacific_LatExt', **kwargs)
+        # Apply landmask
+        if sst_landmask is not None:
+            sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
+            if sst_areacell is None:
+                sst_areacell = ArrayOnes(sst_landmask, id='areacell')
+            sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
+            del sst_landmask
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, compute_anom=True, **kwargs)
+        # Regridding
+        if not isinstance(kwargs['regridding'], dict):
+            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                    'newgrid_name': 'generic_1x1deg'}
+        sst = Regrid(sst, None, region='equatorial_pacific_LatExt', **kwargs['regridding'])
+        # Meridional average
+        sst_lon = AverageMeridional(sst(longitude=(-5., 5)))
+        # skewness
+        ske_lon = SkewnessTemporal(sst_lon)
+        ske_map = SkewnessTemporal(sst)
+        if ".nc" in netcdf_name:
+            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+        else:
+            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+        dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'diagnostic_value': sstSke, 'diagnostic_value_error': sstSkeErr}
+        dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'cell_methods': 'grid: regrid toward generic_1x1deg ; meridional: mean between 5S and 5N'}
+        dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds)}
+        dict4 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                 'frequency': kwargs['frequency']}
+        SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstSkew_' + dataset, var2=ske_lon,
+                   var2_attributes=dict2, var2_name='sstSkew_lon_' + dataset, var3=ske_map, var3_attributes=dict3,
+                   var3_name='sstSkew_map_' + dataset, global_attributes=dict4)
+        del dict1, dict2, dict3, dict4
+
+    # Create output
+    skewMetric = {
+        'name': Name, 'value': sstSke, 'value_error': sstSkeErr, 'units': Units, 'method': Method, 'nyears': yearN,
+        'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
+    }
+    return skewMetric
+
+
 def EnsoSstMap(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-               sstlandmasknameobs, sstbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False, **kwargs):
+               sstlandmasknameobs, sstbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False, netcdf=False,
+               netcdf_name='', **kwargs):
     """
     The EnsoSstMap() function computes temperature anomalies pattern associated with ENSO on the globe.
     First metric: rmse(observations vs model).
@@ -5704,7 +6067,13 @@ def EnsoSstMap(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, s
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -6402,10 +6771,12 @@ def NinaSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
 
     # 2.2 find the zonal position of the minimum SSTA for each selected event and compute a pdf
     # longitude of the minimum SSTA for each selected event
-    lon_min_model = [FindXYMinMax(sample_model[tt], return_val='mini', smooth=True, axis=0, window=5, method='triangle')
-                     for tt in range(len(sample_model))]
-    lon_min_obs = [FindXYMinMax(sample_obs[tt], return_val='mini', smooth=True, axis=0, window=5, method='triangle')
-                   for tt in range(len(sample_obs))]
+    lon_min_model = FindXYMinMaxInTs(sample_model, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
+    lon_min_obs = FindXYMinMaxInTs(sample_obs, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
+    if debug is True:
+        dict_debug = {'line1': '(model) longitude  of the maximum SSTA: ' + str(lon_min_model),
+                      'line2': '(obs) longitude  of the maximum SSTA: ' + str(lon_min_obs)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
     # compute PDFs
     if debug is True:
@@ -6643,7 +7014,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     duration = DurationAllEvent(sample, -0.5, nino=False, debug=debug)
 
     duration_err = float(Std(duration) / NUMPYsqrt(len(duration)))
-    duration_mean = duration.mean()
+    duration_mean = float(duration.mean())
 
     # Dive down diagnostic
     dive_down_diag = {'value': ArrayToList(duration), 'axis': list(duration.getAxis(0)[:])}
@@ -6653,13 +7024,17 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         else:
             file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
         dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                 'nina_years': str(event_years)}
-        dict3 = {'metric_name': Name, 'metric_value_' + dataset: duration_mean,
-                 'metric_value_error_' + dataset: duration_err,
-                 'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='sst_' + dataset,
+                 'nina_years': str(event_years), 'diagnostic_value_' + dataset: duration_mean,
+                 'diagnostic_value_error_' + dataset: duration_err}
+        dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'nina_years': str(event_years), 'diagnostic_value_' + dataset: duration_mean,
+                 'diagnostic_value_error_' + dataset: duration_err}
+        dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                 'frequency': kwargs['frequency']}
+        SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='Nina_duration_' + dataset, var2=sample,
+                   var2_attributes=dict2, var2_name='Nina_time_series_' + dataset,
                    global_attributes=dict3)
-        del dict1, dict3
+        del dict1, dict2, dict3
 
     # Create output
     NinaDurMetric = {
@@ -7340,6 +7715,330 @@ def NinaSstTsRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel
     return NinaTsMetric
 
 
+def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+    """
+    The NinoSstDiv() function computes a zonal composite of El Nino events during the peak of the event.
+        1.) detect events
+            1.1) SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+            1.2) SSTA > 'threshold' during 'season' are considered as La Nina events
+        2.) diversity of the zonal location of the maximum SSTA
+            2.1) zonal SSTA at the peak of the event is computed for each selected event
+            2.2) find the zonal position of the maximum SSTA for each selected event
+            2.3) compute the percentage of EP events (maximum SSTA in Niño3)
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of the SST
+    :param sstname: string
+        name of SST variable (tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param box: string
+        name of box ('nino3') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return NinoDivMetric: dict
+        name, value, value_error, units, method, nyears, events, time_frequency, time_period, time_period, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'Nino Diversity (percentage of Nino peaking in Nino3 region)'
+    lat = ReferenceRegions(box)['latitude']
+    lon = ReferenceRegions(box)['longitude']
+    Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA ' \
+             + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + '])'
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'NinoSstDiv'
+
+    # ------------------------------------------------
+    # 1. detect events
+    # ------------------------------------------------
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        dict_debug = {'file1': sstfile, 'var1': sstname}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files ENSO', 10, **dict_debug)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=region_ev, **kwargs)
+    if debug is True:
+        dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
+                      'time1': str(TimeBounds(sst))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+
+    # Read areacell
+    if sstareafile:
+        areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=region_ev, **kwargs)
+    else:
+        areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=region_ev, **kwargs)
+    if debug is True:
+        dict_debug = {}
+        if areacell is not None:
+            dict_debug['axes1'] = str([ax.id for ax in areacell.getAxisList()])
+            dict_debug['shape1'] = str(areacell.shape)
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+
+    # Read landmask
+    if sstlandmaskfile:
+        landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=region_ev, **kwargs)
+    else:
+        landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=region_ev, **kwargs)
+    if debug is True:
+        dict_debug = {}
+        if landmask is not None:
+            dict_debug['axes1'] = str([ax.id for ax in landmask.getAxisList()])
+            dict_debug['shape1'] = str(landmask.shape)
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+
+    # Apply landmask
+    if landmask is not None:
+        sst = ApplyLandmask(sst, landmask, maskland=True, maskocean=False)
+        if areacell is None:
+            areacell = ArrayOnes(landmask, id='areacell')
+        areacell = ApplyLandmaskToArea(areacell, landmask, maskland=True, maskocean=False)
+        del landmask
+
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        mini = kwargs['min_time_steps']
+        if len(sst) < mini:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+                            str().ljust(5) + metric + ": time-period is too short: "
+                            + str(len(sst)) + " (minimum time-period: " + str(mini) + ")"]
+            EnsoErrorsWarnings.MyError(list_strings)
+
+    # Number of years
+    yearN = sst.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(sst)
+
+    # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+    # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    sst, Method = PreProcessTS(sst, Method, areacell=areacell, average='horizontal', compute_anom=True, **kwargs)
+    del areacell
+    if debug is True:
+        dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
+                      'time1': str(TimeBounds(sst))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+    # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
+    # Lists event years
+    event_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+    if debug is True:
+        dict_debug = {'nino1': str(event_years)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+
+    # ------------------------------------------------
+    # 2. diversity of the zonal location of the minimum SSTA
+    # ------------------------------------------------
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        dict_debug = {'file1': sstfile, 'var1': sstname}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files ENSO', 10, **dict_debug)
+    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=box, **kwargs)
+    if debug is True:
+        dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
+                      'time1': str(TimeBounds(sst))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+
+    # Read areacell
+    if sstareafile:
+        areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=box, **kwargs)
+    else:
+        areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=box, **kwargs)
+    if debug is True:
+        dict_debug = {}
+        if areacell is not None:
+            dict_debug['axes1'] = str([ax.id for ax in areacell.getAxisList()])
+            dict_debug['shape1'] = str(areacell.shape)
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+
+    # Read landmask
+    if sstlandmaskfile:
+        landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=box, **kwargs)
+    else:
+        landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=box, **kwargs)
+    if debug is True:
+        dict_debug = {}
+        if landmask is not None:
+            dict_debug['axes1'] = str([ax.id for ax in landmask.getAxisList()])
+            dict_debug['shape1'] = str(landmask.shape)
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+
+    # Apply landmask
+    if landmask is not None:
+        sst = ApplyLandmask(sst, landmask, maskland=True, maskocean=False)
+        if areacell is None:
+            areacell = ArrayOnes(landmask, id='areacell')
+        areacell = ApplyLandmaskToArea(areacell, landmask, maskland=True, maskocean=False)
+        del landmask
+
+    # 2.1 zonal SSTA at the peak of the event is computed for each selected event
+    # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+    sst, Method = PreProcessTS(sst, Method, areacell=areacell, average=False, compute_anom=False, **kwargs)
+    del areacell
+    if debug is True:
+        dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
+                      'time1': str(TimeBounds(sst))}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+    # Seasonal mean
+    sst = SeasonalMean(sst, season_ev, compute_anom=True)
+    if debug is True:
+        dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+    # Regridding
+    if isinstance(kwargs['regridding'], dict):
+        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                      'regridTool', 'regridMethod'}
+        extra_args = set(kwargs['regridding']) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+        sst = Regrid(sst, None, region=box, **kwargs['regridding'])
+        if debug is True:
+            dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+
+    # Meridional average
+    sst = AverageMeridional(sst)
+    if debug is True:
+        dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+    # samples
+    sample = Composite_ev_by_ev(sst, event_years, kwargs['frequency'])
+
+    # 2.2 find the zonal position of the maximum SSTA for each selected event
+    lon_max = FindXYMinMaxInTs(sample, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+    if debug is True:
+        dict_debug = {'line1': 'longitude  of the maximum SSTA: ' + str(lon_max)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+
+    # 2.3 compute the percentage of EP events (maximum SSTA in Niño3)
+    pos_lon = 'pos' if all(ii >= 0 for ii in lon_max) is True else\
+        ('neg' if all(ii <= 0 for ii in lon_max) is True else False)
+    ep = list()
+    for tt in range(len(lon_max)):
+        if pos_lon == 'pos':
+            if lon_max[tt] > 360 - 140:
+                ep.append(1)
+            else:
+                ep.append(0)
+        elif pos_lon == 'neg':
+            if lon_max[tt] < - 140:
+                ep.append(1)
+            else:
+                ep.append(0)
+        else:
+            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": unknown longitude",
+                            str().ljust(5) + metric + ": " + str(box)
+                            + " longitude are neither all positive nor all negative: " + str(lon_max)]
+            EnsoErrorsWarnings.MyError(list_strings)
+    ep = float(sum(ep)) / len(ep)
+
+    # Dive down diagnostic
+    dive_down_diag = {'value': ArrayToList(lon_max), 'axis': list(lon_max.getAxis(0)[:])}
+    if netcdf is True:
+        if ".nc" in netcdf_name:
+            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+        else:
+            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+        dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'nina_years': str(event_years), 'diagnostic_value_' + dataset: ep,
+                 'diagnostic_value_error_' + dataset: ep}
+        dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'nina_years': str(event_years), 'diagnostic_value_' + dataset: ep,
+                 'diagnostic_value_error_' + dataset: ep}
+        dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                 'frequency': kwargs['frequency']}
+        SaveNetcdf(file_name, var1=lon_max, var1_attributes=dict1, var1_name='Nino_lon_pos_maxSSTA_' + dataset,
+                   var2=sample, var2_attributes=dict2, var2_name='Nino_sst_lon_' + dataset,
+                   global_attributes=dict3)
+        del dict1, dict2, dict3
+
+    # Create output
+    NinoDivMetric = {
+        'name': Name, 'value': ep, 'value_error': None, 'units': Units, 'method': Method, 'nyears': yearN,
+        'events': event_years, 'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref,
+        'dive_down_diag': dive_down_diag,
+    }
+    return NinoDivMetric
+
+
 def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
                    sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False,
@@ -7349,9 +8048,9 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         1.) detect events
             1.1) SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
             1.2) SSTA > 'threshold' during 'season' are considered as La Nina events
-        2.) diversity of the zonal location of the minimum SSTA
+        2.) diversity of the zonal location of the maximum SSTA
             2.1) zonal SSTA at the peak of the event is computed for each selected event
-            2.2) find the zonal position of the minimum SSTA for each selected event and compute a pdf
+            2.2) find the zonal position of the maximum SSTA for each selected event and compute a pdf
 
     Inputs:
     ------
@@ -7584,7 +8283,7 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
         EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
     # ------------------------------------------------
-    # 2. diversity of the zonal location of the minimum SSTA
+    # 2. diversity of the zonal location of the maximum SSTA
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
@@ -7701,20 +8400,22 @@ def NinoSstDivRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemode
     sample_model = Composite_ev_by_ev(sst_model, event_years_model, kwargs['frequency'])
     sample_obs = Composite_ev_by_ev(sst_obs, event_years_obs, kwargs['frequency'])
 
-    # 2.2 find the zonal position of the minimum SSTA for each selected event and compute a pdf
-    # longitude of the minimum SSTA for each selected event
-    lon_min_model = [FindXYMinMax(sample_model[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
-                     for tt in range(len(sample_model))]
-    lon_min_obs = [FindXYMinMax(sample_obs[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
-                   for tt in range(len(sample_obs))]
+    # 2.2 find the zonal position of the maximum SSTA for each selected event and compute a pdf
+    # longitude of the maximum SSTA for each selected event
+    lon_max_model = FindXYMinMaxInTs(sample_model, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+    lon_max_obs = FindXYMinMaxInTs(sample_obs, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+    if debug is True:
+        dict_debug = {'line1': '(model) longitude  of the maximum SSTA: ' + str(lon_max_model),
+                      'line2': '(obs) longitude  of the maximum SSTA: ' + str(lon_max_obs)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
     # compute PDFs
     if debug is True:
         dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' + str((lon[1] - lon[0]) / 10)
                                + '  ;  nbr_bins new = ' + str(int((lon[1] - lon[0]) / 10))}
         EnsoErrorsWarnings.DebugMode('\033[92m', 'before ComputePDF', 15, **dict_debug)
-    pdf_model = ComputePDF(lon_min_model, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
-    pdf_obs = ComputePDF(lon_min_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
+    pdf_model = ComputePDF(lon_max_model, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
+    pdf_obs = ComputePDF(lon_max_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
 
     # Computes the root mean square difference
     pdfRmse = RmsZonal(pdf_model, pdf_obs, centered=centered_rmse, biased=biased_rmse)
@@ -7944,7 +8645,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     duration = DurationAllEvent(sample, 0.5, nino=True, debug=debug)
 
     duration_err = float(Std(duration) / NUMPYsqrt(len(duration)))
-    duration_mean = duration.mean()
+    duration_mean = float(duration.mean())
 
     # Dive down diagnostic
     dive_down_diag = {'value': ArrayToList(duration), 'axis': list(duration.getAxis(0)[:])}
@@ -7954,13 +8655,17 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         else:
             file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
         dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                 'nino_years': str(event_years)}
-        dict3 = {'metric_name': Name, 'metric_value_' + dataset: duration_mean,
-                 'metric_value_error_' + dataset: duration_err,
-                 'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='sst_' + dataset,
+                 'nina_years': str(event_years), 'diagnostic_value_' + dataset: duration_mean,
+                 'diagnostic_value_error_' + dataset: duration_err}
+        dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'nina_years': str(event_years), 'diagnostic_value_' + dataset: duration_mean,
+                 'diagnostic_value_error_' + dataset: duration_err}
+        dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                 'frequency': kwargs['frequency']}
+        SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='Nino_duration_' + dataset, var2=sample,
+                   var2_attributes=dict2, var2_name='Nino_time_series_' + dataset,
                    global_attributes=dict3)
-        del dict1, dict3
+        del dict1, dict2, dict3
 
     # Create output
     NinoDurMetric = {

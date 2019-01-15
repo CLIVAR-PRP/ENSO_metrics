@@ -68,13 +68,20 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
     return file_name, file_area, file_land
 
 def find_fx(model, project='', experiment='', ensemble='', realm=''):
-    if project == 'CMIP6':
+    if project in ['CMIP5', 'CMIP6']:
+        if project in ['CMIP5']:
+            my_ens = 'r0i0p0'
+        else:
+            my_ens = deepcopy(ensemble)
         if realm == 'A':
-            farea1, farea2 = find_path_and_files(ens=ensemble, exp=experiment, fre='fx', mod=model, pro=project, rea=realm, var='areacella')
-            fland1, fland2 = find_path_and_files(ens=ensemble, exp=experiment, fre='fx', mod=model, pro=project, rea=realm, var='sftlf')
+            farea1, farea2 = find_path_and_files(ens=my_ens, exp=experiment, fre='fx', mod=model, pro=project,
+                                                 rea=realm, var='areacella')
+            fland1, fland2 = find_path_and_files(ens=my_ens, exp=experiment, fre='fx', mod=model, pro=project,
+                                                 rea=realm, var='sftlf')
             file_land = OSpath__join(fland1, fland2[0])
         elif realm == 'O':
-            farea1, farea2 = find_path_and_files(ens=ensemble, exp=experiment, fre='fx', mod=model, pro=project, rea=realm, var='areacello')
+            farea1, farea2 = find_path_and_files(ens=my_ens, exp=experiment, fre='fx', mod=model, pro=project,
+                                                 rea=realm, var='areacello')
             file_land = None
         file_area = OSpath__join(farea1, farea2[0])
     else:
@@ -303,7 +310,8 @@ for mod in list_models:
             dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file,
                                   'path + filename_area': list_areacell, 'areaname': list_name_area,
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
-            del areacell_in_file, file_areacell, file_landmask, file_name, landmask_in_file, list_areacell, list_files, list_landmask, list_name_area, list_name_land, var0, var_in_file
+            del areacell_in_file, file_areacell, file_landmask, file_name, landmask_in_file, list_areacell, list_files,\
+                list_landmask, list_name_area, list_name_land, var0, var_in_file
             # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
             # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
             # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
@@ -336,42 +344,42 @@ for mod in list_models:
     del dict_ens, dict_ens_dive, list_ens
 # ------------------------------------------------
 # reshape dictionary
-listm = sorted(dict_metric.keys())
-liste = dict((mod, sorted(dict_metric[mod].keys())) for mod in listm)
-dict_dive, dict_metr = dict(), dict()
-for met in list_metric:
-    dict1, dict2 = dict(), dict()
-    for mod in listm:
-        for ens in liste[mod]:
-            # dive down diagnostics & metadata (nyears)
-            dict3 = dict()
-            for key4 in dict_metric[mod][ens]['value'][met]['diagnostic'].keys():
-                # dive
-                tmp = dict_metric[mod][ens]['value'][met]['diagnostic'][key4]['value']
-                if key4 == 'model':
-                    dict1[mod + '__' + ens] = tmp
-                else:
-                    dict1[key4] = tmp
-                del tmp
-                # meta
-                tmp = dict_metric[mod][ens]['metadata']['metrics'][met]['diagnostic'][key4]['nyears']
-                if key4 != 'model':
-                    dict3[key4] = tmp
-                del tmp
-            # metrics
-            dict4 = dict()
-            for key4 in dict_metric[mod][ens]['value'][met]['metric'].keys():
-                tmp = dict_metric[mod][ens]['value'][met]['metric'][key4]['value']
-                tmp_key = key4.replace("ref_", "")
-                dict4[tmp_key] = {'metric': tmp, 'nyears_obs': dict3[tmp_key]}
-                del tmp, tmp_key
-            dict2[mod + '__' + ens] = dict4
-            del dict3, dict4
-    dict_dive[met], dict_metr[met] = dict1, dict2
-    del dict1, dict2
-# ------------------------------------------------
-# save as json file
-name = today + '_YANN_PLANTON_' + mc_name + '.json'
-with open(name, 'w') as outfile:
-    json.dump(dict_metr, outfile)
-del name
+# listm = sorted(dict_metric.keys())
+# liste = dict((mod, sorted(dict_metric[mod].keys())) for mod in listm)
+# dict_dive, dict_metr = dict(), dict()
+# for met in list_metric:
+#     dict1, dict2 = dict(), dict()
+#     for mod in listm:
+#         for ens in liste[mod]:
+#             # dive down diagnostics & metadata (nyears)
+#             dict3 = dict()
+#             for key4 in dict_metric[mod][ens]['value'][met]['diagnostic'].keys():
+#                 # dive
+#                 tmp = dict_metric[mod][ens]['value'][met]['diagnostic'][key4]['value']
+#                 if key4 == 'model':
+#                     dict1[mod + '__' + ens] = tmp
+#                 else:
+#                     dict1[key4] = tmp
+#                 del tmp
+#                 # meta
+#                 tmp = dict_metric[mod][ens]['metadata']['metrics'][met]['diagnostic'][key4]['nyears']
+#                 if key4 != 'model':
+#                     dict3[key4] = tmp
+#                 del tmp
+#             # metrics
+#             dict4 = dict()
+#             for key4 in dict_metric[mod][ens]['value'][met]['metric'].keys():
+#                 tmp = dict_metric[mod][ens]['value'][met]['metric'][key4]['value']
+#                 tmp_key = key4.replace("ref_", "")
+#                 dict4[tmp_key] = {'metric': tmp, 'nyears_obs': dict3[tmp_key]}
+#                 del tmp, tmp_key
+#             dict2[mod + '__' + ens] = dict4
+#             del dict3, dict4
+#     dict_dive[met], dict_metr[met] = dict1, dict2
+#     del dict1, dict2
+# # ------------------------------------------------
+# # save as json file
+# name = today + '_YANN_PLANTON_' + mc_name + '.json'
+# with open(name, 'w') as outfile:
+#     json.dump(dict_metr, outfile)
+# del name

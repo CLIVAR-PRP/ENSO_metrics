@@ -575,7 +575,16 @@ def Std(tab, weights=None, axis=0, centered=1, biased=1):
     import genutil
     help(genutil.statistics.std)
     """
-    return GENUTILstd(tab, weights=weights, axis=axis, centered=centered, biased=biased)
+    try:
+        grid = tab.getGrid()
+    except:
+        pass
+    tmp = GENUTILstd(tab, weights=weights, axis=axis, centered=centered, biased=biased)
+    try:
+        tmp.setGrid(grid)
+    except:
+        pass
+    return tmp
 
 
 def TimeBounds(tab):
@@ -614,8 +623,12 @@ def annualcycle(tab):
     months = MV2array(list(tt.month for tt in time_ax))
     cyc = []
     for ii in range(12):
-        cyc.append(MV2average(tab.compress(months == (ii + 1), axis=0), axis=0))
-    cyc = MV2array(cyc)
+        tmp = tab.compress(months == (ii + 1), axis=0)
+        tmp_ax = CDMS2createAxis(range(len(tmp)), id='month')
+        tmp.setAxisList([tmp_ax] + axes[1:])
+        tmp = MV2average(tmp, axis=0)
+        cyc.append(tmp)
+        del tmp
     time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
     time.units = "months since 0001-01-01"
     moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
@@ -2063,6 +2076,70 @@ def Smoothing(tab, info, axis=0, window=5, method='triangle'):
         EnsoErrorsWarnings.MyError(list_strings)
     info = info + ', smoothing using a ' + str(method) + ' shaped window of ' + str(window) + ' points'
     return dict_smooth[method](tab, axis=axis, window=window), info
+
+
+def SkewMonthly(tab):
+    """
+    #################################################################################
+    Description:
+    Computes the monthly standard deviation (value of each calendar month) of tab
+    #################################################################################
+
+    :param tab: masked_array
+    :return: tab: array
+        array of the monthly standard deviation
+    """
+    initorder = tab.getOrder()
+    tab = tab.reorder('t...')
+    axes = tab.getAxisList()
+    time_ax = tab.getTime().asComponentTime()
+    months = MV2array(list(tt.month for tt in time_ax))
+    cyc = []
+    for ii in range(12):
+        tmp = tab.compress(months == (ii + 1), axis=0)
+        tmp_ax = CDMS2createAxis(range(len(tmp)), id='month')
+        tmp.setAxisList([tmp_ax] + axes[1:])
+        tmp = SCIPYstats__skew(tmp)
+        cyc.append(tmp)
+        del tmp
+    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
+    time.units = "months since 0001-01-01"
+    skew = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
+    skew = skew.reorder(initorder)
+    cdutil.setTimeBoundsMonthly(skew)
+    return skew
+
+
+def StdMonthly(tab):
+    """
+    #################################################################################
+    Description:
+    Computes the monthly standard deviation (value of each calendar month) of tab
+    #################################################################################
+
+    :param tab: masked_array
+    :return: tab: array
+        array of the monthly standard deviation
+    """
+    initorder = tab.getOrder()
+    tab = tab.reorder('t...')
+    axes = tab.getAxisList()
+    time_ax = tab.getTime().asComponentTime()
+    months = MV2array(list(tt.month for tt in time_ax))
+    cyc = []
+    for ii in range(12):
+        tmp = tab.compress(months == (ii + 1), axis=0)
+        tmp_ax = CDMS2createAxis(range(len(tmp)), id='month')
+        tmp.setAxisList([tmp_ax] + axes[1:])
+        tmp = Std(tmp, axis=0)
+        cyc.append(tmp)
+        del tmp
+    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
+    time.units = "months since 0001-01-01"
+    std = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
+    std = std.reorder(initorder)
+    cdutil.setTimeBoundsMonthly(std)
+    return std
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -2208,6 +2285,50 @@ def FindXYMinMax(tab, return_val='both', smooth=False, axis=0, window=5, method=
             return [axis_min[0], axis_max[0]]
         else:
             return [axis_min, axis_max]
+
+
+def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, method='triangle'):
+    """
+    #################################################################################
+    Description:
+    Finds in tab in each time step the position (t,x,y,z) of the minimum (return_val='mini') or the maximum
+    (return_val='maxi') or both values (if return_val is neither 'mini' nor 'maxi')
+    Returned position(s) are not the position in tab but in the (t,x,y,z) space defined by tab axes
+
+    Uses uvcdat for smoothing
+    #################################################################################
+
+    :param tab: masked_array
+        array for which you would like to know the position (t,x,y,z) of the minimum and/or the maximum values
+    :param return_val: string, optional
+        'mini' to return the position of the minimum value
+        'maxi' to return the position of the maximum value
+        to return both minimum and maximum values, pass anything else
+        default value = 'both', returns both minimum and maximum values
+    :param smooth: boolean, optional
+        True if you want to smooth tab, if you do not, pass anything but true
+        default value = False, tab is not smoothed
+
+    See function EnsoUvcdatToolsLib.Smoothing
+    :param axis: integer, optional
+        axis along which to smooth the data
+        default value is the first axis (0)
+    :param window: odd integer, optional
+        number of points used for the moving window average
+        default value is 5
+    :param method: string, optional
+        smoothing method:
+            'gaussian': gaussian shaped window
+            'square':   square shaped window
+            'triangle': triangle shaped window
+
+    :return: minimum/maximum position or both minimum and maximum positions, int, float or list
+        position(s) in the (t,x,y,z) space defined by tab axes of the minimum and/or maximum values of tab
+    """
+    tab_ts = MV2array([FindXYMinMax(tab[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+                       for tt in range(len(tab))])
+    tab_ts.setAxis(0, tab.getAxis(0))
+    return tab_ts
 
 
 def MyDerive(project, internal_variable_name, dict_var):
