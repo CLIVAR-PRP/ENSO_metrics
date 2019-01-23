@@ -33,7 +33,8 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
             'MIROC-ESM', 'MIROC-ESM-CHEM', 'MIROC4h', 'MIROC5',
             'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P', 'NorESM1-M', 'NorESM1-ME']
 
-modnames = ['IPSL-CM5A-LR']
+modnames = ['ACCESS1-0']
+#modnames = ['IPSL-CM5A-LR']
 #modnames = ['BCC-CSM1-1']
 
 #=================================================
