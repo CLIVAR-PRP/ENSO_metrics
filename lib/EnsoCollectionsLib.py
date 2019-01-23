@@ -459,7 +459,10 @@ def ReferenceRegions(AR=True):
             'long_name': 'Equatorial Pacific (EP)', 'latitude': (-5., 5.), 'longitude': (120., 280.),
         },
         'equatorial_pacific_LatExt': {
-            'long_name': 'Equatorial Pacific extended in latitude', 'latitude': (-15., 15.), 'longitude': (150., 270.),
+            'long_name': 'Equatorial Pacific (EP)', 'latitude': (-15., 15.), 'longitude': (150., 270.),
+        },
+        'equatorial_pacific_LatExt2': {
+            'long_name': 'Equatorial Pacific extended in latitude', 'latitude': (-15., 15.), 'longitude': (120., 285.),
         },
         'equatorial_pacific_LonRed': {
             'long_name': 'Equatorial Pacific extended in latitude', 'latitude': (-5., 5.), 'longitude': (150., 270.),
