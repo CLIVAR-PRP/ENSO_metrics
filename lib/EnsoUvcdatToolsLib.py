@@ -2588,6 +2588,52 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
     return tab
 
 
+def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area='', name_area='', file_mask='',
+                       name_mask='', debug=False, **kwargs):
+    # Read variable
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[93m', metric, 10)
+        dict_debug = {'file1': '(' + type_data + ')' + str(file_data), 'var1': '(' + type_data + ')' + str(name_data)}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'Files', 10, **dict_debug)
+    variable = ReadSelectRegionCheckUnits(file_data, name_data, type_data, box=region, **kwargs)
+    if debug is True:
+        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in variable.getAxisList()]),
+                      'shape1': '(sst) ' + str(variable.shape),
+                      'time1': '(sst) ' + str(TimeBounds(variable))}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+    # checks if the time-period fulfills the minimum length criterion
+    if isinstance(kwargs['min_time_steps'], int):
+        if len(variable) < kwargs['min_time_steps']:
+            EnsoErrorsWarnings.TooShortTimePeriod(metric, len(variable), kwargs['min_time_steps'], INSPECTstack())
+    # Read areacell
+    if file_area:
+        areacell = ReadAreaSelectRegion(file_area, areaname=name_area, box=region, **kwargs)
+    else:
+        areacell = ReadAreaSelectRegion(file_data, areaname=name_area, box=region, **kwargs)
+    if debug is True:
+        if areacell is not None:
+            dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in areacell.getAxisList()]),
+                          'shape1': '(' + type_data + ') ' + str(areacell.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+    # Read landmask
+    if file_mask:
+        landmask = ReadLandmaskSelectRegion(file_mask, landmaskname=name_mask, box=region, **kwargs)
+    else:
+        landmask = ReadLandmaskSelectRegion(file_data, landmaskname=name_mask, box=region, **kwargs)
+    if debug is True:
+        if landmask is not None:
+            dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in landmask.getAxisList()]),
+                          'shape1': '(' + type_data + ') ' + str(landmask.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+    # Apply landmask
+    if landmask is not None:
+        variable = ApplyLandmask(variable, landmask, maskland=True, maskocean=False)
+        if areacell is None:
+            areacell = ArrayOnes(landmask, id='areacell')
+        areacell = ApplyLandmaskToArea(areacell, landmask, maskland=True, maskocean=False)
+    return variable, areacell
+
+
 def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):
     """
     #################################################################################

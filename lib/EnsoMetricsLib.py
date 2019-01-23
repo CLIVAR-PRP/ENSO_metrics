@@ -10,10 +10,10 @@ from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
 from EnsoUvcdatToolsLib import ArrayOnes, ArrayToList, ApplyLandmask, ApplyLandmaskToArea, AverageMeridional,\
     AverageZonal, CheckTime, Composite, Composite_ev_by_ev, ComputePDF, Correlation, DetectEvents, DurationAllEvent, \
-    FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, MyDerive, PreProcessTS,\
-    ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis, RmsHorizontal,\
-    RmsMeridional, RmsTemporal, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, Std, StdMonthly, TimeBounds,\
-    TwoVarRegrid
+    FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, MyDerive, PreProcessTS, \
+    Read_data_mask_area, ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis,\
+    RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, Std, StdMonthly,\
+    TimeBounds, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -4031,50 +4031,9 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     metric = 'EnsoAmpl'
 
     # Read file and select the right region
-    if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(sst) ' + sstfile, 'var1': '(sst) ' + sstname}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafile:
-        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
-    else:
-        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if debug is True:
-        if sst_areacell is not None:
-            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()]),
-                          'shape1': '(sst) ' + str(sst_areacell.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfile:
-        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
-    else:
-        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox, **kwargs)
-    if debug is True:
-        if sst_landmask is not None:
-            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()]),
-                          'shape1': '(sst) ' + str(sst_landmask.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if sst_landmask is not None:
-        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-        if sst_areacell is None:
-            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-        del sst_landmask
-
-    # checks if the time-period fulfills the minimum length criterion
-    if isinstance(kwargs['min_time_steps'], int):
-        if len(sst) < kwargs['min_time_steps']:
-            EnsoErrorsWarnings.TooShortTimePeriod(metric, len(sst), kwargs['min_time_steps'], INSPECTstack())
+    sst, sst_areacell = Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+                                            debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -4102,55 +4061,32 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     if netcdf is True:
         # additional diagnostic
         # Read file and select the right region
-        sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box='equatorial_pacific_LatExt', **kwargs)
-        # Read areacell
-        if sstareafile:
-            sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box='equatorial_pacific_LatExt',
-                                                **kwargs)
-        else:
-            sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box='equatorial_pacific_LatExt',
-                                                **kwargs)
-        # Read landmask
-        if sstlandmaskfile:
-            sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname,
-                                                    box='equatorial_pacific_LatExt', **kwargs)
-        else:
-            sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname,
-                                                    box='equatorial_pacific_LatExt', **kwargs)
-        # Apply landmask
-        if sst_landmask is not None:
-            sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-            if sst_areacell is None:
-                sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-            sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-            del sst_landmask
+        sst, sst_areacell = Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific_LatExt2',
+                                                file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                                name_mask=sstlandmaskname, debug=debug, **kwargs)
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, compute_anom=True, **kwargs)
+        sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, compute_anom=True, **kwargs)
         # Regridding
         if not isinstance(kwargs['regridding'], dict):
             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                     'newgrid_name': 'generic_1x1deg'}
-        sst = Regrid(sst, None, region='equatorial_pacific_LatExt', **kwargs['regridding'])
-        # Meridional average
-        sst_lon = AverageMeridional(sst(longitude=(-5., 5)))
-        # skewness
-        std_lon = Std(sst_lon)
+        sst = Regrid(sst, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+        # std
         std_map = Std(sst)
         if ".nc" in netcdf_name:
             file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
         else:
             file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
         dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                 'description': "monthly standard deviation of " + sstbox + " sstA",
                  'diagnostic_value': sstStd, 'diagnostic_value_error': sstStdErr}
         dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                 'cell_methods': 'grid: regrid toward generic_1x1deg ; meridional: mean between 5S and 5N'}
-        dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds)}
-        dict4 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                 'description': "standard deviation of " + sstbox + " sstA (whole time series)"}
+        dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                  'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_' + dataset, var2=std_lon,
-                   var2_attributes=dict2, var2_name='sstStd_lon_' + dataset, var3=std_map, var3_attributes=dict3,
-                   var3_name='sstStd_map_' + dataset, global_attributes=dict4)
-        del dict1, dict2, dict3, dict4
+        SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_monthly_' + dataset,
+                   var2=std_map, var2_attributes=dict2, var2_name='sstStd_map_' + dataset, global_attributes=dict3)
+        del dict1, dict2, dict3
 
     # Create output
     amplMetric = {
