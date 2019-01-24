@@ -2965,7 +2965,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is None:
+    if keyerror is not None:
         alphaLhf, alphaLhfPos, alphaLhfNeg = None, None, None
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -3215,7 +3215,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is None:
+    if keyerror is not None:
         alphaLwr, alphaLwrPos, alphaLwrNeg = None, None, None
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -3428,7 +3428,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is None:
+    if keyerror is not None:
         alphaShf, alphaShfPos, alphaShfNeg = None, None, None
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -3677,7 +3677,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is None:
+    if keyerror is not None:
         alphaSwr, alphaSwrPos, alphaSwrNeg = None, None, None
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -3931,7 +3931,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is None:
+    if keyerror is not None:
         alpha, alphaPos, alphaNeg = None, None, None
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -4063,8 +4063,8 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is None:
-        sstStd, sstStdErr = None, None
+    if keyerror is not None:
+        sstStd, sstStdErr, dive_down_diag = None, None, None
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
@@ -4309,7 +4309,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is None:
+    if keyerror is not None:
         mu, muPos, muNeg = None, None, None
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)

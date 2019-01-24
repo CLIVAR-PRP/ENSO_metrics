@@ -2623,6 +2623,7 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
                       'time1': '(sst) ' + str(TimeBounds(variable))}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
     # checks if the time-period fulfills the minimum length criterion
+    keyerror2 = None
     if isinstance(kwargs['min_time_steps'], int):
         if len(variable) < kwargs['min_time_steps']:
             EnsoErrorsWarnings.TooShortTimePeriod(metric, len(variable), kwargs['min_time_steps'], INSPECTstack())
@@ -2648,9 +2649,9 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
                           'shape1': '(' + type_data + ') ' + str(landmask.shape)}
             EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
     # Apply landmask
-    if landmask is not None and variable:
+    if landmask is not None:
         variable, keyerror3 = ApplyLandmask(variable, landmask, maskland=maskland, maskocean=maskocean)
-        if len(keyerror3) == 0:
+        if keyerror3 is None:
             if areacell is None:
                 areacell = ArrayOnes(landmask, id='areacell')
             areacell, keyerror4 = ApplyLandmaskToArea(areacell, landmask, maskland=maskland, maskocean=maskocean)
