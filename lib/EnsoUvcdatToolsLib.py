@@ -694,9 +694,9 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                 # if land = 100 instead of 1, divides landmask by 100
                 if MV2minimum(landmask_nd) == 0 and MV2maximum(landmask_nd) == 100:
                     landmask_nd = landmask_nd / 100.
-                    if maskland:
+                if maskland is True:
                     tab = MV2masked_where(landmask_nd == 1, tab)
-                if maskocean:
+                if maskocean is True:
                     tab = MV2masked_where(landmask_nd == 0, tab)
     return tab, keyerror
 
