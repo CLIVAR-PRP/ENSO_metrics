@@ -658,41 +658,47 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
     :return: tab: masked_array
         masked_array where land points and/or ocean points are masked
     """
+    keyerror = None
     if maskland is True or maskocean is True:
         if tab.getGrid().shape != landmask.getGrid().shape:
+            keyerror = "tab (" + str(tab.getGrid().shape) + ") and landmask (" + str(landmask.getGrid().shape) +\
+                       ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": applying landmask",
-                str().ljust(5) + "tab (" + str(tab.getGrid().shape) + ") and landmask ("
-                + str(landmask.getGrid().shape) + ") are not on the same grid",
-                str().ljust(5) + "cannot apply landmask"
+                str().ljust(5) + keyerror,
+                str().ljust(5) + "cannot apply landmask",
+                str().ljust(5) + "this metric will be skipped"
             ]
-            EnsoErrorsWarnings.MyError(list_strings)
-        landmask_nd = MV2zeros(tab.shape)
-        if landmask_nd.shape == landmask.shape:
-            landmask_nd = deepcopy(landmask)
+            EnsoErrorsWarnings.MyWarning(list_strings)
         else:
-            try:
-                landmask_nd[:] = landmask
-            except:
+            landmask_nd = MV2zeros(tab.shape)
+            if landmask_nd.shape == landmask.shape:
+                landmask_nd = deepcopy(landmask)
+            else:
                 try:
-                    landmask_nd[:, :] = landmask
+                    landmask_nd[:] = landmask
                 except:
-                    list_strings = [
-                        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": landmask shape",
-                        str().ljust(5) + "tab must be more than 4D and this is not taken into account yet (" +
-                        str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")",
-                        str().ljust(5) + "cannot reshape landmask"
-                    ]
-                    EnsoErrorsWarnings.MyError(list_strings)
-        tab = MV2masked_where(landmask_nd.mask, tab)
-        # if land = 100 instead of 1, divides landmask by 100
-        if MV2minimum(landmask_nd) == 0 and MV2maximum(landmask_nd) == 100:
-            landmask_nd = landmask_nd / 100.
-        if maskland:
-            tab = MV2masked_where(landmask_nd == 1, tab)
-        if maskocean:
-            tab = MV2masked_where(landmask_nd == 0, tab)
-    return tab
+                    try:
+                        landmask_nd[:, :] = landmask
+                    except:
+                        keyerror = "tab must be more than 4D and this is not taken into account yet (" +\
+                                   str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
+                        list_strings = [
+                            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": landmask shape",
+                            str().ljust(5) + keyerror,
+                            str().ljust(5) + "cannot reshape landmask"
+                        ]
+                        EnsoErrorsWarnings.MyWarning(list_strings)
+            if keyerror is None:
+                tab = MV2masked_where(landmask_nd.mask, tab)
+                # if land = 100 instead of 1, divides landmask by 100
+                if MV2minimum(landmask_nd) == 0 and MV2maximum(landmask_nd) == 100:
+                    landmask_nd = landmask_nd / 100.
+                    if maskland:
+                    tab = MV2masked_where(landmask_nd == 1, tab)
+                if maskocean:
+                    tab = MV2masked_where(landmask_nd == 0, tab)
+    return tab, keyerror
 
 def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     """
@@ -716,26 +722,29 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     :return: tab: masked_array
         masked_array where land points and/or ocean points are masked
     """
+    keyerror = None
     if maskland is True or maskocean is True:
         if area.getGrid().shape != landmask.getGrid().shape:
+            keyerror = "area (" + str(area.getGrid().shape) + ") and landmask (" + str(landmask.getGrid().shape) +\
+                       ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": applying landmask to areacell",
-                str().ljust(5) + "area (" + str(area.getGrid().shape) + ") and landmask ("
-                + str(landmask.getGrid().shape) + ") are not on the same grid",
+                str().ljust(5) + keyerror,
                 str().ljust(5) + "cannot apply landmask to areacell"
             ]
-            EnsoErrorsWarnings.MyError(list_strings)
-        # if land = 100 instead of 1, divides landmask by 100
-        if MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100:
-            landmask = landmask / 100.
-        area = MV2masked_where(landmask.mask, area)
-        if maskland:
-            area = MV2masked_where(landmask == 1, area)
-            area = MV2multiply(area, 1-landmask)
-        if maskocean:
-            area = MV2masked_where(landmask == 0, area)
-            area = MV2multiply(area, landmask)
-    return area
+            EnsoErrorsWarnings.MyWarning(list_strings)
+        if keyerror is None:
+            # if land = 100 instead of 1, divides landmask by 100
+            if MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100:
+                landmask = landmask / 100.
+            area = MV2masked_where(landmask.mask, area)
+            if maskland:
+                area = MV2masked_where(landmask == 1, area)
+                area = MV2multiply(area, 1-landmask)
+            if maskocean:
+                area = MV2masked_where(landmask == 0, area)
+                area = MV2multiply(area, landmask)
+    return area, keyerror
 
 
 def ArrayToList(tab):
@@ -785,6 +794,7 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
         name of the metric calling the function
     :return:
     """
+    keyerror = None
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
@@ -831,7 +841,9 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
         if len(tab1_sliced)<min_time_steps or len(tab2_sliced)<min_time_steps:
             shortest = min(len(tab1_sliced), len(tab2_sliced))
             EnsoErrorsWarnings.TooShortTimePeriod(metric_name, shortest, min_time_steps, INSPECTstack())
-    return tab1_sliced, tab2_sliced
+            keyerror = "too short time period (variable1:" + str(len(tab1_sliced)) + " ; variable2:" +\
+                       str(len(tab2_sliced)) + ")"
+    return tab1_sliced, tab2_sliced, keyerror
 
 
 def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwargs):
@@ -858,6 +870,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     :return tab: array
         array with new units (if applicable)
     """
+    keyerror = None
     if var_name in ['temperature']:
         if units == 'K':
             # check if the temperature units is really K
@@ -868,6 +881,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             else:
                 minmax = [MV2minimum(tab),MV2maximum(tab)]
                 EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, minmax, INSPECTstack())
+                keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
                        'degrees C']:
             # check if the temperature units is really degC
@@ -876,8 +890,10 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             else:
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, minmax, units, INSPECTstack())
+                keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
+            keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['precipitations']:
         if units == 'kg m-2 s-1':
             # changes units of the precipitation flux: from kg/(m2.s) to mm/day
@@ -888,11 +904,13 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             pass
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
+            keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['wind stress']:
         if units in ['N/m^2', 'Pa', 'N m-2', 'N/m2']:
             units = "N/m2"
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
+            keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['velocity']:
         if units in ['cm s-1', 'cm/s', 'cm s**-1']:
             # unit change of the velocity: from cm/s to m/s
@@ -902,24 +920,27 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             units = "m/s"
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
+            keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['heat flux']:
         if units in ['W/m2', 'W m-2', 'W/m^2']:
             units = "W/m2"
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
+            keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['pressure']:
         if units in ['N/m^2', 'Pa', 'N m-2', 'N/m2']:
             units = "Pa"
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
+            keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     else:
         list_strings = ["WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": variable name",
                         str().ljust(5) + "unknown variable name: " + var_name + " (" + name_in_file + ")"]
         EnsoErrorsWarnings.MyWarning(list_strings)
-    if return_tab_only:
+    if return_tab_only is True:
        return tab
     else:
-        return tab, units
+        return tab, units, keyerror
 
 
 def Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=None):
@@ -2582,20 +2603,20 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
         masked_array containing 'varname' in 'box'
     """
     tab = ReadAndSelectRegion(filename, varname, box=box, time_bounds=time_bounds, frequency=frequency)
-    tab, units = CheckUnits(tab, varfamily, varname, tab.units, return_tab_only=False)
+    tab, units, keyerror = CheckUnits(tab, varfamily, varname, tab.units, return_tab_only=False)
     tab.name = varname
     tab.units = units
-    return tab
+    return tab, keyerror
 
 
 def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area='', name_area='', file_mask='',
-                       name_mask='', debug=False, **kwargs):
+                        name_mask='', maskland=False, maskocean=False, debug=False, **kwargs):
     # Read variable
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[93m', metric, 10)
         dict_debug = {'file1': '(' + type_data + ')' + str(file_data), 'var1': '(' + type_data + ')' + str(name_data)}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'Files', 10, **dict_debug)
-    variable = ReadSelectRegionCheckUnits(file_data, name_data, type_data, box=region, **kwargs)
+    variable, keyerror1 = ReadSelectRegionCheckUnits(file_data, name_data, type_data, box=region, **kwargs)
     if debug is True:
         dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in variable.getAxisList()]),
                       'shape1': '(sst) ' + str(variable.shape),
@@ -2605,6 +2626,7 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
     if isinstance(kwargs['min_time_steps'], int):
         if len(variable) < kwargs['min_time_steps']:
             EnsoErrorsWarnings.TooShortTimePeriod(metric, len(variable), kwargs['min_time_steps'], INSPECTstack())
+            keyerror2 = "too short time period (" + str(len(variable)) + ")"
     # Read areacell
     if file_area:
         areacell = ReadAreaSelectRegion(file_area, areaname=name_area, box=region, **kwargs)
@@ -2626,12 +2648,31 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
                           'shape1': '(' + type_data + ') ' + str(landmask.shape)}
             EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
     # Apply landmask
-    if landmask is not None:
-        variable = ApplyLandmask(variable, landmask, maskland=True, maskocean=False)
-        if areacell is None:
-            areacell = ArrayOnes(landmask, id='areacell')
-        areacell = ApplyLandmaskToArea(areacell, landmask, maskland=True, maskocean=False)
-    return variable, areacell
+    if landmask is not None and variable:
+        variable, keyerror3 = ApplyLandmask(variable, landmask, maskland=maskland, maskocean=maskocean)
+        if len(keyerror3) == 0:
+            if areacell is None:
+                areacell = ArrayOnes(landmask, id='areacell')
+            areacell, keyerror4 = ApplyLandmaskToArea(areacell, landmask, maskland=maskland, maskocean=maskocean)
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None or keyerror4 is not None:
+        keyerror = ''
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
+        if len(keyerror) > 0 and keyerror4 is not None:
+            keyerror += " ; "
+        if keyerror4 is not None:
+            keyerror += keyerror4
+    else:
+        keyerror = None
+    return variable, areacell, keyerror
 
 
 def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):

@@ -2957,7 +2957,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     del lhf_landmask
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lhf = CheckTime(sst, lhf, metric_name=metric, **kwargs)
+    sst, lhf, keyerror = CheckTime(sst, lhf, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -2965,26 +2965,31 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
-    lhf, unneeded = PreProcessTS(lhf, '', areacell=lhf_areacell, average='horizontal', compute_anom=True, **kwargs)
-    del sst_areacell, lhf_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lhf) ' + str(TimeBounds(lhf))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+    if keyerror is None:
+        alphaLhf, alphaLhfPos, alphaLhfNeg = None, None, None
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        lhf, unneeded = PreProcessTS(lhf, '', areacell=lhf_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
+        del sst_areacell, lhf_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lhf) ' + str(TimeBounds(lhf))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
-    alphaLhf, alphaLhfPos, alphaLhfNeg = LinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
+        # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+        alphaLhf, alphaLhfPos, alphaLhfNeg = LinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
 
     # Create output
     alphaLhfMetric = {
         'name': Name, 'value': alphaLhf[0], 'value_error': alphaLhf[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
         'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaLhfNeg[0] - alphaLhfPos[0],
-        'nonlinearity_error': alphaLhfNeg[1] + alphaLhfPos[1],
+        'nonlinearity_error': alphaLhfNeg[1] + alphaLhfPos[1], 'keyerror': keyerror,
     }
     return alphaLhfMetric
 
@@ -3202,7 +3207,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     del lwr_landmask
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lwr = CheckTime(sst, lwr, metric_name=metric, **kwargs)
+    sst, lwr, keyerror = CheckTime(sst, lwr, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3210,26 +3215,30 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
-    lwr, unneeded = PreProcessTS(lwr, '', areacell=lwr_areacell, average='horizontal', compute_anom=True, **kwargs)
-    del sst_areacell, lwr_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lwr) ' + str(TimeBounds(lwr))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+    if keyerror is None:
+        alphaLwr, alphaLwrPos, alphaLwrNeg = None, None, None
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        lwr, unneeded = PreProcessTS(lwr, '', areacell=lwr_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del sst_areacell, lwr_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lwr) ' + str(TimeBounds(lwr))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
-    alphaLwr, alphaLwrPos, alphaLwrNeg = LinearRegressionAndNonlinearity(lwr, sst, return_stderr=True)
+        # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+        alphaLwr, alphaLwrPos, alphaLwrNeg = LinearRegressionAndNonlinearity(lwr, sst, return_stderr=True)
 
     # Create output
     alphaLwrMetric = {
         'name': Name, 'value': alphaLwr[0], 'value_error': alphaLwr[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
         'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaLwrNeg[0] - alphaLwrPos[0],
-        'nonlinearity_error': alphaLwrNeg[1] + alphaLwrPos[1],
+        'nonlinearity_error': alphaLwrNeg[1] + alphaLwrPos[1], 'keyerror': keyerror,
     }
     return alphaLwrMetric
 
@@ -3411,7 +3420,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     del shf_landmask
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, shf = CheckTime(sst, shf, metric_name=metric, **kwargs)
+    sst, shf, keyerror = CheckTime(sst, shf, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3419,26 +3428,30 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
-    shf, unneeded = PreProcessTS(shf, '', areacell=shf_areacell, average='horizontal', compute_anom=True, **kwargs)
-    del sst_areacell, shf_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(shf) ' + str([ax.id for ax in shf.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(shf) ' + str(shf.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(shf) ' + str(TimeBounds(shf))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+    if keyerror is None:
+        alphaShf, alphaShfPos, alphaShfNeg = None, None, None
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        shf, unneeded = PreProcessTS(shf, '', areacell=shf_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del sst_areacell, shf_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(shf) ' + str([ax.id for ax in shf.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(shf) ' + str(shf.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(shf) ' + str(TimeBounds(shf))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
-    alphaShf, alphaShfPos, alphaShfNeg = LinearRegressionAndNonlinearity(shf, sst, return_stderr=True)
+        # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+        alphaShf, alphaShfPos, alphaShfNeg = LinearRegressionAndNonlinearity(shf, sst, return_stderr=True)
 
     # Create output
     alphaShfMetric = {
         'name': Name, 'value': alphaShf[0], 'value_error': alphaShf[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
         'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaShfNeg[0] - alphaShfPos[0],
-        'nonlinearity_error': alphaShfNeg[1] + alphaShfPos[1],
+        'nonlinearity_error': alphaShfNeg[1] + alphaShfPos[1], 'keyerror': keyerror,
     }
     return alphaShfMetric
 
@@ -3656,7 +3669,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     del swr_landmask
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, swr = CheckTime(sst, swr, metric_name=metric, **kwargs)
+    sst, swr, keyerror = CheckTime(sst, swr, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3664,26 +3677,30 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
-    swr, unneeded = PreProcessTS(swr, '', areacell=swr_areacell, average='horizontal', compute_anom=True, **kwargs)
-    del sst_areacell, swr_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(swr) ' + str([ax.id for ax in swr.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(swr) ' + str(swr.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(swr) ' + str(TimeBounds(swr))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+    if keyerror is None:
+        alphaSwr, alphaSwrPos, alphaSwrNeg = None, None, None
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        swr, unneeded = PreProcessTS(swr, '', areacell=swr_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del sst_areacell, swr_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(swr) ' + str([ax.id for ax in swr.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(swr) ' + str(swr.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(swr) ' + str(TimeBounds(swr))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
-    alphaSwr, alphaSwrPos, alphaSwrNeg = LinearRegressionAndNonlinearity(swr, sst, return_stderr=True)
+        # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+        alphaSwr, alphaSwrPos, alphaSwrNeg = LinearRegressionAndNonlinearity(swr, sst, return_stderr=True)
 
     # Create output
     alphaSwrMetric = {
         'name': Name, 'value': alphaSwr[0], 'value_error': alphaSwr[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
         'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaSwrNeg[0] - alphaSwrPos[0],
-        'nonlinearity_error': alphaSwrNeg[1] + alphaSwrPos[1],
+        'nonlinearity_error': alphaSwrNeg[1] + alphaSwrPos[1], 'keyerror': keyerror,
     }
     return alphaSwrMetric
 
@@ -3906,7 +3923,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     del thf_landmask
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, thf = CheckTime(sst, thf, metric_name=metric, **kwargs)
+    sst, thf, keyerror = CheckTime(sst, thf, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3914,26 +3931,30 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
-    thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True, **kwargs)
-    del sst_areacell, thf_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(thf))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+    if keyerror is None:
+        alpha, alphaPos, alphaNeg = None, None, None
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del sst_areacell, thf_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(thf))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
-    alpha, alphaPos, alphaNeg = LinearRegressionAndNonlinearity(thf, sst, return_stderr=True)
+        # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+        alpha, alphaPos, alphaNeg = LinearRegressionAndNonlinearity(thf, sst, return_stderr=True)
 
     # Create output
     alphaMetric = {
         'name': Name, 'value': alpha[0], 'value_error': alpha[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
         'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaNeg[0] - alphaPos[0],
-        'nonlinearity_error': alphaNeg[1] + alphaPos[1],
+        'nonlinearity_error': alphaNeg[1] + alphaPos[1], 'keyerror': keyerror,
     }
     return alphaMetric
 
@@ -4031,9 +4052,10 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     metric = 'EnsoAmpl'
 
     # Read file and select the right region
-    sst, sst_areacell = Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
-                                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
-                                            debug=debug, **kwargs)
+    sst, sst_areacell, keyerror =\
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -4041,57 +4063,62 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
-    del sst_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]), 'shape1': '(sst) ' + str(sst.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-
-    # Computes the standard deviation
-    sstStd = float(Std(sst))
-
-    # Standard Error of the Standard Deviation (function of nyears)
-    sstStdErr = sstStd / NUMPYsqrt(yearN)
-
-    # Dive down diagnostic
-    sstStd_monthly = StdMonthly(sst)
-    dive_down_diag = {'model': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
-    if netcdf is True:
-        # additional diagnostic
-        # Read file and select the right region
-        sst, sst_areacell = Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific_LatExt2',
-                                                file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
-                                                name_mask=sstlandmaskname, debug=debug, **kwargs)
+    if keyerror is None:
+        sstStd, sstStdErr = None, None
+    else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, compute_anom=True, **kwargs)
-        # Regridding
-        if not isinstance(kwargs['regridding'], dict):
-            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                    'newgrid_name': 'generic_1x1deg'}
-        sst = Regrid(sst, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
-        # std
-        std_map = Std(sst)
-        if ".nc" in netcdf_name:
-            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
-        else:
-            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-        dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                 'description': "monthly standard deviation of " + sstbox + " sstA",
-                 'diagnostic_value': sstStd, 'diagnostic_value_error': sstStdErr}
-        dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                 'description': "standard deviation of " + sstbox + " sstA (whole time series)"}
-        dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                 'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_monthly_' + dataset,
-                   var2=std_map, var2_attributes=dict2, var2_name='sstStd_map_' + dataset, global_attributes=dict3)
-        del dict1, dict2, dict3
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del sst_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # Computes the standard deviation
+        sstStd = float(Std(sst))
+
+        # Standard Error of the Standard Deviation (function of nyears)
+        sstStdErr = sstStd / NUMPYsqrt(yearN)
+
+        # Dive down diagnostic
+        sstStd_monthly = StdMonthly(sst)
+        dive_down_diag = {'model': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
+        if netcdf is True:
+            # additional diagnostic
+            # Read file and select the right region
+            sst, sst_areacell, unneeded =\
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific_LatExt2',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, debug=debug, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+            sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, compute_anom=True, **kwargs)
+            # Regridding
+            if not isinstance(kwargs['regridding'], dict):
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            sst = Regrid(sst, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+            # std
+            std_map = Std(sst)
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': "monthly standard deviation of " + sstbox + " sstA",
+                     'diagnostic_value': sstStd, 'diagnostic_value_error': sstStdErr}
+            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': "standard deviation of " + sstbox + " sstA (whole time series)"}
+            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_monthly_' + dataset,
+                       var2=std_map, var2_attributes=dict2, var2_name='sstStd_map_' + dataset, global_attributes=dict3)
+            del dict1, dict2, dict3
 
     # Create output
     amplMetric = {
         'name': Name, 'value': sstStd, 'value_error': sstStdErr, 'units': Units, 'method': Method, 'nyears': yearN,
-        'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref,
+        'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref, 'keyerror': keyerror,
         'dive_down_diag': dive_down_diag,
     }
     return amplMetric
@@ -4274,7 +4301,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     del taux_landmask
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, taux = CheckTime(sst, taux, metric_name=metric, **kwargs)
+    sst, taux, keyerror = CheckTime(sst, taux, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -4282,31 +4309,36 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
-    sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
-    taux, unneeded = PreProcessTS(taux, '', areacell=taux_areacell, average='horizontal', compute_anom=True, **kwargs)
-    del sst_areacell, taux_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(taux))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+    if keyerror is None:
+        mu, muPos, muNeg = None, None, None
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        taux, unneeded = PreProcessTS(taux, '', areacell=taux_areacell, average='horizontal', compute_anom=True,
+                                      **kwargs)
+        del sst_areacell, taux_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(taux))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
-    mu, muPos, muNeg = LinearRegressionAndNonlinearity(taux, sst, return_stderr=True)
+        # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+        mu, muPos, muNeg = LinearRegressionAndNonlinearity(taux, sst, return_stderr=True)
 
-    # Change units
-    mu = [mu[0] * 1e3, mu[1] * 1e3]
-    muPos = [muPos[0] * 1e3, muPos[1] * 1e3]
-    muNeg = [muNeg[0] * 1e3, muNeg[1] * 1e3]
+        # Change units
+        mu = [mu[0] * 1e3, mu[1] * 1e3]
+        muPos = [muPos[0] * 1e3, muPos[1] * 1e3]
+        muNeg = [muNeg[0] * 1e3, muNeg[1] * 1e3]
 
     # Create output
     muMetric = {
         'name': Name, 'value': mu[0], 'value_error': mu[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
         'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': muNeg[0] - muPos[0],
-        'nonlinearity_error': muNeg[1] + muPos[1],
+        'nonlinearity_error': muNeg[1] + muPos[1], 'keyerror': keyerror,
     }
     return muMetric
 

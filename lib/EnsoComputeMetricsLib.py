@@ -19,7 +19,7 @@ from KeyArgLib import DefaultArgValues
 # Computation of the metric collection
 #
 def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False, netcdf=False,
-                      netcdf_path='', netcdf_name=''):
+                      netcdf_name=''):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -80,9 +80,6 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
-    :param netcdf_path: string, optional
-        default value = '' NetCDFs are saved where the program is ran
-        If you want to save the NetCDFs in another directory, give the path here (directory must exist)
     :param netcdf_name: string, optional
         default value = '' root name of the saved NetCDFs
         the name of a metric will be append at the end of the root name
@@ -264,7 +261,7 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
             dict_col_dd_meta['metrics'][metric] = ComputeMetric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
-                netcdf_path=netcdf_path, netcdf_name=netcdf_name, **arg_var2)
+                netcdf_name=netcdf_name, **arg_var2)
     if dive_down is True:
         return {'value': dict_col_valu, 'metadata': dict_col_meta},\
                {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}

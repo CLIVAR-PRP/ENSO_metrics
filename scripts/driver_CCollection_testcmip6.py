@@ -261,7 +261,7 @@ dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     list_ens = get_ensembles(exp='hist', fre=frequency, mod=mod, pro=project, rea=realm) #toto
-    list_ens = list_ens[4:]
+    #list_ens = list_ens[4:]
     dict_ens, dict_ens_dive = dict(), dict()
     for ens in list_ens:
         dict_mod = {mod: {}}

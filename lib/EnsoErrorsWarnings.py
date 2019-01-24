@@ -197,7 +197,7 @@ def TooShortTimePeriod(metric_name, length, minimum_length, inspect_stack):
     list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": too short time-period",
                     str().ljust(5) + str(metric_name) + ": the time-period is too short: " + str(length)
                     + " (minimum time-period: " + str(minimum_length) + ")"]
-    MyError(list_strings)
+    MyWarning(list_strings)
     return
 
 
@@ -224,7 +224,7 @@ def UnlikelyUnits(var_name, name_in_file, units, minmax, inspect_stack):
     list_strings = ["ERROR " + MessageFormating(inspect_stack) + ": units",
                     str().ljust(5) + "the file says that " + str(var_name) + " (" + str(name_in_file)
                     + ") is in " + str(units) + " but it seems unlikely (" + str(minmax) + ")"]
-    MyError(list_strings)
+    MyWarning(list_strings)
     return
 
 def UnknownAveraging(average, known_average, inspect_stack):
@@ -312,7 +312,7 @@ def UnknownUnits(var_name, name_in_file, units, inspect_stack):
     list_strings = ["ERROR" + MessageFormating(inspect_stack) + ": units",
                     str().ljust(5) + "unknown units: " + str(var_name) + " (" + str(name_in_file)
                     + ") is in " + str(units)]
-    MyError(list_strings)
+    MyWarning(list_strings)
     return
 # ---------------------------------------------------------------------------------------------------------------------#
 
