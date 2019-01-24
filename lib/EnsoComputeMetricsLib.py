@@ -656,9 +656,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         try:
                             dict_dive_down_metadata[obs]
                         except:
-                            dict_dive_down_metadata[obs] = {elt: diag_obs['dive_down_diag'][elt]}
+                            dict_dive_down_metadata[obs] = {elt: diag_obs[obs]['dive_down_diag'][elt]}
                         else:
-                            dict_dive_down_metadata[obs][elt] = diag_obs['dive_down_diag'][elt]
+                            dict_dive_down_metadata[obs][elt] = diag_obs[obs]['dive_down_diag'][elt]
             # puts diagnostic metadata in its proper dictionary
             dict_diagnostic_metadata[obs] = {
                 'name': obs, 'nyears': diag_obs[obs]['nyears'], 'time_period': diag_obs[obs]['time_period'],

@@ -2611,6 +2611,7 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
 
 def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area='', name_area='', file_mask='',
                         name_mask='', maskland=False, maskocean=False, debug=False, **kwargs):
+    keyerror1, keyerror2, keyerror3, keyerror4 = None, None, None, None
     # Read variable
     if debug is True:
         dict_debug = {'file1': '(' + type_data + ') ' + str(file_data), 'var1': '(' + type_data + ') ' + str(name_data)}
@@ -2622,7 +2623,6 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
                       'time1': '(' + type_data + ') ' + str(TimeBounds(variable))}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
     # checks if the time-period fulfills the minimum length criterion
-    keyerror2 = None
     if isinstance(kwargs['min_time_steps'], int):
         if len(variable) < kwargs['min_time_steps']:
             EnsoErrorsWarnings.TooShortTimePeriod(metric, len(variable), kwargs['min_time_steps'], INSPECTstack())
