@@ -2781,8 +2781,8 @@ def BiasTauxLonRmse(tauxfilemodel, tauxnamemodel, tauxareafilemodel, tauxareanam
 
 
 def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lhffile, lhfname,
-                 lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, dataset='', debug=False,
+                 netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoAlphaLhf() function computes the regression of 'lhfbox' lhfA (latent heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 lhfA over nino3 sstA)
@@ -2995,8 +2995,8 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
-                 lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, dataset='', debug=False,
+                 netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoAlphaLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
     'sstbox' sstA (usually the regression of nino3 lwrA over nino3 sstA)
@@ -3244,8 +3244,8 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, shffile, shfname,
-                 shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, dataset='', debug=False,
+                 netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoAlphaShf() function computes the regression of 'shfbox' shfA (sensible heat flux anomalies) over 'sstbox'
     sstA (usually the regression of nino3 shfA over nino3 sstA)
@@ -3457,8 +3457,8 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, swrfile, swrname,
-                 swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, dataset='', debug=False,
+                 netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoAlphaSwr() function computes the regression of 'swrbox' swrA (net surface shortwave radiation anomalies)
     over 'sstbox' sstA (usually the regression of nino3 swrA over nino3 sstA)
@@ -3706,8 +3706,8 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, thffile, thfname,
-                 thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, dataset='', debug=False,
+                 netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoAlphaThf() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 thfA over nino3 sstA)
@@ -4136,8 +4136,8 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
 
 
 def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile, tauxname,
-           tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, debug=False, netcdf=False,
-           netcdf_name='', **kwargs):
+           tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, dataset='', debug=False,
+           netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoMu() function computes the regression of 'tauxbox' tauxA (surface downward zonal stress anomalies) over
     'sstbox' sstA (usually the regression of nino4 tauxA over nino3 sstA)
@@ -5597,8 +5597,8 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     return EnsoPrTelMetric
 
 
-def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, debug=False,
-                    netcdf=False, netcdf_name='', **kwargs):
+def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset='',
+                    debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The EnsoSeasonality() function computes ratio between the November-December-January (NDJ) and March-April-May (MAM)
     average standard deviation of 'sstbox' sstA (usually nino3 sstA)

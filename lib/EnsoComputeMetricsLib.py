@@ -576,7 +576,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
             diagnostic1 = dict_oneVar[metric](
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
-                regionVar1, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                regionVar1, dataset='model', debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
         elif metric in dict_twoVar.keys():
             # computes diagnostic that needs two variables
             print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
@@ -584,7 +584,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             diagnostic1 = dict_twoVar[metric](
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                 regionVar1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2,
-                modelLandmaskName2, regionVar2, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                modelLandmaskName2, regionVar2, dataset='model', debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
+                **keyarg)
         else:
             diagnostic1 = None
             list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric", str().ljust(5) +
@@ -626,7 +627,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 output_name = obs1
                 diag_obs[output_name] = dict_oneVar[metric](
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], regionVar1, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                    obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
+                    netcdf_name=netcdf_name, **keyarg)
             elif metric in dict_twoVar.keys():
                 for jj in range(len(obsNameVar2)):
                     obs2 = obsNameVar2[jj]
@@ -636,8 +638,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     diag_obs[output_name] = dict_twoVar[metric](
                         obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                         obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
-                        obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2, debug=debug,
-                        netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                        obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2, dataset=output_name,
+                        debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
         for obs in diag_obs.keys():
             # computes the metric
             metric_val, metric_err, description_metric = MathMetriComputation(
@@ -651,7 +653,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 dict_diagnostic[obs]['nonlinearity_error'] = diag_obs[obs]['nonlinearity_error']
             if 'dive_down_diag' in diag_obs[obs].keys():
                 dict_dive_down[obs] = diag_obs[obs]['dive_down_diag']['value']
-                for elt in diag_obs['dive_down_diag'].keys():
+                for elt in diag_obs[obs]['dive_down_diag'].keys():
                     if elt not in ['value']:
                         try:
                             dict_dive_down_metadata[obs]
