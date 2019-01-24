@@ -4052,6 +4052,8 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     metric = 'EnsoAmpl'
 
     # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror =\
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -4083,7 +4085,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
 
         # Dive down diagnostic
         sstStd_monthly = StdMonthly(sst)
-        dive_down_diag = {'model': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
+        dive_down_diag = {'value': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
         if netcdf is True:
             # additional diagnostic
             # Read file and select the right region
@@ -4093,10 +4095,19 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                                     name_mask=sstlandmaskname, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, compute_anom=True, **kwargs)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst.shape),
+                              'time1': '(sst) ' + str(TimeBounds(sst))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 10, **dict_debug)
             # Regridding
-            if not isinstance(kwargs['regridding'], dict):
+            if 'regridding' not in kwargs.keys():
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
             sst = Regrid(sst, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
             # std
             std_map = Std(sst)
@@ -5921,7 +5932,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
 
     # Dive down diagnostic
     sstStd_monthly = StdMonthly(sst)
-    dive_down_diag = {'model': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
+    dive_down_diag = {'value': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
     if netcdf is True:
         # additional diagnostic
         # Read file and select the right region

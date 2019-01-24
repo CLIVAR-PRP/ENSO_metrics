@@ -2613,14 +2613,13 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
                         name_mask='', maskland=False, maskocean=False, debug=False, **kwargs):
     # Read variable
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[93m', metric, 10)
-        dict_debug = {'file1': '(' + type_data + ')' + str(file_data), 'var1': '(' + type_data + ')' + str(name_data)}
-        EnsoErrorsWarnings.DebugMode('\033[93m', 'Files', 10, **dict_debug)
+        dict_debug = {'file1': '(' + type_data + ') ' + str(file_data), 'var1': '(' + type_data + ') ' + str(name_data)}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'Files', 15, **dict_debug)
     variable, keyerror1 = ReadSelectRegionCheckUnits(file_data, name_data, type_data, box=region, **kwargs)
     if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in variable.getAxisList()]),
-                      'shape1': '(sst) ' + str(variable.shape),
-                      'time1': '(sst) ' + str(TimeBounds(variable))}
+        dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in variable.getAxisList()]),
+                      'shape1': '(' + type_data + ') ' + str(variable.shape),
+                      'time1': '(' + type_data + ') ' + str(TimeBounds(variable))}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
     # checks if the time-period fulfills the minimum length criterion
     keyerror2 = None
