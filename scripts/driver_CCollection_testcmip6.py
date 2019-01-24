@@ -261,7 +261,7 @@ dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     list_ens = get_ensembles(exp='hist', fre=frequency, mod=mod, pro=project, rea=realm) #toto
-    list_ens = list_ens[4:]
+    #list_ens = list_ens[4:]
     dict_ens, dict_ens_dive = dict(), dict()
     for ens in list_ens:
         dict_mod = {mod: {}}
@@ -338,7 +338,8 @@ for mod in list_models:
                                                                                         netcdf=True, netcdf_name=netcdf,
                                                                                         debug=False)
         # save json
-        save_json(dict_ens, today + '_YANN_PLANTON_' + mc_name + '_' + mod + '_' + ens, metric=True)
+        namejson = today + '_YANN_PLANTON_' + mc_name + '_' + mod + '_' + ens + '_' + experiment
+        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, namejson, metric=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, list_ens
