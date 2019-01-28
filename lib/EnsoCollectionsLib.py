@@ -171,6 +171,12 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'metric_computation': 'ratio',
                 },
+                'EnsoSstSkew': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'metric_computation': 'ratio',
+                },
                 'NinaSstDivRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
@@ -252,7 +258,7 @@ def defCollection(MC=True):
                 'modeled_period': ('1906-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
             'plot_groupings': {
-                'plot_ratio': ['EnsoAmpl', 'EnsoSeasonality', 'NinaSstDur', 'NinoSstDur'],
+                'plot_ratio': ['EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew', 'NinaSstDur', 'NinoSstDur'],
                 'plot_rmse': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLatRmse', 'BiasSstLonRmse', 'BiasSstSkLonRmse',
                               'BiasTauxLatRmse', 'BiasTauxLonRmse', 'SeasonalPrLatRmse', 'SeasonalSstLatRmse',
                               'SeasonalSstLonRmse', 'NinaSstDivRmse', 'NinaSstLonRmse', 'NinaSstTsRmse',
