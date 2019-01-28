@@ -166,7 +166,7 @@ list_metric = sorted(dict_mc['metrics_list'].keys())
 project = 'CMIP6'
 experiment = 'hist'
 frequency = 'mon'
-realm = 'O'
+realm = 'A'
 
 # list of variables
 list_variables = list()
@@ -337,6 +337,7 @@ for mod in list_models:
         dict_ens[mod + '__' + ens], dict_ens_dive[mod + '__' + ens] = ComputeCollection(mc_name, dictDatasets,
                                                                                         netcdf=True, netcdf_name=netcdf,
                                                                                         debug=True)
+        stop
         # save json
         save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf_name, metric=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name

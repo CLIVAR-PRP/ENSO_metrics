@@ -429,12 +429,12 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         dive_down_diag = {'model': ArrayToList(sst_mod), 'observations': ArrayToList(sst_obs),
                           'axis': list(sst_mod.getAxis(0)[:])}
         if netcdf is True:
-            map_mod, map_areacell, keyerror_mod = \
+            map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafilemod, name_area=sstareanamemod,
                                     file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
                                     maskocean=False, debug=debug, **kwargs)
-            map_obs, map_areacell, keyerror_obs = \
+            map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
@@ -442,6 +442,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                                compute_anom=False, **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
                                              **kwargs)
+            del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 map_mod, map_obs, Method = TwoVarRegrid(map_mod, map_obs, Method,
@@ -675,12 +676,12 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         dive_down_diag = {'model': ArrayToList(sst_mod), 'observations': ArrayToList(sst_obs),
                           'axis': list(sst_mod.getAxis(0)[:])}
         if netcdf is True:
-            map_mod, map_areacell, keyerror_mod = \
+            map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafilemod, name_area=sstareanamemod,
                                     file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
                                     maskocean=False, debug=debug, **kwargs)
-            map_obs, map_areacell, keyerror_obs = \
+            map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
@@ -688,6 +689,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                              compute_anom=False, **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
                                              **kwargs)
+            del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 map_mod, map_obs, Method = TwoVarRegrid(map_mod, map_obs, Method,
