@@ -467,9 +467,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
     try:
-        keyarg['time_bounds_model'] = keyarg['modeled_period']
+        keyarg['time_bounds_mod'] = keyarg['modeled_period']
     except:
-        keyarg['time_bounds_model'] = DefaultArgValues('time_bounds_model')
+        keyarg['time_bounds_mod'] = DefaultArgValues('time_bounds_mod')
     # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
     try:
@@ -569,7 +569,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         #
         # model diagnostic
         #
-        keyarg['time_bounds'] = keyarg['time_bounds_model']
+        keyarg['time_bounds'] = keyarg['time_bounds_mod']
         keyarg['project_interpreter_var1'] = keyarg['project_interpreter']
         if metric in dict_oneVar.keys():
             # computes diagnostic that needs only one variable

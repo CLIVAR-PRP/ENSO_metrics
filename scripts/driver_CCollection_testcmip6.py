@@ -338,8 +338,7 @@ for mod in list_models:
                                                                                         netcdf=True, netcdf_name=netcdf,
                                                                                         debug=False)
         # save json
-        namejson = today + '_YANN_PLANTON_' + mc_name + '_' + mod + '_' + ens + '_' + experiment
-        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, namejson, metric=True)
+        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf_name, metric=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, list_ens
