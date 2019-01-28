@@ -336,7 +336,7 @@ for mod in list_models:
         #                                                      netcdf_name=netcdf_name, debug=True, dive_down=True)
         dict_ens[mod + '__' + ens], dict_ens_dive[mod + '__' + ens] = ComputeCollection(mc_name, dictDatasets,
                                                                                         netcdf=True, netcdf_name=netcdf,
-                                                                                        debug=False)
+                                                                                        debug=True)
         # save json
         save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf_name, metric=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
