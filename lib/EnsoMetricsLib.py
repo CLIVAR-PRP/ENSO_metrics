@@ -920,18 +920,23 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # skewness
-        ske_mod = SkewnessTemporal(sst_mod)
-        ske_obs = SkewnessTemporal(sst_obs)
+        sst_mod = SkewnessTemporal(sst_mod)
+        sst_obs = SkewnessTemporal(sst_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SkewnessTemporal', 15, **dict_debug)
 
         # Computes the root mean square difference
-        skeRmse = RmsZonal(ske_mod, ske_obs, centered=centered_rmse, biased=biased_rmse)
+        skeRmse = RmsZonal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
 
         # Error on the metric
         skeRmseErr = None
 
         # Dive down diagnostic
-        dive_down_diag = {'model': ArrayToList(ske_mod), 'observations': ArrayToList(ske_obs),
-                          'axis': list(ske_mod.getAxis(0)[:])}
+        dive_down_diag = {'model': ArrayToList(sst_mod), 'observations': ArrayToList(sst_obs),
+                          'axis': list(sst_mod.getAxis(0)[:])}
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
