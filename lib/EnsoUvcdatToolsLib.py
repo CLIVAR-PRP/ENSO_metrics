@@ -8,8 +8,15 @@ from numpy import arange as NParange
 from numpy import array as NParray
 from numpy import exp as NPexp
 from numpy import histogram as NPhistogram
+from numpy import isnan as NPisnan
+from numpy import nan as NPnan
 from numpy import nonzero as NPnonzero
+from numpy import ones as NPones
+from numpy import product as NPproduct
 from numpy import unravel_index as NPunravel_index
+from numpy import where as NPwhere
+from numpy.ma.core import MaskedArray as NPma__core__MaskedArray
+
 from os.path import isdir as OSpath_isdir
 from os.path import isfile as OSpath__isfile
 from scipy.signal import detrend as SCIPYsignal_detrend
@@ -1743,19 +1750,32 @@ def SkewnessTemporal(tab):
     elif len(tab.shape) == 1:
         skew = float(SCIPYstats__skew(tab))
     else:
-        skew = MV2zeros(tab[0].shape)
-        for ii in range(len(tab[0])):
-            if len(tab[:, ii].shape) > 1:
-                for jj in range(len(tab[0, ii])):
-                    if len(tab[:, ii, jj].shape) > 1:
-                        for kk in range(len(tab[0, ii, jj])):
-                            skew[ii, jj, kk] = SCIPYstats__skew(tab[:, ii, jj, kk])
-                    else:
-                        skew[ii, jj] = SCIPYstats__skew(tab[:, ii, jj])
-            else:
-                skew[ii] = SCIPYstats__skew(tab[:, ii])
-        skew = CDMS2createVariable(skew, axes=tab[0].getAxisList(), grid=tab.getGrid(), mask=tab[0].mask,
-                                   attributes=tab.attributes)
+        if len(tab.shape) == 2:
+            skew = SCIPYstats__skew(tab, axis=0)
+        else:
+            # swith to numpy
+            dataset = NPma__core__MaskedArray(tab)
+            # masked values -> nan
+            dataset = dataset.filled(fill_value=NPnan)
+            # Store information about the shape/size of the input data
+            time_ax = dataset.shape[0]
+            spac_ax = dataset.shape[1:]
+            channels = NPproduct(spac_ax)
+            # Reshape to two dimensions (time, space) creating the design matrix
+            dataset = dataset.reshape([time_ax, channels])
+            # Find the indices of values that are not missing in one row. All the rows will have missing values in the same
+            # places provided the array was centered. If it wasn't then it is possible that some missing values will be
+            # missed and the singular value decomposition will produce not a number for everything.
+            nonMissingIndex = NPwhere(NPisnan(dataset[0]) == False)[0]
+            # Remove missing values from the design matrix.
+            dataNoMissing = dataset[:, nonMissingIndex]
+            new_dataset = SCIPYstats__skew(dataNoMissing, axis=0)
+            flatE = NPones([channels], dtype=dataset.dtype) * NPnan
+            flatE = flatE.astype(dataset.dtype)
+            flatE[nonMissingIndex] = new_dataset
+            skew = flatE.reshape(spac_ax)
+        skew = CDMS2createVariable(MV2array(skew), axes=tab.getAxisList()[1:], grid=tab.getGrid(), mask=tab[0].mask,
+                                   attributes=tab.attributes, id='skewness')
     return skew
 
 
