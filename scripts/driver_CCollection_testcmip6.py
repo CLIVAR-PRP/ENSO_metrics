@@ -163,10 +163,10 @@ dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
 # parameters
-project = 'CMIP6'
+project = 'CMIP5'#'CMIP6'
 experiment = 'hist'
 frequency = 'mon'
-realm = 'O'
+realm = 'A'
 
 # list of variables
 list_variables = list()
@@ -190,7 +190,7 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
+    list_obs = ['Tropflux','GPCPv2.3']#['HadISST','Tropflux','GPCPv2.3']#['HadISST']#
 elif mc_name == 'ENSO_tel':
     list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
@@ -253,7 +253,7 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['IPSL-CM6A-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
+list_models = ['IPSL-CM5B-LR']#['IPSL-CM6A-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
 #
 # finding file and variable name in file for each observations dataset
 #
@@ -336,10 +336,10 @@ for mod in list_models:
         #                                                      netcdf_name=netcdf_name, debug=True, dive_down=True)
         dict_ens[mod + '__' + ens], dict_ens_dive[mod + '__' + ens] = ComputeCollection(mc_name, dictDatasets,
                                                                                         netcdf=True, netcdf_name=netcdf,
-                                                                                        debug=False)
+                                                                                        debug=True)
         # save json
-        namejson = today + '_YANN_PLANTON_' + mc_name + '_' + mod + '_' + ens + '_' + experiment
-        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, namejson, metric=True)
+        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf_name, metric=True)
+        stop
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, list_ens

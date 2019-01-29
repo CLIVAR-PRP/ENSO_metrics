@@ -89,20 +89,20 @@ def defCollection(MC=True):
         'ENSO_perf': {
             'long_name': 'Metrics Collection for ENSO performance',
             'metrics_list': {
-                'BiasSstLonRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                },
-                'BiasPrLonRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                },
+                # 'BiasSstLonRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'equatorial_pacific_LonRed'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                # },
+                # 'BiasPrLonRmse': {
+                #     'variables': ['pr'],
+                #     'regions': {'pr': 'equatorial_pacific_LonRed'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                # },
                 'BiasTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific_LonRed'},
@@ -110,20 +110,20 @@ def defCollection(MC=True):
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
-                'BiasSstLatRmse': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3.3_LatExt'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                },
-                'BiasPrLatRmse': {
-                    'variables': ['pr'],
-                    'regions': {'pr': 'nino3.3_LatExt'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                },
+                # 'BiasSstLatRmse': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'nino3.3_LatExt'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                # },
+                # 'BiasPrLatRmse': {
+                #     'variables': ['pr'],
+                #     'regions': {'pr': 'nino3.3_LatExt'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                # },
                 'BiasTauxLatRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific_LatExt'},
@@ -166,6 +166,12 @@ def defCollection(MC=True):
                     'metric_computation': 'ratio',
                 },
                 'EnsoSeasonality': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'metric_computation': 'ratio',
+                },
+                'EnsoSstSkew': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
@@ -252,7 +258,7 @@ def defCollection(MC=True):
                 'modeled_period': ('1906-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
             'plot_groupings': {
-                'plot_ratio': ['EnsoAmpl', 'EnsoSeasonality', 'NinaSstDur', 'NinoSstDur'],
+                'plot_ratio': ['EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew', 'NinaSstDur', 'NinoSstDur'],
                 'plot_rmse': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLatRmse', 'BiasSstLonRmse', 'BiasSstSkLonRmse',
                               'BiasTauxLatRmse', 'BiasTauxLonRmse', 'SeasonalPrLatRmse', 'SeasonalSstLatRmse',
                               'SeasonalSstLonRmse', 'NinaSstDivRmse', 'NinaSstLonRmse', 'NinaSstTsRmse',
