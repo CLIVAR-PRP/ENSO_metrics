@@ -942,9 +942,9 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
-            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=True,
+            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average=False, compute_anom=True,
                                              **kwargs)
-            map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=True,
+            map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=True,
                                              **kwargs)
             del mod_areacell, obs_areacell
             # skewness
