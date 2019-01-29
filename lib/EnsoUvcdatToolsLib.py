@@ -1297,6 +1297,9 @@ def get_num_axis(tab, name_axis):
     return num
 
 
+def MinMax(tab):
+    return [float(MV2minimum(tab)),float(MV2maximum(tab))]
+
 def Normalize(tab, frequency):
     """
     #################################################################################

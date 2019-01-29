@@ -10,7 +10,7 @@ from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
 from EnsoUvcdatToolsLib import ArrayOnes, ArrayToList, ApplyLandmask, ApplyLandmaskToArea, AverageMeridional,\
     AverageZonal, CheckTime, Composite, Composite_ev_by_ev, ComputePDF, Correlation, DetectEvents, DurationAllEvent, \
-    FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, MyDerive, PreProcessTS, \
+    FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, MinMax, MyDerive, PreProcessTS, \
     Read_data_mask_area, ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis,\
     RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal, SaveNetcdf, SeasonalMean, SkewMonthly, SkewnessTemporal, Std,\
     StdMonthly, TimeBounds, TwoVarRegrid
@@ -951,10 +951,25 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                                              **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=True,
                                              **kwargs)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
+                              'line1': '(model) minmax' + str(MinMax(map_mod)),
+                              'line2': '(obs) minmax' + str(MinMax(map_obs)),
+                              'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
             del mod_areacell, obs_areacell
             # skewness
             ske_map_mod = SkewnessTemporal(map_mod)
             ske_map_obs = SkewnessTemporal(map_obs)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ske_map_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in ske_map_obs.getAxisList()]),
+                              'line1': '(model) minmax' + str(MinMax(ske_map_mod)),
+                              'line2': '(obs) minmax' + str(MinMax(ske_map_obs)),
+                              'shape1': '(model) ' + str(ske_map_mod.shape),
+                              'shape2': '(obs) ' + str(ske_map_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after SkewnessTemporal: netcdf', 15, **dict_debug)
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 ske_map_mod, ske_map_obs, unneeded = TwoVarRegrid(ske_map_mod, ske_map_obs, '',
@@ -962,6 +977,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ske_map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in ske_map_obs.getAxisList()]),
+                                  'line1': '(model) minmax' + str(MinMax(ske_map_mod)),
+                                  'line2': '(obs) minmax' + str(MinMax(ske_map_obs)),
                                   'shape1': '(model) ' + str(ske_map_mod.shape),
                                   'shape2': '(obs) ' + str(ske_map_obs.shape)}
                     EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
