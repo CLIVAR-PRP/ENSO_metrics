@@ -1777,6 +1777,7 @@ def SkewnessTemporal(tab):
             flatE = flatE.astype(dataset.dtype)
             flatE[nonMissingIndex] = new_dataset
             skew = flatE.reshape(spac_ax)
+            skew = MV2masked_where(NPisnan(skew), skew)
         skew = CDMS2createVariable(MV2array(skew), axes=tab.getAxisList()[1:], grid=tab.getGrid(), mask=tab[0].mask,
                                    attributes=tab.attributes, id='skewness')
     return skew
