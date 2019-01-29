@@ -1376,6 +1376,8 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
+        pr_mod = AverageZonal(pr_mod)
+        pr_obs = AverageZonal(pr_obs)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -1621,6 +1623,8 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
+        pr_mod = AverageMeridional(pr_mod)
+        pr_obs = AverageMeridional(pr_obs)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
