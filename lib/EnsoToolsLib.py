@@ -83,9 +83,9 @@ def percentage_val_eastward(val_longitude, metric, region, threshold=-140):
         ep_event = None
     else:
         if pos_lon == 'pos':
-            ep_event = [1 for tt in range(len(val_longitude)) if val_longitude[tt] > 360 + threshold]
+            ep_event = [1 for val in val_longitude if val > 360 + threshold]
         else:
-            ep_event = [1 for tt in range(len(val_longitude)) if val_longitude[tt] > threshold]
+            ep_event = [1 for val in val_longitude if val > threshold]
         ep_event = sum(ep_event) * 100. / len(val_longitude)
     return ep_event, keyerror
 
