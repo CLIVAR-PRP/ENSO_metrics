@@ -3965,8 +3965,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
-            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                          'regridTool', 'regridMethod'}
+            known_args = {'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool',
+                          'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
                 EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
@@ -6462,8 +6462,8 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
-            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                          'regridTool', 'regridMethod'}
+            known_args = {'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool',
+                          'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
                 EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
@@ -7736,8 +7736,8 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
-            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                          'regridTool', 'regridMethod'}
+            known_args = {'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool',
+                          'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
                 EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())

@@ -172,8 +172,8 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'treshold_ep_ev': -140,
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
                 },
                 'EnsoSeasonality': {
                     'variables': ['sst'],
@@ -194,8 +194,8 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'treshold_ep_ev': -140,
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
                 },
                 'NinaSstDivRmse': {
                     'variables': ['sst'],
@@ -239,8 +239,8 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'treshold_ep_ev': -140,
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
                 },
                 'NinoSstDivRmse': {
                     'variables': ['sst'],
