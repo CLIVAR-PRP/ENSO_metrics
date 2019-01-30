@@ -4064,11 +4064,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                 keyerror += keyerror_nina
         else:
             # Standard Error of the Standard Deviation (function of nyears)
-            StdErr_nino = Std(lon_sstmax) / NUMPYsqrt(len(nino_years))
-            StdErr_nina = Std(lon_sstmin) / NUMPYsqrt(len(nina_years))
-            # The error (dy) on ratio ('y = x/z'): dy = (z*dx + x*dz) / z2
-            StdErr =\
-                float((Std(lon_sstmin) * StdErr_nino + Std(lon_sstmax) * StdErr_nina) / NUMPYsquare(Std(lon_sstmin)))
+            StdErr = None
 
             # Dive down diagnostic
             dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
@@ -6560,7 +6556,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             keyerror = deepcopy(keyerror_metric)
         else:
             # Standard Error of the Standard Deviation (function of nyears)
-            StdErr = Std(lon_sstmax) / NUMPYsqrt(yearN)
+            StdErr = None
 
             # Dive down diagnostic
             dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
@@ -7856,7 +7852,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             keyerror = deepcopy(keyerror_metric)
         else:
             # Standard Error of the Standard Deviation (function of nyears)
-            StdErr = Std(lon_sstmax) / NUMPYsqrt(yearN)
+            StdErr = None
 
             # Dive down diagnostic
             dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
