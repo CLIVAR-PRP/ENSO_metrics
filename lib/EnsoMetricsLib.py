@@ -159,8 +159,8 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     yearN_obs = sst_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(sst_mod)
-    actualtimeboundsobs = TimeBounds(sst_obs)
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr, dive_down_diag = None, None, None
@@ -214,8 +214,8 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
                      'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
@@ -227,7 +227,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     rmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': sstRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return rmseMetric
@@ -370,8 +370,8 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     yearN_obs = sst_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(sst_mod)
-    actualtimeboundsobs = TimeBounds(sst_obs)
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr, dive_down_diag = None, None, None
@@ -457,10 +457,10 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict5 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
                      'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
@@ -474,7 +474,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     LatRmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': sstRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
@@ -618,8 +618,8 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     yearN_obs = sst_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(sst_mod)
-    actualtimeboundsobs = TimeBounds(sst_obs)
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr, dive_down_diag = None, None, None
@@ -705,10 +705,10 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict5 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
                      'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
@@ -722,7 +722,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     LonRmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': sstRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
@@ -869,8 +869,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     yearN_obs = sst_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(sst_mod)
-    actualtimeboundsobs = TimeBounds(sst_obs)
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         skeRmse, skeRmseErr, dive_down_diag = None, None, None
@@ -986,10 +986,10 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict5 = {'metric_name': Name, 'metric_value_' + dataset: skeRmse,
                      'metric_value_error_' + dataset: skeRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
@@ -1003,7 +1003,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     LonRmseMetric = {
         'name': Name, 'value': skeRmse, 'value_error': skeRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model':actualtimeboundsmod, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
+        'time_period_model':actualtimebounds_mod, 'time_period_observations':actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
@@ -1146,8 +1146,8 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     yearN_obs = pr_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(pr_mod)
-    actualtimeboundsobs = TimeBounds(pr_obs)
+    actualtimebounds_mod = TimeBounds(pr_mod)
+    actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr, dive_down_diag = None, None, None
@@ -1201,8 +1201,8 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
                      'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_map__model', var2=pr_obs,
@@ -1213,7 +1213,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     rmseMetric = {
         'name': Name, 'value': prRmse, 'value_error': prRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return rmseMetric
@@ -1356,8 +1356,8 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     yearN_obs = pr_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(pr_mod)
-    actualtimeboundsobs = TimeBounds(pr_obs)
+    actualtimebounds_mod = TimeBounds(pr_mod)
+    actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr, dive_down_diag = None, None, None
@@ -1444,10 +1444,10 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict5 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
                      'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_lat__model', var2=pr_obs,
@@ -1460,7 +1460,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     LatRmseMetric = {
         'name': Name, 'value': prRmse, 'value_error': prRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
@@ -1603,8 +1603,8 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     yearN_obs = pr_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(pr_mod)
-    actualtimeboundsobs = TimeBounds(pr_obs)
+    actualtimebounds_mod = TimeBounds(pr_mod)
+    actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr, dive_down_diag = None, None, None
@@ -1690,10 +1690,10 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict5 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
                      'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_lon__model', var2=pr_obs,
@@ -1706,7 +1706,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     LonRmseMetric = {
         'name': Name, 'value': prRmse, 'value_error': prRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
@@ -1849,8 +1849,8 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     yearN_obs = taux_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(taux_mod)
-    actualtimeboundsobs = TimeBounds(taux_obs)
+    actualtimebounds_mod = TimeBounds(taux_mod)
+    actualtimebounds_obs = TimeBounds(taux_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr, dive_down_diag = None, None, None
@@ -1908,8 +1908,8 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset: tauxRmse,
                      'metric_value_error_' + dataset: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
@@ -1921,7 +1921,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     rmseMetric = {
         'name': Name, 'value': tauxRmse, 'value_error': tauxRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return rmseMetric
@@ -2065,8 +2065,8 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     yearN_obs = taux_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(taux_mod)
-    actualtimeboundsobs = TimeBounds(taux_obs)
+    actualtimebounds_mod = TimeBounds(taux_mod)
+    actualtimebounds_obs = TimeBounds(taux_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr, dive_down_diag = None, None, None
@@ -2156,10 +2156,10 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict5 = {'metric_name': Name, 'metric_value_' + dataset: tauxRmse,
                      'metric_value_error_' + dataset: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
@@ -2173,7 +2173,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     LatRmseMetric = {
         'name': Name, 'value': tauxRmse, 'value_error': tauxRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
@@ -2317,8 +2317,8 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     yearN_obs = taux_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmod = TimeBounds(taux_mod)
-    actualtimeboundsobs = TimeBounds(taux_obs)
+    actualtimebounds_mod = TimeBounds(taux_mod)
+    actualtimebounds_obs = TimeBounds(taux_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr, dive_down_diag = None, None, None
@@ -2405,10 +2405,10 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimeboundsmod)}
-            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict5 = {'metric_name': Name, 'metric_value_' + dataset: tauxRmse,
                      'metric_value_error_' + dataset: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
@@ -2422,7 +2422,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     LonRmseMetric = {
         'name': Name, 'value': tauxRmse, 'value_error': tauxRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmod, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
@@ -8388,28 +8388,27 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     return NinoTsMetric
 
 
-def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
-                      prlandmasknamemodel, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
-                      prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                      netcdf_name='', **kwargs):
+def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
+                      prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
+                      centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The SeasonalPrLatRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
 
     Inputs:
     ------
-    :param prfilemodel: string
+    :param prfilemod: string
         path_to/filename of the file (NetCDF) of the modeled PR
-    :param prnamemodel: string
-        name of PR variable (pr, precip) in 'prfilemodel'
-    :param prareafilemodel: string
+    :param prnamemod: string
+        name of PR variable (pr, precip) in 'prfilemod'
+    :param prareafilemod: string
         path_to/filename of the file (NetCDF) of the model areacell for PR
-    :param prareanamemodel: string
-        name of areacell variable (areacella, areacello) in 'prareafilemodel'
-    :param prlandmaskfilemodel: string
+    :param prareanamemod: string
+        name of areacell variable (areacella, areacello) in 'prareafilemod'
+    :param prlandmaskfilemod: string
         path_to/filename of the file (NetCDF) of the model landmask for PR
-    :param prlandmasknamemodel: string
-        name of landmask variable (sftlf, lsmask, landmask) in 'prlandmaskfilemodel'
+    :param prlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'prlandmaskfilemod'
     :param prfileobs: string
         path_to/filename of the file (NetCDF) of the observed PR
     :param prnameobs: string
@@ -8484,7 +8483,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     ------
     :return LatRmseMetric: dict
         name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
-        time_period_observations, ref
+        time_period_observations, ref, keyerror, dive_down_diag
 
     Method:
     -------
@@ -8505,7 +8504,7 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'PR meridional seasonality RMSE'
+    Name = 'pr meridional seasonality RMSE'
     Units = 'mm/day'
     Method = 'Meridional root mean square error of ' + box + ' climatological pr STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -8514,189 +8513,130 @@ def SeasonalPrLatRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs,
-                      'var1': '(model) ' + prnamemodel, 'var2': '(obs) ' + prnameobs}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=box,
-                                          time_bounds=kwargs['time_bounds_mod'], **kwargs)
-    pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
-                                        time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
-                      'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if prareafilemodel:
-        model_areacell = ReadAreaSelectRegion(prareafilemodel, areaname=prareanamemodel, box=box, **kwargs)
-    else:
-        model_areacell = ReadAreaSelectRegion(prfilemodel, areaname=prareanamemodel, box=box, **kwargs)
-    if prareafileobs:
-        obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=box, **kwargs)
-    else:
-        obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_areacell is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
-        if obs_areacell is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if prlandmaskfilemodel:
-        model_landmask = ReadLandmaskSelectRegion(prlandmaskfilemodel, landmaskname=prlandmasknamemodel, box=box,
-                                                  **kwargs)
-    else:
-        model_landmask = ReadLandmaskSelectRegion(prfilemodel, landmaskname=prlandmasknamemodel, box=box, **kwargs)
-    if prlandmaskfileobs:
-        obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    else:
-        obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_landmask is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
-        if obs_landmask is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if model_landmask is not None:
-        pr_model = ApplyLandmask(pr_model, model_landmask, maskland=True, maskocean=False)
-        if model_areacell is None:
-            model_areacell = ArrayOnes(model_landmask, id='areacell')
-        model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=True, maskocean=False)
-        del model_landmask
-    if obs_landmask is not None:
-        pr_obs = ApplyLandmask(pr_obs, obs_landmask, maskland=True, maskocean=False)
-        if obs_areacell is None:
-            obs_areacell = ArrayOnes(obs_landmask, id='areacell')
-        obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=True, maskocean=False)
-        del obs_landmask
-
-    # checks if the time-period fulfills the minimum length criterion
-    if isinstance(kwargs['min_time_steps'], int):
-        mini = kwargs['min_time_steps']
-        if len(pr_model) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the modeled time-period is too short: "
-                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
-        if len(pr_obs) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the observed time-period is too short: "
-                            + str(len(pr_obs)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
+    pr_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
+                            name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+    pr_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, box, file_area=prareafileobs,
+                            name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN_model = pr_model.shape[0] / 12
+    yearN_mod = pr_mod.shape[0] / 12
     yearN_obs = pr_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmodel = TimeBounds(pr_model)
-    actualtimeboundsobs = TimeBounds(pr_obs)
+    actualtimebounds_mod = TimeBounds(pr_mod)
+    actualtimebounds_obs = TimeBounds(pr_obs)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    # here only the detrending (if applicable) and time averaging are performed
-    pr_model, Method = PreProcessTS(pr_model, Method, compute_sea_cycle=True, **kwargs)
-    pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
-    del model_areacell, obs_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-
-    # standard deviation computation
-    pr_model = Std(pr_model)
-    pr_obs = Std(pr_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
-
-    # Regridding
-    if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                      'regridTool', 'regridMethod'}
-        extra_args = set(kwargs['regridding']) - known_args
-        if extra_args:
-            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
+    if keyerror_mod is not None or keyerror_obs is not None:
+        prRmse, prRmseErr, dive_down_diag = None, None, None
+        keyerror = ''
+        if keyerror_mod is not None:
+            keyerror = keyerror_mod
+        if len(keyerror) > 0 and keyerror_obs is not None:
+            keyerror += " ; "
+        if keyerror_obs is not None:
+            keyerror += keyerror_obs
+    else:
+        keyerror = None
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        pr_mod, Method = PreProcessTS(pr_mod, Method, compute_sea_cycle=True, **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
+        del mod_areacell, obs_areacell
         if debug is True:
-            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                          'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                          'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Zonal average
-    pr_model = AverageZonal(pr_model)
-    pr_obs = AverageZonal(pr_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+        # standard deviation computation
+        pr_mod = Std(pr_mod)
+        pr_obs = Std(pr_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
 
-    # Computes the root mean square difference
-    prRmse = RmsMeridional(pr_model, pr_obs, centered=centered_rmse, biased=biased_rmse)
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=box, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
-    # Dive down diagnostic
-    dive_down_diag = {'model': ArrayToList(pr_model), 'observations': ArrayToList(pr_obs),
-                      'axis': list(pr_model.getAxis(0)[:])}
-    if netcdf is True:
-        if ".nc" in netcdf_name:
-            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
-        else:
-            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-        dict1 = {'units': Units, 'number_of_years_used': yearN_model, 'time_period': str(actualtimeboundsmodel)}
-        dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-        dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: None,
-                 'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
-                   var2_attributes=dict2, var2=pr_obs, var2_name='pr_obs_' + dataset, global_attributes=dict3)
-        del dict1, dict2, dict3
+        # Zonal average
+        pr_mod = AverageZonal(pr_mod)
+        pr_obs = AverageZonal(pr_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        prRmse = RmsMeridional(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        prRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(pr_mod), 'observations': ArrayToList(pr_obs),
+                          'axis': list(pr_mod.getAxis(0)[:])}
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
+                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_model', var2=pr_obs,
+                       var2_attributes=dict2, var2_name='pr_obs_' + dataset, global_attributes=dict3)
+            del dict1, dict2, dict3
 
     # Create output
     LatRmseMetric = {
-        'name': Name, 'value': prRmse, 'value_error': None, 'units': Units, 'method': Method,
-        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
-        'dive_down_diag': dive_down_diag,
+        'name': Name, 'value': prRmse, 'value_error': prRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
 
 
-def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
-                      prlandmasknamemodel, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
-                      prlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                      netcdf_name='', **kwargs):
+def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
+                      prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
+                      centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The SeasonalPrLonRmse() function computes the climatological (12 months) PR (precipitation) zonal (longitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
 
     Inputs:
     ------
-     :param prfilemodel: string
+     :param prfilemod: string
         path_to/filename of the file (NetCDF) of the modeled PR
-    :param prnamemodel: string
-        name of PR variable (pr, precip) in 'prfilemodel'
-    :param prareafilemodel: string
+    :param prnamemod: string
+        name of PR variable (pr, precip) in 'prfilemod'
+    :param prareafilemod: string
         path_to/filename of the file (NetCDF) of the model areacell for PR
-    :param prareanamemodel: string
-        name of areacell variable (areacella, areacello) in 'prareafilemodel'
-    :param prlandmaskfilemodel: string
+    :param prareanamemod: string
+        name of areacell variable (areacella, areacello) in 'prareafilemod'
+    :param prlandmaskfilemod: string
         path_to/filename of the file (NetCDF) of the model landmask for PR
-    :param prlandmasknamemodel: string
-        name of landmask variable (sftlf, lsmask, landmask) in 'prlandmaskfilemodel'
+    :param prlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'prlandmaskfilemod'
     :param prfileobs: string
         path_to/filename of the file (NetCDF) of the observed PR
     :param prnameobs: string
@@ -8771,7 +8711,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     ------
     :return LonRmseMetric: dict
         name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
-        time_period_observations, ref
+        time_period_observations, ref, keyerror, dive_down_diag
 
     Method:
     -------
@@ -8792,7 +8732,7 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'PR zonal seasonality RMSE'
+    Name = 'pr zonal seasonality RMSE'
     Units = 'mm/day'
     Method = 'Zonal root mean square error of ' + box + ' climatological pr STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -8801,189 +8741,131 @@ def SeasonalPrLonRmse(prfilemodel, prnamemodel, prareafilemodel, prareanamemodel
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs,
-                      'var1': '(model) ' + prnamemodel, 'var2': '(obs) ' + prnameobs}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=box,
-                                          time_bounds=kwargs['time_bounds_mod'], **kwargs)
-    pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=box,
-                                        time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
-                      'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if prareafilemodel:
-        model_areacell = ReadAreaSelectRegion(prareafilemodel, areaname=prareanamemodel, box=box, **kwargs)
-    else:
-        model_areacell = ReadAreaSelectRegion(prfilemodel, areaname=prareanamemodel, box=box, **kwargs)
-    if prareafileobs:
-        obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=box, **kwargs)
-    else:
-        obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_areacell is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
-        if obs_areacell is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if prlandmaskfilemodel:
-        model_landmask = ReadLandmaskSelectRegion(prlandmaskfilemodel, landmaskname=prlandmasknamemodel, box=box,
-                                                  **kwargs)
-    else:
-        model_landmask = ReadLandmaskSelectRegion(prfilemodel, landmaskname=prlandmasknamemodel, box=box, **kwargs)
-    if prlandmaskfileobs:
-        obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    else:
-        obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_landmask is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
-        if obs_landmask is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if model_landmask is not None:
-        pr_model = ApplyLandmask(pr_model, model_landmask, maskland=True, maskocean=False)
-        if model_areacell is None:
-            model_areacell = ArrayOnes(model_landmask, id='areacell')
-        model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=True, maskocean=False)
-        del model_landmask
-    if obs_landmask is not None:
-        pr_obs = ApplyLandmask(pr_obs, obs_landmask, maskland=True, maskocean=False)
-        if obs_areacell is None:
-            obs_areacell = ArrayOnes(obs_landmask, id='areacell')
-        obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=True, maskocean=False)
-        del obs_landmask
-
-    # checks if the time-period fulfills the minimum length criterion
-    if isinstance(kwargs['min_time_steps'], int):
-        mini = kwargs['min_time_steps']
-        if len(pr_model) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the modeled time-period is too short: "
-                            + str(len(pr_model)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
-        if len(pr_obs) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the observed time-period is too short: "
-                            + str(len(pr_obs)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
+    pr_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
+                            name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+    pr_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, box, file_area=prareafileobs,
+                            name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN_model = pr_model.shape[0] / 12
+    yearN_mod = pr_mod.shape[0] / 12
     yearN_obs = pr_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmodel = TimeBounds(pr_model)
-    actualtimeboundsobs = TimeBounds(pr_obs)
+    actualtimebounds_mod = TimeBounds(pr_mod)
+    actualtimebounds_obs = TimeBounds(pr_obs)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    # here only the detrending (if applicable) and time averaging are performed
-    pr_model, Method = PreProcessTS(pr_model, Method, compute_sea_cycle=True, **kwargs)
-    pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
-    del model_areacell, obs_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-
-    # standard deviation computation
-    pr_model = Std(pr_model)
-    pr_obs = Std(pr_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
-
-    # Regridding
-    if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                      'regridTool', 'regridMethod'}
-        extra_args = set(kwargs['regridding']) - known_args
-        if extra_args:
-            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        pr_model, pr_obs, Method = TwoVarRegrid(pr_model, pr_obs, Method, region=box, **kwargs['regridding'])
+    if keyerror_mod is not None or keyerror_obs is not None:
+        prRmse, prRmseErr, dive_down_diag = None, None, None
+        keyerror = ''
+        if keyerror_mod is not None:
+            keyerror = keyerror_mod
+        if len(keyerror) > 0 and keyerror_obs is not None:
+            keyerror += " ; "
+        if keyerror_obs is not None:
+            keyerror += keyerror_obs
+    else:
+        keyerror = None
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        pr_mod, Method = PreProcessTS(pr_mod, Method, compute_sea_cycle=True, **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
+        del mod_areacell, obs_areacell
         if debug is True:
-            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                          'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                          'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Meridional average
-    pr_model = AverageMeridional(pr_model)
-    pr_obs = AverageMeridional(pr_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+        # standard deviation computation
+        pr_mod = Std(pr_mod)
+        pr_obs = Std(pr_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
 
-    # Computes the root mean square difference
-    prRmse = RmsZonal(pr_model, pr_obs, centered=centered_rmse, biased=biased_rmse)
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=box, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
-    # Dive down diagnostic
-    dive_down_diag = {'model': ArrayToList(pr_model), 'observations': ArrayToList(pr_obs),
-                      'axis': list(pr_model.getAxis(0)[:])}
-    if netcdf is True:
-        if ".nc" in netcdf_name:
-            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
-        else:
-            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-        dict1 = {'units': Units, 'number_of_years_used': yearN_model, 'time_period': str(actualtimeboundsmodel)}
-        dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-        dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: None,
-                 'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=pr_model, var1_attributes=dict1, var1_name='pr_model',
-                   var2_attributes=dict2, var2=pr_obs, var2_name='pr_obs_' + dataset, global_attributes=dict3)
-        del dict1, dict2, dict3
+        # Meridional average
+        pr_mod = AverageMeridional(pr_mod)
+        pr_obs = AverageMeridional(pr_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        prRmse = RmsZonal(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        prRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(pr_mod), 'observations': ArrayToList(pr_obs),
+                          'axis': list(pr_mod.getAxis(0)[:])}
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
+                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_model', var2=pr_obs,
+                       var2_attributes=dict2, var2_name='pr_obs_' + dataset, global_attributes=dict3)
+            del dict1, dict2, dict3
 
     # Create output
     LonRmseMetric = {
-        'name': Name, 'value': prRmse, 'value_error': None, 'units': Units, 'method': Method,
-        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
-        'dive_down_diag': dive_down_diag,
+        'name': Name, 'value': prRmse, 'value_error': prRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
 
 
-def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
-                       sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                       sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                       netcdf_name='', **kwargs):
+def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                       sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='',
+                       **kwargs):
     """
     The SeasonalSstLatRmse() function computes the climatological (12 months) SST meridional (latitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
 
     Inputs:
     ------
-    :param sstfilemodel: string
+    :param sstfilemod: string
         path_to/filename of the file (NetCDF) of the modeled SST
-    :param sstnamemodel: string
-        name of SST variable (tos, ts) in 'sstfilemodel'
-    :param sstareafilemodel: string
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string
         path_to/filename of the file (NetCDF) of the model areacell for SST
-    :param sstareanamemodel: string
-        name of areacell variable (areacella, areacello) in 'sstareafilemodel'
-    :param sstlandmaskfilemodel: string
+    :param sstareanamemod: string
+        name of areacell variable (areacella, areacello) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string
         path_to/filename of the file (NetCDF) of the model landmask for SST
-    :param sstlandmasknamemodel: string
-        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfilemodel'
+    :param sstlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfilemod'
     :param sstfileobs: string
         path_to/filename of the file (NetCDF) of the observed SST
     :param sstnameobs: string
@@ -9077,7 +8959,7 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
         except: kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'SST meridional seasonality RMSE'
+    Name = 'sst meridional seasonality RMSE'
     Units = 'C'
     Method = 'Meridional root mean square error of ' + box + ' climatological sst STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -9086,189 +8968,131 @@ def SeasonalSstLatRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
-                      'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
-                                           time_bounds=kwargs['time_bounds_mod'], **kwargs)
-    sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
-                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
-                      'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafilemodel:
-        model_areacell = ReadAreaSelectRegion(sstareafilemodel, areaname=sstareanamemodel, box=box, **kwargs)
-    else:
-        model_areacell = ReadAreaSelectRegion(sstfilemodel, areaname=sstareanamemodel, box=box, **kwargs)
-    if sstareafileobs:
-        obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
-    else:
-        obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_areacell is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
-        if obs_areacell is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfilemodel:
-        model_landmask = ReadLandmaskSelectRegion(sstlandmaskfilemodel, landmaskname=sstlandmasknamemodel, box=box,
-                                                  **kwargs)
-    else:
-        model_landmask = ReadLandmaskSelectRegion(sstfilemodel, landmaskname=sstlandmasknamemodel, box=box, **kwargs)
-    if sstlandmaskfileobs:
-        obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    else:
-        obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_landmask is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
-        if obs_landmask is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if model_landmask is not None:
-        sst_model = ApplyLandmask(sst_model, model_landmask, maskland=True, maskocean=False)
-        if model_areacell is None:
-            model_areacell = ArrayOnes(model_landmask, id='areacell')
-        model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=True, maskocean=False)
-        del model_landmask
-    if obs_landmask is not None:
-        sst_obs = ApplyLandmask(sst_obs, obs_landmask, maskland=True, maskocean=False)
-        if obs_areacell is None:
-            obs_areacell = ArrayOnes(obs_landmask, id='areacell')
-        obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=True, maskocean=False)
-        del obs_landmask
-
-    # checks if the time-period fulfills the minimum length criterion
-    if isinstance(kwargs['min_time_steps'], int):
-        mini = kwargs['min_time_steps']
-        if len(sst_model) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the modeled time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
-        if len(sst_obs) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the observed time-period is too short: "
-                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
+    sst_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+    sst_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN_model = sst_model.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] / 12
     yearN_obs = sst_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmodel = TimeBounds(sst_model)
-    actualtimeboundsobs = TimeBounds(sst_obs)
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    # here only the detrending (if applicable) and time averaging are performed
-    sst_model, Method = PreProcessTS(sst_model, Method, compute_sea_cycle=True, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
-    del model_areacell, obs_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-
-    # standard deviation computation
-    sst_model = Std(sst_model)
-    sst_obs = Std(sst_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
-
-    # Regridding
-    if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                      'regridTool', 'regridMethod'}
-        extra_args = set(kwargs['regridding']) - known_args
-        if extra_args:
-            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
+    if keyerror_mod is not None or keyerror_obs is not None:
+        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        keyerror = ''
+        if keyerror_mod is not None:
+            keyerror = keyerror_mod
+        if len(keyerror) > 0 and keyerror_obs is not None:
+            keyerror += " ; "
+        if keyerror_obs is not None:
+            keyerror += keyerror_obs
+    else:
+        keyerror = None
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        sst_mod, Method = PreProcessTS(sst_mod, Method, compute_sea_cycle=True, **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
+        del mod_areacell, obs_areacell
         if debug is True:
-            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                          'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Zonal average
-    sst_model = AverageZonal(sst_model)
-    sst_obs = AverageZonal(sst_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+        # standard deviation computation
+        sst_mod = Std(sst_mod)
+        sst_obs = Std(sst_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
 
-    # Computes the root mean square difference
-    sstRmse = RmsMeridional(sst_model, sst_obs, centered=centered_rmse, biased=biased_rmse)
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
-    # Dive down diagnostic
-    dive_down_diag = {'model': ArrayToList(sst_model), 'observations': ArrayToList(sst_obs),
-                      'axis': list(sst_model.getAxis(0)[:])}
-    if netcdf is True:
-        if ".nc" in netcdf_name:
-            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
-        else:
-            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-        dict1 = {'units': Units, 'number_of_years_used': yearN_model, 'time_period': str(actualtimeboundsmodel)}
-        dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-        dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
-                 'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
-                   var2_attributes=dict2, var2=sst_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
-        del dict1, dict2, dict3
+        # Zonal average
+        sst_mod = AverageZonal(sst_mod)
+        sst_obs = AverageZonal(sst_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        sstRmse = RmsMeridional(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        sstRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(sst_mod), 'observations': ArrayToList(sst_obs),
+                          'axis': list(sst_mod.getAxis(0)[:])}
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
+                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__model', var2=sst_obs,
+                       var2_attributes=dict2, var2_name='sst__' + dataset, global_attributes=dict3)
+            del dict1, dict2, dict3
 
     # Create output
     LatRmseMetric = {
         'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
-        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model':actualtimeboundsmodel, 'time_period_observations':actualtimeboundsobs, 'ref': Ref,
-        'dive_down_diag': dive_down_diag,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model':actualtimebounds_mod, 'time_period_observations':actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LatRmseMetric
 
 
-def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
-                       sstlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                       sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                       netcdf_name='', **kwargs):
+def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                       sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='',
+                       **kwargs):
     """
     The SeasonalSstLonRmse() function computes the climatological (12 months) SST zonal (longitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
 
     Inputs:
     ------
-    :param sstfilemodel: string
+    :param sstfilemod: string
         path_to/filename of the file (NetCDF) of the modeled SST
-    :param sstnamemodel: string
-        name of SST variable (tos, ts) in 'sstfilemodel'
-    :param sstareafilemodel: string
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string
         path_to/filename of the file (NetCDF) of the model areacell for SST
-    :param sstareanamemodel: string
-        name of areacell variable (areacella, areacello) in 'sstareafilemodel'
-    :param sstlandmaskfilemodel: string
+    :param sstareanamemod: string
+        name of areacell variable (areacella, areacello) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string
         path_to/filename of the file (NetCDF) of the model landmask for SST
-    :param sstlandmasknamemodel: string
-        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfilemodel'
+    :param sstlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfilemod'
     :param sstfileobs: string
         path_to/filename of the file (NetCDF) of the observed SST
     :param sstnameobs: string
@@ -9343,7 +9167,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     ------
     :return LonRmseMetric: dict
         name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
-        time_period_observations, ref
+        time_period_observations, ref, keyerror, dive_down_diag
 
     Method:
     -------
@@ -9364,7 +9188,7 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'SST zonal seasonality RMSE'
+    Name = 'sst zonal seasonality RMSE'
     Units = 'C'
     Method = 'Zonal root mean square error of ' + box + ' climatological sst STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
@@ -9373,163 +9197,106 @@ def SeasonalSstLonRmse(sstfilemodel, sstnamemodel, sstareafilemodel, sstareaname
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
-                      'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=box,
-                                           time_bounds=kwargs['time_bounds_mod'], **kwargs)
-    sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=box,
-                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
-                      'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafilemodel:
-        model_areacell = ReadAreaSelectRegion(sstareafilemodel, areaname=sstareanamemodel, box=box, **kwargs)
-    else:
-        model_areacell = ReadAreaSelectRegion(sstfilemodel, areaname=sstareanamemodel, box=box, **kwargs)
-    if sstareafileobs:
-        obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=box, **kwargs)
-    else:
-        obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_areacell is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
-        if obs_areacell is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfilemodel:
-        model_landmask = ReadLandmaskSelectRegion(sstlandmaskfilemodel, landmaskname=sstlandmasknamemodel, box=box,
-                                                  **kwargs)
-    else:
-        model_landmask = ReadLandmaskSelectRegion(sstfilemodel, landmaskname=sstlandmasknamemodel, box=box, **kwargs)
-    if sstlandmaskfileobs:
-        obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    else:
-        obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs, box=box, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_landmask is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
-        if obs_landmask is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if model_landmask is not None:
-        sst_model = ApplyLandmask(sst_model, model_landmask, maskland=True, maskocean=False)
-        if model_areacell is None:
-            model_areacell = ArrayOnes(model_landmask, id='areacell')
-        model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=True, maskocean=False)
-        del model_landmask
-    if obs_landmask is not None:
-        sst_obs = ApplyLandmask(sst_obs, obs_landmask, maskland=True, maskocean=False)
-        if obs_areacell is None:
-            obs_areacell = ArrayOnes(obs_landmask, id='areacell')
-        obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=True, maskocean=False)
-        del obs_landmask
-
-    # checks if the time-period fulfills the minimum length criterion
-    if isinstance(kwargs['min_time_steps'], int):
-        mini = kwargs['min_time_steps']
-        if len(sst_model) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the modeled time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
-        if len(sst_obs) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + metric + ": the observed time-period is too short: "
-                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
+    sst_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+    sst_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN_model = sst_model.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] / 12
     yearN_obs = sst_obs.shape[0] / 12
 
     # Time period
-    actualtimeboundsmodel = TimeBounds(sst_model)
-    actualtimeboundsobs = TimeBounds(sst_obs)
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
 
-    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    # here only the detrending (if applicable) and time averaging are performed
-    sst_model, Method = PreProcessTS(sst_model, Method, compute_sea_cycle=True, **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
-    del model_areacell, obs_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-
-    # standard deviation computation
-    sst_model = Std(sst_model)
-    sst_obs = Std(sst_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
-
-    # Regridding
-    if isinstance(kwargs['regridding'], dict):
-        known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                      'regridTool', 'regridMethod'}
-        extra_args = set(kwargs['regridding']) - known_args
-        if extra_args:
-            EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-        sst_model, sst_obs, Method = TwoVarRegrid(sst_model, sst_obs, Method, region=box, **kwargs['regridding'])
+    if keyerror_mod is not None or keyerror_obs is not None:
+        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        keyerror = ''
+        if keyerror_mod is not None:
+            keyerror = keyerror_mod
+        if len(keyerror) > 0 and keyerror_obs is not None:
+            keyerror += " ; "
+        if keyerror_obs is not None:
+            keyerror += keyerror_obs
+    else:
+        keyerror = None
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        sst_mod, Method = PreProcessTS(sst_mod, Method, compute_sea_cycle=True, **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
+        del mod_areacell, obs_areacell
         if debug is True:
-            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                          'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-    # Meridional average
-    sst_model = AverageMeridional(sst_model)
-    sst_obs = AverageMeridional(sst_obs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+        # standard deviation computation
+        sst_mod = Std(sst_mod)
+        sst_obs = Std(sst_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
 
-    # Computes the root mean square difference
-    sstRmse = RmsZonal(sst_model, sst_obs, centered=centered_rmse, biased=biased_rmse)
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
-    # Dive down diagnostic
-    dive_down_diag = {'model': ArrayToList(sst_model), 'observations': ArrayToList(sst_obs),
-                      'axis': list(sst_model.getAxis(0)[:])}
-    if netcdf is True:
-        if ".nc" in netcdf_name:
-            file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
-        else:
-            file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-        dict1 = {'units': Units, 'number_of_years_used': yearN_model, 'time_period': str(actualtimeboundsmodel)}
-        dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimeboundsobs)}
-        dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
-                 'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-        SaveNetcdf(file_name, var1=sst_model, var1_attributes=dict1, var1_name='sst_model',
-                   var2_attributes=dict2, var2=sst_obs, var2_name='sst_obs_' + dataset, global_attributes=dict3)
-        del dict1, dict2, dict3
+        # Meridional average
+        sst_mod = AverageMeridional(sst_mod)
+        sst_obs = AverageMeridional(sst_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        sstRmse = RmsZonal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        sstRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(sst_mod), 'observations': ArrayToList(sst_obs),
+                          'axis': list(sst_mod.getAxis(0)[:])}
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
+                     'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__model', var2=sst_obs,
+                       var2_attributes=dict2, var2_name='sst__' + dataset, global_attributes=dict3)
+            del dict1, dict2, dict3
 
     # Create output
     LonRmseMetric = {
-        'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
-        'nyears_model': yearN_model, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
-        'dive_down_diag': dive_down_diag,
+        'name': Name, 'value': sstRmse, 'value_error': sstRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return LonRmseMetric
 # ---------------------------------------------------------------------------------------------------------------------#
