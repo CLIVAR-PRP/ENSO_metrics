@@ -6781,7 +6781,6 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'time1': '(model) ' + str(TimeBounds(map_mod)),
                               'time2': '(obs) ' + str(TimeBounds(map_obs))}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
-            del mod_areacell, obs_areacell
             # Seasonal mean
             map_mod = SeasonalMean(map_mod, season_ev, compute_anom=True)
             map_obs = SeasonalMean(map_obs, season_ev, compute_anom=True)
@@ -8134,7 +8133,6 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'time1': '(model) ' + str(TimeBounds(map_mod)),
                               'time2': '(obs) ' + str(TimeBounds(map_obs))}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
-            del mod_areacell, obs_areacell
             # Seasonal mean
             map_mod = SeasonalMean(map_mod, season_ev, compute_anom=True)
             map_obs = SeasonalMean(map_obs, season_ev, compute_anom=True)
