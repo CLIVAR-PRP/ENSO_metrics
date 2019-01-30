@@ -2370,8 +2370,9 @@ def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, met
     :return: minimum/maximum position or both minimum and maximum positions, int, float or list
         position(s) in the (t,x,y,z) space defined by tab axes of the minimum and/or maximum values of tab
     """
-    tab_ts = MV2array([FindXYMinMax(tab[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
-                       for tt in range(len(tab))])
+    tab_ts =\
+        MV2array([FindXYMinMax(tab[tt], return_val=return_val, smooth=smooth, axis=axis, window=window, method=method)
+                  for tt in range(len(tab))])
     tab_ts.setAxis(0, tab.getAxis(0))
     return tab_ts
 

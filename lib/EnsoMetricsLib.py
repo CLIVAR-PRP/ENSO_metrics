@@ -3796,7 +3796,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             2.1) zonal SSTA at the peak of the event is computed for each selected event
             2.2) find the zonal position of the maximum (minimum) SSTA for each selected event
             2.3) compute the percentage of EP events (maximum/minimum SSTA eastward of the given threshold)
-            2.4) compute the ratio EP events during El Nino divided by EP events during La Nina
+            2.4) compute the ratio EP events during La Nina divided by EP events during El Nino
 
     Inputs:
     ------
@@ -4000,7 +4000,9 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                                                                threshold=kwargs['treshold_ep_ev'])
         ep_event_nina, keyerror_nina = percentage_val_eastward(lon_sstmin, metric, box,
                                                                threshold=kwargs['treshold_ep_ev'])
-        ratioEP = ep_event_nino / ep_event_nina
+
+        # 2.4 compute the ratio EP events during La Nina divided by EP events during El Nino
+        ratioEP = ep_event_nina / ep_event_nino
 
         if keyerror_nino is not None or keyerror_nina is not None:
             StdErr, dive_down_diag = None, None
