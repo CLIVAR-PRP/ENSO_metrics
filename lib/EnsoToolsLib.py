@@ -57,3 +57,35 @@ def StringInDict(string_or_list, dictionary, inspect_stack):
         EnsoErrorsWarnings.ObjectTypeError('string_or_list', '[string, list]', type(string_or_list), INSPECTstack())
     return
 
+
+def percentage_val_eastward(val_longitude, metric, region, threshold=-140):
+    """
+    #################################################################################
+    Description:
+    Computes the percentage of given values (longitude in val_longitude) eastward of 'threshold'
+    #################################################################################
+
+    :param val_longitude: list
+        list of longitude
+    :param threshold: float, optional
+        threshold to define the westward boundary of the region
+    :return ep: float
+        percentage of given values eastward of 'threshold'
+    """
+    keyerror = None
+    pos_lon = 'pos' if all(ii >= 0 for ii in val_longitude) is True else \
+        ('neg' if all(ii <= 0 for ii in val_longitude) is True else False)
+    if pos_lon is False:
+        keyerror = "longitude in lon_axis are neither all positive nor all negative"
+        list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": unknown longitude",
+                        str().ljust(5) + metric + ": " + str(region) + ": " + keyerror + ": " + str(val_longitude)]
+        EnsoErrorsWarnings.MyWarning(list_strings)
+        ep_event = None
+    else:
+        if pos_lon == 'pos':
+            ep_event = [1 for tt in range(len(val_longitude)) if val_longitude[tt] > 360 + threshold]
+        else:
+            ep_event = [1 for tt in range(len(val_longitude)) if val_longitude[tt] < threshold]
+        ep_event = float(sum(ep_event)) / len(pos_lon)
+    return ep_event, keyerror
+

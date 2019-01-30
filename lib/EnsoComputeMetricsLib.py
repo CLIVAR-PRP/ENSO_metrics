@@ -7,11 +7,11 @@ from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
     BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf,\
-    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap, EnsoSeasonality, \
-    EnsoSstSkew, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstTsRmse, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse,\
-    NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
+    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoDiversity, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap,\
+    EnsoSeasonality, EnsoSstSkew, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstTsRmse, NinoSstDiv,\
+    NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse,\
+    SeasonalSstLatRmse, SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
-
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -328,8 +328,9 @@ dict_twoVar_modelAndObs = {
     'EnsoPrMap': EnsoPrMap, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel
 }
 
-dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality, 'EnsoSstSkew': EnsoSstSkew,
-               'NinaSstDur': NinaSstDur, 'NinoSstDur': NinoSstDur}
+dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoDiversity': EnsoDiversity, 'EnsoSeasonality': EnsoSeasonality,
+               'EnsoSstSkew': EnsoSstSkew, 'NinaSstDiv': NinaSstDiv, 'NinaSstDur': NinaSstDur, 'NinoSstDiv': NinoSstDiv,
+               'NinoSstDur': NinoSstDur}
 
 dict_twoVar = {
     'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr, 'EnsoAlphaShf': EnsoAlphaShf,

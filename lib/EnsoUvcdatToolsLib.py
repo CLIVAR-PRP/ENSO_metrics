@@ -688,7 +688,7 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                     try:
                         landmask_nd[:, :] = landmask
                     except:
-                        keyerror = "tab must be more than 4D and this is not taken into account yet (" +\
+                        keyerror = "ApplyLandmask: tab must be more than 4D and this is not taken into account yet (" +\
                                    str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
                         list_strings = [
                             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": landmask shape",
@@ -732,8 +732,8 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     keyerror = None
     if maskland is True or maskocean is True:
         if area.getGrid().shape != landmask.getGrid().shape:
-            keyerror = "area (" + str(area.getGrid().shape) + ") and landmask (" + str(landmask.getGrid().shape) +\
-                       ") are not on the same grid"
+            keyerror = "ApplyLandmaskToArea: area (" + str(area.getGrid().shape) + ") and landmask (" +\
+                       str(landmask.getGrid().shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": applying landmask to areacell",
                 str().ljust(5) + keyerror,
