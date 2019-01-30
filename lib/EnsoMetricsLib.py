@@ -6495,7 +6495,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         # Lists event years
         event_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
         if debug is True:
-            dict_debug = {'nina1': str(event_years)}
+            dict_debug = {'nina1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
@@ -7791,7 +7791,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         # Lists event years
         event_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
         if debug is True:
-            dict_debug = {'nino1': str(event_years)}
+            dict_debug = {'nino1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
