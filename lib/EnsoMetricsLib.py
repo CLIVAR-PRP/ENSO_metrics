@@ -223,6 +223,10 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
             SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_map__model', var2=sst_obs,
                        var2_attributes=dict2, var2_name='sst_map__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     rmseMetric = {
@@ -470,6 +474,10 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var3_name='sst_map__model', var4=map_obs, var4_attributes=dict4, var4_name='sst_map__' + dataset,
                        global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -718,6 +726,10 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var3_name='sst_map__model', var4=map_obs, var4_attributes=dict4, var4_name='sst_map__' + dataset,
                        global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -999,6 +1011,10 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                        var3_attributes=dict3, var3_name='sstSke_map__model', var4=ske_map_obs, var4_attributes=dict4,
                        var4_name='sstSke_map__' + dataset, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(skeRmse), 'line2': 'metric value_error: ' + str(skeRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -1209,6 +1225,10 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_map__model', var2=pr_obs,
                        var2_attributes=dict2, var2_name='pr_map__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     rmseMetric = {
@@ -1456,6 +1476,10 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                        var3_name='pr_map__model', var4=map_obs, var4_attributes=dict4, var4_name='pr_map__' + dataset,
                        global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -1702,6 +1726,10 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                        var3_name='pr_map__model', var4=map_obs, var4_attributes=dict4, var4_name='pr_map__' + dataset,
                        global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -1917,6 +1945,10 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
             SaveNetcdf(file_name, var1=taux_mod, var1_attributes=dict1, var1_name='taux_map__model', var2=taux_obs,
                        var2_attributes=dict2, var2_name='taux_map__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     rmseMetric = {
@@ -2169,6 +2201,10 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                        var3_name='taux_map__model', var4=map_obs, var4_attributes=dict4,
                        var4_name='taux_map__' + dataset, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -2418,6 +2454,10 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                        var3_name='taux_map__model', var4=map_obs, var4_attributes=dict4,
                        var4_name='taux_map__' + dataset, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -3775,6 +3815,10 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_monthly__' + dataset,
                        var2=sst, var2_attributes=dict2, var2_name='sstStd_map__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(sstStd), 'line2': 'metric value_error: ' + str(sstStdErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     amplMetric = {
@@ -4040,6 +4084,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                            var1_name='Nino_lon_pos_maxSSTA__' + dataset, var2=lon_sstmin, var2_attributes=dict2,
                            var2_name='Nina_lon_pos_minSSTA__' + dataset, global_attributes=dict3)
                 del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(ratioEP), 'line2': 'metric value_error: ' + str(StdErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     EnsoDivMetric = {
@@ -5705,6 +5753,10 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                        var3=sst_MAM_std, var3_attributes=dict4, var3_name='sstStd_MAM_map__' + dataset,
                        global_attributes=dict4)
             del dict1, dict2, dict3, dict4
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(ratioStd), 'line2': 'metric value_error: ' + str(ratio_std_err)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     seaMetric = {
@@ -5884,6 +5936,10 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
             SaveNetcdf(file_name, var1=sstSke_monthly, var1_attributes=dict1, var1_name='sstSke_monthly__' + dataset,
                        var2=sst, var2_attributes=dict2, var2_name='sstSke_map__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(sstSke), 'line2': 'metric value_error: ' + str(sstSkeErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     skewMetric = {
@@ -6516,6 +6572,10 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                 SaveNetcdf(file_name, var1=lon_sstmax, var1_attributes=dict1,
                            var1_name='Nina_lon_pos_minSSTA__' + dataset, global_attributes=dict2)
                 del dict1, dict2
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(ep_event), 'line2': 'metric value_error: ' + str(StdErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaDivMetric = {
@@ -6813,6 +6873,11 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             SaveNetcdf(file_name, var1=pdf_mod, var1_attributes=dict1, var1_name='pdf__model', var2=pdf_obs,
                        var2_attributes=dict2, var2_name='pdf__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(pdfRmse), 'line2': 'metric value_error: ' + str(pdfRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+
 
     # Create output
     NinaDivMetric = {
@@ -6999,6 +7064,11 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='nina_duration__' + dataset,
                        global_attributes=dict2)
             del dict1, dict2
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(duration_mean),
+                      'line2': 'metric value_error: ' + str(duration_err)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaDurMetric = {
@@ -7322,6 +7392,10 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var3_attributes=dict3, var3_name='sstComp_map__model', var4=map_obs, var4_attributes=dict4,
                        var4_name='sstComp_map__' + dataset, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaLonMetric = {
@@ -7548,6 +7622,10 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var2=composite_obs, var2_attributes=dict2, var2_name='sst_ts__' + dataset,
                        global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaTsMetric = {
@@ -7790,6 +7868,10 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                 SaveNetcdf(file_name, var1=lon_sstmax, var1_attributes=dict1,
                            var1_name='Nino_lon_pos_maxSSTA__' + dataset, global_attributes=dict2)
                 del dict1, dict2
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(ep_event), 'line2': 'metric value_error: ' + str(StdErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoDivMetric = {
@@ -8087,10 +8169,14 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             SaveNetcdf(file_name, var1=pdf_mod, var1_attributes=dict1, var1_name='pdf__model',
                        var2_attributes=dict2, var2=pdf_obs, var2_name='pdf__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(pdfRmse), 'line2': 'metric value_error: ' + str(pdfRmse)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoDivMetric = {
-        'name': Name, 'value': pdfRmse, 'value_error': None, 'units': Units, 'method': Method,
+        'name': Name, 'value': pdfRmse, 'value_error': pdfRmse, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'events_model': event_years_mod,
         'events_observations': event_years_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
@@ -8272,6 +8358,11 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='nino_duration__' + dataset,
                        global_attributes=dict2)
             del dict1, dict2
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(duration_mean),
+                      'line2': 'metric value_error: ' + str(duration_err)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoDurMetric = {
@@ -8590,6 +8681,10 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var3_attributes=dict3, var3_name='sstComp_map__model', var4=map_obs, var4_attributes=dict4,
                        var4_name='sstComp_map__' + dataset, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoLonMetric = {
@@ -8817,6 +8912,10 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var2=composite_obs, var2_attributes=dict2, var2_name='sst_ts__' + dataset,
                        global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoTsMetric = {
@@ -9046,6 +9145,10 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr__model', var2=pr_obs,
                        var2_attributes=dict2, var2_name='pr__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -9274,6 +9377,10 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr__model', var2=pr_obs,
                        var2_attributes=dict2, var2_name='pr__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -9496,15 +9603,20 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse, 'metric_value_error_' + dataset: None,
-                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
+                     'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__model', var2=sst_obs,
                        var2_attributes=dict2, var2_name='sst__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
-        'name': Name, 'value': sstRmse, 'value_error': None, 'units': Units, 'method': Method,
+        'name': Name, 'value': sstRmse, 'value_error': sstRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model':actualtimebounds_mod, 'time_period_observations':actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
@@ -9731,6 +9843,10 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__model', var2=sst_obs,
                        var2_attributes=dict2, var2_name='sst__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
