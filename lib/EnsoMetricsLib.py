@@ -5641,7 +5641,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
 
     # Define metric attributes
     Name = 'ENSO seasonality'
-    Units = ''
+    Units = 'C'
     Method = 'Ratio between NDJ and MAM standard deviation ' + sstbox + ' sstA'
     Ref = 'Using CDAT std dev calculation'
     metric = 'EnsoSeasonality'
@@ -6705,10 +6705,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     lon = ReferenceRegions(box)['longitude']
     Method = 'Nina events = ' + region_ev + ' sstA < ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA '\
              + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']'
-    if kwargs['normalization']:
-        Units = ''
-    else:
-        Units = 'C'
+    Units = 'density'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstDivRmse'
 
@@ -8000,10 +7997,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     lon = ReferenceRegions(box)['longitude']
     Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA '\
              + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']'
-    if kwargs['normalization']:
-        Units = ''
-    else:
-        Units = 'C'
+    Units = 'density'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstDivRmse'
 

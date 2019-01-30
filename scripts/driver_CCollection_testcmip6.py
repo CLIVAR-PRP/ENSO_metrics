@@ -190,7 +190,7 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['Tropflux','GPCPv2.3']#['HadISST','Tropflux','GPCPv2.3']#['HadISST']#
+    list_obs = ['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
 elif mc_name == 'ENSO_tel':
     list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
