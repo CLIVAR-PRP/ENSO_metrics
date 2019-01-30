@@ -994,8 +994,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                      'metric_value_error_' + dataset: skeRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sstSke_lon__model', var2=sst_obs,
-                       var2_attributes=dict2, var2_name='sstSke_lon__' + dataset, var3=map_mod, var3_attributes=dict3,
-                       var3_name='sstSke_map__model', var4=map_obs, var4_attributes=dict4,
+                       var2_attributes=dict2, var2_name='sstSke_lon__' + dataset, var3=ske_map_mod,
+                       var3_attributes=dict3, var3_name='sstSke_map__model', var4=ske_map_obs, var4_attributes=dict4,
                        var4_name='sstSke_map__' + dataset, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
 
