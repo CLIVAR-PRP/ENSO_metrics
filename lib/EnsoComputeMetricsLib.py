@@ -283,27 +283,39 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
     :param keyword_metric_computation:
     :return:
     """
-    if keyword == 'difference':
-        description_metric = "The metric is the difference between model and observations values (M = model - obs)"
-        metric = model-obs
-        # mathematical definition of the error on addition / subtraction
-        metric_err = model_err + obs_err
-    elif keyword == 'ratio':
-        description_metric = "The metric is the ratio between model and observations values (M = model / obs)"
-        metric = model/obs
-        # mathematical definition of the error on division
-        metric_err = float((obs * model_err + model * obs_err) / NUMPYsquare(obs))
-    elif keyword == 'relative_difference':
-        description_metric = \
-            "The metric is the relative difference between model and observations values (M = [model-obs] / obs)"
-        metric = (model-obs)/obs
-        # mathematical definition of the error on division
-        metric_err = float((obs * (model_err + obs_err) + (model-obs) * obs_err) / NUMPYsquare(obs))
+    if keyword not in ['difference', 'ratio', 'relative_difference']:
+        metric, metric_err, description_metric =\
+            None, None, "unknown keyword for the mathematical computation of the metric: " + str(keyword)
+        list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": keyword",
+                        str().ljust(5) + description_metric]
+        EnsoErrorsWarnings.MyWarning(list_strings)
     else:
-        metric, metric_err, description_metric = None, None, ''
-        list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": keyword", str().ljust(5) +
-                        "unknown keyword for the mathematical computation of the metric: " + str(keyword)]
-        EnsoErrorsWarnings.MyError(list_strings)
+        if model is not None and obs is not None:
+            if keyword == 'difference':
+                description_metric =\
+                    "The metric is the difference between model and observations values (M = model - obs)"
+                metric = model - obs
+            elif keyword == 'ratio':
+                description_metric = "The metric is the ratio between model and observations values (M = model / obs)"
+                metric = model / obs
+            else:
+                description_metric = \
+                    "The metric is the relative difference between model and observations values (M = [model-obs] / obs)"
+                metric = (model - obs) / obs
+        else:
+            metric, description_metric = None, ''
+        if model_err is not None or obs_err is not None:
+            if keyword == 'difference':
+                # mathematical definition of the error on addition / subtraction
+                metric_err = model_err + obs_err
+            elif keyword == 'ratio':
+                # mathematical definition of the error on division
+                metric_err = float((obs * model_err + model * obs_err) / NUMPYsquare(obs))
+            else:
+                # mathematical definition of the error on division
+                metric_err = float((obs * (model_err + obs_err) + (model-obs) * obs_err) / NUMPYsquare(obs))
+        else:
+            metric_err = None
     return metric, metric_err, description_metric
 # ---------------------------------------------------------------------------------------------------------------------#
 
