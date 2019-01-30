@@ -260,6 +260,20 @@ dict_average = {'horizontal': AverageHorizontal, 'meridional': AverageMeridional
                 'zonal': AverageZonal}
 
 
+def ComputeInterannualAnomalies(tab):
+    """
+    #################################################################################
+    Description:
+    Computes interannual anomalies
+    #################################################################################
+
+    for more information:
+    import cdutil
+    help(cdutil.ANNUALCYCLE.departures)
+    """
+    return cdutil.ANNUALCYCLE.departures(tab)
+
+
 def Correlation(tab, ref, weights=None, axis=0, centered=1, biased=1):
     """
     #################################################################################
@@ -636,7 +650,7 @@ def annualcycle(tab):
         tmp = MV2average(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
+    time = CDMS2createAxis(MV2array(range(12), dtype='f'), id='time')
     time.units = "months since 0001-01-01"
     moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     moy = moy.reorder(initorder)
@@ -2542,8 +2556,8 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
                  **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
-    if compute_anom:
-        tab = cdutil.ANNUALCYCLE.departures(tab)
+    if compute_anom is True:
+        tab = ComputeInterannualAnomalies(tab)
     # Normalization of the anomalies
     if kwargs['normalization']:
         if kwargs['frequency'] is not None:
@@ -2564,7 +2578,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
     # computes mean annual cycle
-    if compute_sea_cycle:
+    if compute_sea_cycle is True:
         tab = annualcycle(tab)
     # average
     if average is not False:

@@ -10,11 +10,11 @@ from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
 from EnsoToolsLib import percentage_val_eastward
 from EnsoUvcdatToolsLib import ArrayOnes, ArrayToList, ApplyLandmask, ApplyLandmaskToArea, AverageMeridional,\
-    AverageZonal, CheckTime, Composite, Composite_ev_by_ev, ComputePDF, Correlation, DetectEvents, DurationAllEvent, \
-    FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, MinMax, MyDerive, PreProcessTS, \
-    Read_data_mask_area, ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis,\
-    RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal, SaveNetcdf, SeasonalMean, SkewMonthly, SkewnessTemporal, Std,\
-    StdMonthly, TimeBounds, TwoVarRegrid
+    AverageZonal, CheckTime, Composite, Composite_ev_by_ev, ComputeInterannualAnomalies, ComputePDF, Correlation,\
+    DetectEvents, DurationAllEvent, FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap,\
+    MinMax, MyDerive, PreProcessTS, Read_data_mask_area, ReadAreaSelectRegion, ReadLandmaskSelectRegion,\
+    ReadSelectRegionCheckUnits, Regrid, RmsAxis, RmsHorizontal, RmsMeridional, RmsTemporal, RmsZonal, SaveNetcdf,\
+    SeasonalMean, SkewMonthly, SkewnessTemporal, Std, StdMonthly, TimeBounds, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -2438,6 +2438,9 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
                     EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+            # change units
+            map_mod = map_mod * 1e3
+            map_obs = map_obs * 1e3
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
             else:
@@ -3938,10 +3941,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     Method = 'Nino (Nina) events = ' + region_ev + ' sstA > (<) ' + str(threshold) + ' during ' + season_ev +\
              ', zonal SSTA ' + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) +\
              ']), westward boundary of EP events ' + str(kwargs['treshold_ep_ev']) + 'E'
-    if kwargs['normalization']:
-        Units = ''
-    else:
-        Units = 'C'
+    Units = '%'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoDiversity'
 
@@ -4051,7 +4051,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # 2.4 compute the ratio EP events during La Nina divided by EP events during El Nino
-        ratioEP = ep_event_nina / ep_event_nino
+        ratioEP = float(ep_event_nina / ep_event_nino)
 
         if keyerror_nino is not None or keyerror_nina is not None:
             StdErr, dive_down_diag = None, None
@@ -4073,10 +4073,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                     file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
                 else:
                     file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-                dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                dict1 = {'units': 'longitude (E)', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                          'nino_years': str(nino_years), 'diagnostic_value_' + dataset: ratioEP,
                          'diagnostic_value_error_' + dataset: StdErr}
-                dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                dict2 = {'units': 'longitude (E)', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                          'nina_years': str(nina_years), 'diagnostic_value_' + dataset: ratioEP,
                          'diagnostic_value_error_' + dataset: StdErr}
                 dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
@@ -5751,7 +5751,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_monthly_' + dataset,
                        var2=sst_NDJ_std, var2_attributes=dict2, var2_name='sstStd_NDJ_map__' + dataset,
-                       var3=sst_MAM_std, var3_attributes=dict4, var3_name='sstStd_MAM_map__' + dataset,
+                       var3=sst_MAM_std, var3_attributes=dict3, var3_name='sstStd_MAM_map__' + dataset,
                        global_attributes=dict4)
             del dict1, dict2, dict3, dict4
     # metric value
@@ -6451,10 +6451,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     Method = 'Nina events = ' + region_ev + ' sstA < ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA ' +\
              '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']), westward boundary of EP events' +\
              str(kwargs['treshold_ep_ev']) + 'E'
-    if kwargs['normalization']:
-        Units = ''
-    else:
-        Units = 'C'
+    Units = '%'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstDiv'
 
@@ -6550,6 +6547,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 2.3 compute the percentage of EP events (minimum SSTA eastward of the given threshold)
         ep_event, keyerror_metric = percentage_val_eastward(lon_sstmax, metric, box, threshold=kwargs['treshold_ep_ev'])
+        ep_event = float(ep_event)
 
         if keyerror_metric is not None:
             StdErr, dive_down_diag = None, None
@@ -6565,7 +6563,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                     file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
                 else:
                     file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-                dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                dict1 = {'units': 'longitude (E)', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                          'nina_years': str(event_years), 'diagnostic_value_' + dataset: ep_event,
                          'diagnostic_value_error_' + dataset: StdErr}
                 dict2 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
@@ -7062,7 +7060,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                      'diagnostic_value': duration_mean, 'diagnostic_value_error': duration_err}
             dict2 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='nina_duration__' + dataset,
+            SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='Nina_duration__' + dataset,
                        global_attributes=dict2)
             del dict1, dict2
     # metric value
@@ -7589,6 +7587,10 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         # ------------------------------------------------
         # 2. temporal composite of SSTA
         # ------------------------------------------------
+        # interannual anomalies
+        sst_mod = ComputeInterannualAnomalies(sst_mod)
+        sst_obs = ComputeInterannualAnomalies(sst_obs)
+
         # composites
         composite_mod = Composite(sst_mod, event_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
         composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
@@ -7747,10 +7749,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA ' +\
              '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']), westward boundary of EP events' +\
              str(kwargs['treshold_ep_ev']) + 'E'
-    if kwargs['normalization']:
-        Units = ''
-    else:
-        Units = 'C'
+    Units = '%'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstDiv'
 
@@ -7846,6 +7845,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 2.3 compute the percentage of EP events (maximum SSTA eastward of the given threshold)
         ep_event, keyerror_metric = percentage_val_eastward(lon_sstmax, metric, box, threshold=kwargs['treshold_ep_ev'])
+        ep_event = float(ep_event)
 
         if keyerror_metric is not None:
             StdErr, dive_down_diag = None, None
@@ -7861,7 +7861,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                     file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
                 else:
                     file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
-                dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                dict1 = {'units': 'longitude (E)', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                          'nino_years': str(event_years), 'diagnostic_value_' + dataset: ep_event,
                          'diagnostic_value_error_' + dataset: StdErr}
                 dict2 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
@@ -8131,8 +8131,8 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
         # 2.2 find the zonal position of the maximum SSTA for each selected event and compute a pdf
         # longitude of the maximum SSTA for each selected event
-        lon_min_mod = FindXYMinMaxInTs(sample_mod, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
-        lon_min_obs = FindXYMinMaxInTs(sample_obs, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
+        lon_min_mod = FindXYMinMaxInTs(sample_mod, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+        lon_min_obs = FindXYMinMaxInTs(sample_obs, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
         if debug is True:
             dict_debug = {'line1': '(model) longitude  of the maximum SSTA: ' + str(lon_min_mod),
                           'line2': '(obs) longitude  of the maximum SSTA: ' + str(lon_min_obs)}
@@ -8356,7 +8356,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                      'diagnostic_value': duration_mean, 'diagnostic_value_error': duration_err}
             dict2 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='nino_duration__' + dataset,
+            SaveNetcdf(file_name, var1=duration, var1_attributes=dict1, var1_name='Nino_duration__' + dataset,
                        global_attributes=dict2)
             del dict1, dict2
     # metric value
@@ -8878,6 +8878,10 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         # ------------------------------------------------
         # 2. temporal composite of SSTA
         # ------------------------------------------------
+        # interannual anomalies
+        sst_mod = ComputeInterannualAnomalies(sst_mod)
+        sst_obs = ComputeInterannualAnomalies(sst_obs)
+
         # composites
         composite_mod = Composite(sst_mod, event_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
         composite_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
