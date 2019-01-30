@@ -5351,7 +5351,6 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_ts, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=False,
                                       **kwargs)
-        del sst_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_ts.getAxisList()]),
                           'shape1': '(sst) ' + str(sst_ts.shape),
@@ -5380,9 +5379,9 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         ratio_std_err = float(
             (sst_MAM_std * sst_NDJ_std_err + sst_NDJ_std * sst_MAM_std_err) / NUMPYsquare(sst_MAM_std))
 
-
         # Dive down diagnostic
         sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del sst_areacell
         sstStd_monthly = StdMonthly(sst)
         dive_down_diag = {'value': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
         if netcdf is True:
@@ -5394,6 +5393,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, compute_anom=False, **kwargs)
+            del sst_areacell
             if debug is True:
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                               'shape1': '(sst) ' + str(sst.shape),
