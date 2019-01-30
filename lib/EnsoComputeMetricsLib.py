@@ -8,7 +8,7 @@ import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
     BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf,\
     EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap, EnsoSeasonality, \
-    NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstTsRmse, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse,\
+    EnsoSstSkew, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstTsRmse, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse,\
     NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
 
@@ -328,8 +328,8 @@ dict_twoVar_modelAndObs = {
     'EnsoPrMap': EnsoPrMap, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel
 }
 
-dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality, 'NinaSstDur': NinaSstDur,
-               'NinoSstDur': NinoSstDur}
+dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoSeasonality': EnsoSeasonality, 'EnsoSstSkew': EnsoSstSkew,
+               'NinaSstDur': NinaSstDur, 'NinoSstDur': NinoSstDur}
 
 dict_twoVar = {
     'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr, 'EnsoAlphaShf': EnsoAlphaShf,

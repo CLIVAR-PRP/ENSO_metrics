@@ -165,12 +165,12 @@ def defCollection(MC=True):
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                 #     'metric_computation': 'ratio',
                 # },
-                'EnsoSeasonality': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                    'metric_computation': 'ratio',
-                },
+                # 'EnsoSeasonality': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'nino3.4'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                #     'metric_computation': 'ratio',
+                # },
                 'EnsoSstSkew': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
