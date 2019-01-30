@@ -6744,6 +6744,11 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # samples
         sst_mod = Composite(sst_mod, event_years_mod, kwargs['frequency'])
         sst_obs = Composite(sst_obs, event_years_obs, kwargs['frequency'])
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # Computes the root mean square difference
         compRmse = RmsZonal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
@@ -6764,10 +6769,18 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
-            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+            map_mod, Method = PreProcessTS(map_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
+                                           **kwargs)
+            map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
                                              **kwargs)
-            map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+            del mod_areacell, obs_areacell
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(map_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
             del mod_areacell, obs_areacell
             # Seasonal mean
             map_mod = SeasonalMean(map_mod, season_ev, compute_anom=True)
@@ -8109,10 +8122,18 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
-            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+            map_mod, Method = PreProcessTS(map_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
+                                           **kwargs)
+            map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
                                              **kwargs)
-            map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+            del mod_areacell, obs_areacell
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(map_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
             del mod_areacell, obs_areacell
             # Seasonal mean
             map_mod = SeasonalMean(map_mod, season_ev, compute_anom=True)
