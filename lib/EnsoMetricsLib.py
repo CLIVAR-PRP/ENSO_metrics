@@ -3979,7 +3979,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         nino_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
         nina_years = DetectEvents(sst, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
         if debug is True:
-            dict_debug = {'nino1': str(nino_years), 'nina1': str(nina_years)}
+            dict_debug = {'nino1': 'nbr(' + str(len(nino_years)) + '): ' + str(nino_years),
+                          'nina1': 'nbr(' + str(len(nina_years)) + '): ' + str(nina_years)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
@@ -4044,6 +4045,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                                                                threshold=kwargs['treshold_ep_ev'])
         ep_event_nina, keyerror_nina = percentage_val_eastward(lon_sstmin, metric, box,
                                                                threshold=kwargs['treshold_ep_ev'])
+        if debug is True:
+            dict_debug = {'nino1': 'percentage of EP event + ' + str(ep_event_nino),
+                          'nina1': 'percentage of EP event + ' + str(ep_event_nina)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # 2.4 compute the ratio EP events during La Nina divided by EP events during El Nino
         ratioEP = ep_event_nina / ep_event_nino
