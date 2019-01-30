@@ -6986,10 +6986,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     # Define metric attributes
     Name = 'Nina Duration'
-    if kwargs['normalization']:
-        Units = ''
-    else:
-        Units = 'C'
+    Units = 'months'
     Method = 'Nina events = ' + region_ev + ' sstA < ' + str(threshold) + ' during ' + season_ev + \
              ', number of consecutive months when sstA < -0.5' + Units
     Ref = 'Using CDAT'
@@ -8282,10 +8279,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     # Define metric attributes
     Name = 'Nino Duration'
-    if kwargs['normalization']:
-        Units = ''
-    else:
-        Units = 'C'
+    Units = 'months'
     Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + \
              ', number of consecutive months when sstA > 0.5' + Units
     Ref = 'Using CDAT'
