@@ -260,6 +260,20 @@ dict_average = {'horizontal': AverageHorizontal, 'meridional': AverageMeridional
                 'zonal': AverageZonal}
 
 
+def ComputeInterannualAnomalies(tab):
+    """
+    #################################################################################
+    Description:
+    Computes interannual anomalies
+    #################################################################################
+
+    for more information:
+    import cdutil
+    help(cdutil.ANNUALCYCLE.departures)
+    """
+    return cdutil.ANNUALCYCLE.departures(tab)
+
+
 def Correlation(tab, ref, weights=None, axis=0, centered=1, biased=1):
     """
     #################################################################################
@@ -636,7 +650,7 @@ def annualcycle(tab):
         tmp = MV2average(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
+    time = CDMS2createAxis(MV2array(range(12), dtype='f'), id='time')
     time.units = "months since 0001-01-01"
     moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     moy = moy.reorder(initorder)
@@ -688,7 +702,7 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                     try:
                         landmask_nd[:, :] = landmask
                     except:
-                        keyerror = "tab must be more than 4D and this is not taken into account yet (" +\
+                        keyerror = "ApplyLandmask: tab must be more than 4D and this is not taken into account yet (" +\
                                    str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
                         list_strings = [
                             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": landmask shape",
@@ -732,8 +746,8 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     keyerror = None
     if maskland is True or maskocean is True:
         if area.getGrid().shape != landmask.getGrid().shape:
-            keyerror = "area (" + str(area.getGrid().shape) + ") and landmask (" + str(landmask.getGrid().shape) +\
-                       ") are not on the same grid"
+            keyerror = "ApplyLandmaskToArea: area (" + str(area.getGrid().shape) + ") and landmask (" +\
+                       str(landmask.getGrid().shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": applying landmask to areacell",
                 str().ljust(5) + keyerror,
@@ -2370,8 +2384,9 @@ def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, met
     :return: minimum/maximum position or both minimum and maximum positions, int, float or list
         position(s) in the (t,x,y,z) space defined by tab axes of the minimum and/or maximum values of tab
     """
-    tab_ts = MV2array([FindXYMinMax(tab[tt], return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
-                       for tt in range(len(tab))])
+    tab_ts =\
+        MV2array([FindXYMinMax(tab[tt], return_val=return_val, smooth=smooth, axis=axis, window=window, method=method)
+                  for tt in range(len(tab))])
     tab_ts.setAxis(0, tab.getAxis(0))
     return tab_ts
 
@@ -2541,8 +2556,8 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
                  **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
-    if compute_anom:
-        tab = cdutil.ANNUALCYCLE.departures(tab)
+    if compute_anom is True:
+        tab = ComputeInterannualAnomalies(tab)
     # Normalization of the anomalies
     if kwargs['normalization']:
         if kwargs['frequency'] is not None:
@@ -2563,7 +2578,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
     # computes mean annual cycle
-    if compute_sea_cycle:
+    if compute_sea_cycle is True:
         tab = annualcycle(tab)
     # average
     if average is not False:
