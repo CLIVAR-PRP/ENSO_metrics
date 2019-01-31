@@ -334,9 +334,8 @@ for mod in list_models:
         netcdf = OSpath__join(netcdf_path, netcdf_name)
         # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
         #                                                      netcdf_name=netcdf_name, debug=True, dive_down=True)
-        dict_ens[mod + '__' + ens], dict_ens_dive[mod + '__' + ens] = ComputeCollection(mc_name, dictDatasets,
-                                                                                        netcdf=True, netcdf_name=netcdf,
-                                                                                        debug=True)
+        dict_ens[mod + '__' + ens], dict_ens_dive[mod + '__' + ens] =\
+            ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
         # save json
         save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf_name, metric=True)
         stop

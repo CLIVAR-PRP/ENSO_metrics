@@ -5749,7 +5749,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                      'description': "standard deviation of " + sstbox + " sstA (during MAM)"}
             dict4 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_monthly_' + dataset,
+            SaveNetcdf(file_name, var1=sstStd_monthly, var1_attributes=dict1, var1_name='sstStd_monthly__' + dataset,
                        var2=sst_NDJ_std, var2_attributes=dict2, var2_name='sstStd_NDJ_map__' + dataset,
                        var3=sst_MAM_std, var3_attributes=dict3, var3_name='sstStd_MAM_map__' + dataset,
                        global_attributes=dict4)
