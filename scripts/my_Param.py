@@ -1,5 +1,4 @@
 import datetime
-now = datetime.datetime.now()
 
 #=================================================
 # Observation
@@ -33,8 +32,8 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
             'MIROC-ESM', 'MIROC-ESM-CHEM', 'MIROC4h', 'MIROC5',
             'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P', 'NorESM1-M', 'NorESM1-ME']
 
-modnames = ['ACCESS1-0']
-#modnames = ['IPSL-CM5A-LR']
+#modnames = ['ACCESS1-0']
+modnames = ['IPSL-CM5A-LR']
 #modnames = ['BCC-CSM1-1']
 
 #=================================================
@@ -48,8 +47,9 @@ metricsCollection = 'ENSO_perf'
 # Output
 #-------------------------------------------------
 nc_out = True
-results_dir = '/work/lee1043/imsi/result_test/enso_metric' 
-json_name = metricsCollection + '_' + now.strftime("%Y%m%d-%H%M")
+case_id = "{:v%Y%m%d-%H%M}".format(datetime.datetime.now())
+results_dir = '/work/lee1043/imsi/result_test/enso_metric/' + case_id 
+json_name = metricsCollection + '_' + case_id
 netcdf_name = json_name + '_%(model)'
 
 #=================================================
