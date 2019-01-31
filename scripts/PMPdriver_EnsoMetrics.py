@@ -134,7 +134,7 @@ print('PMPdriver: dict_obs readin end')
 #=================================================
 # Loop for Models 
 #-------------------------------------------------
-# Dictionary to save result ---
+# Dictionary to save result 
 def tree(): return defaultdict(tree)
 enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
 
@@ -144,21 +144,10 @@ dict_var = CmipVariables()['variable_name_in_file']
 for mod in models:
 
     try:
-
         dict_mod = {mod: {}}
-        # ------------------------------------------------
-        # @jiwoo: between these dash the program is a bit ad hoc...
-        # it works well for me because I am looking for sst and taux on the ocean grid, and fluxes [lhf, lwr, swr, shf, thf]
-        # on the atmosphere grid
-        # if you want to use atmosphere only, do not use this or create your own way to find the equivalent between the
-        # variable name in the program and the variable name in the file
-    
         print('PMPdriver: var loop start for model ', mod)
-    
         for var in list_variables:
-            #
             # finding variable name in file
-            #
             var_in_file = dict_var[var]['var_name']
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]
@@ -167,10 +156,8 @@ for mod in models:
             #
             # finding file for 'mod', 'var'
             #
-            #file_name = param.modpath.replace('MOD',mod).replace('VAR',var0)
             file_name = modpath(model=mod, realization='r1i1p1', variable=var0)
             file_areacell = None ## temporary for now
-            #file_landmask = param.modpath_lf.replace('MOD',mod)
             file_landmask = modpath_lf(model=mod)
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
@@ -201,11 +188,6 @@ for mod in models:
         print('PMPdriver: var loop end')
     
         # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
-        # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
-        # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
-        # so the function does not take a specific obs to compute the metric so for every obs in 'dict_obs' we must include
-        # every variables needed by the metric collection [lhf, lwr, swr, shf, sst, taux, thf] even if its coming from
-        # another dataset
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         # regridding dictionary (only if you want to specify the regridding)
         dict_regrid = {}
@@ -224,19 +206,6 @@ for mod in models:
         else:
             dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, dive_down=False, netcdf=False, netcdf_path=netcdf_path,
                                                              netcdf_name=netcdf_name, debug=param.debug)
-
-        # Prints the metrics values
-        """
-        for ii in range (3): print('')
-        print(str().ljust(5) + str(mod))
-        list_metric = dict_metric[mod]['value'].keys()
-        for metric in list_metric:
-            print(str().ljust(10) + str(metric))
-            metric_dict = dict_metric[mod]['value'][metric]['metric']
-            for ref in metric_dict.keys():
-                print(str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
-                      + str(metric_dict[ref]['value_error']))
-        """
     except Exception as e: 
         print('failed for ', mod)
         print(e)
@@ -284,8 +253,6 @@ json.dump(metrics_dictionary,
               indent=4, separators=(',', ': '))
 """
 
-
-
 if param.nc_out:
     """
     OUT2 = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'_dive_down.json')
@@ -302,5 +269,4 @@ if param.nc_out:
               open(os.path.join(param.results_dir, param.json_name+'_dive_down.json'), 'w'),
               indent=4, separators=(',', ': '))
     
-
 sys.exit('done')
