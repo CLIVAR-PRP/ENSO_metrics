@@ -31,6 +31,8 @@ modpath_lf = StringConstructor(param.modpath_lf)
 models = param.modnames
 print('models:', models)
 
+netcdf_path = param.results_dir
+
 mc_name = param.metricsCollection 
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
@@ -197,15 +199,10 @@ for mod in models:
         #         'newgrid_name': 'generic 1x1deg'},
         # }
         # Computes the metric collection
-        netcdf_path = param.results_dir
         netcdf_name = StringConstructor(param.netcdf_name)(model=mod) 
-        if param.nc_out: 
-            dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, dive_down=True, netcdf=True, 
-                                                             netcdf_path=netcdf_path,
-                                                             netcdf_name=netcdf_name, debug=param.debug)
-        else:
-            dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, dive_down=False, netcdf=False, netcdf_path=netcdf_path,
-                                                             netcdf_name=netcdf_name, debug=param.debug)
+        netcdf = os.path.join(netcdf_path, netcdf_name)
+        dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=param.nc_out,
+                                             netcdf_name=netcdf, debug=param.debug)
     except Exception as e: 
         print('failed for ', mod)
         print(e)
@@ -228,11 +225,11 @@ disclaimer = open(
         "disclaimer.txt")).read()
 
 if param.metricsCollection == 'MC1':
-  reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
+    reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
 elif param.metricsCollection == 'ENSO_perf':
-  reference = "GFDL..."
+    reference = "GFDL..."
 elif param.metricsCollection == 'ENSO_tel':
-  reference = "MC3 for ENSO Teleconnection..."
+    reference = "MC3 for ENSO Teleconnection..."
 
 metrics_dictionary = collections.OrderedDict()
 metrics_dictionary["DISCLAIMER"] = disclaimer
@@ -247,26 +244,11 @@ OUT.write(
         ',',
         ': '),
     sort_keys=True)
+
 """
 json.dump(metrics_dictionary,
               open(os.path.join(param.results_dir, param.json_name+'.json'), 'w'),
               indent=4, separators=(',', ': '))
 """
 
-if param.nc_out:
-    """
-    OUT2 = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'_dive_down.json')
-    OUT2.write(
-        dict_dive,
-        # json_structure=["type", "data", "metric", "item", "value or description"],
-        indent=4,
-        separators=(
-            ',',
-            ': '),
-        sort_keys=True)
-    """
-    json.dump(dict_dive, 
-              open(os.path.join(param.results_dir, param.json_name+'_dive_down.json'), 'w'),
-              indent=4, separators=(',', ': '))
-    
 sys.exit('done')
