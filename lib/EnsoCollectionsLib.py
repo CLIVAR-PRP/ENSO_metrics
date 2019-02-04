@@ -78,7 +78,7 @@ def defCollection(MC=True):
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
                 'frequency': 'monthly',
-                'min_time_steps': 204,
+                'min_time_steps': 24,
                 'project_interpreter': 'CMIP',
                 'metric_computation': 'difference',
                 'observed_period': ('1980-01-01 00:00:00', '2016-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
@@ -284,7 +284,7 @@ def defCollection(MC=True):
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
                 'frequency': 'monthly',
-                'min_time_steps': 204,
+                'min_time_steps': 24,
                 'normalization': False,
                 'project_interpreter': 'CMIP',
                 'observed_period': ('1917-01-01 00:00:00', '2016-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
@@ -347,7 +347,7 @@ def defCollection(MC=True):
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
                 'frequency': 'monthly',
-                'min_time_steps': 204,
+                'min_time_steps': 24,
                 'normalization': False,
                 'project_interpreter': 'CMIP',
                 'observed_period': ('1980-01-01 00:00:00', '2016-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
