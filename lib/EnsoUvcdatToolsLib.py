@@ -1415,11 +1415,14 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
         # this section checks if one time step has not been included by error at the beginning or the end of the time
         # series
-        if isinstance(time_bounds[0], basestring):
-            if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
-                tab = tab[1:]
-            if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
-                tab = tab[:-1]
+        try: time_bounds[0]
+        except: pass
+        else:
+            if isinstance(time_bounds[0], basestring):
+                if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
+                    tab = tab[1:]
+                if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
+                    tab = tab[:-1]
     if frequency is None:  # no frequency given
         pass
     elif frequency == 'daily':

@@ -375,9 +375,9 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         final_name_out = file_name + '_' + ens + '_' + '_' + str(str(nbr_years).zfill(3)) + 'years'
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         dict1 = dict()
-        for ystart in range(1, model_nbr_years-nbr_years):
+        for ystart in range(model_nbr_years-nbr_years):
             yend = ystart+nbr_years
-            period = slice(ystart*12, (yend)*12)
+            period = slice(ystart*12, yend*12)
             # file names
             file_out = final_name_out + '_slice_' + str(str(ystart).zfill(3)) + '_to_' + str(str(yend).zfill(3))
             file_out = OSpath__join(path, file_out)
