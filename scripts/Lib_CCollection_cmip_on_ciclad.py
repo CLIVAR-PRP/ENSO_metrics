@@ -377,9 +377,11 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         dict1 = dict()
         for ystart in range(model_nbr_years-nbr_years):
             yend = ystart+nbr_years
+            print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(3) + ' to ' + \
+                  str(yend).zfill(3) + '\033[0m'
             period = slice(ystart*12, yend*12)
             # file names
-            file_out = final_name_out + '_slice_' + str(str(ystart).zfill(3)) + '_to_' + str(str(yend).zfill(3))
+            file_out = final_name_out + '_slice_' + str(ystart).zfill(3) + '_to_' + str(yend).zfill(3)
             file_out = OSpath__join(path, file_out)
             dict1[str(ystart).zfill(3)] = InternCompute(metricCollection, metric, dictDatasets, debug=False,
                                                         netcdf=True, netcdf_name=file_out, period=period)
