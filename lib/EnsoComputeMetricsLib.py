@@ -269,7 +269,7 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
         return {'value': dict_col_valu, 'metadata': dict_col_meta}, {}
 
 
-def InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=False, netcdf_name=''):
+def InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=False, netcdf_name='', period=None):
     dict_mc = defCollection(metricCollection)
     dict_col_meta = {
         'name': dict_mc['long_name'], 'description_of_the_collection': dict_mc['description'], 'metrics': {},
@@ -400,7 +400,8 @@ def InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=Fa
         dict_col_valu[metric], dict_col_meta['metrics'][metric], dict_col_dd_valu[metric],\
         dict_col_dd_meta['metrics'][metric] = ComputeMetric(
             metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-            dict_regions[list_variables[0]], debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **arg_var2)
+            dict_regions[list_variables[0]], debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, period=period,
+            **arg_var2)
     return {'value': dict_col_valu, 'metadata': dict_col_meta}
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -491,7 +492,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                   modelFile2='', modelVarName2='', modelFileArea2='', modelAreaName2='', modelFileLandmask2='',
                   modelLandmaskName2='', obsNameVar2='', obsFile2='', obsVarName2='', obsFileArea2='', obsAreaName2='',
                   obsFileLandmask2='', obsLandmaskName2='', regionVar2='', user_regridding={}, debug=False,
-                  netcdf=False, netcdf_name=''):
+                  netcdf=False, netcdf_name='', period=None):
     """
     :param metricCollection: string
         name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
@@ -614,11 +615,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         keyarg['metric_computation'] = DefaultArgValues('metric_computation')
     # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
-    try:
-        keyarg['time_bounds_mod'] = keyarg['modeled_period']
-    except:
-        keyarg['time_bounds_mod'] = DefaultArgValues('time_bounds_mod')
-    # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
+    if period is not None:
+        keyarg['time_bounds_mod'] = period
+    else:
+        try:
+            keyarg['time_bounds_mod'] = keyarg['modeled_period']
+        except:
+            keyarg['time_bounds_mod'] = DefaultArgValues('time_bounds_mod')
+    # if 'observed_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
     try:
         keyarg['time_bounds_obs'] = keyarg['observed_period']

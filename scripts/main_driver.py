@@ -1,17 +1,27 @@
+# -*- coding:UTF-8 -*-
+#---------------------------------------------------#
+# Main driver to compute the ENSO_metrics package
+# This version of the package has been created to be able:
+#      - to compute one metric at a time
+#      - to compute the metric using only a specified number of simulated (model) years
+#---------------------------------------------------#
+
+
+#---------------------------------------------------#
 # usual python package
 import datetime
 import sys
-
-sys.path.insert(0, "/home/yplanton/ENSO_metrics/lib")
-
 # ENSO_metrics package
 from EnsoCollectionsLib import defCollection
 from Lib_CCollection_cmip_on_ciclad import main_compute
 from Lib_CCollection_cmip_on_ciclad import nbryear_from_model
-
 # My (YYP) package
+# set new path where to find programs
+sys.path.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
 from getfiles_sh_to_py import get_ensembles
 from getfiles_sh_to_py import get_models
+#---------------------------------------------------#
+
 
 #---------------------------------------------------#
 # At least in the beginning, you are not supposed to change the next lines
@@ -30,6 +40,7 @@ list_models = sorted(get_models(project))
 today = str(datetime.date.today())
 today = today.replace("-", "")
 #---------------------------------------------------#
+
 
 #---------------------------------------------------#
 # These lines can be modified

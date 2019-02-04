@@ -1,3 +1,11 @@
+# -*- coding:UTF-8 -*-
+#---------------------------------------------------#
+# Library for the main driver to compute the ENSO_metrics package
+#---------------------------------------------------#
+
+
+#---------------------------------------------------#
+# import python packages
 # usual python package
 from copy import deepcopy
 from glob import iglob as GLOBiglob
@@ -7,20 +15,19 @@ from math import floor as MATHfloor
 from os import remove as OSremove
 from os.path import join as OSpath__join
 import sys
-# set new path where to find programs
-sys.path.insert(0, "/home/yplanton/ENSO_metrics/lib")
-
 # CDAT package
 from cdms2 import open as CDMS2open
-
 # ENSO_metrics package
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import InternCompute
-
 # My (YYP) package
+# set new path where to find programs
+sys.path.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
 from getfiles_sh_to_py import find_path_and_files
 from getfiles_sh_to_py import get_ensembles
 from getfiles_sh_to_py import get_time_size
+#---------------------------------------------------#
+
 
 #---------------------------------------------------#
 # colors for printing
@@ -35,6 +42,9 @@ class bcolors:
     UNDERLINE = '\033[4m'
 #---------------------------------------------------#
 
+
+# ---------------------------------------------------------------------------------------------------------------------#
+# define path and dimensions
 xmldir = '/home/yplanton/New_XMLDIR'
 # CMIP variable names
 dict_CMIPvar = CmipVariables()['variable_name_in_file']
@@ -42,6 +52,11 @@ dimensions = ['bounds_latitude', 'bounds_latitude_a', 'bounds_latitude_b', 'boun
               'bounds_longitude_b', 'bounds_months', 'bounds_time', 'bounds_years', 'bounds_years_a', 'bounds_years_b',
               'bounds_years_c', 'bounds_years_d',' bounds_years_e', 'latitude', 'latitude_a', 'latitude_b', 'longitude',
               'longitude_a', 'longitude_b', 'months', 'years', 'years_a', 'years_b', 'years_c', 'years_d', 'years_e']
+
+
+def return_dim_names():
+    return dimensions
+# ---------------------------------------------------------------------------------------------------------------------#
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -150,40 +165,50 @@ def find_fx(model, project='', experiment='', ensemble='', realm=''):
         file_area = OSpath__join(farea1, farea2[0])
     else:
         file_area, file_land = find_xml_fx(model, project=project, experiment=experiment, realm=realm)
-    try: CDMS2open(file_area)
-    except: file_area = None
-    try: CDMS2open(file_land)
-    except: file_land = None
+    try:
+        CDMS2open(file_area)
+    except:
+        file_area = None
+    try:
+        CDMS2open(file_land)
+    except:
+        file_land = None
     return file_area, file_land
 
 
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
     list_obs = ReferenceObservations().keys()
     if name in list_obs:
-        file_name, file_area, file_land = find_xml_obs(name, frequency, variable)
+        file_name, file_area, file_land = find_xml_obs(name, variable)
     else:
         file_name, file_area, file_land = find_xml_cmip(name, project, experiment, ensemble, frequency, realm, variable)
     return file_name, file_area, file_land
 
 
 def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
-    try: pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project, rea=realm, var=variable)
+    try:
+        pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project,
+                                             rea=realm, var=variable)
     except:
         if realm == 'O':
             new_realm = 'A'
         elif realm == 'A':
             new_realm = 'O'
         # if var is not in realm 'O' (for ocean), look for it in realm 'A' (for atmosphere), and conversely
-        try: pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project, rea=new_realm, var=variable)
+        try:
+            pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project,
+                                                 rea=new_realm, var=variable)
         except:
             # given variable is neither in realm 'A' nor 'O'
             print bcolors.FAIL + '%%%%%     -----     %%%%%'
-            print 'ERROR: function: '+str(INSPECTstack()[0][3])+', line: '+str(INSPECTstack()[0][2])
-            print 'given variable cannot be found in either realm A or O: '+str(variable)
-            print 'param: '+str(model)+', '+str(project)+', '+str(experiment)+', '+str(ensemble)+', '+str(frequency)+', '+str(realm)
+            print 'ERROR: function: ' + str(INSPECTstack()[0][3]) + ', line: ' + str(INSPECTstack()[0][2])
+            print 'given variable cannot be found in either realm A or O: ' + str(variable)
+            print 'param: ' + str(model) + ', ' + str(project) + ', ' + str(experiment) + ', ' + str(ensemble) + \
+                  ', ' + str(frequency) + ', ' + str(realm)
             print '%%%%%     -----     %%%%%' + bcolors.ENDC
             sys.exit('')
-        file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble, realm=new_realm)
+        file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble,
+                                       realm=new_realm)
     else:
         file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble, realm=realm)
     file_name = OSpath__join(pathnc, filenc[0])
@@ -196,14 +221,13 @@ def find_xml_fx(name, project='', experiment='', realm=''):
         file_area = OSpath__join(xmldir, 'obs_' + str(name) + '_areacell.xml')
         file_land = OSpath__join(xmldir, 'obs_' + str(name) + '_landmask.xml')
     else:
-        file_area = OSpath__join(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_'
-                                   + str(realm) + '_areacell.xml')
-        file_land = OSpath__join(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_'
-                                   + str(realm) + '_landmask.xml')
+        filename = str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_' + str(realm)
+        file_area = OSpath__join(xmldir, filename + '_areacell.xml')
+        file_land = OSpath__join(xmldir, filename + '_landmask.xml')
     return file_area, file_land
 
 
-def find_xml_obs(obs, frequency, variable):
+def find_xml_obs(obs, variable):
     if obs == 'HadISST':
         file_name = OSpath__join(xmldir, 'obs_' + str(obs) + 'v1.1.xml')
     else:
@@ -221,6 +245,27 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
+# functions to find the number of simulated years available for a model
+def nbryear_from_filename(filename):
+    length = get_time_size(filename)
+    nbryear = length / 12.
+    if nbryear == int(nbryear):
+        nbryear = int(nbryear)
+    else:
+        nbryear = MATHfloor(nbryear)
+    return nbryear
+
+
+def nbryear_from_model(experiment, ensemble, frequency, model, project, realm, variable):
+    dict_mod = file_model(experiment, ensemble, frequency, model, project, realm, [variable])
+    filename = dict_mod[dict_mod.keys()[0]][dict_mod[dict_mod.keys()[0]].keys()[0]]['path + filename']
+    nbryear = nbryear_from_filename(filename)
+    return nbryear
+# ---------------------------------------------------------------------------------------------------------------------#
+
+
+# ---------------------------------------------------------------------------------------------------------------------#
+# additional functions to (re)save outputs of the ENSO_metrics package
 def attributes_global(xml, name, att_dict={}):
     list_glob = xml.listglobal()
     for att in ['cdms_filemap', 'history']:
@@ -242,28 +287,6 @@ def attributes_variable(xml, variable_name):
             list_att.remove(att)
     attributes = dict((att,xml.getattribute(variable_name, att)) for att in list_att)
     return attributes
-
-
-def nbryear_from_filename(filename):
-    length = get_time_size(filename)
-    nbryear = length / 12.
-    if nbryear == int(nbryear):
-        nbryear = int(nbryear)
-    else:
-        nbryear = MATHfloor(nbryear)
-    return nbryear
-
-
-def nbryear_from_model(experiment, ensemble, frequency, model, project, realm, variable):
-    dict_mod = file_model(experiment, ensemble, frequency, model, project, realm, [variable])
-    filename = dict_mod[dict_mod.keys()[0]][dict_mod[dict_mod.keys()[0]].keys()[0]]['path + filename']
-    length = get_time_size(filename)
-    nbryear = length / 12.
-    if nbryear == int(nbryear):
-        nbryear = int(nbryear)
-    else:
-        nbryear = MATHfloor(nbryear)
-    return nbryear
 
 
 def save_json(dict_in, json_name):
@@ -330,6 +353,9 @@ def save_netcdf(netcdf_name, metric):
     return
 # ---------------------------------------------------------------------------------------------------------------------#
 
+
+# ---------------------------------------------------------------------------------------------------------------------#
+# main function to compute ENSO_metrics
 def main_compute(metricCollection, metric, nbr_years, path, file_name, experiment, frequency, model, project, realm):
     # metric collection dictionary for the given metric collection (mc_name)
     dict_mc = defCollection(metricCollection)
@@ -355,10 +381,10 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
             yend = ystart+nbr_years
             period = slice(ystart*12, (yend)*12)
             # file names
-            file_out = final_name_out + '_slice_' + str(ystart.zfill(3)) + '_to_' + str(yend.zfill(3))
+            file_out = final_name_out + '_slice_' + str(str(ystart).zfill(3)) + '_to_' + str(str(yend).zfill(3))
             file_out = OSpath__join(path, file_out)
-            dict1[ystart.zfill(3)] =\
-                InternCompute(metricCollection, metric, dictDatasets, netcdf=True, netcdf_name=file_out, debug=False)
+            dict1[str(ystart).zfill(3)] = InternCompute(metricCollection, metric, dictDatasets, debug=False,
+                                                        netcdf=True, netcdf_name=file_out, period=period)
             del file_out, period, yend
         # save json
         save_json(dict1, final_name_out)
@@ -367,4 +393,4 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         del dict_mod, dict1, dictDatasets, model_file_name, model_nbr_years
     del dict_obs
     return
-
+# ---------------------------------------------------------------------------------------------------------------------#
