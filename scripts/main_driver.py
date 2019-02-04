@@ -53,7 +53,7 @@ metric = 'EnsoAmpl'
 # list of ensembles
 list_ensembles = sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, pro=project, rea=realm))
 # number of years used
-nbr_years = 10 # you can test from 5 to 200 years
+nbr_years = 100 # you can test from 5 to 200 years
 # where to save the files
 path = '/data/yplanton/ENSO_metrics' # change that to your own environment
 # file name

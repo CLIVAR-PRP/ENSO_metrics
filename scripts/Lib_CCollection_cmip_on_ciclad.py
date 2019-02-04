@@ -309,6 +309,7 @@ def save_json(dict_in, json_name):
     dict_out = {'metric': dict_metric, 'metric_err': dict_metric_err, 'diagnostic': dict_diag,
                 'diagnostic_err': dict_diag_err, 'metadata': dict_metadata}
     # save as json file
+    print '\033[95m' + 'json   output ' + str(json_name + '.json') + '\033[0m'
     with open(json_name + '.json', 'w') as outfile:
         json.dump(dict_out, outfile)
     return
@@ -338,7 +339,9 @@ def save_netcdf(netcdf_name, metric):
         ff.close()
         del ff, list_variables, snbr
     # save files
-    o = CDMS2open(netcdf_name + '_' + metric + '.nc', 'w+')
+    file_out = netcdf_name + '_' + metric + '.nc'
+    print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
+    o = CDMS2open(file_out, 'w+')
     for var in dict_var.keys():
         o.write(dict_var[var], attributes=dict_att_var[var], dtype='float32', id=var)
     for att in dict_att_glob.keys():
@@ -372,18 +375,19 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         dict_mod = file_model(experiment, ens, frequency, model, project, realm, list_variables)
         model_file_name = dict_mod[dict_mod.keys()[0]][dict_mod[dict_mod.keys()[0]].keys()[0]]['path + filename']
         model_nbr_years = nbryear_from_filename(model_file_name)
-        final_name_out = file_name + '_' + ens + '_' + '_' + str(str(nbr_years).zfill(3)) + 'years'
+        print '\033[95m' + 'ensemble ' + str(ens) + ' ' + str(str(model_nbr_years).zfill(4)) + 'years' + '\033[0m'
+        final_name_out = file_name + '_' + ens + '_' + str(str(nbr_years).zfill(4)) + 'years'
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         dict1 = dict()
         for ystart in range(model_nbr_years-nbr_years):
             yend = ystart+nbr_years
-            print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(3) + ' to ' + \
-                  str(yend).zfill(3) + '\033[0m'
+            print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(4) + ' to ' + \
+                  str(yend).zfill(4) + '\033[0m'
             period = slice(ystart*12, yend*12)
             # file names
-            file_out = final_name_out + '_slice_' + str(ystart).zfill(3) + '_to_' + str(yend).zfill(3)
+            file_out = final_name_out + '_slice_' + str(ystart).zfill(4) + '_to_' + str(yend).zfill(4)
             file_out = OSpath__join(path, file_out)
-            dict1[str(ystart).zfill(3)] = InternCompute(metricCollection, metric, dictDatasets, debug=False,
+            dict1[str(ystart).zfill(4)] = InternCompute(metricCollection, metric, dictDatasets, debug=False,
                                                         netcdf=True, netcdf_name=file_out, period=period)
             del file_out, period, yend
         # save json
