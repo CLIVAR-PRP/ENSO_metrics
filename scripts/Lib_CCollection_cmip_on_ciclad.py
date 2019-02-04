@@ -375,7 +375,7 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         dict_mod = file_model(experiment, ens, frequency, model, project, realm, list_variables)
         model_file_name = dict_mod[dict_mod.keys()[0]][dict_mod[dict_mod.keys()[0]].keys()[0]]['path + filename']
         model_nbr_years = nbryear_from_filename(model_file_name)
-        print '\033[95m' + 'ensemble ' + str(ens) + ' ' + str(str(model_nbr_years).zfill(4)) + 'years' + '\033[0m'
+        print '\033[95m' + 'ensemble ' + str(ens) + ' ' + str(model_nbr_years).zfill(4) + ' years' + '\033[0m'
         final_name_out = file_name + '_' + ens + '_' + str(str(nbr_years).zfill(4)) + 'years'
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         dict1 = dict()
