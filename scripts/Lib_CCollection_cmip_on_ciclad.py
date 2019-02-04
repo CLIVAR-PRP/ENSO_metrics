@@ -21,8 +21,6 @@ from cdms2 import open as CDMS2open
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import InternCompute
 # My (YYP) package
-# set new path where to find programs
-sys.path.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
 from getfiles_sh_to_py import find_path_and_files
 from getfiles_sh_to_py import get_ensembles
 from getfiles_sh_to_py import get_time_size
@@ -374,7 +372,7 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         dict_mod = file_model(experiment, ens, frequency, model, project, realm, list_variables)
         model_file_name = dict_mod[dict_mod.keys()[0]][dict_mod[dict_mod.keys()[0]].keys()[0]]['path + filename']
         model_nbr_years = nbryear_from_filename(model_file_name)
-        final_name_out = file_name + '_' + ens + '_' + '_' + str(nbr_years.zfill(3)) + 'years'
+        final_name_out = file_name + '_' + ens + '_' + '_' + str(str(nbr_years).zfill(3)) + 'years'
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         dict1 = dict()
         for ystart in range(1, model_nbr_years-nbr_years):

@@ -12,6 +12,8 @@
 import datetime
 import sys
 # ENSO_metrics package
+# set new path where to find programs
+sys.path.insert(0, "/home/yplanton/ENSO_metrics/lib")
 from EnsoCollectionsLib import defCollection
 from Lib_CCollection_cmip_on_ciclad import main_compute
 from Lib_CCollection_cmip_on_ciclad import nbryear_from_model
