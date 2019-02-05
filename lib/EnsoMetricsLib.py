@@ -646,7 +646,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                       **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
                                          **kwargs)
         del mod_areacell, obs_areacell

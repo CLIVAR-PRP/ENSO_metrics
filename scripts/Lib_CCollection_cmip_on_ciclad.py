@@ -287,10 +287,10 @@ def attributes_variable(xml, variable_name):
     return attributes
 
 
-def save_json(dict_in, json_name):
-    list_sli = sorted(dict_in.keys())
-    list_ref = sorted(dict_in[list_sli[0]]['value']['metric'].keys())
-    list_dat = sorted(dict_in[list_sli[0]]['value']['diagnostic'].keys())
+def save_json(dict_in, json_name, myslice):
+    list_sli = [myslice]
+    list_ref = sorted(dict_in['value']['metric'].keys())
+    list_dat = sorted(dict_in['value']['diagnostic'].keys())
     dict_metric, dict_metric_err = dict(), dict()
     for ref in list_ref:
         tab1, tab2 = list(), list()
@@ -309,15 +309,54 @@ def save_json(dict_in, json_name):
     dict_out = {'metric': dict_metric, 'metric_err': dict_metric_err, 'diagnostic': dict_diag,
                 'diagnostic_err': dict_diag_err, 'metadata': dict_metadata}
     # save as json file
-    print '\033[95m' + 'json   output ' + str(json_name + '.json') + '\033[0m'
     with open(json_name + '.json', 'w') as outfile:
         json.dump(dict_out, outfile)
     return
 
 
-def save_netcdf(netcdf_name, metric):
+def resave_json(json_name):
     # list all files
-    list_files = sorted(list(GLOBiglob(netcdf_name + '_*' + metric + '.nc')))
+    list_files = sorted(list(GLOBiglob(json_name + '_slice_*_to_*.json')))
+    # list keys
+    list_sli = [file1.split('_slice_')[1].slpit('_to_')[0] for file1 in list_files]
+    with open(list_files[0]) as ff:
+        data = json.load(ff)
+    list_ref = sorted(data[list_sli[0]]['value']['metric'].keys())
+    list_dat = sorted(data[list_sli[0]]['value']['diagnostic'].keys())
+    # get metric values
+    dict_metric, dict_metric_err = dict(), dict()
+    for ref in list_ref:
+        tab1, tab2 = list(), list()
+        for file1, sli in zip(list_files, list_sli):
+            with open(file1) as ff:
+                data = json.load(ff)
+            tab1.append(data[sli]['value']['metric'][ref]['value'])
+            tab2.append(data[sli]['value']['metric'][ref]['value_error'])
+        dict_metric[ref], dict_metric_err[ref] = tab1, tab2
+        del tab1, tab2
+    # get diagnostic values
+    dict_diag, dict_diag_err = dict(), dict()
+    for dat in list_dat:
+        tab1, tab2 = list(), list()
+        for file1, sli in zip(list_files, list_sli):
+            with open(file1) as ff:
+                data = json.load(ff)
+            tab1.append(data[sli]['value']['diagnostic'][dat]['value'])
+            tab2.append(data[sli]['value']['diagnostic'][dat]['value_error'])
+        dict_diag[dat], dict_diag_err[dat] = tab1, tab2
+        del tab1, tab2
+    dict_metadata = data[sli]['metadata']
+    dict_out = {'metric': dict_metric, 'metric_err': dict_metric_err, 'diagnostic': dict_diag,
+                'diagnostic_err': dict_diag_err, 'metadata': dict_metadata}
+    # save as json file
+    print '\033[95m' + 'json   output ' + str(json_name + '.json') + '\033[0m'
+    with open(json_name + '.json', 'w') as outfile:
+        json.dump(dict_out, outfile)
+    return
+
+def resave_netcdf(netcdf_name, metric):
+    # list all files
+    list_files = sorted(list(GLOBiglob(netcdf_name + '_slice_*_to_*_' + metric + '.nc')))
     # loop on files
     dict_att_glob, dict_att_var, dict_var = dict(), dict(), dict()
     for file1 in list_files:
@@ -387,13 +426,14 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
             # file names
             file_out = final_name_out + '_slice_' + str(ystart).zfill(4) + '_to_' + str(yend).zfill(4)
             file_out = OSpath__join(path, file_out)
-            dict1[str(ystart).zfill(4)] = InternCompute(metricCollection, metric, dictDatasets, debug=False,
-                                                        netcdf=True, netcdf_name=file_out, period=period)
+            dict1 = InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=True,
+                                  netcdf_name=file_out, period=period)
+            save_json(dict1, file_out, str(ystart).zfill(4))
             del file_out, period, yend
         # save json
-        save_json(dict1, final_name_out)
+        resave_json(final_name_out)
         # resave NetCDF
-        save_netcdf(final_name_out, metric)
+        resave_netcdf(final_name_out, metric)
         del dict_mod, dict1, dictDatasets, model_file_name, model_nbr_years
     del dict_obs
     return
