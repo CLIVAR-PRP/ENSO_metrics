@@ -124,7 +124,7 @@ def MyError(list_strings):
         print str().ljust(5) + str(string)
     print str().ljust(5) + "%%%%%     -----     %%%%%"
     for ii in range(2): print '' + bcolors.ENDC
-    sys_exit(1)
+    sys_exit('')
     return
 
 

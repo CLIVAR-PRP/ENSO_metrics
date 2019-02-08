@@ -4,6 +4,43 @@
 #---------------------------------------------------#
 
 
+#---------------------------------------------------#
+# import python packages
+# usual python package
+from copy import deepcopy
+from glob import iglob as GLOBiglob
+from inspect import stack as INSPECTstack
+import json
+import math
+from matplotlib.font_manager import FontProperties
+from matplotlib.lines import Line2D
+import matplotlib.pyplot as plt
+from numpy import array as NUMPYarray
+from numpy import arange as NUMPYarange
+# CDAT package
+from MV2 import array as MV2array
+# ENSO_metrics package
+from EnsoCollectionsLib import ReferenceObservations, ReferenceRegions
+from EnsoErrorsWarnings import MyError
+#---------------------------------------------------#
+
+
+dict_colors = {'ERA-Interim': 'green', 'ERSSTv5': 'skyblue', 'GPCPv2.3': 'orange', 'HadISST': 'orange',
+               'Tropflux': 'purple', 'model': 'black'}
+
+
+def isobs(name):
+    # list observations
+    list_observations = sorted(ReferenceObservations().keys())
+    # test if the given name contains the name of an observational dataset
+    isobs = False
+    for obs in list_observations:
+        if obs in name:
+            isobs = True
+            break
+    return isobs
+
+
 def create_box(region):
     dict_reg = ReferenceRegions(region)
     lat, lon = dict_reg['latitude'], dict_reg['longitude']
@@ -11,12 +48,45 @@ def create_box(region):
     li_type, li_width, li_x1x2, li_y1y2 = ['solid' for ii in range(4)], [4 for ii in range(4)], [[minlon,maxlon],[minlon,maxlon],[minlon,minlon],[maxlon,maxlon]], [[maxlat,maxlat],[minlat,minlat],[minlat,maxlat],[minlat,maxlat]]
     return li_type, li_width, li_x1x2, li_y1y2
 
+
 def create_dom(tab):
     min1 = min(tab.getAxis(0)[:])
     max1 = max(tab.getAxis(0)[:])
     min2 = min(tab.getAxis(1)[:])
     max2 = max(tab.getAxis(1)[:])
     return [min1,max1,min2,max2]
+
+
+def create_minmax_plot(tab):
+    locmini, locmaxi = deepcopy(min(tab)), deepcopy(max(tab))
+    print "in = " + str([locmini, locmaxi])
+    if locmini < 0 and locmaxi > 0:
+        locmaxi = max([abs(locmini), abs(locmaxi)])
+        locmini = -deepcopy(locmaxi)
+    interval = locmaxi - locmini
+    tmp = str("%e" % abs(interval))
+    exp = int(tmp.split('e')[1])
+    mult = pow(10, exp)
+    locmini, locmaxi = float(locmini) / mult, float(locmaxi) / mult
+    interval = float(interval) / mult
+    listbase = [0.1, 0.2, 0.4, 0.5, 1, 2, 4, 5]
+    list1 = [round(base * 6, 1) if base < 1 else int(round(base * 6, 0)) for base in listbase]
+    list2 = [abs(ii - interval) for ii in list1]
+    interval = list1[list2.index(min(list2))]
+    base = listbase[list1.index(interval)]
+    print "base = " +str(base)
+    if abs(locmini) == locmaxi:
+        mini_out = (interval / 2.) - base
+        maxi_out = (interval / 2.) + base
+    else:
+        mini_out = max([0, (round(locmini + (locmaxi - locmini) / 2.) - interval / 2.) - base])
+        maxi_out = (round(locmini + (locmaxi - locmini) / 2.) + interval / 2.) + base
+    if exp in [-1,0,1]:
+        mini_out = mini_out * mult
+        maxi_out = maxi_out * mult
+        mult = 1.
+    print "out = " + str([mini_out, maxi_out])
+    return mini_out, maxi_out, mult
 
 def create_label(mini, maxi, ratio=1.):
     """
@@ -53,6 +123,7 @@ def create_label(mini, maxi, ratio=1.):
     exp2 = int(tmp2.split('e')[1])
     label = [round(ii,2) if exp2==-2 else (round(ii,1) if exp2==-1 else int(ii)) for ii in label]
     return label, mult
+
 
 def create_label_and_color(name, minmax, ratio=1.):
     if 'corr' in name.lower():
@@ -105,50 +176,18 @@ def obs_or_mod(name, list_observations, list_models):
     try:
         name_out
     except:
-        print bcolors.FAIL + '%%%%%     -----     %%%%%'
-        print 'unknown name (obs or model): ' + str(name)
-        print 'known observations: ' + str(list_observations)
-        print 'known models: ' + str(list_models)
-        print '%%%%%     -----     %%%%%' + bcolors.ENDC
-        SYSexit('')
+        list_strings = ['ERROR: function: ' + str(INSPECTstack()[0][3]) + ', line: ' + str(INSPECTstack()[0][2]),
+                        'unknown name (obs or model): ' + str(name), 'known observations: ' + str(list_observations),
+                        'known models: ' + str(list_models)]
+        MyError(list_strings)
     return name_out
 
 
 def replace_in_obsname(name):
-    new_name = deepcopy(name).replace('sst_map__', '').replace('pr__', '').replace('pr_lat__', '').replace('pr_lon__',
-                                                                                                           '').replace(
-        'pr_map__', '').replace('sst__', '').replace('sst_lat__', '').replace('sst_lon__', '').replace('sst_map__',
-                                                                                                       '').replace(
-        'sst_ts__', '').replace('sstComp_lon__', '').replace('sstComp_map__', '').replace('sstStd_MAM_map__',
-                                                                                          '').replace(
-        'sstStd_NDJ_map__', '').replace('sstSke_lon__', '').replace('sstSke_map__', '').replace('sstSke_monthly__',
-                                                                                                '').replace(
-        'sstStd_map__', '').replace('sstStd_monthly__', '').replace('taux__', '').replace('taux_lat__', '').replace(
-        'taux_lon__', '').replace('taux_map__', '').replace('Nina_duration__', '').replace('Nina_lon_pos_minSSTA__',
-                                                                                           '').replace(
-        'Nino_duration__', '').replace('Nino_lon_pos_maxSSTA__', '').replace('pdf__', '')
-    return new_name
+    return deepcopy(name).split('__')[1]
 
 
-def names_to_colors(name, dict_colors):
-    if 'GPCPv2.3' in name:
-        col = dict_colors['GPCPv2.3']
-    elif 'HadISST' in name:
-        col = dict_colors['HadISST']
-    elif 'Tropflux' in name:
-        col = dict_colors['Tropflux']
-    elif 'IPSL-CM5A-LR' in name:
-        col = dict_colors['IPSL-CM5A-LR']
-    elif 'IPSL-CM5A-MR' in name:
-        col = dict_colors['IPSL-CM5A-MR']
-    elif 'IPSL-CM5B-LR' in name:
-        col = dict_colors['IPSL-CM5B-LR']
-    else:
-        col = dict_colors['IPSL-CM6A-LR']
-    return col
-
-
-def both_nina_and_nino(list_var):
+def is_nina_and_nino(list_var):
     tmp = ''
     for var in list_var:
         if 'nina' in var.lower():
@@ -160,3 +199,118 @@ def both_nina_and_nino(list_var):
     else:
         value = False
     return value
+
+
+# ---------------------------------------------------------------------------------------------------------------------#
+# boxplot
+def get_nbr_years(name):
+    return int(name.split('years_')[0].split('_')[-1])
+
+
+def read_json(json_file, key_val):
+    with open(json_file) as ff:
+        data = json.load(ff)
+    list_ref = sorted(data[key_val].keys())
+    metric = dict()
+    for ref in list_ref:
+        val = data[key_val][ref]
+        if len(val) == 1:
+            metric[ref] = val[0]
+        else:
+            metric[ref] = val
+        del val
+    return metric
+
+
+def metric_boxplot(json_pattern, key_val, output_name, title, yname):
+    # list all files
+    list_files = sorted(list(GLOBiglob(json_pattern + ".json")))
+    # nbr years used
+    list_nbr = [get_nbr_years(file1) for file1 in list_files]
+    # read json
+    files_val = dict()
+    for nbr, file1 in zip(list_nbr, list_files):
+        files_val[nbr] = read_json(file1, key_val)
+    # reorganize
+    list_ref = sorted(files_val[list_nbr[0]].keys())
+    if 'metric' in key_val:
+        dict_out = dict((ref, [files_val[nbr][ref] for nbr in list_nbr]) for ref in list_ref)
+    else:
+        dict_out = dict((ref, [files_val[nbr][ref] for nbr in list_nbr]) if isobs(ref) is False else
+                        (ref, files_val[list_nbr[0]][ref]) for ref in list_ref)
+    # plot
+    alignment = {'horizontalalignment': 'right', 'verticalalignment': 'baseline'}
+    font0 = FontProperties()
+    font1 = font0.copy()
+    font1.set_size('large')
+    boxprops = dict(linestyle='-', linewidth=2, color='k')
+    capprops = dict(linestyle='-', linewidth=2, color='k')
+    marprops = dict(markerfacecolor='k', marker='o', markersize=2.0)
+    meaprops = dict(markerfacecolor='r', marker='D', markersize=8.0)
+    medprops = dict(linestyle='-', linewidth=2, color='k')
+    wisprops = dict(linestyle='-', linewidth=2, color='k')
+    tab = list()
+    for ref in list_ref:
+        if isinstance(dict_out[ref], float):
+            tab.append(dict_out[ref])
+        else:
+            for elt in dict_out[ref]:
+                if isinstance(elt, float):
+                    tab.append(elt)
+                else:
+                    tab += deepcopy(elt)
+    mini, maxi, mult = create_minmax_plot(tab)
+    if mult != 1.:
+        title = title + "(*" + str("%e" % mult) + ")"
+        for ref in list_ref:
+            if isinstance(dict_out[ref], float):
+                dict_out[ref] = dict_out[ref] / mult
+            else:
+                dict_out[ref] = NUMPYarray(dict_out[ref]) / mult
+    if 'metric' in key_val:
+        for ref in list_ref:
+            fig1, ax1 = plt.subplots()
+            plt.ylim(mini, maxi)
+            plt.title(title, fontsize=20)
+            plt.xlabel('number of simulated years', fontsize=15)
+            plt.ylabel(yname, fontsize=15)
+            for tick in ax1.xaxis.get_major_ticks():
+                tick.label.set_fontsize(15)
+            for tick in ax1.yaxis.get_major_ticks():
+                tick.label.set_fontsize(15)
+            plt.text(0.98, 0.95, ref, fontproperties=font1, transform=ax1.transAxes, **alignment)
+            ax1.boxplot(dict_out[ref], whis=[5, 95], labels=list_nbr, showmeans=True, boxprops=boxprops,
+                        capprops=capprops, flierprops=marprops, meanprops=meaprops, medianprops=medprops,
+                        whiskerprops=wisprops)
+            plt.savefig(output_name + '_' + ref)
+            plt.close()
+    else:
+        dict_ref = dict()
+        for ref in list_ref:
+            if isinstance(dict_out[ref], float):
+                dict_ref[ref] = [dict_out[ref], dict_out[ref]]
+            else:
+                tab_to_plot = dict_out[ref]
+        fig1, ax1 = plt.subplots()
+        plt.ylim(mini, maxi)
+        plt.title(title, fontsize=20)
+        plt.xlabel('number of simulated years', fontsize=15)
+        plt.ylabel(yname, fontsize=15)
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label.set_fontsize(15)
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label.set_fontsize(15)
+        ax1.boxplot(tab_to_plot, whis=[5, 95], labels=list_nbr, showmeans=True, boxprops=boxprops, capprops=capprops,
+                    flierprops=marprops, meanprops=meaprops, medianprops=medprops, whiskerprops=wisprops)
+        nref = sorted(dict_ref.keys())
+        if len(nref) > 0:
+            lines, names = list(), list()
+            for ref in nref:
+                plt.plot([-100, 100], dict_ref[ref], dict_colors[ref], lw=2)
+                lines.append(Line2D([0], [0], color=dict_colors[ref], lw=2))
+                names.append(ref)
+            plt.legend(lines, names)
+        plt.savefig(output_name)
+        plt.close()
+    return
+# ---------------------------------------------------------------------------------------------------------------------#

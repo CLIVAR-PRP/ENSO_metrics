@@ -20,6 +20,8 @@ from cdms2 import open as CDMS2open
 # ENSO_metrics package
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import InternCompute
+from EnsoErrorsWarnings import MyError
+from Lib_plot_on_ciclad import isobs
 # My (YYP) package
 from getfiles_sh_to_py import find_path_and_files
 from getfiles_sh_to_py import get_ensembles
@@ -27,22 +29,8 @@ from getfiles_sh_to_py import get_time_size
 #---------------------------------------------------#
 
 
-#---------------------------------------------------#
-# colors for printing
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-#---------------------------------------------------#
-
-
 # ---------------------------------------------------------------------------------------------------------------------#
-# define path and dimensions
+# general functions
 xmldir = '/home/yplanton/New_XMLDIR'
 # CMIP variable names
 dict_CMIPvar = CmipVariables()['variable_name_in_file']
@@ -198,13 +186,11 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
                                                  rea=new_realm, var=variable)
         except:
             # given variable is neither in realm 'A' nor 'O'
-            print bcolors.FAIL + '%%%%%     -----     %%%%%'
-            print 'ERROR: function: ' + str(INSPECTstack()[0][3]) + ', line: ' + str(INSPECTstack()[0][2])
-            print 'given variable cannot be found in either realm A or O: ' + str(variable)
-            print 'param: ' + str(model) + ', ' + str(project) + ', ' + str(experiment) + ', ' + str(ensemble) + \
-                  ', ' + str(frequency) + ', ' + str(realm)
-            print '%%%%%     -----     %%%%%' + bcolors.ENDC
-            sys.exit('')
+            list_strings = ['ERROR: function: ' + str(INSPECTstack()[0][3]) + ', line: ' + str(INSPECTstack()[0][2]),
+                            'given variable cannot be found in either realm A or O: ' + str(variable),
+                            'param: ' + str(model) + ', ' + str(project) + ', ' + str(experiment) + ', ' +
+                            str(ensemble) + ', ' + str(frequency) + ', ' + str(realm)]
+            MyError(list_strings)
         file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble,
                                        realm=new_realm)
     else:
@@ -287,109 +273,127 @@ def attributes_variable(xml, variable_name):
     return attributes
 
 
-def save_json(dict_in, json_name, myslice):
-    list_sli = [myslice]
-    list_ref = sorted(dict_in['value']['metric'].keys())
-    list_dat = sorted(dict_in['value']['diagnostic'].keys())
+def save_json(dict_in, json_name, myslice, metric):
+    list_ref = sorted(dict_in['value'][metric]['metric'].keys())
+    list_dat = sorted(dict_in['value'][metric]['diagnostic'].keys())
     dict_metric, dict_metric_err = dict(), dict()
     for ref in list_ref:
-        tab1, tab2 = list(), list()
-        for sli in list_sli:
-            tab1.append(dict_in[sli]['value']['metric'][ref]['value'])
-            tab2.append(dict_in[sli]['value']['metric'][ref]['value_error'])
-        dict_metric[ref], dict_metric_err[ref] = tab1, tab2
+        dict_metric[ref] = dict_in['value'][metric]['metric'][ref]['value']
+        dict_metric_err[ref] = dict_in['value'][metric]['metric'][ref]['value_error']
     dict_diag, dict_diag_err = dict(), dict()
     for dat in list_dat:
-        tab1, tab2 = list(), list()
-        for sli in list_sli:
-            tab1.append(dict_in[sli]['value']['diagnostic'][dat]['value'])
-            tab2.append(dict_in[sli]['value']['diagnostic'][dat]['value_error'])
-        dict_diag[dat], dict_diag_err[dat] = tab1, tab2
-    dict_metadata = dict_in[list_sli[0]]['metadata']
-    dict_out = {'metric': dict_metric, 'metric_err': dict_metric_err, 'diagnostic': dict_diag,
-                'diagnostic_err': dict_diag_err, 'metadata': dict_metadata}
+        dict_diag[dat] = dict_in['value'][metric]['diagnostic'][dat]['value']
+        dict_diag_err[dat] = dict_in['value'][metric]['diagnostic'][dat]['value_error']
+    dict_metadata = dict_in['metadata']
+    dict_out = {myslice: {'metric': dict_metric, 'metric_err': dict_metric_err, 'diagnostic': dict_diag,
+                          'diagnostic_err': dict_diag_err, 'metadata': dict_metadata}}
     # save as json file
-    with open(json_name + '.json', 'w') as outfile:
+    file_out = json_name + '_' + metric + '.json'
+    with open(file_out, 'w') as outfile:
         json.dump(dict_out, outfile)
     return
 
 
-def resave_json(json_name):
+def resave_json(json_name, metric):
     # list all files
     list_files = sorted(list(GLOBiglob(json_name + '_slice_*_to_*.json')))
-    # list keys
-    list_sli = [file1.split('_slice_')[1].slpit('_to_')[0] for file1 in list_files]
-    with open(list_files[0]) as ff:
-        data = json.load(ff)
-    list_ref = sorted(data[list_sli[0]]['value']['metric'].keys())
-    list_dat = sorted(data[list_sli[0]]['value']['diagnostic'].keys())
-    # get metric values
-    dict_metric, dict_metric_err = dict(), dict()
-    for ref in list_ref:
-        tab1, tab2 = list(), list()
-        for file1, sli in zip(list_files, list_sli):
-            with open(file1) as ff:
-                data = json.load(ff)
-            tab1.append(data[sli]['value']['metric'][ref]['value'])
-            tab2.append(data[sli]['value']['metric'][ref]['value_error'])
-        dict_metric[ref], dict_metric_err[ref] = tab1, tab2
-        del tab1, tab2
-    # get diagnostic values
-    dict_diag, dict_diag_err = dict(), dict()
-    for dat in list_dat:
-        tab1, tab2 = list(), list()
-        for file1, sli in zip(list_files, list_sli):
-            with open(file1) as ff:
-                data = json.load(ff)
-            tab1.append(data[sli]['value']['diagnostic'][dat]['value'])
-            tab2.append(data[sli]['value']['diagnostic'][dat]['value_error'])
-        dict_diag[dat], dict_diag_err[dat] = tab1, tab2
-        del tab1, tab2
-    dict_metadata = data[sli]['metadata']
-    dict_out = {'metric': dict_metric, 'metric_err': dict_metric_err, 'diagnostic': dict_diag,
-                'diagnostic_err': dict_diag_err, 'metadata': dict_metadata}
-    # save as json file
-    print '\033[95m' + 'json   output ' + str(json_name + '.json') + '\033[0m'
-    with open(json_name + '.json', 'w') as outfile:
-        json.dump(dict_out, outfile)
+    if len(list_files) > 0:
+        # list keys
+        list_sli = [file1.split('_slice_')[1].split('_to_')[0] for file1 in list_files]
+        with open(list_files[0]) as ff:
+            data = json.load(ff)
+        list_ref = sorted(data[list_sli[0]]['metric'].keys())
+        list_dat = sorted(data[list_sli[0]]['diagnostic'].keys())
+        # get metric values
+        dict_metric, dict_metric_err = dict(), dict()
+        for ref in list_ref:
+            tab1, tab2 = list(), list()
+            for file1, sli in zip(list_files, list_sli):
+                with open(file1) as ff:
+                    data = json.load(ff)
+                tab1.append(data[sli]['metric'][ref])
+                tab2.append(data[sli]['metric_err'][ref])
+            dict_metric[ref], dict_metric_err[ref] = tab1, tab2
+            del tab1, tab2
+        # get diagnostic values
+        dict_diag, dict_diag_err = dict(), dict()
+        for dat in list_dat:
+            # test if the dataset is observations
+            var_is_obs = isobs(dat)
+            tab1, tab2 = list(), list()
+            if var_is_obs is True:
+                with open(list_files[0]) as ff:
+                    data = json.load(ff)
+                tab1.append(data[list_sli[0]]['diagnostic'][dat])
+                tab2.append(data[list_sli[0]]['diagnostic_err'][dat])
+            else:
+                for file1, sli in zip(list_files, list_sli):
+                    with open(file1) as ff:
+                        data = json.load(ff)
+                    tab1.append(data[sli]['diagnostic'][dat])
+                    tab2.append(data[sli]['diagnostic_err'][dat])
+            dict_diag[dat], dict_diag_err[dat] = tab1, tab2
+            del tab1, tab2
+        dict_metadata = data[sli]['metadata']
+        dict_out = {'metric': dict_metric, 'metric_err': dict_metric_err, 'diagnostic': dict_diag,
+                    'diagnostic_err': dict_diag_err, 'metadata': dict_metadata}
+        # save as json file
+        file_out = json_name + '_' + metric + '.json'
+        print '\033[95m' + 'json   output ' + str(file_out) + '\033[0m'
+        with open(file_out, 'w') as outfile:
+            json.dump(dict_out, outfile)
+        # delete selected files
+        for file1 in list_files:
+            OSremove(file1)
     return
+
 
 def resave_netcdf(netcdf_name, metric):
     # list all files
     list_files = sorted(list(GLOBiglob(netcdf_name + '_slice_*_to_*_' + metric + '.nc')))
-    # loop on files
-    dict_att_glob, dict_att_var, dict_var = dict(), dict(), dict()
-    for file1 in list_files:
-        # find slice number
-        snbr = file1.split('_slice_')[1].slpit('_to_')[0]
-        # open current file
-        ff = CDMS2open(file1)
-        # read global attributes
-        attributes_global(ff, snbr, att_dict=dict_att_glob)
-        # list all variables in current file that are not dimensions
-        list_variables = [var for var in ff.listvariables() if var not in dimensions]
-        list_variables.sort(key=lambda v: v.lower())
-        # loop on variables
-        for var in list_variables:
-            # read variable in the current file
-            dict_var[var + '__' + str(snbr)] = ff(var)
-            # read variable attributes
-            dict_att_var[var + '__' + str(snbr)] = attributes_variable(ff, var)
-        ff.close()
-        del ff, list_variables, snbr
-    # save files
-    file_out = netcdf_name + '_' + metric + '.nc'
-    print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
-    o = CDMS2open(file_out, 'w+')
-    for var in dict_var.keys():
-        o.write(dict_var[var], attributes=dict_att_var[var], dtype='float32', id=var)
-    for att in dict_att_glob.keys():
-        o.__setattr__(att, dict_att_glob[att])
-    o.close()
-    # delete selected files
-    for file1 in list_files:
-        OSremove(file1)
-    del dict_att_glob, dict_att_var, dict_var, list_files, o
+    if len(list_files) > 0:
+        # loop on files
+        dict_att_glob, dict_att_var, dict_var = dict(), dict(), dict()
+        for file1 in list_files:
+            # find slice number
+            snbr = file1.split('_slice_')[1].split('_to_')[0]
+            # open current file
+            ff = CDMS2open(file1)
+            # read global attributes
+            attributes_global(ff, snbr, att_dict=dict_att_glob)
+            # list all variables in current file that are not dimensions
+            list_variables = [var for var in ff.listvariables() if var not in dimensions]
+            list_variables.sort(key=lambda v: v.lower())
+            # loop on variables
+            for var in list_variables:
+                # test if var is from observations
+                var_is_obs = isobs(var)
+                # read variable in the current file
+                tab = ff(var)
+                # read variable attributes in the current file
+                att = attributes_variable(ff, var)
+                # put it in a dictionary
+                if var_is_obs is True:
+                    dict_var[var] = tab
+                    dict_att_var[var] = att
+                else:
+                    dict_var[var + '__' + str(snbr)] = tab
+                    dict_att_var[var + '__' + str(snbr)] = att
+                del att, tab, var_is_obs
+            ff.close()
+            del ff, list_variables, snbr
+        # save files
+        file_out = netcdf_name + '_' + metric + '.nc'
+        print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
+        o = CDMS2open(file_out, 'w+')
+        for var in dict_var.keys():
+            o.write(dict_var[var], attributes=dict_att_var[var], dtype='float32', id=var)
+        for att in dict_att_glob.keys():
+            o.__setattr__(att, dict_att_glob[att])
+        o.close()
+        # delete selected files
+        for file1 in list_files:
+            OSremove(file1)
     return
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -415,26 +419,31 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         model_file_name = dict_mod[dict_mod.keys()[0]][dict_mod[dict_mod.keys()[0]].keys()[0]]['path + filename']
         model_nbr_years = nbryear_from_filename(model_file_name)
         print '\033[95m' + 'ensemble ' + str(ens) + ' ' + str(model_nbr_years).zfill(4) + ' years' + '\033[0m'
-        final_name_out = file_name + '_' + ens + '_' + str(str(nbr_years).zfill(4)) + 'years'
+        final_name_out = OSpath__join(path, file_name + '_' + ens + '_' + str(str(nbr_years).zfill(4)) + 'years')
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
-        dict1 = dict()
-        for ystart in range(model_nbr_years-nbr_years):
-            yend = ystart+nbr_years
-            print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(4) + ' to ' + \
-                  str(yend).zfill(4) + '\033[0m'
-            period = slice(ystart*12, yend*12)
-            # file names
-            file_out = final_name_out + '_slice_' + str(ystart).zfill(4) + '_to_' + str(yend).zfill(4)
-            file_out = OSpath__join(path, file_out)
-            dict1 = InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=True,
-                                  netcdf_name=file_out, period=period)
-            save_json(dict1, file_out, str(ystart).zfill(4))
-            del file_out, period, yend
-        # save json
-        resave_json(final_name_out)
-        # resave NetCDF
-        resave_netcdf(final_name_out, metric)
-        del dict_mod, dict1, dictDatasets, model_file_name, model_nbr_years
-    del dict_obs
+        # is the final file done?
+        final_file = len(list(GLOBiglob(final_name_out + '_' + metric + '*')))
+        if final_file != 2:
+            # number of files computed
+            nbr_comp = len(list(GLOBiglob(final_name_out + '_slice_*_to_*_' + metric + '.json')))
+            if nbr_comp > 0:
+                nbr_comp -= 1
+            for ystart in range(nbr_comp, model_nbr_years-nbr_years+1):
+                yend = ystart+nbr_years
+                print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(4) + ' to ' + \
+                      str(yend-1).zfill(4) + '\033[0m'
+                period = slice(ystart*12, yend*12)
+                # file names
+                file_out = final_name_out + '_slice_' + str(ystart).zfill(4) + '_to_' + str(yend-1).zfill(4)
+                dict1 = InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=True,
+                                      netcdf_name=file_out, period=period)
+                save_json(dict1, file_out, str(ystart).zfill(4), metric)
+                del dict1, file_out, period, yend
+            # resave json
+            resave_json(final_name_out, metric)
+            # resave NetCDF
+            resave_netcdf(final_name_out, metric)
+            del nbr_comp
+        del dict_mod, dictDatasets, final_file, final_name_out, model_file_name, model_nbr_years
     return
 # ---------------------------------------------------------------------------------------------------------------------#
