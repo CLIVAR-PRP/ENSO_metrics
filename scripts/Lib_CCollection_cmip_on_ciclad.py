@@ -21,7 +21,7 @@ from cdms2 import open as CDMS2open
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import InternCompute
 from EnsoErrorsWarnings import MyError
-from Lib_plot_on_ciclad import isobs
+from Lib_plot_on_ciclad import return_dim_names, isobs
 # My (YYP) package
 from getfiles_sh_to_py import find_path_and_files
 from getfiles_sh_to_py import get_ensembles
@@ -34,14 +34,7 @@ from getfiles_sh_to_py import get_time_size
 xmldir = '/home/yplanton/New_XMLDIR'
 # CMIP variable names
 dict_CMIPvar = CmipVariables()['variable_name_in_file']
-dimensions = ['bounds_latitude', 'bounds_latitude_a', 'bounds_latitude_b', 'bounds_longitude', 'bounds_longitude_a',
-              'bounds_longitude_b', 'bounds_months', 'bounds_time', 'bounds_years', 'bounds_years_a', 'bounds_years_b',
-              'bounds_years_c', 'bounds_years_d',' bounds_years_e', 'latitude', 'latitude_a', 'latitude_b', 'longitude',
-              'longitude_a', 'longitude_b', 'months', 'years', 'years_a', 'years_b', 'years_c', 'years_d', 'years_e']
 
-
-def return_dim_names():
-    return dimensions
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -349,11 +342,16 @@ def resave_json(json_name, metric):
 
 
 def resave_netcdf(netcdf_name, metric):
+    # get usual dimensions
+    dimensions = return_dim_names()
     # list all files
     list_files = sorted(list(GLOBiglob(netcdf_name + '_slice_*_to_*_' + metric + '.nc')))
     if len(list_files) > 0:
         # loop on files
-        dict_att_glob, dict_att_var, dict_var = dict(), dict(), dict()
+        dict_att_glob = dict()
+        dict_att_var_1d, dict_var_1d = dict(), dict()
+        dict_att_var_2d, dict_var_2d = dict(), dict()
+        dict_att_var_3d, dict_var_3d = dict(), dict()
         for file1 in list_files:
             # find slice number
             snbr = file1.split('_slice_')[1].split('_to_')[0]
@@ -374,23 +372,56 @@ def resave_netcdf(netcdf_name, metric):
                 att = attributes_variable(ff, var)
                 # put it in a dictionary
                 if var_is_obs is True:
-                    dict_var[var] = tab
-                    dict_att_var[var] = att
+                    if tab.shape == 1:
+                        dict_var_1d[var] = tab
+                        dict_att_var_1d[var] = att
+                    elif tab.shape == 2:
+                        dict_var_2d[var] = tab
+                        dict_att_var_2d[var] = att
+                    else:
+                        dict_var_3d[var] = tab
+                        dict_att_var_3d[var] = att
                 else:
-                    dict_var[var + '__' + str(snbr)] = tab
-                    dict_att_var[var + '__' + str(snbr)] = att
+                    if tab.shape == 1:
+                        dict_var_1d[var + '__' + str(snbr)] = tab
+                        dict_att_var_1d[var + '__' + str(snbr)] = att
+                    elif tab.shape == 2:
+                        dict_var_2d[var + '__' + str(snbr)] = tab
+                        dict_att_var_2d[var + '__' + str(snbr)] = att
+                    else:
+                        dict_var_3d[var + '__' + str(snbr)] = tab
+                        dict_att_var_3d[var + '__' + str(snbr)] = att
                 del att, tab, var_is_obs
             ff.close()
             del ff, list_variables, snbr
         # save files
-        file_out = netcdf_name + '_' + metric + '.nc'
-        print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
-        o = CDMS2open(file_out, 'w+')
-        for var in dict_var.keys():
-            o.write(dict_var[var], attributes=dict_att_var[var], dtype='float32', id=var)
-        for att in dict_att_glob.keys():
-            o.__setattr__(att, dict_att_glob[att])
-        o.close()
+        if len(dict_var_1d.keys()) > 0:
+            file_out = netcdf_name + '_' + metric + '_1d.nc'
+            print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
+            o = CDMS2open(file_out, 'w+')
+            for var in dict_var_1d.keys():
+                o.write(dict_var_1d[var], attributes=dict_att_var_1d[var], dtype='float32', id=var)
+            for att in dict_att_glob.keys():
+                o.__setattr__(att, dict_att_glob[att])
+            o.close()
+        if len(dict_var_2d.keys()) > 0:
+            file_out = netcdf_name + '_' + metric + '_2d.nc'
+            print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
+            o = CDMS2open(file_out, 'w+')
+            for var in dict_var_2d.keys():
+                o.write(dict_var_2d[var], attributes=dict_att_var_2d[var], dtype='float32', id=var)
+            for att in dict_att_glob.keys():
+                o.__setattr__(att, dict_att_glob[att])
+            o.close()
+        if len(dict_var_3d.keys()) > 0:
+            file_out = netcdf_name + '_' + metric + '_3d.nc'
+            print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
+            o = CDMS2open(file_out, 'w+')
+            for var in dict_var_3d.keys():
+                o.write(dict_var_3d[var], attributes=dict_att_var_3d[var], dtype='float32', id=var)
+            for att in dict_att_glob.keys():
+                o.__setattr__(att, dict_att_glob[att])
+            o.close()
         # delete selected files
         for file1 in list_files:
             OSremove(file1)
@@ -400,7 +431,8 @@ def resave_netcdf(netcdf_name, metric):
 
 # ---------------------------------------------------------------------------------------------------------------------#
 # main function to compute ENSO_metrics
-def main_compute(metricCollection, metric, nbr_years, path, file_name, experiment, frequency, model, project, realm):
+def main_compute(metricCollection, metric, nbr_years, path, file_name, experiment, frequency, model, project, realm,
+                 save_netcdf=False):
     # metric collection dictionary for the given metric collection (mc_name)
     dict_mc = defCollection(metricCollection)
     # list of variables for the given metric
@@ -426,8 +458,6 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         if final_file != 2:
             # number of files computed
             nbr_comp = len(list(GLOBiglob(final_name_out + '_slice_*_to_*_' + metric + '.json')))
-            if nbr_comp > 0:
-                nbr_comp -= 1
             for ystart in range(nbr_comp, model_nbr_years-nbr_years+1):
                 yend = ystart+nbr_years
                 print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(4) + ' to ' + \
@@ -435,7 +465,7 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
                 period = slice(ystart*12, yend*12)
                 # file names
                 file_out = final_name_out + '_slice_' + str(ystart).zfill(4) + '_to_' + str(yend-1).zfill(4)
-                dict1 = InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=True,
+                dict1 = InternCompute(metricCollection, metric, dictDatasets, debug=False, netcdf=save_netcdf,
                                       netcdf_name=file_out, period=period)
                 save_json(dict1, file_out, str(ystart).zfill(4), metric)
                 del dict1, file_out, period, yend

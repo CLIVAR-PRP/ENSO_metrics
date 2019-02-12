@@ -22,6 +22,7 @@ sys.path.insert(1, "/home/" + user_name + "/ENSO_metrics/scripts")
 from EnsoCollectionsLib import defCollection
 from Lib_CCollection_cmip_on_ciclad import main_compute
 from Lib_CCollection_cmip_on_ciclad import nbryear_from_model
+from my_arg import my_arg
 # My (YYP) package
 # set new path where to find programs
 sys.path.insert(0, "/home/" + user_name + "/New_programs/lib_cmip_bash")
@@ -59,16 +60,35 @@ realm = 'A'
 model = 'IPSL-CM5A-LR'
 # metric
 metric = 'EnsoAmpl'
-# number of years used
-try:
-    sys.argv[1] # first test if the number of years is given as an argument
-except:
-    # if it was not given, you can define it here
-    nbr_years = 500 # you can test from 5 to 500 years
-else:
-    nbr_years = int(sys.argv[1])
 # file name
 file_name = user_name + "_" + mc_name + "_" + model + "_" + experiment
+# arguments: number or years used and save netcdf
+needed_arg = {
+    # define what arguments can be 'nbr_years'
+    'nbr_years': {
+        # 'nbr_years' must be an integer
+        'type': 'int',
+        # 'nbr_years' must be a multiple of 5 between 5 and 500
+        'possible_values': range(5, 505, 5),
+        # the default value of 'nbr_years' is:
+        # you can change this integer if you do not use main_driver.sh and if you do not want to give arguments when
+        # running main_driver.py (e.g., python -i main_driver.py 10 True
+        'default': 100,
+    },
+    # define what arguments can be 'save_netcdf' (i.e., saving or not NetCDF files, used to create maps and curves)
+    'save_netcdf': {
+        # 'nbr_years' must be a string
+        'type': basestring,
+        # 'save_netcdf' must be either False or True
+        'possible_values': ['False', 'True'],
+        # the default value of 'save_netcdf' is:
+        # False means NetCDF files are not saved, True means NetCDF files are saved
+        'default': 'False',
+    },
+}
+dict1 = my_arg(needed_arg, sys.argv[1:])
+nbr_years = dict1['nbr_years']
+save_netcdf = dict1['save_netcdf']
 #---------------------------------------------------#
 
 
@@ -113,4 +133,5 @@ list_ensembles = sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, 
 
 #---------------------------------------------------#
 # to compute the metric for a given experiment/frequency/model/project/realm
-main_compute(mc_name, metric, nbr_years, path, file_name, experiment, frequency, model, project, realm)
+main_compute(mc_name, metric, nbr_years, path, file_name, experiment, frequency, model, project, realm,
+             save_netcdf=save_netcdf)
