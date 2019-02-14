@@ -58,12 +58,29 @@ realm = 'A'
 # The next lines can be modified
 # model
 model = 'IPSL-CM5A-LR'
-# metric
-metric = 'EnsoAmpl'
+# metric (must be in list_metrics)
+default_metric = 'EnsoAmpl'
+# number of years used for the computation of the metric (must be an integer multiple of 5 between 5 and 500)
+default_nyears = 100
+# save output NetCDF files ('False' or 'True')
+default_savenc = 'False'
 # file name
 file_name = user_name + "_" + mc_name + "_" + model + "_" + experiment
-# arguments: number or years used and save netcdf
+#---------------------------------------------------#
+
+
+#---------------------------------------------------#
+# arguments: metric, number or years used and save netcdf (do not change this)
 needed_arg = {
+    # define what arguments can be 'metric'
+    'metric': {
+        # 'metric' must be a string
+        'type': basestring,
+        # 'metric' must be define in EnsoCollectionsLib.defCollection(mc_name)
+        'possible_values': list_metrics,
+        # the default value of 'metric' is:
+        'default': default_metric,
+    },
     # define what arguments can be 'nbr_years'
     'nbr_years': {
         # 'nbr_years' must be an integer
@@ -73,7 +90,7 @@ needed_arg = {
         # the default value of 'nbr_years' is:
         # you can change this integer if you do not use main_driver.sh and if you do not want to give arguments when
         # running main_driver.py (e.g., python -i main_driver.py 10 True
-        'default': 100,
+        'default': default_nyears,
     },
     # define what arguments can be 'save_netcdf' (i.e., saving or not NetCDF files, used to create maps and curves)
     'save_netcdf': {
@@ -83,10 +100,11 @@ needed_arg = {
         'possible_values': ['False', 'True'],
         # the default value of 'save_netcdf' is:
         # False means NetCDF files are not saved, True means NetCDF files are saved
-        'default': 'False',
+        'default': default_savenc,
     },
 }
 dict1 = my_arg(needed_arg, sys.argv[1:])
+metric = dict1['metric']
 nbr_years = dict1['nbr_years']
 save_netcdf = dict1['save_netcdf']
 #---------------------------------------------------#

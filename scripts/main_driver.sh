@@ -5,12 +5,14 @@ export PYTHONPATH='/home/yplanton/miniconda/envs/cdat8/lib/python2.7/site-packag
 
 #---------------------------------------------------#
 # This line can be modified
-nbr_years=500 # define the number of model years used to compute the metric
+metric="EnsoAmpl" # define the metric
+nbr_years=100 # define the number of model years used to compute the metric
+save_netcdf="False" # save or not NetCDF files (used to plot curves and maps)
 #---------------------------------------------------#
 
 # this loop is to ensure that the metric is computed for all possible slice of $nbr_years, even if a memory error or
 # something occurs
 for num in $(seq 0 20)
 do
-    python /home/yplanton/ENSO_metrics/scripts/main_driver.py ${nbr_years}
+    python /home/yplanton/ENSO_metrics/scripts/main_driver.py ${metric} ${nbr_years} ${save_netcdf}
 done

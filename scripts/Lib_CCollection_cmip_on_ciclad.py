@@ -34,7 +34,6 @@ from getfiles_sh_to_py import get_time_size
 xmldir = '/home/yplanton/New_XMLDIR'
 # CMIP variable names
 dict_CMIPvar = CmipVariables()['variable_name_in_file']
-
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -372,20 +371,20 @@ def resave_netcdf(netcdf_name, metric):
                 att = attributes_variable(ff, var)
                 # put it in a dictionary
                 if var_is_obs is True:
-                    if tab.shape == 1:
+                    if len(tab.shape) == 1:
                         dict_var_1d[var] = tab
                         dict_att_var_1d[var] = att
-                    elif tab.shape == 2:
+                    elif len(tab.shape) == 2:
                         dict_var_2d[var] = tab
                         dict_att_var_2d[var] = att
                     else:
                         dict_var_3d[var] = tab
                         dict_att_var_3d[var] = att
                 else:
-                    if tab.shape == 1:
+                    if len(tab.shape) == 1:
                         dict_var_1d[var + '__' + str(snbr)] = tab
                         dict_att_var_1d[var + '__' + str(snbr)] = att
-                    elif tab.shape == 2:
+                    elif len(tab.shape) == 2:
                         dict_var_2d[var + '__' + str(snbr)] = tab
                         dict_att_var_2d[var + '__' + str(snbr)] = att
                     else:
@@ -454,14 +453,20 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         final_name_out = OSpath__join(path, file_name + '_' + ens + '_' + str(str(nbr_years).zfill(4)) + 'years')
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         # is the final file done?
-        final_file = len(list(GLOBiglob(final_name_out + '_' + metric + '*')))
-        if final_file != 2:
+        final_file = len(list(GLOBiglob(final_name_out + '_' + metric + '.*')))
+        if save_netcdf is True:
+            nbr_file_out1 = 2
+            nbr_file_out2 = 3
+        else:
+            nbr_file_out1 = 1
+            nbr_file_out2 = 1
+        if final_file != nbr_file_out1 and final_file != nbr_file_out2:
             # number of files computed
             nbr_comp = len(list(GLOBiglob(final_name_out + '_slice_*_to_*_' + metric + '.json')))
             for ystart in range(nbr_comp, model_nbr_years-nbr_years+1):
                 yend = ystart+nbr_years
-                print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(4) + ' to ' + \
-                      str(yend-1).zfill(4) + '\033[0m'
+                print '\033[95m' + str().ljust(5) + 'ensemble ' + str(ens) + ' ; years ' + str(ystart).zfill(4) +\
+                      ' to ' + str(yend-1).zfill(4) + '\033[0m'
                 period = slice(ystart*12, yend*12)
                 # file names
                 file_out = final_name_out + '_slice_' + str(ystart).zfill(4) + '_to_' + str(yend-1).zfill(4)
