@@ -69,7 +69,8 @@ for ens in list_ensembles:
         path, user_name + "_" + mc_name + "_" + model + "_" + experiment + "_" + ens + "_*years_" + metric)
     print input_name
     # output file name
-    output_name = OSpath__join(path_out, mc_name + "_" + model + "_" + experiment + "_" + ens + "_" + metric)
+    output_name = OSpath__join(
+        path_out, user_name + "_" + mc_name + "_" + model + "_" + experiment + "_" + ens + "_" + metric)
     # general plot title
     title = model + " " + metric
     #---------------------------------------------------#
