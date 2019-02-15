@@ -5,8 +5,8 @@ export PYTHONPATH='/home/yplanton/miniconda/envs/cdat8/lib/python2.7/site-packag
 
 #---------------------------------------------------#
 # This line can be modified
-metric="EnsoAmpl" # define the metric
-nbr_years=100 # define the number of model years used to compute the metric
+metric="NinoSstTsRmse" # define the metric
+nbr_years=5 # define the number of model years used to compute the metric
 save_netcdf="False" # save or not NetCDF files (used to plot curves and maps)
 #---------------------------------------------------#
 

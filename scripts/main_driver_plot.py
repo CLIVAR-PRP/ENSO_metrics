@@ -11,24 +11,24 @@ from getpass import getuser as GETPASSgetuser
 from os.path import join as OSpath__join
 import sys
 # user (get your user name for the paths and to save the files)
-user_name = 'yplanton' #GETPASSgetuser()
+user_name = GETPASSgetuser()
 # ENSO_metrics package
 # set new path where to find programs
-#sys.path.insert(0, "/home/" + user_name + "/ENSO_metrics/lib")
-#sys.path.insert(1, "/home/" + user_name + "/ENSO_metrics/scripts")
+sys.path.insert(0, "/home/" + user_name + "/ENSO_metrics/lib")
+sys.path.insert(1, "/home/" + user_name + "/ENSO_metrics/scripts")
 from Lib_plot_on_ciclad import metric_boxplot, myplot
 # My (YYP) package
 # set new path where to find programs
-#sys.path.insert(0, "/home/" + user_name + "/New_programs/lib_cmip_bash")
-#from getfiles_sh_to_py import get_ensembles
+sys.path.insert(0, "/home/" + user_name + "/New_programs/lib_cmip_bash")
+from getfiles_sh_to_py import get_ensembles
 #---------------------------------------------------#
 
 
 #---------------------------------------------------#
 # general parameters (do not change this)
 # where to save the files
-# path = "/data/" + user_name + "/ENSO_metrics"
-path = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test"
+path = "/data/" + user_name + "/ENSO_metrics"
+# path = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test"
 # metric collection
 mc_name = 'ENSO_perf'
 #---------------------------------------------------#
@@ -48,15 +48,15 @@ model = 'IPSL-CM5A-LR'
 # metric
 metric = 'EnsoAmpl'
 # list of ensembles
-list_ensembles = ['r1i1p1'] #sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, pro=project, rea=realm))
+list_ensembles = sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, pro=project, rea=realm))
 #---------------------------------------------------#
 
 
 #---------------------------------------------------#
 # plot
 # path for the plots
-# path_out = "/data/" + user_name + "/Plots"  # create your own
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Plots"
+path_out = "/data/" + user_name + "/Plots"  # create your own
+# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Plots"
 # loop on ensembles
 # only if you have computed all available ensembles! If not, set 'list_ensembles' with the list of ensembles you have
 # computed: e.g., list_ensembles = ['r1i1p1']
