@@ -8909,7 +8909,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: compRmse,
                      'metric_value_error_' + dataset2: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=composite_mod, var1_attributes=dict1, var1_name='sst_ts__' + dataset,
+            SaveNetcdf(file_name, var1=composite_mod, var1_attributes=dict1, var1_name='sst_ts__' + dataset1,
                        var2=composite_obs, var2_attributes=dict2, var2_name='sst_ts__' + dataset2,
                        global_attributes=dict3)
             del dict1, dict2, dict3
