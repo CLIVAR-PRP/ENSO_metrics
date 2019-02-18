@@ -150,11 +150,13 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -366,11 +368,13 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -439,13 +443,14 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=sstareafilemod, name_area=sstareanamemod,
-                                    file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=sstareafilemod, name_area=sstareanamemod, file_mask=sstlandmaskfilemod,
+                                    name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
-                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
+                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
                                                compute_anom=False, **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
@@ -618,11 +623,13 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -691,13 +698,14 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=sstareafilemod, name_area=sstareanamemod,
-                                    file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=sstareafilemod, name_area=sstareanamemod, file_mask=sstlandmaskfilemod,
+                                    name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
-                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
+                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
                                              compute_anom=False, **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
@@ -873,11 +881,13 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -955,13 +965,14 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=sstareafilemod, name_area=sstareanamemod,
-                                    file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=sstareafilemod, name_area=sstareanamemod, file_mask=sstlandmaskfilemod,
+                                    name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
-                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
+                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average=False, compute_anom=True,
                                              **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=True,
@@ -1155,11 +1166,13 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     pr_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, box, file_area=prareafileobs,
                             name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = pr_mod.shape[0] / 12
@@ -1371,11 +1384,13 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     pr_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, box, file_area=prareafileobs,
                             name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = pr_mod.shape[0] / 12
@@ -1444,13 +1459,14 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=prareafilemod, name_area=prareanamemod,
-                                    file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=prareafilemod, name_area=prareanamemod, file_mask=prlandmaskfilemod,
+                                    name_mask=prlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, 'equatorial_pacific_LatExt2',
                                     file_area=prareafileobs, name_area=prareanameobs, file_mask=prlandmaskfileobs,
-                                    name_mask=prlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
+                                    name_mask=prlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
                                                compute_anom=False, **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
@@ -1623,11 +1639,13 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     pr_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, box, file_area=prareafileobs,
                             name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = pr_mod.shape[0] / 12
@@ -1696,13 +1714,14 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=prareafilemod, name_area=prareanamemod,
-                                    file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=prareafilemod, name_area=prareanamemod, file_mask=prlandmaskfilemod,
+                                    name_mask=prlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, 'equatorial_pacific_LatExt2',
                                     file_area=prareafileobs, name_area=prareanameobs, file_mask=prlandmaskfileobs,
-                                    name_mask=prlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
+                                    name_mask=prlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
                                              compute_anom=False, **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
@@ -1875,11 +1894,13 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     taux_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(tauxfileobs, tauxnameobs, 'wind stress', metric, box, file_area=tauxareafileobs,
                             name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs, name_mask=tauxlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = taux_mod.shape[0] / 12
@@ -2095,11 +2116,13 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     taux_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(tauxfileobs, tauxnameobs, 'wind stress', metric, box, file_area=tauxareafileobs,
                             name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs, name_mask=tauxlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = taux_mod.shape[0] / 12
@@ -2168,14 +2191,14 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=tauxareafilemod, name_area=tauxareanamemod,
-                                    file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=tauxareafilemod, name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod,
+                                    name_mask=tauxlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(tauxfileobs, tauxnameobs, 'wind stress', metric, 'equatorial_pacific_LatExt2',
                                     file_area=tauxareafileobs, name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs,
-                                    name_mask=tauxlandmasknameobs, maskland=True, maskocean=False, debug=debug,
-                                    **kwargs)
+                                    name_mask=tauxlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
                                              **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
@@ -2351,11 +2374,13 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     taux_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(tauxfileobs, tauxnameobs, 'wind stress', metric, box, file_area=tauxareafileobs,
                             name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs, name_mask=tauxlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = taux_mod.shape[0] / 12
@@ -2424,14 +2449,14 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=tauxareafilemod, name_area=tauxareanamemod,
-                                    file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=tauxareafilemod, name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod,
+                                    name_mask=tauxlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(tauxfileobs, tauxnameobs, 'wind stress', metric, 'equatorial_pacific_LatExt2',
                                     file_area=tauxareafileobs, name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs,
-                                    name_mask=tauxlandmasknameobs, maskland=True, maskocean=False, debug=debug,
-                                    **kwargs)
+                                    name_mask=tauxlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
                                              **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
@@ -6726,11 +6751,13 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -6780,11 +6807,13 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         sst_mod, mod_areacell, unneeded = \
             Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                                 name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmaskfilemod,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                                **kwargs)
         sst_obs, obs_areacell, unneeded = \
             Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                                 name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmaskfileobs,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                                **kwargs)
 
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
@@ -7212,11 +7241,13 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -7266,11 +7297,13 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         sst_mod, mod_areacell, unneeded = \
             Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                                 name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmaskfilemod,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                                **kwargs)
         sst_obs, obs_areacell, unneeded = \
             Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                                 name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmaskfileobs,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                                **kwargs)
 
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
@@ -7339,13 +7372,14 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=sstareafilemod, name_area=sstareanamemod,
-                                    file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=sstareafilemod, name_area=sstareanamemod, file_mask=sstlandmaskfilemod,
+                                    name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
-                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
+                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, Method = PreProcessTS(map_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
                                            **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
@@ -7539,11 +7573,13 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -8018,11 +8054,13 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -8072,11 +8110,13 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         sst_mod, mod_areacell, unneeded = \
             Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                                 name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmaskfilemod,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                                **kwargs)
         sst_obs, obs_areacell, unneeded = \
             Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                                 name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmaskfileobs,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                                **kwargs)
 
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
@@ -8502,11 +8542,13 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -8556,11 +8598,13 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         sst_mod, mod_areacell, unneeded = \
             Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                                 name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmaskfilemod,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                                **kwargs)
         sst_obs, obs_areacell, unneeded = \
             Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                                 name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmaskfileobs,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
+                                maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                                **kwargs)
 
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
@@ -8624,13 +8668,14 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         if netcdf is True:
             map_mod, mod_areacell, keyerror_mod = \
                 Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
-                                    file_area=sstareafilemod, name_area=sstareanamemod,
-                                    file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
-                                    maskocean=False, debug=debug, **kwargs)
+                                    file_area=sstareafilemod, name_area=sstareanamemod, file_mask=sstlandmaskfilemod,
+                                    name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
             map_obs, obs_areacell, keyerror_obs = \
                 Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
-                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False, debug=debug, **kwargs)
+                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, Method = PreProcessTS(map_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
                                            **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
@@ -8824,11 +8869,13 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -9058,11 +9105,13 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     pr_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, box, file_area=prareafileobs,
                             name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = pr_mod.shape[0] / 12
@@ -9292,11 +9341,13 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     pr_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, box, file_area=prareafileobs,
                             name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = pr_mod.shape[0] / 12
@@ -9524,11 +9575,13 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -9758,11 +9811,13 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
     sst_obs, obs_areacell, keyerror_obs = \
         Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
                             name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
