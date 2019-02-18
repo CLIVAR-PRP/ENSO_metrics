@@ -57,7 +57,7 @@ frequency = 'mon'
 realm = 'A'
 # The next lines can be modified
 # model
-model = 'IPSL-CM5A-LR'
+default_model = 'IPSL-CM5A-LR'
 # metric (must be in list_metrics)
 default_metric = 'EnsoAmpl'
 # number of years used for the computation of the metric (must be an integer multiple of 5 between 5 and 500)
@@ -80,6 +80,15 @@ needed_arg = {
         'possible_values': list_metrics,
         # the default value of 'metric' is:
         'default': default_metric,
+    },
+    # define what arguments can be 'model'
+    'model': {
+        # 'model' must be a string
+        'type': basestring,
+        # 'model' must be define in getfiles_sh_to_py.get_models(project)
+        'possible_values': sorted(get_models(project)),
+        # the default value of 'model' is:
+        'default': default_model,
     },
     # define what arguments can be 'nbr_years'
     'nbr_years': {
@@ -113,7 +122,7 @@ save_netcdf = dict1['save_netcdf']
 #---------------------------------------------------#
 # information
 # list of CMIP models
-list_models = sorted(get_models(project))
+list_models = sorted(get_models(project, experiment))
 # list of ensembles
 list_ensembles = sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, pro=project, rea=realm))
 
