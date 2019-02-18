@@ -25,7 +25,8 @@ from KeyArgLib import DefaultArgValues
 #
 def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                 sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
+                **kwargs):
     """
     The BiasSstRmse() function computes the SST spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -219,11 +220,11 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
-                     'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_map__model', var2=sst_obs,
-                       var2_attributes=dict2, var2_name='sst_map__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_map__' + dataset1, var2=sst_obs,
+                       var2_attributes=dict2, var2_name='sst_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -242,7 +243,8 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
 
 def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                   centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
+                   **kwargs):
     """
     The BiasSstLatRmse() function computes the SST meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -471,13 +473,13 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
-                     'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_lat__model', var2=sst_obs,
-                       var2_attributes=dict2, var2_name='sst_lat__' + dataset, var3=map_mod, var3_attributes=dict3,
-                       var3_name='sst_map__model', var4=map_obs, var4_attributes=dict4, var4_name='sst_map__' + dataset,
-                       global_attributes=dict5)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_lat__' + dataset1, var2=sst_obs,
+                       var2_attributes=dict2, var2_name='sst_lat__' + dataset2, var3=map_mod, var3_attributes=dict3,
+                       var3_name='sst_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='sst_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -496,8 +498,8 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod,
                    sstlandmasknamemod, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                   sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                   netcdf_name='', **kwargs):
+                   sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasSstLonRmse() function computes the SST zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -651,7 +653,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                       **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
                                          **kwargs)
         del mod_areacell, obs_areacell
@@ -726,13 +728,13 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
-                     'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_lon__model', var2=sst_obs,
-                       var2_attributes=dict2, var2_name='sst_lon__' + dataset, var3=map_mod, var3_attributes=dict3,
-                       var3_name='sst_map__model', var4=map_obs, var4_attributes=dict4, var4_name='sst_map__' + dataset,
-                       global_attributes=dict5)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_lon__' + dataset1, var2=sst_obs,
+                       var2_attributes=dict2, var2_name='sst_lon__' + dataset2, var3=map_mod, var3_attributes=dict3,
+                       var3_name='sst_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='sst_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -751,8 +753,8 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                      sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                     box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='',
-                     **kwargs):
+                     box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                     netcdf_name='', **kwargs):
     """
     The BiasSstSkLonRmse() function computes the SST zonal (longitude) skewness and then its root mean square error
     (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -1014,13 +1016,13 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: skeRmse,
-                     'metric_value_error_' + dataset: skeRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: skeRmse,
+                     'metric_value_error_' + dataset2: skeRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sstSke_lon__model', var2=sst_obs,
-                       var2_attributes=dict2, var2_name='sstSke_lon__' + dataset, var3=ske_map_mod,
-                       var3_attributes=dict3, var3_name='sstSke_map__model', var4=ske_map_obs, var4_attributes=dict4,
-                       var4_name='sstSke_map__' + dataset, global_attributes=dict5)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sstSke_lon__' + dataset1,
+                       var2=sst_obs, var2_attributes=dict2, var2_name='sstSke_lon__' + dataset2, var3=ske_map_mod,
+                       var3_attributes=dict3, var3_name='sstSke_map__' + dataset1, var4=ske_map_obs,
+                       var4_attributes=dict4, var4_name='sstSke_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -1039,7 +1041,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
 
 def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-               centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+               centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
+               **kwargs):
     """
     The BiasPrRmse() function computes the PR spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -1233,10 +1236,11 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
-                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_map__model', var2=pr_obs,
-                       var2_attributes=dict2, var2_name='pr_map__' + dataset, global_attributes=dict3)
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
+                     'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_map__' + dataset1, var2=pr_obs,
+                       var2_attributes=dict2, var2_name='pr_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -1255,7 +1259,8 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
 
 def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-                  centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                  centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
+                  **kwargs):
     """
     The BiasPrLatRmse() function computes the PR meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -1485,12 +1490,13 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
-                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_lat__model', var2=pr_obs,
-                       var2_attributes=dict2, var2_name='pr_lat__' + dataset, var3=map_mod, var3_attributes=dict3,
-                       var3_name='pr_map__model', var4=map_obs, var4_attributes=dict4, var4_name='pr_map__' + dataset,
-                       global_attributes=dict5)
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
+                     'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_lat__' + dataset1, var2=pr_obs,
+                       var2_attributes=dict2, var2_name='pr_lat__' + dataset2, var3=map_mod, var3_attributes=dict3,
+                       var3_name='pr_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='pr_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -1509,7 +1515,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
 def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, prfileobs,
                   prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box, centered_rmse=0,
-                  biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                  biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasPrLonRmse() function computes the PR zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -1738,12 +1744,13 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
-                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_lon__model', var2=pr_obs,
-                       var2_attributes=dict2, var2_name='pr_lon__' + dataset, var3=map_mod, var3_attributes=dict3,
-                       var3_name='pr_map__model', var4=map_obs, var4_attributes=dict4, var4_name='pr_map__' + dataset,
-                       global_attributes=dict5)
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
+                     'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_lon__' + dataset1, var2=pr_obs,
+                       var2_attributes=dict2, var2_name='pr_lon__' + dataset2, var3=map_mod, var3_attributes=dict3,
+                       var3_name='pr_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='pr_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -1762,7 +1769,8 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
 def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod, tauxlandmasknamemod,
                  tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs, tauxlandmaskfileobs, tauxlandmasknameobs,
-                 box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                 box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                 netcdf_name='', **kwargs):
     """
     The BiasTauxRmse() function computes the TAUX spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -1960,11 +1968,11 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: tauxRmse,
-                     'metric_value_error_' + dataset: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: tauxRmse,
+                     'metric_value_error_' + dataset2: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=taux_mod, var1_attributes=dict1, var1_name='taux_map__model', var2=taux_obs,
-                       var2_attributes=dict2, var2_name='taux_map__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name, var1=taux_mod, var1_attributes=dict1, var1_name='taux_map__' + dataset1,
+                       var2=taux_obs, var2_attributes=dict2, var2_name='taux_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -1983,8 +1991,8 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
 
 def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod,
                     tauxlandmasknamemod, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
-                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='',
-                    debug=False, netcdf=False, netcdf_name='', **kwargs):
+                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='',
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasTauxLatRmse() function computes the TAUX meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -2216,13 +2224,13 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: tauxRmse,
-                     'metric_value_error_' + dataset: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: tauxRmse,
+                     'metric_value_error_' + dataset2: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=taux_mod, var1_attributes=dict1, var1_name='taux_lat__model', var2=taux_obs,
-                       var2_attributes=dict2, var2_name='taux_lat__' + dataset, var3=map_mod, var3_attributes=dict3,
-                       var3_name='taux_map__model', var4=map_obs, var4_attributes=dict4,
-                       var4_name='taux_map__' + dataset, global_attributes=dict5)
+            SaveNetcdf(file_name, var1=taux_mod, var1_attributes=dict1, var1_name='taux_lat__' + dataset1,
+                       var2=taux_obs, var2_attributes=dict2, var2_name='taux_lat__' + dataset2, var3=map_mod,
+                       var3_attributes=dict3, var3_name='taux_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='taux_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -2241,8 +2249,8 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
 def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod,
                     tauxlandmasknamemod, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
-                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset='',
-                    debug=False, netcdf=False, netcdf_name='', **kwargs):
+                    tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='',
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The BiasTauxLonRmse() function computes the TAUX zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -2474,13 +2482,13 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: tauxRmse,
-                     'metric_value_error_' + dataset: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: tauxRmse,
+                     'metric_value_error_' + dataset2: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=taux_mod, var1_attributes=dict1, var1_name='taux_lon__model', var2=taux_obs,
-                       var2_attributes=dict2, var2_name='taux_lon__' + dataset, var3=map_mod, var3_attributes=dict3,
-                       var3_name='taux_map__model', var4=map_obs, var4_attributes=dict4,
-                       var4_name='taux_map__' + dataset, global_attributes=dict5)
+            SaveNetcdf(file_name, var1=taux_mod, var1_attributes=dict1, var1_name='taux_lon__' + dataset1,
+                       var2=taux_obs, var2_attributes=dict2, var2_name='taux_lon__' + dataset2, var3=map_mod,
+                       var3_attributes=dict3, var3_name='taux_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='taux_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -6612,8 +6620,8 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                   netcdf_name='', **kwargs):
+                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinaSstDivRmse() function computes a zonal minimum of La Nina events during the peak of the event.
         1.) detect events
@@ -6892,11 +6900,11 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
                      'nina_years': str(event_years_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: pdfRmse,
-                     'metric_value_error_' + dataset: pdfRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: pdfRmse,
+                     'metric_value_error_' + dataset2: pdfRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=pdf_mod, var1_attributes=dict1, var1_name='pdf__model', var2=pdf_obs,
-                       var2_attributes=dict2, var2_name='pdf__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name, var1=pdf_mod, var1_attributes=dict1, var1_name='pdf__' + dataset1, var2=pdf_obs,
+                       var2_attributes=dict2, var2_name='pdf__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -7103,8 +7111,8 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                   netcdf_name='', **kwargs):
+                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinaSstLonRmse() function computes a zonal composite of La Nina events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -7411,13 +7419,13 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                      'nina_years': str(event_years_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
                      'nina_years': str(event_years_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: compRmse,
-                     'metric_value_error_' + dataset: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: compRmse,
+                     'metric_value_error_' + dataset2: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sstComp_lon__model',
-                       var2=sst_obs, var2_attributes=dict2, var2_name='sstComp_lon__' + dataset, var3=map_mod,
-                       var3_attributes=dict3, var3_name='sstComp_map__model', var4=map_obs, var4_attributes=dict4,
-                       var4_name='sstComp_map__' + dataset, global_attributes=dict5)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sstComp_lon__' + dataset1,
+                       var2=sst_obs, var2_attributes=dict2, var2_name='sstComp_lon__' + dataset2, var3=map_mod,
+                       var3_attributes=dict3, var3_name='sstComp_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='sstComp_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -7437,8 +7445,8 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset='', debug=False,
-                  netcdf=False, netcdf_name='', **kwargs):
+                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
+                  debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinaSstTsRmse() function computes a time composite of La Nina events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -7648,11 +7656,11 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
                      'nina_years': str(event_years_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: compRmse,
-                     'metric_value_error_' + dataset: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: compRmse,
+                     'metric_value_error_' + dataset2: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=composite_mod, var1_attributes=dict1, var1_name='sst_ts__model',
-                       var2=composite_obs, var2_attributes=dict2, var2_name='sst_ts__' + dataset,
+            SaveNetcdf(file_name, var1=composite_mod, var1_attributes=dict1, var1_name='sst_ts__' + dataset1,
+                       var2=composite_obs, var2_attributes=dict2, var2_name='sst_ts__' + dataset2,
                        global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
@@ -7915,8 +7923,8 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                   netcdf_name='', **kwargs):
+                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstDivRmse() function computes a zonal composite of El Nino events during the peak of the event.
         1.) detect events
@@ -8195,11 +8203,11 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
                      'nino_years': str(event_years_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: pdfRmse,
-                     'metric_value_error_' + dataset: pdfRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: pdfRmse,
+                     'metric_value_error_' + dataset2: pdfRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=pdf_mod, var1_attributes=dict1, var1_name='pdf__model',
-                       var2_attributes=dict2, var2=pdf_obs, var2_name='pdf__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name, var1=pdf_mod, var1_attributes=dict1, var1_name='pdf__' + dataset1,
+                       var2_attributes=dict2, var2=pdf_obs, var2_name='pdf__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -8218,7 +8226,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 
 def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+               nbr_years_window, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstDur() function computes a duration of El Nino events.
         1.) detect events
@@ -8707,13 +8715,13 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                      'nino_years': str(event_years_mod)}
             dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
                      'nino_years': str(event_years_obs)}
-            dict5 = {'metric_name': Name, 'metric_value_' + dataset: compRmse,
-                     'metric_value_error_' + dataset: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: compRmse,
+                     'metric_value_error_' + dataset2: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sstComp_lon__model',
-                       var2=sst_obs, var2_attributes=dict2, var2_name='sstComp_lon__' + dataset, var3=map_mod,
-                       var3_attributes=dict3, var3_name='sstComp_map__model', var4=map_obs, var4_attributes=dict4,
-                       var4_name='sstComp_map__' + dataset, global_attributes=dict5)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sstComp_lon__' + dataset1,
+                       var2=sst_obs, var2_attributes=dict2, var2_name='sstComp_lon__' + dataset2, var3=map_mod,
+                       var3_attributes=dict3, var3_name='sstComp_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
+                       var4_name='sstComp_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -8733,8 +8741,8 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset='', debug=False,
-                  netcdf=False, netcdf_name='', **kwargs):
+                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
+                  debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstTsRmse() function computes a time composite of El Nino events
     SSTA averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
@@ -8875,9 +8883,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
-    print actualtimebounds_mod
     actualtimebounds_obs = TimeBounds(sst_obs)
-    print actualtimebounds_obs
 
     if keyerror_mod is not None or keyerror_obs is not None:
         compRmse, compRmseErr, dive_down_diag, event_years_mod, event_years_obs = None, None, None, None, None
@@ -8947,11 +8953,11 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
                      'nino_years': str(event_years_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: compRmse,
-                     'metric_value_error_' + dataset: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: compRmse,
+                     'metric_value_error_' + dataset2: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=composite_mod, var1_attributes=dict1, var1_name='sst_ts__model',
-                       var2=composite_obs, var2_attributes=dict2, var2_name='sst_ts__' + dataset,
+            SaveNetcdf(file_name, var1=composite_mod, var1_attributes=dict1, var1_name='sst_ts__' + dataset1,
+                       var2=composite_obs, var2_attributes=dict2, var2_name='sst_ts__' + dataset2,
                        global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
@@ -8972,7 +8978,8 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
 def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                       prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-                      centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                      centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                      netcdf_name='', **kwargs):
     """
     The SeasonalPrLatRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -9184,10 +9191,11 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
-                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr__model', var2=pr_obs,
-                       var2_attributes=dict2, var2_name='pr__' + dataset, global_attributes=dict3)
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
+                     'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr__' + dataset1, var2=pr_obs,
+                       var2_attributes=dict2, var2_name='pr__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -9206,7 +9214,8 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
 def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                       prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
-                      centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                      centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                      netcdf_name='', **kwargs):
     """
     The SeasonalPrLonRmse() function computes the climatological (12 months) PR (precipitation) zonal (longitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -9418,10 +9427,11 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: prRmse, 'metric_value_error_' + dataset: prRmseErr,
-                     'metric_method': Method, 'metric_reference': Ref, 'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr__model', var2=pr_obs,
-                       var2_attributes=dict2, var2_name='pr__' + dataset, global_attributes=dict3)
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
+                     'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr__' + dataset1, var2=pr_obs,
+                       var2_attributes=dict2, var2_name='pr__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -9440,8 +9450,8 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
 def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                        sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                       box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='',
-                       **kwargs):
+                       box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                       netcdf_name='', **kwargs):
     """
     The SeasonalSstLatRmse() function computes the climatological (12 months) SST meridional (latitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -9651,11 +9661,11 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
-                     'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__model', var2=sst_obs,
-                       var2_attributes=dict2, var2_name='sst__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__' + dataset1, var2=sst_obs,
+                       var2_attributes=dict2, var2_name='sst__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -9674,8 +9684,8 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
 def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                        sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                       box, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False, netcdf_name='',
-                       **kwargs):
+                       box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                       netcdf_name='', **kwargs):
     """
     The SeasonalSstLonRmse() function computes the climatological (12 months) SST zonal (longitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -9887,11 +9897,11 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
-            dict3 = {'metric_name': Name, 'metric_value_' + dataset: sstRmse,
-                     'metric_value_error_' + dataset: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__model', var2=sst_obs,
-                       var2_attributes=dict2, var2_name='sst__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst__' + dataset1, var2=sst_obs,
+                       var2_attributes=dict2, var2_name='sst__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -9907,7 +9917,4 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     }
     return LonRmseMetric
 # ---------------------------------------------------------------------------------------------------------------------#
-
-
-
 
