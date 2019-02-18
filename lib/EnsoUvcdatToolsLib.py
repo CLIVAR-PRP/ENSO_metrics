@@ -2652,13 +2652,14 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
 
 
 def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area='', name_area='', file_mask='',
-                        name_mask='', maskland=False, maskocean=False, debug=False, **kwargs):
+                        name_mask='', maskland=False, maskocean=False, time_bounds=None, debug=False, **kwargs):
     keyerror1, keyerror2, keyerror3, keyerror4 = None, None, None, None
     # Read variable
     if debug is True:
         dict_debug = {'file1': '(' + type_data + ') ' + str(file_data), 'var1': '(' + type_data + ') ' + str(name_data)}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'Files', 15, **dict_debug)
-    variable, keyerror1 = ReadSelectRegionCheckUnits(file_data, name_data, type_data, box=region, **kwargs)
+    variable, keyerror1 = ReadSelectRegionCheckUnits(file_data, name_data, type_data, box=region,
+                                                     time_bounds=time_bounds, **kwargs)
     if debug is True:
         dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in variable.getAxisList()]),
                       'shape1': '(' + type_data + ') ' + str(variable.shape),
