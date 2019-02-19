@@ -64,8 +64,6 @@ default_metric = 'EnsoAmpl'
 default_nyears = 100
 # save output NetCDF files ('False' or 'True')
 default_savenc = 'False'
-# file name
-file_name = user_name + "_" + mc_name + "_" + model + "_" + experiment
 #---------------------------------------------------#
 
 
@@ -114,8 +112,9 @@ needed_arg = {
 }
 dict1 = my_arg(needed_arg, sys.argv[1:])
 metric = dict1['metric']
-nbr_years = dict1['nbr_years']
-save_netcdf = dict1['save_netcdf']
+model = dict1['model']
+nyear = dict1['nbr_years']
+save_nc = dict1['save_netcdf']
 #---------------------------------------------------#
 
 
@@ -159,6 +158,7 @@ list_ensembles = sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, 
 
 
 #---------------------------------------------------#
+# file name
+file_name = user_name + "_" + mc_name + "_" + model + "_" + experiment
 # to compute the metric for a given experiment/frequency/model/project/realm
-main_compute(mc_name, metric, nbr_years, path, file_name, experiment, frequency, model, project, realm,
-             save_netcdf=save_netcdf)
+main_compute(mc_name, metric, nyear, path, file_name, experiment, frequency, model, project, realm, save_netcdf=save_nc)

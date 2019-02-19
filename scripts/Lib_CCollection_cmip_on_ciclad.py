@@ -288,7 +288,7 @@ def save_json(dict_in, json_name, myslice, metric):
 
 def resave_json(json_name, metric):
     # list all files
-    list_files = sorted(list(GLOBiglob(json_name + '_slice_*_to_*.json')))
+    list_files = sorted(list(GLOBiglob(json_name + '_slice_*_to_*_' + metric + '.json')))
     if len(list_files) > 0:
         # list keys
         list_sli = [file1.split('_slice_')[1].split('_to_')[0] for file1 in list_files]

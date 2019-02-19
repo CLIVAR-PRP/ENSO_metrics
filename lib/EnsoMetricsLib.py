@@ -8226,7 +8226,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 
 def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               nbr_years_window, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstDur() function computes a duration of El Nino events.
         1.) detect events
