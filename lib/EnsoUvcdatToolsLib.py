@@ -721,6 +721,7 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                     tab = MV2masked_where(landmask_nd == 0, tab)
     return tab, keyerror
 
+
 def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     """
     #################################################################################
@@ -772,10 +773,10 @@ def ArrayToList(tab):
     try:
         len(tab.mask)
     except:
-        mask = [tab.mask]
+        tmp_mask = [tab.mask]
     else:
-        mask = tab.mask
-    if all(ii is False for ii in mask) is True:
+        tmp_mask = tab.mask
+    if all(ii is False for ii in tmp_mask) is True or all(ii == False for ii in tmp_mask) == True:
         tmp = NParray(tab)
     else:
         tmp = NParray(MV2where(tab.mask, 1e20, tab))
@@ -793,6 +794,65 @@ def ArrayToList(tab):
         ]
         EnsoErrorsWarnings.MyError(list_strings)
     return tab_out
+
+
+def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lon1=None, lon2=None, lonkey='',
+              debug=False):
+    keyerror = None
+    keys = ['between', 'outside']
+    # temp corrections for cdms2 to find the right axis
+    CDMS2setAutoBounds('on')
+    # open file
+    ff = CDMS2open('../data/basin_generic_1x1deg.nc')
+    # read basins
+    if box is not None:
+        region_ref = ReferenceRegions(box)
+        basin = ff('basin', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+    else:
+        basin = ff('basin')
+    if debug is True:
+        dict_debug = {'axes1': str([ax.id for ax in basin.getAxisList()]), 'shape1': str(basin.shape),
+                      'line1': 'order = ' + str(basin.getOrder())}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'in BasinMask', 20, **dict_debug)
+    # choose basin
+    keybasin = {'atlantic': 1, 'pacific': 2, 'indian': 3, 'antarctic': 10, 'arctic': 11}
+    mask = MV2zeros(basin.shape)
+    if region_mask.lower() not in keybasin.keys():
+        keyerror = "unknown region: " + region_mask + " (basin_generic_1x1deg.nc, regrided file from NOAA NODC" + \
+                   "WOA09 Masks basin Data Files)"
+        list_strings = ["WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": region",
+                        str().ljust(5) + keyerror,
+                        str().ljust(5) + "https://iridl.ldeo.columbia.edu/SOURCES/.NOAA/.NODC/.WOA09/.Masks/.basin/"
+                        + "datafiles.html"]
+        EnsoErrorsWarnings.MyWarning(list_strings)
+    else:
+        mask = MV2where(basin == keybasin[region_mask], 1, mask)
+        mask = MV2where(basin.mask, 0, mask)
+    # basin mask is selected only between or outside lat1 and lat2
+    if latkey in keys and lat1 is not None and lat2 is not None:
+        lat2d = MV2zeros(basin.shape)
+        lat2d = lat2d.reorder('10')
+        lat2d[:] = basin.getLatitude()
+        lat2d = lat2d.reorder('10')
+        tmp = MV2where(lat2d > lat1, 1, 0) + MV2where(lat2d < lat2, 1, 0)
+        if latkey == 'between':
+            mask = MV2where(tmp != 2, 0, mask)
+        else:
+            mask = MV2where(tmp == 2, 0, mask)
+    # basin mask is selected only between or outside lon1 and lon2
+    if lonkey in keys and lat1 is not None and lat2 is not None:
+        lon2d = MV2zeros(basin.shape)
+        lon2d[:] = basin.getLongitude()
+        tmp = MV2where(lon2d > lon1, 1, 0) + MV2where(lon2d < lon2, 1, 0)
+        if latkey == 'between':
+            mask = MV2where(tmp != 2, 0, mask)
+        else:
+            mask = MV2where(tmp == 2, 0, mask)
+    # apply mask
+    tab_out = MV2masked_where(mask == 1, tab_in)
+    tab_out = CDMS2createVariable(tab_out, axes=tab_in.getAxisList(), grid=tab_in.getGrid(), mask=tab_in.mask,
+                                  attributes=tab_in.attributes, id=tab_in.id)
+    return tab_out, keyerror
 
 
 def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', **kwargs):
@@ -2204,7 +2264,7 @@ def StdMonthly(tab):
 
 # ---------------------------------------------------------------------------------------------------------------------#
 #
-# Cet of often used combinations of previous functions
+# Set of often used combinations of previous functions
 #
 def ComputePDF(tab, nbr_bins=10, interval=None, axis_name='axis'):
     """

@@ -257,11 +257,33 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
             if len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0:
                 print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
         else:
-            dict_col_valu[metric], dict_col_meta['metrics'][metric], dict_col_dd_valu[metric],\
-            dict_col_dd_meta['metrics'][metric] = ComputeMetric(
+            valu, vame, dive, dime = ComputeMetric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
                 netcdf_name=netcdf_name, **arg_var2)
+            keys1 = valu.keys()
+            keys2 = list(set([kk.replace('value', '').replace('__', '').replace('_error', '')
+                              for ll in valu[keys1[0]].keys() for kk in valu[keys1[0]][ll].keys()]))
+            if len(keys2) > 1:
+                for kk in keys2:
+                    mm, dd = dict(), dict()
+                    keys3 = valu['metric'].keys()
+                    for ll in keys3:
+                        mm[ll] = {'value': valu['metric'][ll][kk + '__value'],
+                                  'value_error': valu['metric'][ll][kk + '__value_error']}
+                    keys3 = valu['diagnostic'].keys()
+                    for ll in keys3:
+                        dd[ll] = {'value': valu['diagnostic'][ll][kk + '__value'],
+                                  'value_error': valu['diagnostic'][ll][kk + '__value_error']}
+                    dict_col_valu[metric + kk] = {'metric': mm, 'diagnostic': dd}
+                    mm = dict((ii, vame['metric'][ii]) for ii in vame['metric'].keys() if 'units' not in ii)
+                    mm['units'] = vame['metric'][kk + '__units']
+                    dict_col_meta['metrics'][metric + kk] = {'metric': mm, 'diagnostic': vame['diagnostic']}
+                    dict_col_dd_valu[metric + kk], dict_col_dd_meta['metrics'][metric + kk] = dive, dime
+                    del mm, dd
+            else:
+                dict_col_valu[metric], dict_col_meta['metrics'][metric] = valu, vame
+                dict_col_dd_valu[metric], dict_col_dd_meta['metrics'][metric] = dive, dime
     if dive_down is True:
         return {'value': dict_col_valu, 'metadata': dict_col_meta},\
                {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}
@@ -517,6 +539,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     dict_dive_down = dict()
     dict_dive_down_metadata = dict()
 
+    multimetric = False
+
     if metric in dict_oneVar_modelAndObs.keys() or metric in dict_twoVar_modelAndObs.keys():
         #
         # this part regroups all diagnostics comparing model and obs (rmse)
@@ -533,8 +557,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
-                    netcdf_name=netcdf_name, **keyarg)
+                    obsLandmaskName1[ii], regionVar1, dataset1=modelName, dataset2=output_name, debug=debug,
+                    netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
             elif metric in dict_twoVar_modelAndObs.keys():
                 for jj in range(len(obsNameVar2)):
                     output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
@@ -546,19 +570,33 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         modelFileLandmask2, modelLandmaskName2, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii],
                         obsAreaName1[ii], obsFileLandmask1[ii], obsLandmaskName1[ii], obsFile2[jj], obsVarName2[jj],
                         obsFileArea2[jj], obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar1,
-                        regionVar2, dataset=output_name, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                        regionVar2, dataset1=modelName, dataset2=output_name, debug=debug, netcdf=netcdf,
+                        netcdf_name=netcdf_name, **keyarg)
         for obs in diagnostic1.keys():
             # puts metric values in its proper dictionary
-            dict_metric_val['ref_' + obs] = {
-                'value': diagnostic1[obs]['value'], 'value_error': diagnostic1[obs]['value_error']}
-            if 'value2' in diagnostic1[obs].keys():
-                dict_metric_val['ref_' + obs]['value2'] = diagnostic1[obs]['value2']
-                dict_metric_val['ref_' + obs]['value_error2'] = diagnostic1[obs]['value_error2']
-            if 'value3' in diagnostic1[obs].keys():
-                dict_metric_val['ref_' + obs]['value3'] = diagnostic1[obs]['value3']
-                dict_metric_val['ref_' + obs]['value_error3'] = diagnostic1[obs]['value_error3']
-            dict_diagnostic['model'] = {'value': None, 'value_error': None}
-            dict_diagnostic[obs] = {'value': None, 'value_error': None}
+            if 'value' in diagnostic1[obs].keys():
+                dict_metric_val['ref_' + obs] = {
+                    'value': diagnostic1[obs]['value'], 'value_error': diagnostic1[obs]['value_error']}
+                dict_diagnostic['model'] = {'value': None, 'value_error': None}
+                dict_diagnostic[obs] = {'value': None, 'value_error': None}
+            else:
+                multimetric = True
+                lkeys = list(set([key.split('__')[0] for key in diagnostic1[obs].keys() if 'value' in key]))
+                for key in lkeys:
+                    try:
+                        dict_metric_val['ref_' + obs]
+                    except:
+                        dict_metric_val['ref_' + obs] = {key + '__value': diagnostic1[obs][key + '__value'],
+                                                         key + '__value_error': diagnostic1[obs][key + '__value_error']}
+                        dict_diagnostic['model'] = {key + '__value': None, key + '__value_error': None}
+                        dict_diagnostic[obs] = {key + '__value': None, key + '__value_error': None}
+                    else:
+                        dict_metric_val['ref_' + obs][key + '__value'] = diagnostic1[obs][key + '__value']
+                        dict_metric_val['ref_' + obs][key + '__value_error'] = diagnostic1[obs][key + '__value_error']
+                        dict_diagnostic['model'][key + '__value'] = None
+                        dict_diagnostic['model'][key + '__value_error'] = None
+                        dict_diagnostic[obs][key + '__value'] = None
+                        dict_diagnostic[obs][key + '__value_error'] = None
             if 'dive_down_diag' in diagnostic1[obs].keys():
                 dict_dive_down['model'] = diagnostic1[obs]['dive_down_diag']['model']
                 dict_dive_down[obs] = diagnostic1[obs]['dive_down_diag']['observations']
@@ -589,7 +627,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
             diagnostic1 = dict_oneVar[metric](
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
-                regionVar1, dataset='model', debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                regionVar1, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
         elif metric in dict_twoVar.keys():
             # computes diagnostic that needs two variables
             print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
@@ -597,7 +635,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             diagnostic1 = dict_twoVar[metric](
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                 regionVar1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2,
-                modelLandmaskName2, regionVar2, dataset='model', debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
+                modelLandmaskName2, regionVar2, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
                 **keyarg)
         else:
             diagnostic1 = None
@@ -715,14 +753,15 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             datasets = datasets + obsNameVar2[ii] + obsVarName2[ii] + "'s"
             if ii != len(obsNameVar2) - 1:
                 datasets = datasets + ' & '
-    dict_metadata = {
-        'metric': {
-            'name': metric, 'method': description_metric, 'datasets': datasets, 'units': units,
-        },
-        'diagnostic': dict_diagnostic_metadata,
-    }
-    if 'dive_down_diag' in diagnostic1.keys():
-        return dict_metrics, dict_metadata, dict_dive_down, dict_dive_down_metadata
+    if multimetric is True:
+        tmp = {'name': metric, 'method': description_metric, 'datasets': datasets}
+        for key in lkeys:
+            tmp[key + '__units'] = diagnostic1[key + '__units']
+        dict_metadata = {'metric': tmp, 'diagnostic': dict_diagnostic_metadata}
     else:
-        return dict_metrics, dict_metadata, {}, {}
+        dict_metadata = {
+            'metric': {'name': metric, 'method': description_metric, 'datasets': datasets, 'units': units},
+            'diagnostic': dict_diagnostic_metadata,
+        }
+    return dict_metrics, dict_metadata, dict_dive_down, dict_dive_down_metadata
 # ---------------------------------------------------------------------------------------------------------------------#

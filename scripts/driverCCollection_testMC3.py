@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_tel'#'MC1'#
+mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -243,12 +243,14 @@ for mod in list_models:
     #dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid,
     #                                                     debug=False, dive_down=True)
     netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
-    netcdf_name = '20181210_YANN_PLANTON_' + mc_name + '_' + mod
+    netcdf_name = 'YANN_PLANTON_' + mc_name + '_' + mod
     netcdf = join_path(netcdf_path, netcdf_name)
-    # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
-    #                                                      netcdf_name=netcdf_name, debug=True, dive_down=True)
-    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
-    dict_metric[mod]['value'].keys()
+    # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True, dive_down=True)
+    # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
+    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=False, netcdf_name=netcdf, debug=False)
+    tmp = dict_metric[mod]['value'].keys()
+    for kk in tmp:
+        print kk.ljust(13) + ': ' + str(dict_metric[mod]['value'][kk]['metric'])
     stop
     # Prints the metrics values
     for ii in range(3): print ''
