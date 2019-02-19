@@ -453,7 +453,7 @@ def main_compute(metricCollection, metric, nbr_years, path, file_name, experimen
         final_name_out = OSpath__join(path, file_name + '_' + ens + '_' + str(str(nbr_years).zfill(4)) + 'years')
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         # is the final file done?
-        final_file = len(list(GLOBiglob(final_name_out + '_' + metric + '.*')))
+        final_file = len(list(GLOBiglob(final_name_out + '_' + metric + '*')))
         if save_netcdf is True:
             nbr_file_out1 = 2
             nbr_file_out2 = 3
