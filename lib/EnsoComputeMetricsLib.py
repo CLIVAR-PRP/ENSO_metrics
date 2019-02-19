@@ -8,9 +8,9 @@ import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
     BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf,\
     EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoDiversity, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap,\
-    EnsoSeasonality, EnsoSstSkew, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstTsRmse, NinoSstDiv,\
-    NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse,\
-    SeasonalSstLatRmse, SeasonalSstLonRmse
+    EnsoSeasonality, EnsoSstSkew, NinaPrMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap,\
+    NinaSstTsRmse, NinoPrMap, NinoSstDiv, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse,\
+    SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -351,7 +351,7 @@ dict_oneVar_modelAndObs = {
     'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
     'BiasSstSkLonRmse': BiasSstSkLonRmse,
-    'EnsoSstMap': EnsoSstMap,
+    'EnsoSstMap': EnsoSstMap, 'NinaSstMap': NinaSstMap, 'NinoSstMap': NinoSstMap,
     'NinaSstDivRmse':NinaSstDivRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinaSstTsRmse': NinaSstTsRmse,
     'NinoSstDivRmse':NinoSstDivRmse, 'NinoSstLonRmse': NinoSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
@@ -359,7 +359,8 @@ dict_oneVar_modelAndObs = {
 }
 
 dict_twoVar_modelAndObs = {
-    'EnsoPrMap': EnsoPrMap, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel
+    'EnsoPrMap': EnsoPrMap, 'NinaPrMap': NinaPrMap, 'NinoPrMap': NinoPrMap,
+    'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel,
 }
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoDiversity': EnsoDiversity, 'EnsoSeasonality': EnsoSeasonality,
