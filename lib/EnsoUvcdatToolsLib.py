@@ -1105,6 +1105,7 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True):
         ids = MV2compress(condition, indices)
         print ids
         print list_years
+        print MV2take(list_years, ids, axis=0)
         # Events years
         list_ev_year = list(MV2take(list_years, ids, axis=0))
     else:
