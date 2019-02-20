@@ -1099,10 +1099,14 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True):
         condition = MV2where(tab > tab_threshold, True, False)
     else:
         condition = MV2where(tab < tab_threshold, True, False)
-    # Indices of the events
-    ids = MV2compress(condition, indices)
-    # Events years
-    return list(MV2take(list_years, ids, axis=0))
+    if all(ii is False for ii in condition) is not True:
+        # Indices of the events
+        ids = MV2compress(condition, indices)
+        # Events years
+        list_ev_year = list(MV2take(list_years, ids, axis=0))
+    else:
+        list_ev_year = list()
+    return list_ev_year
 
 
 def Detrend(tab, info, axis=0, method='linear', bp=0):
