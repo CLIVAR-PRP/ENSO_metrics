@@ -59,9 +59,9 @@ realm = 'A'
 # model
 default_model = 'IPSL-CM5A-LR'
 # metric (must be in list_metrics)
-default_metric = 'EnsoAmpl'
+default_metric = 'NinoSstDur'#'EnsoAmpl'
 # number of years used for the computation of the metric (must be an integer multiple of 5 between 5 and 500)
-default_nyears = 100
+default_nyears = 5#100
 # save output NetCDF files ('False' or 'True')
 default_savenc = 'False'
 #---------------------------------------------------#
