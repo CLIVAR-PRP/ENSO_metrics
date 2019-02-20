@@ -1099,7 +1099,7 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True):
         condition = MV2where(tab > tab_threshold, True, False)
     else:
         condition = MV2where(tab < tab_threshold, True, False)
-    if all(ii is False for ii in condition) is not True:
+    if all(ii is False for ii in condition) is not True or all(ii == False for ii in condition) != True:
         # Indices of the events
         ids = MV2compress(condition, indices)
         # Events years
