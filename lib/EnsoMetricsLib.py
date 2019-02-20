@@ -10862,7 +10862,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -11098,7 +11098,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
