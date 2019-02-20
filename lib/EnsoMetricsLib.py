@@ -167,7 +167,8 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        sstRmse, sstRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -211,7 +212,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
         sstRmseErr = None
 
         # Dive down diagnostic
-        dive_down_diag = None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
 
         if netcdf is True:
             if ".nc" in netcdf_name:
@@ -385,7 +386,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -640,7 +641,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -898,7 +899,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        skeRmse, skeRmseErr, dive_down_diag = None, None, None
+        skeRmse, skeRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -1183,7 +1184,8 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        prRmse, prRmseErr, dive_down_diag = None, None, None
+        prRmse, prRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -1227,7 +1229,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
         prRmseErr = None
 
         # Dive down diagnostic
-        dive_down_diag = None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
 
         if netcdf is True:
             if ".nc" in netcdf_name:
@@ -1401,7 +1403,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        prRmse, prRmseErr, dive_down_diag = None, None, None
+        prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -1656,7 +1658,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        prRmse, prRmseErr, dive_down_diag = None, None, None
+        prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -1911,7 +1913,8 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     actualtimebounds_obs = TimeBounds(taux_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        tauxRmse, tauxRmseErr, dive_down_diag = None, None, None
+        tauxRmse, tauxRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -1959,7 +1962,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
         tauxRmseErr = None
 
         # Dive down diagnostic
-        dive_down_diag = None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
 
         if netcdf is True:
             if ".nc" in netcdf_name:
@@ -2133,7 +2136,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     actualtimebounds_obs = TimeBounds(taux_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        tauxRmse, tauxRmseErr, dive_down_diag = None, None, None
+        tauxRmse, tauxRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -2391,7 +2394,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     actualtimebounds_obs = TimeBounds(taux_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        tauxRmse, tauxRmseErr, dive_down_diag = None, None, None
+        tauxRmse, tauxRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -3791,7 +3794,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     actualtimebounds = TimeBounds(sst)
 
     if keyerror is not None:
-        sstStd, sstStdErr, dive_down_diag = None, None, None
+        sstStd, sstStdErr, dive_down_diag = None, None, {'value': None, 'axis': None}
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -3996,7 +3999,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     actualtimebounds = TimeBounds(sst)
 
     if keyerror is not None:
-        ratioEP, StdErr, dive_down_diag, nino_years, nina_years = None, None, None, None, None
+        ratioEP, StdErr, dive_down_diag, nino_years, nina_years = None, None, {'value': None, 'axis': None}, None, None
     else:
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
@@ -4095,7 +4098,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                 keyerror_nino = "no El Nino event during the period"
 
         if keyerror_nino is not None or keyerror_nina is not None:
-            StdErr, dive_down_diag = None, None
+            StdErr, dive_down_diag = None, {'value': None, 'axis': None}
             keyerror = ''
             if keyerror_nino is not None:
                 keyerror = keyerror_nino
@@ -5702,7 +5705,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     actualtimebounds = TimeBounds(sst)
 
     if keyerror is not None:
-        ratioStd, ratio_std_err, dive_down_diag = None, None, None
+        ratioStd, ratio_std_err, dive_down_diag = None, None, {'value': None, 'axis': None}
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_ts, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=False,
@@ -5918,7 +5921,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     actualtimebounds = TimeBounds(sst)
 
     if keyerror is not None:
-        sstSke, sstSkeErr, dive_down_diag = None, None, None
+        sstSke, sstSkeErr, dive_down_diag = None, None, {'value': None, 'axis': None}
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -9231,7 +9234,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        prRmse, prRmseErr, dive_down_diag = None, None, None
+        prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -9467,7 +9470,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     actualtimebounds_obs = TimeBounds(pr_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        prRmse, prRmseErr, dive_down_diag = None, None, None
+        prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -9701,7 +9704,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
@@ -9937,7 +9940,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     actualtimebounds_obs = TimeBounds(sst_obs)
 
     if keyerror_mod is not None or keyerror_obs is not None:
-        sstRmse, sstRmseErr, dive_down_diag = None, None, None
+        sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
         keyerror = ''
         if keyerror_mod is not None:
             keyerror = keyerror_mod
