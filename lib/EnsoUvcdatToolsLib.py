@@ -1100,14 +1100,13 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True):
     else:
         condition = MV2where(tab < tab_threshold, True, False)
     if all(ii is False for ii in condition) is not True or all(ii == False for ii in condition) != True:
-        print condition
         # Indices of the events
         ids = MV2compress(condition, indices)
-        print ids
-        print list_years
-        print MV2take(list_years, ids, axis=0)
         # Events years
-        list_ev_year = list(MV2take(list_years, ids, axis=0))
+        if len(ids) == 1:
+            list_ev_year = [MV2take(list_years, ids, axis=0)]
+        else:
+            list_ev_year = list(MV2take(list_years, ids, axis=0))
     else:
         list_ev_year = list()
     return list_ev_year
