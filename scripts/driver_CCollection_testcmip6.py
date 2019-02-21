@@ -1,19 +1,25 @@
 from cdms2 import open as CDMS2open
 from copy import deepcopy
 import datetime
+from getpass import getuser as GETPASSgetuser
 from inspect import stack as INSPECTstack
 import json
 from os import environ as OSenviron
 from os.path import join as OSpath__join
 import sys
-
-sys.path.insert(0, "/home/yplanton/ENSO_metrics/lib")
+# user (get your user name for the paths and to save the files)
+user_name = GETPASSgetuser()
 
 # ENSO_metrics package
+# set new path where to find programs
+sys.path.insert(0, "/home/" + user_name + "/ENSO_metrics/lib")
+sys.path.insert(1, "/home/" + user_name + "/ENSO_metrics/scripts")
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import ComputeCollection
 
 # My (YYP) package
+# set new path where to find programs
+sys.path.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
 from getfiles_sh_to_py import find_path_and_files
 from getfiles_sh_to_py import get_ensembles
 
@@ -30,10 +36,8 @@ class bcolors:
     UNDERLINE = '\033[4m'
 #---------------------------------------------------#
 
-today = str(datetime.date.today())
-today = today.replace("-", "")
 xmldir = OSenviron['XMLDIR']
-netcdf_path = '/data/yplanton/ENSO_metrics'
+netcdf_path = '/data/yplanton/Eval_IPSL'
 
 
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
@@ -190,7 +194,7 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
+    list_obs = ['ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
 elif mc_name == 'ENSO_tel':
     list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
@@ -253,14 +257,14 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['IPSL-CM5B-LR']#['IPSL-CM6A-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
+list_models = ['IPSL-CM6A-LR', 'IPSL-CM6A-MR', 'IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
 #
 # finding file and variable name in file for each observations dataset
 #
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
-    list_ens = get_ensembles(exp='hist', fre=frequency, mod=mod, pro=project, rea=realm) #toto
+    list_ens = get_ensembles(exp=experiment, fre=frequency, mod=mod, pro=project, rea=realm)
     #list_ens = list_ens[4:]
     dict_ens, dict_ens_dive = dict(), dict()
     for ens in list_ens:
@@ -284,9 +288,8 @@ for mod in list_models:
             # finding file for 'mod', 'var'
             #
             # @jiwoo: first try in the realm 'O' (for ocean)
-            file_name, file_areacell, file_landmask = find_xml(mod, frequency, var0, project=project,
-                                                               experiment=experiment,
-                                                               ensemble=ens, realm=realm)
+            file_name, file_areacell, file_landmask =\
+                find_xml(mod, frequency, var0, project=project, experiment=experiment, ensemble=ens, realm=realm)
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
             except:
@@ -307,9 +310,9 @@ for mod in list_models:
                 list_name_area = areacell_in_file
                 list_landmask = file_landmask
                 list_name_land = landmask_in_file
-            dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file,
-                                  'path + filename_area': list_areacell, 'areaname': list_name_area,
-                                  'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
+            dict_mod[mod + '_' + ens][var] =\
+                {'path + filename': list_files, 'varname': var_in_file, 'path + filename_area': list_areacell,
+                 'areaname': list_name_area, 'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
             del areacell_in_file, file_areacell, file_landmask, file_name, landmask_in_file, list_areacell, list_files,\
                 list_landmask, list_name_area, list_name_land, var0, var_in_file
             # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
@@ -330,7 +333,7 @@ for mod in list_models:
         # dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=False)
         # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid,
         #                                                     debug=False, dive_down=True)
-        netcdf_name = today + '_YANN_PLANTON_' + mc_name + '_' + mod + '_' + experiment + '_' + ens
+        netcdf_name = user_name + '_' + mc_name + '_' + mod + '_' + experiment + '_' + ens
         netcdf = OSpath__join(netcdf_path, netcdf_name)
         # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
         #                                                      netcdf_name=netcdf_name, debug=True, dive_down=True)
@@ -338,7 +341,6 @@ for mod in list_models:
             ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
         # save json
         save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf_name, metric=True)
-        stop
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, list_ens

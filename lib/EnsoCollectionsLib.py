@@ -417,6 +417,7 @@ def ReferenceObservations(DATASET=True):
             'source': 'see https://esgf.nccs.nasa.gov/search/create-ip/', # do not use 'source' keyword
             'file_name': '<var_name>' + '_Amon_reanalysis_IFS-Cy31r2_*.nc',
             'variable_name_in_file': {
+                'landmask': {'var_name': 'lsmask'},
                 'lhf': {'var_name': 'hfls'},
                 # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
                 # lwr = rlds - rlus
