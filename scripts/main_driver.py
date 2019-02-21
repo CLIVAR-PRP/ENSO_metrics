@@ -25,7 +25,7 @@ from Lib_CCollection_cmip_on_ciclad import nbryear_from_model
 from my_arg import my_arg
 # My (YYP) package
 # set new path where to find programs
-sys.path.insert(0, "/home/" + user_name + "/New_programs/lib_cmip_bash")
+sys.path.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
 from getfiles_sh_to_py import get_ensembles
 from getfiles_sh_to_py import get_models
 #---------------------------------------------------#

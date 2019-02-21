@@ -19,7 +19,7 @@ sys.path.insert(1, "/home/" + user_name + "/ENSO_metrics/scripts")
 from Lib_plot_on_ciclad import metric_boxplot, myplot
 # My (YYP) package
 # set new path where to find programs
-sys.path.insert(0, "/home/" + user_name + "/New_programs/lib_cmip_bash")
+sys.path.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
 from getfiles_sh_to_py import get_ensembles
 #---------------------------------------------------#
 
