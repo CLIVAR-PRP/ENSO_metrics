@@ -4090,15 +4090,22 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
             # 2.4 compute the ratio EP events during La Nina divided by EP events during El Nino
-            ratioEP = float(ep_event_nina / ep_event_nino)
+            if ep_event_nino == 0:
+                keyerror_nino = "no EP El Nino during the period"
+            else:
+                ratioEP = float(ep_event_nina / ep_event_nino)
         else:
             if len(nina_years) == 0:
                 keyerror_nina = "no La Nina event during the period"
+            else:
+                keyerror_nina = None
             if len(nino_years) == 0:
                 keyerror_nino = "no El Nino event during the period"
+            else:
+                keyerror_nino = None
 
         if keyerror_nino is not None or keyerror_nina is not None:
-            StdErr, dive_down_diag = None, {'value': None, 'axis': None}
+            ratioEP, StdErr, dive_down_diag = None, None, {'value': None, 'axis': None}
             keyerror = ''
             if keyerror_nino is not None:
                 keyerror = keyerror_nino
