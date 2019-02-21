@@ -268,7 +268,7 @@ for mod in list_models:
     #list_ens = list_ens[4:]
     dict_ens, dict_ens_dive = dict(), dict()
     for ens in list_ens:
-        dict_mod = {mod: {}}
+        dict_mod = {mod + '_' + ens: {}}
         # ------------------------------------------------
         # @jiwoo: between these dash the program is a bit ad hoc...
         # it works well for me because I am looking for sst and taux on the ocean grid, and fluxes [lhf, lwr, swr, shf, thf]

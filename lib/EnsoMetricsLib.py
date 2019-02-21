@@ -286,8 +286,10 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -541,8 +543,10 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -796,8 +800,10 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -1084,8 +1090,10 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If you want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -1303,8 +1311,10 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -1558,8 +1568,10 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -1813,8 +1825,10 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If you want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -2036,8 +2050,10 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -2294,8 +2310,10 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -6917,8 +6935,10 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -7406,8 +7426,10 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -8074,8 +8096,10 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -8907,8 +8931,10 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -9349,8 +9375,8 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset='', debug=False, netcdf=False,
-                   netcdf_name='', **kwargs):
+                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   netcdf=False, netcdf_name='', **kwargs):
     """
     The NinoSstLonRmse() function computes a zonal composite of El Nino events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -9394,8 +9420,10 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -10057,8 +10085,10 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -10288,8 +10318,10 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -10524,8 +10556,10 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -10760,8 +10794,10 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -10994,8 +11030,10 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
