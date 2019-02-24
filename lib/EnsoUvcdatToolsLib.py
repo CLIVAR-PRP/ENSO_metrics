@@ -771,9 +771,8 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
 
 def ArrayListAx(tab, list1, ax_name_ax='', ax_long_name='', ax_ref=''):
     tab_out = MV2array(tab)
-    print tab_out.shape
-    print list1
-    ax = CDMS2createAxis(list1, id=ax_name_ax)
+    ax = CDMS2createAxis(range(len(list1)), id=ax_name_ax)
+    ax.regions = str(list1)
     if len(ax_long_name) > 0:
         ax.long_name = ax_long_name
     if len(ax_ref) > 0:

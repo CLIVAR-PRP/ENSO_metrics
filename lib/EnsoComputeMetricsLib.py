@@ -7,10 +7,11 @@ from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
     BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf,\
-    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoDiversity, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSstMap,\
-    EnsoSeasonality, EnsoSstSkew, NinaPrMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap,\
-    NinaSstTsRmse, NinoPrMap, NinoSstDiv, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse,\
-    SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
+    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoDiversity, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSlpMap,\
+    EnsoSstMap, EnsoSeasonality, EnsoSstSkew, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv,\
+    NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap,\
+    NinoSlpMap, NinoSstDiv, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
+    SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -359,8 +360,10 @@ dict_oneVar_modelAndObs = {
 }
 
 dict_twoVar_modelAndObs = {
-    'EnsoPrMap': EnsoPrMap, 'NinaPrMap': NinaPrMap, 'NinoPrMap': NinoPrMap,
-    'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoPrJjaTel': EnsoPrJjaTel,
+    'EnsoPrMap': EnsoPrMap, 'EnsoPrJjaTel': EnsoPrJjaTel, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoSlpMap': EnsoSlpMap,
+    'NinaPrMap': NinaPrMap, 'NinaPrJjaTel': NinaPrJjaTel, 'NinaPrNdjTel': NinaPrNdjTel, 'NinaSlpMap': NinaSlpMap,
+    'NinoPrMap': NinoPrMap, 'NinoPrJjaTel': NinoPrJjaTel, 'NinoPrNdjTel': NinoPrNdjTel, 'NinoSlpMap': NinoSlpMap,
+
 }
 
 dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoDiversity': EnsoDiversity, 'EnsoSeasonality': EnsoSeasonality,

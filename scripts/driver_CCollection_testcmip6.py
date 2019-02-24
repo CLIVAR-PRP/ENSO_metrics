@@ -126,8 +126,9 @@ def find_xml_obs(obs, frequency, variable):
 def save_json(dict_in, json_name, metric=True):
     # reshape dictionary
     liste = sorted(dict_in.keys())
+    listm = sorted(dict_in[liste[0]]['value'].keys())
     dict_out = dict()
-    for met in list_metric:
+    for met in listm:
         dict1 = dict()
         for ens in liste:
             if metric is True:
@@ -162,7 +163,7 @@ def save_json(dict_in, json_name, metric=True):
     return
 
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_tel'#'MC1'#
+mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -196,7 +197,7 @@ if mc_name == 'MC1':
 elif mc_name == 'ENSO_perf':
     list_obs = ['ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
 elif mc_name == 'ENSO_tel':
-    list_obs = ['HadISST','GPCPv2.3']
+    list_obs = ['ERA-Interim', 'HadISST', 'GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -257,7 +258,7 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['IPSL-CM6A-LR', 'IPSL-CM6A-MR', 'IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
+list_models = ['IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR']#['IPSL-CM6A-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
 #
 # finding file and variable name in file for each observations dataset
 #
