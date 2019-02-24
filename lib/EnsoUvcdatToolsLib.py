@@ -769,6 +769,19 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     return area, keyerror
 
 
+def ArrayListAx(tab, list1, ax_name_ax='', ax_long_name='', ax_ref=''):
+    tab_out = MV2array(tab)
+    print tab_out.shape
+    print list1
+    ax = CDMS2createAxis(list1, id=ax_name_ax)
+    if len(ax_long_name) > 0:
+        ax.long_name = ax_long_name
+    if len(ax_ref) > 0:
+        ax.reference = ax_ref
+    tab_out.setAxis(0, ax)
+    return tab_out
+
+
 def ArrayToList(tab):
     try:
         len(tab.mask)
@@ -2710,7 +2723,7 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
 
 def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area='', name_area='', file_mask='',
                         name_mask='', maskland=False, maskocean=False, time_bounds=None, debug=False, **kwargs):
-    keyerror1, keyerror2, keyerror3, keyerror4 = None, None, None, None
+    keyerror1, keyerror2, keyerror3 = None, None, None
     # Read variable
     if debug is True:
         dict_debug = {'file1': '(' + type_data + ') ' + str(file_data), 'var1': '(' + type_data + ') ' + str(name_data)}
@@ -2727,6 +2740,31 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
         if len(variable) < kwargs['min_time_steps']:
             EnsoErrorsWarnings.TooShortTimePeriod(metric, len(variable), kwargs['min_time_steps'], INSPECTstack())
             keyerror2 = "too short time period (" + str(len(variable)) + ")"
+    # Read areacell & mask
+    variable, areacell, keyerror3 = Read_mask_area(variable, file_data, type_data, region, file_area=file_area,
+                                                   name_area=name_area, file_mask=file_mask, name_mask=name_mask,
+                                                   maskland=maskland, maskocean=maskocean, debug=debug, **kwargs)
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        keyerror = ''
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
+    else:
+        keyerror = None
+    return variable, areacell, keyerror
+
+
+def Read_mask_area(tab, file_data, type_data, region, file_area='', name_area='', file_mask='', name_mask='',
+                   maskland=False, maskocean=False, debug=False, **kwargs):
+    tab_out = deepcopy(tab)
+    keyerror1, keyerror2 = None, None
     # Read areacell
     if file_area:
         areacell = ReadAreaSelectRegion(file_area, areaname=name_area, box=region, **kwargs)
@@ -2749,12 +2787,12 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
             EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
     # Apply landmask
     if landmask is not None:
-        variable, keyerror3 = ApplyLandmask(variable, landmask, maskland=maskland, maskocean=maskocean)
-        if keyerror3 is None:
+        tab_out, keyerror1 = ApplyLandmask(tab_out, landmask, maskland=maskland, maskocean=maskocean)
+        if keyerror1 is None:
             if areacell is None:
                 areacell = ArrayOnes(landmask, id='areacell')
-            areacell, keyerror4 = ApplyLandmaskToArea(areacell, landmask, maskland=maskland, maskocean=maskocean)
-    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None or keyerror4 is not None:
+            areacell, keyerror2 = ApplyLandmaskToArea(areacell, landmask, maskland=maskland, maskocean=maskocean)
+    if keyerror1 is not None or keyerror2 is not None:
         keyerror = ''
         if keyerror1 is not None:
             keyerror = keyerror1
@@ -2762,17 +2800,9 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
             keyerror += " ; "
         if keyerror2 is not None:
             keyerror += keyerror2
-        if len(keyerror) > 0 and keyerror3 is not None:
-            keyerror += " ; "
-        if keyerror3 is not None:
-            keyerror += keyerror3
-        if len(keyerror) > 0 and keyerror4 is not None:
-            keyerror += " ; "
-        if keyerror4 is not None:
-            keyerror += keyerror4
     else:
         keyerror = None
-    return variable, areacell, keyerror
+    return tab_out, areacell, keyerror
 
 
 def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):

@@ -246,8 +246,8 @@ for mod in list_models:
     netcdf_name = 'YANN_PLANTON_' + mc_name + '_' + mod
     netcdf = join_path(netcdf_path, netcdf_name)
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True, dive_down=True)
-    # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
-    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
+    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
+    # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
     tmp = sorted(dict_metric[mod]['value'].keys())
     for kk in tmp:
         print kk.ljust(13) + ': ' + str(dict_metric[mod]['value'][kk]['metric'])

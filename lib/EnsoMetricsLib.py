@@ -9,12 +9,13 @@ from numpy import square as NUMPYsquare
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
 from EnsoToolsLib import percentage_val_eastward
-from EnsoUvcdatToolsLib import ArrayOnes, ArrayToList, ApplyLandmask, ApplyLandmaskToArea, AverageMeridional,\
-    AverageZonal, BasinMask, CheckTime, Composite, Composite_ev_by_ev, ComputeInterannualAnomalies, ComputePDF,\
-    Correlation, DetectEvents, DurationAllEvent, FindXYMinMaxInTs, LinearRegressionAndNonlinearity,\
-    LinearRegressionTsAgainstMap, MinMax, MyDerive, PreProcessTS, Read_data_mask_area, ReadAreaSelectRegion,\
-    ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal,\
-    SaveNetcdf, SeasonalMean, SkewMonthly, SkewnessTemporal, Std, StdMonthly, TimeBounds, TwoVarRegrid
+from EnsoUvcdatToolsLib import ArrayListAx, ArrayOnes, ArrayToList, ApplyLandmask, ApplyLandmaskToArea,\
+    AverageMeridional, AverageZonal, BasinMask, CheckTime, Composite, Composite_ev_by_ev, ComputeInterannualAnomalies,\
+    ComputePDF, Correlation, DetectEvents, DurationAllEvent, FindXYMinMaxInTs, LinearRegressionAndNonlinearity,\
+    LinearRegressionTsAgainstMap, MinMax, MyDerive, PreProcessTS, Read_data_mask_area, Read_mask_area,\
+    ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis, RmsHorizontal,\
+    RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewMonthly, SkewnessTemporal, Std, StdMonthly, TimeBounds,\
+    TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -4405,7 +4406,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     :param prfilemod: string
         path_to/filename of the file (NetCDF) of the modeled PR
     :param prnamemod: string
-        name of PRvariable (pr) in 'prfilemod'
+        name of PR variable (pr) in 'prfilemod'
     :param prareafilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled PR areacell
     :param prareanamemod: string, optional
@@ -4689,6 +4690,14 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                                debug=debug)
         pr_obs_slope, keyerror_obs = BasinMask(pr_obs_slope, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between',
                                                debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
@@ -4733,7 +4742,8 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         'Corr__value': prCorr, 'Corr__value_error': prCorrErr, 'Corr__units': '', 'Std__value': prStd,
         'Std__value_error': prStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
         'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'dive_down_diag': dive_down_diag, 'units': '',
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
     }
     return EnsoPrMapMetric
 
@@ -4760,7 +4770,7 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     :param prfilemodel: string
         path_to/filename of the file (NetCDF) of the modeled PR
     :param prnamemodel: string
-        name of PRvariable (pr) in 'prfilemodel'
+        name of PR variable (pr) in 'prfilemodel'
     :param sstfileobs: string
         path_to/filename of the file (NetCDF) of the observed SST
     :param sstnameobs: string
@@ -5150,12 +5160,424 @@ def EnsoPrJjaTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     return EnsoPrTelMetric
 
 
-def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
-                 sstlandmasknamemodel, prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
-                 prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
-                 sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
-                 prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False,
-                 netcdf=False, netcdf_name='', **kwargs):
+# def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel, sstlandmaskfilemodel,
+#                  sstlandmasknamemodel, prfilemodel, prnamemodel, prareafilemodel, prareanamemodel, prlandmaskfilemodel,
+#                  prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
+#                  sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
+#                  prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False,
+#                  netcdf=False, netcdf_name='', **kwargs):
+#     """
+#     The EnsoPrNdjTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
+#         reference regions, then precipitations in NDJ are composited for each selected event and the difference
+#         (El Nino PR - La Nina PR) is computed in each region.
+#     The first rmse(observations vs model) is the metric.
+#     The second metric is the number of regions where observations and models agree on the sign of the teleconnection
+#
+#     Inputs:
+#     ------
+#     :param sstfilemodel: string
+#         path_to/filename of the file (NetCDF) of the modeled SST
+#     :param sstnamemodel: string
+#         name of SST variable (tos, ts) in 'sstfilemodel'
+#     :param prfilemodel: string
+#         path_to/filename of the file (NetCDF) of the modeled PR
+#     :param prnamemodel: string
+#         name of PR variable (pr) in 'prfilemodel'
+#     :param sstfileobs: string
+#         path_to/filename of the file (NetCDF) of the observed SST
+#     :param sstnameobs: string
+#         name of SST variable (tos, ts) in 'sstfileobs'
+#     :param prfileobs: string
+#         path_to/filename of the file (NetCDF) of the observed PR
+#     :param prnameobs: string
+#         name of PR variable (pr, precip) in 'prfileobs'
+#     :param box: string
+#         name of box (e.g. 'nino3') for SST
+#     :param event_definition: dict
+#         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+#         e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+#     :param sstareafilemodel: string, optional
+#         path_to/filename of the file (NetCDF) of the modeled SST areacell
+#     :param sstareanamemodel: string, optional
+#         name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemodel'
+#     :param sstlandmaskfilemodel: string, optional
+#         path_to/filename of the file (NetCDF) of the modeled SST landmask
+#     :param sstlandmasknamemodel: string, optional
+#         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemodel'
+#     :param prareafilemodel: string, optional
+#         path_to/filename of the file (NetCDF) of the modeled PR areacell
+#     :param prareanamemodel: string, optional
+#         name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemodel'
+#     :param prlandmaskfilemodel: string, optional
+#         path_to/filename of the file (NetCDF) of the modeled PR landmask
+#     :param prlandmasknamemodel: string, optional
+#         name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemodel'
+#     :param sstareafileobs: string, optional
+#         path_to/filename of the file (NetCDF) of the observed SST areacell
+#     :param sstareanameobs: string, optional
+#         name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+#     :param sstlandmaskfileobs: string, optional
+#         path_to/filename of the file (NetCDF) of the observed SST landmask
+#     :param sstlandmasknameobs: string, optional
+#         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+#     :param prareafileobs: string, optional
+#         path_to/filename of the file (NetCDF) of the observed PR areacell
+#     :param prareanameobs: string, optional
+#         name of areacell for the PR variable (areacella, areacello,...) in 'prareafileobs'
+#     :param prlandmaskfileobs: string, optional
+#         path_to/filename of the file (NetCDF) of the observed PR landmask
+#     :param prlandmasknameobs: string, optional
+#         name of landmask for the PR variable (sftlf,...) in 'prlandmaskfileobs'
+#     :param centered_rmse: int, optional
+#         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+#         set to 1. NOTE: Most other statistic functions return a centered statistic by default
+#     :param biased_rmse: int, optional
+#         default value = 1 returns biased statistic (number of elements along given axis)
+#         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+#     :param debug: bolean, optional
+#         default value = False debug mode not activated
+#         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+#     :param netcdf: boolean, optional
+#         default value = False dive_down are not saved in NetCDFs
+#         If you want to save the dive down diagnostics set it to True
+#     :param netcdf_name: string, optional
+#         default value = '' NetCDFs are saved where the program is ran without a root name
+#         the name of a metric will be append at the end of the root name
+#         e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+#     usual kwargs:
+#     :param detrending: dict, optional
+#         see EnsoUvcdatToolsLib.Detrend for options
+#         the aim if to specify if the trend must be removed
+#         detrending method can be specified
+#         default value is False
+#     :param frequency: string, optional
+#         time frequency of the datasets
+#         e.g., frequency='monthly'
+#         default value is None
+#     :param min_time_steps: int, optional
+#         minimum number of time steps for the metric to make sens
+#         e.g., for 30 years of monthly data mintimesteps=360
+#         default value is None
+#     :param normalization: boolean, optional
+#         True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+#         anything but true
+#         default value is False
+#     :param smoothing: dict, optional
+#         see EnsoUvcdatToolsLib.Smoothing for options
+#         the aim if to specify if variables are smoothed (running mean)
+#         smoothing axis, window and method can be specified
+#         default value is False
+#     :param time_bounds: tuple, optional
+#         tuple of the first and last dates to extract from the files (strings)
+#         e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+#         default value is None
+#
+#     Output:
+#     ------
+#     :return EnsoPrTelMetric: dict
+#         name, value (rms [NinoPr-NinaPr]), value_error, units, method, value2 (sign agreement [NinoPr-NinaPr]),
+#         value_error2, units2, nyears_model, nyears_observations, nina_model, nino_model, nina_observations,
+#         nino_observations, time_frequency, time_period_model, time_period_observations, ref, dive_down_diag
+#
+#     Method:
+#     -------
+#         uses tools from uvcdat library
+#
+#     """
+#     # setting variables
+#     region_ev = event_definition['region_ev']
+#     season_ev = event_definition['season_ev']
+#     threshold = event_definition['threshold']
+#     # test given kwargs
+#     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+#                     'time_bounds_obs']
+#     for arg in needed_kwarg:
+#         try:
+#             kwargs[arg]
+#         except:
+#             kwargs[arg] = DefaultArgValues(arg)
+#
+#     # Define metric attributes
+#     Name = 'Nino composite minus Nina composite during JJA preceding the events in each region'
+#     Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ', Nina events = ' + region_ev + ' sstA < -'\
+#              + str(threshold) + ' during ' + season_ev + '; Precipitations associated with El Nino/La Nina' + \
+#              'events during the preceding JJA are composited and the difference (El Nino PR - La Nina PR) is' + \
+#              'computed in each region'
+#     if kwargs['normalization']:
+#         Units = ''
+#     else:
+#         Units = 'mm/day'
+#     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+#
+#     # ------------------------------------------------
+#     # detect events
+#     # ------------------------------------------------
+#     # Read file and select the right region
+#     if debug is True:
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoPrNdjTel', 10)
+#         dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
+#                       'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files ENSO', 10, **dict_debug)
+#     sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=region_ev,
+#                                            time_bounds=kwargs['time_bounds_mod'], **kwargs)
+#     sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
+#                                          time_bounds=kwargs['time_bounds_obs'], **kwargs)
+#     if debug is True:
+#         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
+#                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+#                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+#                       'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+#     # Read areacell
+#     if sstareafilemodel:
+#         model_areacell = ReadAreaSelectRegion(sstareafilemodel, areaname=sstareanamemodel, box=region_ev, **kwargs)
+#     else:
+#         model_areacell = ReadAreaSelectRegion(sstfilemodel, areaname=sstareanamemodel, box=region_ev, **kwargs)
+#     if sstareafileobs:
+#         obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
+#     else:
+#         obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
+#     if debug is True:
+#         dict_debug = {}
+#         if model_areacell is not None:
+#             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
+#             dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
+#         if obs_areacell is not None:
+#             dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
+#             dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+#     # Read landmask
+#     if sstlandmaskfilemodel:
+#         model_landmask = ReadLandmaskSelectRegion(sstlandmaskfilemodel, landmaskname=sstlandmasknamemodel,
+#                                                   box=region_ev, **kwargs)
+#     else:
+#         model_landmask = ReadLandmaskSelectRegion(sstfilemodel, landmaskname=sstlandmasknamemodel, box=region_ev,
+#                                                   **kwargs)
+#     if sstlandmaskfileobs:
+#         obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs,
+#                                                   box=region_ev, **kwargs)
+#     else:
+#         obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs,
+#                                                 box=region_ev, **kwargs)
+#     if debug is True:
+#         dict_debug = {}
+#         if model_landmask is not None:
+#             dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
+#             dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
+#         if obs_landmask is not None:
+#             dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
+#             dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+#     # Apply landmask
+#     if model_landmask is not None:
+#         sst_model = ApplyLandmask(sst_model, model_landmask, maskland=True, maskocean=False)
+#         if model_areacell is None:
+#             model_areacell = ArrayOnes(model_landmask, id='areacell')
+#         model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=True, maskocean=False)
+#         del model_landmask
+#     if obs_landmask is not None:
+#         sst_obs = ApplyLandmask(sst_obs, obs_landmask, maskland=True, maskocean=False)
+#         if obs_areacell is None:
+#             obs_areacell = ArrayOnes(obs_landmask, id='areacell')
+#         obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=True, maskocean=False)
+#         del obs_landmask
+#
+#     # checks if the time-period fulfills the minimum length criterion
+#     if isinstance(kwargs['min_time_steps'], int):
+#         mini = kwargs['min_time_steps']
+#         if len(sst_model) < mini:
+#             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+#                             str().ljust(5) + "EnsoPrNdjTel: the modeled time-period is too short: "
+#                             + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
+#             EnsoErrorsWarnings.MyError(list_strings)
+#         if len(sst_obs) < mini:
+#             list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
+#                             str().ljust(5) + "EnsoPrNdjTel: the observed time-period is too short: "
+#                             + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
+#             EnsoErrorsWarnings.MyError(list_strings)
+#
+#     # Number of years
+#     yearN_model = sst_model.shape[0] / 12
+#     yearN_obs = sst_obs.shape[0] / 12
+#
+#     # Time period
+#     actualtimeboundsmodel = TimeBounds(sst_model)
+#     actualtimeboundsobs = TimeBounds(sst_obs)
+#
+#     # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+#     sst_model, unneeded = PreProcessTS(sst_model, '', areacell=model_areacell, average='horizontal', compute_anom=False,
+#                                        **kwargs)
+#     sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+#                                      **kwargs)
+#     del model_areacell, obs_areacell
+#     if debug is True:
+#         dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
+#                       'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+#                       'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+#                       'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+#
+#     # Lists event years
+#     nina_years_model = DetectEvents(sst_model, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
+#     nino_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+#     nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
+#     nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+#     del sst_model, sst_obs
+#     if debug is True:
+#         dict_debug = {'nina1': '(model) ' + str(nina_years_model), 'nina2': '(obs) ' + str(nina_years_obs),
+#                       'nino1': '(model) ' + str(nino_years_model), 'nino2': '(obs) ' + str(nino_years_obs)}
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+#
+#     # ------------------------------------------------
+#     # compute composite
+#     # ------------------------------------------------
+#     if debug is True:
+#         dict_debug = {
+#             'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs, 'var1': '(model) ' + prnamemodel,
+#             'var2': '(obs) ' + prnameobs}
+#         EnsoErrorsWarnings.DebugMode('\033[92m', 'Files Composite', 10, **dict_debug)
+#     # smoothing is not applied
+#     if 'smoothing' in kwargs.keys():
+#         smooth = deepcopy(kwargs['smoothing'])
+#         kwargs['smoothing'] = False
+#     if not isinstance(prbox, list):
+#         prbox = [prbox]
+#     prbox = sorted(prbox, key=str.lower)
+#     list_composite_model, list_composite_obs = list(), list()
+#     for reg in prbox:
+#         if debug is True:
+#             EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 10)
+#         # Read file and select the right region
+#         pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=reg,
+#                                               time_bounds=kwargs['time_bounds_mod'], **kwargs)
+#         pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=reg,
+#                                             time_bounds=kwargs['time_bounds_obs'], **kwargs)
+#         if debug is True:
+#             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
+#                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+#                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
+#                           'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+#             EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
+#         # Read areacell
+#         if prareafilemodel:
+#             model_areacell = ReadAreaSelectRegion(prareafilemodel, areaname=prareanamemodel, box=reg, **kwargs)
+#         else:
+#             model_areacell = ReadAreaSelectRegion(prfilemodel, areaname=prareanamemodel, box=reg, **kwargs)
+#         if prareafileobs:
+#             obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=reg, **kwargs)
+#         else:
+#             obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=reg, **kwargs)
+#         if debug is True:
+#             dict_debug = {}
+#             if model_areacell is not None:
+#                 dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
+#                 dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
+#             if obs_areacell is not None:
+#                 dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
+#                 dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
+#             EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
+#         # Read if the given region is defined as a land region, an oceanic region, or both
+#         dict_reg = ReferenceRegions(reg)
+#         if 'maskland' in dict_reg.keys():
+#             maskland = dict_reg['maskland']
+#         else:
+#             maskland = False
+#         if 'maskocean' in dict_reg.keys():
+#             maskocean = dict_reg['maskocean']
+#         else:
+#             maskocean = False
+#         # Read landmask
+#         if prlandmaskfilemodel:
+#             model_landmask = ReadLandmaskSelectRegion(prlandmaskfilemodel, landmaskname=prlandmasknamemodel, box=reg,
+#                                                       **kwargs)
+#         else:
+#             model_landmask = ReadLandmaskSelectRegion(prfilemodel, landmaskname=prlandmasknamemodel, box=reg, **kwargs)
+#         if prlandmaskfileobs:
+#             obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=reg,
+#                                                     **kwargs)
+#         else:
+#             obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=reg, **kwargs)
+#         if debug is True:
+#             dict_debug = {}
+#             if model_landmask is not None:
+#                 dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
+#                 dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
+#             if obs_landmask is not None:
+#                 dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
+#                 dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
+#             EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
+#         # Apply landmask
+#         if model_landmask is not None:
+#             pr_model = ApplyLandmask(pr_model, model_landmask, maskland=maskland, maskocean=maskocean)
+#             if model_areacell is None:
+#                 model_areacell = ArrayOnes(model_landmask, id='areacell')
+#             model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=maskland, maskocean=maskocean)
+#             del model_landmask
+#         if obs_landmask is not None:
+#             pr_obs = ApplyLandmask(pr_obs, obs_landmask, maskland=maskland, maskocean=maskocean)
+#             if obs_areacell is None:
+#                 obs_areacell = ArrayOnes(obs_landmask, id='areacell')
+#             obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=maskland, maskocean=maskocean)
+#             del obs_landmask
+#
+#         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+#         pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average='horizontal',
+#                                         compute_anom=False, **kwargs)
+#         pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+#                                         **kwargs)
+#         del model_areacell, obs_areacell
+#         if debug is True:
+#             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
+#                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+#                           'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
+#                           'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+#             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+#
+#         # Seasonal mean
+#         pr_model = SeasonalMean(pr_model, 'NDJ', compute_anom=False)
+#         pr_obs = SeasonalMean(pr_obs, 'NDJ', compute_anom=False)
+#
+#         # composites
+#         composite_nina_model = Composite(pr_model, nina_years_model, kwargs['frequency'])
+#         composite_nino_model = Composite(pr_model, nino_years_model, kwargs['frequency'])
+#         composite_nina_obs = Composite(pr_obs, nina_years_obs, kwargs['frequency'])
+#         composite_nino_obs = Composite(pr_obs, nino_years_obs, kwargs['frequency'])
+#
+#         # list composites
+#         list_composite_model.append(float(composite_nino_model-composite_nina_model))
+#         list_composite_obs.append(float(composite_nino_obs-composite_nina_obs))
+#     if 'smoothing' in kwargs.keys():
+#         kwargs['smoothing'] = smooth
+#         del smooth
+#
+#     # Computes the root mean square difference
+#     compositeRmse = RmsAxis(list_composite_model, list_composite_obs, centered=centered_rmse, biased=biased_rmse)
+#
+#     # Computes the percentage of regions where observations and model agree on the sign of the teleconnection
+#     signAgreement = sum([1. for vmod,vobs in zip(list_composite_model,list_composite_obs)
+#                         if NUMPYsign(vmod)==NUMPYsign(vobs)])/len(list_composite_model)
+#
+#     # Dive down diagnostic
+#     dive_down_diag = {'model': list_composite_model, 'observations': list_composite_obs, 'axis': prbox}
+#
+#     # Create output
+#     EnsoPrTelMetric = {
+#         'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
+#         'value2': signAgreement, 'value_error2': None, 'units2': '%', 'nyears_model': yearN_model,
+#         'nyears_observations': yearN_obs, 'nina_model': nina_years_model, 'nino_model': nino_years_model,
+#         'nina_observations': nina_years_obs, 'nino_observations': nino_years_obs, 'time_frequency': kwargs['frequency'],
+#         'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
+#         'dive_down_diag': dive_down_diag,
+#     }
+#     return EnsoPrTelMetric
+
+
+def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                 prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs,
+                 sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
+                 prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
+                 event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                 netcdf_name='', **kwargs):
     """
     The EnsoPrNdjTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
         reference regions, then precipitations in NDJ are composited for each selected event and the difference
@@ -5165,14 +5587,14 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
 
     Inputs:
     ------
-    :param sstfilemodel: string
+    :param sstfilemod: string
         path_to/filename of the file (NetCDF) of the modeled SST
-    :param sstnamemodel: string
-        name of SST variable (tos, ts) in 'sstfilemodel'
-    :param prfilemodel: string
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param prfilemod: string
         path_to/filename of the file (NetCDF) of the modeled PR
-    :param prnamemodel: string
-        name of PRvariable (pr) in 'prfilemodel'
+    :param prnamemod: string
+        name of PR variable (pr) in 'prfilemod'
     :param sstfileobs: string
         path_to/filename of the file (NetCDF) of the observed SST
     :param sstnameobs: string
@@ -5186,22 +5608,22 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     :param event_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
         e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
-    :param sstareafilemodel: string, optional
+    :param sstareafilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled SST areacell
-    :param sstareanamemodel: string, optional
-        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemodel'
-    :param sstlandmaskfilemodel: string, optional
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled SST landmask
-    :param sstlandmasknamemodel: string, optional
-        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemodel'
-    :param prareafilemodel: string, optional
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param prareafilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled PR areacell
-    :param prareanamemodel: string, optional
-        name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemodel'
-    :param prlandmaskfilemodel: string, optional
+    :param prareanamemod: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemod'
+    :param prlandmaskfilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled PR landmask
-    :param prlandmasknamemodel: string, optional
-        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemodel'
+    :param prlandmasknamemod: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemod'
     :param sstareafileobs: string, optional
         path_to/filename of the file (NetCDF) of the observed SST areacell
     :param sstareanameobs: string, optional
@@ -5224,6 +5646,10 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
     :param biased_rmse: int, optional
         default value = 1 returns biased statistic (number of elements along given axis)
         If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -5288,276 +5714,248 @@ def EnsoPrNdjTel(sstfilemodel, sstnamemodel, sstareafilemodel, sstareanamemodel,
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Nino composite minus Nina composite during JJA preceding the events in each region'
-    Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ', Nina events = ' + region_ev + ' sstA < -'\
-             + str(threshold) + ' during ' + season_ev + '; Precipitations associated with El Nino/La Nina' + \
-             'events during the preceding JJA are composited and the difference (El Nino PR - La Nina PR) is' + \
-             'computed in each region'
+    Name = 'Nino composite minus Nina composites during NDJ (peak) of the events in each region'
+    Method = "Nino events = " + region_ev + " sstA > " + str(threshold) + ", Nina events = " + region_ev + " sstA < -"\
+             + str(threshold) + " during " + season_ev + "; Precipitations associated with El Nino/La Nina" + \
+             "events during the events peak are composited and the difference (El Nino PR - La Nina PR) is" + \
+             "computed in each region"
     if kwargs['normalization']:
         Units = ''
     else:
         Units = 'mm/day'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoPrNdjTel'
 
-    # ------------------------------------------------
-    # detect events
-    # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'EnsoPrNdjTel', 10)
-        dict_debug = {'file1': '(model) ' + sstfilemodel, 'file2': '(obs) ' + sstfileobs,
-                      'var1': '(model) ' + sstnamemodel, 'var2': '(obs) ' + sstnameobs}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files ENSO', 10, **dict_debug)
-    sst_model = ReadSelectRegionCheckUnits(sstfilemodel, sstnamemodel, 'temperature', box=region_ev,
-                                           time_bounds=kwargs['time_bounds_mod'], **kwargs)
-    sst_obs = ReadSelectRegionCheckUnits(sstfileobs, sstnameobs, 'temperature', box=region_ev,
-                                         time_bounds=kwargs['time_bounds_obs'], **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
-                      'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-    # Read areacell
-    if sstareafilemodel:
-        model_areacell = ReadAreaSelectRegion(sstareafilemodel, areaname=sstareanamemodel, box=region_ev, **kwargs)
-    else:
-        model_areacell = ReadAreaSelectRegion(sstfilemodel, areaname=sstareanamemodel, box=region_ev, **kwargs)
-    if sstareafileobs:
-        obs_areacell = ReadAreaSelectRegion(sstareafileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
-    else:
-        obs_areacell = ReadAreaSelectRegion(sstfileobs, areaname=sstareanameobs, box=region_ev, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_areacell is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
-        if obs_areacell is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-    # Read landmask
-    if sstlandmaskfilemodel:
-        model_landmask = ReadLandmaskSelectRegion(sstlandmaskfilemodel, landmaskname=sstlandmasknamemodel,
-                                                  box=region_ev, **kwargs)
-    else:
-        model_landmask = ReadLandmaskSelectRegion(sstfilemodel, landmaskname=sstlandmasknamemodel, box=region_ev,
-                                                  **kwargs)
-    if sstlandmaskfileobs:
-        obs_landmask = ReadLandmaskSelectRegion(sstlandmaskfileobs, landmaskname=sstlandmasknameobs,
-                                                  box=region_ev, **kwargs)
-    else:
-        obs_landmask = ReadLandmaskSelectRegion(sstfileobs, landmaskname=sstlandmasknameobs,
-                                                box=region_ev, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if model_landmask is not None:
-            dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
-            dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
-        if obs_landmask is not None:
-            dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
-            dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-    # Apply landmask
-    if model_landmask is not None:
-        sst_model = ApplyLandmask(sst_model, model_landmask, maskland=True, maskocean=False)
-        if model_areacell is None:
-            model_areacell = ArrayOnes(model_landmask, id='areacell')
-        model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=True, maskocean=False)
-        del model_landmask
-    if obs_landmask is not None:
-        sst_obs = ApplyLandmask(sst_obs, obs_landmask, maskland=True, maskocean=False)
-        if obs_areacell is None:
-            obs_areacell = ArrayOnes(obs_landmask, id='areacell')
-        obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=True, maskocean=False)
-        del obs_landmask
-
-    # checks if the time-period fulfills the minimum length criterion
-    if isinstance(kwargs['min_time_steps'], int):
-        mini = kwargs['min_time_steps']
-        if len(sst_model) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoPrNdjTel: the modeled time-period is too short: "
-                            + str(len(sst_model)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
-        if len(sst_obs) < mini:
-            list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too short time-period",
-                            str().ljust(5) + "EnsoPrNdjTel: the observed time-period is too short: "
-                            + str(len(sst_obs)) + " (minimum time-period: " + str(mini) + ")"]
-            EnsoErrorsWarnings.MyError(list_strings)
-
-    # Number of years
-    yearN_model = sst_model.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
-
-    # Time period
-    actualtimeboundsmodel = TimeBounds(sst_model)
-    actualtimeboundsobs = TimeBounds(sst_obs)
-
-    # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-    sst_model, unneeded = PreProcessTS(sst_model, '', areacell=model_areacell, average='horizontal', compute_anom=False,
-                                       **kwargs)
-    sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                     **kwargs)
-    del model_areacell, obs_areacell
-    if debug is True:
-        dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_model.getAxisList()]),
-                      'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                      'shape1': '(model) ' + str(sst_model.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
-                      'time1': '(model) ' + str(TimeBounds(sst_model)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-
-    # Lists event years
-    nina_years_model = DetectEvents(sst_model, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-    nino_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-    nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-    nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-    del sst_model, sst_obs
-    if debug is True:
-        dict_debug = {'nina1': '(model) ' + str(nina_years_model), 'nina2': '(obs) ' + str(nina_years_obs),
-                      'nino1': '(model) ' + str(nino_years_model), 'nino2': '(obs) ' + str(nino_years_obs)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
-
-    # ------------------------------------------------
-    # compute composite
-    # ------------------------------------------------
-    if debug is True:
-        dict_debug = {
-            'file1': '(model) ' + prfilemodel, 'file2': '(obs) ' + prfileobs, 'var1': '(model) ' + prnamemodel,
-            'var2': '(obs) ' + prnameobs}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files Composite', 10, **dict_debug)
-    # smoothing is not applied
-    if 'smoothing' in kwargs.keys():
-        smooth = deepcopy(kwargs['smoothing'])
-        kwargs['smoothing'] = False
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, mod_areacell, keyerror_mod1 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, obs_areacell, keyerror_obs1 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
     if not isinstance(prbox, list):
         prbox = [prbox]
     prbox = sorted(prbox, key=str.lower)
-    list_composite_model, list_composite_obs = list(), list()
-    for reg in prbox:
-        if debug is True:
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 10)
-        # Read file and select the right region
-        pr_model = ReadSelectRegionCheckUnits(prfilemodel, prnamemodel, 'precipitations', box=reg,
-                                              time_bounds=kwargs['time_bounds_mod'], **kwargs)
-        pr_obs = ReadSelectRegionCheckUnits(prfileobs, prnameobs, 'precipitations', box=reg,
-                                            time_bounds=kwargs['time_bounds_obs'], **kwargs)
-        if debug is True:
-            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                          'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                          'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
-                          'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-        # Read areacell
-        if prareafilemodel:
-            model_areacell = ReadAreaSelectRegion(prareafilemodel, areaname=prareanamemodel, box=reg, **kwargs)
-        else:
-            model_areacell = ReadAreaSelectRegion(prfilemodel, areaname=prareanamemodel, box=reg, **kwargs)
-        if prareafileobs:
-            obs_areacell = ReadAreaSelectRegion(prareafileobs, areaname=prareanameobs, box=reg, **kwargs)
-        else:
-            obs_areacell = ReadAreaSelectRegion(prfileobs, areaname=prareanameobs, box=reg, **kwargs)
-        if debug is True:
-            dict_debug = {}
-            if model_areacell is not None:
-                dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_areacell.getAxisList()])
-                dict_debug['shape1'] = '(model) ' + str(model_areacell.shape)
-            if obs_areacell is not None:
-                dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_areacell.getAxisList()])
-                dict_debug['shape2'] = '(obs) ' + str(obs_areacell.shape)
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-        # Read if the given region is defined as a land region, an oceanic region, or both
-        dict_reg = ReferenceRegions(reg)
-        if 'maskland' in dict_reg.keys():
-            maskland = dict_reg['maskland']
-        else:
-            maskland = False
-        if 'maskocean' in dict_reg.keys():
-            maskocean = dict_reg['maskocean']
-        else:
-            maskocean = False
-        # Read landmask
-        if prlandmaskfilemodel:
-            model_landmask = ReadLandmaskSelectRegion(prlandmaskfilemodel, landmaskname=prlandmasknamemodel, box=reg,
-                                                      **kwargs)
-        else:
-            model_landmask = ReadLandmaskSelectRegion(prfilemodel, landmaskname=prlandmasknamemodel, box=reg, **kwargs)
-        if prlandmaskfileobs:
-            obs_landmask = ReadLandmaskSelectRegion(prlandmaskfileobs, landmaskname=prlandmasknameobs, box=reg,
-                                                    **kwargs)
-        else:
-            obs_landmask = ReadLandmaskSelectRegion(prfileobs, landmaskname=prlandmasknameobs, box=reg, **kwargs)
-        if debug is True:
-            dict_debug = {}
-            if model_landmask is not None:
-                dict_debug['axes1'] = '(model) ' + str([ax.id for ax in model_landmask.getAxisList()])
-                dict_debug['shape1'] = '(model) ' + str(model_landmask.shape)
-            if obs_landmask is not None:
-                dict_debug['axes2'] = '(obs) ' + str([ax.id for ax in obs_landmask.getAxisList()])
-                dict_debug['shape2'] = '(obs) ' + str(obs_landmask.shape)
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-        # Apply landmask
-        if model_landmask is not None:
-            pr_model = ApplyLandmask(pr_model, model_landmask, maskland=maskland, maskocean=maskocean)
-            if model_areacell is None:
-                model_areacell = ArrayOnes(model_landmask, id='areacell')
-            model_areacell = ApplyLandmaskToArea(model_areacell, model_landmask, maskland=maskland, maskocean=maskocean)
-            del model_landmask
-        if obs_landmask is not None:
-            pr_obs = ApplyLandmask(pr_obs, obs_landmask, maskland=maskland, maskocean=maskocean)
-            if obs_areacell is None:
-                obs_areacell = ArrayOnes(obs_landmask, id='areacell')
-            obs_areacell = ApplyLandmaskToArea(obs_areacell, obs_landmask, maskland=maskland, maskocean=maskocean)
-            del obs_landmask
+    prmap_mod, unneeded, keyerror_mod2 = \
+        Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, prbox[0], file_area=prareafilemod,
+                            name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    prmap_obs, unneeded, keyerror_obs2 = \
+        Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, prbox[0], file_area=prareafileobs,
+                            name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
 
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, **kwargs)
+    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        compRmse, compRmseErr, signAgreement, signAgreementErr = None, None, None, None
+        nina_years_mod, nina_years_obs, nino_years_mod, nino_years_obs = None, None, None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        keyerror = ''
+        if keyerror_mod1 is not None:
+            keyerror = keyerror_mod1
+        if len(keyerror) > 0 and keyerror_obs1 is not None:
+            keyerror += " ; "
+        if keyerror_obs1 is not None:
+            keyerror += keyerror_obs1
+        if len(keyerror) > 0 and keyerror_mod2 is not None:
+            keyerror += " ; "
+        if keyerror_mod2 is not None:
+            keyerror += keyerror_mod2
+        if len(keyerror) > 0 and keyerror_obs2 is not None:
+            keyerror += " ; "
+        if keyerror_obs2 is not None:
+            keyerror += keyerror_obs2
+        if len(keyerror) > 0 and keyerror_mod3 is not None:
+            keyerror += " ; "
+        if keyerror_mod3 is not None:
+            keyerror += keyerror_mod3
+        if len(keyerror) > 0 and keyerror_obs3 is not None:
+            keyerror += " ; "
+        if keyerror_obs3 is not None:
+            keyerror += keyerror_obs3
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. detect events
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        pr_model, Method = PreProcessTS(pr_model, Method, areacell=model_areacell, average='horizontal',
-                                        compute_anom=False, **kwargs)
-        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                        **kwargs)
-        del model_areacell, obs_areacell
+        sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        del mod_areacell, obs_areacell
         if debug is True:
-            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_model.getAxisList()]),
-                          'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                          'shape1': '(model) ' + str(pr_model.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
-                          'time1': '(model) ' + str(TimeBounds(pr_model)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
-        # Seasonal mean
-        pr_model = SeasonalMean(pr_model, 'NDJ', compute_anom=False)
-        pr_obs = SeasonalMean(pr_obs, 'NDJ', compute_anom=False)
+        # 1.2 SSTA < 'threshold' (SSTA > 'threshold') during 'season' are considered as La Nina (El Nino) events
+        # Lists event years
+        nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
+        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
+        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        if debug is True:
+            dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs),
+                          'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
-        # composites
-        composite_nina_model = Composite(pr_model, nina_years_model, kwargs['frequency'])
-        composite_nino_model = Composite(pr_model, nino_years_model, kwargs['frequency'])
-        composite_nina_obs = Composite(pr_obs, nina_years_obs, kwargs['frequency'])
-        composite_nino_obs = Composite(pr_obs, nino_years_obs, kwargs['frequency'])
+        # ------------------------------------------------
+        # 2. compute composite
+        # ------------------------------------------------
+        # smoothing is not applied
+        if 'smoothing' in kwargs.keys():
+            smooth = deepcopy(kwargs['smoothing'])
+            kwargs['smoothing'] = False
+        list_composite_mod, list_composite_obs = list(), list()
+        loop_keyerror = ''
+        loop_box = list()
+        for reg in prbox:
+            if debug is True:
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
+            # Read if the given region is defined as a land region, an oceanic region, or both
+            dict_reg = ReferenceRegions(reg)
+            if 'maskland' in dict_reg.keys():
+                maskland = dict_reg['maskland']
+            else:
+                maskland = False
+            if 'maskocean' in dict_reg.keys():
+                maskocean = dict_reg['maskocean']
+            else:
+                maskocean = False
+            pr_mod, mod_areacell, keyerror_mod = \
+                Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, reg, file_area=prareafilemod,
+                                    name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
+                                    maskland=maskland, maskocean=maskocean, time_bounds=kwargs['time_bounds_mod'],
+                                    debug=debug, **kwargs)
+            pr_obs, obs_areacell, keyerror_obs = \
+                Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, reg, file_area=prareafileobs,
+                                    name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
+                                    maskland=maskland, maskocean=maskocean, time_bounds=kwargs['time_bounds_obs'],
+                                    debug=debug, **kwargs)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(pr_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                if len(loop_keyerror) > 0 and keyerror_mod is not None:
+                    loop_keyerror += " ; "
+                if keyerror_mod is not None:
+                    loop_keyerror += keyerror_mod
+                if len(loop_keyerror) > 0 and keyerror_obs is not None:
+                    loop_keyerror += " ; "
+                if keyerror_obs is not None:
+                    loop_keyerror += keyerror_obs
+            else:
+                loop_box.append(reg)
+                # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+                pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='horizontal',
+                                              compute_anom=False, **kwargs)
+                pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal',
+                                                compute_anom=False, **kwargs)
+                del mod_areacell, obs_areacell
+                if debug is True:
+                    dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                                  'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
+                                  'time1': '(model) ' + str(TimeBounds(pr_mod)),
+                                  'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS '+str(reg), 20, **dict_debug)
 
-        # list composites
-        list_composite_model.append(float(composite_nino_model-composite_nina_model))
-        list_composite_obs.append(float(composite_nino_obs-composite_nina_obs))
-    if 'smoothing' in kwargs.keys():
-        kwargs['smoothing'] = smooth
-        del smooth
+                # Seasonal mean
+                pr_mod = SeasonalMean(pr_mod, 'NDJ', compute_anom=False)
+                pr_obs = SeasonalMean(pr_obs, 'NDJ', compute_anom=False)
 
-    # Computes the root mean square difference
-    compositeRmse = RmsAxis(list_composite_model, list_composite_obs, centered=centered_rmse, biased=biased_rmse)
+                # composites
+                composite_nina_mod = Composite(pr_mod, nina_years_mod, kwargs['frequency'])
+                composite_nino_mod = Composite(pr_mod, nino_years_mod, kwargs['frequency'])
+                composite_nina_obs = Composite(pr_obs, nina_years_obs, kwargs['frequency'])
+                composite_nino_obs = Composite(pr_obs, nino_years_obs, kwargs['frequency'])
 
-    # Computes the percentage of regions where observations and model agree on the sign of the teleconnection
-    signAgreement = sum([1. for vmod,vobs in zip(list_composite_model,list_composite_obs)
-                        if NUMPYsign(vmod)==NUMPYsign(vobs)])/len(list_composite_model)
+                # list composites
+                list_composite_mod.append(float(composite_nino_mod-composite_nina_mod))
+                list_composite_obs.append(float(composite_nino_obs-composite_nina_obs))
+                del composite_nina_mod, composite_nina_obs, composite_nino_mod, composite_nino_obs
+            del dict_reg, keyerror_mod, keyerror_obs, maskland, maskocean, pr_mod, pr_obs
 
-    # Dive down diagnostic
-    dive_down_diag = {'model': list_composite_model, 'observations': list_composite_obs, 'axis': prbox}
+        # create arrays
+        ar5 = 'AR5 reference regions'
+        ref = 'https://www.ipcc-data.org/guidelines/pages/ar5_regions.html'
+        list_composite_mod = ArrayListAx(list_composite_mod, loop_box, ax_name_ax='box', ax_long_name=ar5, ax_ref=ref)
+        list_composite_obs = ArrayListAx(list_composite_obs, loop_box, ax_name_ax='box', ax_long_name=ar5, ax_ref=ref)
+
+        if len(loop_keyerror) > 0:
+            keyerror = deepcopy(loop_keyerror)
+        if 'smoothing' in kwargs.keys():
+            kwargs['smoothing'] = smooth
+            del smooth
+
+        # Computes the root mean square difference
+        compRmse = RmsAxis(list_composite_mod, list_composite_obs, centered=centered_rmse, biased=biased_rmse)
+        compRmseErr = None
+
+        # Computes the percentage of regions where observations and model agree on the sign of the teleconnection
+        signAgreement = sum([1. for vmod,vobs in zip(list_composite_mod, list_composite_obs)
+                             if NUMPYsign(vmod) == NUMPYsign(vobs)]) / len(list_composite_mod)
+        signAgreementErr = NUMPYsqrt(signAgreement * (1 - signAgreement) / len(list_composite_mod)) * 1.65
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(list_composite_mod), 'observations': ArrayToList(list_composite_obs),
+                          'axis': loop_box}
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nina_years': str(nina_years_mod), 'nino_years': str(nino_years_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nina_years': str(nina_years_obs), 'nino_years': str(nino_years_obs)}
+            dict3 = {
+                'metric_name': Name, 'metric_valueRMSE_' + dataset2: compRmse,
+                'metric_valueRMSE_error_' + dataset2: compRmseErr, 'metric_valueSignAgree_' + dataset2: signAgreement,
+                'metric_valueSignAgree_error_' + dataset2: signAgreementErr, 'metric_method': Method,
+                'metric_reference': Ref, 'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=list_composite_mod, var1_attributes=dict1, var1_name='prComp_box__' + dataset1,
+                       var2=list_composite_obs, var2_attributes=dict2, var2_name='prComp_box__' + dataset2,
+                       global_attributes=dict3)
+            del dict1, dict2, dict3
 
     # Create output
     EnsoPrTelMetric = {
-        'name': Name, 'value': compositeRmse, 'value_error': None, 'units': Units, 'method': Method,
-        'value2': signAgreement, 'value_error2': None, 'units2': '%', 'nyears_model': yearN_model,
-        'nyears_observations': yearN_obs, 'nina_model': nina_years_model, 'nino_model': nino_years_model,
-        'nina_observations': nina_years_obs, 'nino_observations': nino_years_obs, 'time_frequency': kwargs['frequency'],
-        'time_period_model': actualtimeboundsmodel, 'time_period_observations': actualtimeboundsobs, 'ref': Ref,
-        'dive_down_diag': dive_down_diag,
+        'name': Name, 'Rmse__value': compRmse, 'Rmse__value_error': signAgreement, 'Rmse__units': Units,
+        'method': Method, 'SignAgree__value': signAgreement, 'SignAgree__value_error': signAgreementErr,
+        'SignAgree__units': '%', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
+        'nina_model': nina_years_mod, 'nino_model': nino_years_mod, 'nina_observations': nina_years_obs,
+        'nino_observations': nino_years_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return EnsoPrTelMetric
 
@@ -5952,6 +6350,380 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     return skewMetric
 
 
+def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+               slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
+               sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+               slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
+               slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+               netcdf=False, netcdf_name='', **kwargs):
+    """
+    The EnsoSlpMap() function computes sea level pressure anomalies pattern associated with ENSO on the globe.
+    First metric: rmse(observations vs model).
+    Second metric: correlation(observations vs model).
+    Third metric: std(model)/std(observations)
+    These metrics can be used to compute a Taylor diagram.
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param slpfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SLP
+    :param slpnamemod: string
+        name of SLP variable (psl) in 'slpfilemod'
+    :param slpareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SLP areacell
+    :param slpareanamemod: string, optional
+        name of areacell for the SLP variable (areacella, areacello,...) in 'slpareafilemod'
+    :param slplandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SLP landmask
+    :param slplandmasknamemod: string, optional
+        name of landmask for the SLP variable (sftlf,...) in 'slplandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param slpfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SLP
+    :param slpnameobs: string
+        name of SLP variable (slp) in 'slpfileobs'
+    :param slpareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SLP areacell
+    :param slpareanameobs: string, optional
+        name of areacell for the SLP variable (areacella, areacello,...) in 'slpareafileobs'
+    :param slplandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SLP landmask
+    :param slplandmasknameobs: string, optional
+        name of landmask for the SLP variable (sftlf,...) in 'slplandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'global') for SST
+    :param slpbox: string
+        name of box (e.g. 'global') for SLP
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoSlpMapMetric: dict
+        name, value (rms [obs;model]), value_error, units, method, value2 (corr [obs;model]),
+        value_error2, units2, value3 (std_model / std_obs), value_error3, units3, nyears_model, nyears_observations,
+        time_frequency, time_period_mod, time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'ENSO SLPA pattern '
+    Method = region_ev + 'SSTA during ' + season_ev + ' regressed against sea level pressure anomalies in ' + slpbox
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'Pa / C'
+    Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
+          'rms (uncentered and biased) calculation'
+    metric = 'EnsoSlpMap'
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, mod_areacell, keyerror_mod1 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, obs_areacell, keyerror_obs1 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+    slp_mod, slp_mod_areacell, keyerror_mod2 = \
+        Read_data_mask_area(slpfilemod, slpnamemod, 'sea level pressure', metric, slpbox, file_area=slpareafilemod,
+                            name_area=slpareanamemod, file_mask=slplandmaskfilemod, name_mask=slplandmasknamemod,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    slp_obs, slp_obs_areacell, keyerror_obs2 = \
+        Read_data_mask_area(slpfileobs, slpnameobs, 'sea level pressure', metric, slpbox, file_area=slpareafileobs,
+                            name_area=slpareanameobs, file_mask=slplandmaskfileobs, name_mask=slplandmasknameobs,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, **kwargs)
+    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        slpCorr, slpCorrErr, slpRmse, slpRmseErr, slpStd, slpStdErr = None, None, None, None, None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+        keyerror = ''
+        if keyerror_mod1 is not None:
+            keyerror = keyerror_mod1
+        if len(keyerror) > 0 and keyerror_obs1 is not None:
+            keyerror += " ; "
+        if keyerror_obs1 is not None:
+            keyerror += keyerror_obs1
+        if len(keyerror) > 0 and keyerror_mod2 is not None:
+            keyerror += " ; "
+        if keyerror_mod2 is not None:
+            keyerror += keyerror_mod2
+        if len(keyerror) > 0 and keyerror_obs2 is not None:
+            keyerror += " ; "
+        if keyerror_obs2 is not None:
+            keyerror += keyerror_obs2
+        if len(keyerror) > 0 and keyerror_mod3 is not None:
+            keyerror += " ; "
+        if keyerror_mod3 is not None:
+            keyerror += keyerror_mod3
+        if len(keyerror) > 0 and keyerror_obs3 is not None:
+            keyerror += " ; "
+        if keyerror_obs3 is not None:
+            keyerror += keyerror_obs3
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        del mod_areacell, obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 Seasonal mean and anomalies
+        sst_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
+        sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
+        if season_ev == 'DJF':
+            time_ax = sst_mod.getTime()
+            time_ax[:] = time_ax[:] - (time_ax[1] - time_ax[0])
+            sst_mod.setAxis(0, time_ax)
+            del time_ax
+            time_ax = sst_obs.getTime()
+            time_ax[:] = time_ax[:] - (time_ax[1] - time_ax[0])
+            sst_obs.setAxis(0, time_ax)
+            del time_ax
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. SLPA
+        # ------------------------------------------------
+        # 2.1 SLPA in 'prbox' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess pr (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, **kwargs)
+        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, **kwargs)
+        del slp_mod_areacell, slp_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 2.2 Seasonal mean and anomalies
+        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True)
+        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Regression map
+        # ------------------------------------------------
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            slp_mod, slp_obs, Method = TwoVarRegrid(slp_mod, slp_obs, Method, region=slpbox, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+        # regression
+        slp_mod_slope, slp_mod_stderr = LinearRegressionTsAgainstMap(slp_mod, sst_mod, return_stderr=True)
+        slp_obs_slope, slp_obs_stderr = LinearRegressionTsAgainstMap(slp_obs, sst_obs, return_stderr=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod_slope.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs_slope.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod_slope.shape),
+                          'shape2': '(obs) ' + str(slp_obs_slope.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+
+        # mask Pacific
+        slp_mod_slope, keyerror_mod = BasinMask(slp_mod_slope, 'pacific', box=slpbox, lat1=-30, lat2=30,
+                                                latkey='between', debug=debug)
+        slp_obs_slope, keyerror_obs = BasinMask(slp_obs_slope, 'pacific', box=slpbox, lat1=-30, lat2=30,
+                                                latkey='between', debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod_slope.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs_slope.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod_slope.shape),
+                          'shape2': '(obs) ' + str(slp_obs_slope.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+
+        # Metric 1
+        slpRmse = float(RmsAxis(slp_mod_slope, slp_obs_slope, axis='xy', centered=centered_rmse, biased=biased_rmse))
+        slpRmseErr = None
+        # Metric 2
+        slpCorr = float(Correlation(slp_mod_slope, slp_obs_slope, axis='xy', centered=1, biased=1))
+        slpCorrErr = None
+        # Metric 3
+        std_mod = Std(slp_mod_slope, weights=None, axis='xy', centered=1, biased=1)
+        std_obs = Std(slp_obs_slope, weights=None, axis='xy', centered=1, biased=1)
+        slpStd = float(std_mod) / float(std_obs)
+        slpStdErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: slpRmse,
+                     'metric_valueRMSE_error_' + dataset2: slpRmseErr, 'metric_valueCORR_' + dataset2: slpCorr,
+                     'metric_valueCORR_error_' + dataset2: slpCorrErr, 'metric_valueSTD_' + dataset2: slpStd,
+                     'metric_valueCORR_error_' + dataset2: slpStdErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=slp_mod_slope, var1_attributes=dict1,
+                       var1_name='reg_slp_over_sst_map__' + dataset1, var2=slp_obs_slope, var2_attributes=dict2,
+                       var2_name='reg_slp_over_sst_map__' + dataset2, global_attributes=dict3)
+            del dict1, dict2, dict3
+
+    # Create output
+    EnsoSlpMapMetric = {
+        'name': Name, 'Rmse__value': slpRmse, 'Rmse__value_error': slpRmseErr, 'Rmse__units': Units, 'method': Method,
+        'Corr__value': slpCorr, 'Corr__value_error': slpCorrErr, 'Corr__units': '', 'Std__value': slpStd,
+        'Std__value_error': slpStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
+        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
+    }
+    return EnsoSlpMapMetric
+
+
 def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
                event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
@@ -6241,6 +7013,14 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                                debug=debug)
         ts_obs_slope, keyerror_obs = BasinMask(ts_obs_slope, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
                                                debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ts_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ts_obs_slope.getAxisList()]),
@@ -6285,7 +7065,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         'Corr__value': tsCorr, 'Corr__value_error': tsCorrErr, 'Corr__units': '', 'Std__value': tsStd,
         'Std__value_error': tsStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
         'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'dive_down_diag': dive_down_diag, 'units': '',
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
     }
     return EnsoSstMapMetric
 
@@ -6323,7 +7104,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     :param prfilemod: string
         path_to/filename of the file (NetCDF) of the modeled PR
     :param prnamemod: string
-        name of PRvariable (pr) in 'prfilemod'
+        name of PR variable (pr) in 'prfilemod'
     :param prareafilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled PR areacell
     :param prareanamemod: string, optional
@@ -6593,6 +7374,14 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # mask Pacific
         pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
         pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -6638,7 +7427,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         'Corr__value': prCorr, 'Corr__value_error': prCorrErr, 'Corr__units': '', 'Std__value': prStd,
         'Std__value_error': prStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
         'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'dive_down_diag': dive_down_diag, 'units': '',
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinaPrMapMetric
 
@@ -7716,6 +8506,371 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     return NinaLonMetric
 
 
+def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+               slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
+               sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+               slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
+               slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+               netcdf=False, netcdf_name='', **kwargs):
+    """
+    The NinaSlpMap() function computes a sea level pressure anomalies composite of during the peak of La Nina events
+    SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        Then SSTA < 'threshold' during 'season' are considered as La Nina events
+    Then the SLPA at the peak of the event is composited for each selected event
+    First metric: rmse(observations vs model).
+    Second metric: correlation(observations vs model).
+    Third metric: std(model)/std(observations)
+    These metrics can be used to compute a Taylor diagram.
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param slpfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SLP
+    :param slpnamemod: string
+        name of SLP variable (slp) in 'slpfilemod'
+    :param slpareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SLP areacell
+    :param slpareanamemod: string, optional
+        name of areacell for the SLP variable (areacella, areacello,...) in 'slpareafilemod'
+    :param slplandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SLP landmask
+    :param slplandmasknamemod: string, optional
+        name of landmask for the SLP variable (sftlf,...) in 'slplandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param slpfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SLP
+    :param slpnameobs: string
+        name of SLP variable (slp) in 'slpfileobs'
+    :param slpareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SLP areacell
+    :param slpareanameobs: string, optional
+        name of areacell for the SLP variable (areacella, areacello,...) in 'slpareafileobs'
+    :param slplandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SLP landmask
+    :param slplandmasknameobs: string, optional
+        name of landmask for the SLP variable (sftlf,...) in 'slplandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'global') for SST
+    :param slpbox: string
+        name of box (e.g. 'global') for SLP
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return NinaSlpMapMetric: dict
+        name, Rmse__value (rms [obs;model]), Rmse__value_error, Rmse__units, method, Corr__value (corr [obs;model]),
+        Corr__value_error, Corr__units, Std__value (std_model / std_obs), Std__value_error, Std__units, nyears_model,
+        nyears_observations, time_frequency, time_period_mod, time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'Nina SLPA Composite'
+    Method = 'Nina events = ' + region_ev + ' sstA < ' + str(threshold) + ' during ' + season_ev +\
+             ', Nina SLPA Composited'
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'Pa'
+    Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
+          'rms (uncentered and biased) calculation'
+    metric = 'NinaSlpMap'
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, mod_areacell, keyerror_mod1 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, obs_areacell, keyerror_obs1 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+    slp_mod, slp_mod_areacell, keyerror_mod2 = \
+        Read_data_mask_area(slpfilemod, slpnamemod, 'sea level pressure', metric, slpbox, file_area=slpareafilemod,
+                            name_area=slpareanamemod, file_mask=slplandmaskfilemod, name_mask=slplandmasknamemod,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    slp_obs, slp_obs_areacell, keyerror_obs2 = \
+        Read_data_mask_area(slpfileobs, slpnameobs, 'sea level pressure', metric, slpbox, file_area=slpareafileobs,
+                            name_area=slpareanameobs, file_mask=slplandmaskfileobs, name_mask=slplandmasknameobs,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, **kwargs)
+    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        slpCorr, slpCorrErr, slpRmse, slpRmseErr, slpStd, slpStdErr = None, None, None, None, None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+        keyerror = ''
+        if keyerror_mod1 is not None:
+            keyerror = keyerror_mod1
+        if len(keyerror) > 0 and keyerror_obs1 is not None:
+            keyerror += " ; "
+        if keyerror_obs1 is not None:
+            keyerror += keyerror_obs1
+        if len(keyerror) > 0 and keyerror_mod2 is not None:
+            keyerror += " ; "
+        if keyerror_mod2 is not None:
+            keyerror += keyerror_mod2
+        if len(keyerror) > 0 and keyerror_obs2 is not None:
+            keyerror += " ; "
+        if keyerror_obs2 is not None:
+            keyerror += keyerror_obs2
+        if len(keyerror) > 0 and keyerror_mod3 is not None:
+            keyerror += " ; "
+        if keyerror_mod3 is not None:
+            keyerror += keyerror_mod3
+        if len(keyerror) > 0 and keyerror_obs3 is not None:
+            keyerror += " ; "
+        if keyerror_obs3 is not None:
+            keyerror += keyerror_obs3
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. detect events
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        del mod_areacell, obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
+        # Lists event years
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        if debug is True:
+            dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. composite SLPA
+        # ------------------------------------------------
+        # 2.1 SLPA in 'slpbox' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess slp (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, **kwargs)
+        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, **kwargs)
+        del slp_mod_areacell, slp_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 2.2 Seasonal mean and anomalies
+        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True)
+        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            slp_mod, slp_obs, Method = TwoVarRegrid(slp_mod, slp_obs, Method, region=slpbox, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+        # 2.3 Composites
+        slp_mod = Composite(slp_mod, event_years_mod, kwargs['frequency'])
+        slp_obs = Composite(slp_obs, event_years_obs, kwargs['frequency'])
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+
+        # mask Pacific
+        slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+                                          debug=debug)
+        slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+                                          debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+
+        # Metric 1
+        slpRmse = float(RmsAxis(slp_mod, slp_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
+        slpRmseErr = None
+        # Metric 2
+        slpCorr = float(Correlation(slp_mod, slp_obs, axis='xy', centered=1, biased=1))
+        slpCorrErr = None
+        # Metric 3
+        std_mod = Std(slp_mod, weights=None, axis='xy', centered=1, biased=1)
+        std_obs = Std(slp_obs, weights=None, axis='xy', centered=1, biased=1)
+        slpStd = float(std_mod) / float(std_obs)
+        slpStdErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nina_years': str(event_years_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nina_years': str(event_years_obs)}
+            dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: slpRmse,
+                     'metric_valueRMSE_error_' + dataset2: slpRmseErr, 'metric_valueCORR_' + dataset2: slpCorr,
+                     'metric_valueCORR_error_' + dataset2: slpCorrErr, 'metric_valueSTD_' + dataset2: slpStd,
+                     'metric_valueCORR_error_' + dataset2: slpStdErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=slp_mod, var1_attributes=dict1, var1_name='slpComp_map__' + dataset1,
+                       var2=slp_obs, var2_attributes=dict2, var2_name='slpComp_map__' + dataset2,
+                       global_attributes=dict3)
+            del dict1, dict2, dict3
+
+    # Create output
+    NinaSlpMapMetric = {
+        'name': Name, 'Rmse__value': slpRmse, 'Rmse__value_error': slpRmseErr, 'Rmse__units': Units, 'method': Method,
+        'Corr__value': slpCorr, 'Corr__value_error': slpCorrErr, 'Corr__units': '', 'Std__value': slpStd,
+        'Std__value_error': slpStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
+        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
+    }
+    return NinaSlpMapMetric
+
+
 def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
                event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
@@ -7996,6 +9151,14 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                             debug=debug)
         tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
                                             debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
@@ -8042,7 +9205,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         'Corr__value': tsCorr, 'Corr__value_error': tsCorrErr, 'Corr__units': '', 'Std__value': tsStd,
         'Std__value_error': tsStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
         'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'dive_down_diag': dive_down_diag, 'units': '',
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinaSstMapMetric
 
@@ -8319,7 +9483,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     :param prfilemod: string
         path_to/filename of the file (NetCDF) of the modeled PR
     :param prnamemod: string
-        name of PRvariable (pr) in 'prfilemod'
+        name of PR variable (pr) in 'prfilemod'
     :param prareafilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled PR areacell
     :param prareanamemod: string, optional
@@ -8589,6 +9753,14 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # mask Pacific
         pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
         pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -8634,7 +9806,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         'Corr__value': prCorr, 'Corr__value_error': prCorrErr, 'Corr__units': '', 'Std__value': prStd,
         'Std__value_error': prStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
         'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'dive_down_diag': dive_down_diag, 'units': '',
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinoPrMapMetric
 
@@ -9705,6 +10878,371 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     return NinoLonMetric
 
 
+def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+               slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
+               sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+               slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
+               slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+               netcdf=False, netcdf_name='', **kwargs):
+    """
+    The NinoSlpMap() function computes a seal level pressure anomalies composite of during the peak of El Nino events
+    SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        Then SSTA > 'threshold' during 'season' are considered as El Nino events
+    Then the SLPA at the peak of the event is composited for each selected event
+    First metric: rmse(observations vs model).
+    Second metric: correlation(observations vs model).
+    Third metric: std(model)/std(observations).
+    These metrics can be used to compute a Taylor diagram.
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param slpfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SLP
+    :param slpnamemod: string
+        name of SLP variable (slp) in 'slpfilemod'
+    :param slpareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SLP areacell
+    :param slpareanamemod: string, optional
+        name of areacell for the SLP variable (areacella, areacello,...) in 'slpareafilemod'
+    :param slplandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SLP landmask
+    :param slplandmasknamemod: string, optional
+        name of landmask for the SLP variable (sftlf,...) in 'slplandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param slpfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SLP
+    :param slpnameobs: string
+        name of SLP variable (slp) in 'slpfileobs'
+    :param slpareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SLP areacell
+    :param slpareanameobs: string, optional
+        name of areacell for the SLP variable (areacella, areacello,...) in 'slpareafileobs'
+    :param slplandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SLP landmask
+    :param slplandmasknameobs: string, optional
+        name of landmask for the SLP variable (sftlf,...) in 'slplandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'global') for SST
+    :param slpbox: string
+        name of box (e.g. 'global') for SLP
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return NinoSlpMapMetric: dict
+        name, Rmse__value (rms [obs;model]), Rmse__value_error, Rmse__units, method, Corr__value (corr [obs;model]),
+        Corr__value_error, Corr__units, Std__value (std_model / std_obs), Std__value_error, Std__units, nyears_model,
+        nyears_observations, time_frequency, time_period_mod, time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'Nino SLPA Composite'
+    Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev +\
+             ', Nino SLPA Composited'
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'Pa'
+    Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
+          'rms (uncentered and biased) calculation'
+    metric = 'NinoSlpMap'
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, mod_areacell, keyerror_mod1 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, obs_areacell, keyerror_obs1 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+    slp_mod, slp_mod_areacell, keyerror_mod2 = \
+        Read_data_mask_area(slpfilemod, slpnamemod, 'sea level pressure', metric, slpbox, file_area=slpareafilemod,
+                            name_area=slpareanamemod, file_mask=slplandmaskfilemod, name_mask=slplandmasknamemod,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    slp_obs, slp_obs_areacell, keyerror_obs2 = \
+        Read_data_mask_area(slpfileobs, slpnameobs, 'sea level pressure', metric, slpbox, file_area=slpareafileobs,
+                            name_area=slpareanameobs, file_mask=slplandmaskfileobs, name_mask=slplandmasknameobs,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, **kwargs)
+    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        slpCorr, slpCorrErr, slpRmse, slpRmseErr, slpStd, slpStdErr = None, None, None, None, None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+        keyerror = ''
+        if keyerror_mod1 is not None:
+            keyerror = keyerror_mod1
+        if len(keyerror) > 0 and keyerror_obs1 is not None:
+            keyerror += " ; "
+        if keyerror_obs1 is not None:
+            keyerror += keyerror_obs1
+        if len(keyerror) > 0 and keyerror_mod2 is not None:
+            keyerror += " ; "
+        if keyerror_mod2 is not None:
+            keyerror += keyerror_mod2
+        if len(keyerror) > 0 and keyerror_obs2 is not None:
+            keyerror += " ; "
+        if keyerror_obs2 is not None:
+            keyerror += keyerror_obs2
+        if len(keyerror) > 0 and keyerror_mod3 is not None:
+            keyerror += " ; "
+        if keyerror_mod3 is not None:
+            keyerror += keyerror_mod3
+        if len(keyerror) > 0 and keyerror_obs3 is not None:
+            keyerror += " ; "
+        if keyerror_obs3 is not None:
+            keyerror += keyerror_obs3
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. detect events
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        del mod_areacell, obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
+        # Lists event years
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        if debug is True:
+            dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. composite SLPA
+        # ------------------------------------------------
+        # 2.1 SLPA in 'slpbox' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess slp (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, **kwargs)
+        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, **kwargs)
+        del slp_mod_areacell, slp_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 2.2 Seasonal mean and anomalies
+        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True)
+        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            slp_mod, slp_obs, Method = TwoVarRegrid(slp_mod, slp_obs, Method, region=slpbox, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+        # 2.3 Composites
+        slp_mod = Composite(slp_mod, event_years_mod, kwargs['frequency'])
+        slp_obs = Composite(slp_obs, event_years_obs, kwargs['frequency'])
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+
+        # mask Pacific
+        slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+                                          debug=debug)
+        slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+                                          debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+
+        # Metric 1
+        slpRmse = float(RmsAxis(slp_mod, slp_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
+        slpRmseErr = None
+        # Metric 2
+        slpCorr = float(Correlation(slp_mod, slp_obs, axis='xy', centered=1, biased=1))
+        slpCorrErr = None
+        # Metric 3
+        std_mod = Std(slp_mod, weights=None, axis='xy', centered=1, biased=1)
+        std_obs = Std(slp_obs, weights=None, axis='xy', centered=1, biased=1)
+        slpStd = float(std_mod) / float(std_obs)
+        slpStdErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+
+        if netcdf is True:
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nino_years': str(event_years_mod)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nino_years': str(event_years_obs)}
+            dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: slpRmse,
+                     'metric_valueRMSE_error_' + dataset2: slpRmseErr, 'metric_valueCORR_' + dataset2: slpCorr,
+                     'metric_valueCORR_error_' + dataset2: slpCorrErr, 'metric_valueSTD_' + dataset2: slpStd,
+                     'metric_valueCORR_error_' + dataset2: slpStdErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name, var1=slp_mod, var1_attributes=dict1, var1_name='slpComp_map__' + dataset1,
+                       var2=slp_obs, var2_attributes=dict2, var2_name='slpComp_map__' + dataset2,
+                       global_attributes=dict3)
+            del dict1, dict2, dict3
+
+    # Create output
+    NinoSlpMapMetric = {
+        'name': Name, 'Rmse__value': slpRmse, 'Rmse__value_error': slpRmseErr, 'Rmse__units': Units, 'method': Method,
+        'Corr__value': slpCorr, 'Corr__value_error': slpCorrErr, 'Corr__units': '', 'Std__value': slpStd,
+        'Std__value_error': slpStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
+        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
+    }
+    return NinoSlpMapMetric
+
+
 def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
                event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
@@ -9985,6 +11523,14 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                             debug=debug)
         tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
                                             debug=debug)
+        if keyerror_mod is not None or keyerror_obs is not None:
+            keyerror = ''
+            if keyerror_mod is not None:
+                keyerror = keyerror_mod
+            if len(keyerror) > 0 and keyerror_obs is not None:
+                keyerror += " ; "
+            if keyerror_obs is not None:
+                keyerror += keyerror_obs
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
@@ -10031,7 +11577,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         'Corr__value': tsCorr, 'Corr__value_error': tsCorrErr, 'Corr__units': '', 'Std__value': tsStd,
         'Std__value_error': tsStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
         'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'dive_down_diag': dive_down_diag, 'units': '',
+        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinoSstMapMetric
 

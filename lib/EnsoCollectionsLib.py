@@ -307,60 +307,60 @@ def defCollection(MC=True):
         'ENSO_tel': {
             'long_name': 'Metrics Collection for ENSO teleconnections',
             'metrics_list': {
-                'EnsoPrMap': {
-                    'variables': ['sst', 'pr'],
-                    'regions': {'pr': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC'},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
-                },
-                'EnsoSstMap': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'global'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC'},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                },
-                'NinaPrMap': {
-                    'variables': ['sst', 'pr'],
-                    'regions': {'pr': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
-                },
-                'NinaSstMap': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'global'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                },
-                'NinoPrMap': {
-                    'variables': ['sst', 'pr'],
-                    'regions': {'pr': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
-                },
-                'NinoSstMap': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'global'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
-                },
+                # 'EnsoPrMap': {
+                #     'variables': ['sst', 'pr'],
+                #     'regions': {'pr': 'global', 'sst': 'nino3.4'},
+                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC'},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                # },
+                # 'EnsoSstMap': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'global'},
+                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC'},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                # },
+                # 'NinaPrMap': {
+                #     'variables': ['sst', 'pr'],
+                #     'regions': {'pr': 'global', 'sst': 'nino3.4'},
+                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                # },
+                # 'NinaSstMap': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'global'},
+                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                # },
+                # 'NinoPrMap': {
+                #     'variables': ['sst', 'pr'],
+                #     'regions': {'pr': 'global', 'sst': 'nino3.4'},
+                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                # },
+                # 'NinoSstMap': {
+                #     'variables': ['sst'],
+                #     'regions': {'sst': 'global'},
+                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                # },
                 'EnsoPrNdjTel': {
                     'variables': ['sst', 'pr'],
                     'regions': {'pr': ['CAS', 'CEP', 'CNA', 'CNP', 'CSP', 'EAF', 'EAS', 'ENA', 'INO', 'MED', 'NAU',
@@ -370,15 +370,15 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
                 },
-                'EnsoPrJjaTel': {
-                    'variables': ['sst', 'pr'],
-                    'regions': {'pr': ['CAS', 'CEP', 'CNA', 'CNP', 'CSP', 'EAF', 'EAS', 'ENA', 'INO', 'MED', 'NAU',
-                                       'NEB', 'SAF', 'SAH', 'SAU', 'SEA', 'TIB', 'WAF', 'WAS', 'WNA'],
-                                'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
-                    'smoothing': {'window': 5, 'method': 'triangle'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
-                },
+                # 'EnsoPrJjaTel': {
+                #     'variables': ['sst', 'pr'],
+                #     'regions': {'pr': ['CAS', 'CEP', 'CNA', 'CNP', 'CSP', 'EAF', 'EAS', 'ENA', 'INO', 'MED', 'NAU',
+                #                        'NEB', 'SAF', 'SAH', 'SAU', 'SEA', 'TIB', 'WAF', 'WAS', 'WNA'],
+                #                 'sst': 'nino3.4'},
+                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75},
+                #     'smoothing': {'window': 5, 'method': 'triangle'},
+                #     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                # },
             },
             'common_collection_parameters': {
                 'detrending': {'method': 'linear'},
@@ -532,7 +532,8 @@ def ReferenceObservations(DATASET=True):
 
 def ReferenceRegions(AR=True):
     dict_reference_regions = {
-        'global': {'long_name': 'Global', 'latitude': (-60., 60.), 'longitude': (0., 360.)},
+        'global': {'long_name': 'Global 60S-60N', 'latitude': (-60., 60.), 'longitude': (0., 360.)},
+        'global2': {'long_name': 'Global', 'latitude': (-90., 90.), 'longitude': (0., 360.)},
         'tropical_pacific': {
             'long_name': 'Tropical Pacific (TP)', 'latitude': (-30., 30.), 'longitude': (120., 280.),
         },
@@ -646,22 +647,24 @@ def CmipVariables():
             'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
             'landmask': {'var_name': 'sftlf', 'cf_name': 'cell_area', 'cf_units': '1'},
-            # latent heat flux (on ocean grid or ocean points only)
+            # latent heat flux
             'lhf': {'var_name': 'hfls', 'cf_name': 'land_area_fraction', 'cf_units': 'W m-2'},
-            # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+            # longwave radiation computed from these variables IN THAT ORDER
             # lwr = rlds - rlus
             # sometimes lwr is included in the datasets in a variable called 'rls'
             'lwr': {
                 'var_name': ['rlds', 'rlus'],
                 'cf_name': ['surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air',],
                 'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']},
-            # Rainfall Flux (on ocean grid or ocean points only)
+            # Rainfall Flux
             'pr': {'var_name': 'pr', 'cf_name': 'rainfall_flux', 'cf_units': 'kg m-2 s-1'},
+            # Sea Level Pressure
+            'slp': {'var_name': 'psl', 'cf_name': 'air_pressure_at_mean_sea_level', 'cf_units': 'Pa'},
             # sensible heat flux (on ocean grid or ocean points only)
             'shf': {'var_name': 'hfss', 'cf_name': 'surface_upward_sensible_heat_flux', 'cf_units': 'W m-2'},
-            # sea surface temperature (on ocean grid or ocean points only)
+            # sea surface temperature
             'sst': {'var_name': 'ts', 'cf_name': 'sea_surface_temperature', 'cf_units': 'K'},
-            # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+            # shortwave radiation computed from these variables IN THAT ORDER
             # swr = rsds - rsus
             # sometimes swr is included in the datasets in a variable called 'rss'
             'swr': {
@@ -669,9 +672,9 @@ def CmipVariables():
                 'cf_name': ['surface_downwelling_shortwave_flux_in_air', 'surface_upwelling_shortwave_flux_in_air'],
                 'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']
             },
-            # zonal surface wind stress (on ocean grid or ocean points only)
+            # zonal surface wind stress
             'taux': {'var_name': 'tauu', 'cf_name': 'surface_downward_eastward_stress', 'cf_units': 'Pa'},
-            # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+            # total heat flux computed from these variables IN THAT ORDER
             # tfh = hfls + hfss + rlds - rlus + rsds - rsus
             # sometimes rls = rlds - rlus and rss = rsds - rsus
             # sometimes thf is included in the datasets in a variable called 'hfds', 'netflux', 'thflx',...
