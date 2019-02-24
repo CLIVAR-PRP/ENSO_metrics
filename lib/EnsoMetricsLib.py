@@ -6499,12 +6499,12 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                             **kwargs)
     slp_mod, slp_mod_areacell, keyerror_mod2 = \
-        Read_data_mask_area(slpfilemod, slpnamemod, 'sea level pressure', metric, slpbox, file_area=slpareafilemod,
+        Read_data_mask_area(slpfilemod, slpnamemod, 'pressure', metric, slpbox, file_area=slpareafilemod,
                             name_area=slpareanamemod, file_mask=slplandmaskfilemod, name_mask=slplandmasknamemod,
                             maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
                             **kwargs)
     slp_obs, slp_obs_areacell, keyerror_obs2 = \
-        Read_data_mask_area(slpfileobs, slpnameobs, 'sea level pressure', metric, slpbox, file_area=slpareafileobs,
+        Read_data_mask_area(slpfileobs, slpnameobs, 'pressure', metric, slpbox, file_area=slpareafileobs,
                             name_area=slpareanameobs, file_mask=slplandmaskfileobs, name_mask=slplandmasknameobs,
                             maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                             **kwargs)
@@ -9420,12 +9420,12 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                             **kwargs)
     slp_mod, slp_mod_areacell, keyerror_mod2 = \
-        Read_data_mask_area(slpfilemod, slpnamemod, 'sea level pressure', metric, slpbox, file_area=slpareafilemod,
+        Read_data_mask_area(slpfilemod, slpnamemod, 'pressure', metric, slpbox, file_area=slpareafilemod,
                             name_area=slpareanamemod, file_mask=slplandmaskfilemod, name_mask=slplandmasknamemod,
                             maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
                             **kwargs)
     slp_obs, slp_obs_areacell, keyerror_obs2 = \
-        Read_data_mask_area(slpfileobs, slpnameobs, 'sea level pressure', metric, slpbox, file_area=slpareafileobs,
+        Read_data_mask_area(slpfileobs, slpnameobs, 'pressure', metric, slpbox, file_area=slpareafileobs,
                             name_area=slpareanameobs, file_mask=slplandmaskfileobs, name_mask=slplandmasknameobs,
                             maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                             **kwargs)
@@ -12552,12 +12552,12 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                             **kwargs)
     slp_mod, slp_mod_areacell, keyerror_mod2 = \
-        Read_data_mask_area(slpfilemod, slpnamemod, 'sea level pressure', metric, slpbox, file_area=slpareafilemod,
+        Read_data_mask_area(slpfilemod, slpnamemod, 'pressure', metric, slpbox, file_area=slpareafilemod,
                             name_area=slpareanamemod, file_mask=slplandmaskfilemod, name_mask=slplandmasknamemod,
                             maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
                             **kwargs)
     slp_obs, slp_obs_areacell, keyerror_obs2 = \
-        Read_data_mask_area(slpfileobs, slpnameobs, 'sea level pressure', metric, slpbox, file_area=slpareafileobs,
+        Read_data_mask_area(slpfileobs, slpnameobs, 'pressure', metric, slpbox, file_area=slpareafileobs,
                             name_area=slpareanameobs, file_mask=slplandmaskfileobs, name_mask=slplandmasknameobs,
                             maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                             **kwargs)
