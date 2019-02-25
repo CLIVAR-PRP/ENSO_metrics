@@ -815,7 +815,7 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     # temp corrections for cdms2 to find the right axis
     CDMS2setAutoBounds('on')
     # open file
-    ff = CDMS2open('../data/basin_generic_1x1deg.nc')
+    ff = CDMS2open('./../data/basin_generic_1x1deg.nc')
     # read basins
     if box is not None:
         region_ref = ReferenceRegions(box)
