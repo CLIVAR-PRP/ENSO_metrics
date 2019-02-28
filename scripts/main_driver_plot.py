@@ -65,8 +65,9 @@ for ens in list_ensembles:
     # this is an example. You can create plots for all 'nbr_years' you have computed using the '*' before 'years' or
     # specify the number of years: e.g., '_0010years_'
     # You can also give a file name 'in hard': 'yplanton_ENSO_perf_IPSL-CM5A-LR_pi_r1i1p1_0010years_EnsoAmpl'
-    input_name = OSpath__join(
-        path, user_name + "_" + mc_name + "_" + model + "_" + experiment + "_" + ens + "_*years_" + metric)
+    tmp_name = mc_name + "_" + model + "_" + experiment + "_" + ens + "_*years_" + metric
+    input_name = OSpath__join(path, user_name + "_" + tmp_name)
+    #input_name = OSpath__join(path, "yplanton_" + tmp_name)
     print input_name
     # output file name
     output_name = OSpath__join(
@@ -80,7 +81,7 @@ for ens in list_ensembles:
         listkeys = ['metric']
     else:
         listkeys = ['metric', 'metric_err', 'diagnostic', 'diagnostic_err']
-    for key_val in []:  # listkeys:
+    for key_val in listkeys:
         print str().ljust(10) + key_val
         plot_title = title + " (" + key_val + ")"  # this is an example you can give the name you want
         local_output_name = output_name + "_" + key_val  # this is an example you can give the name you want
