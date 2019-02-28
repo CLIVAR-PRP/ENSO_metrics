@@ -137,6 +137,6 @@ for ens in list_ensembles:
     # ---------------------------------------------------#
     # mapplot (uses 1d.nc files)
     print str().ljust(5) + "mapplot"
-    myplot(input_name, output_name, metric, title, '2d', z_name='spread 90%')
+    myplot(input_name, output_name, metric, title, '2d', model_name=model, z_name='spread 90%')
 
 

@@ -539,7 +539,8 @@ def metric_curveplot(name_plot, title_plot, x_axis, x_label, x_name, y_name, y_r
     return
 
 
-def metric_mapplot(name_plot, title_plot, lats, lons, z1_range, z2_range, units, dict_to_plot, color_bar='Oranges',
+def metric_mapplot(name_plot, title_plot, model_name, lats, lons, z1_range, z2_range, units, dict_to_plot,
+                   color_bar='Oranges',
                    z2_name=''):
     for dat in dict_to_plot.keys():
         if dat != 'model':
@@ -548,6 +549,7 @@ def metric_mapplot(name_plot, title_plot, lats, lons, z1_range, z2_range, units,
             tab = deepcopy(dict_to_plot[dat])
     for dat in dict_to_plot.keys():
         if dat == 'model':
+            titlef = deepcopy(title_plot)
             tab = deepcopy(dict_to_plot[dat])
             mean = MV2average(tab, axis=0)
             mean = CDMS2createVariable(mean, axes=tab.getAxisList()[1:], grid=tab.getGrid(), mask=tab[0].mask,
@@ -559,6 +561,7 @@ def metric_mapplot(name_plot, title_plot, lats, lons, z1_range, z2_range, units,
             spread = c95 - c05
             del c05, c95
         else:
+            titlef = title_plot.replace(model_name, dat)
             mean = deepcopy(dict_to_plot[dat])
             spread = MV2zeros(mean.shape)
             if color_bar in ['PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdBu', 'bwr', 'seismic']:
@@ -596,13 +599,13 @@ def metric_mapplot(name_plot, title_plot, lats, lons, z1_range, z2_range, units,
         # Recast levels to new class
         cs.levels = [my_f.format(ii) for ii in cs.levels]
         plt.clabel(cs, cs.levels, inline=True, fontsize=10, use_clabeltext=True)
-        plt.title(title_plot + " " + dat, fontsize=20, y=1.02)
+        plt.title(titlef, fontsize=20, y=1.02)
         plt.savefig(name_plot + "_" + dat)
         plt.close()
     return
 
 
-def myplot(nc_pattern, output_name, metric, title, plot_type, z_name=''):
+def myplot(nc_pattern, output_name, metric, title, plot_type, model_name='', z_name=''):
     # list all files
     list_files = sorted(list(GLOBiglob(nc_pattern + "_" + str(plot_type) + ".nc")))
     # nbr years used
@@ -662,7 +665,7 @@ def myplot(nc_pattern, output_name, metric, title, plot_type, z_name=''):
                 title_plot = title + " (" + str(nbr).zfill(4) + " years)" + add_to
                 minmax2 = NUMPYarray(dict_range[var_typ]['minmax']) - dict_range[var_typ]['minmax'][0]
                 minmax2 = minmax2 * 0.75
-                metric_mapplot(name_png, title_plot, axis[0], axis[1], dict_range[var_typ]['minmax'],
+                metric_mapplot(name_png, title_plot, model_name, axis[0], axis[1], dict_range[var_typ]['minmax'],
                                minmax2, units, dict_data, z2_name=z_name)
             del name_png, title_plot
             del add_to, axis, axis_label, axis_name, dict_data, units
