@@ -6605,7 +6605,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             keyerror_metric = "no La Nina event during the period"
 
         if keyerror_metric is not None:
-            StdErr, dive_down_diag = None, {'value': None, 'axis': None}
+            ep_event, StdErr, dive_down_diag, event_years = None, None, {'value': None, 'axis': None}, None
             keyerror = deepcopy(keyerror_metric)
         else:
             # Standard Error of the Standard Deviation (function of nyears)
@@ -7959,7 +7959,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             keyerror_metric = "no El Nino event during the period"
 
         if keyerror_metric is not None:
-            StdErr, dive_down_diag = None, {'value': None, 'axis': None}
+            ep_event, StdErr, dive_down_diag, event_years = None, None, {'value': None, 'axis': None}, None
             keyerror = deepcopy(keyerror_metric)
         else:
             # Standard Error of the Standard Deviation (function of nyears)
