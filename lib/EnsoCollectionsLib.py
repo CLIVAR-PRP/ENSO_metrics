@@ -81,7 +81,7 @@ def defCollection(MC=True):
                 'min_time_steps': 24,
                 'project_interpreter': 'CMIP',
                 'metric_computation': 'difference',
-                'observed_period': ('1980-01-01 00:00:00', '2016-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                'observed_period': ('1980-01-01 00:00:00', '2016-12-31 23:59:60.0'),
                 'modeled_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
             'description': 'Describe which science question this collection is about',
@@ -287,7 +287,7 @@ def defCollection(MC=True):
                 'min_time_steps': 24,
                 'normalization': False,
                 'project_interpreter': 'CMIP',
-                'observed_period': ('1917-01-01 00:00:00', '2016-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                'observed_period': ('1917-01-01 00:00:00', '2016-12-31 23:59:60.0'),
                 'modeled_period': ('1906-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
             'plot_groupings': {
@@ -297,10 +297,6 @@ def defCollection(MC=True):
                               'BiasTauxLatRmse', 'BiasTauxLonRmse', 'SeasonalPrLatRmse', 'SeasonalSstLatRmse',
                               'SeasonalSstLonRmse', 'NinaSstLonRmse', 'NinaSstTsRmse', 'NinoSstLonRmse',
                               'NinoSstTsRmse'],
-                # 'plot_rmse': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLatRmse', 'BiasSstLonRmse', 'BiasSstSkLonRmse',
-                #               'BiasTauxLatRmse', 'BiasTauxLonRmse', 'SeasonalPrLatRmse', 'SeasonalSstLatRmse',
-                #               'SeasonalSstLonRmse', 'NinaSstDivRmse', 'NinaSstLonRmse', 'NinaSstTsRmse',
-                #               'NinoSstDivRmse', 'NinoSstLonRmse', 'NinoSstTsRmse'],
             },
             'description': 'Describe which science question this collection is about',
         },
@@ -350,7 +346,7 @@ def defCollection(MC=True):
                 'min_time_steps': 24,
                 'normalization': False,
                 'project_interpreter': 'CMIP',
-                'observed_period': ('1980-01-01 00:00:00', '2016-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                'observed_period': ('1980-01-01 00:00:00', '2016-12-31 23:59:60.0'),
                 'modeled_period': ('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
             },
             'description': 'Describe which science question this collection is about',
@@ -605,7 +601,8 @@ def CmipVariables():
         'reference': 'http://cfconventions.org/Data/cf-standard-names/46/build/cf-standard-name-table.html',
         'variable_name_in_file': {
             # line keys:
-            # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>, 'cf_unit':'<unit_in_file>'}
+            # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>,
+            # 'cf_unit':'<unit_in_file>'}
             # areacell
             'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
