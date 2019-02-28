@@ -76,15 +76,57 @@ for ens in list_ensembles:
     #---------------------------------------------------#
     # boxplot (uses json files)
     print str().ljust(5) + "boxplot"
-    for key_val in ['metric', 'metric_err', 'diagnostic', 'diagnostic_err']:
+    if "Rmse" in metric:
+        listkeys = ['metric']
+    else:
+        listkeys = ['metric', 'metric_err', 'diagnostic', 'diagnostic_err']
+    for key_val in []:  # listkeys:
         print str().ljust(10) + key_val
         plot_title = title + " (" + key_val + ")"  # this is an example you can give the name you want
         local_output_name = output_name + "_" + key_val  # this is an example you can give the name you want
         # this must be changed depending on the metric. Read the metadata in the json file or ask me for ideas
-        if 'metric' in key_val:
-            plot_yname = "STDmodel / STDobs"
-        else:
-            plot_yname = "sst STD"
+        if "Rmse" in metric:
+            plot_yname = "RMSE (model, obs)"
+        elif metric == 'EnsoAmpl':
+            if 'metric' in key_val:
+                plot_yname = "STDmodel / STDobs"
+            else:
+                plot_yname = "sst standard deviation"
+        elif metric == "EnsoDiversity":
+            if 'metric' in key_val:
+                plot_yname = "DIVmodel / DIVobs"
+            else:
+                plot_yname = "% EP La Nina / % EP El Nino"
+        elif metric == "EnsoSeasonality":
+            if 'metric' in key_val:
+                plot_yname = "SEAmodel / SEAobs"
+            else:
+                plot_yname = "STD(NDJ) / STD(MAM)"
+        elif metric == 'EnsoSstSkew':
+            if 'metric' in key_val:
+                plot_yname = "SKEWmodel / SKEWobs"
+            else:
+                plot_yname = "sst skewness"
+        elif metric == "NinaSstDiv":
+            if 'metric' in key_val:
+                plot_yname = "% EP La Nina model / obs"
+            else:
+                plot_yname = "% EP La Nina"
+        elif metric == "NinaSstDur":
+            if 'metric' in key_val:
+                plot_yname = "duration La Nina model / obs"
+            else:
+                plot_yname = "duration La Nina"
+        elif metric == "NinoSstDiv":
+            if 'metric' in key_val:
+                plot_yname = "% EP El Nino model / obs"
+            else:
+                plot_yname = "% EP El Nino"
+        elif metric == "NinoSstDur":
+            if 'metric' in key_val:
+                plot_yname = "duration El Nino model / obs"
+            else:
+                plot_yname = "duration EP El Nino"
         metric_boxplot(input_name, key_val, local_output_name, plot_title, plot_yname)
         del local_output_name, plot_title, plot_yname
     #---------------------------------------------------#

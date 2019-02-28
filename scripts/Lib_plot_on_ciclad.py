@@ -71,6 +71,7 @@ def add_units_and_scale(units, scale):
             name_out += " (" + uni + ")"
     return name_out
 
+
 def my_format(tab):
     interval = tab[1] - tab[0]
     tmp = str("%e" % abs(interval))
@@ -218,7 +219,10 @@ def create_box(region):
     dict_reg = ReferenceRegions(region)
     lat, lon = dict_reg['latitude'], dict_reg['longitude']
     maxlat, minlat, maxlon, minlon = max(lat), min(lat), max(lon), min(lon)
-    li_type, li_width, li_x1x2, li_y1y2 = ['solid' for ii in range(4)], [4 for ii in range(4)], [[minlon,maxlon],[minlon,maxlon],[minlon,minlon],[maxlon,maxlon]], [[maxlat,maxlat],[minlat,minlat],[minlat,maxlat],[minlat,maxlat]]
+    li_type = ['solid' for ii in range(4)]
+    li_width = [4 for ii in range(4)]
+    li_x1x2 = [[minlon,maxlon],[minlon,maxlon], [minlon,minlon],[maxlon,maxlon]]
+    li_y1y2 = [[maxlat,maxlat],[minlat,minlat], [minlat,maxlat],[minlat,maxlat]]
     return li_type, li_width, li_x1x2, li_y1y2
 
 
@@ -248,7 +252,7 @@ def create_minmax_plot(tab):
     interval = list1[list2.index(min(list2))]
     base = listbase[list1.index(interval)]
     if abs(locmini) == locmaxi:
-        mini_out = (interval / 2.) - base
+        mini_out = -((interval / 2.) + base)
         maxi_out = (interval / 2.) + base
     else:
         tmp_middle = locmini + (locmaxi - locmini) / 2.
@@ -335,7 +339,18 @@ def read_json(json_file, key_val):
         if len(val) == 1:
             dict_out[ref] = val[0]
         else:
-            dict_out[ref] = val
+            arr = MV2array(val)
+            try:
+                arr = MV2masked_where(arr == None, arr)
+            except:
+                pass
+            try:
+                arr = MV2masked_where(NUMPYisnan(arr), arr)
+            except:
+                pass
+            arr = list(arr.compressed())
+            dict_out[ref] = arr
+            del arr
         del val
     metric = data['metadata']['metrics'].keys()[0]
     if 'metric' in key_val:
@@ -464,15 +479,23 @@ def read_nc_bydim(nc_file, metric, nbr_dim):
     var_in.sort(key=lambda v: v.lower())
     tab, tabu = list(), list()
     for var in var_in:
-        # read variable in the given time, latitude, longitude window
+        # read variable
+        tmp = ff(var)
         if nbr_dim == "1d" and\
                 (metric == 'EnsoDiversity' or metric == 'NinaSstDiv' or metric == 'NinoSstDiv' or 'SstDur' in metric):
-            tmp = ff(var)
+
             axe = CDMS2createAxis(MV2array(range(len(tmp)), dtype='f'), id='years')
             tmp.setAxis(0, axe)
-            tab.append(tmp)
-        else:
-            tab.append(ff(var))
+            del axe
+        try:
+            tmp = MV2masked_where(tmp == None, tmp)
+        except:
+            pass
+        try:
+            tmp = MV2masked_where(NUMPYisnan(tmp), tmp)
+        except:
+            pass
+        tab.append(tmp)
         list_att = ff.listattribute(var)
         for att in ['_FillValue', 'coordinates', 'history', 'missing_value', 'var_desc']:
             while att in list_att:
