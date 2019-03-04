@@ -81,7 +81,7 @@ print(list_obs)
 dict_obs = dict()
 
 for obs in list_obs:
-    # @jiwoo: be sure to add your datasets to EnsoCollectionsLib.ReferenceObservations if needed
+    # be sure to add your datasets to EnsoCollectionsLib.ReferenceObservations if needed
     dict_var = ReferenceObservations(obs)['variable_name_in_file']
     dict_obs[obs] = dict()
     for var in list_variables:
@@ -97,7 +97,6 @@ for obs in list_obs:
             else:
                 var0 = var_in_file
             # finding file for 'obs', 'var'
-            # @jiwoo: pretty easy as I have all variables in one file
             file_name = param.reference_data_path[obs].replace('VAR',var0)
             file_areacell = None ## temporary for now
             try:
@@ -244,11 +243,5 @@ OUT.write(
         ',',
         ': '),
     sort_keys=True)
-
-"""
-json.dump(metrics_dictionary,
-              open(os.path.join(param.results_dir, param.json_name+'.json'), 'w'),
-              indent=4, separators=(',', ': '))
-"""
 
 sys.exit('done')
