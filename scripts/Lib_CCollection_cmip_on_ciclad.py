@@ -399,6 +399,17 @@ def resave_netcdf(netcdf_name, metric):
             print '\033[95m' + 'NetCDF output ' + str(file_out) + '\033[0m'
             o = CDMS2open(file_out, 'w+')
             for var in dict_var_1d.keys():
+                if dict_var_1d[var].getAxis(0).id == 'years':
+                    tmp = var.split('__')[-1]
+                    try: int(tmp)
+                    except: pass
+                    else:
+                        axis = dict_var_1d[var].getAxis(0)
+                        axis.id = "events_"+str(int(tmp)).zfill(4)
+                        axis.bounds = "bounds_events_"+str(int(tmp)).zfill(4)
+                        dict_var_1d[var].setAxis(0, axis)
+                        del axis
+                    del tmp
                 o.write(dict_var_1d[var], attributes=dict_att_var_1d[var], dtype='float32', id=var)
             for att in dict_att_glob.keys():
                 o.__setattr__(att, dict_att_glob[att])

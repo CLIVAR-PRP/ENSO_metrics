@@ -340,10 +340,8 @@ def read_json(json_file, key_val):
             dict_out[ref] = val[0]
         else:
             arr = MV2array(val)
-            try:
-                arr = MV2masked_where(arr == None, arr)
-            except:
-                pass
+            arr = MV2array([1e20 if ii is None else ii for ii in val])
+            arr = MV2masked_where(arr == 1e20, arr)
             try:
                 arr = MV2masked_where(NUMPYisnan(arr), arr)
             except:
