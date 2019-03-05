@@ -21,6 +21,7 @@ from mpl_toolkits.basemap import Basemap, cm
 from numpy import array as NUMPYarray
 from numpy import arange as NUMPYarange
 from numpy import isnan as NUMPYisnan
+from numpy import linspace as NUMPYlinspace
 from numpy import meshgrid as NUMPYmeshgrid
 from numpy import nan as NUMPYnan
 from numpy import ones as NUMPYones
@@ -139,7 +140,7 @@ def get_nbr_years(name):
 
 def isobs(name):
     # list observations
-    list_observations = sorted(ReferenceObservations().keys())
+    list_observations = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
     # test if the given name contains the name of an observational dataset
     isobs = False
     for obs in list_observations:
@@ -261,7 +262,19 @@ def create_minmax_plot(tab):
         mul2 = pow(10, exp2)
         tmp_middle = round(tmp_middle / mul2) * mul2
         mini_out = max([0, tmp_middle - interval / 2. - base])
+        for ii in range(3):
+            if mini_out > locmini:
+                mini_out -= base
+        for ii in range(3):
+            if mini_out < locmini and mini_out + base < locmini:
+                mini_out += base
         maxi_out = tmp_middle + interval / 2. + base
+        for ii in range(3):
+            if maxi_out < locmaxi:
+                maxi_out += base
+        for ii in range(3):
+            if maxi_out > locmaxi and maxi_out - base > locmaxi:
+                maxi_out -= base
     if exp in [-1, 0, 1]:
         mini_out = mini_out * mult
         maxi_out = maxi_out * mult
@@ -332,7 +345,7 @@ def create_label_and_color(name, minmax, ratio=1.):
 def read_json(json_file, key_val):
     with open(json_file) as ff:
         data = json.load(ff)
-    list_ref = sorted(data[key_val].keys())
+    list_ref = sorted(data[key_val].keys(), key=lambda v: v.upper())
     dict_out = dict()
     for ref in list_ref:
         val = data[key_val][ref]
@@ -360,7 +373,7 @@ def read_json(json_file, key_val):
 
 def metric_boxplot(json_pattern, key_val, output_name, title, yname):
     # list all files
-    list_files = sorted(list(GLOBiglob(json_pattern + ".json")))
+    list_files = sorted(list(GLOBiglob(json_pattern + ".json")), key=lambda v: v.upper())
     # nbr years used
     list_nbr = [get_nbr_years(file1) for file1 in list_files]
     # read json
@@ -382,7 +395,7 @@ def metric_boxplot(json_pattern, key_val, output_name, title, yname):
             'multiple units for variable ' + str(yname) + ': ' + str(units)]
         MyError(list_strings)
     # reorganize
-    list_ref = sorted(files_val[list_nbr[0]].keys())
+    list_ref = sorted(files_val[list_nbr[0]].keys(), key=lambda v: v.upper())
     if 'metric' in key_val:
         dict_out = dict((ref, [files_val[nbr][ref] for nbr in list_nbr]) for ref in list_ref)
     else:
@@ -420,7 +433,7 @@ def metric_boxplot(json_pattern, key_val, output_name, title, yname):
                 dict_out[ref] = NUMPYarray(dict_out[ref]) / mult
     if 'metric' in key_val:
         for ref in list_ref:
-            fig1, ax1 = plt.subplots()
+            fig1, ax1 = plt.subplots(figsize=(6, 5))
             plt.ylim(min(minmax), max(minmax))
             plt.title(title, fontsize=20)
             plt.xlabel('number of simulated years', fontsize=15)
@@ -453,7 +466,7 @@ def metric_boxplot(json_pattern, key_val, output_name, title, yname):
             tick.label.set_fontsize(15)
         ax1.boxplot(tab_to_plot, whis=[5, 95], labels=list_nbr, showmeans=True, boxprops=boxprops, capprops=capprops,
                     flierprops=marprops, meanprops=meaprops, medianprops=medprops, whiskerprops=wisprops)
-        nref = sorted(dict_ref.keys())
+        nref = sorted(dict_ref.keys(), key=lambda v: v.upper())
         if len(nref) > 0:
             lines, names = list(), list()
             for ref in nref:
@@ -463,6 +476,94 @@ def metric_boxplot(json_pattern, key_val, output_name, title, yname):
             plt.legend(lines, names)
         plt.savefig(output_name)
         plt.close()
+    return
+
+
+def metric_curves_json(json_pattern, key_val, output_name, title, yname):
+    # list all files
+    list_files = sorted(list(GLOBiglob(json_pattern + ".json")), key=lambda v: v.upper())
+    # nbr years used
+    list_nbr = [get_nbr_years(file1) for file1 in list_files]
+    # read json
+    units = list()
+    files_val = dict()
+    for nbr, file1 in zip(list_nbr, list_files):
+        met, uni = read_json(file1, key_val)
+        files_val[nbr] = met
+        units.append(uni)
+        del met, uni
+    units = list(set(units))
+    if len(units) == 0:
+        units = ''
+    elif len(units) == 1:
+        units = units[0]
+    else:
+        list_strings = [
+            'ERROR: function: ' + str(INSPECTstack()[0][3]) + ', line: ' + str(INSPECTstack()[0][2]),
+            'multiple units for variable ' + str(yname) + ': ' + str(units)]
+        MyError(list_strings)
+    # reorganize
+    if key_val == 'diagnostic':
+        list_ref = ['model']
+    else:
+        list_ref = sorted(files_val[list_nbr[0]].keys(), key=lambda v: v.upper())
+    if 'metric' in key_val:
+        dict_out = dict((ref, [files_val[nbr][ref] for nbr in list_nbr]) for ref in list_ref)
+    else:
+        dict_out = dict((ref, [files_val[nbr][ref] for nbr in list_nbr]) if isobs(ref) is False else
+                        (ref, files_val[list_nbr[0]][ref]) for ref in list_ref)
+    # plot
+    colormap = plt.cm.gist_ncar
+    for ref in list_ref:
+        tmp = dict_out[ref]
+        # min / max y axis
+        tab = list()
+        if isinstance(tmp, float):
+            tab.append(tmp)
+        else:
+            for elt in tmp:
+                if isinstance(elt, float):
+                    tab.append(elt)
+                else:
+                    tab += deepcopy(elt)
+        minmax, mult = create_minmax_plot(tab)
+        del tab
+        # units and scale
+        add_to = add_units_and_scale(units, mult)
+        yname_plot = yname + add_to
+        fig1, ax1 = plt.subplots(figsize=(8, 5))
+        plt.ylim(min(minmax), max(minmax))
+        plt.title(title + ": "+ref, fontsize=20, y=1.02)
+        plt.xlabel("time", fontsize=15)
+        plt.ylabel(yname_plot, fontsize=15)
+        for tick in ax1.yaxis.get_major_ticks():
+            tick.label.set_fontsize(15)
+        # colors
+        colors = [colormap(ii) for ii in NUMPYlinspace(0, 0.9, len(tmp))]
+        # xaxis and first tab
+        nbr0, tab = list_nbr[0], tmp[0]
+        x_axis = range(len(tab))
+        for tick in ax1.xaxis.get_major_ticks():
+            tick.label.set_fontsize(15)
+        if len(x_axis) <= 100:
+            plt.xticks(x_axis[::10], x_axis[::10])
+        elif len(x_axis) <= 200:
+            plt.xticks(x_axis[::20], x_axis[::20])
+        elif len(x_axis) <= 300:
+            plt.xticks(x_axis[::30], x_axis[::30])
+        ax1.plot(x_axis, list(tab), lw=2, label=str(nbr0), color=colors[0])
+        lines, names = [Line2D([0], [0], lw=2, color=colors[0])], [str(nbr0)]
+        del tab, x_axis
+        for ii, nbr, tab in zip(range(len(tmp[1:])), list_nbr[1:], tmp[1:]):
+            x_axis = [(nbr / 2.) + jj for jj in range(len(tab))]
+            ax1.plot(x_axis, list(tab), lw=2, label=str(nbr), color=colors[ii + 1])
+            lines.append(Line2D([0], [0], lw=2, color=colors[ii + 1]))
+            names.append(str(nbr))
+            del x_axis
+        plt.legend(lines, names, ncol=7, loc='upper center')
+        plt.savefig(output_name + "_curves_" + ref)
+        plt.close()
+        del add_to, colors, lines, minmax, mult, names, nbr0, tab, tmp, yname_plot
     return
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -510,7 +611,7 @@ def metric_curveplot(name_plot, title_plot, x_axis, x_label, x_name, y_name, y_r
     c25 = MV2array(SCIPYstats__scoreatpercentile(model, 25, axis=0))
     c75 = MV2array(SCIPYstats__scoreatpercentile(model, 75, axis=0))
     c95 = MV2array(SCIPYstats__scoreatpercentile(model, 95, axis=0))
-    fig1, ax1 = plt.subplots()
+    fig1, ax1 = plt.subplots(figsize=(6, 5))
     plt.ylim(min(y_range), max(y_range))
     plt.title(title_plot, fontsize=20, y=1.02)
     plt.xlabel(x_name, fontsize=15)
@@ -525,7 +626,7 @@ def metric_curveplot(name_plot, title_plot, x_axis, x_label, x_name, y_name, y_r
     ax1.fill_between(x_axis, list(c05), list(c95), facecolor=dict_colors['model'], alpha=0.3)
     ax1.fill_between(x_axis, list(c25), list(c75), facecolor=dict_colors['model'], alpha=0.2)
     lines, names = [Line2D([0], [0], lw=2, color=dict_colors['model'])], ['model']
-    datkeys = sorted(dict_to_plot.keys())
+    datkeys = sorted(dict_to_plot.keys(), key=lambda v: v.upper())
     for dat in datkeys:
         if dat != 'model':
             ax1.plot(x_axis, list(dict_to_plot[dat]), lw=4, label=dat, color=dict_colors[dat])
@@ -605,7 +706,7 @@ def metric_mapplot(name_plot, title_plot, model_name, lats, lons, z1_range, z2_r
 
 def myplot(nc_pattern, output_name, metric, title, plot_type, model_name='', z_name=''):
     # list all files
-    list_files = sorted(list(GLOBiglob(nc_pattern + "_" + str(plot_type) + ".nc")))
+    list_files = sorted(list(GLOBiglob(nc_pattern + "_" + str(plot_type) + ".nc")), key=lambda v: v.upper())
     # nbr years used
     list_nbr = [get_nbr_years(file1) for file1 in list_files]
     # loop on files

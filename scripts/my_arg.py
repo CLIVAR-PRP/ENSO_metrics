@@ -43,6 +43,9 @@ def test_type(arg_list, arg_type, arg_values, arg_default):
 
 def my_arg(needed_arg, *kwargs):
     dict_out = dict()
+    if len(needed_arg.keys()) == len(kwargs[0]):
+        for key in needed_arg.keys():
+            needed_arg[key]['default'] = "unknown_" + key
     for key in needed_arg.keys():
         tmp = needed_arg[key]
         tmp_out = test_type(kwargs[0], tmp['type'], tmp['possible_values'], tmp['default'])

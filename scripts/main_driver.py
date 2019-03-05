@@ -43,7 +43,7 @@ mc_name = 'ENSO_perf'
 # get metric collection definition
 dict_mc = defCollection(mc_name)
 # list of metrics of the metric collection
-list_metrics = sorted(dict_mc['metrics_list'].keys())
+list_metrics = sorted(dict_mc['metrics_list'].keys(), key=lambda v: v.upper())
 #---------------------------------------------------#
 
 
@@ -121,7 +121,7 @@ save_nc = dict1['save_netcdf']
 #---------------------------------------------------#
 # information
 # list of CMIP models
-list_models = sorted(get_models(project, experiment))
+list_models = sorted(get_models(project, experiment), key=lambda v: v.upper())
 # list of ensembles
 list_ensembles = sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, pro=project, rea=realm))
 
@@ -153,7 +153,7 @@ list_ensembles = sorted(get_ensembles(exp=experiment, fre=frequency, mod=model, 
 #     list_ens = sorted(get_ensembles(exp=experiment, fre=frequency, mod=mod, pro=project, rea=realm))
 #     for ens in list_ens:
 #         ens_nbr_years = nbryear_from_model(experiment, ens, frequency, mod, project, realm, 'sst')
-#         print mod.ljust(14) + ' ' + ens + ': ' + str(ens_nbr_years).rjust(4) + ' years'
+#         print mod.ljust(14) + ' ' + ens + ': ' + str(int(ens_nbr_years)).rjust(4) + ' years'
 #---------------------------------------------------#
 
 
