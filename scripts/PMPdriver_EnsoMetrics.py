@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import collections
 import copy
+import glob
 import json
 import os
 import pcmdi_metrics
@@ -33,6 +34,17 @@ modpath_lf = StringConstructor(param.modpath_lf)
 
 # Check given model option
 models = param.modnames
+
+if 'all' in [m.lower() for m in models]:
+    models = [p.split('.')[1]
+        for p in glob.glob(modpath(
+            mip=mip,
+            model='*',
+            realization='*',
+            variable='ts'))]
+    # remove duplicates
+    models = sorted(list(dict.fromkeys(models)), key=lambda s: s.lower())
+
 print('models:', models)
 
 # Output
