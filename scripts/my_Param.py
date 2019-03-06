@@ -1,4 +1,12 @@
 import datetime
+import os
+
+# =================================================
+# Background Information
+# -------------------------------------------------
+mip = 'cmip5'
+#exp = 'piControl'
+exp = 'historical'
 
 #=================================================
 # Observation
@@ -33,8 +41,8 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
             'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P', 'NorESM1-M', 'NorESM1-ME']
 
 #modnames = ['ACCESS1-0']
-modnames = ['IPSL-CM5A-LR']
 #modnames = ['BCC-CSM1-1']
+#modnames = ['IPSL-CM5A-LR']
 
 #=================================================
 # Metrics Collection
@@ -47,8 +55,13 @@ metricsCollection = 'ENSO_perf'
 # Output
 #-------------------------------------------------
 nc_out = True
-case_id = "{:v%Y%m%d-%H%M}".format(datetime.datetime.now())
-results_dir = '/work/lee1043/imsi/result_test/enso_metric/' + case_id 
+#case_id = "{:v%Y%m%d-%H%M}".format(datetime.datetime.now())
+case_id = "{:v%Y%m%d}".format(datetime.datetime.now())
+#results_dir = '/work/lee1043/imsi/result_test/enso_metric/' + case_id 
+results_dir = os.path.join(
+    '/p/user_pub/pmp/pmp_results/pmp_v1.1.2',
+    '%(output_type)', 'enso_metric',
+    mip, exp, case_id)
 json_name = metricsCollection + '_' + case_id
 netcdf_name = json_name + '_%(model)'
 

@@ -31,7 +31,9 @@ modpath_lf = StringConstructor(param.modpath_lf)
 models = param.modnames
 print('models:', models)
 
-netcdf_path = param.results_dir
+# Output
+outdir = param.process_templated_argument("results_dir")
+netcdf_path = outdir(output_type='diagnostic_results')
 
 mc_name = param.metricsCollection 
 dict_mc = defCollection(mc_name)
@@ -40,11 +42,11 @@ list_metric = sorted(dict_mc['metrics_list'].keys())
 #=================================================
 # Prepare loop iteration
 #-------------------------------------------------
-# setup an output directory 
-try:
-    os.mkdir(param.results_dir)
-except BaseException:
-    pass
+# Create output directory
+for output_type in ['graphics', 'diagnostic_results', 'metrics_results']:
+    if not os.path.exists(outdir(output_type=output_type)):
+        os.makedirs(outdir(output_type=output_type))
+    print(outdir(output_type=output_type))
 
 # list of variables
 list_variables = list()
@@ -205,6 +207,8 @@ for mod in models:
     except Exception as e: 
         print('failed for ', mod)
         print(e)
+        if not param.debug:
+            pass
   
 print('PMPdriver: model loop end')
 
@@ -214,7 +218,7 @@ print('PMPdriver: model loop end')
 enso_stat_dic['obs'] = dict_obs
 enso_stat_dic['model'] = dict_metric
 
-OUT = pcmdi_metrics.io.base.Base(os.path.abspath(param.results_dir), param.json_name+'.json')
+OUT = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), param.json_name+'.json')
 
 disclaimer = open(
     os.path.join(
