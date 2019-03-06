@@ -175,7 +175,9 @@ for mod in models:
             #
             # finding file for 'mod', 'var'
             #
-            file_name = modpath(mip=mip, model=mod, realization='r1i1p1', variable=var0)
+            if mip == 'cmip5': realization = 'r1i1p1'
+            elif mip == 'cmip6': realization = 'r1i1p1f1'
+            file_name = modpath(mip=mip, model=mod, realization=realization, variable=var0)
             file_areacell = None ## temporary for now
             file_landmask = modpath_lf(mip=mip, model=mod)
             try:
