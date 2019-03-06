@@ -23,6 +23,10 @@ from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 #-------------------------------------------------
 param = ReadOptions()
 
+# Pre-defined options
+mip = param.mip
+exp = param.exp
+
 # Path to model data as string template
 modpath = StringConstructor(param.modpath)
 modpath_lf = StringConstructor(param.modpath_lf)
@@ -159,9 +163,9 @@ for mod in models:
             #
             # finding file for 'mod', 'var'
             #
-            file_name = modpath(model=mod, realization='r1i1p1', variable=var0)
+            file_name = modpath(mip=mip, model=mod, realization='r1i1p1', variable=var0)
             file_areacell = None ## temporary for now
-            file_landmask = modpath_lf(model=mod)
+            file_landmask = modpath_lf(mip=mip, model=mod)
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
             except:
@@ -176,7 +180,7 @@ for mod in models:
                 list_files = [modpath(model=mod, variable=var1) for var1 in var_in_file]
                 list_areacell = [file_areacell for var1 in var_in_file]
                 list_name_area = [areacell_in_file for var1 in var_in_file]
-                list_landmask = [modpath_lf(model=mod) for var1 in var_in_file]
+                list_landmask = [modpath_lf(mip=mip, model=mod) for var1 in var_in_file]
                 list_name_land = [landmask_in_file for var1 in var_in_file]
             else:
                 list_files = file_name
