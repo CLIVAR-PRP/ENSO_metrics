@@ -62,7 +62,7 @@ results_dir = os.path.join(
     '/p/user_pub/pmp/pmp_results/pmp_v1.1.2',
     '%(output_type)', 'enso_metric',
     mip, exp, case_id)
-json_name = metricsCollection + '_' + case_id
+json_name = '_'.join([mip, exp, metricsCollection, case_id])
 netcdf_name = json_name + '_%(model)'
 
 #=================================================
