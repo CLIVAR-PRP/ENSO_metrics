@@ -29,8 +29,10 @@ mip = param.mip
 exp = param.exp
 
 # Path to model data as string template
-modpath = StringConstructor(param.modpath)
-modpath_lf = StringConstructor(param.modpath_lf)
+#modpath = StringConstructor(param.modpath)
+modpath = param.process_templated_argument("modpath")
+#modpath_lf = StringConstructor(param.modpath_lf)
+modpath_lf = param.process_templated_argument("modpath_lf")
 
 # Check given model option
 models = param.modnames
@@ -177,9 +179,16 @@ for mod in models:
             #
             if mip == 'cmip5': realization = 'r1i1p1'
             elif mip == 'cmip6': realization = 'r1i1p1f1'
+            # -- TEMPORARY --
+            if mip =='cmip6' and mod in ['CESM2-WACCM']: realization = 'r2i1p1f1'
+            # -- TEMPORARY END --
             file_name = modpath(mip=mip, model=mod, realization=realization, variable=var0)
             file_areacell = None ## temporary for now
             file_landmask = modpath_lf(mip=mip, model=mod)
+            # -- TEMPORARY --
+            if mip == 'cmip6' and mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
+                file_landmask = '/work/lee1043/ESGF/CMIP6/CMIP/'+mod+'/sftlf_fx_'+mod+'_historical_r1i1p1f1_gr.nc'
+            # -- TEMPORARY END --
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
             except:
