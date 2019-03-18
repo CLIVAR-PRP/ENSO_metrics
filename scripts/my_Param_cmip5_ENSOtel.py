@@ -48,8 +48,8 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
 # Metrics Collection
 #-------------------------------------------------
 #metricsCollection = 'MC1'
-metricsCollection = 'ENSO_perf'
-#metricsCollection = 'ENSO_tel'
+#metricsCollection = 'ENSO_perf'
+metricsCollection = 'ENSO_tel'
 
 #=================================================
 # Output
