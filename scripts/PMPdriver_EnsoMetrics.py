@@ -230,7 +230,7 @@ for mod in models:
         # Computes the metric collection
         netcdf_name = StringConstructor(param.netcdf_name)(model=mod) 
         netcdf = os.path.join(netcdf_path, netcdf_name)
-        dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=param.nc_out,
+        dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=param.nc_out,
                                              netcdf_name=netcdf, debug=param.debug)
     except Exception as e: 
         print('failed for ', mod)
@@ -243,18 +243,13 @@ print('PMPdriver: model loop end')
 #=================================================
 #  OUTPUT METRICS TO JSON FILE
 #-------------------------------------------------
-enso_stat_dic['obs'] = dict_obs
-enso_stat_dic['model'] = dict_metric
-
-OUT = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), param.json_name+'.json')
-
+# disclaimer and reference for JSON header
 disclaimer = open(
     os.path.join(
         sys.prefix,
         "share",
         "pmp",
         "disclaimer.txt")).read()
-
 if param.metricsCollection == 'MC1':
     reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
 elif param.metricsCollection == 'ENSO_perf':
@@ -262,11 +257,15 @@ elif param.metricsCollection == 'ENSO_perf':
 elif param.metricsCollection == 'ENSO_tel':
     reference = "MC3 for ENSO Teleconnection..."
 
+# First JSON for metrics results
+enso_stat_dic['obs'] = dict_obs
+enso_stat_dic['model'] = dict_metric
 metrics_dictionary = collections.OrderedDict()
 metrics_dictionary["DISCLAIMER"] = disclaimer
 metrics_dictionary["REFERENCE"] = reference
 metrics_dictionary["RESULTS"] = enso_stat_dic
 
+OUT = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), param.json_name+'.json')
 OUT.write(
     metrics_dictionary,
     json_structure=["type", "data", "metric", "item", "value or description"],
@@ -275,5 +274,23 @@ OUT.write(
         ',',
         ': '),
     sort_keys=True)
+
+# Second JSON for dive down information
+diveDown_dictionary = collections.OrderedDict()
+diveDown_dictionary["DISCLAIMER"] = disclaimer
+diveDown_dictionary["REFERENCE"] = reference
+diveDown_dictionary["RESULTS"]["model"] = dict_dive
+
+OUT2 = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), param.json_name+'_diveDown.json')
+OUT2.write(
+    dict_dive,
+    json_structure=["type", "data", "metric", "item", "value or description"],
+    indent=4,
+    separators=(
+        ',',
+        ': '),
+    sort_keys=True)
+
+
 
 sys.exit('done')
