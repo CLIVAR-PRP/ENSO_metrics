@@ -280,6 +280,7 @@ OUT.write(
 diveDown_dictionary = collections.OrderedDict()
 diveDown_dictionary["DISCLAIMER"] = disclaimer
 diveDown_dictionary["REFERENCE"] = reference
+diveDown_dictionary["RESULTS"] = {}
 diveDown_dictionary["RESULTS"]["model"] = dict_dive
 
 OUT2 = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), param.json_name+'_diveDown.json')
@@ -291,7 +292,5 @@ OUT2.write(
         ',',
         ': '),
     sort_keys=True)
-
-
 
 sys.exit('done')
