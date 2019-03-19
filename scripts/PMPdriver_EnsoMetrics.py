@@ -37,6 +37,7 @@ modpath_lf = param.process_templated_argument("modpath_lf")
 # Check given model option
 models = param.modnames
 
+# List up all available models if 'all' given in models
 if 'all' in [m.lower() for m in models]:
     models = [p.split('.')[1]
         for p in glob.glob(modpath(
@@ -162,8 +163,8 @@ enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
 # finding file and variable name in file for each observations dataset
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
-for mod in models:
 
+for mod in models:
     try:
         dict_mod = {mod: {}}
         print('PMPdriver: var loop start for model ', mod)
