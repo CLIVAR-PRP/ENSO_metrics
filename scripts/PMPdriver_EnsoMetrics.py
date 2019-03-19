@@ -14,7 +14,8 @@ import sys
 
 from collections import defaultdict
 from genutil import StringConstructor
-from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
+#from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
+from pcmdi_metrics.driver.pmp_parser import PMPParser
 from pmpParser import ReadOptions
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection

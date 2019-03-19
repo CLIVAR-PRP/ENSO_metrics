@@ -1,4 +1,5 @@
-from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
+#from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
+from pcmdi_metrics.driver.pmp_parser import PMPParser
 
 def ReadOptions():
 
