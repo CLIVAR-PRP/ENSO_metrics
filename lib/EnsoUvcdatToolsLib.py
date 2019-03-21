@@ -16,9 +16,10 @@ from numpy import product as NPproduct
 from numpy import unravel_index as NPunravel_index
 from numpy import where as NPwhere
 from numpy.ma.core import MaskedArray as NPma__core__MaskedArray
-
 from os.path import isdir as OSpath_isdir
 from os.path import isfile as OSpath__isfile
+from os.path import join as OSpath__join
+from os.path import split as OSpath__split
 from scipy.signal import detrend as SCIPYsignal_detrend
 from scipy.stats import skew as SCIPYstats__skew
 
@@ -815,7 +816,8 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     # temp corrections for cdms2 to find the right axis
     CDMS2setAutoBounds('on')
     # open file
-    ff = CDMS2open('./../data/basin_generic_1x1deg.nc')
+    this_dir, this_filename = OSpath__split(__file__)
+    ff = CDMS2open(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))
     # read basins
     if box is not None:
         region_ref = ReferenceRegions(box)

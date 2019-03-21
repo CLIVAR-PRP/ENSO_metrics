@@ -146,8 +146,14 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
         dict_regions = dict_m[metric]['regions']
         # model name, file, variable name in file
         modelName = dictDatasets['model'].keys()[0]
-        modelFile1 = dictDatasets['model'][modelName][list_variables[0]]['path + filename']
-        modelVarName1 = dictDatasets['model'][modelName][list_variables[0]]['varname']
+        try:
+            modelFile1 = dictDatasets['model'][modelName][list_variables[0]]['path + filename']
+        except:
+            modelFile1 = ''
+        try:
+            modelVarName1 = dictDatasets['model'][modelName][list_variables[0]]['varname']
+        except:
+            modelVarName1 = ''
         try:
             modelFileArea1 = dictDatasets['model'][modelName][list_variables[0]]['path + filename_area']
         except:
@@ -192,8 +198,14 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
                     'obsFileArea1': obsFileArea1, 'obsAreaName1': obsAreaName1, 'obsFileLandmask1': obsFileLandmask1,
                     'obsLandmaskName1': obsLandmaskName1}
         if len(list_variables) > 1:
-            arg_var2['modelFile2'] = dictDatasets['model'][modelName][list_variables[1]]['path + filename']
-            arg_var2['modelVarName2'] = dictDatasets['model'][modelName][list_variables[1]]['varname']
+            try:
+                arg_var2['modelFile2'] = dictDatasets['model'][modelName][list_variables[1]]['path + filename']
+            except:
+                arg_var2['modelFile2'] = ''
+            try:
+                arg_var2['modelVarName2'] = dictDatasets['model'][modelName][list_variables[1]]['varname']
+            except:
+                arg_var2['modelVarName2'] = ''
             arg_var2['regionVar2'] = dict_regions[list_variables[1]]
             try:
                 arg_var2['modelFileArea2'] = dictDatasets['model'][modelName][list_variables[1]]['path + filename_area']
