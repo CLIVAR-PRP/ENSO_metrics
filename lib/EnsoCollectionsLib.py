@@ -231,6 +231,16 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'metric_computation': 'ratio',
                 },
+                'NinaSstDur2': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'nbr_years_window': 6,
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
+                                         'normalization': True},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'metric_computation': 'ratio',
+                },
                 'NinaSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
