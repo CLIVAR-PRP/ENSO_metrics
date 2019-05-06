@@ -3982,6 +3982,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
@@ -4034,8 +4035,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
         # 1.2 SSTA > (<) 'threshold' during 'season' are considered as El Nino (La Nina) events
         # Lists event years
-        nino_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        nina_years = DetectEvents(sst, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
+        nino_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
+        nina_years = DetectEvents(sst, season_ev, -threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nino1': 'nbr(' + str(len(nino_years)) + '): ' + str(nino_years),
                           'nina1': 'nbr(' + str(len(nina_years)) + '): ' + str(nina_years)}
@@ -4881,6 +4882,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -4991,10 +4993,10 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         # 1.2 SSTA < 'threshold' (SSTA > 'threshold') during 'season' are considered as La Nina (El Nino) events
         # Lists event years
-        nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=normalize, nino=False)
+        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=normalize, nino=False)
+        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs),
                           'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
@@ -5265,6 +5267,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 #     region_ev = event_definition['region_ev']
 #     season_ev = event_definition['season_ev']
 #     threshold = event_definition['threshold']
+#     normalize = event_definition['normalization']
 #     # test given kwargs
 #     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
 #                     'time_bounds_obs']
@@ -5395,10 +5398,10 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 #         EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 #
 #     # Lists event years
-#     nina_years_model = DetectEvents(sst_model, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-#     nino_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-#     nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-#     nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+#     nina_years_model = DetectEvents(sst_model, season_ev, -threshold, normalization=normalize, nino=False)
+#     nino_years_model = DetectEvents(sst_model, season_ev, threshold, normalization=normalize, nino=True)
+#     nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=normalize, nino=False)
+#     nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
 #     del sst_model, sst_obs
 #     if debug is True:
 #         dict_debug = {'nina1': '(model) ' + str(nina_years_model), 'nina2': '(obs) ' + str(nina_years_obs),
@@ -5682,6 +5685,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -5792,10 +5796,10 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         # 1.2 SSTA < 'threshold' (SSTA > 'threshold') during 'season' are considered as La Nina (El Nino) events
         # Lists event years
-        nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=kwargs['normalization'], nino=False)
-        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=normalize, nino=False)
+        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=normalize, nino=False)
+        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs),
                           'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
@@ -7181,6 +7185,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -7289,8 +7294,8 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        nina_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        nina_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        nina_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        nina_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -7561,6 +7566,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -7669,8 +7675,8 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        nina_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        nina_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        nina_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        nina_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -7950,6 +7956,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -8055,8 +8062,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -8263,6 +8270,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
@@ -8314,7 +8322,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -8520,6 +8528,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -8592,8 +8601,8 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -8808,6 +8817,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
@@ -8856,7 +8866,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': str(event_years)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -9011,6 +9021,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -9085,8 +9096,8 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -9385,6 +9396,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -9490,8 +9502,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -9722,6 +9734,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -9827,8 +9840,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -10055,6 +10068,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -10125,8 +10139,8 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=False)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -10320,6 +10334,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -10428,8 +10443,8 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -10700,6 +10715,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -10808,8 +10824,8 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -11089,6 +11105,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -11194,8 +11211,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -11402,6 +11419,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
@@ -11453,7 +11471,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -11659,6 +11677,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -11731,8 +11750,8 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -11945,6 +11964,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
@@ -11993,7 +12013,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years = DetectEvents(sst, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': str(event_years)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -12148,6 +12168,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -12222,8 +12243,8 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -12517,6 +12538,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -12622,8 +12644,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -12854,6 +12876,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -12959,8 +12982,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -13187,6 +13210,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     region_ev = event_definition['region_ev']
     season_ev = event_definition['season_ev']
     threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -13257,8 +13281,8 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
-        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
-        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=kwargs['normalization'], nino=True)
+        event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
+        event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)

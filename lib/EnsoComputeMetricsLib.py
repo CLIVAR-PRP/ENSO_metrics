@@ -270,8 +270,9 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
             if len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0:
                 print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
         else:
+            tmp_metric = metric.replace('_2', '').replace('_3', '').replace('_4', '').replace('_5', '')
             valu, vame, dive, dime = ComputeMetric(
-                metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
+                metricCollection, tmp_metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
                 netcdf_name=netcdf_name, **arg_var2)
             keys1 = valu.keys()
@@ -365,8 +366,8 @@ dict_oneVar_modelAndObs = {
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
     'BiasSstSkLonRmse': BiasSstSkLonRmse,
     'EnsoSstMap': EnsoSstMap, 'NinaSstMap': NinaSstMap, 'NinoSstMap': NinoSstMap,
-    'NinaSstDivRmse':NinaSstDivRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinaSstTsRmse': NinaSstTsRmse,
-    'NinoSstDivRmse':NinoSstDivRmse, 'NinoSstLonRmse': NinoSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
+    'NinaSstDivRmse': NinaSstDivRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinaSstTsRmse': NinaSstTsRmse,
+    'NinoSstDivRmse': NinoSstDivRmse, 'NinoSstLonRmse': NinoSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
     'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
 }
