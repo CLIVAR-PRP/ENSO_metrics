@@ -1776,7 +1776,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     #
     if regridder == 'cdms':
         new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
-                                        regridMethod=regridMethod)
+                                       regridMethod=regridMethod)
         if tab_to_regrid.getGrid().shape == newgrid.shape:
             new_tab = MV2masked_where(tab_to_regrid.mask, new_tab)
     elif regridder == 'cdmsHorizontal':

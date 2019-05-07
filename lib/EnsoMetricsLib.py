@@ -27,7 +27,7 @@ from KeyArgLib import DefaultArgValues
 def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                 sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
                 centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-                **kwargs):
+                metname='', **kwargs):
     """
     The BiasSstRmse() function computes the SST spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -146,6 +146,8 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     Method = 'Spatial root mean square error of ' + box + ' sst'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -219,9 +221,9 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
@@ -248,7 +250,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
 def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
                    centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-                   **kwargs):
+                   metname='', **kwargs):
     """
     The BiasSstLatRmse() function computes the SST meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -367,6 +369,8 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = 'Meridional root mean square error of ' + box + ' sst'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstLatRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -472,9 +476,9 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
                     EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
@@ -505,7 +509,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod,
                    sstlandmasknamemod, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
                    sstlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-                   netcdf=False, netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The BiasSstLonRmse() function computes the SST zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -624,6 +628,8 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = 'Zonal root mean square error of ' + box + ' sst'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstLonRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -729,9 +735,9 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
                     EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
@@ -762,7 +768,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                      sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                      box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                     netcdf_name='', **kwargs):
+                     netcdf_name='', metname='', **kwargs):
     """
     The BiasSstSkLonRmse() function computes the SST zonal (longitude) skewness and then its root mean square error
     (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -884,6 +890,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     Method = 'Zonal root mean square error of ' + box + ' sstA skewness'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstSkLonRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -1019,9 +1027,9 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                                   'shape2': '(obs) ' + str(ske_map_obs.shape)}
                     EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
@@ -1052,7 +1060,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
 def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
                centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-               **kwargs):
+               metname='', **kwargs):
     """
     The BiasPrRmse() function computes the PR spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -1171,6 +1179,8 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     Method = 'Spatial root mean square error of ' + box + ' pr'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasPrRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -1244,9 +1254,9 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
@@ -1273,7 +1283,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
 def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
                   centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-                  **kwargs):
+                  metname='', **kwargs):
     """
     The BiasPrLatRmse() function computes the PR meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -1392,6 +1402,8 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     Method = 'Meridional root mean square error of ' + box + ' pr'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasPrLatRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -1498,9 +1510,9 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                     EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # change units
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
@@ -1530,7 +1542,8 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
 def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, prfileobs,
                   prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box, centered_rmse=0,
-                  biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                  biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='', metname='',
+                  **kwargs):
     """
     The BiasPrLonRmse() function computes the PR zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -1649,6 +1662,8 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     Method = 'Zonal root mean square error of ' + box + ' pr'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasPrLonRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -1754,9 +1769,9 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
                     EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
@@ -1787,7 +1802,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod, tauxlandmasknamemod,
                  tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs, tauxlandmaskfileobs, tauxlandmasknameobs,
                  box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 netcdf_name='', metname='', **kwargs):
     """
     The BiasTauxRmse() function computes the TAUX spatial root mean square error (RMSE) in a 'box' (usually the tropical
     Pacific)
@@ -1906,6 +1921,8 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     Method = 'Spatial root mean square error of ' + box + ' taux'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauxRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -1983,9 +2000,9 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: tauxRmse,
@@ -2012,7 +2029,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
 def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod,
                     tauxlandmasknamemod, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
                     tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='',
-                    dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The BiasTauxLatRmse() function computes the TAUX meridional (latitude) root mean square error (RMSE) in a 'box'
     (usually 'nino3.3_LatExt')
@@ -2131,6 +2148,8 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     Method = 'Meridional root mean square error of ' + box + ' taux'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauxLatRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -2239,9 +2258,9 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             map_mod = map_mod * 1e3
             map_obs = map_obs * 1e3
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
@@ -2272,7 +2291,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod,
                     tauxlandmasknamemod, tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs,
                     tauxlandmaskfileobs, tauxlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='',
-                    dataset2='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The BiasTauxLonRmse() function computes the TAUX zonal (longitude) root mean square error (RMSE) in a 'box'
     (usually the Equatorial Pacific)
@@ -2391,6 +2410,8 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     Method = 'Zonal root mean square error of ' + box + ' taux'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauxLonRmse"
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -2499,9 +2520,9 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             map_mod = map_mod * 1e3
             map_obs = map_obs * 1e3
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
@@ -2531,7 +2552,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
 def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lhffile, lhfname,
                  lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', **kwargs):
+                 netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoAlphaLhf() function computes the regression of 'lhfbox' lhfA (latent heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 lhfA over nino3 sstA)
@@ -2635,78 +2656,23 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
     metric = 'EnsoAlphaLhf'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(lhf) ' + lhffile, 'var1': '(sst) ' + sstname,
-                      'var2': '(lhf) ' + lhfname}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    lhf = ReadSelectRegionCheckUnits(lhffile, lhfname, 'heat flux', box=lhfbox, **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lhf) ' + str(TimeBounds(lhf))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafile:
-        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
-    else:
-        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if lhfareafile:
-        lhf_areacell = ReadAreaSelectRegion(lhfareafile, areaname=lhfareaname, box=lhfbox, **kwargs)
-    else:
-        lhf_areacell = ReadAreaSelectRegion(lhffile, areaname=lhfareaname, box=lhfbox, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if sst_areacell is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_areacell.shape)
-        if lhf_areacell is not None:
-            dict_debug['axes2'] = '(lhf) ' + str([ax.id for ax in lhf_areacell.getAxisList()])
-            dict_debug['shape2'] = '(lhf) ' + str(lhf_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfile:
-        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    else:
-        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    if lhflandmaskfile:
-        lhf_landmask = ReadLandmaskSelectRegion(lhflandmaskfile, landmaskname=lhflandmaskname, box=lhfbox, **kwargs)
-    else:
-        lhf_landmask = ReadLandmaskSelectRegion(lhffile, landmaskname=lhflandmaskname, box=lhfbox, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if sst_landmask is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_landmask.shape)
-        if lhf_landmask is not None:
-            dict_debug['axes2'] = '(lhf) ' + str([ax.id for ax in lhf_landmask.getAxisList()])
-            dict_debug['shape2'] = '(lhf) ' + str(lhf_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if sst_landmask is not None:
-        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-        if sst_areacell is None:
-            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-        del sst_landmask
-    if lhf_landmask is not None:
-        lhf = ApplyLandmask(lhf, lhf_landmask, maskland=True, maskocean=False)
-        if lhf_areacell is None:
-            lhf_areacell = ArrayOnes(lhf_landmask, id='areacell')
-        lhf_areacell = ApplyLandmaskToArea(lhf_areacell, lhf_landmask, maskland=True, maskocean=False)
-    del lhf_landmask
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    lhf, lhf_areacell, keyerror2 = \
+        Read_data_mask_area(lhffile, lhfname, 'heat flux', metric, lhfbox, file_area=lhfareafile,
+                            name_area=lhfareaname, file_mask=lhflandmaskfile, name_mask=lhflandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lhf, keyerror = CheckTime(sst, lhf, metric_name=metric, **kwargs)
+    sst, lhf, keyerror3 = CheckTime(sst, lhf, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -2714,8 +2680,19 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is not None:
-        alphaLhf, alphaLhfPos, alphaLhfNeg = None, None, None
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        alphaLhf, alphaLhfPos, alphaLhfNeg = [None, None], [None, None], [None, None]
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -2732,20 +2709,24 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaLhf, alphaLhfPos, alphaLhfNeg = LinearRegressionAndNonlinearity(lhf, sst, return_stderr=True)
+    try: nl1 = alphaTauxNeg[0] - alphaTauxPos[0]
+    except: nl1 = None
+    try: nl2 = alphaTauxNeg[1] + alphaTauxPos[1]
+    except: nl2 = None
 
     # Create output
     alphaLhfMetric = {
         'name': Name, 'value': alphaLhf[0], 'value_error': alphaLhf[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
-        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaLhfNeg[0] - alphaLhfPos[0],
-        'nonlinearity_error': alphaLhfNeg[1] + alphaLhfPos[1], 'keyerror': keyerror,
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror,
     }
     return alphaLhfMetric
 
 
 def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
                  lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', **kwargs):
+                 netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoAlphaLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
     'sstbox' sstA (usually the regression of nino3 lwrA over nino3 sstA)
@@ -2853,110 +2834,44 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
     metric = 'EnsoAlphaLwr'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(lwr) ' + lwrfile, 'var1': '(sst) ' + sstname,
-                      'var2': '(lwr) ' + lwrname}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    dict_var = dict()
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    dict_area, dict_keye, dict_var = dict(), dict(), dict()
     if isinstance(lwrfile, basestring):
-        dict_var[lwrname] = ReadSelectRegionCheckUnits(lwrfile, lwrname, 'heat flux', box=lwrbox, **kwargs)
+        lwr, lwr_areacell, keyerror2 = \
+            Read_data_mask_area(lwrfile, lwrname, 'heat flux', metric, lwrbox, file_area=lwrareafile,
+                                name_area=lwrareaname, file_mask=lwrlandmaskfile, name_mask=lwrlandmaskname,
+                                maskland=True, maskocean=False, debug=debug, **kwargs)
+        dict_area[lwrname], dict_keye[lwrname], dict_var[lwrname] = lwr_areacell, keyerror2, lwr
     else:
         for ii in range(len(lwrfile)):
-            filename, varname = lwrfile[ii], lwrname[ii]
-            dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=lwrbox, **kwargs)
+            lwr, lwr_areacell, keyerror2 = \
+                Read_data_mask_area(lwrfile[ii], lwrname[ii], 'heat flux', metric, lwrbox, file_area=lwrareafile[ii],
+                                    name_area=lwrareaname[ii], file_mask=lwrlandmaskfile[ii],
+                                    name_mask=lwrlandmaskname[ii], maskland=True, maskocean=False, debug=debug,
+                                    **kwargs)
+            dict_area[lwrname[ii]], dict_keye[lwrname[ii]], dict_var[lwrname[ii]] = lwr_areacell, keyerror2, lwr
     lwr = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lwr) ' + str(TimeBounds(lwr))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafile:
-        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
-    else:
-        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if lwrareafile:
-        if isinstance(lwrareafile, basestring):
-            lwr_areacell = ReadAreaSelectRegion(lwrareafile, areaname=lwrareaname, box=lwrbox, **kwargs)
-        else:
-            for ii in range(len(lwrareafile)):
-                lwr_areacell = ReadAreaSelectRegion(lwrareafile[ii], areaname=lwrareaname[ii], box=lwrbox, **kwargs)
-                if lwr_areacell is not None:
-                    break
-    else:
-        if isinstance(lwrfile, basestring):
-            lwr_areacell = ReadAreaSelectRegion(lwrfile, areaname=lwrareaname, box=lwrbox, **kwargs)
-        else:
-            for ii in range(len(lwrfile)):
-                lwr_areacell = ReadAreaSelectRegion(lwrfile[ii], areaname=lwrareaname[ii], box=lwrbox, **kwargs)
-                if lwr_areacell is not None:
-                    break
-    if debug is True:
-        dict_debug = {}
-        if sst_areacell is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_areacell.shape)
-        if lwr_areacell is not None:
-            dict_debug['axes2'] = '(lwr) ' + str([ax.id for ax in lwr_areacell.getAxisList()])
-            dict_debug['shape2'] = '(lwr) ' + str(lwr_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfile:
-        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    else:
-        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    if lwrlandmaskfile:
-        if isinstance(lwrlandmaskfile, basestring):
-            lwr_landmask = ReadAreaSelectRegion(lwrlandmaskfile, areaname=lwrlandmaskname, box=lwrbox, **kwargs)
-        else:
-            for ii in range(len(lwrlandmaskfile)):
-                lwr_landmask = ReadAreaSelectRegion(lwrlandmaskfile[ii], areaname=lwrlandmaskname[ii], box=lwrbox,
-                                                    **kwargs)
-                if lwr_landmask is not None:
-                    break
-    else:
-        if isinstance(lwrfile, basestring):
-            lwr_landmask = ReadAreaSelectRegion(lwrfile, areaname=lwrlandmaskname, box=lwrbox, **kwargs)
-        else:
-            for ii in range(len(lwrfile)):
-                lwr_landmask = ReadAreaSelectRegion(lwrfile[ii], areaname=lwrlandmaskname[ii], box=lwrbox, **kwargs)
-                if lwr_landmask is not None:
-                    break
-    if debug is True:
-        dict_debug = {}
-        if sst_landmask is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_landmask.shape)
-        if lwr_landmask is not None:
-            dict_debug['axes2'] = '(lwr) ' + str([ax.id for ax in lwr_landmask.getAxisList()])
-            dict_debug['shape2'] = '(lwr) ' + str(lwr_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if sst_landmask is not None:
-        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-        if sst_areacell is None:
-            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-        del sst_landmask
-    if lwr_landmask is not None:
-        lwr = ApplyLandmask(lwr, lwr_landmask, maskland=True, maskocean=False)
-        if lwr_areacell is None:
-            lwr_areacell = ArrayOnes(lwr_landmask, id='areacell')
-        lwr_areacell = ApplyLandmaskToArea(lwr_areacell, lwr_landmask, maskland=True, maskocean=False)
-    del lwr_landmask
+    lwr_areacell = dict_area[dict_area.keys()[0]]
+    keyerror2 = ''
+    for ii in dict_keye.keys():
+        if len(keyerror2) > 0 and dict_keye[ii] is not None:
+            keyerror2 += " ; "
+        if dict_keye[ii] is not None:
+            keyerror2 += dict_keye[ii]
+    if len(keyerror2) == 0:
+        keyerror2 = None
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lwr, keyerror = CheckTime(sst, lwr, metric_name=metric, **kwargs)
+    sst, lwr, keyerror3 = CheckTime(sst, lwr, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -2964,8 +2879,19 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is not None:
-        alphaLwr, alphaLwrPos, alphaLwrNeg = None, None, None
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        alphaLwr, alphaLwrPos, alphaLwrNeg = [None, None], [None, None], [None, None]
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -2981,20 +2907,28 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaLwr, alphaLwrPos, alphaLwrNeg = LinearRegressionAndNonlinearity(lwr, sst, return_stderr=True)
+    try:
+        nl1 = alphaLwrNeg[0] - alphaLwrPos[0]
+    except:
+        nl1 = None
+    try:
+        nl2 = alphaLwrNeg[1] + alphaLwrPos[1]
+    except:
+        nl2 = None
 
     # Create output
     alphaLwrMetric = {
         'name': Name, 'value': alphaLwr[0], 'value_error': alphaLwr[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
-        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaLwrNeg[0] - alphaLwrPos[0],
-        'nonlinearity_error': alphaLwrNeg[1] + alphaLwrPos[1], 'keyerror': keyerror,
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror,
     }
     return alphaLwrMetric
 
 
 def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, shffile, shfname,
                  shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', **kwargs):
+                 netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoAlphaShf() function computes the regression of 'shfbox' shfA (sensible heat flux anomalies) over 'sstbox'
     sstA (usually the regression of nino3 shfA over nino3 sstA)
@@ -3098,78 +3032,23 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
     metric = 'EnsoAlphaShf'
+    if metname == '':
+        metname = deepcopy(metric)
 
-    # Read file and select the right region
+        # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(shf) ' + shffile, 'var1': '(sst) ' + sstname,
-                      'var2': '(shf) ' + shfname}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    shf = ReadSelectRegionCheckUnits(shffile, shfname, 'heat flux', box=shfbox, **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(shf) ' + str([ax.id for ax in shf.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(shf) ' + str(shf.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(shf) ' + str(TimeBounds(shf))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafile:
-        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
-    else:
-        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if shfareafile:
-        shf_areacell = ReadAreaSelectRegion(shfareafile, areaname=shfareaname, box=shfbox, **kwargs)
-    else:
-        shf_areacell = ReadAreaSelectRegion(shffile, areaname=shfareaname, box=shfbox, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if sst_areacell is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_areacell.shape)
-        if shf_areacell is not None:
-            dict_debug['axes2'] = '(shf) ' + str([ax.id for ax in shf_areacell.getAxisList()])
-            dict_debug['shape2'] = '(shf) ' + str(shf_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfile:
-        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    else:
-        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    if shflandmaskfile:
-        shf_landmask = ReadLandmaskSelectRegion(shflandmaskfile, landmaskname=shflandmaskname, box=shfbox, **kwargs)
-    else:
-        shf_landmask = ReadLandmaskSelectRegion(shffile, landmaskname=shflandmaskname, box=shfbox, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if sst_landmask is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_landmask.shape)
-        if shf_landmask is not None:
-            dict_debug['axes2'] = '(shf) ' + str([ax.id for ax in shf_landmask.getAxisList()])
-            dict_debug['shape2'] = '(shf) ' + str(shf_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if sst_landmask is not None:
-        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-        if sst_areacell is None:
-            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-        del sst_landmask
-    if shf_landmask is not None:
-        shf = ApplyLandmask(shf, shf_landmask, maskland=True, maskocean=False)
-        if shf_areacell is None:
-            shf_areacell = ArrayOnes(shf_landmask, id='areacell')
-        shf_areacell = ApplyLandmaskToArea(shf_areacell, shf_landmask, maskland=True, maskocean=False)
-    del shf_landmask
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    shf, shf_areacell, keyerror2 = \
+        Read_data_mask_area(shffile, shfname, 'heat flux', metric, shfbox, file_area=shfareafile,
+                            name_area=shfareaname, file_mask=shflandmaskfile, name_mask=shflandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, shf, keyerror = CheckTime(sst, shf, metric_name=metric, **kwargs)
+    sst, shf, keyerror3 = CheckTime(sst, shf, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3177,13 +3056,25 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is not None:
-        alphaShf, alphaShfPos, alphaShfNeg = None, None, None
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        alphaShf, alphaShfPos, alphaShfNeg = [None, None], [None, None], [None, None]
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
                                    **kwargs)
-        shf, unneeded = PreProcessTS(shf, '', areacell=shf_areacell, average='horizontal', compute_anom=True, **kwargs)
+        shf, unneeded = PreProcessTS(shf, '', areacell=shf_areacell, average='horizontal', compute_anom=True,
+                                     **kwargs)
         del sst_areacell, shf_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -3194,20 +3085,28 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaShf, alphaShfPos, alphaShfNeg = LinearRegressionAndNonlinearity(shf, sst, return_stderr=True)
+    try:
+        nl1 = alphaTauxNeg[0] - alphaTauxPos[0]
+    except:
+        nl1 = None
+    try:
+        nl2 = alphaTauxNeg[1] + alphaTauxPos[1]
+    except:
+        nl2 = None
 
     # Create output
     alphaShfMetric = {
         'name': Name, 'value': alphaShf[0], 'value_error': alphaShf[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
-        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaShfNeg[0] - alphaShfPos[0],
-        'nonlinearity_error': alphaShfNeg[1] + alphaShfPos[1], 'keyerror': keyerror,
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror,
     }
     return alphaShfMetric
 
 
 def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, swrfile, swrname,
                  swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', **kwargs):
+                 netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoAlphaSwr() function computes the regression of 'swrbox' swrA (net surface shortwave radiation anomalies)
     over 'sstbox' sstA (usually the regression of nino3 swrA over nino3 sstA)
@@ -3315,110 +3214,44 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
     metric = 'EnsoAlphaSwr'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(swr) ' + swrfile, 'var1': '(sst) ' + sstname,
-                      'var2': '(swr) ' + swrname}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    dict_var = dict()
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    dict_area, dict_keye, dict_var = dict(), dict(), dict()
     if isinstance(swrfile, basestring):
-        dict_var[swrname] = ReadSelectRegionCheckUnits(swrfile, swrname, 'heat flux', box=swrbox, **kwargs)
+        swr, swr_areacell, keyerror2 = \
+            Read_data_mask_area(swrfile, swrname, 'heat flux', metric, swrbox, file_area=swrareafile,
+                                name_area=swrareaname, file_mask=swrlandmaskfile, name_mask=swrlandmaskname,
+                                maskland=True, maskocean=False, debug=debug, **kwargs)
+        dict_area[swrname], dict_keye[swrname], dict_var[swrname] = swr_areacell, keyerror2, swr
     else:
         for ii in range(len(swrfile)):
-            filename, varname = swrfile[ii], swrname[ii]
-            dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=swrbox, **kwargs)
+            swr, swr_areacell, keyerror2 = \
+                Read_data_mask_area(swrfile[ii], swrname[ii], 'heat flux', metric, swrbox, file_area=swrareafile[ii],
+                                    name_area=swrareaname[ii], file_mask=swrlandmaskfile[ii],
+                                    name_mask=swrlandmaskname[ii], maskland=True, maskocean=False, debug=debug,
+                                    **kwargs)
+            dict_area[swrname[ii]], dict_keye[swrname[ii]], dict_var[swrname[ii]] = swr_areacell, keyerror2, swr
     swr = MyDerive(kwargs['project_interpreter_var2'], 'swr', dict_var)
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(swr) ' + str([ax.id for ax in swr.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(swr) ' + str(swr.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(swr) ' + str(TimeBounds(swr))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafile:
-        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
-    else:
-        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if swrareafile:
-        if isinstance(swrareafile, basestring):
-            swr_areacell = ReadAreaSelectRegion(swrareafile, areaname=swrareaname, box=swrbox, **kwargs)
-        else:
-            for ii in range(len(swrareafile)):
-                swr_areacell = ReadAreaSelectRegion(swrareafile[ii], areaname=swrareaname[ii], box=swrbox, **kwargs)
-                if swr_areacell is not None:
-                    break
-    else:
-        if isinstance(swrfile, basestring):
-            swr_areacell = ReadAreaSelectRegion(swrfile, areaname=swrareaname, box=swrbox, **kwargs)
-        else:
-            for ii in range(len(swrfile)):
-                swr_areacell = ReadAreaSelectRegion(swrfile[ii], areaname=swrareaname[ii], box=swrbox, **kwargs)
-                if swr_areacell is not None:
-                    break
-    if debug is True:
-        dict_debug = {}
-        if sst_areacell is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_areacell.shape)
-        if swr_areacell is not None:
-            dict_debug['axes2'] = '(swr) ' + str([ax.id for ax in swr_areacell.getAxisList()])
-            dict_debug['shape2'] = '(swr) ' + str(swr_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfile:
-        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    else:
-        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    if swrlandmaskfile:
-        if isinstance(swrlandmaskfile, basestring):
-            swr_landmask = ReadAreaSelectRegion(swrlandmaskfile, areaname=swrlandmaskname, box=swrbox, **kwargs)
-        else:
-            for ii in range(len(swrlandmaskfile)):
-                swr_landmask = ReadAreaSelectRegion(swrlandmaskfile[ii], areaname=swrlandmaskname[ii], box=swrbox,
-                                                    **kwargs)
-                if swr_landmask is not None:
-                    break
-    else:
-        if isinstance(swrfile, basestring):
-            swr_landmask = ReadAreaSelectRegion(swrfile, areaname=swrlandmaskname, box=swrbox, **kwargs)
-        else:
-            for ii in range(len(swrfile)):
-                swr_landmask = ReadAreaSelectRegion(swrfile[ii], areaname=swrlandmaskname[ii], box=swrbox, **kwargs)
-                if swr_landmask is not None:
-                    break
-    if debug is True:
-        dict_debug = {}
-        if sst_landmask is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_landmask.shape)
-        if swr_landmask is not None:
-            dict_debug['axes2'] = '(swr) ' + str([ax.id for ax in swr_landmask.getAxisList()])
-            dict_debug['shape2'] = '(swr) ' + str(swr_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if sst_landmask is not None:
-        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-        if sst_areacell is None:
-            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-        del sst_landmask
-    if swr_landmask is not None:
-        swr = ApplyLandmask(swr, swr_landmask, maskland=True, maskocean=False)
-        if swr_areacell is None:
-            swr_areacell = ArrayOnes(swr_landmask, id='areacell')
-        swr_areacell = ApplyLandmaskToArea(swr_areacell, swr_landmask, maskland=True, maskocean=False)
-    del swr_landmask
+    swr_areacell = dict_area[dict_area.keys()[0]]
+    keyerror2 = ''
+    for ii in dict_keye.keys():
+        if len(keyerror2) > 0 and dict_keye[ii] is not None:
+            keyerror2 += " ; "
+        if dict_keye[ii] is not None:
+            keyerror2 += dict_keye[ii]
+    if len(keyerror2) == 0:
+        keyerror2 = None
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, swr, keyerror = CheckTime(sst, swr, metric_name=metric, **kwargs)
+    sst, swr, keyerror3 = CheckTime(sst, swr, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3426,8 +3259,19 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is not None:
-        alphaSwr, alphaSwrPos, alphaSwrNeg = None, None, None
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        alphaSwr, alphaSwrPos, alphaSwrNeg = [None, None], [None, None], [None, None]
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -3443,20 +3287,24 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaSwr, alphaSwrPos, alphaSwrNeg = LinearRegressionAndNonlinearity(swr, sst, return_stderr=True)
+    try: nl1 = alphaSwrNeg[0] - alphaSwrPos[0]
+    except: nl1 = None
+    try: nl2 = alphaSwrNeg[1] + alphaSwrPos[1]
+    except: nl2 = None
 
     # Create output
     alphaSwrMetric = {
         'name': Name, 'value': alphaSwr[0], 'value_error': alphaSwr[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
-        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaSwrNeg[0] - alphaSwrPos[0],
-        'nonlinearity_error': alphaSwrNeg[1] + alphaSwrPos[1], 'keyerror': keyerror,
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror,
     }
     return alphaSwrMetric
 
 
 def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, thffile, thfname,
                  thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', **kwargs):
+                 netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoAlphaThf() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 thfA over nino3 sstA)
@@ -3569,110 +3417,44 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
     metric = 'EnsoAlphaThf'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(thf) ' + thffile, 'var1': '(sst) ' + sstname,
-                      'var2': '(thf) ' + thfname}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    dict_var = dict()
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    dict_area, dict_keye, dict_var = dict(), dict(), dict()
     if isinstance(thffile, basestring):
-        dict_var[thfname] = ReadSelectRegionCheckUnits(thffile, thfname, 'heat flux', box=thfbox, **kwargs)
+        thf, thf_areacell, keyerror2 = \
+            Read_data_mask_area(thffile, thfname, 'heat flux', metric, thfbox, file_area=thfareafile,
+                                name_area=thfareaname, file_mask=thflandmaskfile, name_mask=thflandmaskname,
+                                maskland=True, maskocean=False, debug=debug, **kwargs)
+        dict_area[thfname], dict_keye[thfname], dict_var[thfname] = thf_areacell, keyerror2, thf
     else:
         for ii in range(len(thffile)):
-            filename, varname = thffile[ii], thfname[ii]
-            dict_var[varname] = ReadSelectRegionCheckUnits(filename, varname, 'heat flux', box=thfbox, **kwargs)
+            thf, thf_areacell, keyerror2 = \
+                Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, thfbox, file_area=thfareafile[ii],
+                                    name_area=thfareaname[ii], file_mask=thflandmaskfile[ii],
+                                    name_mask=thflandmaskname[ii], maskland=True, maskocean=False, debug=debug,
+                                    **kwargs)
+            dict_area[thfname[ii]], dict_keye[thfname[ii]], dict_var[thfname[ii]] = thf_areacell, keyerror2, thf
     thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(thf))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafile:
-        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
-    else:
-        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if thfareafile:
-        if isinstance(thfareafile, basestring):
-            thf_areacell = ReadAreaSelectRegion(thfareafile, areaname=thfareaname, box=thfbox, **kwargs)
-        else:
-            for ii in range(len(thfareafile)):
-                thf_areacell = ReadAreaSelectRegion(thfareafile[ii], areaname=thfareaname[ii], box=thfbox, **kwargs)
-                if thf_areacell is not None:
-                    break
-    else:
-        if isinstance(thffile, basestring):
-            thf_areacell = ReadAreaSelectRegion(thffile, areaname=thfareaname, box=thfbox, **kwargs)
-        else:
-            for ii in range(len(thffile)):
-                thf_areacell = ReadAreaSelectRegion(thffile[ii], areaname=thfareaname[ii], box=thfbox, **kwargs)
-                if thf_areacell is not None:
-                    break
-    if debug is True:
-        dict_debug = {}
-        if sst_areacell is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_areacell.shape)
-        if thf_areacell is not None:
-            dict_debug['axes2'] = '(thf) ' + str([ax.id for ax in thf_areacell.getAxisList()])
-            dict_debug['shape2'] = '(thf) ' + str(thf_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfile:
-        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    else:
-        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    if thflandmaskfile:
-        if isinstance(thflandmaskfile, basestring):
-            thf_landmask = ReadAreaSelectRegion(thflandmaskfile, areaname=thflandmaskname, box=thfbox, **kwargs)
-        else:
-            for ii in range(len(thflandmaskfile)):
-                thf_landmask = ReadAreaSelectRegion(thflandmaskfile[ii], areaname=thflandmaskname[ii], box=thfbox,
-                                                    **kwargs)
-                if thf_landmask is not None:
-                    break
-    else:
-        if isinstance(thffile, basestring):
-            thf_landmask = ReadAreaSelectRegion(thffile, areaname=thflandmaskname, box=thfbox, **kwargs)
-        else:
-            for ii in range(len(thffile)):
-                thf_landmask = ReadAreaSelectRegion(thffile[ii], areaname=thflandmaskname[ii], box=thfbox, **kwargs)
-                if thf_landmask is not None:
-                    break
-    if debug is True:
-        dict_debug = {}
-        if sst_landmask is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_landmask.shape)
-        if thf_landmask is not None:
-            dict_debug['axes2'] = '(thf) ' + str([ax.id for ax in thf_landmask.getAxisList()])
-            dict_debug['shape2'] = '(thf) ' + str(thf_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if sst_landmask is not None:
-        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-        if sst_areacell is None:
-            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-        del sst_landmask
-    if thf_landmask is not None:
-        thf = ApplyLandmask(thf, thf_landmask, maskland=True, maskocean=False)
-        if thf_areacell is None:
-            thf_areacell = ArrayOnes(thf_landmask, id='areacell')
-        thf_areacell = ApplyLandmaskToArea(thf_areacell, thf_landmask, maskland=True, maskocean=False)
-    del thf_landmask
+    thf_areacell = dict_area[dict_area.keys()[0]]
+    keyerror2 = ''
+    for ii in dict_keye.keys():
+        if len(keyerror2) > 0 and dict_keye[ii] is not None:
+            keyerror2 += " ; "
+        if dict_keye[ii] is not None:
+            keyerror2 += dict_keye[ii]
+    if len(keyerror2) == 0:
+        keyerror2 = None
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, thf, keyerror = CheckTime(sst, thf, metric_name=metric, **kwargs)
+    sst, thf, keyerror3 = CheckTime(sst, thf, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3680,8 +3462,19 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is not None:
-        alpha, alphaPos, alphaNeg = None, None, None
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        alphaThf, alphaThfPos, alphaThfNeg = [None, None], [None, None], [None, None]
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -3696,20 +3489,28 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
-        alpha, alphaPos, alphaNeg = LinearRegressionAndNonlinearity(thf, sst, return_stderr=True)
+        alphaThf, alphaThfPos, alphaThfNeg = LinearRegressionAndNonlinearity(thf, sst, return_stderr=True)
+    try:
+        nl1 = alphaThfNeg[0] - alphaThfPos[0]
+    except:
+        nl1 = None
+    try:
+        nl2 = alphaThfNeg[1] + alphaThfPos[1]
+    except:
+        nl2 = None
 
     # Create output
-    alphaMetric = {
-        'name': Name, 'value': alpha[0], 'value_error': alpha[1], 'units': Units, 'method': Method,
+    alphaThfMetric = {
+        'name': Name, 'value': alphaThf[0], 'value_error': alphaThf[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
-        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': alphaNeg[0] - alphaPos[0],
-        'nonlinearity_error': alphaNeg[1] + alphaPos[1], 'keyerror': keyerror,
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror,
     }
-    return alphaMetric
+    return alphaThfMetric
 
 
 def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset='',
-             debug=False, netcdf=False, netcdf_name='', **kwargs):
+             debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoAmpl() function computes the standard deviation of 'sstbox' sstA (usually the standard deviation of nino3
     sstA)
@@ -3862,9 +3663,9 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                                             'newgrid_name': 'generic_1x1deg'}
             sst = Regrid(sst, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "monthly standard deviation of " + sstbox + " sstA",
                      'diagnostic_value': sstStd, 'diagnostic_value_error': sstStdErr}
@@ -3890,7 +3691,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
 
 
 def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-                  dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+                  dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoDiversity() function computes a zonal composite of El Nino and La Nina events during the peak of the event.
         1.) detect events
@@ -4002,6 +3803,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     Units = '%'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoDiversity'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # ------------------------------------------------
     # 1. detect events
@@ -4129,9 +3932,9 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
             if netcdf is True:
                 if ".nc" in netcdf_name:
-                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                 else:
-                    file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
                 dict1 = {'units': 'longitude (E)', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                          'nino_years': str(nino_years), 'diagnostic_value_' + dataset: ratioEP,
                          'diagnostic_value_error_' + dataset: StdErr}
@@ -4160,7 +3963,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
 def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile, tauxname,
            tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, dataset='', debug=False,
-           netcdf=False, netcdf_name='', **kwargs):
+           netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoMu() function computes the regression of 'tauxbox' tauxA (surface downward zonal stress anomalies) over
     'sstbox' sstA (usually the regression of nino4 tauxA over nino3 sstA)
@@ -4264,78 +4067,24 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
     metric = 'EnsoMu'
+    if metname == '':
+        metname = deepcopy(metric)
 
-    # Read file and select the right region
+        # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
-        dict_debug = {'file1': '(sst) ' + sstfile, 'file2': '(taux) ' + tauxfile, 'var1': '(sst) ' + sstname,
-                      'var2': '(taux) ' + tauxname}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'Files', 10, **dict_debug)
-    sst = ReadSelectRegionCheckUnits(sstfile, sstname, 'temperature', box=sstbox, **kwargs)
-    taux = ReadSelectRegionCheckUnits(tauxfile, tauxname, 'wind stress', box=tauxbox, **kwargs)
-    if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                      'axes2': '(thf) ' + str([ax.id for ax in taux.getAxisList()]),
-                      'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(taux.shape),
-                      'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(taux))}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadSelectRegionCheckUnits', 15, **dict_debug)
-
-    # Read areacell
-    if sstareafile:
-        sst_areacell = ReadAreaSelectRegion(sstareafile, areaname=sstareaname, box=sstbox, **kwargs)
-    else:
-        sst_areacell = ReadAreaSelectRegion(sstfile, areaname=sstareaname, box=sstbox, **kwargs)
-    if tauxareafile:
-        taux_areacell = ReadAreaSelectRegion(tauxareafile, areaname=tauxareaname, box=tauxbox, **kwargs)
-    else:
-        taux_areacell = ReadAreaSelectRegion(tauxfile, areaname=tauxareaname, box=tauxbox, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if sst_areacell is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_areacell.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_areacell.shape)
-        if taux_areacell is not None:
-            dict_debug['axes2'] = '(taux) ' + str([ax.id for ax in taux_areacell.getAxisList()])
-            dict_debug['shape2'] = '(taux) ' + str(taux_areacell.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadAreaSelectRegion', 15, **dict_debug)
-
-    # Read landmask
-    if sstlandmaskfile:
-        sst_landmask = ReadLandmaskSelectRegion(sstlandmaskfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    else:
-        sst_landmask = ReadLandmaskSelectRegion(sstfile, landmaskname=sstlandmaskname, box=sstbox,
-                                                **kwargs)
-    if tauxlandmaskfile:
-        taux_landmask = ReadLandmaskSelectRegion(tauxlandmaskfile, landmaskname=tauxlandmaskname, box=tauxbox, **kwargs)
-    else:
-        taux_landmask = ReadLandmaskSelectRegion(tauxfile, landmaskname=tauxlandmaskname, box=tauxbox, **kwargs)
-    if debug is True:
-        dict_debug = {}
-        if sst_landmask is not None:
-            dict_debug['axes1'] = '(sst) ' + str([ax.id for ax in sst_landmask.getAxisList()])
-            dict_debug['shape1'] = '(sst) ' + str(sst_landmask.shape)
-        if taux_landmask is not None:
-            dict_debug['axes2'] = '(taux) ' + str([ax.id for ax in taux_landmask.getAxisList()])
-            dict_debug['shape2'] = '(taux) ' + str(taux_landmask.shape)
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'after ReadLandmaskSelectRegion', 15, **dict_debug)
-
-    # Apply landmask
-    if sst_landmask is not None:
-        sst = ApplyLandmask(sst, sst_landmask, maskland=True, maskocean=False)
-        if sst_areacell is None:
-            sst_areacell = ArrayOnes(sst_landmask, id='areacell')
-        sst_areacell = ApplyLandmaskToArea(sst_areacell, sst_landmask, maskland=True, maskocean=False)
-        del sst_landmask
-    if taux_landmask is not None:
-        taux = ApplyLandmask(taux, taux_landmask, maskland=True, maskocean=False)
-        if taux_areacell is None:
-            taux_areacell = ArrayOnes(taux_landmask, id='areacell')
-        taux_areacell = ApplyLandmaskToArea(taux_areacell, taux_landmask, maskland=True, maskocean=False)
-    del taux_landmask
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    taux, taux_areacell, keyerror2 = \
+        Read_data_mask_area(tauxfile, tauxname, 'wind stress', metric, tauxbox, file_area=tauxareafile,
+                            name_area=tauxareaname, file_mask=tauxlandmaskfile, name_mask=tauxlandmaskname,
+                            maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, taux, keyerror = CheckTime(sst, taux, metric_name=metric, **kwargs)
+    sst, taux, keyerror3 = CheckTime(sst, taux, metric_name=metric, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -4343,8 +4092,19 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     # Time period
     actualtimebounds = TimeBounds(sst)
 
-    if keyerror is not None:
-        mu, muPos, muNeg = None, None, None
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        alphaTaux, alphaTauxPos, alphaTauxNeg = [None, None], [None, None], [None, None]
+        if keyerror1 is not None:
+            keyerror = keyerror1
+        if len(keyerror) > 0 and keyerror2 is not None:
+            keyerror += " ; "
+        if keyerror2 is not None:
+            keyerror += keyerror2
+        if len(keyerror) > 0 and keyerror3 is not None:
+            keyerror += " ; "
+        if keyerror3 is not None:
+            keyerror += keyerror3
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -4356,7 +4116,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
-                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(taux))}
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(taux) ' + str(TimeBounds(taux))}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
@@ -4366,13 +4126,21 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
         mu = [mu[0] * 1e3, mu[1] * 1e3]
         muPos = [muPos[0] * 1e3, muPos[1] * 1e3]
         muNeg = [muNeg[0] * 1e3, muNeg[1] * 1e3]
+    try:
+        nl1 = muNeg[0] - muPos[0]
+    except:
+        nl1 = None
+    try:
+        nl2 = muNeg[1] + muPos[1]
+    except:
+        nl2 = None
 
     # Create output
     muMetric = {
         'name': Name, 'value': mu[0], 'value_error': mu[1], 'units': Units, 'method': Method,
         'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
-        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': muNeg[0] - muPos[0],
-        'nonlinearity_error': muNeg[1] + muPos[1], 'keyerror': keyerror,
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror,
     }
     return muMetric
 
@@ -4382,7 +4150,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
               sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
               prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
               centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-              **kwargs):
+              metname='', **kwargs):
     """
     The EnsoPrMap() function computes precipitation anomalies pattern associated with ENSO on the globe.
     First metric: rmse(observations vs model).
@@ -4722,9 +4490,9 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: prRmse,
@@ -4754,7 +4522,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
                  event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 netcdf_name='', metname='', **kwargs):
     """
     The EnsoPrJjaTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
         reference regions, then precipitations during JJA preceding the events are composited for each selected event
@@ -4904,6 +4672,8 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = 'mm/day'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoPrJjaTel'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -5109,9 +4879,9 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axis': loop_box}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(nina_years_mod), 'nino_years': str(nino_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -5144,7 +4914,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 #                  prlandmasknamemodel, sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs,
 #                  sstlandmasknameobs, prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs,
 #                  prlandmasknameobs, sstbox, prbox, event_definition, centered_rmse=0, biased_rmse=1, debug=False,
-#                  netcdf=False, netcdf_name='', **kwargs):
+#                  netcdf=False, netcdf_name='', metname='', **kwargs):
 #     """
 #     The EnsoPrNdjTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
 #         reference regions, then precipitations in NDJ are composited for each selected event and the difference
@@ -5557,7 +5327,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
                  event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 netcdf_name='', metname='', **kwargs):
     """
     The EnsoPrNdjTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
         reference regions, then precipitations during NDJ (peak) are composited for each selected event and the
@@ -5707,6 +5477,8 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = 'mm/day'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoPrNdjTel'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -5912,9 +5684,9 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axis': loop_box}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(nina_years_mod), 'nino_years': str(nino_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -5943,7 +5715,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
 
 def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset='',
-                    debug=False, netcdf=False, netcdf_name='', **kwargs):
+                    debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoSeasonality() function computes ratio between the November-December-January (NDJ) and March-April-May (MAM)
     average standard deviation of 'sstbox' sstA (usually nino3 sstA)
@@ -6026,6 +5798,8 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     Method = 'Ratio between NDJ and MAM standard deviation ' + sstbox + ' sstA'
     Ref = 'Using CDAT std dev calculation'
     metric = 'EnsoSeasonality'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -6118,9 +5892,9 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
             sst_NDJ_std = Regrid(sst_NDJ_std, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
             sst_MAM_std = Regrid(sst_MAM_std, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "monthly standard deviation of " + sstbox + " sstA",
                      'diagnostic_value': ratioStd, 'diagnostic_value_error': ratio_std_err}
@@ -6150,7 +5924,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
 
 
 def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset='',
-                debug=False, netcdf=False, netcdf_name='', **kwargs):
+                debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoSstSkew() function computes the skewness of 'sstbox' sstA (usually the skewness of nino3 sstA)
 
@@ -6242,6 +6016,8 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     Method = 'Standard deviation of ' + sstbox + ' sstA'
     Ref = 'Using CDAT regression calculation'
     metric = 'EnsoSstSkew'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -6305,9 +6081,9 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                             'newgrid_name': 'generic_1x1deg'}
             sst = Regrid(sst, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "monthly standard deviation of " + sstbox + " sstA",
                      'diagnostic_value': sstSke, 'diagnostic_value_error': sstSkeErr}
@@ -6337,7 +6113,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
                slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-               netcdf=False, netcdf_name='', **kwargs):
+               netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The EnsoSlpMap() function computes sea level pressure anomalies pattern associated with ENSO on the globe.
     First metric: rmse(observations vs model).
@@ -6488,6 +6264,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'EnsoSlpMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -6679,9 +6457,9 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: slpRmse,
@@ -6709,7 +6487,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
                event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-               netcdf_name='', **kwargs):
+               netcdf_name='', metname='', **kwargs):
     """
     The EnsoSstMap() function computes surface temperature anomalies pattern associated with ENSO on the globe.
     First metric: rmse(observations vs model).
@@ -6834,6 +6612,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'EnsoSstMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -7026,9 +6806,9 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: tsRmse,
@@ -7058,7 +6838,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
                  event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 netcdf_name='', metname='', **kwargs):
     """
     The NinaPrJjaTel() function computes precipitations anomalies associated with La Nina events in many AR5 reference
         regions, then precipitations during JJA preceding the events are composited in each region.
@@ -7205,6 +6985,8 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = 'mm/day'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinaPrJjaTel'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -7405,9 +7187,9 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axis': loop_box}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(nina_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -7439,7 +7221,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
                  event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 netcdf_name='', metname='', **kwargs):
     """
     The NinaPrNdjTel() function computes precipitations anomalies associated with La Nina events in many AR5 reference
         regions, then precipitations during NDJ (peak) are composited in each region.
@@ -7586,6 +7368,8 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = 'mm/day'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinaPrNdjTel'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -7786,9 +7570,9 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axis': loop_box}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(nina_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -7820,7 +7604,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
               sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
               prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
               centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-              **kwargs):
+              metname='', **kwargs):
     """
     The NinaPrMap() function computes a precipitation anomalies composite of during the peak of La Nina events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -7977,6 +7761,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinaPrMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -8150,9 +7936,9 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -8179,7 +7965,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
 
 def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+               dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstDiv() function computes a zonal composite of La Nina events during the peak of the event.
         1.) detect events
@@ -8290,6 +8076,8 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     Units = '%'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstDiv'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # ------------------------------------------------
     # 1. detect events
@@ -8396,9 +8184,9 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
             if netcdf is True:
                 if ".nc" in netcdf_name:
-                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                 else:
-                    file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
                 dict1 = {'units': 'longitude (E)', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                          'nina_years': str(event_years), 'diagnostic_value_' + dataset: ep_event,
                          'diagnostic_value_error_' + dataset: StdErr}
@@ -8424,7 +8212,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
                    event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-                   netcdf=False, netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstDivRmse() function computes a zonal minimum of La Nina events during the peak of the event.
         1.) detect events
@@ -8547,6 +8335,8 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Units = 'density'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstDivRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # ------------------------------------------------
     # 1. detect events
@@ -8700,9 +8490,9 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axis': list(pdf_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -8731,7 +8521,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 
 def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstDurRmse() function computes a duration of La Nina events.
         1.) detect events
@@ -8833,6 +8623,8 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
              ', number of consecutive months when sstA < -0.5' + Units
     Ref = 'Using CDAT'
     metric = 'NinaSstDur'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -8891,9 +8683,9 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         dive_down_diag = {'value': ArrayToList(duration), 'axis': list(duration.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'nina_years': str(event_years), 'description': "duration of Nina events",
                      'diagnostic_value': duration_mean, 'diagnostic_value_error': duration_err}
@@ -8920,7 +8712,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
                    event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-                   netcdf=False, netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstLonRmse() function computes a zonal composite of La Nina events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -9042,6 +8834,8 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         Units = 'C'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # ------------------------------------------------
     # detect events
@@ -9220,9 +9014,9 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             map_mod = Composite(map_mod, event_years_mod, kwargs['frequency'])
             map_obs = Composite(map_obs, event_years_obs, kwargs['frequency'])
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -9260,7 +9054,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
                slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-               netcdf=False, netcdf_name='', **kwargs):
+               netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSlpMap() function computes a sea level pressure anomalies composite of during the peak of La Nina events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -9417,6 +9211,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinaSlpMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -9592,9 +9388,9 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -9624,7 +9420,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
                event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-               netcdf_name='', **kwargs):
+               netcdf_name='', metname='', **kwargs):
     """
     The NinaSstMap() function computes a surface temperature anomalies composite of during the peak of La Nina events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -9755,6 +9551,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinaSstMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -9933,9 +9731,9 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -9965,7 +9763,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
-                  debug=False, netcdf=False, netcdf_name='', **kwargs):
+                  debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstTsRmse() function computes a time composite of La Nina events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -10088,6 +9886,8 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         Units = 'C'
     Ref = 'Using CDAT rms (uncentered and biased) calculation'
     metric = 'NinaSstTsRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -10172,9 +9972,9 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'axis': list(composite_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nina_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -10207,7 +10007,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
                  event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 netcdf_name='', metname='', **kwargs):
     """
     The NinoPrJjaTel() function computes precipitations anomalies associated with El Nino events in many AR5 reference
         regions, then precipitations during JJA preceding the events are composited in each region.
@@ -10320,10 +10120,10 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     Output:
     ------
     :return EnsoPrTelMetric: dict
-		name, Rmse__value (rms [NinoPr]), Rmse__value_error, Rmse__units, method,
-		SignAgree__value (sign agreement [NinoPr]), SignAgree__value_error, SignAgree__units, nyears_model,
+        name, Rmse__value (rms [NinoPr]), Rmse__value_error, Rmse__units, method,
+        SignAgree__value (sign agreement [NinoPr]), SignAgree__value_error, SignAgree__units, nyears_model,
         nyears_observations, nino_model, nino_observations, time_frequency, time_period_model, time_period_observations,
-		ref, keyerror, dive_down_diag, units
+        ref, keyerror, dive_down_diag, units
 
     Method:
     -------
@@ -10354,6 +10154,8 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = 'mm/day'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinoPrJjaTel'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -10554,9 +10356,9 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axis': loop_box}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(nino_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -10588,7 +10390,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
                  event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                 netcdf_name='', **kwargs):
+                 netcdf_name='', metname='', **kwargs):
     """
     The NinoPrNdjTel() function computes precipitations anomalies associated with El Nino events in many AR5 reference
         regions, then precipitations during NDJ (peak) are composited in each region.
@@ -10735,6 +10537,8 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = 'mm/day'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinoPrNdjTel'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -10935,9 +10739,9 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axis': loop_box}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(nino_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -10969,7 +10773,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
               sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
               prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
               centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-              **kwargs):
+              metname='', **kwargs):
     """
     The NinoPrMap() function computes a precipitation anomalies composite of during the peak of El Nino events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -11126,6 +10930,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinoPrMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -11299,9 +11105,9 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -11328,7 +11134,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
 
 def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+               dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstDiv() function computes a zonal composite of El Nino events during the peak of the event.
         1.) detect events
@@ -11439,6 +11245,8 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     Units = '%'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstDiv'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # ------------------------------------------------
     # 1. detect events
@@ -11545,9 +11353,9 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
             if netcdf is True:
                 if ".nc" in netcdf_name:
-                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                 else:
-                    file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
                 dict1 = {'units': 'longitude (E)', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                          'nino_years': str(event_years), 'diagnostic_value_' + dataset: ep_event,
                          'diagnostic_value_error_' + dataset: StdErr}
@@ -11573,7 +11381,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
                    event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-                   netcdf=False, netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstDivRmse() function computes a zonal composite of El Nino events during the peak of the event.
         1.) detect events
@@ -11696,6 +11504,8 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Units = 'density'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstDivRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # ------------------------------------------------
     # 1. detect events
@@ -11849,9 +11659,9 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axis': list(pdf_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -11879,7 +11689,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 
 def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
-               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', **kwargs):
+               nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstDur() function computes a duration of El Nino events.
         1.) detect events
@@ -11980,6 +11790,8 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
              ', number of consecutive months when sstA > 0.5' + Units
     Ref = 'Using CDAT'
     metric = 'NinoSstDur'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -12038,9 +11850,9 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         dive_down_diag = {'value': ArrayToList(duration), 'axis': list(duration.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'nino_years': str(event_years), 'description': "duration of Nino events",
                      'diagnostic_value': duration_mean, 'diagnostic_value_error': duration_err}
@@ -12067,7 +11879,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
                    event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-                   netcdf=False, netcdf_name='', **kwargs):
+                   netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstLonRmse() function computes a zonal composite of El Nino events during the peak of the event
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -12189,6 +12001,8 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         Units = 'C'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # ------------------------------------------------
     # detect events
@@ -12362,9 +12176,9 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             map_mod = Composite(map_mod, event_years_mod, kwargs['frequency'])
             map_obs = Composite(map_obs, event_years_obs, kwargs['frequency'])
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -12402,7 +12216,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
                slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
-               netcdf=False, netcdf_name='', **kwargs):
+               netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSlpMap() function computes a seal level pressure anomalies composite of during the peak of El Nino events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -12559,6 +12373,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinoSlpMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -12734,9 +12550,9 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -12766,7 +12582,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
                event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-               netcdf_name='', **kwargs):
+               netcdf_name='', metname='', **kwargs):
     """
     The NinoSstMap() function computes a surface temperature anomalies composite of during the peak of El Nino events
     SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
@@ -12897,6 +12713,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinoSstMap'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -13075,9 +12893,9 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -13107,7 +12925,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
-                  debug=False, netcdf=False, netcdf_name='', **kwargs):
+                  debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstTsRmse() function computes a time composite of El Nino events
     SSTA averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
@@ -13230,6 +13048,8 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         Units = 'C'
     Ref = 'Using CDAT rms (uncentered and biased) calculation'
     metric = 'NinoSstTsRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -13315,9 +13135,9 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'axis': list(composite_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
                      'nino_years': str(event_years_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
@@ -13348,7 +13168,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                       prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
                       centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                      netcdf_name='', **kwargs):
+                      netcdf_name='', metname='', **kwargs):
     """
     The SeasonalPrLatRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -13469,6 +13289,8 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     Method = 'Meridional root mean square error of ' + box + ' climatological pr STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalPrLatRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -13557,9 +13379,9 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                           'axis': list(pr_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
@@ -13586,7 +13408,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                       prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
                       centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                      netcdf_name='', **kwargs):
+                      netcdf_name='', metname='', **kwargs):
     """
     The SeasonalPrLonRmse() function computes the climatological (12 months) PR (precipitation) zonal (longitude)
     standard deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -13707,6 +13529,8 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     Method = 'Zonal root mean square error of ' + box + ' climatological pr STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalPrLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -13795,9 +13619,9 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                           'axis': list(pr_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
@@ -13824,7 +13648,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                        sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                        box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                       netcdf_name='', **kwargs):
+                       netcdf_name='', metname='', **kwargs):
     """
     The SeasonalSstLatRmse() function computes the climatological (12 months) SST meridional (latitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
@@ -13943,6 +13767,8 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     Method = 'Meridional root mean square error of ' + box + ' climatological sst STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalSstLatRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -14031,9 +13857,9 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                           'axis': list(sst_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
@@ -14060,7 +13886,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                        sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                        box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
-                       netcdf_name='', **kwargs):
+                       netcdf_name='', metname='', **kwargs):
     """
     The SeasonalSstLonRmse() function computes the climatological (12 months) SST zonal (longitude) standard
     deviation root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
@@ -14181,6 +14007,8 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     Method = 'Zonal root mean square error of ' + box + ' climatological sst STD'
     Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalSstLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
 
     # Read file and select the right region
     if debug is True:
@@ -14269,9 +14097,9 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                           'axis': list(sst_mod.getAxis(0)[:])}
         if netcdf is True:
             if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metric + ".nc")
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
-                file_name = deepcopy(netcdf_name) + "_" + metric + ".nc"
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
             dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
             dict3 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,

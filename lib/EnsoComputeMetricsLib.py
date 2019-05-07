@@ -1,4 +1,5 @@
 # -*- coding:UTF-8 -*-
+from copy import deepcopy
 from inspect import stack as INSPECTstack
 from numpy import square as NUMPYsquare
 
@@ -270,9 +271,8 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
             if len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0:
                 print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
         else:
-            tmp_metric = metric.replace('_2', '').replace('_3', '').replace('_4', '').replace('_5', '')
             valu, vame, dive, dime = ComputeMetric(
-                metricCollection, tmp_metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
+                metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
                 netcdf_name=netcdf_name, **arg_var2)
             keys1 = valu.keys()
@@ -499,17 +499,19 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
 
     :return:
     """
+    tmp_metric = deepcopy(metric)
+    metric = metric.replace('_1', '').replace('_2', '').replace('_3', '').replace('_4', '').replace('_5', '')
     # retrieving keyargs from EnsoCollectionsLib.defCollection
     dict_mc = defCollection(metricCollection)
     # read the list of variables for the given metric
-    list_variables = dict_mc['metrics_list'][metric]['variables']
+    list_variables = dict_mc['metrics_list'][tmp_metric]['variables']
 
     # common_collection_parameters
     keyarg = dict()
     for arg in dict_mc['common_collection_parameters'].keys():
         keyarg[arg] = dict_mc['common_collection_parameters'][arg]
-    for arg in dict_mc['metrics_list'][metric].keys():
-        keyarg[arg] = dict_mc['metrics_list'][metric][arg]
+    for arg in dict_mc['metrics_list'][tmp_metric].keys():
+        keyarg[arg] = dict_mc['metrics_list'][tmp_metric][arg]
     # if 'metric_computation' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its
     # default value
     try:
@@ -529,8 +531,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     except:
         keyarg['time_bounds_obs'] = DefaultArgValues('time_bounds_obs')
     # if the user gave a specific regridding Tool / method, use it
-    if metric in user_regridding.keys():
-        keyarg['regridding'] = user_regridding[metric]
+    if tmp_metric in user_regridding.keys():
+        keyarg['regridding'] = user_regridding[tmp_metric]
     elif 'regridding' in user_regridding.keys():
         keyarg['regridding'] = user_regridding['regridding']
 
@@ -575,7 +577,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                     obsLandmaskName1[ii], regionVar1, dataset1=modelName, dataset2=output_name, debug=debug,
-                    netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                    netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
             elif metric in dict_twoVar_modelAndObs.keys():
                 for jj in range(len(obsNameVar2)):
                     output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
@@ -588,7 +590,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         obsAreaName1[ii], obsFileLandmask1[ii], obsLandmaskName1[ii], obsFile2[jj], obsVarName2[jj],
                         obsFileArea2[jj], obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar1,
                         regionVar2, dataset1=modelName, dataset2=output_name, debug=debug, netcdf=netcdf,
-                        netcdf_name=netcdf_name, **keyarg)
+                        netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
         for obs in diagnostic1.keys():
             # puts metric values in its proper dictionary
             if 'value' in diagnostic1[obs].keys():
@@ -644,7 +646,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
             diagnostic1 = dict_oneVar[metric](
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
-                regionVar1, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                regionVar1, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric,
+                **keyarg)
         elif metric in dict_twoVar.keys():
             # computes diagnostic that needs two variables
             print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
@@ -653,7 +656,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                 regionVar1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2,
                 modelLandmaskName2, regionVar2, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
-                **keyarg)
+                metname=tmp_metric, **keyarg)
         else:
             diagnostic1 = None
             list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric", str().ljust(5) +
@@ -696,7 +699,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 diag_obs[output_name] = dict_oneVar[metric](
                     obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                     obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
-                    netcdf_name=netcdf_name, **keyarg)
+                    netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
             elif metric in dict_twoVar.keys():
                 for jj in range(len(obsNameVar2)):
                     obs2 = obsNameVar2[jj]
@@ -707,7 +710,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                         obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
                         obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2, dataset=output_name,
-                        debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, **keyarg)
+                        debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
         for obs in diag_obs.keys():
             # computes the metric
             metric_val, metric_err, description_metric = MathMetriComputation(
@@ -758,18 +761,26 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     dict_metrics = {
         'metric': dict_metric_val, 'diagnostic': dict_diagnostic,
     }
-    datasets = modelName + '; '
+    datasets = modelName + "; "
     for ii in range(len(obsNameVar1)):
-        datasets = datasets + obsNameVar1[ii] + obsVarName1[ii] + "'s"
+        datasets = datasets + obsNameVar1[ii] + "'s " + obsVarName1[ii]
         if ii != len(obsNameVar1) - 1:
-            datasets = datasets + ' & '
+            datasets = datasets + " & "
         else:
-            datasets = datasets + '; '
+            datasets = datasets + "; "
     if len(obsNameVar2) > 0:
         for ii in range(len(obsNameVar2)):
-            datasets = datasets + obsNameVar2[ii] + obsVarName2[ii] + "'s"
+            print obsNameVar2[ii], obsVarName2[ii]
+            if isinstance(obsVarName2[ii], list):
+                datasets = datasets + obsNameVar2[ii] + "'s "
+                for jj in range(len(obsVarName2[ii])):
+                    datasets += obsVarName2[ii][jj]
+                    if jj != len(obsVarName2[ii])-1:
+                        datasets += " & "
+            else:
+                datasets = datasets + obsNameVar2[ii] + "'s " + obsVarName2[ii]
             if ii != len(obsNameVar2) - 1:
-                datasets = datasets + ' & '
+                datasets = datasets + " & "
     if multimetric is True:
         tmp = {'name': metric, 'method': description_metric, 'datasets': datasets}
         for key in lkeys:

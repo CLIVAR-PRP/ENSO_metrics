@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
+mc_name = 'ENSO_proc'#'ENSO_tel'#'ENSO_perf'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -109,9 +109,11 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['Tropflux']#['HadISST']#['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']
+    list_obs = ['Tropflux','GPCPv2.3']#['HadISST']#['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']
 elif mc_name == 'ENSO_tel':
-    list_obs = ['HadISST','GPCPv2.3']
+    list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
+elif mc_name == 'ENSO_proc':
+    list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -246,8 +248,8 @@ for mod in list_models:
     netcdf_name = 'YANN_PLANTON_' + mc_name + '_' + mod
     netcdf = join_path(netcdf_path, netcdf_name)
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True, dive_down=True)
-    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
-    # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
+    # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
+    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
     tmp = sorted(dict_metric[mod]['value'].keys())
     for kk in tmp:
         print kk.ljust(13) + ': ' + str(dict_metric[mod]['value'][kk]['metric'])
