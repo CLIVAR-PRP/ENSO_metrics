@@ -1785,9 +1785,9 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     return new_tab
 
 
-def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=None, var2_attributes={},
-               var2_name='', var3=None, var3_attributes={}, var3_name='', var4=None, var4_attributes={},
-               var4_name='', global_attributes={}):
+def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=None, var2_attributes={}, var2_name='',
+               var3=None, var3_attributes={}, var3_name='', var4=None, var4_attributes={}, var4_name='', var5=None,
+               var5_attributes={}, var5_name='', var6=None, var6_attributes={}, var6_name='', global_attributes={}):
     if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": given path does not exist",
@@ -1814,6 +1814,14 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=No
         if var4_name == '':
             var4_name = var4.id
         o.write(var4, attributes=var4_attributes, dtype='float32', id=var4_name)
+    if var5 is not None:
+        if var5_name == '':
+            var5_name = var5.id
+        o.write(var5, attributes=var5_attributes, dtype='float32', id=var5_name)
+    if var6 is not None:
+        if var6_name == '':
+            var6_name = var6.id
+        o.write(var6, attributes=var6_attributes, dtype='float32', id=var6_name)
     for att in global_attributes.keys():
             o.__setattr__(att, global_attributes[att])
     o.close()

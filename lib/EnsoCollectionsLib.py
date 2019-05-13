@@ -164,6 +164,8 @@ def defCollection(MC=True):
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'metric_computation': 'ratio',
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 # 'EnsoDiversity': {
                 #     'variables': ['sst'],
@@ -182,12 +184,16 @@ def defCollection(MC=True):
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'metric_computation': 'ratio',
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'EnsoSstSkew': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'metric_computation': 'ratio',
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'NinaSstDiv_1': {
                     'variables': ['sst'],
@@ -271,6 +277,8 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'NinaSstTsRmse_2': {
                     'variables': ['sst'],
@@ -280,6 +288,8 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'NinoSstDiv_1': {
                     'variables': ['sst'],
@@ -363,6 +373,8 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'NinoSstTsRmse_2': {
                     'variables': ['sst'],
@@ -372,6 +384,8 @@ def defCollection(MC=True):
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
             },
             'common_collection_parameters': {
