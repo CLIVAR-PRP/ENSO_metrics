@@ -95,6 +95,9 @@ try:
     list_obs.remove('GPCPv2.3')
 except:
     pass
+
+if mc_name == 'ENSO_tel':
+    list_obs.remove('HadISST')
 print(list_obs)
 
 #
