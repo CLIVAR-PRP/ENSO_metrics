@@ -1044,7 +1044,12 @@ def Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=None):
         y1 = tab.getTime().asComponentTime()[0].year
         m1 = tab.getTime().asComponentTime()[0].month
         d1 = tab.getTime().asComponentTime()[0].day
-        tab_out = MV2zeros(nbr_years_window * 12)
+        if len(tab.shape) == 1:
+            tab_out = MV2zeros(nbr_years_window * 12)
+        elif len(tab.shape) == 2:
+            tab_out = MV2zeros((nbr_years_window * 12, tab.shape[1]))
+        else:
+            tab_out = MV2zeros((nbr_years_window * 12, tab.shape[1], tab.shape[2]))
         tab_out = MV2masked_where(tab_out == 0, tab_out)
         axis = CDMS2createAxis(MV2array(range(len(tab_out)), dtype='int32'), id='time')
         axis.units = units
@@ -2212,7 +2217,7 @@ def Smoothing(tab, info, axis=0, window=5, method='triangle'):
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": smoothing method (running mean)",
             str().ljust(5) + "unkwown smoothing method: " + str(method),
-            str().ljust(10) + "known smoothing method: " + str(sorted(dict_smooth.keys())),
+            str().ljust(10) + "known smoothing method: " + str(sorted(dict_smooth.keys(), key=lambda v: v.upper())),
         ]
         EnsoErrorsWarnings.MyError(list_strings)
     info = info + ', smoothing using a ' + str(method) + ' shaped window of ' + str(window) + ' points'
@@ -2563,7 +2568,7 @@ def MyDerive(project, internal_variable_name, dict_var):
             str().ljust(5) + "unknown 'project' (or observations dataset): " + str(project),
             str().ljust(10) + "it must be either a 'CMIP' project or an observations dataset defined in\
             EnsoCollectionsLib.ReferenceObservations",
-            str().ljust(10) + "known observations dataset: " + str(sorted(dict_obs.keys()))
+            str().ljust(10) + "known observations dataset: " + str(sorted(dict_obs.keys(), key=lambda v: v.upper()))
         ]
         EnsoErrorsWarnings.MyError(list_strings)
 

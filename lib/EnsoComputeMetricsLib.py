@@ -139,7 +139,7 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
     dict_col_valu = dict()
     dict_col_dd_valu = dict()
     dict_m = dict_mc['metrics_list']
-    list_metrics = sorted(dict_m.keys())
+    list_metrics = sorted(dict_m.keys(), key=lambda v: v.upper())
     for metric in list_metrics:
         print '\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m'
         # sets arguments for this metric

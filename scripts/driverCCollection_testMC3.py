@@ -109,7 +109,7 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['Tropflux','GPCPv2.3']#['HadISST']#['HadISST','Tropflux','GPCPv2.3']#['Tropflux','GPCPv2.3']
+    list_obs = ['ERA-Interim']#['Tropflux','GPCPv2.3']#['HadISST']#['HadISST','Tropflux','GPCPv2.3']#
 elif mc_name == 'ENSO_tel':
     list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
 elif mc_name == 'ENSO_proc':
@@ -250,7 +250,7 @@ for mod in list_models:
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True, dive_down=True)
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
     dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
-    tmp = sorted(dict_metric[mod]['value'].keys())
+    tmp = sorted(dict_metric[mod]['value'].keys(), key=lambda v: v.upper())
     for kk in tmp:
         print kk.ljust(13) + ': ' + str(dict_metric[mod]['value'][kk]['metric'])
     stop

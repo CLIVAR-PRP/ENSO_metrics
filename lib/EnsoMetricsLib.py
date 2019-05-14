@@ -4458,9 +4458,9 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
         # mask Pacific
-        pr_mod_slope, keyerror_mod = BasinMask(pr_mod_slope, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between',
+        pr_mod_slope, keyerror_mod = BasinMask(pr_mod_slope, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between',
                                                debug=debug)
-        pr_obs_slope, keyerror_obs = BasinMask(pr_obs_slope, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between',
+        pr_obs_slope, keyerror_obs = BasinMask(pr_obs_slope, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between',
                                                debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
@@ -6435,9 +6435,9 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
         # mask Pacific
-        slp_mod_slope, keyerror_mod = BasinMask(slp_mod_slope, 'pacific', box=slpbox, lat1=-30, lat2=30,
+        slp_mod_slope, keyerror_mod = BasinMask(slp_mod_slope, 'pacific', box=slpbox, lat1=-15, lat2=15,
                                                 latkey='between', debug=debug)
-        slp_obs_slope, keyerror_obs = BasinMask(slp_obs_slope, 'pacific', box=slpbox, lat1=-30, lat2=30,
+        slp_obs_slope, keyerror_obs = BasinMask(slp_obs_slope, 'pacific', box=slpbox, lat1=-15, lat2=15,
                                                 latkey='between', debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
@@ -6785,9 +6785,9 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
         # mask Pacific
-        ts_mod_slope, keyerror_mod = BasinMask(ts_mod_slope, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
+        ts_mod_slope, keyerror_mod = BasinMask(ts_mod_slope, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                                debug=debug)
-        ts_obs_slope, keyerror_obs = BasinMask(ts_obs_slope, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
+        ts_obs_slope, keyerror_obs = BasinMask(ts_obs_slope, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                                debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
@@ -7917,8 +7917,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
-        pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
-        pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
+        pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
+        pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
             if keyerror_mod is not None:
@@ -9370,9 +9370,9 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
-        slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+        slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
                                           debug=debug)
-        slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+        slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
                                           debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
@@ -9713,9 +9713,9 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
-        tsmap_mod, keyerror_mod = BasinMask(tsmap_mod, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
+        tsmap_mod, keyerror_mod = BasinMask(tsmap_mod, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                             debug=debug)
-        tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
+        tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                             debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
@@ -11161,8 +11161,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
-        pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
-        pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-30, lat2=30, latkey='between', debug=debug)
+        pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
+        pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
             if keyerror_mod is not None:
@@ -12607,9 +12607,9 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
-        slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+        slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
                                           debug=debug)
-        slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-30, lat2=30, latkey='between',
+        slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
                                           debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
@@ -12950,9 +12950,9 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
-        tsmap_mod, keyerror_mod = BasinMask(tsmap_mod, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
+        tsmap_mod, keyerror_mod = BasinMask(tsmap_mod, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                             debug=debug)
-        tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-30, lat2=30, latkey='between',
+        tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                             debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
             keyerror = ''
