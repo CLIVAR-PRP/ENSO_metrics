@@ -12471,10 +12471,11 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict5 = {'metric_name': Name, 'metric_value_' + dataset2: compRmse,
                      'metric_value_error_' + dataset2: compRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst_mod, var1_attributes=dict1, var1_name='sst_lon__' + dataset1,
-                       var2=sst_obs, var2_attributes=dict2, var2_name='sst_lon__' + dataset2, var3=map_mod,
-                       var3_attributes=dict3, var3_name='sst_map__' + dataset1, var4=map_obs, var4_attributes=dict4,
-                       var4_name='sst_map__' + dataset2, global_attributes=dict5)
+            SaveNetcdf(file_name,
+                       var1=sst_mod, var1_attributes=dict1, var1_name='sst_lon__' + dataset1,
+                       var2=sst_obs, var2_attributes=dict2, var2_name='sst_lon__' + dataset2,
+                       var3=map_mod, var3_attributes=dict3, var3_name='sst_map__' + dataset1,
+                       var4=map_obs, var4_attributes=dict4, var4_name='sst_map__' + dataset2, global_attributes=dict5)
             del dict1, dict2, dict3, dict4, dict5
     # metric value
     if debug is True:
@@ -12844,8 +12845,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                      'metric_valueCORR_error_' + dataset2: slpStdErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=slp_mod, var1_attributes=dict1, var1_name='slp_map__' + dataset1,
-                       var2=slp_obs, var2_attributes=dict2, var2_name='slp_map__' + dataset2,
-                       global_attributes=dict3)
+                       var2=slp_obs, var2_attributes=dict2, var2_name='slp_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
 
     # Create output
@@ -13801,8 +13801,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict7 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
                      'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name,
-                       var1=prStdLat_mod, var1_attributes=dict1, var1_name='pr_lat__' + dataset1,
+            SaveNetcdf(file_name, var1=prStdLat_mod, var1_attributes=dict1, var1_name='pr_lat__' + dataset1,
                        var2=prStdLat_obs, var2_attributes=dict2, var2_name='pr_lat__' + dataset2,
                        var3=prMap_mod, var3_attributes=dict3, var3_name='pr_map__' + dataset1,
                        var4=prMap_obs, var4_attributes=dict4, var4_name='pr_map__' + dataset2,
@@ -14109,8 +14108,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict7 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
                      'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name,
-                       var1=prStdLon_mod, var1_attributes=dict1, var1_name='pr_lon__' + dataset1,
+            SaveNetcdf(file_name, var1=prStdLon_mod, var1_attributes=dict1, var1_name='pr_lon__' + dataset1,
                        var2=prStdLon_obs, var2_attributes=dict2, var2_name='pr_lon__' + dataset2,
                        var3=prMap_mod, var3_attributes=dict3, var3_name='pr_map__' + dataset1,
                        var4=prMap_obs, var4_attributes=dict4, var4_name='pr_map__' + dataset2,
@@ -14416,8 +14414,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict7 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
                      'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name,
-                       var1=sstStdLat_mod, var1_attributes=dict1, var1_name='sst_lat__' + dataset1,
+            SaveNetcdf(file_name, var1=sstStdLat_mod, var1_attributes=dict1, var1_name='sst_lat__' + dataset1,
                        var2=sstStdLat_obs, var2_attributes=dict2, var2_name='sst_lat__' + dataset2,
                        var3=sstMap_mod, var3_attributes=dict3, var3_name='sst_map__' + dataset1,
                        var4=sstMap_obs, var4_attributes=dict4, var4_name='sst_map__' + dataset2,
@@ -14725,8 +14722,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict7 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
                      'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name,
-                       var1=sstStdLon_mod, var1_attributes=dict1, var1_name='sst_lon__' + dataset1,
+            SaveNetcdf(file_name, var1=sstStdLon_mod, var1_attributes=dict1, var1_name='sst_lon__' + dataset1,
                        var2=sstStdLon_obs, var2_attributes=dict2, var2_name='sst_lon__' + dataset2,
                        var3=sstMap_mod, var3_attributes=dict3, var3_name='sst_map__' + dataset1,
                        var4=sstMap_obs, var4_attributes=dict4, var4_name='sst_map__' + dataset2,

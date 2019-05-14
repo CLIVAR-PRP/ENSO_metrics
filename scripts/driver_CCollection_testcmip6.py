@@ -256,7 +256,7 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR']#['IPSL-CM6A-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
+list_models = ['CNRM-CM5']#['IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR']#['IPSL-CM6A-LR']#
 #
 # finding file and variable name in file for each observations dataset
 #
