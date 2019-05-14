@@ -12,8 +12,8 @@ user_name = GETPASSgetuser()
 
 # ENSO_metrics package
 # set new path where to find programs
-sys.path.insert(0, "/home/" + user_name + "/ENSO_metrics/lib")
-sys.path.insert(1, "/home/" + user_name + "/ENSO_metrics/scripts")
+sys.path.insert(0, "/home/" + user_name + "/test_MC3/ENSO_metrics/lib")
+sys.path.insert(1, "/home/" + user_name + "/test_MC3/ENSO_metrics/scripts")
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import ComputeCollection
 
@@ -37,7 +37,8 @@ class bcolors:
 #---------------------------------------------------#
 
 xmldir = OSenviron['XMLDIR']
-netcdf_path = '/data/yplanton/Eval_IPSL'
+#netcdf_path = '/data/yplanton/Eval_IPSL'
+netcdf_path = '/data/yplanton/TMP'
 
 
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
@@ -163,7 +164,7 @@ def save_json(dict_in, json_name, metric=True):
     return
 
 # metric collection
-mc_name = 'ENSO_tel'#'ENSO_perf'#'MC1'#
+mc_name = 'ENSO_perf'#'ENSO_tel'#'ENSO_proc'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -195,9 +196,11 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
+    list_obs = ['ERA-Interim']#['ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
 elif mc_name == 'ENSO_tel':
-    list_obs = ['ERA-Interim', 'HadISST', 'GPCPv2.3']
+    list_obs = ['ERA-Interim']#['ERA-Interim', 'HadISST', 'GPCPv2.3']
+elif mc_name == 'ENSO_proc':
+    list_obs = ['ERA-Interim']#['ERA-Interim', 'HadISST', 'GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 

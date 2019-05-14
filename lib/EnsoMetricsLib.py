@@ -3773,6 +3773,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=True, **kwargs)
             sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True, **kwargs)
+            del sst_areacell1, sst_areacell2
             if debug is True:
                 dict_debug = {'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
                               'axes2': '(sst2) ' + str([ax.id for ax in sst2.getAxisList()]),
@@ -3793,7 +3794,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             sst1 = Regrid(sst1, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
             sst2 = Regrid(sst2, None, region='equatorial_pacific', **kwargs['regridding'])
             # Meridional average
-            sstLon = AverageMeridional(sst2)
+            sst2 = AverageMeridional(sst2)
             # Dive down diagnostic
             dive_down_diag = {'value': ArrayToList(sstLon), 'axis': list(sstLon.getAxis(0)[:])}
             if ".nc" in netcdf_name:
@@ -3807,7 +3808,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                      'description': "standard deviation of equatorial_pacific sstA"}
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sstLon, var1_attributes=dict1, var1_name='sstStd_lon__' + dataset,
+            SaveNetcdf(file_name, var1=sst2, var1_attributes=dict1, var1_name='sstStd_lon__' + dataset,
                        var2=sst1, var2_attributes=dict2, var2_name='sstStd_map__' + dataset, global_attributes=dict3)
             del dict1, dict2, dict3
     # metric value
@@ -6025,7 +6026,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
             sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=False, **kwargs)
             sst3, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=False, **kwargs)
             sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True, **kwargs)
-            del sst_areacell
+            del sst_areacell1, sst_areacell2
             if debug is True:
                 dict_debug = {'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
                               'axes2': '(sst2) ' + str([ax.id for ax in sst2.getAxisList()]),
@@ -6258,6 +6259,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=True, **kwargs)
             sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True, **kwargs)
+            del sst_areacell1, sst_areacell2
             if debug is True:
                 dict_debug = {'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
                               'axes2': '(sst2) ' + str([ax.id for ax in sst2.getAxisList()]),
