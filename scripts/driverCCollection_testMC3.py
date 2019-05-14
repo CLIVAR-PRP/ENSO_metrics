@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_proc'#'ENSO_tel'#'ENSO_perf'#'MC1'#
+mc_name = 'ENSO_perf'#'ENSO_proc'#'ENSO_tel'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
