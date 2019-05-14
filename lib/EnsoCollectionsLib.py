@@ -368,7 +368,7 @@ def defCollection(MC=True):
                 'NinoSstTsRmse_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
@@ -379,7 +379,7 @@ def defCollection(MC=True):
                 'NinoSstTsRmse_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
@@ -454,7 +454,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'EnsoSlpMap': {
                     'variables': ['sst', 'slp'],
@@ -463,7 +463,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'EnsoSstMap': {
                     'variables': ['sst'],
@@ -472,7 +472,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim']},
                 },
                 # 'NinaPrNdjTel': {
                 #     'variables': ['sst', 'pr'],
@@ -502,7 +502,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinaPrMap_2': {
                     'variables': ['sst', 'pr'],
@@ -512,7 +512,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinaSlpMap_1': {
                     'variables': ['sst', 'slp'],
@@ -522,7 +522,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinaSlpMap_2': {
                     'variables': ['sst', 'slp'],
@@ -532,7 +532,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinaSstLonRmse_1': {
                     'variables': ['sst'],
@@ -562,7 +562,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim']},
                 },
                 'NinaSstMap_2': {
                     'variables': ['sst'],
@@ -572,7 +572,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim']},
                 },
                 # 'NinoPrNdjTel': {
                 #     'variables': ['sst', 'pr'],
@@ -602,7 +602,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinoPrMap_2': {
                     'variables': ['sst', 'pr'],
@@ -612,7 +612,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinoSlpMap_1': {
                     'variables': ['sst', 'slp'],
@@ -622,7 +622,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinoSlpMap_2': {
                     'variables': ['sst', 'slp'],
@@ -632,7 +632,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
                 },
                 'NinoSstLonRmse_1': {
                     'variables': ['sst'],
@@ -662,7 +662,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim']},
                 },
                 'NinoSstMap_2': {
                     'variables': ['sst'],
@@ -672,7 +672,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim']},
                 },
             },
             'common_collection_parameters': {
@@ -724,31 +724,31 @@ def defCollection(MC=True):
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['HadISST', 'Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
                 'EnsoAlphaLhf': {
                     'variables': ['sst', 'lhf'],
                     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'lwr': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
                 'EnsoAlphaSwr': {
                     'variables': ['sst', 'swr'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'swr': ['Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'swr': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
                 'EnsoAlphaThf': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
-                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'thf': ['Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
                 'EnsoMu': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['HadISST', 'Tropflux'], 'taux': ['Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
             },
