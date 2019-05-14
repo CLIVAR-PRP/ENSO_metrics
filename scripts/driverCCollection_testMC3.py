@@ -139,15 +139,6 @@ for obs in list_obs:
         except:
             print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
         else:
-            if isinstance(var_in_file, list):
-                var0 = var_in_file[0]
-            else:
-                var0 = var_in_file
-            #
-            # finding file for 'obs', 'var'
-            #
-            # @jiwoo: pretty easy as I have all variables in one file
-            file_name, file_areacell, file_landmask = find_xml(obs, frequency, var0)
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
             except:
@@ -156,14 +147,18 @@ for obs in list_obs:
                 landmask_in_file = dict_var['landmask']['var_name']
             except:
                 landmask_in_file = None
-            # if var_in_file is a list (like for thf) all variables should be read from the same realm
             if isinstance(var_in_file, list):
-                list_files = [file_name for var1 in var_in_file]
-                list_areacell = [file_areacell for var1 in var_in_file]
-                list_name_area = [areacell_in_file for var1 in var_in_file]
-                list_landmask = [file_landmask for var1 in var_in_file]
-                list_name_land = [landmask_in_file for var1 in var_in_file]
+                list_areacell, list_files, list_landmask, list_name_area, list_name_land = \
+                    list(), list(), list(), list(), list()
+                for var1 in var_in_file:
+                    file_name, file_areacell, file_landmask = find_xml(obs, frequency, var1)
+                    list_files.append(file_name)
+                    list_areacell.append(file_areacell)
+                    list_name_area.append(areacell_in_file)
+                    list_landmask.append(file_landmask)
+                    list_name_land.append(landmask_in_file)
             else:
+                file_name, file_areacell, file_landmask = find_xml(obs, frequency, var_in_file)
                 list_files = file_name
                 list_areacell = file_areacell
                 list_name_area = areacell_in_file
@@ -193,16 +188,6 @@ for mod in list_models:
         # finding variable name in file
         #
         var_in_file = dict_var[var]['var_name']
-        if isinstance(var_in_file, list):
-            var0 = var_in_file[0]
-        else:
-            var0 = var_in_file
-        #
-        # finding file for 'mod', 'var'
-        #
-        # @jiwoo: first try in the realm 'O' (for ocean)
-        file_name, file_areacell, file_landmask = find_xml(mod, frequency, var0, project=project, experiment=experiment,
-                                                           ensemble=ensemble, realm=realm)
         try:
             areacell_in_file = dict_var['areacell']['var_name']
         except:
@@ -212,12 +197,21 @@ for mod in list_models:
         except:
             landmask_in_file = None
         if isinstance(var_in_file, list):
-            list_files = [file_name for var1 in var_in_file]
-            list_areacell = [file_areacell for var1 in var_in_file]
-            list_name_area = [areacell_in_file for var1 in var_in_file]
-            list_landmask = [file_landmask for var1 in var_in_file]
-            list_name_land = [landmask_in_file for var1 in var_in_file]
+            list_areacell, list_files, list_landmask, list_name_area, list_name_land = \
+                list(), list(), list(), list(), list()
+            for var1 in var_in_file:
+                file_name, file_areacell, file_landmask = \
+                    find_xml(mod, frequency, var1, project=project, experiment=experiment, ensemble=ens,
+                             realm=realm)
+                list_files.append(file_name)
+                list_areacell.append(file_areacell)
+                list_name_area.append(areacell_in_file)
+                list_landmask.append(file_landmask)
+                list_name_land.append(landmask_in_file)
         else:
+            file_name, file_areacell, file_landmask = \
+                find_xml(mod, frequency, var_in_file, project=project, experiment=experiment, ensemble=ens,
+                         realm=realm)
             list_files = file_name
             list_areacell = file_areacell
             list_name_area = areacell_in_file

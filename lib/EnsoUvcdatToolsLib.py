@@ -1790,9 +1790,11 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     return new_tab
 
 
-def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=None, var2_attributes={}, var2_name='',
-               var3=None, var3_attributes={}, var3_name='', var4=None, var4_attributes={}, var4_name='', var5=None,
-               var5_attributes={}, var5_name='', var6=None, var6_attributes={}, var6_name='', global_attributes={}):
+def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_time_name=None, var2=None,
+               var2_attributes={}, var2_name='', var2_time_name=None, var3=None, var3_attributes={}, var3_name='',
+               var3_time_name=None, var4=None, var4_attributes={}, var4_name='', var4_time_name=None, var5=None,
+               var5_attributes={}, var5_name='', var5_time_name=None, var6=None, var6_attributes={}, var6_name='',
+               var6_time_name=None, global_attributes={}):
     if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": given path does not exist",
@@ -1806,26 +1808,56 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var2=No
     if var1 is not None:
         if var1_name == '':
             var1_name = var1.id
+        if var1_time_name is not None:
+            time_num = get_num_axis(var1, 'time')
+            axis = var1.getAxis(time_num)
+            axis.id = var1_time_name
+            var1.setAxis(time_num, axis)
         o.write(var1, attributes=var1_attributes, dtype='float32', id=var1_name)
     if var2 is not None:
         if var2_name == '':
             var2_name = var2.id
+        if var2_time_name is not None:
+            time_num = get_num_axis(var2, 'time')
+            axis = var2.getAxis(time_num)
+            axis.id = var2_time_name
+            var2.setAxis(time_num, axis)
         o.write(var2, attributes=var2_attributes, dtype='float32', id=var2_name)
     if var3 is not None:
         if var3_name == '':
             var3_name = var3.id
+        if var3_time_name is not None:
+            time_num = get_num_axis(var3, 'time')
+            axis = var3.getAxis(time_num)
+            axis.id = var3_time_name
+            var3.setAxis(time_num, axis)
         o.write(var3, attributes=var3_attributes, dtype='float32', id=var3_name)
     if var4 is not None:
         if var4_name == '':
             var4_name = var4.id
+        if var4_time_name is not None:
+            time_num = get_num_axis(var4, 'time')
+            axis = var4.getAxis(time_num)
+            axis.id = var4_time_name
+            var4.setAxis(time_num, axis)
         o.write(var4, attributes=var4_attributes, dtype='float32', id=var4_name)
     if var5 is not None:
         if var5_name == '':
             var5_name = var5.id
+        if var5_time_name is not None:
+            time_num = get_num_axis(var5, 'time')
+            axis = var5.getAxis(time_num)
+            axis.id = var5_time_name
+            var5.setAxis(time_num, axis)
         o.write(var5, attributes=var5_attributes, dtype='float32', id=var5_name)
     if var6 is not None:
         if var6_name == '':
             var6_name = var6.id
+        if var6_time_name is not None:
+            time_num = get_num_axis(var6, 'time')
+            axis = var6.getAxis(time_num)
+            axis.id = var6_time_name
+            var6.setAxis(time_num, axis)
         o.write(var6, attributes=var6_attributes, dtype='float32', id=var6_name)
     for att in global_attributes.keys():
             o.__setattr__(att, global_attributes[att])
@@ -2327,7 +2359,7 @@ def ComputePDF(tab, nbr_bins=10, interval=None, axis_name='axis'):
     return pdf
 
 
-def CustomLinearRegression(y, x, sign_x=0, return_stderr=True):
+def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=True):
     """
     #################################################################################
     Description:
@@ -2348,6 +2380,9 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True):
     :param return_stderr: boolean, optional
         default value = True, returns the the unadjusted standard error
         True if you want the unadjusted standard error, if you don't want it pass anything but true
+    :param return_intercept: boolean, optional
+        default value = True, returns the the interception value of the linear regression
+        True if you want the interception value, if you don't want it pass anything but true
     :return slope, stderr: floats
         slope of the linear regression of y over x
         unadjusted standard error of the linear regression of y over x (if return_stderr=True)
@@ -2356,17 +2391,19 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True):
     y = NParray(y)
     if sign_x == 1:
         idxpos = NPnonzero(x >= 0.)
-        results = GENUTILlinearregression(y[idxpos], x=x[idxpos], error=1, nointercept=1)
+        results = GENUTILlinearregression(y[idxpos], x=x[idxpos], error=1, nointercept=None)
     elif sign_x == -1:
         idxneg = NPnonzero(x <= 0.)
-        results = GENUTILlinearregression(y[idxneg], x=x[idxneg], error=1, nointercept=1)
+        results = GENUTILlinearregression(y[idxneg], x=x[idxneg], error=1, nointercept=None)
     else:
-        results = GENUTILlinearregression(y, x=x, error=1, nointercept=1)
-    slope, stderr = results
-    if return_stderr:
-        return float(slope), float(stderr)
-    else:
-        return float(slope)
+        results = GENUTILlinearregression(y, x=x, error=1, nointercept=None)
+    slope, stderr, intercept = results[0][0], results[0][1], results[1][0]
+    tab = [slope]
+    if return_stderr is True:
+        tab.append(stderr)
+    if return_intercept is True:
+        tab.append(intercept)
+    return tab
 
 
 def FindXYMinMax(tab, return_val='both', smooth=False, axis=0, window=5, method='triangle'):
@@ -2573,7 +2610,7 @@ def MyDerive(project, internal_variable_name, dict_var):
         EnsoErrorsWarnings.MyError(list_strings)
 
 
-def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
+def LinearRegressionAndNonlinearity(y, x, return_stderr=True, return_intercept=True):
     """
     #################################################################################
     Description:
@@ -2589,22 +2626,21 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
     :param return_stderr: boolean, optional
         default value = True, returns the the unadjusted standard error
         True if you want the unadjusted standard error, if you don't want it pass anything but true
+    :param return_intercept: boolean, optional
+        default value = True, returns the the interception value of the linear regression
+        True if you want the interception value, if you don't want it pass anything but true
     :return [slope_all_values, stderr_all_values], [slope_positive_values, stderr_positive_values],
             [slope_negative_values, stderr_negative_values]: lists of floats
         slope of the linear regression of y over x
         unadjusted standard error of the linear regression of y over x (if return_stderr=True)
     """
     # all points
-    all_values = CustomLinearRegression(y, x, 0, return_stderr=return_stderr)
+    all_values = CustomLinearRegression(y, x, 0, return_stderr=return_stderr, return_intercept=return_intercept)
     # positive SSTA = El Nino
-    positive_values = CustomLinearRegression(y, x, 1, return_stderr=return_stderr)
+    positive_values = CustomLinearRegression(y, x, 1, return_stderr=return_stderr, return_intercept=return_intercept)
     # negative SSTA = La Nina
-    negative_values = CustomLinearRegression(y, x, -1, return_stderr=return_stderr)
-    if return_stderr:
-        return [float(all_values[0]), float(all_values[1])], [float(positive_values[0]), float(positive_values[1])],\
-               [float(negative_values[0]), float(negative_values[1])]
-    else:
-        return [float(all_values)], [float(positive_values)], [float(negative_values)]
+    negative_values = CustomLinearRegression(y, x, -1, return_stderr=return_stderr, return_intercept=return_intercept)
+    return all_values, positive_values, negative_values
 
 
 def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
