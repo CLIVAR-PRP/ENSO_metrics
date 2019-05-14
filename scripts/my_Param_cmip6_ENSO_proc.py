@@ -34,14 +34,12 @@ modnames = ['all']
 #modnames = ['ACCESS1-0']
 #modnames = ['BCC-CSM1-1']
 #modnames = ['IPSL-CM5A-LR']
-modnames = ['CESM2-WACCM']
+#modnames = ['CESM2-WACCM']
 
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
-#metricsCollection = 'MC1'
-metricsCollection = 'ENSO_perf'
-#metricsCollection = 'ENSO_tel'
+metricsCollection = 'ENSO_proc'
 
 #=================================================
 # Output
