@@ -817,6 +817,10 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     CDMS2setAutoBounds('on')
     # open file
     this_dir, this_filename = OSpath__split(__file__)
+    if debug is True:
+        dict_debug = {'line1': '(path) ' + str(this_dir), 'line2': '(file) ' + str(this_filename),
+                      'line3': '(basin) ' + str(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'OSpath__split', 20, **dict_debug)
     ff = CDMS2open(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))
     # read basins
     if box is not None:

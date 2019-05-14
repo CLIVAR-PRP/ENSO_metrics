@@ -12,8 +12,8 @@ user_name = GETPASSgetuser()
 
 # ENSO_metrics package
 # set new path where to find programs
-sys.path.insert(0, "/home/" + user_name + "/test_MC3/ENSO_metrics/lib")
-sys.path.insert(1, "/home/" + user_name + "/test_MC3/ENSO_metrics/scripts")
+sys.path.insert(0, "/home/" + user_name + "/Test_MC3/ENSO_metrics/lib")
+sys.path.insert(1, "/home/" + user_name + "/Test_MC3/ENSO_metrics/scripts")
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import ComputeCollection
 

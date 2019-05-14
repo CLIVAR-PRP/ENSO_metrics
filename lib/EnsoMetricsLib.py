@@ -3796,7 +3796,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             # Meridional average
             sst2 = AverageMeridional(sst2)
             # Dive down diagnostic
-            dive_down_diag = {'value': ArrayToList(sstLon), 'axis': list(sstLon.getAxis(0)[:])}
+            dive_down_diag = {'value': ArrayToList(sst2), 'axis': list(sst2.getAxis(0)[:])}
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
