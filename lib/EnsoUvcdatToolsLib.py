@@ -2321,7 +2321,7 @@ def TimeButNotTime(tab, new_time_name, frequency):
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     axis = CDMS2createAxis(range(len(tab_out)), id=new_time_name)
     axis.units = freq + " since " + str(year1) + "-" + str(month1) + "-" + str(day1)
-    axis.axis = "T"
+    axis.axis = freq
     tab_out.setAxis(time_num, axis)
     return tab_out
 # ---------------------------------------------------------------------------------------------------------------------#
