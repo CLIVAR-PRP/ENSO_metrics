@@ -308,7 +308,6 @@ for mod in list_models:
                 list_name_area = areacell_in_file
                 list_landmask = file_landmask
                 list_name_land = landmask_in_file
-            print var, list_files
             dict_mod[mod + '_' + ens][var] =\
                 {'path + filename': list_files, 'varname': var_in_file, 'path + filename_area': list_areacell,
                  'areaname': list_name_area, 'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}

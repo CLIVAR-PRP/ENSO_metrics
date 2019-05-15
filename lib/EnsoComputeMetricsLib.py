@@ -770,7 +770,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             datasets = datasets + "; "
     if len(obsNameVar2) > 0:
         for ii in range(len(obsNameVar2)):
-            print obsNameVar2[ii], obsVarName2[ii]
             if isinstance(obsVarName2[ii], list):
                 datasets = datasets + obsNameVar2[ii] + "'s "
                 for jj in range(len(obsVarName2[ii])):

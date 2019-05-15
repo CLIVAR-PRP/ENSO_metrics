@@ -2729,8 +2729,10 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var2=lhf, var2_attributes=dict2, var2_name='lhf__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name,
+                       var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                       var2=lhf, var2_attributes=dict2, var2_name='lhf__' + dataset, var2_time_name='months_' + dataset,
+                       global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaLhfNeg[0] - alphaLhfPos[0]
@@ -2954,8 +2956,10 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var2=lwr, var2_attributes=dict2, var2_name='lwr__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name,
+                       var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                       var2=lwr, var2_attributes=dict2, var2_name='lwr__' + dataset, var2_time_name='months_' + dataset,
+                       global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaLwrNeg[0] - alphaLwrPos[0]
@@ -3155,8 +3159,10 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var2=shf, var2_attributes=dict2, var2_name='shf__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name,
+                       var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                       var2=shf, var2_attributes=dict2, var2_name='shf__' + dataset, var2_time_name='months_' + dataset,
+                       global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaShfNeg[0] - alphaShfPos[0]
@@ -3380,8 +3386,10 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var2=swr, var2_attributes=dict2, var2_name='swr__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name,
+                       var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                       var2=swr, var2_attributes=dict2, var2_name='swr__' + dataset, var2_time_name='months_' + dataset,
+                       global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaSwrNeg[0] - alphaSwrPos[0]
@@ -3610,8 +3618,10 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var2=thf, var2_attributes=dict2, var2_name='thf__' + dataset, global_attributes=dict3)
+            SaveNetcdf(file_name,
+                       var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                       var2=thf, var2_attributes=dict2, var2_name='thf__' + dataset, var2_time_name='months_' + dataset,
+                       global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaThfNeg[0] - alphaThfPos[0]
