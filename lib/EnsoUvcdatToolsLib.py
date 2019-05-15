@@ -1798,7 +1798,7 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
                var2_attributes={}, var2_name='', var2_time_name=None, var3=None, var3_attributes={}, var3_name='',
                var3_time_name=None, var4=None, var4_attributes={}, var4_name='', var4_time_name=None, var5=None,
                var5_attributes={}, var5_name='', var5_time_name=None, var6=None, var6_attributes={}, var6_name='',
-               var6_time_name=None, global_attributes={}):
+               var6_time_name=None, frequency='monthly', global_attributes={}):
     if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": given path does not exist",
@@ -1813,58 +1813,40 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
         if var1_name == '':
             var1_name = var1.id
         if var1_time_name is not None:
-            time_num = get_num_axis(var1, 'time')
-            axis = var1.getAxis(time_num)
-            axis.id = var1_time_name
-            var1.setAxis(time_num, axis)
+            var1 = TimeButNotTime(var1, var1_time_name, frequency)
         o.write(var1, attributes=var1_attributes, dtype='float32', id=var1_name)
     if var2 is not None:
         if var2_name == '':
             var2_name = var2.id
         if var2_time_name is not None:
-            time_num = get_num_axis(var2, 'time')
-            axis = var2.getAxis(time_num)
-            axis.id = var2_time_name
-            var2.setAxis(time_num, axis)
+            var2 = TimeButNotTime(var2, var2_time_name, frequency)
         o.write(var2, attributes=var2_attributes, dtype='float32', id=var2_name)
     if var3 is not None:
         if var3_name == '':
             var3_name = var3.id
         if var3_time_name is not None:
-            time_num = get_num_axis(var3, 'time')
-            axis = var3.getAxis(time_num)
-            axis.id = var3_time_name
-            var3.setAxis(time_num, axis)
+            var3 = TimeButNotTime(var3, var3_time_name, frequency)
         o.write(var3, attributes=var3_attributes, dtype='float32', id=var3_name)
     if var4 is not None:
         if var4_name == '':
             var4_name = var4.id
         if var4_time_name is not None:
-            time_num = get_num_axis(var4, 'time')
-            axis = var4.getAxis(time_num)
-            axis.id = var4_time_name
-            var4.setAxis(time_num, axis)
+            var4 = TimeButNotTime(var4, var4_time_name, frequency)
         o.write(var4, attributes=var4_attributes, dtype='float32', id=var4_name)
     if var5 is not None:
         if var5_name == '':
             var5_name = var5.id
         if var5_time_name is not None:
-            time_num = get_num_axis(var5, 'time')
-            axis = var5.getAxis(time_num)
-            axis.id = var5_time_name
-            var5.setAxis(time_num, axis)
+            var5 = TimeButNotTime(var5, var5_time_name, frequency)
         o.write(var5, attributes=var5_attributes, dtype='float32', id=var5_name)
     if var6 is not None:
         if var6_name == '':
             var6_name = var6.id
         if var6_time_name is not None:
-            time_num = get_num_axis(var6, 'time')
-            axis = var6.getAxis(time_num)
-            axis.id = var6_time_name
-            var6.setAxis(time_num, axis)
+            var6 = TimeButNotTime(var6, var6_time_name, frequency)
         o.write(var6, attributes=var6_attributes, dtype='float32', id=var6_name)
     for att in global_attributes.keys():
-            o.__setattr__(att, global_attributes[att])
+        o.__setattr__(att, global_attributes[att])
     o.close()
     return
 
@@ -2322,6 +2304,26 @@ def StdMonthly(tab):
     std = std.reorder(initorder)
     cdutil.setTimeBoundsMonthly(std)
     return std
+
+
+def TimeButNotTime(tab, new_time_name, frequency):
+    tab_out = deepcopy(tab)
+    time_num = get_num_axis(tab_out, 'time')
+    timeax = tab_out.getAxis(time_num).asComponentTime()
+    year1, month1, day1 = timeax[0].year, timeax[0].month, timeax[0].day
+    if frequency == 'daily':
+        freq = 'days'
+    elif frequency == 'monthly':
+        freq = 'months'
+    elif frequency == 'yearly':
+        freq = 'years'
+    else:
+        EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
+    axis = CDMS2createAxis(range(len(tab_out)), id=new_time_name)
+    axis.units = freq + " since " + str(year1) + "-" + str(month1) + "-" + str(day1)
+    axis.axis = "T"
+    tab_out.setAxis(time_num, axis)
+    return tab_out
 # ---------------------------------------------------------------------------------------------------------------------#
 
 

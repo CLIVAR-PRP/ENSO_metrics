@@ -2732,7 +2732,7 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=lhf, var2_attributes=dict2, var2_name='lhf__' + dataset, var2_time_name='months_' + dataset,
-                       global_attributes=dict3)
+                       frequency=kwargs['frequency'], global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaLhfNeg[0] - alphaLhfPos[0]
@@ -2959,7 +2959,7 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=lwr, var2_attributes=dict2, var2_name='lwr__' + dataset, var2_time_name='months_' + dataset,
-                       global_attributes=dict3)
+                       frequency=kwargs['frequency'], global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaLwrNeg[0] - alphaLwrPos[0]
@@ -3162,7 +3162,7 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=shf, var2_attributes=dict2, var2_name='shf__' + dataset, var2_time_name='months_' + dataset,
-                       global_attributes=dict3)
+                       frequency=kwargs['frequency'], global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaShfNeg[0] - alphaShfPos[0]
@@ -3389,7 +3389,7 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=swr, var2_attributes=dict2, var2_name='swr__' + dataset, var2_time_name='months_' + dataset,
-                       global_attributes=dict3)
+                       frequency=kwargs['frequency'], global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaSwrNeg[0] - alphaSwrPos[0]
@@ -3621,7 +3621,7 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=thf, var2_attributes=dict2, var2_name='thf__' + dataset, var2_time_name='months_' + dataset,
-                       global_attributes=dict3)
+                       frequency=kwargs['frequency'], global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = alphaThfNeg[0] - alphaThfPos[0]
@@ -4291,7 +4291,8 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
                        var1_time_name='months_' + dataset, var2=taux, var2_attributes=dict2,
-                       var2_name='taux__' + dataset, var2_time_name='months_' + dataset, global_attributes=dict3)
+                       var2_name='taux__' + dataset, var2_time_name='months_' + dataset, frequency=kwargs['frequency'],
+                       global_attributes=dict3)
             del dict1, dict2, dict3
     try:
         nl1 = muNeg[0] - muPos[0]
