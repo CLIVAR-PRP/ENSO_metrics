@@ -1961,9 +1961,9 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                        **kwargs)
         taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                          **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -2187,9 +2187,9 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                        **kwargs)
         taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                          **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -2449,9 +2449,9 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                        **kwargs)
         taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                          **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -4225,8 +4225,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     taux, taux_areacell, keyerror2 = \
         Read_data_mask_area(tauxfile, tauxname, 'wind stress', metric, tauxbox, file_area=tauxareafile,
                             name_area=tauxareaname, file_mask=tauxlandmaskfile, name_mask=tauxlandmaskname,
-                            maskland=True,
-                            maskocean=False, debug=debug, **kwargs)
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, taux, keyerror3 = CheckTime(sst, taux, metric_name=metric, **kwargs)
@@ -4239,7 +4238,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
 
     keyerror = ''
     if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
-        alphaTaux, alphaTauxPos, alphaTauxNeg = [None, None], [None, None], [None, None]
+        mu, muPos, muNeg = [None, None], [None, None], [None, None]
         if keyerror1 is not None:
             keyerror = keyerror1
         if len(keyerror) > 0 and keyerror2 is not None:
@@ -4263,13 +4262,10 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(taux) ' + str(TimeBounds(taux))}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-
+        # change units
+        taux = taux * 1e3
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         mu, muPos, muNeg = LinearRegressionAndNonlinearity(taux, sst, return_stderr=True, return_intercept=True)
-        # Change units
-        mu = [mu[0] * 1e3, mu[1] * 1e3, mu[2] * 1e3]
-        muPos = [muPos[0] * 1e3, muPos[1] * 1e3, muPos[2] * 1e3]
-        muNeg = [muNeg[0] * 1e3, muNeg[1] * 1e3, muNeg[2] * 1e3]
         # Dive down diagnostic
         dive_down_diag = {'value': None, 'axis': None}
         if netcdf is True:
@@ -4290,7 +4286,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var1_time_name='months_' + dataset, var2=taux * 1e3, var2_attributes=dict2,
+                       var1_time_name='months_' + dataset, var2=taux , var2_attributes=dict2,
                        var2_name='taux__' + dataset, var2_time_name='months_' + dataset, frequency=kwargs['frequency'],
                        global_attributes=dict3)
             del dict1, dict2, dict3
