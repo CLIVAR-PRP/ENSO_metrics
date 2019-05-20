@@ -4290,7 +4290,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
             dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var1_time_name='months_' + dataset, var2=taux, var2_attributes=dict2,
+                       var1_time_name='months_' + dataset, var2=taux * 1e3, var2_attributes=dict2,
                        var2_name='taux__' + dataset, var2_time_name='months_' + dataset, frequency=kwargs['frequency'],
                        global_attributes=dict3)
             del dict1, dict2, dict3
