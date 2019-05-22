@@ -1,7 +1,7 @@
 from cdms2 import open as CDMS2open
 from copy import deepcopy
-import datetime
 from getpass import getuser as GETPASSgetuser
+from glob import iglob as GLOBiglob
 from inspect import stack as INSPECTstack
 import json
 from os import environ as OSenviron
@@ -264,7 +264,9 @@ dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     list_ens = get_ensembles(exp=experiment, fre=frequency, mod=mod, pro=project, rea=realm)
-    list_ens = list_ens[:1]
+    pattern_out = OSpath__join(netcdf_path, user_name + '_' + mc_name + '_' + mod + '_' + experiment)
+    files_in = list(GLOBiglob(pattern_out + '*.json'))
+    list_ens = list_ens[len(files_in):]
     dict_ens, dict_ens_dive = dict(), dict()
     for ens in list_ens:
         dict_mod = {mod + '_' + ens: {}}
@@ -328,20 +330,15 @@ for mod in list_models:
         #         'newgrid_name': 'generic 1x1deg'},
         # }
         # Computes the metric collection
-        # dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid, debug=False)
-        # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid,
-        #                                                     debug=False, dive_down=True)
         netcdf_name = user_name + '_' + mc_name + '_' + mod + '_' + experiment + '_' + ens
-        netcdf = OSpath__join(netcdf_path, netcdf_name)
-        # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_path=netcdf_path,
-        #                                                      netcdf_name=netcdf_name, debug=True, dive_down=True)
+        netcdf = pattern_out + '_' + ens #OSpath__join(netcdf_path, netcdf_name)
         dict_ens[mod + '__' + ens], dict_ens_dive[mod + '__' + ens] =\
             ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
         # save json
-        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf_name, metric=True)
+        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf, metric=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
-    del dict_ens, dict_ens_dive, list_ens
+    del dict_ens, dict_ens_dive, files_in, list_ens, pattern_out
 # ------------------------------------------------
 # reshape dictionary
 # listm = sorted(dict_metric.keys())
