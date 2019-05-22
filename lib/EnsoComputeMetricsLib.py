@@ -12,7 +12,7 @@ from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonR
     EnsoSstMap, EnsoSeasonality, EnsoSstSkew, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv,\
     NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap,\
     NinoSlpMap, NinoSstDiv, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
-    SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse
+    SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -370,6 +370,7 @@ dict_oneVar_modelAndObs = {
     'NinoSstDivRmse': NinoSstDivRmse, 'NinoSstLonRmse': NinoSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
     'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
+    'SeasonalTauxLatRmse': SeasonalTauxLatRmse, 'SeasonalTauxLonRmse': SeasonalTauxLonRmse,
 }
 
 dict_twoVar_modelAndObs = {
@@ -739,7 +740,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             if 'events_model' in diag_obs[obs].keys():
                 dict_diagnostic_metadata[obs]['events'] = diag_obs[obs]['events']
         if keyarg['metric_computation'] in ['ratio', 'relative_difference']:
-            units = ''
+            units = diagnostic1['units'] + ' / ' + diagnostic1['units']
         else:
             units = diagnostic1['units']
     # finishes to fill the diagnostic dictionary

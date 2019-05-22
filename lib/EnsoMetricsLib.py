@@ -2717,12 +2717,12 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + sstbox + " sstA",
                      'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
                      'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
                      'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
-            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': 'W/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + lhfbox + " lhfA",
                      'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
                      'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
@@ -2944,12 +2944,12 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + sstbox + " sstA",
                      'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
                      'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
                      'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
-            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': 'W/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + lwrbox + " lwrA",
                      'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
                      'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
@@ -3147,12 +3147,12 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + sstbox + " sstA",
                      'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
                      'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
                      'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
-            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': 'W/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + shfbox + " shfA",
                      'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
                      'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
@@ -3374,12 +3374,12 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + sstbox + " sstA",
                      'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                      'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                      'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
-            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': 'W/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + swrbox + " swrA",
                      'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                      'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
@@ -3606,12 +3606,12 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + sstbox + " sstA",
                      'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                      'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                      'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
-            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': 'W/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + thfbox + " thfA",
                      'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                      'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
@@ -4273,12 +4273,12 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + sstbox + " sstA",
                      'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1],
                      'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
                      'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
-            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': 'N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + tauxbox + " tauxA",
                      'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1],
                      'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
@@ -4461,7 +4461,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     if kwargs['normalization']:
         Units = ''
     else:
-        Units = 'mm/day / C'
+        Units = 'mm/day/C'
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'EnsoPrMap'
@@ -4673,10 +4673,10 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     EnsoPrMapMetric = {
         'name': Name, 'Rmse__value': prRmse, 'Rmse__value_error': prRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': prCorr, 'Corr__value_error': prCorrErr, 'Corr__units': '', 'Std__value': prStd,
-        'Std__value_error': prStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': prStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return EnsoPrMapMetric
 
@@ -6470,7 +6470,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     if kwargs['normalization']:
         Units = ''
     else:
-        Units = 'Pa / C'
+        Units = 'hPa/C'
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'EnsoSlpMap'
@@ -6594,8 +6594,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
-        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True)
-        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True)
+        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
+        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True) * 1e-2
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
@@ -6686,10 +6686,10 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     EnsoSlpMapMetric = {
         'name': Name, 'Rmse__value': slpRmse, 'Rmse__value_error': slpRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': slpCorr, 'Corr__value_error': slpCorrErr, 'Corr__units': '', 'Std__value': slpStd,
-        'Std__value_error': slpStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': slpStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return EnsoSlpMapMetric
 
@@ -6818,7 +6818,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     if kwargs['normalization']:
         Units = ''
     else:
-        Units = 'C / C'
+        Units = 'C/C'
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'EnsoSstMap'
@@ -7035,10 +7035,10 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     EnsoSstMapMetric = {
         'name': Name, 'Rmse__value': tsRmse, 'Rmse__value_error': tsRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': tsCorr, 'Corr__value_error': tsCorrErr, 'Corr__units': '', 'Std__value': tsStd,
-        'Std__value_error': tsStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': tsStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return EnsoSstMapMetric
 
@@ -8166,10 +8166,10 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     NinaPrMapMetric = {
         'name': Name, 'Rmse__value': prRmse, 'Rmse__value_error': prRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': prCorr, 'Corr__value_error': prCorrErr, 'Corr__units': '', 'Std__value': prStd,
-        'Std__value_error': prStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': prStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinaPrMapMetric
 
@@ -9420,7 +9420,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     if kwargs['normalization']:
         Units = ''
     else:
-        Units = 'Pa'
+        Units = 'hPa'
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinaSlpMap'
@@ -9533,8 +9533,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
-        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True)
-        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True)
+        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
+        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True) * 1e-2
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
@@ -9622,10 +9622,10 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     NinaSlpMapMetric = {
         'name': Name, 'Rmse__value': slpRmse, 'Rmse__value_error': slpRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': slpCorr, 'Corr__value_error': slpCorrErr, 'Corr__units': '', 'Std__value': slpStd,
-        'Std__value_error': slpStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': slpStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinaSlpMapMetric
 
@@ -9965,10 +9965,10 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     NinaSstMapMetric = {
         'name': Name, 'Rmse__value': tsRmse, 'Rmse__value_error': tsRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': tsCorr, 'Corr__value_error': tsCorrErr, 'Corr__units': '', 'Std__value': tsStd,
-        'Std__value_error': tsStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': tsStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinaSstMapMetric
 
@@ -11410,10 +11410,10 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     NinoPrMapMetric = {
         'name': Name, 'Rmse__value': prRmse, 'Rmse__value_error': prRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': prCorr, 'Corr__value_error': prCorrErr, 'Corr__units': '', 'Std__value': prStd,
-        'Std__value_error': prStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': prStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinoPrMapMetric
 
@@ -12658,7 +12658,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     if kwargs['normalization']:
         Units = ''
     else:
-        Units = 'Pa'
+        Units = 'hPa'
     Ref = 'Using CDAT regridding, correlation (centered and biased), std (centered and biased) and ' + \
           'rms (uncentered and biased) calculation'
     metric = 'NinoSlpMap'
@@ -12771,8 +12771,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
-        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True)
-        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True)
+        slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
+        slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True) * 1e-2
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
@@ -12859,10 +12859,10 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     NinoSlpMapMetric = {
         'name': Name, 'Rmse__value': slpRmse, 'Rmse__value_error': slpRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': slpCorr, 'Corr__value_error': slpCorrErr, 'Corr__units': '', 'Std__value': slpStd,
-        'Std__value_error': slpStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': slpStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinoSlpMapMetric
 
@@ -13201,10 +13201,10 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     NinoSstMapMetric = {
         'name': Name, 'Rmse__value': tsRmse, 'Rmse__value_error': tsRmseErr, 'Rmse__units': Units, 'method': Method,
         'Corr__value': tsCorr, 'Corr__value_error': tsCorrErr, 'Corr__units': '', 'Std__value': tsStd,
-        'Std__value_error': tsStdErr, 'Std__units': '', 'nyears_model': yearN_mod, 'nyears_observations': yearN_obs,
-        'time_frequency': kwargs['frequency'], 'time_period_model': actualtimebounds_mod,
-        'time_period_observations': actualtimebounds_obs, 'ref': Ref, 'keyerror': keyerror,
-        'dive_down_diag': dive_down_diag, 'units': '',
+        'Std__value_error': tsStdErr, 'Std__units': Units + ' / ' + Units, 'nyears_model': yearN_mod,
+        'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return NinoSstMapMetric
 
