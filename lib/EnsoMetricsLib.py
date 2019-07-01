@@ -8,13 +8,12 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
-from EnsoToolsLib import percentage_val_eastward
-from EnsoUvcdatToolsLib import ArrayListAx, ArrayOnes, ArrayToList, ApplyLandmask, ApplyLandmaskToArea,\
-    AverageMeridional, AverageZonal, BasinMask, CheckTime, Composite, Composite_ev_by_ev, ComputeInterannualAnomalies,\
-    ComputePDF, Correlation, DetectEvents, DurationAllEvent, FindXYMinMaxInTs, LinearRegressionAndNonlinearity,\
-    LinearRegressionTsAgainstMap, MinMax, MyDerive, PreProcessTS, Read_data_mask_area, Read_mask_area,\
-    ReadAreaSelectRegion, ReadLandmaskSelectRegion, ReadSelectRegionCheckUnits, Regrid, RmsAxis, RmsHorizontal,\
-    RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewMonthly, SkewnessTemporal, Std, StdMonthly, TimeBounds,\
+from EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
+from EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
+    Composite, ComputeInterannualAnomalies, ComputePDF, Correlation, DetectEvents, DurationAllEvent, DurationEvent,\
+    Event_selection, FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap,\
+    LinearRegressionTsAgainstTs, MinMax, MyDerive, MyEmpty, PreProcessTS, Read_data_mask_area, Regrid, RmsAxis,\
+    RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, Std, StdMonthly, TimeBounds,\
     TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
@@ -4036,8 +4035,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
-        sample_nino = Composite_ev_by_ev(sst, nino_years, kwargs['frequency'])
-        sample_nina = Composite_ev_by_ev(sst, nina_years, kwargs['frequency'])
+        sample_nino = Event_selection(sst, kwargs['frequency'], list_event_years=nino_years)
+        sample_nina = Event_selection(sst, kwargs['frequency'], list_event_years=nina_years)
 
         # 2.2 find the zonal position of the maximum/minimum SSTA for each selected event
         lon_sstmax = FindXYMinMaxInTs(sample_nino, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
@@ -4104,6 +4103,258 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         'ref': Ref, 'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return EnsoDivMetric
+
+
+def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+                 nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoDuration() function computes sea surface temperature anomalies life cycle associated with ENSO in a 'box'
+    (usually the nino3.4) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and lagging
+    ENSO), the duration is then the period, around the peak, during which the life cycle is above 0.
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of the SST
+    :param sstname: string
+        name of SST variable (tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param box: string
+        name of box (e.g. 'nino3.4') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoDurMetric: dict
+        name, value, value_error, units, method, nyears, time_frequency, time_period, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from CDAT library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = "ENSO Duration based on life cyle SSTA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + region_ev + " SSTA during " +\
+             str(nbr_years_window) + " years (centered on ENSO), the duration is the number of consecutive months " +\
+             "during which the regression is above 0"
+    Units = 'months'
+    Ref = 'Using CDAT'
+    metric = 'EnsoDuration'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst, areacell, keyerror = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+
+    # Number of years
+    yearN = sst.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(sst)
+
+    if keyerror is not None:
+        duration, duration_err = None, None
+        dive_down_diag = {'model': None, 'axis': None}
+    else:
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False, **kwargs)
+        if debug is True:
+            dict_debug = {'axes1': str([ax.id for ax in enso.getAxisList()]), 'shape1': str(enso.shape),
+                          'time1': str(TimeBounds(enso))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 Seasonal mean and anomalies
+        enso = SeasonalMean(enso, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso.getAxisList()]),
+                          'shape1': '(model) ' + str(enso.shape), 'time1': '(model) ' + str(TimeBounds(enso))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. temporal SSTA
+        # ------------------------------------------------
+        # 2.1 SSTA in 'box' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average='horizontal', compute_anom=True, **kwargs)
+        del areacell
+        if debug is True:
+            dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
+                          'time1': str(TimeBounds(sst))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Regression map
+        # ------------------------------------------------
+        sstts = LinearRegressionTsAgainstTs(sst, enso, nbr_years_window, return_stderr=False,
+                                            frequency=kwargs['frequency'], debug=debug)
+        if debug is True:
+            dict_debug = {'axes1': str([ax.id for ax in sstts.getAxisList()]), 'shape1': str(sstts.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Duration
+        # ------------------------------------------------
+        # 4.1 count the number of consecutive month above a threshold
+        duration = DurationEvent(sstts, 0, nino=True, debug=debug)
+
+        # Error on the metric
+        duration_err = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'value': ArrayToList(sstts), 'axis': list(sstts.getAxis(0)[:])}
+
+        if netcdf is True:
+            # Lists event years
+            nina_years = DetectEvents(enso, season_ev, -threshold, normalization=normalize, nino=False,
+                                      compute_season=False)
+            nino_years = DetectEvents(enso, season_ev, threshold, normalization=normalize, nino=True,
+                                      compute_season=False)
+            if debug is True:
+                dict_debug = {'nina1': 'nbr(' + str(len(nina_years)) + '): ' + str(nina_years),
+                              'nino1': 'nbr(' + str(len(nino_years)) + '): ' + str(nino_years)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            # composites
+            if len(nina_years) > 0:
+                sample = Event_selection(sst, kwargs['frequency'], nbr_years_window=nbr_years_window,
+                                         list_event_years=nina_years)
+                # count the number of consecutive month bellow a threshold
+                if normalize is True:
+                    nina_dur_all = DurationAllEvent(sample, -0.5 * float(Std(enso)), nino=False, debug=debug)
+                else:
+                    nina_dur_all = DurationAllEvent(sample, -0.5, nino=False, debug=debug)
+                nina_dur_mean = float(nina_dur_all.mean())
+                nina_dur_err = float(Std(nina_dur_all) / NUMPYsqrt(len(nina_dur_all)))
+            else:
+                nina_dur_all = MyEmpty(sst[:5], time=True, time_id='years')
+                nina_dur_mean = None
+                nina_dur_err = None
+            if len(nino_years) > 0:
+                sample = Event_selection(sst, kwargs['frequency'], nbr_years_window=nbr_years_window,
+                                         list_event_years=nino_years)
+                # count the number of consecutive month above a threshold
+                if normalize is True:
+                    nino_dur_all = DurationAllEvent(sample, 0.5 * float(Std(enso)), nino=True, debug=debug)
+                else:
+                    nino_dur_all = DurationAllEvent(sample, 0.5, nino=True, debug=debug)
+                nino_dur_mean = float(nino_dur_all.mean())
+                nino_dur_err = float(Std(nino_dur_all) / NUMPYsqrt(len(nino_dur_all)))
+            else:
+                nino_dur_all = MyEmpty(sst[:5], time=True, time_id='years')
+                nino_dur_mean = None
+                nino_dur_err = None
+            if debug is True:
+                dict_debug = {'nina1': 'mean(' + str(nina_dur_mean) + '): ' + str(nina_dur_all),
+                              'nino1': 'mean(' + str(nino_dur_mean) + '): ' + str(nino_dur_all)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DurationAllEvent', 15, **dict_debug)
+            # save
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            my_thresh = 'std' if normalize is True else 'C'
+            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': "time series of " + region_ev + " SSTA " + season_ev + " regressed against " +
+                                    region_ev + " SSTA during " + str(nbr_years_window) + " years (centered on ENSO)",
+                     'diagnostic_value': duration, 'diagnostic_value_error': duration_err}
+            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'nina_years': str(nina_years),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", duration is the number of consecutive months during " +
+                                    "which SSTA < -0.5" + my_thresh,
+                     'diagnostic_value': nina_dur_mean, 'diagnostic_value_error': nina_dur_err}
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'nino_years': str(nino_years),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", duration is the number of consecutive months during " +
+                                    "which SSTA > 0.5" + my_thresh,
+                     'diagnostic_value': nino_dur_mean, 'diagnostic_value_error': nino_dur_err}
+            dict4 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=sstts, var1_attributes=dict1, var1_name='sst_against_sst_ts__' + dataset,
+                       var2=nina_dur_all, var2_attributes=dict2, var2_name='Nina_duration__' + dataset,
+                       var3=nino_dur_all, var3_attributes=dict3, var3_name='Nino_duration__' + dataset,
+                       global_attributes=dict4)
+    # Create output
+    EnsoDurMetric = {
+        'name': Name, 'value': duration, 'value_error': duration_err, 'units': Units, 'method': Method, 'nyears': yearN,
+        'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag,
+    }
+    return EnsoDurMetric
 
 
 def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile, tauxname,
@@ -4456,7 +4707,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'ENSO PRA pattern '
+    Name = 'ENSO PRA pattern'
     Method = region_ev + 'SSTA during ' + season_ev + ' regressed against precipitation anomalies in ' + prbox
     if kwargs['normalization']:
         Units = ''
@@ -6694,6 +6945,442 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     return EnsoSlpMapMetric
 
 
+def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   box, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoSstLonRmse() function computes sea surface temperature anomalies pattern associated with ENSO in a 'box'
+    (usually the equatorial_pacific)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param box: string
+        name of box (e.g. 'equatorial_pacific_LonRed') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoSstMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = "ENSO Zonal SSTA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + box + " SSTA"
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'C/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoSstLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, mod_areacell, keyerror_mod1 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, obs_areacell, keyerror_obs1 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+    sstmap_mod, sstmap_mod_areacell, keyerror_mod2 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sstmap_obs, sstmap_obs_areacell, keyerror_obs2 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, sstmap_mod, keyerror_mod3 = CheckTime(sst_mod, sstmap_mod, metric_name=metric, **kwargs)
+    sst_obs, sstmap_obs, keyerror_obs3 = CheckTime(sst_obs, sstmap_obs, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        sstRmse, sstRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+        tmp = [keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2, keyerror_mod3, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+                                         **kwargs)
+        del mod_areacell, obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 Seasonal mean and anomalies
+        sst_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
+        sst_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. spatial SSTA
+        # ------------------------------------------------
+        # 2.1 SSTA in 'box' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sstmap_mod, Method = PreProcessTS(sstmap_mod, Method, areacell=sstmap_mod_areacell, compute_anom=False,
+                                          **kwargs)
+        sstmap_obs, unneeded = PreProcessTS(sstmap_obs, '', areacell=sstmap_obs_areacell, compute_anom=False, **kwargs)
+        del sstmap_mod_areacell, sstmap_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 2.2 Seasonal mean and anomalies
+        sstmap_mod = SeasonalMean(sstmap_mod, season_ev, compute_anom=True)
+        sstmap_obs = SeasonalMean(sstmap_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Regression map
+        # ------------------------------------------------
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                          'regridTool', 'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            sstmap_mod, sstmap_obs, Method = TwoVarRegrid(sstmap_mod, sstmap_obs, Method, region=box,
+                                                          **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(sstmap_mod.shape),
+                              'shape2': '(obs) ' + str(sstmap_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+        # Meridional average
+        sstlon_mod = AverageMeridional(sstmap_mod)
+        sstlon_obs = AverageMeridional(sstmap_obs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstlon_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sstlon_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sstlon_mod.shape), 'shape2': '(obs) ' + str(sstlon_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+        # regression
+        sst_mod_slope = LinearRegressionTsAgainstMap(sstlon_mod, sst_mod, return_stderr=False)
+        sst_obs_slope = LinearRegressionTsAgainstMap(sstlon_obs, sst_obs, return_stderr=False)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod_slope.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs_slope.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod_slope.shape),
+                          'shape2': '(obs) ' + str(sst_obs_slope.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        sstRmse = RmsZonal(sst_mod_slope, sst_obs_slope, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        sstRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(sst_mod_slope), 'observations': ArrayToList(sst_obs_slope),
+                          'axis': list(sst_mod_slope.getAxis(0)[:])}
+
+        if netcdf is True:
+            # Read file and select the right region
+            sstmap_mod, sstmap_mod_areacell, unneeded = \
+                Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LatExt2',
+                                    file_area=sstareafilemod, name_area=sstareanamemod, file_mask=sstlandmaskfilemod,
+                                    name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+            sstmap_obs, sstmap_obs_areacell, unneeded = \
+                Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LatExt2',
+                                    file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
+                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+            # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+            sstmap_mod, unneeded = PreProcessTS(sstmap_mod, '', areacell=sstmap_mod_areacell, compute_anom=False,
+                                                **kwargs)
+            sstmap_obs, unneeded = PreProcessTS(sstmap_obs, '', areacell=sstmap_obs_areacell, compute_anom=False,
+                                                **kwargs)
+            del sstmap_mod_areacell, sstmap_obs_areacell
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            # Seasonal mean and anomalies
+            sstmap_mod = SeasonalMean(sstmap_mod, season_ev, compute_anom=True)
+            sstmap_obs = SeasonalMean(sstmap_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                sstmap_mod, sstmap_obs, unneeded =\
+                    TwoVarRegrid(sstmap_mod, sstmap_obs, '', region='equatorial_pacific_LatExt2',
+                                 **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                                  'shape1': '(model) ' + str(sstmap_mod.shape),
+                                  'shape2': '(obs) ' + str(sstmap_obs.shape)}
+                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+            # Linear regression
+            sstmap_mod_slope = LinearRegressionTsAgainstMap(sstmap_mod, sst_mod, return_stderr=False)
+            sstmap_obs_slope = LinearRegressionTsAgainstMap(sstmap_obs, sst_obs, return_stderr=False)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod_slope.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs_slope.getAxisList()]),
+                              'shape1': '(model) ' + str(sstmap_mod_slope.shape),
+                              'shape2': '(obs) ' + str(sstmap_obs_slope.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+            # Lists event years
+            nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            if debug is True:
+                dict_debug = {'nina1': '(model) nbr(' + str(len(nina_years_mod)) + '): ' + str(nina_years_mod),
+                              'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
+                              'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
+                              'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            # composites
+            if len(nina_years_mod) > 0:
+                nina_sstlon_mod = Composite(sstlon_mod, nina_years_mod, kwargs['frequency'])
+                nina_sstmap_mod = Composite(sstmap_mod, nina_years_mod, kwargs['frequency'])
+            else:
+                nina_sstlon_mod = MyEmpty(sstlon_mod[0], time=False)
+                nina_sstmap_mod = MyEmpty(sstmap_mod[0], time=False)
+            if len(nino_years_mod) > 0:
+                nino_sstlon_mod = Composite(sstlon_mod, nino_years_mod, kwargs['frequency'])
+                nino_sstmap_mod = Composite(sstmap_mod, nino_years_mod, kwargs['frequency'])
+            else:
+                nino_sstlon_mod = MyEmpty(sstlon_mod[0], time=False)
+                nino_sstmap_mod = MyEmpty(sstmap_mod[0], time=False)
+            if len(nina_years_obs) > 0:
+                nina_sstlon_obs = Composite(sstlon_obs, nina_years_obs, kwargs['frequency'])
+                nina_sstmap_obs = Composite(sstmap_obs, nina_years_obs, kwargs['frequency'])
+            else:
+                nina_sstlon_obs = MyEmpty(sstlon_obs[0], time=False)
+                nina_sstmap_obs = MyEmpty(sstmap_obs[0], time=False)
+            if len(nino_years_obs) > 0:
+                nino_sstlon_obs = Composite(sstlon_obs, nino_years_obs, kwargs['frequency'])
+                nino_sstmap_obs = Composite(sstmap_obs, nino_years_obs, kwargs['frequency'])
+            else:
+                nino_sstlon_obs = MyEmpty(sstlon_obs[0], time=False)
+                nino_sstmap_obs = MyEmpty(sstmap_obs[0], time=False)
+            # save
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            my_thresh = 'std' if normalize is True else 'C'
+            my_units = '' if kwargs['normalization'] is True else 'C'
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': region_ev + " SSTA during " + season_ev + " regressed against " + box + " SSTA"}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': region_ev + " SSTA during " + season_ev + " regressed against " + box + " SSTA"}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': region_ev + " SSTA during " + season_ev +
+                                    " regressed against tropical Pacific SSTA"}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': region_ev + " SSTA during " + season_ev +
+                                    " regressed against tropical Pacific SSTA"}
+            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nina_years': str(nina_years_mod),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of La Nina events"}
+            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nino_years': str(nino_years_mod),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of El Nino events"}
+            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nina_years': str(nina_years_obs),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of La Nina events"}
+            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nino_years': str(nino_years_obs),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of El Nino events"}
+            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=sst_mod_slope, var1_attributes=dict1, var1_name='sst_against_sst_lon__' + dataset1,
+                       var2=sst_obs_slope, var2_attributes=dict2, var2_name='sst_against_sst_lon__' + dataset2,
+                       var3=sstmap_mod_slope, var3_attributes=dict3, var3_name='sst_against_sst_map__' + dataset1,
+                       var4=sstmap_obs_slope, var4_attributes=dict4, var4_name='sst_against_sst_map__' + dataset2,
+                       var5=nina_sstlon_mod, var5_attributes=dict5, var5_name='Nina_sst_lon__' + dataset1,
+                       var6=nina_sstmap_mod, var6_attributes=dict5, var6_name='Nina_sst_map__' + dataset1,
+                       var7=nino_sstlon_mod, var7_attributes=dict6, var7_name='Nino_sst_lon__' + dataset1,
+                       var8=nino_sstmap_mod, var8_attributes=dict6, var8_name='Nino_sst_map__' + dataset1,
+                       var9=nina_sstlon_obs, var9_attributes=dict7, var9_name='Nina_sst_lon__' + dataset2,
+                       var10=nina_sstmap_obs, var10_attributes=dict7, var10_name='Nina_sst_map__' + dataset2,
+                       var11=nino_sstlon_obs, var11_attributes=dict8, var11_name='Nino_sst_lon__' + dataset2,
+                       var12=nino_sstmap_obs, var12_attributes=dict8, var12_name='Nino_sst_map__' + dataset2,
+                       global_attributes=dict9)
+
+    # Create output
+    EnsoSstMetric = {
+        'name': Name, 'value': sstRmse, 'value_error': sstRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return EnsoSstMetric
+
+
 def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
                event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
@@ -6813,8 +7500,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'ENSO TSA pattern '
-    Method = region_ev + 'SSTA during ' + season_ev + ' regressed against surface temperature anomalies in ' + tsbox
+    Name = "ENSO TSA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + tsbox + " surface temperature anomalies"
     if kwargs['normalization']:
         Units = ''
     else:
@@ -7019,8 +7706,12 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
-            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': region_ev + " SSTA during " + season_ev + " regressed against " + tsbox +
+                                    " surface temperature anomalies"}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': region_ev + " SSTA during " + season_ev + " regressed against " + tsbox +
+                                    " surface temperature anomalies"}
             dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: tsRmse,
                      'metric_valueRMSE_error_' + dataset2: tsRmseErr, 'metric_valueCORR_' + dataset2: tsCorr,
                      'metric_valueCORR_error_' + dataset2: tsCorrErr, 'metric_valueSTD_' + dataset2: tsStd,
@@ -7041,6 +7732,409 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag, 'units': '',
     }
     return EnsoSstMapMetric
+
+
+def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
+                  debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoSstTsRmse() function computes sea surface temperature anomalies life cycle associated with ENSO in a 'box'
+    (usually the nino3.4) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and lagging
+    ENSO)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param box: string
+        name of box (e.g. 'nino3.4') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoSstMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = "ENSO life cyle SSTA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + region_ev + " SSTA during " +\
+             str(nbr_years_window) + " years (centered on ENSO)"
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'C/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoSstTsRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod is not None or keyerror_obs is not None):
+        sstRmse, sstRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
+                                          **kwargs)
+        enso_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
+                                          **kwargs)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(enso_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 Seasonal mean and anomalies
+        enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(enso_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. temporal SSTA
+        # ------------------------------------------------
+        # 2.1 SSTA in 'box' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average='horizontal', compute_anom=True,
+                                       **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
+                                         **kwargs)
+        del mod_areacell, obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(sst_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Regression map
+        # ------------------------------------------------
+        sstts_mod = LinearRegressionTsAgainstTs(sst_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                frequency=kwargs['frequency'], debug=debug)
+        sstts_obs = LinearRegressionTsAgainstTs(sst_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                frequency=kwargs['frequency'], debug=debug)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstts_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in sstts_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(sstts_mod.shape),
+                          'shape2': '(obs) ' + str(sstts_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        sstRmse = RmsAxis(sstts_mod, sstts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        sstRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(sstts_mod), 'observations': ArrayToList(sstts_obs),
+                          'axis': list(sstts_mod.getAxis(0)[:])}
+
+        if netcdf is True:
+            # Read file and select the right region
+            sstmap_mod, sstmap_mod_areacell, unneeded = \
+                Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, 'equatorial_pacific_LonRed',
+                                    file_area=sstareafilemod, name_area=sstareanamemod, file_mask=sstlandmaskfilemod,
+                                    name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+            sstmap_obs, sstmap_obs_areacell, unneeded = \
+                Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, 'equatorial_pacific_LonRed',
+                                    file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
+                                    name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+            # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+            sstmap_mod, unneeded = PreProcessTS(sstmap_mod, '', areacell=sstmap_mod_areacell, compute_anom=True,
+                                                **kwargs)
+            sstmap_obs, unneeded = PreProcessTS(sstmap_obs, '', areacell=sstmap_obs_areacell, compute_anom=True,
+                                                **kwargs)
+            del sstmap_mod_areacell, sstmap_obs_areacell
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                sstmap_mod, sstmap_obs, unneeded =\
+                    TwoVarRegrid(sstmap_mod, sstmap_obs, '', region='equatorial_pacific_LonRed', **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
+                                  'shape1': '(model) ' + str(sstmap_mod.shape),
+                                  'shape2': '(obs) ' + str(sstmap_obs.shape)}
+                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+            # Meridional average
+            ssthov_mod = AverageMeridional(sstmap_mod)
+            ssthov_obs = AverageMeridional(sstmap_obs)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssthov_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in ssthov_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(ssthov_mod.shape), 'shape2': '(obs) ' + str(ssthov_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Linear regression
+            ssthov_mod = LinearRegressionTsAgainstTs(ssthov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                     frequency=kwargs['frequency'], debug=debug)
+            ssthov_obs = LinearRegressionTsAgainstTs(ssthov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                     frequency=kwargs['frequency'], debug=debug)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssthov_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in ssthov_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(ssthov_mod.shape),
+                              'shape2': '(obs) ' + str(ssthov_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+            # Lists event years
+            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            if debug is True:
+                dict_debug = {'nina1': '(model) nbr(' + str(len(nina_years_mod)) + '): ' + str(nina_years_mod),
+                              'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
+                              'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
+                              'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            # composites
+            if len(nina_years_mod) > 0:
+                nina_sst_mod = Composite(sst_mod, nina_years_mod, kwargs['frequency'],
+                                         nbr_years_window=nbr_years_window)
+                nina_ssthov_mod = Composite(ssthov_mod, nina_years_mod, kwargs['frequency'],
+                                            nbr_years_window=nbr_years_window)
+            else:
+                nina_sst_mod = MyEmpty(sst_mod[:12 * nbr_years_window], time=True, time_id='months')
+                nina_ssthov_mod = MyEmpty(ssthov_mod[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nino_years_mod) > 0:
+                nino_sst_mod = Composite(sst_mod, nino_years_mod, kwargs['frequency'],
+                                         nbr_years_window=nbr_years_window)
+                nino_ssthov_mod = Composite(ssthov_mod, nino_years_mod, kwargs['frequency'],
+                                            nbr_years_window=nbr_years_window)
+            else:
+                nino_sst_mod = MyEmpty(sst_mod[:12 * nbr_years_window], time=True, time_id='months')
+                nino_ssthov_mod = MyEmpty(ssthov_mod[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nina_years_obs) > 0:
+                nina_sst_obs = Composite(sst_obs, nina_years_obs, kwargs['frequency'],
+                                         nbr_years_window=nbr_years_window)
+                nina_ssthov_obs = Composite(ssthov_obs, nina_years_obs, kwargs['frequency'],
+                                            nbr_years_window=nbr_years_window)
+            else:
+                nina_sst_obs = MyEmpty(sst_obs[:12 * nbr_years_window], time=True, time_id='months')
+                nina_ssthov_obs = MyEmpty(ssthov_obs[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nino_years_obs) > 0:
+                nino_sst_obs = Composite(sst_obs, nino_years_obs, kwargs['frequency'],
+                                         nbr_years_window=nbr_years_window)
+                nino_ssthov_obs = Composite(ssthov_obs, nino_years_obs, kwargs['frequency'],
+                                            nbr_years_window=nbr_years_window)
+            else:
+                nino_sst_obs = MyEmpty(sst_obs[:12 * nbr_years_window], time=True, time_id='months')
+                nino_ssthov_obs = MyEmpty(ssthov_obs[:12 * nbr_years_window], time=True, time_id='months')
+            # save
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            my_thresh = 'std' if normalize is True else 'C'
+            my_units = '' if kwargs['normalization'] is True else 'C'
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': "time series of " + region_ev + " SSTA " + season_ev + " regressed against " +
+                                    region_ev + " SSTA during " + str(nbr_years_window) + " years (centered on ENSO)"}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': "time series of " + region_ev + " SSTA " + season_ev + " regressed against " +
+                                    region_ev + " SSTA during " + str(nbr_years_window) + " years (centered on ENSO)"}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " + season_ev +
+                                    " regressed against equatorial Pacific SSTA during " + str(nbr_years_window) +
+                                    " years (centered on ENSO)"}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " + season_ev +
+                                    " regressed against equatorial Pacific SSTA during " + str(nbr_years_window) +
+                                    " years (centered on ENSO)"}
+            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nina_years': str(nina_years_mod),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of La Nina events"}
+            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nino_years': str(nino_years_mod),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of El Nino events"}
+            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nina_years': str(nina_years_obs),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of La Nina events"}
+            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nino_years': str(nino_years_obs),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", this is the composite of El Nino events"}
+            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=sstts_mod, var1_attributes=dict1, var1_name='sst_against_sst_ts__' + dataset1,
+                       var2=sstts_obs, var2_attributes=dict2, var2_name='sst_against_sst_ts__' + dataset2,
+                       var3=ssthov_mod, var3_attributes=dict3, var3_name='sst_against_sst_hov__' + dataset1,
+                       var4=ssthov_obs, var4_attributes=dict4, var4_name='sst_against_sst_hov__' + dataset2,
+                       var5=nina_sst_mod, var5_attributes=dict5, var5_name='Nina_sst_ts__' + dataset1,
+                       var6=nina_ssthov_mod, var6_attributes=dict5, var6_name='Nina_sst_hov__' + dataset1,
+                       var7=nino_sst_mod, var7_attributes=dict6, var7_name='Nino_sst_ts__' + dataset1,
+                       var8=nino_ssthov_mod, var8_attributes=dict6, var8_name='Nino_sst_hov__' + dataset1,
+                       var9=nina_sst_obs, var9_attributes=dict7, var9_name='Nina_sst_ts__' + dataset2,
+                       var10=nina_ssthov_obs, var10_attributes=dict7, var10_name='Nina_sst_hov__' + dataset2,
+                       var11=nino_sst_obs, var11_attributes=dict8, var11_name='Nino_sst_ts__' + dataset2,
+                       var12=nino_ssthov_obs, var12_attributes=dict8, var12_name='Nino_sst_hov__' + dataset2,
+                       global_attributes=dict9)
+
+    # Create output
+    EnsoSstMetric = {
+        'name': Name, 'value': sstRmse, 'value_error': sstRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return EnsoSstMetric
 
 
 def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
@@ -8371,7 +9465,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
-        sample = Composite_ev_by_ev(sst, event_years, kwargs['frequency'])
+        sample = Event_selection(sst, kwargs['frequency'], list_event_years=event_years)
 
         # 2.2 find the zonal position of the minimum SSTA for each selected event
         lon_sstmax = FindXYMinMaxInTs(sample, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
@@ -8669,8 +9763,8 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
-        sample_mod = Composite_ev_by_ev(sst_mod, event_years_mod, kwargs['frequency'])
-        sample_obs = Composite_ev_by_ev(sst_obs, event_years_obs, kwargs['frequency'])
+        sample_mod = Event_selection(sst_mod, kwargs['frequency'], list_event_years=event_years_mod)
+        sample_obs = Event_selection(sst_obs, kwargs['frequency'], list_event_years=event_years_obs)
 
         # 2.2 find the zonal position of the minimum SSTA for each selected event and compute a pdf
         # longitude of the minimum SSTA for each selected event
@@ -8878,10 +9972,11 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         # ------------------------------------------------
         # 2.1 get a time series of 2 years before and 2 years after the La Nina peak (4 years time series)
         # composites
-        sample = Composite_ev_by_ev(sst, event_years, kwargs['frequency'], nbr_years_window=nbr_years_window)
+        sample = Event_selection(sst, kwargs['frequency'], nbr_years_window=nbr_years_window,
+                                 list_event_years=event_years)
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sample.getAxisList()]), 'shape1': str(sample.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Event_selection', 15, **dict_debug)
 
         # 2.2 count the number of consecutive month bellow a threshold
         if normalize is True:
@@ -8959,7 +10054,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param sstlandmasknameobs: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
-        name of box ('nino3') for SST
+        name of box ('equatorial_pacific_LonRed') for SST
     :param event_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
         e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
@@ -11449,8 +12544,6 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     :param event_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
         e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
-    :param nbr_years_window: integer
-        number of years used to compute the composite (e.g. 6)
     :param dataset: string, optional
         name of current dataset (e.g., 'model', 'obs', ...)
     :param debug: bolean, optional
@@ -11615,7 +12708,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
-        sample = Composite_ev_by_ev(sst, event_years, kwargs['frequency'])
+        sample = Event_selection(sst, kwargs['frequency'], list_event_years=event_years)
 
         # 2.2 find the zonal position of the maximum SSTA for each selected event
         lon_sstmax = FindXYMinMaxInTs(sample, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
@@ -11659,6 +12752,308 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         'name': Name, 'value': ep_event, 'value_error': StdErr, 'units': Units, 'method': Method, 'nyears': yearN,
         'events': event_years, 'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return NinoDivMetric
+
+
+def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box,
+                     event_definition, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The NinoSstDiversity() function computes a zonal composite of El Nino events during the peak of the event.
+        1.) detect events
+            1.1) SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+            1.2) SSTA > 'threshold' during 'season' are considered as El Nino events
+        2.) diversity of the zonal location of the maximum SSTA
+            2.1) zonal SSTA at the peak of the event is computed for each selected event
+            2.2) find the zonal position of the maximum SSTA for each selected event
+            2.3) compute the spread of the distribution
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of the SST
+    :param sstname: string
+        name of SST variable (tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param box: string
+        name of box ('nino3') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param treshold_ep_ev: float, optional
+        see EnsoToolsLib.percentage_val_eastward
+        longitude, in degree east, of the westward boundary of eastern Pacific event
+        default value is -140°E (i.e., 140°W)
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return NinoDivMetric: dict
+        name, value, value_error, units, method, nyears, events, time_frequency, time_period, ref, keyerror,
+        dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    my_thresh = 'std' if normalize is True else 'C'
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
+                    'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = "Nino Diversity (interquartile range)"
+    lat = ReferenceRegions(box)['latitude']
+    lon = ReferenceRegions(box)['longitude']
+
+    Method = "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh + " during " + season_ev +\
+             ", zonal SSTA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) + "]), the zonal SSTA maximum " +\
+             "is located for each event, the diversity is the interquartile range (IQR = Q3 - Q1)"
+    Units = 'longitude (E)'
+    Ref = 'Using CDAT regridding'
+    metric = 'NinoSstDiversity'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # ------------------------------------------------
+    # 1. detect events
+    # ------------------------------------------------
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+    sstmap, sstmap_areacell, keyerror2 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, box, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+
+    # Number of years
+    yearN = sst.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(sst)
+
+    if keyerror1 is not None or keyerror2 is not None:
+        dispersion1, dispersion1_err, dispersion2, dispersion2_err, event_years = None, None, None, None, None
+        dive_down_diag = None, None, {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2]
+        keyerror = add_up_errors(tmp)
+    else:
+        keyerror = None
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, average='horizontal', compute_anom=False,
+                                      **kwargs)
+        del sst_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in enso.getAxisList()]),
+                          'shape1': '(sst) ' + str(enso.shape), 'time1': '(sst) ' + str(TimeBounds(enso))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
+        # Lists event years
+        event_years = DetectEvents(enso, season_ev, threshold, normalization=normalize, nino=True)
+        if debug is True:
+            dict_debug = {'nino1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. diversity of the zonal location of the maximum SSTA
+        # ------------------------------------------------
+        # 2.1 zonal SSTA at the peak of the event is computed for each selected event
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sstmap, Method = PreProcessTS(sstmap, Method, areacell=sstmap_areacell, average=False, compute_anom=False,
+                                      **kwargs)
+        del sstmap_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
+                          'shape1': '(sst) ' + str(sstmap.shape), 'time1': '(sst) ' + str(TimeBounds(sstmap))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # Seasonal mean
+        sstmap = SeasonalMean(sstmap, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
+                          'shape1': '(sst) ' + str(sstmap.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool',
+                          'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            sstmap = Regrid(sstmap, None, region=box, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
+                              'shape1': '(sst) ' + str(sstmap.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+        # Meridional average
+        sstlon = AverageMeridional(sstmap)
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstlon.getAxisList()]),
+                          'shape1': '(sst) ' + str(sstlon.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+        if len(event_years) > 0:
+            # samples
+            sample = Event_selection(sstlon, kwargs['frequency'], list_event_years=event_years)
+
+            # 2.2 find the zonal position of the maximum SSTA for each selected event
+            lon_sstmax = FindXYMinMaxInTs(sample, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+            if debug is True:
+                dict_debug = {'line1': 'longitude of the maximum SSTA: ' + str(lon_sstmax)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+
+            # 2.3 compute the spread of the distribution
+            dispersion1 = statistical_dispersion(lon_sstmax, method='IQR')
+            dispersion2 = statistical_dispersion(lon_sstmax, method='MAD')
+            dispersion1_err = None
+            dispersion2_err = None
+        else:
+            lon_sstmax = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
+            dispersion1 = None
+            dispersion2 = None
+            dispersion1_err = None
+            dispersion2_err = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
+
+        if netcdf is True:
+            # nina events
+            nina_years = DetectEvents(enso, season_ev, -threshold, normalization=normalize, nino=False)
+            if len(event_years) > 0:
+                # samples
+                sample = Event_selection(sstlon, kwargs['frequency'], list_event_years=nina_years)
+                # 2.2 find the zonal position of the maximum SSTA for each selected event
+                lon_sstmin = FindXYMinMaxInTs(sample, return_val='mini', smooth=True, axis=0, window=5,
+                                              method='triangle')
+                if debug is True:
+                    dict_debug = {'line1': 'longitude of the minimum SSTA: ' + str(lon_sstmax)}
+                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+                # 2.3 compute the spread of the distribution
+                nina_disp1 = statistical_dispersion(lon_sstmin, method='IQR')
+                nina_disp2 = statistical_dispersion(lon_sstmin, method='MAD')
+                nina_disp1_err = None
+                nina_disp2_err = None
+            else:
+                lon_sstmin = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
+                nina_disp1 = None
+                nina_disp2 = None
+                nina_disp1_err = None
+                nina_disp2_err = None
+            # save
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+
+            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'nino_years': str(event_years),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", zonal SSTA " + "(meridional averaged [" + str(lat[0]) +
+                                    " ; " + str(lat[1]) + "]), the zonal SSTA maximum is located for each event, the " +
+                                    "diversity is the interquartile range (IQR = Q3 - Q1), second value is the median" +
+                                    " absolute deviation (MAD = median([Xi - median(tab)]))",
+                     'diagnostic_value_' + dataset: dispersion1, 'diagnostic_value_error_' + dataset: dispersion1_err,
+                     'diagnostic_value2_' + dataset: dispersion2, 'diagnostic_value_error2_' + dataset: dispersion2_err,
+                     }
+            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'nino_years': str(nina_years),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", zonal SSTA " + "(meridional averaged [" + str(lat[0]) +
+                                    " ; " + str(lat[1]) + "]), the zonal SSTA minimum is located for each event, the " +
+                                    "diversity is the interquartile range (IQR = Q3 - Q1), second value is the median" +
+                                    " absolute deviation (MAD = median([Xi - median(tab)]))",
+                     'diagnostic_value_' + dataset: nina_disp1, 'diagnostic_value_error_' + dataset: nina_disp1_err,
+                     'diagnostic_value2_' + dataset: nina_disp2, 'diagnostic_value_error2_' + dataset: nina_disp2_err,
+                     }
+            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=lon_sstmax, var1_attributes=dict1, var1_name='Nino_lon_pos_maxSSTA__' + dataset,
+                       var2=lon_sstmin, var2_attributes=dict2, var2_name='Nina_lon_pos_minSSTA__' + dataset,
+                       global_attributes=dict3)
+            del dict1, dict2
+
+    # metric value
+    if debug is True:
+        dict_debug = {
+            'line1': 'diagnostic (IQR) value: ' + str(dispersion1),
+            'line2': 'diagnostic (IQR) value_error: ' + str(dispersion1_err),
+            'line3': 'diagnostic (MAD) value: ' + str(dispersion2),
+            'line4': 'diagnostic (MAD) value_error: ' + str(dispersion2_err),
+        }
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+
+    # Create output
+    NinoDivMetric = {
+        'name': Name, 'value': dispersion1, 'value_error': dispersion1_err, 'value2': dispersion2,
+        'value_error2': dispersion2_err, 'units': Units, 'method': Method, 'nyears': yearN, 'events': event_years,
+        'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds, 'ref': Ref, 'keyerror': keyerror,
+        'dive_down_diag': dive_down_diag,
     }
     return NinoDivMetric
 
@@ -11913,8 +13308,8 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
-        sample_mod = Composite_ev_by_ev(sst_mod, event_years_mod, kwargs['frequency'])
-        sample_obs = Composite_ev_by_ev(sst_obs, event_years_obs, kwargs['frequency'])
+        sample_mod = Event_selection(sst_mod, kwargs['frequency'], list_event_years=event_years_mod)
+        sample_obs = Event_selection(sst_obs, kwargs['frequency'], list_event_years=event_years_obs)
 
         # 2.2 find the zonal position of the maximum SSTA for each selected event and compute a pdf
         # longitude of the maximum SSTA for each selected event
@@ -12120,10 +13515,11 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         # ------------------------------------------------
         # 2.1 get a time series of N years before and N years after the El Nino peak (2N years time series)
         # composites
-        sample = Composite_ev_by_ev(sst, event_years, kwargs['frequency'], nbr_years_window=nbr_years_window)
+        sample = Event_selection(sst, kwargs['frequency'], nbr_years_window=nbr_years_window,
+                                 list_event_years=event_years)
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sample.getAxisList()]), 'shape1': str(sample.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Event_selection', 15, **dict_debug)
 
         # 2.2 count the number of consecutive month bellow a threshold
         if normalize is True:
@@ -12201,7 +13597,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param sstlandmasknameobs: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
-        name of box ('nino3') for SST
+        name of box ('equatorial_pacific_LonRed') for SST
     :param event_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
         e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
@@ -15331,7 +16727,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                               'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:

@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_proc'#'ENSO_tel'#'MC1'#
+mc_name = 'EVAL_IPSL'#'ENSO_perf'#'ENSO_proc'#'ENSO_tel'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -114,6 +114,8 @@ elif mc_name == 'ENSO_tel':
     list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
 elif mc_name == 'ENSO_proc':
     list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
+elif mc_name == 'EVAL_IPSL':
+    list_obs = ['ERA-Interim']#
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -170,6 +172,7 @@ for obs in list_obs:
 
 # models
 list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
+ens = 'r1i1p1'
 #
 # finding file and variable name in file for each observations dataset
 #

@@ -8,11 +8,12 @@ from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
     BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf,\
-    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoDiversity, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSlpMap,\
-    EnsoSstMap, EnsoSeasonality, EnsoSstSkew, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv,\
-    NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap,\
-    NinoSlpMap, NinoSstDiv, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
-    SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse
+    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoDiversity, EnsoDuration, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel,\
+    EnsoSlpMap, EnsoSstLonRmse, EnsoSstMap, EnsoSstTsRmse, EnsoSeasonality, EnsoSstSkew, NinaPrJjaTel, NinaPrNdjTel,\
+    NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse,\
+    NinoPrJjaTel, NinoPrNdjTel, NinoPrMap, NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, NinoSstDur,\
+    NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse,\
+    SeasonalSstLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -365,9 +366,10 @@ dict_oneVar_modelAndObs = {
     'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
     'BiasSstSkLonRmse': BiasSstSkLonRmse,
+    'EnsoSstLonRmse': EnsoSstLonRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
     'EnsoSstMap': EnsoSstMap, 'NinaSstMap': NinaSstMap, 'NinoSstMap': NinoSstMap,
-    'NinaSstDivRmse': NinaSstDivRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinaSstTsRmse': NinaSstTsRmse,
-    'NinoSstDivRmse': NinoSstDivRmse, 'NinoSstLonRmse': NinoSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
+    'EnsoSstTsRmse': EnsoSstTsRmse, 'NinaSstTsRmse': NinaSstTsRmse, 'NinoSstLonRmse': NinoSstLonRmse,
+    'NinaSstDivRmse': NinaSstDivRmse, 'NinoSstDivRmse': NinoSstDivRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
     'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
     'SeasonalTauxLatRmse': SeasonalTauxLatRmse, 'SeasonalTauxLonRmse': SeasonalTauxLonRmse,
@@ -377,12 +379,13 @@ dict_twoVar_modelAndObs = {
     'EnsoPrMap': EnsoPrMap, 'EnsoPrJjaTel': EnsoPrJjaTel, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoSlpMap': EnsoSlpMap,
     'NinaPrMap': NinaPrMap, 'NinaPrJjaTel': NinaPrJjaTel, 'NinaPrNdjTel': NinaPrNdjTel, 'NinaSlpMap': NinaSlpMap,
     'NinoPrMap': NinoPrMap, 'NinoPrJjaTel': NinoPrJjaTel, 'NinoPrNdjTel': NinoPrNdjTel, 'NinoSlpMap': NinoSlpMap,
-
 }
 
-dict_oneVar = {'EnsoAmpl': EnsoAmpl, 'EnsoDiversity': EnsoDiversity, 'EnsoSeasonality': EnsoSeasonality,
-               'EnsoSstSkew': EnsoSstSkew, 'NinaSstDiv': NinaSstDiv, 'NinaSstDur': NinaSstDur, 'NinoSstDiv': NinoSstDiv,
-               'NinoSstDur': NinoSstDur}
+dict_oneVar = {
+    'EnsoAmpl': EnsoAmpl, 'EnsoDuration': EnsoDuration, 'EnsoDiversity': EnsoDiversity,
+    'EnsoSeasonality': EnsoSeasonality, 'EnsoSstSkew': EnsoSstSkew, 'NinaSstDiv': NinaSstDiv, 'NinaSstDur': NinaSstDur,
+    'NinoSstDiv': NinoSstDiv, 'NinoSstDiversity': NinoSstDiversity, 'NinoSstDur': NinoSstDur,
+}
 
 dict_twoVar = {
     'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr, 'EnsoAlphaShf': EnsoAlphaShf,
@@ -504,8 +507,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     metric = metric.replace('_1', '').replace('_2', '').replace('_3', '').replace('_4', '').replace('_5', '')
     # retrieving keyargs from EnsoCollectionsLib.defCollection
     dict_mc = defCollection(metricCollection)
-    # read the list of variables for the given metric
-    list_variables = dict_mc['metrics_list'][tmp_metric]['variables']
 
     # common_collection_parameters
     keyarg = dict()

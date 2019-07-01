@@ -28,7 +28,7 @@ from EnsoCollectionsLib import CmipVariables
 from EnsoCollectionsLib import ReferenceObservations
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
-from EnsoToolsLib import StringInDict
+from EnsoToolsLib import FindXYMinMax, StringInDict
 
 # uvcdat based functions:
 from cdms2 import createAxis as CDMS2createAxis
@@ -1042,7 +1042,10 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
         return tab, units, keyerror
 
 
-def Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=None):
+def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
+    if len(list_event_years) == 0:
+        tax = tab.getTime().asComponentTime()
+        list_event_years = list(set([tax[ii].year for ii in range(len(tax))]))
     # function to fill array with masked value where the data is not available
     def fill_array(tab, units, freq):
         y1 = tab.getTime().asComponentTime()[0].year
@@ -1135,10 +1138,11 @@ def Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=None):
 
 
 def Composite(tab, list_event_years, frequency, nbr_years_window=None):
-    return MV2average(Composite_ev_by_ev(tab, list_event_years, frequency, nbr_years_window=nbr_years_window), axis=0)
+    return MV2average(
+        Event_selection(tab, frequency, nbr_years_window=nbr_years_window, list_event_years=list_event_years), axis=0)
 
 
-def DetectEvents(tab, season, threshold, normalization=False, nino=True):
+def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute_season=True):
     """
     #################################################################################
     Description:
@@ -1165,10 +1169,8 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True):
         list of years including a detected event
     """
     # Seasonal mean and anomalies
-    tab = SeasonalMean(tab, season, compute_anom=True)
-    if season == 'DJF':
-        time_ax = tab.getTime()
-        time_ax[:] = time_ax[:] - (time_ax[1] - time_ax[0])
+    if compute_season is True:
+        tab = SeasonalMean(tab, season, compute_anom=True)
     # Normalization ?
     if normalization is True:
         threshold = threshold * float(GENUTILstd(tab, weights=None, axis=0, centered=1, biased=1))
@@ -1396,6 +1398,18 @@ def get_num_axis(tab, name_axis):
 
 def MinMax(tab):
     return [float(MV2minimum(tab)),float(MV2maximum(tab))]
+
+
+def MyEmpty(tab, time=True, time_id=''):
+    tab_out = ArrayZeros(tab)
+    if time is True:
+        axis = CDMS2createAxis(MV2array(len(tab_out), dtype='int32'), id=time_id)
+        axes = [axis] + tab.getAxisList()[1:]
+    else:
+        axes = tab.getAxisList()
+    tab_out.setAxisList(axes)
+    return tab_out
+
 
 def Normalize(tab, frequency):
     """
@@ -1798,7 +1812,11 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
                var2_attributes={}, var2_name='', var2_time_name=None, var3=None, var3_attributes={}, var3_name='',
                var3_time_name=None, var4=None, var4_attributes={}, var4_name='', var4_time_name=None, var5=None,
                var5_attributes={}, var5_name='', var5_time_name=None, var6=None, var6_attributes={}, var6_name='',
-               var6_time_name=None, frequency='monthly', global_attributes={}):
+               var6_time_name=None, var7=None, var7_attributes={}, var7_name='', var7_time_name=None, var8=None,
+               var8_attributes={}, var8_name='', var8_time_name=None, var9=None, var9_attributes={}, var9_name='',
+               var9_time_name=None, var10=None, var10_attributes={}, var10_name='', var10_time_name=None, var11=None,
+               var11_attributes={}, var11_name='', var11_time_name=None, var12=None, var12_attributes={}, var12_name='',
+               var12_time_name=None, frequency='monthly', global_attributes={}):
     if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": given path does not exist",
@@ -1845,6 +1863,42 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
         if var6_time_name is not None:
             var6 = TimeButNotTime(var6, var6_time_name, frequency)
         o.write(var6, attributes=var6_attributes, dtype='float32', id=var6_name)
+    if var7 is not None:
+        if var7_name == '':
+            var7_name = var7.id
+        if var7_time_name is not None:
+            var7 = TimeButNotTime(var7, var7_time_name, frequency)
+        o.write(var7, attributes=var7_attributes, dtype='float32', id=var7_name)
+    if var8 is not None:
+        if var8_name == '':
+            var8_name = var8.id
+        if var8_time_name is not None:
+            var8 = TimeButNotTime(var8, var8_time_name, frequency)
+        o.write(var8, attributes=var8_attributes, dtype='float32', id=var8_name)
+    if var9 is not None:
+        if var9_name == '':
+            var9_name = var9.id
+        if var9_time_name is not None:
+            var9 = TimeButNotTime(var9, var9_time_name, frequency)
+        o.write(var9, attributes=var9_attributes, dtype='float32', id=var9_name)
+    if var10 is not None:
+        if var10_name == '':
+            var10_name = var10.id
+        if var10_time_name is not None:
+            var10 = TimeButNotTime(var10, var10_time_name, frequency)
+        o.write(var10, attributes=var10_attributes, dtype='float32', id=var10_name)
+    if var11 is not None:
+        if var11_name == '':
+            var11_name = var11.id
+        if var11_time_name is not None:
+            var11 = TimeButNotTime(var11, var11_time_name, frequency)
+        o.write(var11, attributes=var11_attributes, dtype='float32', id=var11_name)
+    if var12 is not None:
+        if var12_name == '':
+            var12_name = var12.id
+        if var12_time_name is not None:
+            var12 = TimeButNotTime(var12, var12_time_name, frequency)
+        o.write(var12, attributes=var12_attributes, dtype='float32', id=var12_name)
     for att in global_attributes.keys():
         o.__setattr__(att, global_attributes[att])
     o.close()
@@ -2150,7 +2204,7 @@ def SeasonalMean(tab, season, compute_anom=False):
     CDMS2setAutoBounds('on')
     # Checks if the season has been defined
     try:
-        tab_sea = sea_dict[season]
+        sea_dict[season]
     except:
         list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": season",
                         str().ljust(5) + "unknown season: " + str(season)]
@@ -2198,6 +2252,10 @@ def SeasonalMean(tab, season, compute_anom=False):
             tab = sea_dict[season].departures(tab)  # extracts 'season' seasonal anomalies (from climatology)
         else:
             tab = sea_dict[season](tab)  # computes the 'season' climatology of a tab
+    if season == 'DJF':
+        time_ax = tab.getTime()
+        time_ax[:] = time_ax[:] - (time_ax[1] - time_ax[0])
+        tab.setAxis(0, time_ax)
     return tab
 
 
@@ -2412,70 +2470,6 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
     return tab
 
 
-def FindXYMinMax(tab, return_val='both', smooth=False, axis=0, window=5, method='triangle'):
-    """
-    #################################################################################
-    Description:
-    Finds in tab the position (t,x,y,z) of the minimum (return_val='mini') or the maximum (return_val='maxi') or both
-    values (if return_val is neither 'mini' nor 'maxi')
-    Returned position(s) are not the position in tab but in the (t,x,y,z) space defined by tab axes
-
-    Uses uvcdat for smoothing
-    #################################################################################
-
-    :param tab: masked_array
-        array for which you would like to know the position (t,x,y,z) of the minimum and/or the maximum values
-    :param return_val: string, optional
-        'mini' to return the position of the minimum value
-        'maxi' to return the position of the maximum value
-        to return both minimum and maximum values, pass anything else
-        default value = 'both', returns both minimum and maximum values
-    :param smooth: boolean, optional
-        True if you want to smooth tab, if you do not, pass anything but true
-        default value = False, tab is not smoothed
-
-    See function EnsoUvcdatToolsLib.Smoothing
-    :param axis: integer, optional
-        axis along which to smooth the data
-        default value is the first axis (0)
-    :param window: odd integer, optional
-        number of points used for the moving window average
-        default value is 5
-    :param method: string, optional
-        smoothing method:
-            'gaussian': gaussian shaped window
-            'square':   square shaped window
-            'triangle': triangle shaped window
-
-    :return: minimum/maximum position or both minimum and maximum positions, int, float or list
-        position(s) in the (t,x,y,z) space defined by tab axes of the minimum and/or maximum values of tab
-    """
-    if smooth is True:
-        tmp, unneeded = Smoothing(tab, '', axis=axis, window=window, method=method)
-    else:
-        tmp = deepcopy(tab)
-    mini = NPunravel_index(tmp.argmin(), tmp.shape)
-    maxi = NPunravel_index(tmp.argmax(), tmp.shape)
-    list_ax = NParray([tmp.getAxis(ii)[:] for ii in range(len(mini))])
-    axis_min = [list_ax[ii][mini[ii]] for ii in range(len(mini))]
-    axis_max = [list_ax[ii][maxi[ii]] for ii in range(len(mini))]
-    if return_val == 'mini':
-        if len(axis_min) == 1:
-            return axis_min[0]
-        else:
-            return axis_min
-    elif return_val == 'maxi':
-        if len(axis_max) == 1:
-            return axis_max[0]
-        else:
-            return axis_max
-    else:
-        if len(axis_min) == 1 and len(axis_max) == 1:
-            return [axis_min[0], axis_max[0]]
-        else:
-            return [axis_min, axis_max]
-
-
 def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, method='triangle'):
     """
     #################################################################################
@@ -2514,9 +2508,14 @@ def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, met
     :return: minimum/maximum position or both minimum and maximum positions, int, float or list
         position(s) in the (t,x,y,z) space defined by tab axes of the minimum and/or maximum values of tab
     """
-    tab_ts =\
-        MV2array([FindXYMinMax(tab[tt], return_val=return_val, smooth=smooth, axis=axis, window=window, method=method)
-                  for tt in range(len(tab))])
+    tab_ts = list()
+    for tt in range(len(tab)):
+        if smooth is True:
+            tmp, unneeded = Smoothing(tab[tt], '', axis=axis, window=window, method=method)
+        else:
+            tmp = deepcopy(tab[tt])
+        tab_ts.append(FindXYMinMax(tmp, return_val=return_val))
+    tab_ts = MV2array(tab_ts)
     tab_ts.setAxis(0, tab.getAxis(0))
     return tab_ts
 
@@ -2655,7 +2654,6 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
     Description:
     Custom version of genutil.linearregression
     This function offers the possibility to compute the linear regression of a time series against a map
-    of x<=0
 
     Uses uvcdat
     #################################################################################
@@ -2680,6 +2678,92 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
         return slope, stderr
     else:
         return slope
+
+
+def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, frequency=None, debug=False):
+    """
+    #################################################################################
+    Description:
+    Custom version of genutil.linearregression
+    This function offers the possibility to compute the linear regression of a time series against a lead-lag time
+    series
+
+    Uses uvcdat
+    #################################################################################
+
+    :param y: masked_array
+        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+    :param x: masked_array
+        masked_array (uvcdat cdms2) containing 'var_name', with many attributes attached (short_name, units,...)
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param return_stderr: boolean, optional
+        default value = True, returns the the unadjusted standard error
+        True if you want the unadjusted standard error, if you don't want it pass anything but true
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param debug: boolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :return slope, stderr: floats
+        slope of the linear regression of y over x
+        unadjusted standard error of the linear regression of y over x (if return_stderr=True)
+    """
+    if frequency == 'daily':
+        nbr_timestep = nbr_years_window * 365
+    elif frequency == 'monthly':
+        nbr_timestep = nbr_years_window * 12
+    elif frequency == 'yearly':
+        nbr_timestep = nbr_years_window
+    else:
+        EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
+    tab_yy_mm = Event_selection(y, frequency, nbr_years_window=nbr_years_window)
+    myshape = [nbr_timestep] + [ss for ss in y.shape[1:]]
+    tmp_ax = CDMS2createAxis(range(nbr_timestep), id='month')
+    slope_out = MV2zeros(myshape)
+    slope_out.setAxisList([tmp_ax] + y.getAxisList()[1:])
+    stderr_out = MV2zeros(myshape)
+    stderr_out.setAxisList([tmp_ax] + y.getAxisList()[1:])
+    for ii in range(nbr_timestep):
+        tmp1 = tab_yy_mm[:, ii]
+        tmp2 = deepcopy(x)
+        yy1 = tab_yy_mm.getAxis(0)[0]
+        yy2 = tmp2.getTime().asComponentTime()[0].year
+        if yy1 == yy2:
+            tmp1 = tmp1[:len(tmp2)]
+        elif yy1 < yy2:
+            tmp1 = tmp1[yy2 - yy1:len(tmp2)]
+        else:
+            tmp2 = tmp2[yy2 - yy1:]
+            tmp1 = tmp1[:len(x)]
+        if len(tmp2) > len(tmp1):
+            tmp2 = tmp2[:len(tmp1)]
+        if debug is True:
+            yy1 = tmp1.getAxis(0)[0]
+            yy2 = tmp2.getTime().asComponentTime()[0].year
+            EnsoErrorsWarnings.DebugMode('\033[93m', "EnsoUvcdatToolsLib LinearRegressionTsAgainstMapMac", 15)
+            dict_debug = {'axes1': str([ax.id for ax in tmp1.getAxisList()]), 'shape1': str(tmp1.shape),
+                          'line1': "first year is " + str(yy1),
+                          'axes2': str([ax.id for ax in tmp2.getAxisList()]), 'shape2': str(tmp2.shape),
+                          'line2': "first year is " + str(yy2)}
+            EnsoErrorsWarnings.DebugMode('\033[93m', str(x.id) + " regressed against " + str(y.id), 20, **dict_debug)
+        if tmp2.shape == tmp1.shape:
+            tmp3 = deepcopy(tmp2)
+        else:
+            tmp3 = MV2zeros(tmp1.shape)
+            for jj in range(len(tmp3)):
+                tmp3[jj].fill(tmp2[jj])
+        tmp3 = CDMS2createVariable(tmp3, mask=tmp1.mask, grid=tmp1.getGrid(), axes=tmp1.getAxisList(), id=x.id)
+        slope, stderr = GENUTILlinearregression(tmp1, x=tmp3, error=1, nointercept=1)
+        slope_out[ii] = slope
+        stderr_out[ii] = stderr
+        del slope, stderr, tmp1, tmp2, tmp3, yy1, yy2
+    if return_stderr:
+        return slope_out, stderr_out
+    else:
+        return slope_out
 
 
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
@@ -2714,7 +2798,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
         if debug is True:
             EnsoErrorsWarnings.DebugMode('\033[93m', "EnsoUvcdatToolsLib PreProcessTS", 15)
             dict_debug = {'axes1':  str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', "averaging to perform: " + str(average), 20, **dict_debug)
+            EnsoErrorsWarnings.DebugMode('\033[93m', "averaging to perform: " + str(average), 20, **dict_debug)
         if isinstance(average, basestring):
             try: dict_average[average]
             except:
@@ -2723,7 +2807,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
                 tab = dict_average[average](tab, areacell)
                 if debug is True:
                     dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', "performed " + str(average), 20, **dict_debug)
+                    EnsoErrorsWarnings.DebugMode('\033[93m', "performed " + str(average), 20, **dict_debug)
         elif isinstance(average, list):
             for av in average:
                 try: dict_average[av]
@@ -2733,7 +2817,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
                     tab = dict_average[av](tab, areacell)
                     if debug is True:
                         dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
-                        EnsoErrorsWarnings.DebugMode('\033[92m', "performed " + str(av), 20, **dict_debug)
+                        EnsoErrorsWarnings.DebugMode('\033[93m', "performed " + str(av), 20, **dict_debug)
         else:
             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info

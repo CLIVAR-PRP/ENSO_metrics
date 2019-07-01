@@ -437,7 +437,6 @@ def DebugMode(color, title, nbr_spaces, axes1='', axes2='', axes3='', axes4='', 
     if line2:
         print color + str().ljust(nbr_spaces+5) + line2 + bcolors.ENDC
     # third variable
-    print color + str().ljust(nbr_spaces) + title + bcolors.ENDC
     if file3:
         print color + str().ljust(nbr_spaces + 5) + 'file name 3: ' + file3 + bcolors.ENDC
     if var3:
