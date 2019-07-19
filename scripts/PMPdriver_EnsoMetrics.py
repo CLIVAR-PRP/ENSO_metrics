@@ -118,39 +118,46 @@ for obs in list_obs:
                 var0 = var_in_file[0]
             else:
                 var0 = var_in_file
-            # finding file for 'obs', 'var'
-            file_name = param.reference_data_path[obs].replace('VAR',var0)
-            file_areacell = None ## temporary for now
-            try:
-                file_landmask = param.reference_data_lf_path[obs]
-            except:
-                file_landmask = None
 
             try:
-                areacell_in_file = dict_var['areacell']['var_name']
+                # finding file for 'obs', 'var'
+                file_name = param.reference_data_path[obs].replace('VAR',var0)
+                file_areacell = None ## temporary for now
+                try:
+                    file_landmask = param.reference_data_lf_path[obs]
+                except:
+                    file_landmask = None
+                try:
+                    areacell_in_file = dict_var['areacell']['var_name']
+                except:
+                    areacell_in_file = None
+                try:
+                    landmask_in_file = dict_var['landmask']['var_name']
+                except:
+                    landmask_in_file = None
+                # if var_in_file is a list (like for thf) all variables should be read from the same realm
+                if isinstance(var_in_file, list):
+                    list_files = list()
+                    list_files = [param.reference_data_path[obs].replace('VAR',var1) for var1 in var_in_file]
+                    list_areacell = [file_areacell for var1 in var_in_file]
+                    list_name_area = [areacell_in_file for var1 in var_in_file]
+                    #list_landmask = [param.reference_data_lf_path[obs] for var1 in var_in_file]
+                    try:
+                        list_landmask = [param.reference_data_lf_path[obs] for var1 in var_in_file]
+                    except:
+                        list_landmask = None
+                    list_name_land = [landmask_in_file for var1 in var_in_file]
+                else:
+                    list_files = file_name
+                    list_areacell = file_areacell
+                    list_name_area = areacell_in_file
+                    list_landmask = file_landmask
+                    list_name_land = landmask_in_file
+                dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file,
+                                      'path + filename_area': list_areacell, 'areaname': list_name_area,
+                                      'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
             except:
-                areacell_in_file = None
-            try:
-                landmask_in_file = dict_var['landmask']['var_name']
-            except:
-                landmask_in_file = None
-            # if var_in_file is a list (like for thf) all variables should be read from the same realm
-            if isinstance(var_in_file, list):
-                list_files = list()
-                list_files = [param.reference_data_path[obs].replace('VAR',var1) for var1 in var_in_file]
-                list_areacell = [file_areacell for var1 in var_in_file]
-                list_name_area = [areacell_in_file for var1 in var_in_file]
-                list_landmask = [param.reference_data_lf_path[obs] for var1 in var_in_file]
-                list_name_land = [landmask_in_file for var1 in var_in_file]
-            else:
-                list_files = file_name
-                list_areacell = file_areacell
-                list_name_area = areacell_in_file
-                list_landmask = file_landmask
-                list_name_land = landmask_in_file
-            dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file,
-                                  'path + filename_area': list_areacell, 'areaname': list_name_area,
-                                  'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
+                print('\033[95m' + 'Observation dataset' + str(obs) + " is not given for variable " + str(var) + '\033[0m')
 
 print('PMPdriver: dict_obs readin end')
 
