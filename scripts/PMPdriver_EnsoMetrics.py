@@ -14,7 +14,6 @@ import sys
 
 from collections import defaultdict
 from genutil import StringConstructor
-#from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 from pcmdi_metrics.driver.pmp_parser import PMPParser
 from pmpParser import ReadOptions
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
@@ -30,9 +29,7 @@ mip = param.mip
 exp = param.exp
 
 # Path to model data as string template
-#modpath = StringConstructor(param.modpath)
 modpath = param.process_templated_argument("modpath")
-#modpath_lf = StringConstructor(param.modpath_lf)
 modpath_lf = param.process_templated_argument("modpath_lf")
 
 # Check given model option
@@ -257,9 +254,11 @@ disclaimer = open(
 if param.metricsCollection == 'MC1':
     reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
 elif param.metricsCollection == 'ENSO_perf':
-    reference = "GFDL..."
+    reference = "MC for ENSO Performance..."
 elif param.metricsCollection == 'ENSO_tel':
-    reference = "MC3 for ENSO Teleconnection..."
+    reference = "MC for ENSO Teleconnection..."
+elif param.metricsCollection == 'ENSO_proc':
+    reference = "MC for ENSO Process..."
 
 # First JSON for metrics results
 enso_stat_dic['obs'] = dict_obs
