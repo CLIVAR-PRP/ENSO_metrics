@@ -2970,11 +2970,9 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
 
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
                  **kwargs):
-    axes = tab.getAxisList()
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom is True:
         tab = ComputeInterannualAnomalies(tab)
-        tab.setAxis(0, axes[0])
     # Normalization of the anomalies
     if kwargs['normalization']:
         if kwargs['frequency'] is not None:

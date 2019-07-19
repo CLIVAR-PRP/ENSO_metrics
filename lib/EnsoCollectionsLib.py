@@ -822,12 +822,6 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
-                'EnsoFbSstLhf': {
-                    'variables': ['sst', 'lhf'],
-                    'regions': {'sst': 'nino3', 'lhf': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'lwr': ['ERA-Interim', 'Tropflux']},
-                    'metric_computation': 'ratio',
-                },
                 'EnsodSstOce_1': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
@@ -856,6 +850,12 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2']},
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'ratio',
+                },
+                'EnsoFbSstLhf': {
+                    'variables': ['sst', 'lhf'],
+                    'regions': {'sst': 'nino3', 'lhf': 'nino3'},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'lwr': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
                 'EnsoFbSstSwr': {
@@ -1032,7 +1032,7 @@ def ReferenceObservations(DATASET=True):
             'variable_name_in_file': {
                 'so': {'var_name': 'salt'},
                 'ssh': {'var_name': 'ssh'},
-                'taux': {'var_name': 'tauu'},
+                'taux': {'var_name': 'taux'},
                 'thetao': {'var_name': 'temp'},
                 'uo': {'var_name': 'u'},
                 'vo': {'var_name': 'v'},
