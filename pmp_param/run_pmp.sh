@@ -16,7 +16,7 @@ MCs='ENSO_perf ENSO_proc'
 for mip in $mips; do
     for MC in $MCs; do
         echo $mip $MC
-        python ../script/PMPdriver_EnsoMetrics.py -p my_Param_${mip}_${MC}.py >& log.${mip}.${MC}.all.v${ver}.txt &
+        python ../scripts/PMPdriver_EnsoMetrics.py -p my_Param_${mip}_${MC}.py >& log.${mip}.${MC}.all.v${ver}.txt &
         disown
     done
 done
