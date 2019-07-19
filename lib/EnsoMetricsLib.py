@@ -11,10 +11,10 @@ import EnsoErrorsWarnings
 from EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
 from EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
     Composite, ComputeInterannualAnomalies, ComputePDF, Correlation, DetectEvents, DurationAllEvent, DurationEvent,\
-    Event_selection, FindXYMinMaxInTs, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap,\
+    Event_selection, FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap,\
     LinearRegressionTsAgainstTs, MinMax, MyDerive, MyEmpty, PreProcessTS, Read_data_mask_area, Regrid, RmsAxis,\
-    RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, Std, StdMonthly, TimeBounds,\
-    TwoVarRegrid
+    RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, SlabOcean, Smoothing, Std,\
+    StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -2549,11 +2549,11 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     return LonRmseMetric
 
 
-def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lhffile, lhfname,
+def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lhffile, lhfname,
                  lhfareafile, lhfareaname, lhflandmaskfile, lhflandmaskname, lhfbox, dataset='', debug=False,
                  netcdf=False, netcdf_name='', metname='', **kwargs):
     """
-    The EnsoAlphaLhf() function computes the regression of 'lhfbox' lhfA (latent heat flux anomalies) over 'sstbox' sstA
+    The EnsoFbSstLhf() function computes the regression of 'lhfbox' lhfA (latent heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 lhfA over nino3 sstA)
 
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
@@ -2649,12 +2649,12 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Latent feedback (alpha_lh)'
+    Name = 'Lhf-Sst feedback (alpha_lh)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + lhfbox + ' lhfA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
-    metric = 'EnsoAlphaLhf'
+    metric = 'EnsoFbSstLhf'
     if metname == '':
         metname = deepcopy(metric)
 
@@ -2681,17 +2681,10 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     keyerror = ''
     if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
-        alphaLhf, alphaLhfPos, alphaLhfNeg = [None, None], [None, None], [None, None]
-        if keyerror1 is not None:
-            keyerror = keyerror1
-        if len(keyerror) > 0 and keyerror2 is not None:
-            keyerror += " ; "
-        if keyerror2 is not None:
-            keyerror += keyerror2
-        if len(keyerror) > 0 and keyerror3 is not None:
-            keyerror += " ; "
-        if keyerror3 is not None:
-            keyerror += keyerror3
+        alphaLhf, alphaLhfPos, alphaLhfNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -2709,9 +2702,78 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaLhf, alphaLhfPos, alphaLhfNeg = \
             LinearRegressionAndNonlinearity(lhf, sst, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = alphaLhfNeg[0] - alphaLhfPos[0]
+        nl2 = alphaLhfNeg[1] + alphaLhfPos[1]
         # Dive down diagnostic
         dive_down_diag = {'value': None, 'axis': None}
         if netcdf is True:
+            sst_map, sst_map_areacell, unneeded = \
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            lhf_map, lhf_map_areacell, unneeded = \
+                Read_data_mask_area(lhffile, lhfname, 'heat flux', metric, 'equatorial_pacific', file_area=lhfareafile,
+                                    name_area=lhfareaname, file_mask=lhflandmaskfile, name_mask=lhflandmaskname,
+                                    maskland=True, maskocean=False, debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            sst_map, lhf_map, unneeded = CheckTime(sst_map, lhf_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            lhf_map, unneeded = PreProcessTS(lhf_map, Method, areacell=lhf_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del lhf_map_areacell, sst_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            lhf_map = Regrid(lhf_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            sst_map = AverageMeridional(sst_map)
+            lhf_map = AverageMeridional(lhf_map)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
+            lhf_map, unneeded = Smoothing(lhf_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Array year by year
+            sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
+            lhf_yby = get_year_by_year(lhf_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lhf) ' + str([ax.id for ax in lhf_yby.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+            curAlpha, curAlphaPos, curAlphaNeg = \
+                LinearRegressionAndNonlinearity(lhf_map, sst_map, return_stderr=False, return_intercept=False)
+            hovAlpha, hovAlphaPos, hovAlphaNeg = \
+                LinearRegressionAndNonlinearity(lhf_yby, sst_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
+                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
+                              'shape1': '(zonal alpha) ' + str(curAlpha.shape),
+                              'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -2726,22 +2788,48 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
                      'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
                      'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
-            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of lhfA over sstA",
+                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of lhfA over sstA>0",
+                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of lhfA over sstA<0",
+                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of lhfA over sstA",
+                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of lhfA over sstA>0",
+                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of lhfA over sstA<0",
+                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=lhf, var2_attributes=dict2, var2_name='lhf__' + dataset, var2_time_name='months_' + dataset,
-                       frequency=kwargs['frequency'], global_attributes=dict3)
-            del dict1, dict2, dict3
-    try:
-        nl1 = alphaLhfNeg[0] - alphaLhfPos[0]
-    except:
-        nl1 = None
-    try:
-        nl2 = alphaLhfNeg[1] + alphaLhfPos[1]
-    except:
-        nl2 = None
-
+                       var3=curAlpha, var3_attributes=dict3, var3_name='reg_lhf_over_sst_lon__' + dataset,
+                       var4=curAlphaPos, var4_attributes=dict4, var4_name='reg_lhf_over_POSsst_lon__' + dataset,
+                       var5=curAlphaNeg, var5_attributes=dict5, var5_name='reg_lhf_over_NEGsst_lon__' + dataset,
+                       var6=hovAlpha, var6_attributes=dict6, var6_name='reg_lhf_over_sst_hov__' + dataset,
+                       var7=hovAlphaPos, var7_attributes=dict7, var7_name='reg_lhf_over_POSsst_hov__' + dataset,
+                       var8=hovAlphaNeg, var8_attributes=dict8, var8_name='reg_lhf_over_NEGsst_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
     # Create output
     alphaLhfMetric = {
         'name': Name, 'value': alphaLhf[0], 'value_error': alphaLhf[1], 'units': Units, 'method': Method,
@@ -2752,11 +2840,11 @@ def EnsoAlphaLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return alphaLhfMetric
 
 
-def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
+def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
                  lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, dataset='', debug=False,
                  netcdf=False, netcdf_name='', metname='', **kwargs):
     """
-    The EnsoAlphaLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
+    The EnsoFbSstLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
     'sstbox' sstA (usually the regression of nino3 lwrA over nino3 sstA)
 
     The net surface longwave radiation is not a CMIP variable.
@@ -2856,12 +2944,12 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Longwave feedback (alpha_lwr)'
+    Name = 'Lwr-Sst feedback (alpha_lwr)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + lwrbox + ' lwrA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
-    metric = 'EnsoAlphaLwr'
+    metric = 'EnsoFbSstLwr'
     if metname == '':
         metname = deepcopy(metric)
 
@@ -2909,17 +2997,10 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     keyerror = ''
     if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
-        alphaLwr, alphaLwrPos, alphaLwrNeg = [None, None], [None, None], [None, None]
-        if keyerror1 is not None:
-            keyerror = keyerror1
-        if len(keyerror) > 0 and keyerror2 is not None:
-            keyerror += " ; "
-        if keyerror2 is not None:
-            keyerror += keyerror2
-        if len(keyerror) > 0 and keyerror3 is not None:
-            keyerror += " ; "
-        if keyerror3 is not None:
-            keyerror += keyerror3
+        alphaLwr, alphaLwrPos, alphaLwrNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -2936,9 +3017,92 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaLwr, alphaLwrPos, alphaLwrNeg = \
             LinearRegressionAndNonlinearity(lwr, sst, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = alphaLwrNeg[0] - alphaLwrPos[0]
+        nl2 = alphaLwrNeg[1] + alphaLwrPos[1]
         # Dive down diagnostic
         dive_down_diag = {'value': None, 'axis': None}
         if netcdf is True:
+            sst_map, sst_map_areacell, unneeded = \
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            dict_area, dict_keye, dict_var = dict(), dict(), dict()
+            if isinstance(lwrfile, basestring):
+                lwr_map, lwr_map_areacell, unneeded = \
+                    Read_data_mask_area(lwrfile, lwrname, 'heat flux', metric, 'equatorial_pacific',
+                                        file_area=lwrareafile, name_area=lwrareaname, file_mask=lwrlandmaskfile,
+                                        name_mask=lwrlandmaskname, maskland=True, maskocean=False, debug=debug,
+                                        **kwargs)
+                dict_area[lwrname], dict_var[lwrname] = lwr_map_areacell, lwr_map
+            else:
+                for ii in range(len(lwrfile)):
+                    lwr_map, lwr_map_areacell, unneeded = \
+                        Read_data_mask_area(lwrfile[ii], lwrname[ii], 'heat flux', metric, 'equatorial_pacific',
+                                            file_area=lwrareafile[ii], name_area=lwrareaname[ii],
+                                            file_mask=lwrlandmaskfile[ii], name_mask=lwrlandmaskname[ii], maskland=True,
+                                            maskocean=False, debug=debug, **kwargs)
+                    dict_area[lwrname[ii]], dict_var[lwrname[ii]] = lwr_map_areacell, lwr_map
+            lwr_map = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
+            lwr_map_areacell = dict_area[dict_area.keys()[0]]
+            # Checks if the same time period is used for both variables
+            sst_map, lwr_map, unneeded = CheckTime(sst_map, lwr_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            lwr_map, unneeded = PreProcessTS(lwr_map, Method, areacell=lwr_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del lwr_map_areacell, sst_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            lwr_map = Regrid(lwr_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            sst_map = AverageMeridional(sst_map)
+            lwr_map = AverageMeridional(lwr_map)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
+            lwr_map, unneeded = Smoothing(lwr_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Array year by year
+            sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
+            lwr_yby = get_year_by_year(lwr_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(lwr) ' + str([ax.id for ax in lwr_yby.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+            curAlpha, curAlphaPos, curAlphaNeg = \
+                LinearRegressionAndNonlinearity(lwr_map, sst_map, return_stderr=False, return_intercept=False)
+            hovAlpha, hovAlphaPos, hovAlphaNeg = \
+                LinearRegressionAndNonlinearity(lwr_yby, sst_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
+                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
+                              'shape1': '(zonal alpha) ' + str(curAlpha.shape),
+                              'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -2953,22 +3117,48 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
                      'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
                      'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
-            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of lwrA over sstA",
+                     'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
+                     'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
+                     'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of lwrA over sstA>0",
+                     'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
+                     'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
+                     'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of lwrA over sstA<0",
+                     'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
+                     'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
+                     'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of lwrA over sstA",
+                     'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
+                     'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
+                     'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of lwrA over sstA>0",
+                     'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
+                     'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
+                     'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of lwrA over sstA<0",
+                     'diagnostic_value': alphaLwr[0], 'diagnostic_value_error': alphaLwr[1],
+                     'slope': alphaLwr[0], 'intercept': alphaLwr[2], 'slope_neg': alphaLwrNeg[0],
+                     'intercept_neg': alphaLwrNeg[2], 'slope_pos': alphaLwrPos[0], 'intercept_pos': alphaLwrPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=lwr, var2_attributes=dict2, var2_name='lwr__' + dataset, var2_time_name='months_' + dataset,
-                       frequency=kwargs['frequency'], global_attributes=dict3)
-            del dict1, dict2, dict3
-    try:
-        nl1 = alphaLwrNeg[0] - alphaLwrPos[0]
-    except:
-        nl1 = None
-    try:
-        nl2 = alphaLwrNeg[1] + alphaLwrPos[1]
-    except:
-        nl2 = None
-
+                       var3=curAlpha, var3_attributes=dict3, var3_name='reg_lwr_over_sst_lon__' + dataset,
+                       var4=curAlphaPos, var4_attributes=dict4, var4_name='reg_lwr_over_POSsst_lon__' + dataset,
+                       var5=curAlphaNeg, var5_attributes=dict5, var5_name='reg_lwr_over_NEGsst_lon__' + dataset,
+                       var6=hovAlpha, var6_attributes=dict6, var6_name='reg_lwr_over_sst_hov__' + dataset,
+                       var7=hovAlphaPos, var7_attributes=dict7, var7_name='reg_lwr_over_POSsst_hov__' + dataset,
+                       var8=hovAlphaNeg, var8_attributes=dict8, var8_name='reg_lwr_over_NEGsst_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
     # Create output
     alphaLwrMetric = {
         'name': Name, 'value': alphaLwr[0], 'value_error': alphaLwr[1], 'units': Units, 'method': Method,
@@ -2979,11 +3169,11 @@ def EnsoAlphaLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return alphaLwrMetric
 
 
-def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, shffile, shfname,
+def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, shffile, shfname,
                  shfareafile, shfareaname, shflandmaskfile, shflandmaskname, shfbox, dataset='', debug=False,
                  netcdf=False, netcdf_name='', metname='', **kwargs):
     """
-    The EnsoAlphaShf() function computes the regression of 'shfbox' shfA (sensible heat flux anomalies) over 'sstbox'
+    The EnsoFbSstShf() function computes the regression of 'shfbox' shfA (sensible heat flux anomalies) over 'sstbox'
     sstA (usually the regression of nino3 shfA over nino3 sstA)
 
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
@@ -3079,12 +3269,12 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Sensible feedback (alpha_sh)'
+    Name = 'Shf-Sst feedback (alpha_sh)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + shfbox + ' shfA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
-    metric = 'EnsoAlphaShf'
+    metric = 'EnsoFbSstShf'
     if metname == '':
         metname = deepcopy(metric)
 
@@ -3111,17 +3301,10 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     keyerror = ''
     if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
-        alphaShf, alphaShfPos, alphaShfNeg = [None, None], [None, None], [None, None]
-        if keyerror1 is not None:
-            keyerror = keyerror1
-        if len(keyerror) > 0 and keyerror2 is not None:
-            keyerror += " ; "
-        if keyerror2 is not None:
-            keyerror += keyerror2
-        if len(keyerror) > 0 and keyerror3 is not None:
-            keyerror += " ; "
-        if keyerror3 is not None:
-            keyerror += keyerror3
+        alphaShf, alphaShfPos, alphaShfNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -3139,9 +3322,78 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaShf, alphaShfPos, alphaShfNeg = \
             LinearRegressionAndNonlinearity(shf, sst, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = alphaShfNeg[0] - alphaShfPos[0]
+        nl2 = alphaShfNeg[1] + alphaShfPos[1]
         # Dive down diagnostic
         dive_down_diag = {'value': None, 'axis': None}
         if netcdf is True:
+            sst_map, sst_map_areacell, unneeded = \
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            shf_map, shf_map_areacell, unneeded = \
+                Read_data_mask_area(shffile, shfname, 'heat flux', metric, 'equatorial_pacific', file_area=shfareafile,
+                                    name_area=shfareaname, file_mask=shflandmaskfile, name_mask=shflandmaskname,
+                                    maskland=True, maskocean=False, debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            sst_map, shf_map, unneeded = CheckTime(sst_map, shf_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            shf_map, unneeded = PreProcessTS(shf_map, Method, areacell=shf_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del shf_map_areacell, sst_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            shf_map = Regrid(shf_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            sst_map = AverageMeridional(sst_map)
+            shf_map = AverageMeridional(shf_map)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
+            shf_map, unneeded = Smoothing(shf_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Array year by year
+            sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
+            shf_yby = get_year_by_year(shf_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(shf) ' + str([ax.id for ax in shf_yby.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+            curAlpha, curAlphaPos, curAlphaNeg = \
+                LinearRegressionAndNonlinearity(shf_map, sst_map, return_stderr=False, return_intercept=False)
+            hovAlpha, hovAlphaPos, hovAlphaNeg = \
+                LinearRegressionAndNonlinearity(shf_yby, sst_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
+                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
+                              'shape1': '(zonal alpha) ' + str(curAlpha.shape),
+                              'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -3156,22 +3408,48 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
                      'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
                      'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
-            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of shfA over sstA",
+                     'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
+                     'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
+                     'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of shfA over sstA>0",
+                     'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
+                     'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
+                     'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of shfA over sstA<0",
+                     'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
+                     'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
+                     'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of shfA over sstA",
+                     'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
+                     'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
+                     'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of shfA over sstA>0",
+                     'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
+                     'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
+                     'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of shfA over sstA<0",
+                     'diagnostic_value': alphaShf[0], 'diagnostic_value_error': alphaShf[1],
+                     'slope': alphaShf[0], 'intercept': alphaShf[2], 'slope_neg': alphaShfNeg[0],
+                     'intercept_neg': alphaShfNeg[2], 'slope_pos': alphaShfPos[0], 'intercept_pos': alphaShfPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=shf, var2_attributes=dict2, var2_name='shf__' + dataset, var2_time_name='months_' + dataset,
-                       frequency=kwargs['frequency'], global_attributes=dict3)
-            del dict1, dict2, dict3
-    try:
-        nl1 = alphaShfNeg[0] - alphaShfPos[0]
-    except:
-        nl1 = None
-    try:
-        nl2 = alphaShfNeg[1] + alphaShfPos[1]
-    except:
-        nl2 = None
-
+                       var3=curAlpha, var3_attributes=dict3, var3_name='reg_shf_over_sst_lon__' + dataset,
+                       var4=curAlphaPos, var4_attributes=dict4, var4_name='reg_shf_over_POSsst_lon__' + dataset,
+                       var5=curAlphaNeg, var5_attributes=dict5, var5_name='reg_shf_over_NEGsst_lon__' + dataset,
+                       var6=hovAlpha, var6_attributes=dict6, var6_name='reg_shf_over_sst_hov__' + dataset,
+                       var7=hovAlphaPos, var7_attributes=dict7, var7_name='reg_shf_over_POSsst_hov__' + dataset,
+                       var8=hovAlphaNeg, var8_attributes=dict8, var8_name='reg_shf_over_NEGsst_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
     # Create output
     alphaShfMetric = {
         'name': Name, 'value': alphaShf[0], 'value_error': alphaShf[1], 'units': Units, 'method': Method,
@@ -3182,11 +3460,11 @@ def EnsoAlphaShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return alphaShfMetric
 
 
-def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, swrfile, swrname,
-                 swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', metname='', **kwargs):
+def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox,
+                 swrfile, swrname, swrareafile, swrareaname, swrlandmaskfile, swrlandmaskname, swrbox,
+                 dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
-    The EnsoAlphaSwr() function computes the regression of 'swrbox' swrA (net surface shortwave radiation anomalies)
+    The EnsoFbSstSwr() function computes the regression of 'swrbox' swrA (net surface shortwave radiation anomalies)
     over 'sstbox' sstA (usually the regression of nino3 swrA over nino3 sstA)
 
     The net surface shortwave radiation is not a CMIP variable.
@@ -3286,12 +3564,12 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Shortwave feedback (alpha_swr)'
+    Name = 'Swr-Sst feedback (alpha_swr)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + swrbox + ' swrA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
-    metric = 'EnsoAlphaSwr'
+    metric = 'EnsoFbSstSwr'
     if metname == '':
         metname = deepcopy(metric)
 
@@ -3339,17 +3617,10 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     keyerror = ''
     if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
-        alphaSwr, alphaSwrPos, alphaSwrNeg = [None, None], [None, None], [None, None]
-        if keyerror1 is not None:
-            keyerror = keyerror1
-        if len(keyerror) > 0 and keyerror2 is not None:
-            keyerror += " ; "
-        if keyerror2 is not None:
-            keyerror += keyerror2
-        if len(keyerror) > 0 and keyerror3 is not None:
-            keyerror += " ; "
-        if keyerror3 is not None:
-            keyerror += keyerror3
+        alphaSwr, alphaSwrPos, alphaSwrNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -3366,9 +3637,92 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaSwr, alphaSwrPos, alphaSwrNeg = \
             LinearRegressionAndNonlinearity(swr, sst, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = alphaSwrNeg[0] - alphaSwrPos[0]
+        nl2 = alphaSwrNeg[1] + alphaSwrPos[1]
         # Dive down diagnostic
         dive_down_diag = {'value': None, 'axis': None}
         if netcdf is True:
+            sst_map, sst_map_areacell, unneeded = \
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            dict_area, dict_keye, dict_var = dict(), dict(), dict()
+            if isinstance(swrfile, basestring):
+                swr_map, swr_map_areacell, unneeded = \
+                    Read_data_mask_area(swrfile, swrname, 'heat flux', metric, 'equatorial_pacific',
+                                        file_area=swrareafile, name_area=swrareaname, file_mask=swrlandmaskfile,
+                                        name_mask=swrlandmaskname, maskland=True, maskocean=False, debug=debug,
+                                        **kwargs)
+                dict_area[swrname], dict_var[swrname] = swr_map_areacell, swr_map
+            else:
+                for ii in range(len(swrfile)):
+                    swr_map, swr_map_areacell, unneeded = \
+                        Read_data_mask_area(swrfile[ii], swrname[ii], 'heat flux', metric, 'equatorial_pacific',
+                                            file_area=swrareafile[ii], name_area=swrareaname[ii],
+                                            file_mask=swrlandmaskfile[ii], name_mask=swrlandmaskname[ii], maskland=True,
+                                            maskocean=False, debug=debug, **kwargs)
+                    dict_area[swrname[ii]], dict_var[swrname[ii]] = swr_map_areacell, swr_map
+            swr_map = MyDerive(kwargs['project_interpreter_var2'], 'swr', dict_var)
+            swr_map_areacell = dict_area[dict_area.keys()[0]]
+            # Checks if the same time period is used for both variables
+            sst_map, swr_map, unneeded = CheckTime(sst_map, swr_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            swr_map, unneeded = PreProcessTS(swr_map, Method, areacell=swr_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del swr_map_areacell, sst_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            swr_map = Regrid(swr_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            sst_map = AverageMeridional(sst_map)
+            swr_map = AverageMeridional(swr_map)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
+            swr_map, unneeded = Smoothing(swr_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Array year by year
+            sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
+            swr_yby = get_year_by_year(swr_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(swr) ' + str([ax.id for ax in swr_yby.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+            curAlpha, curAlphaPos, curAlphaNeg = \
+                LinearRegressionAndNonlinearity(swr_map, sst_map, return_stderr=False, return_intercept=False)
+            hovAlpha, hovAlphaPos, hovAlphaNeg = \
+                LinearRegressionAndNonlinearity(swr_yby, sst_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlphaPos.getAxisList()]),
+                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlphaPos.getAxisList()]),
+                              'shape1': '(zonal alpha) ' + str(curAlphaPos.shape),
+                              'shape2': '(hovtx alpha) ' + str(hovAlphaPos.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -3383,22 +3737,48 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                      'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                      'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
-            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of swrA over sstA",
+                     'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
+                     'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
+                     'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of swrA over sstA>0",
+                     'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
+                     'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
+                     'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of swrA over sstA<0",
+                     'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
+                     'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
+                     'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of swrA over sstA",
+                     'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
+                     'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
+                     'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of swrA over sstA>0",
+                     'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
+                     'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
+                     'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of swrA over sstA<0",
+                     'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
+                     'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
+                     'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=swr, var2_attributes=dict2, var2_name='swr__' + dataset, var2_time_name='months_' + dataset,
-                       frequency=kwargs['frequency'], global_attributes=dict3)
-            del dict1, dict2, dict3
-    try:
-        nl1 = alphaSwrNeg[0] - alphaSwrPos[0]
-    except:
-        nl1 = None
-    try:
-        nl2 = alphaSwrNeg[1] + alphaSwrPos[1]
-    except:
-        nl2 = None
-
+                       var3=curAlpha, var3_attributes=dict3, var3_name='reg_swr_over_sst_lon__' + dataset,
+                       var4=curAlphaPos, var4_attributes=dict4, var4_name='reg_swr_over_POSsst_lon__' + dataset,
+                       var5=curAlphaNeg, var5_attributes=dict5, var5_name='reg_swr_over_NEGsst_lon__' + dataset,
+                       var6=hovAlpha, var6_attributes=dict6, var6_name='reg_swr_over_sst_hov__' + dataset,
+                       var7=hovAlphaPos, var7_attributes=dict7, var7_name='reg_swr_over_POSsst_hov__' + dataset,
+                       var8=hovAlphaNeg, var8_attributes=dict8, var8_name='reg_swr_over_NEGsst_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
     # Create output
     alphaSwrMetric = {
         'name': Name, 'value': alphaSwr[0], 'value_error': alphaSwr[1], 'units': Units, 'method': Method,
@@ -3409,11 +3789,11 @@ def EnsoAlphaSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return alphaSwrMetric
 
 
-def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, thffile, thfname,
+def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, thffile, thfname,
                  thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox, dataset='', debug=False,
                  netcdf=False, netcdf_name='', metname='', **kwargs):
     """
-    The EnsoAlphaThf() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
+    The EnsoFbSstThf() function computes the regression of 'thfbox' thfA (total heat flux anomalies) over 'sstbox' sstA
     (usually the regression of nino3 thfA over nino3 sstA)
     The total heat flux is the sum of four term:
          - net surface shortwave radiation,
@@ -3518,12 +3898,12 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Heat flux feedback (alpha)'
+    Name = 'Thf-Sst feedback (alpha)'
     Units = 'W/m2/C'
     Method = 'Regression of ' + thfbox + ' thfA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
-    metric = 'EnsoAlphaThf'
+    metric = 'EnsoFbSstThf'
     if metname == '':
         metname = deepcopy(metric)
 
@@ -3571,17 +3951,10 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     keyerror = ''
     if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
-        alphaThf, alphaThfPos, alphaThfNeg = [None, None], [None, None], [None, None]
-        if keyerror1 is not None:
-            keyerror = keyerror1
-        if len(keyerror) > 0 and keyerror2 is not None:
-            keyerror += " ; "
-        if keyerror2 is not None:
-            keyerror += keyerror2
-        if len(keyerror) > 0 and keyerror3 is not None:
-            keyerror += " ; "
-        if keyerror3 is not None:
-            keyerror += keyerror3
+        alphaThf, alphaThfPos, alphaThfNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -3598,9 +3971,92 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaThf, alphaThfPos, alphaThfNeg = \
             LinearRegressionAndNonlinearity(thf, sst, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = alphaThfNeg[0] - alphaThfPos[0]
+        nl2 = alphaThfNeg[1] + alphaThfPos[1]
         # Dive down diagnostic
         dive_down_diag = {'value': None, 'axis': None}
         if netcdf is True:
+            sst_map, sst_map_areacell, unneeded = \
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            dict_area, dict_keye, dict_var = dict(), dict(), dict()
+            if isinstance(thffile, basestring):
+                thf_map, thf_map_areacell, unneeded = \
+                    Read_data_mask_area(thffile, thfname, 'heat flux', metric, 'equatorial_pacific',
+                                        file_area=thfareafile, name_area=thfareaname, file_mask=thflandmaskfile,
+                                        name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
+                                        **kwargs)
+                dict_area[thfname], dict_var[thfname] = thf_map_areacell, thf_map
+            else:
+                for ii in range(len(thffile)):
+                    thf_map, thf_map_areacell, unneeded = \
+                        Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, 'equatorial_pacific',
+                                            file_area=thfareafile[ii], name_area=thfareaname[ii],
+                                            file_mask=thflandmaskfile[ii], name_mask=thflandmaskname[ii], maskland=True,
+                                            maskocean=False, debug=debug, **kwargs)
+                    dict_area[thfname[ii]], dict_var[thfname[ii]] = thf_map_areacell, thf_map
+            thf_map = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
+            thf_map_areacell = dict_area[dict_area.keys()[0]]
+            # Checks if the same time period is used for both variables
+            sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            thf_map, unneeded = PreProcessTS(thf_map, Method, areacell=thf_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del thf_map_areacell, sst_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            thf_map = Regrid(thf_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            sst_map = AverageMeridional(sst_map)
+            thf_map = AverageMeridional(thf_map)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
+            thf_map, unneeded = Smoothing(thf_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Array year by year
+            sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
+            thf_yby = get_year_by_year(thf_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(thf) ' + str([ax.id for ax in thf_yby.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+            curAlpha, curAlphaPos, curAlphaNeg = \
+                LinearRegressionAndNonlinearity(thf_map, sst_map, return_stderr=False, return_intercept=False)
+            hovAlpha, hovAlphaPos, hovAlphaNeg = \
+                LinearRegressionAndNonlinearity(thf_yby, sst_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
+                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
+                              'shape1': '(zonal alpha) ' + str(curAlpha.shape),
+                              'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -3615,22 +4071,48 @@ def EnsoAlphaThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                      'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                      'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
-            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of thfA over sstA",
+                     'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
+                     'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
+                     'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of thfA over sstA>0",
+                     'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
+                     'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
+                     'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of thfA over sstA<0",
+                     'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
+                     'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
+                     'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of thfA over sstA",
+                     'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
+                     'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
+                     'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of thfA over sstA>0",
+                     'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
+                     'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
+                     'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of thfA over sstA<0",
+                     'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
+                     'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
+                     'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name,
                        var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
                        var2=thf, var2_attributes=dict2, var2_name='thf__' + dataset, var2_time_name='months_' + dataset,
-                       frequency=kwargs['frequency'], global_attributes=dict3)
-            del dict1, dict2, dict3
-    try:
-        nl1 = alphaThfNeg[0] - alphaThfPos[0]
-    except:
-        nl1 = None
-    try:
-        nl2 = alphaThfNeg[1] + alphaThfPos[1]
-    except:
-        nl2 = None
-
+                       var3=curAlpha, var3_attributes=dict3, var3_name='reg_thf_over_sst_lon__' + dataset,
+                       var4=curAlphaPos, var4_attributes=dict4, var4_name='reg_thf_over_POSsst_lon__' + dataset,
+                       var5=curAlphaNeg, var5_attributes=dict5, var5_name='reg_thf_over_NEGsst_lon__' + dataset,
+                       var6=hovAlpha, var6_attributes=dict6, var6_name='reg_thf_over_sst_hov__' + dataset,
+                       var7=hovAlphaPos, var7_attributes=dict7, var7_name='reg_thf_over_POSsst_hov__' + dataset,
+                       var8=hovAlphaNeg, var8_attributes=dict8, var8_name='reg_thf_over_NEGsst_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
     # Create output
     alphaThfMetric = {
         'name': Name, 'value': alphaThf[0], 'value_error': alphaThf[1], 'units': Units, 'method': Method,
@@ -4357,12 +4839,358 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return EnsoDurMetric
 
 
-def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile, tauxname,
-           tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, dataset='', debug=False,
-           netcdf=False, netcdf_name='', metname='', **kwargs):
+def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox,
+                thffile, thfname, thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox,
+                event_definition, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
-    The EnsoMu() function computes the regression of 'tauxbox' tauxA (surface downward zonal stress anomalies) over
-    'sstbox' sstA (usually the regression of nino4 tauxA over nino3 sstA)
+    The EnsodSstOce() function computes an estimation of the SST change caused by an anomalous ocean circulation
+    (usually in nino3)
+    For this, the (THF) total heat flux is integrated from June to December (representing SST change driven by heat
+    fluxes) and subtracted to the SST change during this period. dSSToce = dSST - dSSTthf
+    The total heat flux is the sum of four term:
+         - net surface shortwave radiation,
+         - net surface longwave radiation,
+         - latent heat flux,
+         - sensible heat flux
+
+    The total heat flux is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into thffile and thfname of this
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus, rlds-rlus, hfls, hfss)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Thu Jul 18 2019
+
+    Based on:
+    Bayr, T., C. Wengel, M. Latif, D. Dommenget, J. Lübbecke, W. Park (2018) Error compensation of ENSO atmospheric
+    feedbacks in climate models and its influence on simulated ENSO dynamics. Clim. Dyn., doi:10.1007/s00382-018-4575-7
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of SST
+    :param sstname: string
+        name of SST variable (tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param sstbox: string
+        name of box (nino3') for SST
+    :param thffile: string
+        path_to/filename of the file (NetCDF) of THF
+    :param thfname: string
+        name of THF variable (thf, netflux, thflx, thf + lwr + lhf + shf) (may be a list of variables) in 'thffile'
+    :param thfareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for THF
+    :param thfareaname: string
+        name of areacell variable (areacella, areacello) in 'thfareafile'
+    :param thflandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for THF
+    :param thflandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'thflandmaskfile'
+    :param thfbox: string
+        name of box (nino3') for THF
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return SlabOceanMetric: dict
+        name, value, value_error, units, method, nyears, time_frequency, time_period, ref, nonlinearity,
+        nonlinearity_error
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'SST change caused by an anomalous ocean circulation (dSSToce)'
+    Units = 'C/C'
+    Method = 'Nino (Nina) events = ' + region_ev + ' sstA > ' + str(threshold) + ' (< -' + str(threshold) + ') during '\
+             + season_ev + ', dSSToce = dSST - dSSTthf during ENSO events (relative difference between ' + sstbox +\
+             ' SST change and heat flux-driven ' + thfbox + ' SST change in '
+    Ref = 'Using CDAT'
+    metric = 'EnsodSstOce'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    enso, enso_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    sst, sst_areacell, keyerror2 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    dict_area, dict_keye, dict_var = dict(), dict(), dict()
+    if isinstance(thffile, basestring):
+        thf, thf_areacell, keyerror3 = \
+            Read_data_mask_area(thffile, thfname, 'heat flux', metric, thfbox, file_area=thfareafile,
+                                name_area=thfareaname, file_mask=thflandmaskfile, name_mask=thflandmaskname,
+                                maskland=True, maskocean=False, debug=debug, **kwargs)
+        dict_area[thfname], dict_keye[thfname], dict_var[thfname] = thf_areacell, keyerror3, thf
+    else:
+        for ii in range(len(thffile)):
+            thf, thf_areacell, keyerror3 = \
+                Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, thfbox, file_area=thfareafile[ii],
+                                    name_area=thfareaname[ii], file_mask=thflandmaskfile[ii],
+                                    name_mask=thflandmaskname[ii], maskland=True, maskocean=False, debug=debug,
+                                    **kwargs)
+            dict_area[thfname[ii]], dict_keye[thfname[ii]], dict_var[thfname[ii]] = thf_areacell, keyerror3, thf
+    thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
+    thf_areacell = dict_area[dict_area.keys()[0]]
+    keyerror3 = ''
+    for ii in dict_keye.keys():
+        if len(keyerror3) > 0 and dict_keye[ii] is not None:
+            keyerror3 += " ; "
+        if dict_keye[ii] is not None:
+            keyerror3 += dict_keye[ii]
+    if len(keyerror3) == 0:
+        keyerror3 = None
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst, thf, keyerror4 = CheckTime(sst, thf, metric_name=metric, **kwargs)
+    sst, enso, unneeded = CheckTime(sst, enso, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN = sst.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(sst)
+
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None or keyerror4 is not None:
+        metric, metricErr, dive_down_diag = None, None, {'value': None, 'value2': None, 'value3': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3, keyerror4]
+        keyerror = add_up_errors(tmp)
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        enso, unneeded = PreProcessTS(enso, '', areacell=enso_areacell, average='horizontal', compute_anom=False,
+                                      **kwargs)
+        # if 'smoothing' in kwargs.keys():
+        #     smooth = deepcopy(kwargs['smoothing'])
+        #     kwargs['smoothing'] = False
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del enso_areacell, sst_areacell, thf_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(thf))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+        # Lists event years
+        nina_years = DetectEvents(enso, season_ev, -threshold, normalization=normalize, nino=False, compute_season=True)
+        nino_years = DetectEvents(enso, season_ev, threshold, normalization=normalize, nino=True, compute_season=True)
+        if debug is True:
+            dict_debug = {'nina1': str(nina_years), 'nino1': str(nino_years)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+        # SST change
+        dSST, dSSTthf, dSSToce = SlabOcean(sst, thf, 'JUN', 'DEC', nina_years + nino_years,
+                                           frequency=kwargs['frequency'], debug=debug)
+        # Mean SST change caused by an anomalous ocean circulation during ENSO events
+        metric = float(dSSToce[-1])
+        metricErr = None
+        # Dive down diagnostic
+        dive_down_diag = {'value': ArrayToList(dSST), 'value2': ArrayToList(dSSTthf), 'value3': ArrayToList(dSSToce),
+                          'axis': list(dSST.getAxis(0)[:])}
+        if netcdf is True:
+            sst_map, sst_map_areacell, unneeded = \
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            dict_area, dict_keye, dict_var = dict(), dict(), dict()
+            if isinstance(thffile, basestring):
+                thf_map, thf_map_areacell, unneeded = \
+                    Read_data_mask_area(thffile, thfname, 'heat flux', metric, 'equatorial_pacific',
+                                        file_area=thfareafile, name_area=thfareaname, file_mask=thflandmaskfile,
+                                        name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
+                                        **kwargs)
+                dict_area[thfname], dict_var[thfname] = thf_map_areacell, thf_map
+            else:
+                for ii in range(len(thffile)):
+                    thf_map, thf_map_areacell, unneeded = \
+                        Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, 'equatorial_pacific',
+                                            file_area=thfareafile[ii], name_area=thfareaname[ii],
+                                            file_mask=thflandmaskfile[ii], name_mask=thflandmaskname[ii], maskland=True,
+                                            maskocean=False, debug=debug, **kwargs)
+                    dict_area[thfname[ii]], dict_var[thfname[ii]] = thf_map_areacell, thf_map
+            thf_map = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
+            thf_map_areacell = dict_area[dict_area.keys()[0]]
+            # Checks if the same time period is used for both variables
+            sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            thf_map, unneeded = PreProcessTS(thf_map, Method, areacell=thf_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del thf_map_areacell, sst_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            thf_map = Regrid(thf_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            sst_map = AverageMeridional(sst_map)
+            thf_map = AverageMeridional(thf_map)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=51, method='square')
+            thf_map, unneeded = Smoothing(thf_map, '', axis=1, window=51, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # SST change
+            hovdSST, hovdSSTthf, hovdSSToce = SlabOcean(sst_map, thf_map, 'JUN', 'DEC', nina_years + nino_years,
+                                                        frequency=kwargs['frequency'], debug=debug)
+            curdSSTthf, curdSSToce = hovdSSTthf[-1], hovdSSToce[-1]
+            if debug is True:
+                dict_debug = {'axes1': '(zonal curdSSTthf) ' + str([ax.id for ax in curdSSTthf.getAxisList()]),
+                              'axes2': '(hovtx hovdSST) ' + str([ax.id for ax in hovdSST.getAxisList()]),
+                              'shape1': '(zonal curdSSTthf) ' + str(curdSSTthf.shape),
+                              'shape2': '(hovtx hovdSST) ' + str(hovdSST.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after SlabOcean', 15, **dict_debug)
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s SST change in " + sstbox, 'diagnostic_value': metric,
+                     'diagnostic_value_error': metricErr, 'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s heat flux-driven SST change in " + thfbox, 'diagnostic_value': metric,
+                     'diagnostic_value_error': metricErr, 'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s SST change caused by an anomalous ocean circulation in " + thfbox,
+                     'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
+                     'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal heat flux-driven SST change", 'diagnostic_value': metric,
+                     'diagnostic_value_error': metricErr, 'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal SST change caused by an anomalous ocean circulation",
+                     'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
+                     'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly SST change", 'diagnostic_value': metric,
+                     'diagnostic_value_error': metricErr, 'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly heat flux-driven SST change",
+                     'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
+                     'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly SST change caused by an anomalous ocean circulation",
+                     'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
+                     'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=dSST, var1_attributes=dict1, var1_name='dSST_ts__' + dataset,
+                       var2=dSSTthf, var2_attributes=dict2, var2_name='dSSTthf_ts__' + dataset,
+                       var3=dSSToce, var3_attributes=dict3, var3_name='dSSToce_ts__' + dataset,
+                       var4=curdSSTthf, var4_attributes=dict4, var4_name='dSSTthf_lon__' + dataset,
+                       var5=curdSSToce, var5_attributes=dict5, var5_name='dSSToce_lon__' + dataset,
+                       var6=hovdSST, var6_attributes=dict6, var6_name='dSST_hov__' + dataset,
+                       var7=hovdSSTthf, var7_attributes=dict7, var7_name='dSSTthf_hov__' + dataset,
+                       var8=hovdSSToce, var8_attributes=dict8, var8_name='dSSToce_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
+        # if 'smoothing' in kwargs.keys():
+        #     kwargs['smoothing'] = smooth
+        #     del smooth
+    # Create output
+    SlabOceanMetric = {
+        'name': Name, 'value': metric, 'value_error': metricErr, 'units': Units, 'method': Method, 'nyears': yearN,
+        'events': sorted(nina_years + nino_years), 'time_frequency': kwargs['frequency'],
+        'time_period': actualtimebounds, 'ref': Ref, 'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return SlabOceanMetric
+
+
+def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile,
+                  tauxname, tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, dataset='',
+                  debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoFbSstTaux() function computes the regression of 'tauxbox' tauxA (surface downward zonal stress anomalies)
+    over 'sstbox' sstA (usually the regression of nino4 tauxA over nino3 sstA)
 
     Author:	Eric Guilyardi : Eric.Guilyardi@locean-ipsl.upmc.fr
     Co-author: Yann Planton : yann.planton@locean-ipsl.upmc.fr
@@ -4384,7 +5212,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     :param sstlandmaskname: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param sstbox: string
-        name of box (nino3') for SST
+        name of box ('nino3') for SST
     :param tauxfile: string
         path_to/filename of the file (NetCDF) of TAUX
     :param tauxname: string
@@ -4398,7 +5226,7 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
     :param tauxlandmaskname: string
         name of landmask variable (sftlf, lsmask, landmask) in 'tauxlandmaskfile'
     :param tauxbox: string
-        name of box (nino4') for TAUX
+        name of box ('nino4') for TAUX
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -4457,12 +5285,12 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
             kwargs[arg] = DefaultArgValues(arg)
 
     # Define metric attributes
-    Name = 'Bjerknes feedback (mu)'
+    Name = 'Taux-Sst feedback (mu)'
     Units = '10e-3 N/m2/C'
     Method = 'Regression of ' + tauxbox + ' tauxA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
-    metric = 'EnsoMu'
+    metric = 'EnsoFbSstTaux'
     if metname == '':
         metname = deepcopy(metric)
 
@@ -4489,17 +5317,10 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
 
     keyerror = ''
     if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
-        mu, muPos, muNeg = [None, None], [None, None], [None, None]
-        if keyerror1 is not None:
-            keyerror = keyerror1
-        if len(keyerror) > 0 and keyerror2 is not None:
-            keyerror += " ; "
-        if keyerror2 is not None:
-            keyerror += keyerror2
-        if len(keyerror) > 0 and keyerror3 is not None:
-            keyerror += " ; "
-        if keyerror3 is not None:
-            keyerror += keyerror3
+        mu, muPos, muNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
@@ -4513,43 +5334,129 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(taux) ' + str(TimeBounds(taux))}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
-        # change units
+        # Change units
         taux = taux * 1e3
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         mu, muPos, muNeg = LinearRegressionAndNonlinearity(taux, sst, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = muNeg[0] - muPos[0]
+        nl2 = muNeg[1] + muPos[1]
         # Dive down diagnostic
         dive_down_diag = {'value': None, 'axis': None}
         if netcdf is True:
+            taux_map, taux_map_areacell, unneeded = \
+                Read_data_mask_area(tauxfile, tauxname, 'wind stress', metric, 'equatorial_pacific',
+                                    file_area=tauxareafile, name_area=tauxareaname, file_mask=tauxlandmaskfile,
+                                    name_mask=tauxlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            sst, taux_map, unneeded = CheckTime(sst, taux_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            taux_map, unneeded = PreProcessTS(taux_map, Method, areacell=taux_map_areacell, average=False,
+                                              compute_anom=True, **kwargs)
+            del taux_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            taux_map = Regrid(taux_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
+                              'shape1': '(taux) ' + str(taux_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            taux_map = AverageMeridional(taux_map)
+            if debug is True:
+                dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
+                              'shape2': '(taux) ' + str(taux_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            taux_map, unneeded = Smoothing(taux_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
+                              'shape1': '(taux) ' + str(taux_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Change units
+            taux_map = taux_map * 1e3
+            # Sst to map
+            sst_map = TsToMap(sst, taux_map)
+            # Array year by year
+            sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
+            taux_yby = get_year_by_year(taux_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(taux) ' + str(taux_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
+            curMu, curMuPos, curMuNeg = \
+                LinearRegressionAndNonlinearity(taux_map, sst_map, return_stderr=False, return_intercept=False)
+            hovMu, hovMuPos, hovMuNeg = \
+                LinearRegressionAndNonlinearity(taux_yby, sst_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curMuPos.getAxisList()]),
+                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovMuPos.getAxisList()]),
+                              'shape1': '(zonal alpha) ' + str(curMuPos.shape),
+                              'shape2': '(hovtx alpha) ' + str(hovMuPos.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
             dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                     'description': dataset + "'s " + sstbox + " sstA",
-                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1],
-                     'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
+                     'description': dataset + "'s " + sstbox + " sstA", 'diagnostic_value': mu[0],
+                     'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
                      'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
-            dict2 = {'units': 'N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                     'description': dataset + "'s " + tauxbox + " tauxA",
-                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1],
-                     'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
+            dict2 = {'units': '10e-3 N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s " + tauxbox + " tauxA", 'diagnostic_value': mu[0],
+                     'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
                      'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
-            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox +
+                                    " tauxA over sstA",
+                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
+                     'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox +
+                                    " tauxA over sstA>0",
+                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
+                     'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox +
+                                    " tauxA over sstA<0",
+                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
+                     'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of " + tauxbox +
+                                    " tauxA over sstA",
+                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
+                     'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of " + tauxbox +
+                                    " tauxA over sstA>0",
+                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
+                     'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of " + tauxbox +
+                                    " tauxA over sstA<0",
+                     'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
+                     'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
-            SaveNetcdf(file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                       var1_time_name='months_' + dataset, var2=taux , var2_attributes=dict2,
-                       var2_name='taux__' + dataset, var2_time_name='months_' + dataset, frequency=kwargs['frequency'],
-                       global_attributes=dict3)
-            del dict1, dict2, dict3
-    try:
-        nl1 = muNeg[0] - muPos[0]
-    except:
-        nl1 = None
-    try:
-        nl2 = muNeg[1] + muPos[1]
-    except:
-        nl2 = None
-
+            SaveNetcdf(file_name,
+                       var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                       var2=taux, var2_attributes=dict2, var2_name='taux__' + dataset,
+                       var2_time_name='months_' + dataset,
+                       var3=curMu, var3_attributes=dict3, var3_name='reg_taux_over_sst_lon__' + dataset,
+                       var4=curMuPos, var4_attributes=dict4, var4_name='reg_taux_over_POSsst_lon__' + dataset,
+                       var5=curMuNeg, var5_attributes=dict5, var5_name='reg_taux_over_NEGsst_lon__' + dataset,
+                       var6=hovMu, var6_attributes=dict6, var6_name='reg_taux_over_sst_hov__' + dataset,
+                       var7=hovMuPos, var7_attributes=dict7, var7_name='reg_taux_over_POSsst_hov__' + dataset,
+                       var8=hovMuNeg, var8_attributes=dict8, var8_name='reg_taux_over_NEGsst_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
     # Create output
     muMetric = {
         'name': Name, 'value': mu[0], 'value_error': mu[1], 'units': Units, 'method': Method,
@@ -4558,6 +5465,582 @@ def EnsoMu(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandm
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return muMetric
+
+
+def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, sshfile, sshname,
+                 sshareafile, sshareaname, sshlandmaskfile, sshlandmaskname, sshbox, dataset='', debug=False,
+                 netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoFbSshSst() function computes the regression of 'sstbox' sstA over 'sshbox' sshA (sea surface height
+    anomalies) (usually the regression of nino3 sstA over nino3 sshA)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Thu Oct  5 2017
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of SST
+    :param sstname: string
+        name of SST variable (tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param sstbox: string
+        name of box ('nino3') for SST
+    :param sshfile: string
+        path_to/filename of the file (NetCDF) of SSH
+    :param sshname: string
+        name of SSH variable (ssh, sshg, zos) in 'sshfile'
+    :param sshareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SSH
+    :param sshareaname: string
+        name of areacell variable (areacella, areacello) in 'sshareafile'
+    :param sshlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SSH
+    :param sshlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sshlandmaskfile'
+    :param sshbox: string
+        name of box ('nino3') for SSH
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return SshMetric: dict
+        name, value, value_error, units, method, nyears, time_frequency, time_period, ref, nonlinearity,
+        nonlinearity_error
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'Sst-Ssh feedback'
+    Units = 'C/cm'
+    Method = 'Regression of ' + sstbox + ' sstA over ' + sshbox + ' sshA'
+    Method_NL = 'The nonlinearity is the regression computed when sshA<0 minus the regression computed when sshA>0'
+    Ref = 'Using CDAT regression calculation'
+    metric = 'EnsoFbSshSst'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    ssh, ssh_areacell, keyerror2 = \
+        Read_data_mask_area(sshfile, sshname, 'sea surface height', metric, sshbox, file_area=sshareafile,
+                            name_area=sshareaname, file_mask=sshlandmaskfile, name_mask=sshlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst, ssh, keyerror3 = CheckTime(sst, ssh, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN = sst.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(sst)
+
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        ThermoFb, ThermoFbPos, ThermoFbNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        ssh, unneeded = PreProcessTS(ssh, '', areacell=ssh_areacell, average='horizontal', compute_anom=True, **kwargs)
+        del sst_areacell, ssh_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                          'axes2': '(ssh) ' + str([ax.id for ax in ssh.getAxisList()]),
+                          'shape1': '(sst) ' + str(sst.shape), 'shape2': '(ssh) ' + str(ssh.shape),
+                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(ssh) ' + str(TimeBounds(ssh))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+        # Change units
+        ssh = ssh * 1e2
+        # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
+        ThermoFb, ThermoFbPos, ThermoFbNeg = \
+            LinearRegressionAndNonlinearity(sst, ssh, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = ThermoFbNeg[0] - ThermoFbPos[0]
+        nl2 = ThermoFbNeg[1] + ThermoFbPos[1]
+        # Dive down diagnostic
+        dive_down_diag = {'value': None, 'axis': None}
+        if netcdf is True:
+            sst_map, sst_map_areacell, unneeded = \
+                Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
+                                    file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
+                                    name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            ssh_map, ssh_map_areacell, unneeded = \
+                Read_data_mask_area(sshfile, sshname, 'sea surface height', metric, 'equatorial_pacific',
+                                    file_area=sshareafile, name_area=sshareaname, file_mask=sshlandmaskfile,
+                                    name_mask=sshlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            sst_map, ssh_map, unneeded = CheckTime(sst_map, ssh_map, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            ssh_map, unneeded = PreProcessTS(ssh_map, Method, areacell=ssh_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del ssh_map_areacell, sst_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            ssh_map = Regrid(ssh_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            sst_map = AverageMeridional(sst_map)
+            ssh_map = AverageMeridional(ssh_map)
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
+            ssh_map, unneeded = Smoothing(ssh_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Change units
+            ssh_map = ssh_map * 1e2
+            # Array year by year
+            sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
+            ssh_yby = get_year_by_year(ssh_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                              'axes2': '(ssh) ' + str([ax.id for ax in ssh_yby.getAxisList()]),
+                              'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
+            curThermoFb, curThermoFbPos, curThermoFbNeg = \
+                LinearRegressionAndNonlinearity(sst_map, ssh_map, return_stderr=False, return_intercept=False)
+            hovThermoFb, hovThermoFbPos, hovThermoFbNeg = \
+                LinearRegressionAndNonlinearity(sst_yby, ssh_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal Thermo Fb) ' + str([ax.id for ax in curThermoFb.getAxisList()]),
+                              'axes2': '(hovtx Thermo Fb) ' + str([ax.id for ax in hovThermoFb.getAxisList()]),
+                              'shape1': '(zonal Thermo Fb) ' + str(curThermoFb.shape),
+                              'shape2': '(hovtx Thermo Fb) ' + str(hovThermoFb.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s " + sstbox + " sstA",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict2 = {'units': 'cm', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s " + sshbox + " sshA",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of sstA over sshA",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of sstA over sshA>0",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of sstA over sshA<0",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of sstA over sshA",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of sstA over sshA>0",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of sstA over sshA<0",
+                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0], 'intercept_pos': ThermoFbPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                       var2=ssh, var2_attributes=dict2, var2_name='ssh__' + dataset, var2_time_name='months_' + dataset,
+                       var3=curThermoFb, var3_attributes=dict3, var3_name='reg_sst_over_ssh_lon__' + dataset,
+                       var4=curThermoFbPos, var4_attributes=dict4, var4_name='reg_sst_over_POSssh_lon__' + dataset,
+                       var5=curThermoFbNeg, var5_attributes=dict5, var5_name='reg_sst_over_NEGssh_lon__' + dataset,
+                       var6=hovThermoFb, var6_attributes=dict6, var6_name='reg_sst_over_ssh_hov__' + dataset,
+                       var7=hovThermoFbPos, var7_attributes=dict7, var7_name='reg_sst_over_POSssh_hov__' + dataset,
+                       var8=hovThermoFbNeg, var8_attributes=dict8, var8_name='reg_sst_over_NEGssh_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
+    # Create output
+    SshMetric = {
+        'name': Name, 'value': ThermoFb[0], 'value_error': ThermoFb[1], 'units': Units, 'method': Method,
+        'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return SshMetric
+
+
+def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox,
+                  sshfile, sshname, sshareafile, sshareaname, sshlandmaskfile, sshlandmaskname, sshbox, dataset='',
+                  debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoFbTauxSsh() function computes the regression of 'sshbox' sshA (sea surface height anomalies) over 'tauxbox'
+    tauxA (surface downward zonal stress anomalies) (usually the regression of nino3 sshA over nino4 tauxA)
+
+    Author:	Eric Guilyardi : Eric.Guilyardi@locean-ipsl.upmc.fr
+    Co-author: Yann Planton : yann.planton@locean-ipsl.upmc.fr
+
+    Created on Mon Jan  9 11:05:18 CET 2017
+
+    Inputs:
+    ------
+    :param tauxfile: string
+        path_to/filename of the file (NetCDF) of TAUX
+    :param tauxname: string
+        name of TAUX variable (taux, tauu) in 'tauxfile'
+    :param tauxareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for TAUX
+    :param tauxareaname: string
+        name of areacell variable (areacella, areacello) in 'tauxareafile'
+    :param tauxlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for TAUX
+    :param tauxlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'tauxlandmaskfile'
+    :param tauxbox: string
+        name of box ('nino4') for TAUX
+    :param sshfile: string
+        path_to/filename of the file (NetCDF) of SSH
+    :param sshname: string
+        name of SSH variable (ssh, sshg, zos) in 'sshfile'
+    :param sshareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SSH
+    :param sshareaname: string
+        name of areacell variable (areacella, areacello) in 'sshareafile'
+    :param sshlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SSH
+    :param sshlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sshlandmaskfile'
+    :param sshbox: string
+        name of box ('nino3') for SSH
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return fbMetric: dict
+        name, value, value_error, units, method, nyears, time_frequency, time_period, ref, nonlinearity,
+        nonlinearity_error
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = 'Ssh-Taux feedback'
+    Units = '10e3 cm/N/m2'
+    Method = 'Regression of ' + sshbox + ' sshA over ' + tauxbox + ' tauxA'
+    Method_NL = 'The nonlinearity is the regression computed when tauxA<0 minus the regression computed when tauxA>0'
+    Ref = 'Using CDAT regression calculation'
+    metric = 'EnsoFbTauxSsh'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    ssh, ssh_areacell, keyerror1 = \
+        Read_data_mask_area(sshfile, sshname, 'sea surface height', metric, sshbox, file_area=sshareafile,
+                            name_area=sshareaname, file_mask=sshlandmaskfile, name_mask=sshlandmaskname, maskland=True,
+                            maskocean=False, debug=debug, **kwargs)
+    taux, taux_areacell, keyerror2 = \
+        Read_data_mask_area(tauxfile, tauxname, 'wind stress', metric, tauxbox, file_area=tauxareafile,
+                            name_area=tauxareaname, file_mask=tauxlandmaskfile, name_mask=tauxlandmaskname,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    ssh, taux, keyerror3 = CheckTime(ssh, taux, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN = ssh.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(ssh)
+
+    keyerror = ''
+    if keyerror1 is not None or keyerror2 is not None or keyerror3 is not None:
+        fb, fbPos, fbNeg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
+        dive_down_diag = {'value': None, 'axis': None}
+        tmp = [keyerror1, keyerror2, keyerror3]
+        keyerror = add_up_errors(tmp)
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+        ssh, Method = PreProcessTS(ssh, Method, areacell=ssh_areacell, average='horizontal', compute_anom=True,
+                                   **kwargs)
+        taux, unneeded = PreProcessTS(taux, '', areacell=taux_areacell, average='horizontal', compute_anom=True,
+                                      **kwargs)
+        del ssh_areacell, taux_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh.getAxisList()]),
+                          'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
+                          'shape1': '(ssh) ' + str(ssh.shape), 'shape2': '(taux) ' + str(taux.shape),
+                          'time1': '(ssh) ' + str(TimeBounds(ssh)), 'time2': '(taux) ' + str(TimeBounds(taux))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+        # Change units
+        ssh = ssh * 1e2
+        taux = taux * 1e3
+        # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
+        fb, fbPos, fbNeg = LinearRegressionAndNonlinearity(ssh, taux, return_stderr=True, return_intercept=True)
+        # Non linearities
+        nl1 = fbNeg[0] - fbPos[0]
+        nl2 = fbNeg[1] + fbPos[1]
+        # Dive down diagnostic
+        dive_down_diag = {'value': None, 'axis': None}
+        if netcdf is True:
+            ssh_map, ssh_map_areacell, keyerror1 = \
+                Read_data_mask_area(sshfile, sshname, 'sea surface height', metric, 'equatorial_pacific',
+                                    file_area=sshareafile, name_area=sshareaname, file_mask=sshlandmaskfile,
+                                    name_mask=sshlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            ssh_map, taux, unneeded = CheckTime(ssh_map, taux, metric_name=metric, **kwargs)
+            # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
+            ssh_map, unneeded = PreProcessTS(ssh_map, Method, areacell=ssh_map_areacell, average=False,
+                                             compute_anom=True, **kwargs)
+            del ssh_map_areacell
+            # Regridding
+            if 'regridding' not in kwargs.keys():
+                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                        'newgrid_name': 'generic_1x1deg'}
+            else:
+                if not isinstance(kwargs['regridding'], dict):
+                    kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                            'newgrid_name': 'generic_1x1deg'}
+            ssh_map = Regrid(ssh_map, None, region='equatorial_pacific', **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                              'shape1': '(ssh) ' + str(ssh_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+            # Meridional average
+            ssh_map = AverageMeridional(ssh_map)
+            if debug is True:
+                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                              'shape2': '(ssh) ' + str(ssh_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Zonal smoothing
+            ssh_map, unneeded = Smoothing(ssh_map, '', axis=1, window=31, method='square')
+            if debug is True:
+                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                              'shape1': '(ssh) ' + str(ssh_map.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+            # Change units
+            ssh_map = ssh_map * 1e2
+            # Ssh to map
+            taux_map = TsToMap(taux, ssh_map)
+            # Array year by year
+            ssh_yby = get_year_by_year(ssh_map, frequency=kwargs['frequency'])
+            taux_yby = get_year_by_year(taux_map, frequency=kwargs['frequency'])
+            if debug is True:
+                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                              'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
+                              'shape1': '(ssh) ' + str(ssh_map.shape), 'shape2': '(taux) ' + str(taux_yby.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+            # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
+            curFb, curFbPos, curFbNeg = \
+                LinearRegressionAndNonlinearity(ssh_map, taux_map, return_stderr=False, return_intercept=False)
+            hovFb, hovFbPos, hovFbNeg = \
+                LinearRegressionAndNonlinearity(ssh_yby, taux_yby, return_stderr=False, return_intercept=False)
+            if debug is True:
+                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curFbPos.getAxisList()]),
+                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovFbPos.getAxisList()]),
+                              'shape1': '(zonal alpha) ' + str(curFbPos.shape),
+                              'shape2': '(hovtx alpha) ' + str(hovFbPos.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {'units': 'cm', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s " + sshbox + " sshA", 'diagnostic_value': fb[0],
+                     'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2], 'slope_neg': fbNeg[0],
+                     'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict2 = {'units': '10e-3 N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s " + tauxbox + " tauxA", 'diagnostic_value': fb[0],
+                     'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2], 'slope_neg': fbNeg[0],
+                     'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of sshA over " + tauxbox +
+                                    " tauxA",
+                     'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
+                     'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of sshA over " + tauxbox +
+                                    " tauxA>0",
+                     'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
+                     'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal equatorial_pacific regression of sshA over " + tauxbox +
+                                    " tauxA<0",
+                     'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
+                     'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of sshA over " +
+                                    tauxbox + " tauxA",
+                     'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
+                     'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict7 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of sshA over " +
+                                    tauxbox + " tauxA>0",
+                     'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
+                     'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict8 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of sshA over " +
+                                    tauxbox + " tauxA<0",
+                     'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
+                     'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=ssh, var1_attributes=dict1, var1_name='ssh__' + dataset, var1_time_name='months_' + dataset,
+                       var2=taux, var2_attributes=dict2, var2_name='taux__' + dataset,
+                       var2_time_name='months_' + dataset,
+                       var3=curFb, var3_attributes=dict3, var3_name='reg_ssh_over_taux_lon__' + dataset,
+                       var4=curFbPos, var4_attributes=dict4, var4_name='reg_ssh_over_POStaux_lon__' + dataset,
+                       var5=curFbNeg, var5_attributes=dict5, var5_name='reg_ssh_over_NEGtaux_lon__' + dataset,
+                       var6=hovFb, var6_attributes=dict6, var6_name='reg_ssh_over_taux_hov__' + dataset,
+                       var7=hovFbPos, var7_attributes=dict7, var7_name='reg_ssh_over_POStaux_hov__' + dataset,
+                       var8=hovFbNeg, var8_attributes=dict8, var8_name='reg_ssh_over_NEGtaux_hov__' + dataset,
+                       frequency=kwargs['frequency'], global_attributes=dict9)
+    # Create output
+    fbMetric = {
+        'name': Name, 'value': fb[0], 'value_error': fb[1], 'units': Units, 'method': Method,
+        'method_nonlinearity': Method_NL, 'nyears': yearN, 'time_frequency': kwargs['frequency'],
+        'time_period': actualtimebounds, 'ref': Ref, 'nonlinearity': nl1, 'nonlinearity_error': nl2,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return fbMetric
 
 
 def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod, prfilemod,
@@ -6150,7 +7633,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     :param sstlandmaskname: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param sstbox: string
-        name of box (nino3') for SST
+        name of box ('nino3') for SST
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -6397,7 +7880,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     :param sstlandmaskname: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param sstbox: string
-        name of box (nino3') for SST
+        name of box ('nino3') for SST
     :param dataset: string, optional
         name of current dataset (e.g., 'model', 'obs', ...)
     :param debug: bolean, optional

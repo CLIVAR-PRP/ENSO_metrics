@@ -76,7 +76,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'EVAL_IPSL'#'ENSO_perf'#'ENSO_proc'#'ENSO_tel'#'MC1'#
+mc_name = 'ENSO_proc'#'EVAL_IPSL'#'ENSO_perf'#'ENSO_tel'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -113,7 +113,7 @@ elif mc_name == 'ENSO_perf':
 elif mc_name == 'ENSO_tel':
     list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
 elif mc_name == 'ENSO_proc':
-    list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
+    list_obs = ['Tropflux', 'ERA-Interim', 'SODA3.4.2']#['ERA-Interim', 'SODA3.4.2']#['HadISST','GPCPv2.3']
 elif mc_name == 'EVAL_IPSL':
     list_obs = ['ERA-Interim']#
 print '\033[95m' + str(list_obs) + '\033[0m'
@@ -137,7 +137,8 @@ for obs in list_obs:
         # I usually alias the variable names from observations and models in the xml in order to have the same name
         # for sst (or any other variable) in every xml. This way I don not need to go through this function to know the
         # variable name in file
-        try: var_in_file = dict_var[var]['var_name']
+        try:
+            var_in_file = dict_var[var]['var_name']
         except:
             print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
         else:
@@ -246,7 +247,7 @@ for mod in list_models:
     netcdf = join_path(netcdf_path, netcdf_name)
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True, dive_down=True)
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
-    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
+    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
     tmp = sorted(dict_metric[mod]['value'].keys(), key=lambda v: v.upper())
     for kk in tmp:
         print kk.ljust(13) + ': ' + str(dict_metric[mod]['value'][kk]['metric'])

@@ -38,19 +38,19 @@ def defCollection(MC=True):
 #                    'regridding': {'model_orand_obs': 0, 'regridder': 'cdms', 'regridTool': 'esmf',
 #                                   'regridMethod': 'linear'},
 #                },
-                'EnsoAlphaLhf': {
+                'EnsoFbSstLhf': {
                     'variables': ['sst','lhf'],
                     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
 #                    'metric_computation': 'difference',
                 },
-                'EnsoAlphaLwr': {
+                'EnsoFbSstLwr': {
                     'variables': ['sst', 'lwr'],
                     'regions': {'sst': 'nino3', 'lwr': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'lwr': ['Tropflux']},
 #                    'metric_computation': 'difference',
                 },
-                'EnsoAlphaShf': {
+                'EnsoFbSstShf': {
                     'variables': ['sst', 'shf'],
                     'regions': {'sst': 'nino3', 'shf': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'shf': ['Tropflux']},
@@ -62,7 +62,7 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'swr': ['Tropflux']},
 #                    'metric_computation': 'difference',
                 },
-                'EnsoAlphaThf': {
+                'EnsoFbSstThf': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                     'obs_name': {'sst': ['HadISST', 'Tropflux'], 'thf': ['Tropflux']},
@@ -240,6 +240,18 @@ def defCollection(MC=True):
                 #                    'newgrid_name': 'generic_1x1deg'},
                 #     'metric_computation': 'ratio',
                 # },
+                'EnsoDuration': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                                         'normalization': True},
+                    'nbr_years_window': 6,
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'metric_computation': 'ratio',
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                },
                 'EnsoSeasonality': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
@@ -248,6 +260,16 @@ def defCollection(MC=True):
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
                 },
+                'EnsoSstLonRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific_LonRed'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                                         'normalization': True},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                },
                 'EnsoSstSkew': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
@@ -255,6 +277,17 @@ def defCollection(MC=True):
                     'metric_computation': 'ratio',
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
+                },
+                'EnsoSstTsRmse': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                                         'normalization': True},
+                    'nbr_years_window': 6,
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'NinaSstDiv_1': {
                     'variables': ['sst'],
@@ -469,11 +502,12 @@ def defCollection(MC=True):
                 #               'BiasTauxLatRmse', 'BiasTauxLonRmse', 'SeasonalPrLatRmse', 'SeasonalSstLatRmse',
                 #               'SeasonalSstLonRmse', 'NinaSstDivRmse', 'NinaSstLonRmse', 'NinaSstTsRmse',
                 #               'NinoSstDivRmse', 'NinoSstLonRmse', 'NinoSstTsRmse'],
-                'plot_ratio': ['EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew', 'NinaSstDiv_1', 'NinaSstDiv_2',
-                               'NinaSstDur_1', 'NinaSstDur_2', 'NinoSstDiv_1', 'NinoSstDiv_2', 'NinoSstDur_1',
-                               'NinoSstDur_2'],
+                'plot_ratio': ['EnsoAmpl', 'EnsoSeasonality', 'EnsoDuration', 'EnsoSstSkew',
+                               'NinaSstDiv_1', 'NinaSstDiv_2', 'NinaSstDur_1', 'NinaSstDur_2',
+                               'NinoSstDiv_1', 'NinoSstDiv_2', 'NinoSstDur_1', 'NinoSstDur_2', 'NinoSstDiversity'],
                 'plot_rmse': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLatRmse', 'BiasSstLonRmse', 'BiasTauxLatRmse',
                               'BiasTauxLonRmse', 'SeasonalPrLatRmse', 'SeasonalSstLatRmse', 'SeasonalSstLonRmse',
+                              'EnsoSstLonRmse', 'EnsoSstTsRmse',
                               'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1', 'NinaSstTsRmse_2',
                               'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1', 'NinoSstTsRmse_2'],
             },
@@ -788,28 +822,72 @@ def defCollection(MC=True):
                     'obs_name': {'sst': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
-                'EnsoAlphaLhf': {
+                'EnsoFbSstLhf': {
                     'variables': ['sst', 'lhf'],
                     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'lwr': ['ERA-Interim', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
-                'EnsoAlphaSwr': {
+                'EnsodSstOce_1': {
+                    'variables': ['sst', 'thf'],
+                    'regions': {'sst': 'nino3', 'thf': 'nino3'},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['ERA-Interim', 'Tropflux']},
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                                         'normalization': False},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'ratio',
+                },
+                'EnsodSstOce_2': {
+                    'variables': ['sst', 'thf'],
+                    'regions': {'sst': 'nino3', 'thf': 'nino3'},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['ERA-Interim', 'Tropflux']},
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                                         'normalization': True},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'ratio',
+                },
+                'EnsoFbSshSst': {
+                    'variables': ['sst', 'ssh'],
+                    'regions': {'sst': 'nino3', 'ssh': 'nino3'},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2']},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'ratio',
+                },
+                'EnsoFbSstSwr': {
                     'variables': ['sst', 'swr'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'swr': ['ERA-Interim', 'Tropflux']},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'ratio',
                 },
-                'EnsoAlphaThf': {
-                    'variables': ['sst', 'thf'],
-                    'regions': {'sst': 'nino3', 'thf': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
-                    'metric_computation': 'ratio',
-                },
-                'EnsoMu': {
+                'EnsoFbSstTaux': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'ratio',
+                },
+                'EnsoFbSstThf': {
+                    'variables': ['sst', 'thf'],
+                    'regions': {'sst': 'nino3', 'thf': 'nino3'},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'swr': ['ERA-Interim', 'Tropflux']},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'ratio',
+                },
+                'EnsoFbTauxSsh': {
+                    'variables': ['taux', 'ssh'],
+                    'regions': {'ssh': 'nino3', 'taux': 'nino4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2']},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'ratio',
                 },
             },
@@ -823,7 +901,8 @@ def defCollection(MC=True):
                 'modeled_period': ('1850-01-01 00:00:00', '2015-12-31 23:59:60.0'),
             },
             'plot_groupings': {
-                'plot_ratio': ['EnsoAmpl', 'EnsoAlphaLhf', 'EnsoAlphaSwr', 'EnsoAlphaThf', 'EnsoMu'],
+                'plot_ratio': ['EnsoAmpl', 'EnsoFbSstLhf', 'EnsoAlphaSwr', 'EnsoFbSstThf', 'EnsoFbSstTaux',
+                               'EnsoFbSshSst', 'EnsoFbTauxSsh', 'EnsodSstOce_1', 'EnsodSstOce_2'],
             },
             'description': 'Describe which science question this collection is about',
         },
@@ -892,6 +971,7 @@ def ReferenceObservations(DATASET=True):
             'source': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
             'file_name': '<var_name>' + '_Omon_ORAreanalysis_GODAS_*.nc',
             'variable_name_in_file': {
+                'ssh': {'var_name': 'sshg'},
                 'so': {'var_name': 'so'},
                 'thetao': {'var_name': 'thetao'},
                 'uo': {'var_name': 'uo'},
@@ -944,6 +1024,18 @@ def ReferenceObservations(DATASET=True):
                 'thetao': {'var_name': 'thetao'},
                 'uo': {'var_name': 'uo'},
                 'vo': {'var_name': 'vo'},
+            },
+        },
+        'SODA3.4.2': {
+            'source': 'see https://www.atmos.umd.edu/~ocean/index_files/soda3.4.2_mn_download_b.htm',
+            'file_name': 'soda3.4.2_mn_ocean_reg_????.nc',
+            'variable_name_in_file': {
+                'so': {'var_name': 'salt'},
+                'ssh': {'var_name': 'ssh'},
+                'taux': {'var_name': 'tauu'},
+                'thetao': {'var_name': 'temp'},
+                'uo': {'var_name': 'u'},
+                'vo': {'var_name': 'v'},
             },
         },
         'Tropflux': {
@@ -1098,6 +1190,8 @@ def CmipVariables():
             'slp': {'var_name': 'psl', 'cf_name': 'air_pressure_at_mean_sea_level', 'cf_units': 'Pa'},
             # sensible heat flux (on ocean grid or ocean points only)
             'shf': {'var_name': 'hfss', 'cf_name': 'surface_upward_sensible_heat_flux', 'cf_units': 'W m-2'},
+            # sea surface height
+            'ssh': {'var_name': 'zos', 'cf_name': 'sea_surface_height_above_geoid', 'cf_units': 'm'},
             # sea surface temperature
             'sst': {'var_name': 'ts', 'cf_name': 'sea_surface_temperature', 'cf_units': 'K'},
             # shortwave radiation computed from these variables IN THAT ORDER

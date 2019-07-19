@@ -7,13 +7,13 @@ from numpy import square as NUMPYsquare
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
-    BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAlphaLhf, EnsoAlphaLwr, EnsoAlphaShf,\
-    EnsoAlphaSwr, EnsoAlphaThf, EnsoAmpl, EnsoDiversity, EnsoDuration, EnsoMu, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel,\
-    EnsoSlpMap, EnsoSstLonRmse, EnsoSstMap, EnsoSstTsRmse, EnsoSeasonality, EnsoSstSkew, NinaPrJjaTel, NinaPrNdjTel,\
-    NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse,\
-    NinoPrJjaTel, NinoPrNdjTel, NinoPrMap, NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, NinoSstDur,\
-    NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse,\
-    SeasonalSstLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse
+    BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration,\
+    EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh,\
+    EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoSeasonality, EnsoSlpMap, EnsoSstLonRmse, EnsoSstMap, EnsoSstSkew,\
+    EnsoSstTsRmse, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur,\
+    NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap, NinoSlpMap, NinoSstDiv,\
+    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
+    SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -388,8 +388,9 @@ dict_oneVar = {
 }
 
 dict_twoVar = {
-    'EnsoAlphaLhf': EnsoAlphaLhf, 'EnsoAlphaLwr': EnsoAlphaLwr, 'EnsoAlphaShf': EnsoAlphaShf,
-    'EnsoAlphaSwr': EnsoAlphaSwr, 'EnsoAlphaThf': EnsoAlphaThf, 'EnsoMu': EnsoMu,
+    'EnsoFbSshSst': EnsoFbSshSst, 'EnsoFbSstLhf': EnsoFbSstLhf, 'EnsoFbSstLwr': EnsoFbSstLwr,
+    'EnsoFbSstShf': EnsoFbSstShf, 'EnsoFbSstSwr': EnsoFbSstSwr, 'EnsoFbSstTaux': EnsoFbSstTaux,
+    'EnsoFbSstThf': EnsoFbSstThf, 'EnsoFbTauxSsh': EnsoFbTauxSsh, 'EnsodSstOce': EnsodSstOce,
 }
 
 
