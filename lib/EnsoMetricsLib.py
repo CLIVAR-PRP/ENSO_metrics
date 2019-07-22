@@ -9217,6 +9217,453 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     return EnsoSstMapMetric
 
 
+def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                 prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
+                 sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                 prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
+                 prbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
+                 debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoPrTsRmse() function computes precipitations anomalies life cycle associated with ENSO in a 'prbox'
+    (usually the nino3) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and lagging
+    ENSO)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param prfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemod: string
+        name of PR variable (pr) in 'prfilemod'
+    :param prareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR areacell
+    :param prareanamemod: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemod'
+    :param prlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR landmask
+    :param prlandmasknamemod: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, precip) in 'prfileobs'
+    :param prareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR areacell
+    :param prareanameobs: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafileobs'
+    :param prlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR landmask
+    :param prlandmasknameobs: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param prbox: string
+        name of box (e.g. 'nino3') for PR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoPrMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = "ENSO life cyle PRA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + prbox + " PRA during " + \
+             str(nbr_years_window) + " years (centered on ENSO)"
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'mm/day/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoPrTsRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, sst_mod_areacell, keyerror_mod1 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, sst_obs_areacell, keyerror_obs1 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+    pr_mod, pr_mod_areacell, keyerror_mod2 = \
+        Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, prbox, file_area=prareafilemod,
+                            name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    pr_obs, pr_obs_areacell, keyerror_obs2 = \
+        Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, prbox, file_area=prareafileobs,
+                            name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, **kwargs)
+    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        prRmse, prRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, unneeded = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
+                                          compute_anom=False, **kwargs)
+        enso_obs, unneeded = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
+                                          compute_anom=False, **kwargs)
+        del sst_mod_areacell, sst_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(enso_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 Seasonal mean and anomalies
+        enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(enso_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. temporal PRA
+        # ------------------------------------------------
+        # 2.1 PRA in 'prbox' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, average='horizontal', compute_anom=True,
+                                      **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, average='horizontal', compute_anom=True,
+                                        **kwargs)
+        del pr_mod_areacell, pr_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(pr_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Regression map
+        # ------------------------------------------------
+        prts_mod = LinearRegressionTsAgainstTs(pr_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                               frequency=kwargs['frequency'], debug=debug)
+        prts_obs = LinearRegressionTsAgainstTs(pr_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                               frequency=kwargs['frequency'], debug=debug)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prts_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in prts_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(prts_mod.shape),
+                          'shape2': '(obs) ' + str(prts_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        prRmse = RmsAxis(prts_mod, prts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        prRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(prts_mod), 'observations': ArrayToList(prts_obs),
+                          'axis': list(prts_mod.getAxis(0)[:])}
+
+        if netcdf is True:
+            # Read file and select the right region
+            prmap_mod, prmap_mod_areacell, unneeded = \
+                Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, 'equatorial_pacific_LonRed',
+                                    file_area=prareafilemod, name_area=prareanamemod, file_mask=prlandmaskfilemod,
+                                    name_mask=prlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+            prmap_obs, prmap_obs_areacell, unneeded = \
+                Read_data_mask_area(prfileobs, prnameobs, 'precipitations', metric, 'equatorial_pacific_LonRed',
+                                    file_area=prareafileobs, name_area=prareanameobs, file_mask=prlandmaskfileobs,
+                                    name_mask=prlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+            # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+            prmap_mod, unneeded = PreProcessTS(prmap_mod, '', areacell=prmap_mod_areacell, compute_anom=True,
+                                               **kwargs)
+            prmap_obs, unneeded = PreProcessTS(prmap_obs, '', areacell=prmap_obs_areacell, compute_anom=True,
+                                               **kwargs)
+            del prmap_mod_areacell, prmap_obs_areacell
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prmap_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in prmap_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(prmap_mod.shape), 'shape2': '(obs) ' + str(prmap_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(prmap_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(prmap_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                prmap_mod, prmap_obs, unneeded = \
+                    TwoVarRegrid(prmap_mod, prmap_obs, '', region='equatorial_pacific_LonRed', **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prmap_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in prmap_obs.getAxisList()]),
+                                  'shape1': '(model) ' + str(prmap_mod.shape),
+                                  'shape2': '(obs) ' + str(prmap_obs.shape)}
+                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+            # Meridional average
+            prhov_mod = AverageMeridional(prmap_mod)
+            prhov_obs = AverageMeridional(prmap_obs)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prhov_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in prhov_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(prhov_mod.shape), 'shape2': '(obs) ' + str(prhov_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Linear regression
+            prhov_mod = LinearRegressionTsAgainstTs(prhov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                    frequency=kwargs['frequency'], debug=debug)
+            prhov_obs = LinearRegressionTsAgainstTs(prhov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                    frequency=kwargs['frequency'], debug=debug)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prhov_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in prhov_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(prhov_mod.shape),
+                              'shape2': '(obs) ' + str(prhov_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+            # Lists event years
+            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            if debug is True:
+                dict_debug = {'nina1': '(model) nbr(' + str(len(nina_years_mod)) + '): ' + str(nina_years_mod),
+                              'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
+                              'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
+                              'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            # composites
+            if len(nina_years_mod) > 0:
+                nina_pr_mod = Composite(pr_mod, nina_years_mod, kwargs['frequency'],
+                                        nbr_years_window=nbr_years_window)
+                nina_prhov_mod = Composite(prhov_mod, nina_years_mod, kwargs['frequency'],
+                                           nbr_years_window=nbr_years_window)
+            else:
+                nina_pr_mod = MyEmpty(pr_mod[:12 * nbr_years_window], time=True, time_id='months')
+                nina_prhov_mod = MyEmpty(prhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nino_years_mod) > 0:
+                nino_pr_mod = Composite(pr_mod, nino_years_mod, kwargs['frequency'],
+                                        nbr_years_window=nbr_years_window)
+                nino_prhov_mod = Composite(prhov_mod, nino_years_mod, kwargs['frequency'],
+                                           nbr_years_window=nbr_years_window)
+            else:
+                nino_pr_mod = MyEmpty(pr_mod[:12 * nbr_years_window], time=True, time_id='months')
+                nino_prhov_mod = MyEmpty(prhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nina_years_obs) > 0:
+                nina_pr_obs = Composite(pr_obs, nina_years_obs, kwargs['frequency'],
+                                        nbr_years_window=nbr_years_window)
+                nina_prhov_obs = Composite(prhov_obs, nina_years_obs, kwargs['frequency'],
+                                           nbr_years_window=nbr_years_window)
+            else:
+                nina_pr_obs = MyEmpty(pr_obs[:12 * nbr_years_window], time=True, time_id='months')
+                nina_prhov_obs = MyEmpty(prhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nino_years_obs) > 0:
+                nino_pr_obs = Composite(pr_obs, nino_years_obs, kwargs['frequency'],
+                                        nbr_years_window=nbr_years_window)
+                nino_prhov_obs = Composite(prhov_obs, nino_years_obs, kwargs['frequency'],
+                                           nbr_years_window=nbr_years_window)
+            else:
+                nino_pr_obs = MyEmpty(pr_obs[:12 * nbr_years_window], time=True, time_id='months')
+                nino_prhov_obs = MyEmpty(prhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+            # save
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            my_thresh = 'std' if normalize is True else 'C'
+            my_units = '' if kwargs['normalization'] is True else 'mm/day'
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': "time series of " + region_ev + " SSTA " + season_ev + " regressed against " +
+                                    prbox + " PRA during " + str(nbr_years_window) + " years (centered on ENSO)"}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': "time series of " + region_ev + " SSTA " + season_ev + " regressed against " +
+                                    prbox + " PRA during " + str(nbr_years_window) + " years (centered on ENSO)"}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " + season_ev +
+                                    " regressed against equatorial Pacific PRA during " + str(nbr_years_window) +
+                                    " years (centered on ENSO)"}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " + season_ev +
+                                    " regressed against equatorial Pacific PRA during " + str(nbr_years_window) +
+                                    " years (centered on ENSO)"}
+            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nina_years': str(nina_years_mod),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", PRA composited during La Nina events"}
+            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nino_years': str(nino_years_mod),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", PRA composited during El Nino events"}
+            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nina_years': str(nina_years_obs),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", PRA composited during La Nina events"}
+            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nino_years': str(nino_years_obs),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", PRA composited during El Nino events"}
+            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: prRmse,
+                     'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=prts_mod, var1_attributes=dict1, var1_name='sst_against_pr_ts__' + dataset1,
+                       var2=prts_obs, var2_attributes=dict2, var2_name='sst_against_pr_ts__' + dataset2,
+                       var3=prhov_mod, var3_attributes=dict3, var3_name='sst_against_pr_hov__' + dataset1,
+                       var4=prhov_obs, var4_attributes=dict4, var4_name='sst_against_pr_hov__' + dataset2,
+                       var5=nina_pr_mod, var5_attributes=dict5, var5_name='Nina_pr_ts__' + dataset1,
+                       var6=nina_prhov_mod, var6_attributes=dict5, var6_name='Nina_pr_hov__' + dataset1,
+                       var7=nino_pr_mod, var7_attributes=dict6, var7_name='Nino_pr_ts__' + dataset1,
+                       var8=nino_prhov_mod, var8_attributes=dict6, var8_name='Nino_pr_hov__' + dataset1,
+                       var9=nina_pr_obs, var9_attributes=dict7, var9_name='Nina_pr_ts__' + dataset2,
+                       var10=nina_prhov_obs, var10_attributes=dict7, var10_name='Nina_pr_hov__' + dataset2,
+                       var11=nino_pr_obs, var11_attributes=dict8, var11_name='Nino_pr_ts__' + dataset2,
+                       var12=nino_prhov_obs, var12_attributes=dict8, var12_name='Nino_pr_hov__' + dataset2,
+                       global_attributes=dict9)
+
+    # Create output
+    EnsoPrMetric = {
+        'name': Name, 'value': prRmse, 'value_error': prRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return EnsoPrMetric
+
+
 def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
@@ -9618,6 +10065,462 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return EnsoSstMetric
+
+
+def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod, tauxlandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs, tauxlandmaskfileobs, tauxlandmasknameobs,
+                   sstbox, tauxbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='',
+                   dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoTauxTsRmse() function computes zonal wind stress anomalies life cycle associated with ENSO in a 'tauxbox'
+    (usually the nino4) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and lagging
+    ENSO)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param tauxfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled TAUX
+    :param tauxnamemod: string
+        name of TAUX variable (taux, tauu) in 'tauxfilemod'
+    :param tauxareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUX areacell
+    :param tauxareanamemod: string, optional
+        name of areacell for the TAUX variable (areacella, areacello,...) in 'tauxareafilemod'
+    :param tauxlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUX landmask
+    :param tauxlandmasknamemod: string, optional
+        name of landmask for the TAUX variable (sftlf,...) in 'tauxlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param tauxfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUX
+    :param tauxnameobs: string
+        name of TAUX variable (taux, tauu) in 'tauxfileobs'
+    :param tauxareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUX areacell
+    :param tauxareanameobs: string, optional
+        name of areacell for the TAUX variable (areacella, areacello,...) in 'tauxareafileobs'
+    :param tauxlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUX landmask
+    :param tauxlandmasknameobs: string, optional
+        name of landmask for the TAUX variable (sftlf,...) in 'tauxlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param tauxbox: string
+        name of box (e.g. 'nino4') for TAUX
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoTauxMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = "ENSO life cyle TAUXA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauxbox + " TAUXA during " + \
+             str(nbr_years_window) + " years (centered on ENSO)"
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = '1e-3 N/m2/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoTauxTsRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst_mod, sst_mod_areacell, keyerror_mod1 = \
+        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
+                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    sst_obs, sst_obs_areacell, keyerror_obs1 = \
+        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs,
+                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+    taux_mod, taux_mod_areacell, keyerror_mod2 = \
+        Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, tauxbox, file_area=tauxareafilemod,
+                            name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    taux_obs, taux_obs_areacell, keyerror_obs2 = \
+        Read_data_mask_area(tauxfileobs, tauxnameobs, 'wind stress', metric, tauxbox, file_area=tauxareafileobs,
+                            name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs, name_mask=tauxlandmasknameobs,
+                            maskland=False, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, taux_mod, keyerror_mod3 = CheckTime(sst_mod, taux_mod, metric_name=metric, **kwargs)
+    sst_obs, taux_obs, keyerror_obs3 = CheckTime(sst_obs, taux_obs, metric_name=metric, **kwargs)
+
+    # Number of years
+    yearN_mod = sst_mod.shape[0] / 12
+    yearN_obs = sst_obs.shape[0] / 12
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        tauxRmse, tauxRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        keyerror = None
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, unneeded = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
+                                          compute_anom=False, **kwargs)
+        enso_obs, unneeded = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
+                                          compute_anom=False, **kwargs)
+        del sst_mod_areacell, sst_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(enso_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 Seasonal mean and anomalies
+        enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(enso_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. temporal TAUXA
+        # ------------------------------------------------
+        # 2.1 TAUXA in 'tauxbox' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=taux_mod_areacell, average='horizontal',
+                                        compute_anom=True, **kwargs)
+        taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=taux_obs_areacell, average='horizontal',
+                                          compute_anom=True, **kwargs)
+        del taux_mod_areacell, taux_obs_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape),
+                          'time1': '(model) ' + str(TimeBounds(taux_mod)),
+                          'time2': '(obs) ' + str(TimeBounds(taux_obs))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+        # Change units
+        taux_mod = taux_mod * 1e3
+        taux_obs = taux_obs * 1e3
+
+        # ------------------------------------------------
+        # 3. Regression map
+        # ------------------------------------------------
+        tauxts_mod = LinearRegressionTsAgainstTs(taux_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                 frequency=kwargs['frequency'], debug=debug)
+        tauxts_obs = LinearRegressionTsAgainstTs(taux_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                 frequency=kwargs['frequency'], debug=debug)
+        if debug is True:
+            dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxts_mod.getAxisList()]),
+                          'axes2': '(obs) ' + str([ax.id for ax in tauxts_obs.getAxisList()]),
+                          'shape1': '(model) ' + str(tauxts_mod.shape),
+                          'shape2': '(obs) ' + str(tauxts_obs.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+
+        # Computes the root mean square difference
+        tauxRmse = RmsAxis(tauxts_mod, tauxts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+
+        # Error on the metric
+        tauxRmseErr = None
+
+        # Dive down diagnostic
+        dive_down_diag = {'model': ArrayToList(tauxts_mod), 'observations': ArrayToList(tauxts_obs),
+                          'axis': list(tauxts_mod.getAxis(0)[:])}
+
+        if netcdf is True:
+            # Read file and select the right region
+            tauxmap_mod, tauxmap_mod_areacell, unneeded = \
+                Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, 'equatorial_pacific_LonRed',
+                                    file_area=tauxareafilemod, name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod,
+                                    name_mask=tauxlandmasknamemod, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+            tauxmap_obs, tauxmap_obs_areacell, unneeded = \
+                Read_data_mask_area(tauxfileobs, tauxnameobs, 'wind stress', metric, 'equatorial_pacific_LonRed',
+                                    file_area=tauxareafileobs, name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs,
+                                    name_mask=tauxlandmasknameobs, maskland=True, maskocean=False,
+                                    time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+            # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+            tauxmap_mod, unneeded = PreProcessTS(tauxmap_mod, '', areacell=tauxmap_mod_areacell, compute_anom=True,
+                                                 **kwargs)
+            tauxmap_obs, unneeded = PreProcessTS(tauxmap_obs, '', areacell=tauxmap_obs_areacell, compute_anom=True,
+                                                 **kwargs)
+            # Change units
+            tauxmap_mod = tauxmap_mod * 1e3
+            tauxmap_obs = tauxmap_obs * 1e3
+            del tauxmap_mod_areacell, tauxmap_obs_areacell
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxmap_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauxmap_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(tauxmap_mod.shape),
+                              'shape2': '(obs) ' + str(tauxmap_obs.shape),
+                              'time1': '(model) ' + str(TimeBounds(tauxmap_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(tauxmap_obs))}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                tauxmap_mod, tauxmap_obs, unneeded = \
+                    TwoVarRegrid(tauxmap_mod, tauxmap_obs, '', region='equatorial_pacific_LonRed',
+                                 **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxmap_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauxmap_obs.getAxisList()]),
+                                  'shape1': '(model) ' + str(tauxmap_mod.shape),
+                                  'shape2': '(obs) ' + str(tauxmap_obs.shape)}
+                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+            # Meridional average
+            tauxhov_mod = AverageMeridional(tauxmap_mod)
+            tauxhov_obs = AverageMeridional(tauxmap_obs)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxhov_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauxhov_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(tauxhov_mod.shape),
+                              'shape2': '(obs) ' + str(tauxhov_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            # Linear regression
+            tauxhov_mod = LinearRegressionTsAgainstTs(tauxhov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                      frequency=kwargs['frequency'], debug=debug)
+            tauxhov_obs = LinearRegressionTsAgainstTs(tauxhov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                      frequency=kwargs['frequency'], debug=debug)
+            if debug is True:
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxhov_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauxhov_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(tauxhov_mod.shape),
+                              'shape2': '(obs) ' + str(tauxhov_obs.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+            # Lists event years
+            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize, nino=False,
+                                          compute_season=False)
+            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize, nino=True,
+                                          compute_season=False)
+            if debug is True:
+                dict_debug = {'nina1': '(model) nbr(' + str(len(nina_years_mod)) + '): ' + str(nina_years_mod),
+                              'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
+                              'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
+                              'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            # composites
+            if len(nina_years_mod) > 0:
+                nina_taux_mod = Composite(taux_mod, nina_years_mod, kwargs['frequency'],
+                                          nbr_years_window=nbr_years_window)
+                nina_tauxhov_mod = Composite(tauxhov_mod, nina_years_mod, kwargs['frequency'],
+                                             nbr_years_window=nbr_years_window)
+            else:
+                nina_taux_mod = MyEmpty(taux_mod[:12 * nbr_years_window], time=True, time_id='months')
+                nina_tauxhov_mod = MyEmpty(tauxhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nino_years_mod) > 0:
+                nino_taux_mod = Composite(taux_mod, nino_years_mod, kwargs['frequency'],
+                                          nbr_years_window=nbr_years_window)
+                nino_tauxhov_mod = Composite(tauxhov_mod, nino_years_mod, kwargs['frequency'],
+                                             nbr_years_window=nbr_years_window)
+            else:
+                nino_taux_mod = MyEmpty(taux_mod[:12 * nbr_years_window], time=True, time_id='months')
+                nino_tauxhov_mod = MyEmpty(tauxhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nina_years_obs) > 0:
+                nina_taux_obs = Composite(taux_obs, nina_years_obs, kwargs['frequency'],
+                                          nbr_years_window=nbr_years_window)
+                nina_tauxhov_obs = Composite(tauxhov_obs, nina_years_obs, kwargs['frequency'],
+                                             nbr_years_window=nbr_years_window)
+            else:
+                nina_taux_obs = MyEmpty(taux_obs[:12 * nbr_years_window], time=True, time_id='months')
+                nina_tauxhov_obs = MyEmpty(tauxhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+            if len(nino_years_obs) > 0:
+                nino_taux_obs = Composite(taux_obs, nino_years_obs, kwargs['frequency'],
+                                          nbr_years_window=nbr_years_window)
+                nino_tauxhov_obs = Composite(tauxhov_obs, nino_years_obs, kwargs['frequency'],
+                                             nbr_years_window=nbr_years_window)
+            else:
+                nino_taux_obs = MyEmpty(taux_obs[:12 * nbr_years_window], time=True, time_id='months')
+                nino_tauxhov_obs = MyEmpty(tauxhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+            # save
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            my_thresh = 'std' if normalize is True else 'C'
+            my_units = '' if kwargs['normalization'] is True else '1e-3 N/m2'
+            dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': "time series of " + region_ev + " SSTA " + season_ev + " regressed against " +
+                                    tauxbox + " TAUXA during " + str(nbr_years_window) + " years (centered on ENSO)"}
+            dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': "time series of " + region_ev + " SSTA " + season_ev + " regressed against " +
+                                    tauxbox + " TAUXA during " + str(nbr_years_window) + " years (centered on ENSO)"}
+            dict3 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " + season_ev +
+                                    " regressed against equatorial Pacific TAUXA during " + str(nbr_years_window) +
+                                    " years (centered on ENSO)"}
+            dict4 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " + season_ev +
+                                    " regressed against equatorial Pacific TAUXA during " + str(nbr_years_window) +
+                                    " years (centered on ENSO)"}
+            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nina_years': str(nina_years_mod),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", TAUXA composited during La Nina events"}
+            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod),
+                     'nino_years': str(nino_years_mod),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", TAUXA composited during El Nino events"}
+            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nina_years': str(nina_years_obs),
+                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", TAUXA composited during La Nina events"}
+            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs),
+                     'nino_years': str(nino_years_obs),
+                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                    " during " + season_ev + ", TAUXA composited during El Nino events"}
+            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: tauxRmse,
+                     'metric_value_error_' + dataset2: tauxRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=tauxts_mod, var1_attributes=dict1, var1_name='sst_against_taux_ts__' + dataset1,
+                       var2=tauxts_obs, var2_attributes=dict2, var2_name='sst_against_taux_ts__' + dataset2,
+                       var3=tauxhov_mod, var3_attributes=dict3, var3_name='sst_against_taux_hov__' + dataset1,
+                       var4=tauxhov_obs, var4_attributes=dict4, var4_name='sst_against_taux_hov__' + dataset2,
+                       var5=nina_taux_mod, var5_attributes=dict5, var5_name='Nina_taux_ts__' + dataset1,
+                       var6=nina_tauxhov_mod, var6_attributes=dict5, var6_name='Nina_taux_hov__' + dataset1,
+                       var7=nino_taux_mod, var7_attributes=dict6, var7_name='Nino_taux_ts__' + dataset1,
+                       var8=nino_tauxhov_mod, var8_attributes=dict6, var8_name='Nino_taux_hov__' + dataset1,
+                       var9=nina_taux_obs, var9_attributes=dict7, var9_name='Nina_taux_ts__' + dataset2,
+                       var10=nina_tauxhov_obs, var10_attributes=dict7, var10_name='Nina_taux_hov__' + dataset2,
+                       var11=nino_taux_obs, var11_attributes=dict8, var11_name='Nino_taux_ts__' + dataset2,
+                       var12=nino_tauxhov_obs, var12_attributes=dict8, var12_name='Nino_taux_hov__' + dataset2,
+                       global_attributes=dict9)
+
+    # Create output
+    EnsoTauxMetric = {
+        'name': Name, 'value': tauxRmse, 'value_error': tauxRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return EnsoTauxMetric
 
 
 def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
