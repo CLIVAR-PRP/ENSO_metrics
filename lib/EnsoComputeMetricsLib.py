@@ -348,10 +348,16 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
                 metric_err = model_err + obs_err
             elif keyword == 'ratio':
                 # mathematical definition of the error on division
-                metric_err = float((obs * model_err + model * obs_err) / NUMPYsquare(obs))
+                if model is not None and obs is not None:
+                    metric_err = float((obs * model_err + model * obs_err) / NUMPYsquare(obs))
+                else:
+                    metric_err = None
             else:
                 # mathematical definition of the error on division
-                metric_err = float((obs * (model_err + obs_err) + (model-obs) * obs_err) / NUMPYsquare(obs))
+                if model is not None and obs is not None:
+                    metric_err = float((obs * (model_err + obs_err) + (model-obs) * obs_err) / NUMPYsquare(obs))
+                else:
+                    metric_err = None
         else:
             metric_err = None
     return metric, metric_err, description_metric

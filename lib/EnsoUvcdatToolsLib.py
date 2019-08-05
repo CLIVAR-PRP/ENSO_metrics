@@ -4,7 +4,6 @@ from copy import deepcopy
 from datetime import date
 from inspect import stack as INSPECTstack
 import ntpath
-from numpy import arange as NParange
 from numpy import array as NParray
 from numpy import exp as NPexp
 from numpy import histogram as NPhistogram
@@ -13,7 +12,6 @@ from numpy import nan as NPnan
 from numpy import nonzero as NPnonzero
 from numpy import ones as NPones
 from numpy import product as NPproduct
-from numpy import unravel_index as NPunravel_index
 from numpy import where as NPwhere
 from numpy.ma.core import MaskedArray as NPma__core__MaskedArray
 from os.path import isdir as OSpath_isdir
@@ -706,13 +704,10 @@ def annualcycle(tab):
     cyc = []
     for ii in range(12):
         tmp = tab.compress(months == (ii + 1), axis=0)
-        tmp_ax = CDMS2createAxis(range(len(tmp)), id='month')
-        tmp.setAxisList([tmp_ax] + axes[1:])
         tmp = MV2average(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(MV2array(range(12), dtype='f'), id='time')
-    time.units = "months since 0001-01-01"
+    time = CDMS2createAxis(range(12), id='months')
     moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     moy = moy.reorder(initorder)
     cdutil.setTimeBoundsMonthly(moy)
@@ -1133,7 +1128,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         else:
             tab_out = MV2zeros((nbr_years_window * 12, tab.shape[1], tab.shape[2]))
         tab_out = MV2masked_where(tab_out == 0, tab_out)
-        axis = CDMS2createAxis(MV2array(range(len(tab_out)), dtype='int32'), id='time')
+        axis = CDMS2createAxis(range(len(tab_out)), id='time')
         axis.units = units
         tab_out.setAxis(0, axis)
         for ii in range(len(tab)):
@@ -1189,7 +1184,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         composite = MV2array(composite)
         # axis list
         axis0 = CDMS2createAxis(MV2array(list_event_years, dtype='int32'), id='years')
-        axis1 = CDMS2createAxis(MV2array(range(len(composite[0])), dtype='int32'), id='months')
+        axis1 = CDMS2createAxis(range(len(composite[0])), id='months')
         axis1.units = units_out
         axes = [axis0, axis1]
         if tab.shape > 1:
@@ -1491,10 +1486,10 @@ def get_year_by_year(tab, frequency='monthly'):
         days = MV2array(list(tt.day for tt in time_ax))
         months = MV2array(list(tt.month for tt in time_ax))
         months = MV2array([(mm*100)+dd for dd, mm in zip(days, months)])
-        tmm = CDMS2createAxis(MV2array(range(365), dtype='int32'), id='days')
+        tmm = CDMS2createAxis(range(365), id='days')
     elif frequency == 'monthly':
         months = MV2array(list(tt.month for tt in time_ax))
-        tmm = CDMS2createAxis(MV2array(range(12), dtype='int32'), id='months')
+        tmm = CDMS2createAxis(range(12), id='months')
     else:
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     years = sorted(set(MV2array(list(tt.year for tt in time_ax))))
@@ -2466,13 +2461,10 @@ def SkewMonthly(tab):
     cyc = []
     for ii in range(12):
         tmp = tab.compress(months == (ii + 1), axis=0)
-        tmp_ax = CDMS2createAxis(range(len(tmp)), id='month')
-        tmp.setAxisList([tmp_ax] + axes[1:])
         tmp = SCIPYstats__skew(tmp)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
-    time.units = "months since 0001-01-01"
+    time = CDMS2createAxis(range(12), id='months')
     skew = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     skew = skew.reorder(initorder)
     cdutil.setTimeBoundsMonthly(skew)
@@ -2498,13 +2490,10 @@ def StdMonthly(tab):
     cyc = []
     for ii in range(12):
         tmp = tab.compress(months == (ii + 1), axis=0)
-        tmp_ax = CDMS2createAxis(range(len(tmp)), id='month')
-        tmp.setAxisList([tmp_ax] + axes[1:])
         tmp = Std(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
-    time.units = "months since 0001-01-01"
+    time = CDMS2createAxis(range(12), id='months')
     std = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     std = std.reorder(initorder)
     cdutil.setTimeBoundsMonthly(std)
@@ -2923,7 +2912,7 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     tab_yy_mm = Event_selection(y, frequency, nbr_years_window=nbr_years_window)
     myshape = [nbr_timestep] + [ss for ss in y.shape[1:]]
-    tmp_ax = CDMS2createAxis(range(nbr_timestep), id='month')
+    tmp_ax = CDMS2createAxis(range(nbr_timestep), id='months')
     slope_out = MV2zeros(myshape)
     slope_out.setAxisList([tmp_ax] + y.getAxisList()[1:])
     stderr_out = MV2zeros(myshape)
@@ -3235,7 +3224,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
     dSSTthf = MV2average(dSSTthf, axis=0)
     dSSToce = MV2average(dSSToce, axis=0)
     # axes
-    axes = [CDMS2createAxis(MV2array(range(-len(dSST)+1, 1)), id='months')]
+    axes = [CDMS2createAxis(MV2array(range(12-(len(dSST)+1), 12)), id='months')]
     if len(tab1.shape) > 1:
         axes = axes + tab1.getAxisList()[1:]
     dSST.setAxisList(axes)

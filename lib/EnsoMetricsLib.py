@@ -5613,7 +5613,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'axes2': '(ssh) ' + str([ax.id for ax in ssh.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(ssh) ' + str(ssh.shape),
-                          'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(ssh) ' + str(TimeBounds(ssh))}
+                          'time1': '(ssh) ' + str(TimeBounds(sst)), 'time2': '(ssh) ' + str(TimeBounds(ssh))}
             EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
         # Change units
         ssh = ssh * 1e2
@@ -7692,7 +7692,10 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
 
     # Define metric attributes
     Name = 'ENSO seasonality'
-    Units = 'C'
+    if kwargs['normalization']:
+        Units = ''
+    else:
+        Units = 'C/C'
     Method = 'Ratio between NDJ and MAM standard deviation ' + sstbox + ' sstA'
     Ref = 'Using CDAT std dev calculation'
     metric = 'EnsoSeasonality'
@@ -7818,18 +7821,19 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            my_units = '' if kwargs['normalization'] is True else 'C'
+            dict1 = {'units': my_units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "monthly standard deviation of " + sstbox + " sstA",
                      'diagnostic_value': ratioStd, 'diagnostic_value_error': ratio_std_err}
-            dict2 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': my_units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "zonal monthly standard deviation of equatorial_pacific sstA"}
-            dict3 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict3 = {'units': my_units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "zonal standard deviation of equatorial_pacific sstA (during NDJ)"}
-            dict4 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict4 = {'units': my_units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "zonal standard deviation of equatorial_pacific sstA (during MAM)"}
-            dict5 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict5 = {'units': my_units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "standard deviation of equatorial_pacific sstA (during NDJ)"}
-            dict6 = {'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict6 = {'units': my_units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': "standard deviation of equatorial_pacific sstA (during MAM)"}
             dict7 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}

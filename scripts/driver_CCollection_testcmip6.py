@@ -38,7 +38,7 @@ class bcolors:
 
 xmldir = OSenviron['XMLDIR']
 #netcdf_path = '/data/yplanton/Eval_IPSL'
-netcdf_path = '/data/yplanton/TMP'
+netcdf_path = '/data/yplanton/ENSO_metrics/v20190805'
 
 
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
@@ -48,6 +48,7 @@ def find_xml(name, frequency, variable, project='', experiment='', ensemble='', 
     else:
         file_name, file_area, file_land = find_xml_cmip(name, project, experiment, ensemble, frequency, realm, variable)
     return file_name, file_area, file_land
+
 
 def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
     try: pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project, rea=realm, var=variable)
@@ -71,6 +72,7 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
         file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble, realm=realm)
     file_name = OSpath__join(pathnc, filenc[0])
     return file_name, file_area, file_land
+
 
 def find_fx(model, project='', experiment='', ensemble='', realm=''):
     if project in ['CMIP5', 'CMIP6']:
@@ -97,6 +99,7 @@ def find_fx(model, project='', experiment='', ensemble='', realm=''):
     except: file_land = None
     return file_area, file_land
 
+
 def find_xml_fx(name, project='', experiment='', realm=''):
     list_obs = ReferenceObservations().keys()
     if name in list_obs:
@@ -108,6 +111,7 @@ def find_xml_fx(name, project='', experiment='', realm=''):
         file_land = OSpath__join(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_'
                                    + str(realm) + '_landmask.xml')
     return file_area, file_land
+
 
 def find_xml_obs(obs, frequency, variable):
     if obs == 'HadISST':
@@ -124,7 +128,8 @@ def find_xml_obs(obs, frequency, variable):
     file_area, file_land = find_fx(obs)
     return file_name, file_area, file_land
 
-def save_json(dict_in, json_name, metric=True):
+
+def save_json(dict_in, json_name, metric_only=True):
     # reshape dictionary
     liste = sorted(dict_in.keys())
     listm = sorted(dict_in[liste[0]]['value'].keys())
@@ -132,30 +137,42 @@ def save_json(dict_in, json_name, metric=True):
     for met in listm:
         dict1 = dict()
         for ens in liste:
-            if metric is True:
-                # metadata (nyears)
-                dict3 = dict()
-                for key4 in dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys():
-                    if key4 not in ['time_frequency', 'units', 'model', 'ref', 'method', 'method_nonlinearity', 'name']:
-                        dict3[key4] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key4]['nyears']
-                # metrics
-                dict4 = dict()
-                for key4 in dict_in[ens]['value'][met]['metric'].keys():
-                    tmp = dict_in[ens]['value'][met]['metric'][key4]['value']
-                    tmp_key = key4.replace("ref_", "")
-                    dict4[tmp_key] = {'metric':tmp, 'nyears_obs':dict3[tmp_key]}
-                    del tmp, tmp_key
-                dict1[ens] = dict4
-                del dict3, dict4
-            else:
-                # dive down diagnostics
-                for key4 in dict_in[ens]['value'][met]['diagnostic'].keys():
-                    tmp = dict_in[ens]['value'][met]['diagnostic'][key4]['value']
-                    if key4 == 'model':
-                        dict1[ens] = tmp
+            # metadata (nyears)
+            dict_meta = dict()
+            for key1 in dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys():
+                if key1 not in ['time_frequency', 'ref', 'method', 'method_nonlinearity', 'name']:
+                    if key1 == "units":
+                        dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]
                     else:
-                        dict1[key4] = tmp
+                        dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]['nyears']
+            if metric_only is True:
+                # metrics
+                dict2 = dict()
+                for key1 in dict_in[ens]['value'][met]['metric'].keys():
+                    tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
+                    tmp_key = key1.replace("ref_", "")
+                    dict2[tmp_key] = {'metric': tmp, 'nyears_obs': dict_meta[tmp_key]}
+                    del tmp, tmp_key
+            else:
+                # metrics
+                dict2 = {'metric': {}, 'diagnostic': {}}
+                for key1 in dict_in[ens]['value'][met]['metric'].keys():
+                    tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
+                    tmp_key = key1.replace("ref_", "")
+                    dict2['metric'][tmp_key] = {'value': tmp, 'nyears_obs': dict_meta[tmp_key]}
+                    del tmp, tmp_key
+                # dive down diagnostics
+                for key1 in dict_in[ens]['value'][met]['diagnostic'].keys():
+                    tmp = dict_in[ens]['value'][met]['diagnostic'][key1]['value']
+                    if key1 == 'model':
+                        dict2['diagnostic'][ens] = \
+                            {'value': tmp, 'nyears': dict_meta[key1], 'units': dict_meta['units']}
+                    else:
+                        dict2['diagnostic'][key1] = \
+                            {'value': tmp, 'nyears': dict_meta[key1], 'units': dict_meta['units']}
                     del tmp
+            dict1[ens] = dict2
+            del dict_meta, dict2
         dict_out[met] = dict1
         del dict1
     # save as json file
@@ -164,7 +181,7 @@ def save_json(dict_in, json_name, metric=True):
     return
 
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_tel'#'ENSO_proc'#'MC1'#
+mc_name = 'ENSO_test'#'ENSO_tel'#'ENSO_proc'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -201,6 +218,8 @@ elif mc_name == 'ENSO_tel':
     list_obs = ['ERA-Interim']#['ERA-Interim', 'HadISST', 'GPCPv2.3']
 elif mc_name == 'ENSO_proc':
     list_obs = ['ERA-Interim']#['ERA-Interim', 'HadISST', 'GPCPv2.3']
+elif mc_name == 'ENSO_test':
+    list_obs = ['AVISO', 'ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
 
 
@@ -263,7 +282,7 @@ list_models = ['CNRM-CM5']#['IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR']#['IP
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
-    list_ens = get_ensembles(exp=experiment, fre=frequency, mod=mod, pro=project, rea=realm)
+    list_ens = ['r1i1p1']#get_ensembles(exp=experiment, fre=frequency, mod=mod, pro=project, rea=realm)
     pattern_out = OSpath__join(netcdf_path, user_name + '_' + mc_name + '_' + mod + '_' + experiment)
     files_in = list(GLOBiglob(pattern_out + '*.json'))
     list_ens = list_ens[len(files_in):]
