@@ -4750,7 +4750,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # 4. Duration
         # ------------------------------------------------
         # 4.1 count the number of consecutive month above a threshold
-        duration = DurationEvent(sstts, 0, nino=True, debug=debug)
+        duration = float(DurationEvent(sstts, 0, nino=True, debug=debug))
 
         # Error on the metric
         duration_err = None
@@ -5286,7 +5286,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
     # Define metric attributes
     Name = 'Taux-Sst feedback (mu)'
-    Units = '10e-3 N/m2/C'
+    Units = '1e-3 N/m2/C'
     Method = 'Regression of ' + tauxbox + ' tauxA over ' + sstbox + ' sstA'
     Method_NL = 'The nonlinearity is the regression computed when sstA<0 minus the regression computed when sstA>0'
     Ref = 'Using CDAT regression calculation'
@@ -5410,7 +5410,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                      'description': dataset + "'s " + sstbox + " sstA", 'diagnostic_value': mu[0],
                      'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
                      'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
-            dict2 = {'units': '10e-3 N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': '1e-3 N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + tauxbox + " tauxA", 'diagnostic_value': mu[0],
                      'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2], 'slope_neg': muNeg[0],
                      'intercept_neg': muNeg[2], 'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
@@ -5861,7 +5861,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
 
     # Define metric attributes
     Name = 'Ssh-Taux feedback'
-    Units = '10e3 cm/N/m2'
+    Units = '1e3 cm/N/m2'
     Method = 'Regression of ' + sshbox + ' sshA over ' + tauxbox + ' tauxA'
     Method_NL = 'The nonlinearity is the regression computed when tauxA<0 minus the regression computed when tauxA>0'
     Ref = 'Using CDAT regression calculation'
@@ -5986,7 +5986,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                      'description': dataset + "'s " + sshbox + " sshA", 'diagnostic_value': fb[0],
                      'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2], 'slope_neg': fbNeg[0],
                      'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
-            dict2 = {'units': '10e-3 N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+            dict2 = {'units': '1e-3 N/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                      'description': dataset + "'s " + tauxbox + " tauxA", 'diagnostic_value': fb[0],
                      'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2], 'slope_neg': fbNeg[0],
                      'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
@@ -9545,15 +9545,15 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(prhov_mod.shape), 'shape2': '(obs) ' + str(prhov_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Linear regression
-            prhov_mod = LinearRegressionTsAgainstTs(prhov_mod, enso_mod, nbr_years_window, return_stderr=False,
-                                                    frequency=kwargs['frequency'], debug=debug)
-            prhov_obs = LinearRegressionTsAgainstTs(prhov_obs, enso_obs, nbr_years_window, return_stderr=False,
-                                                    frequency=kwargs['frequency'], debug=debug)
+            regprhov_mod = LinearRegressionTsAgainstTs(prhov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                       frequency=kwargs['frequency'], debug=debug)
+            regprhov_obs = LinearRegressionTsAgainstTs(prhov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                       frequency=kwargs['frequency'], debug=debug)
             if debug is True:
-                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prhov_mod.getAxisList()]),
-                              'axes2': '(obs) ' + str([ax.id for ax in prhov_obs.getAxisList()]),
-                              'shape1': '(model) ' + str(prhov_mod.shape),
-                              'shape2': '(obs) ' + str(prhov_obs.shape)}
+                dict_debug = {'axes1': '(model) ' + str([ax.id for ax in regprhov_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in regprhov_obs.getAxisList()]),
+                              'shape1': '(model) ' + str(regprhov_mod.shape),
+                              'shape2': '(obs) ' + str(regprhov_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
             # Lists event years
             nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize, nino=False,
@@ -9644,17 +9644,17 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                      'metric_value_error_' + dataset2: prRmseErr, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
             SaveNetcdf(file_name,
-                       var1=prts_mod, var1_attributes=dict1, var1_name='sst_against_pr_ts__' + dataset1,
-                       var2=prts_obs, var2_attributes=dict2, var2_name='sst_against_pr_ts__' + dataset2,
-                       var3=prhov_mod, var3_attributes=dict3, var3_name='sst_against_pr_hov__' + dataset1,
-                       var4=prhov_obs, var4_attributes=dict4, var4_name='sst_against_pr_hov__' + dataset2,
-                       var5=nina_pr_mod, var5_attributes=dict5, var5_name='Nina_pr_ts__' + dataset1,
-                       var6=nina_prhov_mod, var6_attributes=dict5, var6_name='Nina_pr_hov__' + dataset1,
-                       var7=nino_pr_mod, var7_attributes=dict6, var7_name='Nino_pr_ts__' + dataset1,
-                       var8=nino_prhov_mod, var8_attributes=dict6, var8_name='Nino_pr_hov__' + dataset1,
-                       var9=nina_pr_obs, var9_attributes=dict7, var9_name='Nina_pr_ts__' + dataset2,
+                       var1=prts_mod,        var1_attributes=dict1,  var1_name='sst_against_pr_ts__' + dataset1,
+                       var2=prts_obs,        var2_attributes=dict2,  var2_name='sst_against_pr_ts__' + dataset2,
+                       var3=regprhov_mod,    var3_attributes=dict3,  var3_name='sst_against_pr_hov__' + dataset1,
+                       var4=regprhov_obs,    var4_attributes=dict4,  var4_name='sst_against_pr_hov__' + dataset2,
+                       var5=nina_pr_mod,     var5_attributes=dict5,  var5_name='Nina_pr_ts__' + dataset1,
+                       var6=nina_prhov_mod,  var6_attributes=dict5,  var6_name='Nina_pr_hov__' + dataset1,
+                       var7=nino_pr_mod,     var7_attributes=dict6,  var7_name='Nino_pr_ts__' + dataset1,
+                       var8=nino_prhov_mod,  var8_attributes=dict6,  var8_name='Nino_pr_hov__' + dataset1,
+                       var9=nina_pr_obs,     var9_attributes=dict7,  var9_name='Nina_pr_ts__' + dataset2,
                        var10=nina_prhov_obs, var10_attributes=dict7, var10_name='Nina_pr_hov__' + dataset2,
-                       var11=nino_pr_obs, var11_attributes=dict8, var11_name='Nino_pr_ts__' + dataset2,
+                       var11=nino_pr_obs,    var11_attributes=dict8, var11_name='Nino_pr_ts__' + dataset2,
                        var12=nino_prhov_obs, var12_attributes=dict8, var12_name='Nino_pr_hov__' + dataset2,
                        global_attributes=dict9)
 
@@ -9948,10 +9948,10 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'shape1': '(model) ' + str(ssthov_mod.shape), 'shape2': '(obs) ' + str(ssthov_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Linear regression
-            ssthov_mod = LinearRegressionTsAgainstTs(ssthov_mod, enso_mod, nbr_years_window, return_stderr=False,
-                                                     frequency=kwargs['frequency'], debug=debug)
-            ssthov_obs = LinearRegressionTsAgainstTs(ssthov_obs, enso_obs, nbr_years_window, return_stderr=False,
-                                                     frequency=kwargs['frequency'], debug=debug)
+            regssthov_mod = LinearRegressionTsAgainstTs(ssthov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                        frequency=kwargs['frequency'], debug=debug)
+            regssthov_obs = LinearRegressionTsAgainstTs(ssthov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                        frequency=kwargs['frequency'], debug=debug)
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssthov_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in ssthov_obs.getAxisList()]),
@@ -10049,8 +10049,8 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             SaveNetcdf(file_name,
                        var1=sstts_mod, var1_attributes=dict1, var1_name='sst_against_sst_ts__' + dataset1,
                        var2=sstts_obs, var2_attributes=dict2, var2_name='sst_against_sst_ts__' + dataset2,
-                       var3=ssthov_mod, var3_attributes=dict3, var3_name='sst_against_sst_hov__' + dataset1,
-                       var4=ssthov_obs, var4_attributes=dict4, var4_name='sst_against_sst_hov__' + dataset2,
+                       var3=regssthov_mod, var3_attributes=dict3, var3_name='sst_against_sst_hov__' + dataset1,
+                       var4=regssthov_obs, var4_attributes=dict4, var4_name='sst_against_sst_hov__' + dataset2,
                        var5=nina_sst_mod, var5_attributes=dict5, var5_name='Nina_sst_ts__' + dataset1,
                        var6=nina_ssthov_mod, var6_attributes=dict5, var6_name='Nina_sst_hov__' + dataset1,
                        var7=nino_sst_mod, var7_attributes=dict6, var7_name='Nino_sst_ts__' + dataset1,
@@ -10404,10 +10404,10 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'shape2': '(obs) ' + str(tauxhov_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Linear regression
-            tauxhov_mod = LinearRegressionTsAgainstTs(tauxhov_mod, enso_mod, nbr_years_window, return_stderr=False,
-                                                      frequency=kwargs['frequency'], debug=debug)
-            tauxhov_obs = LinearRegressionTsAgainstTs(tauxhov_obs, enso_obs, nbr_years_window, return_stderr=False,
-                                                      frequency=kwargs['frequency'], debug=debug)
+            regtauxhov_mod = LinearRegressionTsAgainstTs(tauxhov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                                         frequency=kwargs['frequency'], debug=debug)
+            regtauxhov_obs = LinearRegressionTsAgainstTs(tauxhov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                                         frequency=kwargs['frequency'], debug=debug)
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxhov_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in tauxhov_obs.getAxisList()]),
@@ -10505,8 +10505,8 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             SaveNetcdf(file_name,
                        var1=tauxts_mod, var1_attributes=dict1, var1_name='sst_against_taux_ts__' + dataset1,
                        var2=tauxts_obs, var2_attributes=dict2, var2_name='sst_against_taux_ts__' + dataset2,
-                       var3=tauxhov_mod, var3_attributes=dict3, var3_name='sst_against_taux_hov__' + dataset1,
-                       var4=tauxhov_obs, var4_attributes=dict4, var4_name='sst_against_taux_hov__' + dataset2,
+                       var3=regtauxhov_mod, var3_attributes=dict3, var3_name='sst_against_taux_hov__' + dataset1,
+                       var4=regtauxhov_obs, var4_attributes=dict4, var4_name='sst_against_taux_hov__' + dataset2,
                        var5=nina_taux_mod, var5_attributes=dict5, var5_name='Nina_taux_ts__' + dataset1,
                        var6=nina_tauxhov_mod, var6_attributes=dict5, var6_name='Nina_taux_hov__' + dataset1,
                        var7=nino_taux_mod, var7_attributes=dict6, var7_name='Nino_taux_ts__' + dataset1,

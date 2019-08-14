@@ -1,8 +1,4 @@
 # -*- coding:UTF-8 -*-
-
-# ---------------------------------------------------#
-# Import the right package
-# ---------------------------------------------------#
 from copy import deepcopy
 from inspect import stack as INSPECTstack
 from math import ceil as MATHceil
@@ -10,27 +6,74 @@ from math import floor as MATHfloor
 from numpy import arange as NUMPYarange
 from numpy import around as NUMPYaround
 from numpy import array as NUMPYarray
+from numpy.ma import masked_invalid as NUMPYma__masked_invalid
+# xarray based functions
+from xarray import open_dataset
 # ENSO_metrics functions
-import EnsoErrorsWarnings
 from EnsoCollectionsLib import ReferenceObservations
+import EnsoErrorsWarnings
 
+
+calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 observations = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
 
 
-def format_scale(scale):
-    if scale < 0.1 or scale > 10:
-        scale = "{0:.0e}".format(scale)
-    elif scale == 0.1:
-        scale = "{0:.1f}".format(scale)
+def create_labels(label_name, label_ticks):
+    if label_name == "months":
+        if len(label_ticks) > 40:
+            mult = 6
+        elif len(label_ticks) > 10:
+            mult = 4
+        else:
+            mult = 3
+        label_ticks = [ii for ii in label_ticks if ii % mult == 0]
+        label = [calendar_months[ii % 12] for ii in label_ticks]
+    elif label_name == "latitude":
+        if len(label_ticks) < 40:
+            mult = 10
+        else:
+            mult = 20
+        label_ticks = [ii for ii in label_ticks if ii % mult == 0]
+        if min(label_ticks) < 0 and max(label_ticks) > 0 and 0 not in label_ticks:
+            label_ticks = NUMPYarray(label_ticks)
+            while 0 not in label_ticks:
+                label_ticks = label_ticks + 1
+        label = [str(abs(int(ii))) + '$^\circ$S' if ii < 0 else (str(abs(int(ii))) + '$^\circ$N' if ii > 0 else 'eq')
+                 for ii in label_ticks]
+    elif label_name == "longitude":
+        if len(label_ticks) < 200:
+            mult = 40
+        else:
+            mult = 90
+        label_ticks = [ii for ii in label_ticks if ii % mult == 0]
+        if min(label_ticks) < 180 and max(label_ticks) > 180 and 180 not in label_ticks:
+            label_ticks = NUMPYarray(label_ticks)
+            while 180 not in label_ticks:
+                label_ticks = label_ticks + 10
+        label = [str(int(ii)) + "$^\circ$E" if ii < 180 else (
+            str(abs(int(ii) - 360)) + "$^\circ$W" if ii > 180 else "180$^\circ$") for ii in label_ticks]
+    return label_ticks, label
+
+
+def format_metric(metric_type, metric_value, metric_units):
+    if metric_type in ["CORR", "RMSE"]:
+        mytext = deepcopy(metric_type)
     else:
-        scale = str(int(scale))
-    return scale
+        if metric_type == "difference":
+            mytext = "model-ref"
+        elif metric_type == "ratio":
+            mytext = r"$\frac{model}{ref}$"
+        else:
+            mytext = r"$\frac{model-ref}{ref}$"
+    return mytext + ": " + "{0:.2f}".format(metric_value) + " " + metric_units
 
 
 def minmax_plot(tab, metric=False):
     # define minimum and maximum
-    mini, maxi = min(tab), max(tab)
-    if realmini < 0 and maxi > 0:
+    tmp = [NUMPYma__masked_invalid(NUMPYarray(tmp)) for tmp in tab]
+    tmp = [tt.min() for tt in tmp] + [tt.max() for tt in tmp]
+    mini, maxi = min(tmp), max(tmp)
+    if mini < 0 and maxi > 0:
         locmaxi = max([abs(mini), abs(maxi)])
         locmini = -deepcopy(locmaxi)
     else:
@@ -108,19 +151,64 @@ def minmax_plot(tab, metric=False):
     return tick_labels
 
 
-def read_obs(xml, variables_in_xml, metrics_variables, varname, model, dict_metric):
-    if len(metrics_variables) == 1:
+def read_diag(dict_diag, dict_metric, model, reference, metric_variables):
+    diag_mod = dict_diag[model]
+    if reference in dict_diag.keys():
+        obs = deepcopy(reference)
+    else:
+        if len(metric_variables) == 1:
+            for obs in observations:
+                if obs in dict_diag.keys():
+                    break
+        else:
+            for obs1 in observations:
+                for obs2 in observations:
+                    obs = obs1 + "_" + obs2
+                    if obs in dict_diag.keys():
+                        break
+    diag_obs = dict_diag[obs]
+    metric_value = dict_metric[obs]  # ["ref_" + obs]
+    return diag_mod, diag_obs, metric_value, obs
+
+
+def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric):
+    if len(metric_variables) == 1:
         for obs in observations:
-            newvar = varname.replace(model, obs)
+            newvar = varname + obs
             if newvar in variables_in_xml:
                 break
     else:
         for obs1 in observations:
             for obs2 in observations:
                 obs = obs1 + "_" + obs2
-                newvar = varname.replace(model, obs)
+                newvar = varname + obs
                 if newvar in variables_in_xml:
                     break
     tab_out = xml[newvar]
-    metric_value = dict_metric["ref_" + obs]["value"]
-    return tab_out, metric_value
+    metric_value = dict_metric[obs]#["ref_" + obs]
+    return tab_out, metric_value, obs
+
+
+def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric):
+    if isinstance(var_to_read, str):
+        var_to_read = [var_to_read]
+    ff = open_dataset(filename_nc, decode_times=False)
+    variables_in_file = sorted([var for var in ff.keys()], key=lambda v: v.upper())
+    # read model
+    tab_mod = list()
+    for var in var_to_read:
+        tab_mod.append(ff[var + model])
+    # reab obs
+    tab_obs = list()
+    for var in var_to_read:
+        varobs = var + reference
+        if varobs in variables_in_file:
+            tab = ff[varobs]
+            metval = dict_metric[reference]#["ref_" + reference]
+            obs = deepcopy(reference)
+        else:
+            tab, metval, obs = read_obs(ff, variables_in_file, metric_variables, var, dict_metric)
+        tab_obs.append(tab)
+    ff.close()
+    return tab_mod, tab_obs, metval, obs
+

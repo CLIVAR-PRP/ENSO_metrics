@@ -707,10 +707,11 @@ def annualcycle(tab):
         tmp = MV2average(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(range(12), id='months')
+    time = CDMS2createAxis(range(12), id='time')
     moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     moy = moy.reorder(initorder)
-    cdutil.setTimeBoundsMonthly(moy)
+    time = CDMS2createAxis(range(12), id='months')
+    moy.setAxis(get_num_axis(moy, 'time'), time)
     return moy
 
 
@@ -2464,10 +2465,11 @@ def SkewMonthly(tab):
         tmp = SCIPYstats__skew(tmp)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(range(12), id='months')
+    time = CDMS2createAxis(range(12), id='time')
     skew = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     skew = skew.reorder(initorder)
-    cdutil.setTimeBoundsMonthly(skew)
+    time = CDMS2createAxis(range(12), id='months')
+    skew.setAxis(get_num_axis(skew, 'time'), time)
     return skew
 
 
@@ -2493,10 +2495,11 @@ def StdMonthly(tab):
         tmp = Std(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(range(12), id='months')
+    time = CDMS2createAxis(range(12), id='time')
     std = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     std = std.reorder(initorder)
-    cdutil.setTimeBoundsMonthly(std)
+    time = CDMS2createAxis(range(12), id='months')
+    std.setAxis(get_num_axis(std, 'time'), time)
     return std
 
 

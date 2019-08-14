@@ -16,7 +16,9 @@ def DefaultArgValues(arg):
         'normalization': False, 'project_interpreter': 'CMIP', 'regridding': False, 'smoothing': False,
         'treshold_ep_ev': -140, 'time_bounds': None, 'time_bounds_mod': None, 'time_bounds_obs': None,
     }
-    try: default[arg]
-    except: UnknownKeyArg(arg, INSPECTstack())
+    try:
+        default[arg]
+    except:
+        UnknownKeyArg(arg, INSPECTstack())
     return default[arg]
 # ---------------------------------------------------------------------------------------------------------------------#

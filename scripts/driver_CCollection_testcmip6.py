@@ -145,13 +145,14 @@ def save_json(dict_in, json_name, metric_only=True):
                         dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]
                     else:
                         dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]['nyears']
+            units = dict_in['metadata']['metrics'][met]['metric']['units']
             if metric_only is True:
                 # metrics
                 dict2 = dict()
                 for key1 in dict_in[ens]['value'][met]['metric'].keys():
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
                     tmp_key = key1.replace("ref_", "")
-                    dict2[tmp_key] = {'metric': tmp, 'nyears_obs': dict_meta[tmp_key]}
+                    dict2[tmp_key] = {'metric': tmp, 'nyears_obs': dict_meta[tmp_key], 'units': units}
                     del tmp, tmp_key
             else:
                 # metrics
@@ -159,7 +160,7 @@ def save_json(dict_in, json_name, metric_only=True):
                 for key1 in dict_in[ens]['value'][met]['metric'].keys():
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
                     tmp_key = key1.replace("ref_", "")
-                    dict2['metric'][tmp_key] = {'value': tmp, 'nyears_obs': dict_meta[tmp_key]}
+                    dict2['metric'][tmp_key] = {'value': tmp, 'nyears_obs': dict_meta[tmp_key], 'units': units}
                     del tmp, tmp_key
                 # dive down diagnostics
                 for key1 in dict_in[ens]['value'][met]['diagnostic'].keys():
@@ -177,7 +178,7 @@ def save_json(dict_in, json_name, metric_only=True):
         del dict1
     # save as json file
     with open(json_name + '.json', 'w') as outfile:
-        json.dump(dict_out, outfile)
+        json.dump(dict_out, outfile, sort_keys=True)
     return
 
 # metric collection
@@ -351,10 +352,10 @@ for mod in list_models:
         # Computes the metric collection
         netcdf_name = user_name + '_' + mc_name + '_' + mod + '_' + experiment + '_' + ens
         netcdf = pattern_out + '_' + ens #OSpath__join(netcdf_path, netcdf_name)
-        dict_ens[mod + '__' + ens], dict_ens_dive[mod + '__' + ens] =\
+        dict_ens[mod + '_' + ens], dict_ens_dive[mod + '_' + ens] =\
             ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
         # save json
-        save_json({mod + '__' + ens: dict_ens[mod + '__' + ens]}, netcdf, metric=True)
+        save_json({mod + '_' + ens: dict_ens[mod + '_' + ens]}, netcdf, metric_only=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, files_in, list_ens, pattern_out
