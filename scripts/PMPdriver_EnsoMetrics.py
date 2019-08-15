@@ -188,9 +188,6 @@ for mod in models:
             #
             if mip == 'cmip5': realization = 'r1i1p1'
             elif mip == 'cmip6': realization = 'r1i1p1f1'
-            # -- TEMPORARY --
-            if mip =='cmip6' and mod in ['CESM2-WACCM']: realization = 'r2i1p1f1'
-            # -- TEMPORARY END --
             file_name = modpath(mip=mip, model=mod, realization=realization, variable=var0)
             file_areacell = None ## temporary for now
             file_landmask = modpath_lf(mip=mip, model=mod)
