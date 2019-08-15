@@ -227,11 +227,14 @@ for mod in models:
         dictDatasets = {'model': dict_mod, 'observations': dict_obs}
         # regridding dictionary (only if you want to specify the regridding)
         dict_regrid = {}
-        # dict_regrid = {
-        #     'regridding': {
-        #         'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-        #         'newgrid_name': 'generic 1x1deg'},
-        # }
+        """
+        # Usage of dict_regrid (select option as below):
+        dict_regrid = {
+            'regridding': {
+                'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                'newgrid_name': 'generic 1x1deg'},
+        }
+        """
         # Computes the metric collection
         netcdf_name = StringConstructor(param.netcdf_name)(model=mod) 
         netcdf = os.path.join(netcdf_path, netcdf_name)
