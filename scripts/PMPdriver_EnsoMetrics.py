@@ -206,7 +206,7 @@ for mod in models:
     
             if isinstance(var_in_file, list):
                 list_files = list()
-                list_files = [modpath(model=mod, variable=var1) for var1 in var_in_file]
+                list_files = [modpath(mip=mip, model=mod, realization=realization, variable=var1) for var1 in var_in_file]
                 list_areacell = [file_areacell for var1 in var_in_file]
                 list_name_area = [areacell_in_file for var1 in var_in_file]
                 list_landmask = [modpath_lf(mip=mip, model=mod) for var1 in var_in_file]
