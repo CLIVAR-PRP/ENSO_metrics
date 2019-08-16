@@ -108,9 +108,9 @@ def find_xml_fx(name, project='', experiment='', realm=''):
         file_land = OSpath__join(xmldir, 'obs_' + str(name) + '_landmask.xml')
     else:
         file_area = OSpath__join(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_'
-                                   + str(realm) + '_areacell.xml')
+                                 + str(realm) + '_areacell.xml')
         file_land = OSpath__join(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_'
-                                   + str(realm) + '_landmask.xml')
+                                 + str(realm) + '_landmask.xml')
     return file_area, file_land
 
 

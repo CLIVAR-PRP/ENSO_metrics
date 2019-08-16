@@ -3227,7 +3227,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
     dSSTthf = MV2average(dSSTthf, axis=0)
     dSSToce = MV2average(dSSToce, axis=0)
     # axes
-    axes = [CDMS2createAxis(MV2array(range(12-(len(dSST)+1), 12)), id='months')]
+    axes = [CDMS2createAxis(MV2array(range(12-len(dSST), 12)), id='months')]
     if len(tab1.shape) > 1:
         axes = axes + tab1.getAxisList()[1:]
     dSST.setAxisList(axes)
