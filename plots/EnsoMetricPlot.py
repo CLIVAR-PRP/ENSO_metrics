@@ -8,19 +8,19 @@ from EnsoPlotTemplate import my_boxplot, my_curve, my_dotplot, my_hovmoeller, my
 dict_plot = {"boxplot": my_boxplot, "curve": my_curve, "dot": my_dotplot, "hovmoeller": my_hovmoeller, "map": my_map,
              "scatterplot": my_scatterplot}
 
-def main_plotter(metric_collection, metric, model, experiment, member, filename_nc, diagnostic_values,
+def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values,
                  diagnostic_units, metric_values, metric_units, path_png=''):
     dict_param = plot_param(metric_collection, metric)
     list_var = dict_param['metric_variables']
     met_type = dict_param['metric_computation']
     reference = dict_param['metric_reference']
     dict_reg = dict_param['metric_regions']
-    pattern = metric_collection + "_" + metric + "_" + model + "_" + experiment + "_" + member
+    pattern = metric_collection + "_" + metric + "_" + experiment + "_" + model
     # diagnostic
     dict_diag = dict_param['diagnostic']
     fig_name = OSpath__join(path_png, pattern + "_diagnostic")
     dict_plot[dict_diag['plot_type']](
-        model + "_" + member, filename_nc, dict_diag, reference, list_var, fig_name, metric_type=met_type,
+        model, filename_nc, dict_diag, reference, list_var, fig_name, metric_type=met_type,
         metric_values=metric_values, metric_units=metric_units, diagnostic_values=diagnostic_values,
         diagnostic_units=diagnostic_units, regions=dict_reg)
     # dive downs
@@ -29,6 +29,6 @@ def main_plotter(metric_collection, metric, model, experiment, member, filename_
         dict_diag = dict_param[dd]
         fig_name = OSpath__join(path_png, pattern+ "_divedown" + str(ii+1).zfill(2))
         dict_plot[dict_diag['plot_type']](
-            model + "_" + member, filename_nc, dict_diag, reference, list_var, fig_name, metric_type=None,
+            model, filename_nc, dict_diag, reference, list_var, fig_name, metric_type=None,
             metric_values=metric_values, metric_units=metric_units, diagnostic_values=diagnostic_values,
             diagnostic_units=diagnostic_units, regions=dict_reg)

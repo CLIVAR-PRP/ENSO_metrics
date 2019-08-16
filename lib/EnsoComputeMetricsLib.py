@@ -22,8 +22,8 @@ from KeyArgLib import DefaultArgValues
 #
 # Computation of the metric collection
 #
-def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False, netcdf=False,
-                      netcdf_name=''):
+def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding={}, debug=False, dive_down=False,
+                      netcdf=False, netcdf_name=''):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -97,11 +97,11 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
                 'metrics': {
                     'metric1': {
                         'metric_values': {
-                            'ref_obsName1': {
+                            'obsName1': {
                                 'value': 'value of the metric',
                                 'value_error': 'estimation of the error on the metric',
                             },
-                            'ref_obsName2': {'value': val, 'value_error': err},
+                            'obsName2': {'value': val, 'value_error': err},
                             ...
                         },
                         'information about the metric': 'description of how this metric if computed from model and
@@ -148,7 +148,6 @@ def ComputeCollection(metricCollection, dictDatasets, user_regridding={}, debug=
         list_variables = dict_m[metric]['variables']
         dict_regions = dict_m[metric]['regions']
         # model name, file, variable name in file
-        modelName = dictDatasets['model'].keys()[0]
         try:
             modelFile1 = dictDatasets['model'][modelName][list_variables[0]]['path + filename']
         except:
@@ -605,30 +604,30 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         for obs in diagnostic1.keys():
             # puts metric values in its proper dictionary
             if 'value' in diagnostic1[obs].keys():
-                dict_metric_val['ref_' + obs] = {
+                dict_metric_val[obs] = {
                     'value': diagnostic1[obs]['value'], 'value_error': diagnostic1[obs]['value_error']}
-                dict_diagnostic['model'] = {'value': None, 'value_error': None}
+                dict_diagnostic[modelName] = {'value': None, 'value_error': None}
                 dict_diagnostic[obs] = {'value': None, 'value_error': None}
             else:
                 multimetric = True
                 lkeys = list(set([key.split('__')[0] for key in diagnostic1[obs].keys() if 'value' in key]))
                 for key in lkeys:
                     try:
-                        dict_metric_val['ref_' + obs]
+                        dict_metric_val[obs]
                     except:
-                        dict_metric_val['ref_' + obs] = {key + '__value': diagnostic1[obs][key + '__value'],
+                        dict_metric_val[obs] = {key + '__value': diagnostic1[obs][key + '__value'],
                                                          key + '__value_error': diagnostic1[obs][key + '__value_error']}
-                        dict_diagnostic['model'] = {key + '__value': None, key + '__value_error': None}
+                        dict_diagnostic[modelName] = {key + '__value': None, key + '__value_error': None}
                         dict_diagnostic[obs] = {key + '__value': None, key + '__value_error': None}
                     else:
-                        dict_metric_val['ref_' + obs][key + '__value'] = diagnostic1[obs][key + '__value']
-                        dict_metric_val['ref_' + obs][key + '__value_error'] = diagnostic1[obs][key + '__value_error']
-                        dict_diagnostic['model'][key + '__value'] = None
-                        dict_diagnostic['model'][key + '__value_error'] = None
+                        dict_metric_val[obs][key + '__value'] = diagnostic1[obs][key + '__value']
+                        dict_metric_val[obs][key + '__value_error'] = diagnostic1[obs][key + '__value_error']
+                        dict_diagnostic[modelName][key + '__value'] = None
+                        dict_diagnostic[modelName][key + '__value_error'] = None
                         dict_diagnostic[obs][key + '__value'] = None
                         dict_diagnostic[obs][key + '__value_error'] = None
             if 'dive_down_diag' in diagnostic1[obs].keys():
-                dict_dive_down['model'] = diagnostic1[obs]['dive_down_diag']['model']
+                dict_dive_down[modelName] = diagnostic1[obs]['dive_down_diag']['model']
                 dict_dive_down[obs] = diagnostic1[obs]['dive_down_diag']['observations']
                 dict1 = {}
                 for elt in diagnostic1[obs]['dive_down_diag'].keys():
@@ -637,12 +636,12 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 dict_dive_down_metadata[obs] = dict1
                 del dict1
             # puts diagnostic metadata in its proper dictionary
-            dict_diagnostic_metadata['model'] = {'name': modelName, 'nyears': diagnostic1[obs]['nyears_model'],
-                                                 'time_period': diagnostic1[obs]['time_period_model']}
+            dict_diagnostic_metadata[modelName] = {'name': modelName, 'nyears': diagnostic1[obs]['nyears_model'],
+                                                   'time_period': diagnostic1[obs]['time_period_model']}
             dict_diagnostic_metadata[obs] = {'name': obs, 'nyears': diagnostic1[obs]['nyears_observations'],
                                              'time_period': diagnostic1[obs]['time_period_observations']}
             if 'events_model' in diagnostic1[obs].keys():
-                dict_diagnostic_metadata['model']['events'] = diagnostic1[obs]['events_model']
+                dict_diagnostic_metadata[modelName]['events'] = diagnostic1[obs]['events_model']
                 dict_diagnostic_metadata[obs]['events'] = diagnostic1[obs]['events_observations']
         units = diagnostic1[obs]['units']
         diagnostic1 = diagnostic1[obs]
@@ -674,26 +673,26 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             "unknown metric name: " + str(metric)]
             EnsoErrorsWarnings.MyError(list_strings)
         # puts metric / diagnostic values in its proper dictionary
-        dict_diagnostic['model'] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
+        dict_diagnostic[modelName] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
         if 'nonlinearity' in diagnostic1.keys():
-            dict_diagnostic['model']['nonlinearity'] = diagnostic1['nonlinearity']
-            dict_diagnostic['model']['nonlinearity_error'] = diagnostic1['nonlinearity_error']
+            dict_diagnostic[modelName]['nonlinearity'] = diagnostic1['nonlinearity']
+            dict_diagnostic[modelName]['nonlinearity_error'] = diagnostic1['nonlinearity_error']
         if 'dive_down_diag' in diagnostic1.keys():
-            dict_dive_down['model'] = diagnostic1['dive_down_diag']['value']
+            dict_dive_down[modelName] = diagnostic1['dive_down_diag']['value']
             for elt in diagnostic1['dive_down_diag'].keys():
                 if elt not in ['value']:
                     try:
-                        dict_dive_down_metadata['model']
+                        dict_dive_down_metadata[modelName]
                     except:
-                        dict_dive_down_metadata['model'] = {elt: diagnostic1['dive_down_diag'][elt]}
+                        dict_dive_down_metadata[modelName] = {elt: diagnostic1['dive_down_diag'][elt]}
                     else:
-                        dict_dive_down_metadata['model'][elt] = diagnostic1['dive_down_diag'][elt]
+                        dict_dive_down_metadata[modelName][elt] = diagnostic1['dive_down_diag'][elt]
         # puts diagnostic metadata in its proper dictionary
-        dict_diagnostic_metadata['model'] = {
+        dict_diagnostic_metadata[modelName] = {
             'name': modelName, 'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
         }
         if 'events_model' in diagnostic1.keys():
-            dict_diagnostic_metadata['model']['events'] = diagnostic1['events']
+            dict_diagnostic_metadata[modelName]['events'] = diagnostic1['events']
         #
         # observations diag
         #
@@ -727,7 +726,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             metric_val, metric_err, description_metric = MathMetriComputation(
                 diagnostic1['value'], diagnostic1['value_error'], obs=diag_obs[obs]['value'],
                 obs_err=diag_obs[obs]['value_error'], keyword=keyarg['metric_computation'])
-            dict_metric_val['ref_' + obs] = {'value': metric_val, 'value_error': metric_err}
+            dict_metric_val[obs] = {'value': metric_val, 'value_error': metric_err}
             # puts metric / diagnostic values in its proper dictionary
             dict_diagnostic[obs] = {'value': diag_obs[obs]['value'], 'value_error': diag_obs[obs]['value_error']}
             if 'nonlinearity' in diag_obs[obs].keys():

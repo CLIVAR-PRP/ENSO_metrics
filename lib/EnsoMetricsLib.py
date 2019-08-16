@@ -15255,7 +15255,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     Method = "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh + " during " + season_ev +\
              ", zonal SSTA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) + "]), the zonal SSTA maximum " +\
              "is located for each event, the diversity is the interquartile range (IQR = Q3 - Q1)"
-    Units = 'longitude (E)'
+    Units = 'long'
     Ref = 'Using CDAT regridding'
     metric = 'NinoSstDiversity'
     if metname == '':

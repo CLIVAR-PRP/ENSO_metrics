@@ -12,8 +12,9 @@ user_name = GETPASSgetuser()
 
 # ENSO_metrics package
 # set new path where to find programs
-sys.path.insert(0, "/home/" + user_name + "/Test_MC3/ENSO_metrics/lib")
-sys.path.insert(1, "/home/" + user_name + "/Test_MC3/ENSO_metrics/scripts")
+sys.path.insert(0, "/home/" + user_name + "/Test001/ENSO_metrics/lib")
+sys.path.insert(0, "/home/" + user_name + "/Test001/ENSO_metrics/plots")
+sys.path.insert(1, "/home/" + user_name + "/Test001/ENSO_metrics/scripts")
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import ComputeCollection
 
@@ -145,7 +146,7 @@ def save_json(dict_in, json_name, metric_only=True):
                         dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]
                     else:
                         dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]['nyears']
-            units = dict_in['metadata']['metrics'][met]['metric']['units']
+            units = dict_in[ens]['metadata']['metrics'][met]['metric']['units']
             if metric_only is True:
                 # metrics
                 dict2 = dict()
@@ -182,7 +183,7 @@ def save_json(dict_in, json_name, metric_only=True):
     return
 
 # metric collection
-mc_name = 'ENSO_test'#'ENSO_tel'#'ENSO_proc'#'MC1'#
+mc_name = 'ENSO_perf'#'ENSO_tel'#'ENSO_proc'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -286,7 +287,7 @@ for mod in list_models:
     list_ens = ['r1i1p1']#get_ensembles(exp=experiment, fre=frequency, mod=mod, pro=project, rea=realm)
     pattern_out = OSpath__join(netcdf_path, user_name + '_' + mc_name + '_' + mod + '_' + experiment)
     files_in = list(GLOBiglob(pattern_out + '*.json'))
-    list_ens = list_ens[len(files_in):]
+    #list_ens = list_ens[len(files_in):]
     dict_ens, dict_ens_dive = dict(), dict()
     for ens in list_ens:
         dict_mod = {mod + '_' + ens: {}}
@@ -353,9 +354,11 @@ for mod in list_models:
         netcdf_name = user_name + '_' + mc_name + '_' + mod + '_' + experiment + '_' + ens
         netcdf = pattern_out + '_' + ens #OSpath__join(netcdf_path, netcdf_name)
         dict_ens[mod + '_' + ens], dict_ens_dive[mod + '_' + ens] =\
-            ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=False)
+            ComputeCollection(mc_name, dictDatasets, mod + '_' + ens, netcdf=True, netcdf_name=netcdf, debug=False)
         # save json
         save_json({mod + '_' + ens: dict_ens[mod + '_' + ens]}, netcdf, metric_only=True)
+        with open(netcdf + '_raw.json', 'w') as outfile:
+            json.dump(dict_ens[mod + '_' + ens], outfile, sort_keys=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, files_in, list_ens, pattern_out

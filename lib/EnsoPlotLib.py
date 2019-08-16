@@ -746,7 +746,7 @@ plot_parameters = {
         'dive_down02': {
             'plot_type': 'curve',
             'nbr_panel': 1,
-            'title': "ENSO's SSTA life-cycle",
+            'title': "ENSO's SSTA pattern",
             'varpattern': ['Nina_sst_lon__', 'Nino_sst_lon__'],
             'colors': {"model": ["blue", "red"], "reference": ["blue", "red"]},
             'linestyles': {"model": ["-", "-"], "reference": ["-.", "-."]},
@@ -822,7 +822,7 @@ plot_parameters = {
             'plot_type': 'hovmoeller',
             'nbr_panel': 4,
             'colorbar': dict_colorbar['anomalies'],
-            'label': dict_label['SSTA'],
+            'label': dict_label['SKEW'],
             'title': ['La Nina SSTA', 'El Nino SSTA'],
             'varpattern': ['Nina_sst_hov__', 'Nino_sst_hov__'],
             'xname': 'longitude',
@@ -959,6 +959,68 @@ plot_parameters = {
             'zname': 'SSTA skew',
         },
     },
+    'NinaSstDur': {
+        'netcdf_variables': ['Nina_duration__'],
+        'diagnostic': {
+            'plot_type': 'dot',
+            'nbr_panel': 1,
+            'title': 'La Nina duration',
+            'varpattern': 'diagnostic',
+            'yname': 'duration (SSTA<-0.5)',
+        },
+        'dive_down01': {
+            'plot_type': 'boxplot',
+            'nbr_panel': 1,
+            'title': 'La Nina duration',
+            'varpattern': 'Nina_duration__',
+            'yname': 'duration (SSTA<-0.5)',
+        },
+    },
+    'NinaSstLonRmse': {
+        'netcdf_variables': ['sst_lon__', 'sst_map__'],
+        'diagnostic': {
+            'plot_type': 'curve',
+            'nbr_panel': 1,
+            'title': "La Nina pattern",
+            'varpattern': 'sst_lon__',
+            'xname': 'longitude',
+            'yname': 'SSTA',
+        },
+        'dive_down01': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['SKEW'],
+            "maskland": True,
+            'title': 'La Nina SSTA',
+            'varpattern': 'sst_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'SSTA',
+        },
+    },
+    'NinaSstTsRmse': {
+        'netcdf_variables': ['sst_ts__', 'sst_hov__'],
+        'diagnostic': {
+            'plot_type': 'curve',
+            'nbr_panel': 1,
+            'title': "La Nina life-cycle",
+            'varpattern': 'sst_ts__',
+            'xname': 'months',
+            'yname': 'SSTA',
+        },
+        'dive_down01': {
+            'plot_type': 'hovmoeller',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['SKEW'],
+            'title': 'La Nina SSTA',
+            'varpattern': 'sst_hov__',
+            'xname': 'longitude',
+            'yname': 'months',
+            'zname': 'SSTA',
+        },
+    },
     "NinoSstDiversity": {
         'netcdf_variables': ['Nina_lon_pos_minSSTA__', "Nino_lon_pos_maxSSTA__"],
         'diagnostic': {
@@ -974,6 +1036,68 @@ plot_parameters = {
             'title': ['La Nina diversity', 'El Nino diversity'],
             'varpattern': ['Nina_lon_pos_minSSTA__', 'Nino_lon_pos_maxSSTA__'],
             'yname': ['longitude of min SSTA', 'longitude of max SSTA'],
+        },
+    },
+    'NinoSstDur': {
+        'netcdf_variables': ['Nino_duration__'],
+        'diagnostic': {
+            'plot_type': 'dot',
+            'nbr_panel': 1,
+            'title': 'El Nino duration',
+            'varpattern': 'diagnostic',
+            'yname': 'duration (SSTA>0.5)',
+        },
+        'dive_down01': {
+            'plot_type': 'boxplot',
+            'nbr_panel': 1,
+            'title': 'El Nino duration',
+            'varpattern': 'Nino_duration__',
+            'yname': 'duration (SSTA>0.5)',
+        },
+    },
+    'NinoSstLonRmse': {
+        'netcdf_variables': ['sst_lon__', 'sst_map__'],
+        'diagnostic': {
+            'plot_type': 'curve',
+            'nbr_panel': 1,
+            'title': "El Nino pattern",
+            'varpattern': 'sst_lon__',
+            'xname': 'longitude',
+            'yname': 'SSTA',
+        },
+        'dive_down01': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['SKEW'],
+            "maskland": True,
+            'title': 'El Nino SSTA',
+            'varpattern': 'sst_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'SSTA',
+        },
+    },
+    'NinoSstTsRmse': {
+        'netcdf_variables': ['sst_ts__', 'sst_hov__'],
+        'diagnostic': {
+            'plot_type': 'curve',
+            'nbr_panel': 1,
+            'title': "El Nino life-cycle",
+            'varpattern': 'sst_ts__',
+            'xname': 'months',
+            'yname': 'SSTA',
+        },
+        'dive_down01': {
+            'plot_type': 'hovmoeller',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['SKEW'],
+            'title': 'El Nino SSTA',
+            'varpattern': 'sst_hov__',
+            'xname': 'longitude',
+            'yname': 'months',
+            'zname': 'SSTA',
         },
     },
     'SeasonalPrLatRmse': {
@@ -1191,7 +1315,7 @@ def plot_param(metric_collection, metric):
     dict_MC = defCollection(metric_collection)
     dict_MCm = dict_MC['metrics_list'][metric]
     # get plot parameters
-    dict_out = plot_parameters[metric]
+    dict_out = plot_parameters[metric.replace("_1", "").replace("_2", "").replace("_3", "")]
     # get metric computation
     if "rmse" in metric.lower():
         computation = "RMSE"
@@ -1230,4 +1354,3 @@ def plot_param(metric_collection, metric):
     # NinaSstTsRmse, NinoSstTsRmse
     # EnsoPrJjaTel, EnsoPrNdjTel, NinaPrJjaTel, NinaPrNdjTel, NinoPrJjaTel, NinoPrNdjTel
     # NinaSstDiv, NinoSstDiv, NinaSstDivRmse, NinoSstDivRmse
-    # NinaSstDur, NinoSstDur

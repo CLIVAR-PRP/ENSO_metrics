@@ -32,7 +32,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         one_yaxis = True
     else:
         one_yaxis = False
-    units = tab_mod[0].units.replace("C", "$^\circ$C")
+    units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     if "legend" in dict_param.keys():
         legend = dict_param["legend"]
     else:
@@ -48,14 +48,6 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
     # wisprops = dict(linestyle='-', linewidth=2, color='k')
     boxproperties = {
         "model": {
-            "boxprops": dict(linestyle="-", linewidth=2, color="r"),
-            "capprops": dict(linestyle="-", linewidth=2, color="r"),
-            "flierprops": dict(marker="o", markersize=2.0, markeredgecolor="r", markerfacecolor="r", markeredgewidth=0),
-            "meanprops": dict(marker="D", markersize=8.0, markeredgecolor="r", markerfacecolor="r", markeredgewidth=0),
-            "medianprops": dict(linestyle="-", linewidth=2, color="r"),
-            "whiskerprops": dict(linestyle="-", linewidth=2, color="r"),
-        },
-        "reference": {
             "boxprops": dict(linestyle="-", linewidth=2, color="k"),
             "capprops": dict(linestyle="-", linewidth=2, color="k"),
             "flierprops": dict(marker="o", markersize=2.0, markeredgecolor="k", markerfacecolor="k", markeredgewidth=0),
@@ -63,12 +55,22 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             "medianprops": dict(linestyle="-", linewidth=2, color="k"),
             "whiskerprops": dict(linestyle="-", linewidth=2, color="k"),
         },
+        "reference": {
+            "boxprops": dict(linestyle="-", linewidth=2, color="r"),
+            "capprops": dict(linestyle="-", linewidth=2, color="r"),
+            "flierprops": dict(marker="o", markersize=2.0, markeredgecolor="r", markerfacecolor="r", markeredgewidth=0),
+            "meanprops": dict(marker="D", markersize=8.0, markeredgecolor="r", markerfacecolor="r", markeredgewidth=0),
+            "medianprops": dict(linestyle="-", linewidth=2, color="r"),
+            "whiskerprops": dict(linestyle="-", linewidth=2, color="r"),
+        },
     }
     legco = ["k", "r"]
     lines = [Line2D([0], [0], marker="o", c="w", markerfacecolor=cc, markersize=12) for cc in legco]
     tick_labels = minmax_plot(tab_mod + tab_obs, metric=plot_metric)
     for ii in range(nbr_panel):
-        if nbrl == 1:
+        if nbr_panel == 1:
+            ax = axes
+        elif nbrl == 1 and nbrc != 1:
             ax = axes[ii % 2]
         else:
             ax = axes[ii / 2, ii % 2]
@@ -127,7 +129,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     title = dict_param["title"]
     xname = dict_param["xname"]
     yname = dict_param["yname"]
-    units = tab_mod[0].units.replace("C", "$^\circ$C")
+    units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     if units != "":
         yname = yname + " (" + units + ")"
     if "colors" in dict_param.keys():
@@ -292,7 +294,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     xname = dict_param["xname"]
     yname = dict_param["yname"]
     zname = dict_param["zname"]
-    units = tab_mod[0].units.replace("C", "$^\circ$C")
+    units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     if units != "":
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
@@ -313,7 +315,9 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         tab.append(tab_obs[ii])
         tab.append(tab_mod[ii])
     for ii in range(nbr_panel):
-        if nbrl == 1:
+        if nbr_panel == 1:
+            ax = axes
+        elif nbrl == 1 and nbrc != 1:
             ax = axes[ii % 2]
         else:
             ax = axes[ii / 2, ii % 2]
@@ -385,7 +389,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     xname = dict_param["xname"]
     yname = dict_param["yname"]
     zname = dict_param["zname"]
-    units = tab_mod[0].units.replace("C", "$^\circ$C")
+    units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     if units != "":
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
@@ -413,7 +417,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         tab.append(tab_obs[ii])
         tab.append(tab_mod[ii])
     for ii in range(nbr_panel):
-        if nbrl == 1:
+        if nbr_panel == 1:
+            ax = axes
+        elif nbrl == 1 and nbrc != 1:
             ax = axes[ii % 2]
         else:
             ax = axes[ii / 2, ii % 2]
@@ -531,7 +537,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         tab1 = list(reversed(tab1))
         tab2 = list(reversed(tab2))
     for ii in range(nbr_panel):
-        if nbrl == 1 and nbrc == 1:
+        if nbr_panel == 1:
             ax = axes
         elif nbrl == 1 and nbrc != 1:
             ax = axes[ii % 2]
@@ -550,7 +556,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             for kk in regions.keys():
                 if kk in xlabel.lower():
                     xlabel = regions[kk] + " " + xlabel
-            units = tab1[ii].units.replace("C", "$^\circ$C")
+            units = tab1[ii].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
             if units != "":
                 xlabel = xlabel + " (" + units + ")"
             ax.set_xlabel(xlabel, fontsize=15)
@@ -564,7 +570,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             for kk in regions.keys():
                 if kk in ylabel.lower():
                     ylabel = regions[kk] + " " + ylabel
-            units = tab2[ii].units.replace("C", "$^\circ$C")
+            units = tab2[ii].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
             if units != "":
                 ylabel = ylabel + " (" + units + ")"
             ax.set_ylabel(ylabel, fontsize=15)
