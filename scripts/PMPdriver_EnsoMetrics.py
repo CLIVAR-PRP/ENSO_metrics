@@ -238,7 +238,7 @@ for mod in models:
         # Computes the metric collection
         netcdf_name = StringConstructor(param.netcdf_name)(model=mod) 
         netcdf = os.path.join(netcdf_path, netcdf_name)
-        dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=param.nc_out,
+        dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=param.nc_out,
                                              netcdf_name=netcdf, debug=param.debug)
     except Exception as e: 
         print('failed for ', mod)
