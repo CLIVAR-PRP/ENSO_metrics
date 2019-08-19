@@ -8240,8 +8240,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, **kwargs)
-    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, **kwargs)
+    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12

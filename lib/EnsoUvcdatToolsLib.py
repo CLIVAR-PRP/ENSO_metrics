@@ -929,7 +929,7 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     return tab_out, keyerror
 
 
-def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', **kwargs):
+def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', debug=False, **kwargs):
     """
     #################################################################################
     Description:
@@ -949,6 +949,10 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
         name of the metric calling the function
     :return:
     """
+    if debug is True:
+        dict_debug = {'shape1': 'tab1.shape = ' + str(tab1.shape), 'shape2': 'tab2.shape = ' + str(tab2.shape),
+                      'time1': 'tab1.time = ' + str(TimeBounds(tab1)), 'time2': 'tab2.time = ' + str(TimeBounds(tab2))}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'in CheckTime (input)', 20, **dict_debug)
     keyerror = None
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
@@ -990,7 +994,13 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # retains only the time-period common to both tab1 and tab2
     tab1_sliced = tab1(time=(stime_adjust, etime_adjust))
     tab2_sliced = tab2(time=(stime_adjust, etime_adjust))
-    tab2_sliced.setAxis(0 , tab1_sliced.getTime())
+    tab2_sliced.setAxis(0, tab1_sliced.getTime())
+    if debug is True:
+        dict_debug = {'shape1': 'tab1.shape = ' + str(tab1_sliced.shape),
+                      'shape2': 'tab2.shape = ' + str(tab2_sliced.shape),
+                      'time1': 'tab1.time = ' + str(TimeBounds(tab1_sliced)),
+                      'time2': 'tab2.time = ' + str(TimeBounds(tab2_sliced))}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'in CheckTime (output)', 20, **dict_debug)
 
     # checks if the remaining time-period fulfills the minimum length criterion
     if min_time_steps is not None:
@@ -3228,6 +3238,11 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
     dSSToce = MV2average(dSSToce, axis=0)
     # axes
     axes = [CDMS2createAxis(MV2array(range(12-len(dSST), 12)), id='months')]
+    if debug is True:
+        dict_debug = {'axes1': 'axes ' + str(axes[0]), 'axes2': 'axes[:] ' + str(axes[0][:]),
+                      'shape1': '(dSST) ' + str(dSST.shape), 'shape2': '(dSSTthf) ' + str(dSSTthf.shape),
+                      'shape3': '(dSSToce) ' + str(dSSToce.shape)}
+        EnsoErrorsWarnings.DebugMode('\033[93m', 'after mean dSST', 25, **dict_debug)
     if len(tab1.shape) > 1:
         axes = axes + tab1.getAxisList()[1:]
     dSST.setAxisList(axes)
