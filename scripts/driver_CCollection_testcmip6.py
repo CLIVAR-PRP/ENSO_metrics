@@ -362,6 +362,7 @@ for mod in list_models:
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, files_in, list_ens, pattern_out
+print str(sys.argv[0]) + ": done"
 # ------------------------------------------------
 # reshape dictionary
 # listm = sorted(dict_metric.keys())

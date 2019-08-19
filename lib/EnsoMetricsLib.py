@@ -17541,9 +17541,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in prMap_obs.getAxisList()]),
-                              'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape),
-                              'time1': '(model) ' + str(TimeBounds(prMap_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(prMap_obs))}
+                              'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             prMap_mod = Std(prMap_mod)
@@ -17848,9 +17846,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in prMap_obs.getAxisList()]),
-                              'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape),
-                              'time1': '(model) ' + str(TimeBounds(prMap_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(prMap_obs))}
+                              'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             prMap_mod = Std(prMap_mod)
@@ -18154,9 +18150,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sstMap_obs.getAxisList()]),
-                              'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape),
-                              'time1': '(model) ' + str(TimeBounds(sstMap_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(sstMap_obs))}
+                              'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             sstMap_mod = Std(sstMap_mod)
@@ -18462,9 +18456,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sstMap_obs.getAxisList()]),
-                              'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape),
-                              'time1': '(model) ' + str(TimeBounds(sstMap_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(sstMap_obs))}
+                              'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             sstMap_mod = Std(sstMap_mod)
@@ -18771,9 +18763,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in tauxMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxMap_mod.shape),
-                              'shape2': '(obs) ' + str(tauxMap_obs.shape),
-                              'time1': '(model) ' + str(TimeBounds(tauxMap_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(tauxMap_obs))}
+                              'shape2': '(obs) ' + str(tauxMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             tauxMap_mod = Std(tauxMap_mod) * 1e3
@@ -19083,9 +19073,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in tauxMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxMap_mod.shape),
-                              'shape2': '(obs) ' + str(tauxMap_obs.shape),
-                              'time1': '(model) ' + str(TimeBounds(tauxMap_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(tauxMap_obs))}
+                              'shape2': '(obs) ' + str(tauxMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             tauxMap_mod = Std(tauxMap_mod) * 1e3
