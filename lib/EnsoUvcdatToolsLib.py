@@ -3119,6 +3119,9 @@ def Read_mask_area(tab, file_data, type_data, region, file_area='', name_area=''
             dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in areacell.getAxisList()]),
                           'shape1': '(' + type_data + ') ' + str(areacell.shape)}
             EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
+        else:
+            dict_debug = {'line1': 'areacell is None '}
+            EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
     if file_mask:
         landmask = ReadLandmaskSelectRegion(file_mask, landmaskname=name_mask, box=region, **kwargs)
@@ -3128,6 +3131,9 @@ def Read_mask_area(tab, file_data, type_data, region, file_area='', name_area=''
         if landmask is not None:
             dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in landmask.getAxisList()]),
                           'shape1': '(' + type_data + ') ' + str(landmask.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadLandmaskSelectRegion', 20, **dict_debug)
+        else:
+            dict_debug = {'line1': 'landmask is None '}
             EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadLandmaskSelectRegion', 20, **dict_debug)
     # Apply landmask
     if landmask is not None:

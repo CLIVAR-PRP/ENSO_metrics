@@ -4992,12 +4992,53 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                 maskland=True, maskocean=False, debug=debug, **kwargs)
         dict_area[thfname], dict_keye[thfname], dict_var[thfname] = thf_areacell, keyerror3, thf
     else:
+        if debug is True:
+            dict_debug = {'line1': '(thffile) ' + str(thffile), 'line2': '(thfname) ' + str(thfname),
+                          'line3': '(thfareafile) ' + str(thfareafile), 'line4': '(thfareaname) ' + str(thfareaname),
+                          'shape1': '(thflandmaskfile) ' + str(thflandmaskfile),
+                          'shape2': '(thflandmaskname) ' + str(thflandmaskname)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'before Read_data_mask_area (multiple files for one variable)', 15,
+                                         **dict_debug)
         for ii in range(len(thffile)):
+            try:
+                thffile[ii]
+            except:
+                ff1 = ''
+            else:
+                ff1 = thffile[ii]
+            try:
+                thfname[ii]
+            except:
+                nn1 = ''
+            else:
+                nn1 = thfname[ii]
+            try:
+                thfareafile[ii]
+            except:
+                fa1 = ''
+            else:
+                fa1 = thfareafile[ii]
+            try:
+                thfareaname[ii]
+            except:
+                an1 = ''
+            else:
+                an1 = thfareaname[ii]
+            try:
+                thflandmaskfile[ii]
+            except:
+                fl1 = ''
+            else:
+                fl1 = thflandmaskfile[ii]
+            try:
+                thflandmaskname[ii]
+            except:
+                ln1 = ''
+            else:
+                ln1 = thflandmaskname[ii]
             thf, thf_areacell, keyerror3 = \
-                Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, thfbox, file_area=thfareafile[ii],
-                                    name_area=thfareaname[ii], file_mask=thflandmaskfile[ii],
-                                    name_mask=thflandmaskname[ii], maskland=True, maskocean=False, debug=debug,
-                                    **kwargs)
+                Read_data_mask_area(ff1, nn1, 'heat flux', metric, thfbox, file_area=fa1, name_area=an1, file_mask=fl1,
+                                    name_mask=ln1, maskland=True, maskocean=False, debug=debug, **kwargs)
             dict_area[thfname[ii]], dict_keye[thfname[ii]], dict_var[thfname[ii]] = thf_areacell, keyerror3, thf
     thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
     thf_areacell = dict_area[dict_area.keys()[0]]
