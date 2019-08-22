@@ -12,9 +12,9 @@ from EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dis
 from EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
     Composite, ComputeInterannualAnomalies, ComputePDF, Correlation, DetectEvents, DurationAllEvent, DurationEvent,\
     Event_selection, FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap,\
-    LinearRegressionTsAgainstTs, MinMax, MyDerive, MyEmpty, PreProcessTS, Read_data_mask_area, Regrid, RmsAxis,\
-    RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, SlabOcean, Smoothing, Std,\
-    StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
+    LinearRegressionTsAgainstTs, MinMax, MyDerive, MyEmpty, PreProcessTS, Read_data_mask_area,\
+    Read_data_mask_area_multifile, Regrid, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean,\
+    SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -2960,31 +2960,11 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                             maskocean=False, debug=debug, **kwargs)
-    dict_area, dict_keye, dict_var = dict(), dict(), dict()
-    if isinstance(lwrfile, basestring):
-        lwr, lwr_areacell, keyerror2 = \
-            Read_data_mask_area(lwrfile, lwrname, 'heat flux', metric, lwrbox, file_area=lwrareafile,
-                                name_area=lwrareaname, file_mask=lwrlandmaskfile, name_mask=lwrlandmaskname,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
-        dict_area[lwrname], dict_keye[lwrname], dict_var[lwrname] = lwr_areacell, keyerror2, lwr
-    else:
-        for ii in range(len(lwrfile)):
-            lwr, lwr_areacell, keyerror2 = \
-                Read_data_mask_area(lwrfile[ii], lwrname[ii], 'heat flux', metric, lwrbox, file_area=lwrareafile[ii],
-                                    name_area=lwrareaname[ii], file_mask=lwrlandmaskfile[ii],
-                                    name_mask=lwrlandmaskname[ii], maskland=True, maskocean=False, debug=debug,
-                                    **kwargs)
-            dict_area[lwrname[ii]], dict_keye[lwrname[ii]], dict_var[lwrname[ii]] = lwr_areacell, keyerror2, lwr
-    lwr = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
-    lwr_areacell = dict_area[dict_area.keys()[0]]
-    keyerror2 = ''
-    for ii in dict_keye.keys():
-        if len(keyerror2) > 0 and dict_keye[ii] is not None:
-            keyerror2 += " ; "
-        if dict_keye[ii] is not None:
-            keyerror2 += dict_keye[ii]
-    if len(keyerror2) == 0:
-        keyerror2 = None
+    lwr, lwr_areacell, keyerror2 = \
+        Read_data_mask_area_multifile(lwrfile, lwrname, 'heat flux', 'lwr', metric, lwrbox,
+                                      file_area=lwrareafile, name_area=lwrareaname, file_mask=lwrlandmaskfile,
+                                      name_mask=lwrlandmaskname, maskland=True, maskocean=False, debug=debug,
+                                      interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, lwr, keyerror3 = CheckTime(sst, lwr, metric_name=metric, **kwargs)
@@ -3027,24 +3007,11 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
                                     file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
-            dict_area, dict_keye, dict_var = dict(), dict(), dict()
-            if isinstance(lwrfile, basestring):
-                lwr_map, lwr_map_areacell, unneeded = \
-                    Read_data_mask_area(lwrfile, lwrname, 'heat flux', metric, 'equatorial_pacific',
-                                        file_area=lwrareafile, name_area=lwrareaname, file_mask=lwrlandmaskfile,
-                                        name_mask=lwrlandmaskname, maskland=True, maskocean=False, debug=debug,
-                                        **kwargs)
-                dict_area[lwrname], dict_var[lwrname] = lwr_map_areacell, lwr_map
-            else:
-                for ii in range(len(lwrfile)):
-                    lwr_map, lwr_map_areacell, unneeded = \
-                        Read_data_mask_area(lwrfile[ii], lwrname[ii], 'heat flux', metric, 'equatorial_pacific',
-                                            file_area=lwrareafile[ii], name_area=lwrareaname[ii],
-                                            file_mask=lwrlandmaskfile[ii], name_mask=lwrlandmaskname[ii], maskland=True,
-                                            maskocean=False, debug=debug, **kwargs)
-                    dict_area[lwrname[ii]], dict_var[lwrname[ii]] = lwr_map_areacell, lwr_map
-            lwr_map = MyDerive(kwargs['project_interpreter_var2'], 'lwr', dict_var)
-            lwr_map_areacell = dict_area[dict_area.keys()[0]]
+            lwr_map, lwr_map_areacell, unneeded = \
+                Read_data_mask_area_multifile(lwrfile, lwrname, 'heat flux', 'lwr', metric, 'equatorial_pacific',
+                                              file_area=lwrareafile, name_area=lwrareaname, file_mask=lwrlandmaskfile,
+                                              name_mask=lwrlandmaskname, maskland=True, maskocean=False, debug=debug,
+                                              interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
             sst_map, lwr_map, unneeded = CheckTime(sst_map, lwr_map, metric_name=metric, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -3580,31 +3547,11 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                             maskocean=False, debug=debug, **kwargs)
-    dict_area, dict_keye, dict_var = dict(), dict(), dict()
-    if isinstance(swrfile, basestring):
-        swr, swr_areacell, keyerror2 = \
-            Read_data_mask_area(swrfile, swrname, 'heat flux', metric, swrbox, file_area=swrareafile,
-                                name_area=swrareaname, file_mask=swrlandmaskfile, name_mask=swrlandmaskname,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
-        dict_area[swrname], dict_keye[swrname], dict_var[swrname] = swr_areacell, keyerror2, swr
-    else:
-        for ii in range(len(swrfile)):
-            swr, swr_areacell, keyerror2 = \
-                Read_data_mask_area(swrfile[ii], swrname[ii], 'heat flux', metric, swrbox, file_area=swrareafile[ii],
-                                    name_area=swrareaname[ii], file_mask=swrlandmaskfile[ii],
-                                    name_mask=swrlandmaskname[ii], maskland=True, maskocean=False, debug=debug,
-                                    **kwargs)
-            dict_area[swrname[ii]], dict_keye[swrname[ii]], dict_var[swrname[ii]] = swr_areacell, keyerror2, swr
-    swr = MyDerive(kwargs['project_interpreter_var2'], 'swr', dict_var)
-    swr_areacell = dict_area[dict_area.keys()[0]]
-    keyerror2 = ''
-    for ii in dict_keye.keys():
-        if len(keyerror2) > 0 and dict_keye[ii] is not None:
-            keyerror2 += " ; "
-        if dict_keye[ii] is not None:
-            keyerror2 += dict_keye[ii]
-    if len(keyerror2) == 0:
-        keyerror2 = None
+    swr, swr_areacell, keyerror2 = \
+        Read_data_mask_area_multifile(swrfile, swrname, 'heat flux', 'swr', metric, swrbox, file_area=swrareafile,
+                                      name_area=swrareaname, file_mask=swrlandmaskfile, name_mask=swrlandmaskname,
+                                      maskland=True, maskocean=False, debug=debug,
+                                      interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, swr, keyerror3 = CheckTime(sst, swr, metric_name=metric, **kwargs)
@@ -3647,24 +3594,11 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
                                     file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
-            dict_area, dict_keye, dict_var = dict(), dict(), dict()
-            if isinstance(swrfile, basestring):
-                swr_map, swr_map_areacell, unneeded = \
-                    Read_data_mask_area(swrfile, swrname, 'heat flux', metric, 'equatorial_pacific',
-                                        file_area=swrareafile, name_area=swrareaname, file_mask=swrlandmaskfile,
-                                        name_mask=swrlandmaskname, maskland=True, maskocean=False, debug=debug,
-                                        **kwargs)
-                dict_area[swrname], dict_var[swrname] = swr_map_areacell, swr_map
-            else:
-                for ii in range(len(swrfile)):
-                    swr_map, swr_map_areacell, unneeded = \
-                        Read_data_mask_area(swrfile[ii], swrname[ii], 'heat flux', metric, 'equatorial_pacific',
-                                            file_area=swrareafile[ii], name_area=swrareaname[ii],
-                                            file_mask=swrlandmaskfile[ii], name_mask=swrlandmaskname[ii], maskland=True,
-                                            maskocean=False, debug=debug, **kwargs)
-                    dict_area[swrname[ii]], dict_var[swrname[ii]] = swr_map_areacell, swr_map
-            swr_map = MyDerive(kwargs['project_interpreter_var2'], 'swr', dict_var)
-            swr_map_areacell = dict_area[dict_area.keys()[0]]
+            swr_map, swr_map_areacell, unneeded = \
+                Read_data_mask_area_multifile(swrfile, swrname, 'heat flux', 'swr', metric, 'equatorial_pacific',
+                                              file_area=swrareafile, name_area=swrareaname, file_mask=swrlandmaskfile,
+                                              name_mask=swrlandmaskname, maskland=True, maskocean=False, debug=debug,
+                                              interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
             sst_map, swr_map, unneeded = CheckTime(sst_map, swr_map, metric_name=metric, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -3914,31 +3848,11 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                             maskocean=False, debug=debug, **kwargs)
-    dict_area, dict_keye, dict_var = dict(), dict(), dict()
-    if isinstance(thffile, basestring):
-        thf, thf_areacell, keyerror2 = \
-            Read_data_mask_area(thffile, thfname, 'heat flux', metric, thfbox, file_area=thfareafile,
-                                name_area=thfareaname, file_mask=thflandmaskfile, name_mask=thflandmaskname,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
-        dict_area[thfname], dict_keye[thfname], dict_var[thfname] = thf_areacell, keyerror2, thf
-    else:
-        for ii in range(len(thffile)):
-            thf, thf_areacell, keyerror2 = \
-                Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, thfbox, file_area=thfareafile[ii],
-                                    name_area=thfareaname[ii], file_mask=thflandmaskfile[ii],
-                                    name_mask=thflandmaskname[ii], maskland=True, maskocean=False, debug=debug,
-                                    **kwargs)
-            dict_area[thfname[ii]], dict_keye[thfname[ii]], dict_var[thfname[ii]] = thf_areacell, keyerror2, thf
-    thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
-    thf_areacell = dict_area[dict_area.keys()[0]]
-    keyerror2 = ''
-    for ii in dict_keye.keys():
-        if len(keyerror2) > 0 and dict_keye[ii] is not None:
-            keyerror2 += " ; "
-        if dict_keye[ii] is not None:
-            keyerror2 += dict_keye[ii]
-    if len(keyerror2) == 0:
-        keyerror2 = None
+    thf, thf_areacell, keyerror2 = \
+        Read_data_mask_area_multifile(thffile, thfname, 'heat flux', 'thf', metric, thfbox,
+                                      file_area=thfareafile, name_area=thfareaname, file_mask=thflandmaskfile,
+                                      name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
+                                      interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, thf, keyerror3 = CheckTime(sst, thf, metric_name=metric, **kwargs)
@@ -3981,24 +3895,11 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
                                     file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
-            dict_area, dict_keye, dict_var = dict(), dict(), dict()
-            if isinstance(thffile, basestring):
-                thf_map, thf_map_areacell, unneeded = \
-                    Read_data_mask_area(thffile, thfname, 'heat flux', metric, 'equatorial_pacific',
-                                        file_area=thfareafile, name_area=thfareaname, file_mask=thflandmaskfile,
-                                        name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
-                                        **kwargs)
-                dict_area[thfname], dict_var[thfname] = thf_map_areacell, thf_map
-            else:
-                for ii in range(len(thffile)):
-                    thf_map, thf_map_areacell, unneeded = \
-                        Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, 'equatorial_pacific',
-                                            file_area=thfareafile[ii], name_area=thfareaname[ii],
-                                            file_mask=thflandmaskfile[ii], name_mask=thflandmaskname[ii], maskland=True,
-                                            maskocean=False, debug=debug, **kwargs)
-                    dict_area[thfname[ii]], dict_var[thfname[ii]] = thf_map_areacell, thf_map
-            thf_map = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
-            thf_map_areacell = dict_area[dict_area.keys()[0]]
+            thf_map, thf_map_areacell, unneeded = \
+                Read_data_mask_area_multifile(thffile, thfname, 'heat flux', 'thf', metric, 'equatorial_pacific',
+                                              file_area=thfareafile, name_area=thfareaname, file_mask=thflandmaskfile,
+                                              name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
+                                              interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
             sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
@@ -4984,72 +4885,11 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                             maskocean=False, debug=debug, **kwargs)
-    dict_area, dict_keye, dict_var = dict(), dict(), dict()
-    if isinstance(thffile, basestring):
-        thf, thf_areacell, keyerror3 = \
-            Read_data_mask_area(thffile, thfname, 'heat flux', metric, thfbox, file_area=thfareafile,
-                                name_area=thfareaname, file_mask=thflandmaskfile, name_mask=thflandmaskname,
-                                maskland=True, maskocean=False, debug=debug, **kwargs)
-        dict_area[thfname], dict_keye[thfname], dict_var[thfname] = thf_areacell, keyerror3, thf
-    else:
-        if debug is True:
-            dict_debug = {'line1': '(thffile) ' + str(thffile), 'line2': '(thfname) ' + str(thfname),
-                          'line3': '(thfareafile) ' + str(thfareafile), 'line4': '(thfareaname) ' + str(thfareaname),
-                          'shape1': '(thflandmaskfile) ' + str(thflandmaskfile),
-                          'shape2': '(thflandmaskname) ' + str(thflandmaskname)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'before Read_data_mask_area (multiple files for one variable)', 15,
-                                         **dict_debug)
-        for ii in range(len(thffile)):
-            try:
-                thffile[ii]
-            except:
-                ff1 = ''
-            else:
-                ff1 = thffile[ii]
-            try:
-                thfname[ii]
-            except:
-                nn1 = ''
-            else:
-                nn1 = thfname[ii]
-            try:
-                thfareafile[ii]
-            except:
-                fa1 = ''
-            else:
-                fa1 = thfareafile[ii]
-            try:
-                thfareaname[ii]
-            except:
-                an1 = ''
-            else:
-                an1 = thfareaname[ii]
-            try:
-                thflandmaskfile[ii]
-            except:
-                fl1 = ''
-            else:
-                fl1 = thflandmaskfile[ii]
-            try:
-                thflandmaskname[ii]
-            except:
-                ln1 = ''
-            else:
-                ln1 = thflandmaskname[ii]
-            thf, thf_areacell, keyerror3 = \
-                Read_data_mask_area(ff1, nn1, 'heat flux', metric, thfbox, file_area=fa1, name_area=an1, file_mask=fl1,
-                                    name_mask=ln1, maskland=True, maskocean=False, debug=debug, **kwargs)
-            dict_area[thfname[ii]], dict_keye[thfname[ii]], dict_var[thfname[ii]] = thf_areacell, keyerror3, thf
-    thf = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
-    thf_areacell = dict_area[dict_area.keys()[0]]
-    keyerror3 = ''
-    for ii in dict_keye.keys():
-        if len(keyerror3) > 0 and dict_keye[ii] is not None:
-            keyerror3 += " ; "
-        if dict_keye[ii] is not None:
-            keyerror3 += dict_keye[ii]
-    if len(keyerror3) == 0:
-        keyerror3 = None
+    thf, thf_areacell, keyerror3 = \
+        Read_data_mask_area_multifile(thffile, thfname, 'heat flux', 'thf', metric, thfbox, file_area=thfareafile,
+                                      name_area=thfareaname, file_mask=thflandmaskfile, name_mask=thflandmaskname,
+                                      maskland=True, maskocean=False, debug=debug,
+                                      interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
     sst, thf, keyerror4 = CheckTime(sst, thf, metric_name=metric, **kwargs)
@@ -5103,24 +4943,11 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                 Read_data_mask_area(sstfile, sstname, 'temperature', metric, 'equatorial_pacific',
                                     file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
-            dict_area, dict_keye, dict_var = dict(), dict(), dict()
-            if isinstance(thffile, basestring):
-                thf_map, thf_map_areacell, unneeded = \
-                    Read_data_mask_area(thffile, thfname, 'heat flux', metric, 'equatorial_pacific',
-                                        file_area=thfareafile, name_area=thfareaname, file_mask=thflandmaskfile,
-                                        name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
-                                        **kwargs)
-                dict_area[thfname], dict_var[thfname] = thf_map_areacell, thf_map
-            else:
-                for ii in range(len(thffile)):
-                    thf_map, thf_map_areacell, unneeded = \
-                        Read_data_mask_area(thffile[ii], thfname[ii], 'heat flux', metric, 'equatorial_pacific',
-                                            file_area=thfareafile[ii], name_area=thfareaname[ii],
-                                            file_mask=thflandmaskfile[ii], name_mask=thflandmaskname[ii], maskland=True,
-                                            maskocean=False, debug=debug, **kwargs)
-                    dict_area[thfname[ii]], dict_var[thfname[ii]] = thf_map_areacell, thf_map
-            thf_map = MyDerive(kwargs['project_interpreter_var2'], 'thf', dict_var)
-            thf_map_areacell = dict_area[dict_area.keys()[0]]
+            thf_map, thf_map_areacell, unneeded = \
+                Read_data_mask_area_multifile(thffile, thfname, 'heat flux', 'thf', metric, 'equatorial_pacific',
+                                              file_area=thfareafile, name_area=thfareaname, file_mask=thflandmaskfile,
+                                              name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
+                                              interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
             sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)

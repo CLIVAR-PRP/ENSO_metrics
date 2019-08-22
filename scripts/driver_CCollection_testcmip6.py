@@ -183,7 +183,7 @@ def save_json(dict_in, json_name, metric_only=True):
     return
 
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_tel'#'ENSO_proc'#'MC1'#
+mc_name = 'ENSO_proc'#'ENSO_tel'#'ENSO_proc'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -277,7 +277,7 @@ for obs in list_obs:
                                   'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
 # models
-list_models = ['CNRM-CM5']#['IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR']#['IPSL-CM6A-LR']#
+list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR']#['IPSL-CM6A-LR']#
 #
 # finding file and variable name in file for each observations dataset
 #

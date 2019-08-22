@@ -47,6 +47,7 @@ from MV2 import arange as MV2arange
 from MV2 import array as MV2array
 from MV2 import average as MV2average
 from MV2 import compress as MV2compress
+from MV2 import concatenate as MV2concatenate
 from MV2 import divide as MV2divide
 from MV2 import masked_where as MV2masked_where
 from MV2 import maximum as MV2maximum
@@ -1495,14 +1496,23 @@ def get_year_by_year(tab, frequency='monthly'):
     """
     tab = tab.reorder('t...')
     time_ax = tab.getTime().asComponentTime()
+    myshape = [1] + [ss for ss in tab.shape[1:]]
+    zeros = MV2zeros(myshape)
+    zeros = MV2masked_where(zeros == 0, zeros)
     if frequency == 'daily':
         days = MV2array(list(tt.day for tt in time_ax))
         months = MV2array(list(tt.month for tt in time_ax))
         months = MV2array([(mm*100)+dd for dd, mm in zip(days, months)])
         tmm = CDMS2createAxis(range(365), id='days')
+        m1 = time_ax[0].day
+        m2 = time_ax[-1].day
+        t2 = 365
     elif frequency == 'monthly':
         months = MV2array(list(tt.month for tt in time_ax))
         tmm = CDMS2createAxis(range(12), id='months')
+        m1 = time_ax[0].month
+        m2 = time_ax[-1].month
+        t2 = 12
     else:
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     years = sorted(set(MV2array(list(tt.year for tt in time_ax))))
@@ -1513,8 +1523,14 @@ def get_year_by_year(tab, frequency='monthly'):
     if frequency == 'daily':
         val.remove(129)
     for ii in val:
-        tab_out.append(tab.compress(months==ii, axis=0))
+        tmp = tab.compress(months == ii, axis=0)
+        if m1 != 1 and len(tmp) != len(years):
+            tmp = MV2concatenate((zeros, tmp))
+        if m2 != t2 and len(tmp) != len(years):
+            tmp = MV2concatenate((tmp, zeros))
+        tab_out.append(tmp)
     tab_out = MV2array(tab_out)
+    tab_out = MV2masked_where(tab_out == 0, tab_out)
     tab_out = tab_out.reorder('10')
     if len(tab.shape) == 1:
         tab_out = CDMS2createVariable(tab_out, axes=axes, attributes=tab.attributes, id=tab.id)
@@ -3105,6 +3121,77 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
     else:
         keyerror = None
     return variable, areacell, keyerror
+
+
+def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, metric, region, file_area='', name_area='',
+                                  file_mask='', name_mask='', maskland=False, maskocean=False, debug=False,
+                                  interpreter='', **kwargs):
+    dict_area, dict_keye, dict_var = dict(), dict(), dict()
+    if isinstance(file_data, basestring):
+        tab, areacell, keyerror = \
+            Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area=file_area,
+                                name_area=name_area, file_mask=file_mask, name_mask=name_mask, maskland=maskland,
+                                maskocean=maskocean, debug=debug, **kwargs)
+        dict_area[name_data], dict_keye[name_data], dict_var[name_data] = areacell, keyerror, tab
+    else:
+        for ii in range(len(file_data)):
+            try:
+                file_data[ii]
+            except:
+                ff1 = ''
+            else:
+                ff1 = file_data[ii]
+            try:
+                name_data[ii]
+            except:
+                nn1 = ''
+            else:
+                nn1 = name_data[ii]
+            try:
+                file_area[ii]
+            except:
+                fa1 = ''
+            else:
+                fa1 = file_area[ii]
+            try:
+                name_area[ii]
+            except:
+                an1 = ''
+            else:
+                an1 = name_area[ii]
+            try:
+                file_mask[ii]
+            except:
+                fl1 = ''
+            else:
+                fl1 = file_mask[ii]
+            try:
+                name_mask[ii]
+            except:
+                ln1 = ''
+            else:
+                ln1 = name_mask[ii]
+            tab, areacell, keyerror = \
+                Read_data_mask_area(ff1, nn1, type_data, metric, region, file_area=fa1, name_area=an1, file_mask=fl1,
+                                    name_mask=ln1, maskland=maskland, maskocean=maskocean, debug=debug, **kwargs)
+            dict_area[nn1], dict_keye[nn1], dict_var[nn1] = areacell, keyerror, tab
+    list_var = sorted(dict_var.keys())
+    if len(list_var) > 1:
+        for ii in range(2):
+            for var in list_var[1:]:
+                dict_var[list_var[0]], dict_var[var], unneeded =\
+                    CheckTime(dict_var[list_var[0]], dict_var[var], metric_name=metric, **kwargs)
+    tab = MyDerive(kwargs[interpreter], variable, dict_var)
+    areacell = dict_area[dict_area.keys()[0]]
+    keyerror = ''
+    for ii in dict_keye.keys():
+        if len(keyerror) > 0 and dict_keye[ii] is not None:
+            keyerror += " ; "
+        if dict_keye[ii] is not None:
+            keyerror += dict_keye[ii]
+    if len(keyerror) == 0:
+        keyerror = None
+    return tab, areacell, keyerror
 
 
 def Read_mask_area(tab, file_data, type_data, region, file_area='', name_area='', file_mask='', name_mask='',
