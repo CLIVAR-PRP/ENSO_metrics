@@ -964,31 +964,20 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     etime2 = tab2.getTime().asComponentTime()[-1]
 
     # retains only the latest start date and the earliest end date
-    tmp = stime1.cmp(stime2)
-    # tmp is -1 when time1 < time2
-    # tmp is  0 when time1 = time2
-    # tmp is  1 when time1 > time2
-    if tmp in [0, -1]:
-        stime = stime2
-    else:
-        stime = stime1
-    tmp = etime1.cmp(etime2)
-    if tmp in [0, -1]:
-        etime = etime1
-    else:
-        etime = etime2
+    stime = max(stime1, stime2)
+    etime = min(etime1, etime2)
 
     # defines the period between the two dates
     if frequency == 'daily':
         stime_adjust = CDTIMEcomptime(stime.year, stime.month, stime.day, 0, 0, 0.0)
-        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime.day, 23, 59, 60.0)
+        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime.day, 23, 59, 0)
     elif frequency == 'monthly':
         etime_day = monthrange(etime.year, etime.month)[-1]
         stime_adjust = CDTIMEcomptime(stime.year, stime.month, 1, 0, 0, 0.0)
-        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime_day, 23, 59, 60.0)
+        etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime_day, 23, 59, 0)
     elif frequency == 'yearly':
         stime_adjust = CDTIMEcomptime(stime.year, 1, 1, 0, 0, 0.0)
-        etime_adjust = CDTIMEcomptime(etime.year, 12, 31, 23, 59, 60.0)
+        etime_adjust = CDTIMEcomptime(etime.year, 12, 31, 23, 59, 0)
     else:
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
 
