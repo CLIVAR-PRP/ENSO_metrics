@@ -984,7 +984,7 @@ def defCollection(MC=True):
                 'min_time_steps': 204,
                 'normalization': False,
                 'project_interpreter': 'CMIP',
-                'observed_period': ('1850-01-01 00:00:00', '2018-03-31 23:59:60.0'),
+                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),
                 'modeled_period': ('1850-01-01 00:00:00', '2015-12-31 23:59:60.0'),
             },
             'plot_groupings': {
