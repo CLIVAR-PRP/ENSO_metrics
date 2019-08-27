@@ -964,8 +964,40 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     etime2 = tab2.getTime().asComponentTime()[-1]
 
     # retains only the latest start date and the earliest end date
-    stime = max(stime1, stime2)
-    etime = min(etime1, etime2)
+    if stime1.year > stime2.year:
+        stime = stime1
+    elif stime1.year < stime2.year:
+        stime = stime2
+    else:
+        if stime1.month > stime2.month:
+            stime = stime1
+        elif stime1.month < stime2.month:
+            stime = stime2
+        else:
+            if stime1.day > stime2.day:
+                stime = stime1
+            elif stime1.day < stime2.day:
+                stime = stime2
+            else:
+                stime = max(stime1, stime2)
+    if etime1.year < etime2.year:
+        etime = etime1
+    elif etime1.year > etime2.year:
+        etime = etime2
+    else:
+        if etime1.month < etime2.month:
+            etime = etime1
+        elif etime1.month > etime2.month:
+            etime = etime2
+        else:
+            if etime1.day < etime2.day:
+                etime = etime1
+            elif etime1.day > etime2.day:
+                etime = etime2
+            else:
+                etime = min(etime1, etime2)
+    # stime = max(stime1, stime2)
+    # etime = min(etime1, etime2)
 
     # defines the period between the two dates
     if frequency == 'daily':
@@ -1116,7 +1148,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     if len(list_event_years) == 0:
         tax = tab.getTime().asComponentTime()
-        list_event_years = list(set([tax[ii].year for ii in range(len(tax))]))
+        list_event_years = sorted(list(set([tax[ii].year for ii in range(len(tax))])))
     else:
         list_event_years = sorted(list_event_years)
     # function to fill array with masked value where the data is not available
