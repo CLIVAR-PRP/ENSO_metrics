@@ -57,8 +57,8 @@ metricsCollection = 'ENSO_tel'
 nc_out = True
 #case_id = "{:v%Y%m%d-%H%M}".format(datetime.datetime.now())
 case_id = "{:v%Y%m%d}".format(datetime.datetime.now())
-#results_dir = '/work/lee1043/imsi/result_test/enso_metric/' + case_id 
 results_dir = os.path.join(
+    #'/work/lee1043/imsi/result_test',
     '/p/user_pub/pmp/pmp_results/pmp_v1.1.2',
     '%(output_type)', 'enso_metric',
     mip, exp, case_id, metricsCollection)
