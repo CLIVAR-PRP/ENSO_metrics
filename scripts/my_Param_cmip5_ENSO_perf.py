@@ -12,12 +12,16 @@ exp = 'historical'
 # Observation
 #-------------------------------------------------
 reference_data_path = {
-    'ERA-Interim': '/work/lee1043/DATA/reanalysis/ERAINT/mon/ERA-Interim_VAR_mo.xml',
+    #'ERA-Interim': '/work/lee1043/DATA/reanalysis/ERAINT/mon/ERA-Interim_VAR_mo.xml',
+    'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2.1/atmos/mon/VAR/ERA-INT/gn/v20190912/VAR_mon_ERA-INT_BE_gn_197901-201903.nc',
     'HadISST': '/clim_obs/obs/ocn/mo/tos/UKMETOFFICE-HadISST-v1-1/130122_HadISST_sst.nc',
     'OISST': '/work/lee1043/DATA/OISST/xmls/OISST_tos_mo.xml',
-    'Tropflux': '/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_VAR_mo.xml',
-    'OAFlux': '/work/lee1043/DATA/OAFlux/xmls/OAFlux_VAR_mo.xml',
-    'GPCPv2.3': '/clim_obs/PMPObs/pmpobs1-5-1/atmos/mon/pr/GPCP-2-3/gn/v20180706/pr_mon_GPCP-2-3_BE_gn_197901-201803.nc', 
+    #'Tropflux': '/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_VAR_mo.xml',
+    'Tropflux': '/p/user_pub/PCMDIobs/PCMDIobs2.1/atmos/mon/VAR/TropFlux-1-0/gn/v20190912/VAR_mon_TropFlux-1-0_BE_gn_197901-201707.nc',
+    #'OAFlux': '/work/lee1043/DATA/OAFlux/xmls/OAFlux_VAR_mo.xml',
+    #'GPCPv2.3': '/clim_obs/PMPObs/pmpobs1-5-1/atmos/mon/pr/GPCP-2-3/gn/v20180706/pr_mon_GPCP-2-3_BE_gn_197901-201803.nc', 
+    'GPCPv2.3': '/p/user_pub/PCMDIobs/PCMDIobs2.1/atmos/mon/pr/GPCP-2-3/gn/v20190912/pr_mon_GPCP-2-3_BE_gn_197901-201803.nc', 
+    'AVISO': '/p/user_pub/PCMDIobs/PCMDIobs2.1/ocean/mon/zos/AVISO-1-0/gn/v20190912/zos_mon_AVISO-1-0_BE_gn_199210-201012.nc',
 }
 
 reference_data_lf_path = {
@@ -42,14 +46,12 @@ modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
 
 #modnames = ['ACCESS1-0']
 #modnames = ['BCC-CSM1-1']
-#modnames = ['IPSL-CM5A-LR']
+modnames = ['IPSL-CM5A-LR']
 
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
-#metricsCollection = 'MC1'
 metricsCollection = 'ENSO_perf'
-#metricsCollection = 'ENSO_tel'
 
 #=================================================
 # Output
@@ -57,8 +59,8 @@ metricsCollection = 'ENSO_perf'
 nc_out = True
 case_id = "{:v%Y%m%d}".format(datetime.datetime.now())
 results_dir = os.path.join(
-    #'/work/lee1043/imsi/result_test',
-    '/p/user_pub/pmp/pmp_results/pmp_v1.1.2',
+    '/work/lee1043/imsi/result_test',
+    #'/p/user_pub/pmp/pmp_results/pmp_v1.1.2',
     '%(output_type)', 'enso_metric',
     mip, exp, case_id, metricsCollection)
 json_name = '_'.join([mip, exp, metricsCollection, case_id])
@@ -67,5 +69,5 @@ netcdf_name = json_name + '_%(model)'
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-#debug = True
-debug = False
+debug = True
+#debug = False
