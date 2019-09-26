@@ -1448,9 +1448,9 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
             elif all(ii < threshold for ii in tmp2):
                 nbr_after = len(tmp2)
     duration = nbr_before + nbr_after
-    if debug is True:
-        dict_debug = {'line1': 'duration of the event = ' + str(duration)}
-        EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
+    # if debug is True:
+    #     dict_debug = {'line1': 'duration of the event = ' + str(duration)}
+    #     EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
     return duration
 
 
