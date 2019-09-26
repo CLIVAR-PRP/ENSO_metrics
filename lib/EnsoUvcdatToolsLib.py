@@ -1398,11 +1398,12 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
         mask = [tab.mask]
     else:
         mask = tab.mask
-    if debug is True:
-        dict_debug = {'line1': 'threshold = ' + str(threshold) + '  ;  nino = ' + str(nino)
-                               + '  ;  len(tab) = ' + str(len(tab)),
-                      'line2': 'tab = ' + str(tab) + '\nmask = ' + str(mask)}
-        EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
+    # if debug is True:
+    #     dict_debug = {'line1': 'threshold = ' + str(threshold) + '  ;  nino = ' + str(nino)
+    #                            + '  ;  len(tab) = ' + str(len(tab)),
+    #                   'line2': 'tab = ' + str(tab) + '\nmask = ' + str(mask)
+    #                   }
+    #     EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
     if all(ii is False for ii in mask) is True:
         pass
     else:
@@ -1410,10 +1411,10 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
             tab = MV2where(tab.mask, -9999, tab)
         else:
             tab = MV2where(tab.mask, 9999, tab)
-    if debug is True:
-        dict_debug = {'line1': 'after unmasking',
-                      'line2': 'tab = ' + str(tab)}
-        EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
+    # if debug is True:
+    #     dict_debug = {'line1': 'after unmasking',
+    #                   'line2': 'tab = ' + str(tab)}
+    #     EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
     tmp1 = list(reversed(tab[:len(tab)/2]))
     tmp2 = list(tab[len(tab)/2:])
     if nino is True:
@@ -2983,15 +2984,15 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
             tmp1 = tmp1[:len(x)]
         if len(tmp2) > len(tmp1):
             tmp2 = tmp2[:len(tmp1)]
-        if debug is True:
-            yy1 = tmp1.getAxis(0)[0]
-            yy2 = tmp2.getTime().asComponentTime()[0].year
-            EnsoErrorsWarnings.DebugMode('\033[93m', "EnsoUvcdatToolsLib LinearRegressionTsAgainstTs", 20)
-            dict_debug = {'axes1': str([ax.id for ax in tmp1.getAxisList()]), 'shape1': str(tmp1.shape),
-                          'line1': "first year is " + str(yy1),
-                          'axes2': str([ax.id for ax in tmp2.getAxisList()]), 'shape2': str(tmp2.shape),
-                          'line2': "first year is " + str(yy2)}
-            EnsoErrorsWarnings.DebugMode('\033[93m', str(x.id) + " regressed against " + str(y.id), 25, **dict_debug)
+        # if debug is True:
+        #     yy1 = tmp1.getAxis(0)[0]
+        #     yy2 = tmp2.getTime().asComponentTime()[0].year
+        #     EnsoErrorsWarnings.DebugMode('\033[93m', "EnsoUvcdatToolsLib LinearRegressionTsAgainstTs", 20)
+        #     dict_debug = {'axes1': str([ax.id for ax in tmp1.getAxisList()]), 'shape1': str(tmp1.shape),
+        #                   'line1': "first year is " + str(yy1),
+        #                   'axes2': str([ax.id for ax in tmp2.getAxisList()]), 'shape2': str(tmp2.shape),
+        #                   'line2': "first year is " + str(yy2)}
+        #     EnsoErrorsWarnings.DebugMode('\033[93m', str(x.id) + " regressed against " + str(y.id), 25, **dict_debug)
         if tmp2.shape == tmp1.shape:
             tmp3 = deepcopy(tmp2)
         else:

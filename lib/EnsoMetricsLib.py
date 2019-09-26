@@ -4726,6 +4726,16 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                      'diagnostic_value': nino_dur_mean, 'diagnostic_value_error': nino_dur_err}
             dict4 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                      'frequency': kwargs['frequency']}
+            if debug is True:
+                dict_debug = {'axes1': str([ax.id for ax in sstts.getAxisList()]), 'shape1': str(sstts.shape),
+                              'var1': 'sst_against_sst_ts__' + dataset,
+                              'axes2': str([ax.id for ax in nina_dur_all.getAxisList()]),
+                              'nina2': str(len(str(nina_years)))+" "+str(nina_years), 'shape2': str(nina_dur_all.shape),
+                              'var2': 'Nina_duration__' + dataset,
+                              'axes3': str([ax.id for ax in nino_dur_all.getAxisList()]),
+                              'nino3': str(len(str(nino_years)))+" "+str(nina_years), 'shape3': str(nino_dur_all.shape),
+                              'var3': 'Nino_duration__' + dataset}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'before SaveNetcdf', 15, **dict_debug)
             SaveNetcdf(file_name,
                        var1=sstts, var1_attributes=dict1, var1_name='sst_against_sst_ts__' + dataset,
                        var2=nina_dur_all, var2_attributes=dict2, var2_name='Nina_duration__' + dataset,
