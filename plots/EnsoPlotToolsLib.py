@@ -55,6 +55,20 @@ def create_labels(label_name, label_ticks):
     return label_ticks, label
 
 
+def create_levels(labelbar):
+    diff = round(float(labelbar[1] - labelbar[0]), 2)
+    if diff in [0.3, 0.6, 0.9] or diff % 3 == 0:
+        mult = 3
+    elif diff in [0.1, 0.2, 0.4, 0.8, 1.0, 2, 4, 8, 10, 20, 40, 60, 80, 100]:
+        mult = 4
+    elif diff in [0.5, 5, 25]:
+        mult = 5
+    else:
+        mult = 6
+    delta = float(diff) / mult
+    return [round(kk + jj * delta, 2) for kk in labelbar[:-1] for jj in range(mult)] + [labelbar[-1]]
+
+
 def format_metric(metric_type, metric_value, metric_units):
     if metric_type in ["CORR", "RMSE"]:
         mytext = deepcopy(metric_type)
@@ -81,6 +95,9 @@ def minmax_plot(tab, metric=False):
     # find the power of ten to get an interval between 1 and 10
     mult = pow(10, int(str("%e" % abs(locmaxi - locmini)).split('e')[1]))
     locmini, locmaxi = int(MATHfloor(float(locmini) / mult)), int(MATHceil(float(locmaxi) / mult))
+    if locmaxi == 2 and maxi < 15 and mult == 10 and abs(locmini) != locmaxi:
+        locmini, locmaxi = 0, 15
+        mult = 1.
     scalmini, scalemaxi = mini / mult, maxi / mult
     interval = locmaxi - locmini
     listbase = list(NUMPYaround([ii*10**exp for exp in range(-1, 1) for ii in range(1, 6)], decimals=1))
@@ -143,16 +160,19 @@ def minmax_plot(tab, metric=False):
                         ": wrong bounds in ticks for axis"]
         if min(tick_labels) > mini:
             list_strings += [str().ljust(5) + "ticks minimum (" + str(min(tick_labels)) + ") > tab minimum (" +
-                             str(min(mini)) + ")"]
+                             str(mini) + ")"]
         if max(tick_labels) < maxi:
             list_strings += [str().ljust(5) + "ticks maximum (" + str(max(tick_labels)) + ") > tab maximum (" +
-                             str(min(maxi)) + ")"]
+                             str(maxi) + ")"]
         EnsoErrorsWarnings.MyWarning(list_strings)
     return tick_labels
 
 
 def read_diag(dict_diag, dict_metric, model, reference, metric_variables):
-    diag_mod = dict_diag[model]
+    if isinstance(model, str):
+        diag_mod = dict_diag[model]
+    else:
+        diag_mod = [dict_diag[mod] for mod in model]
     if reference in dict_diag.keys():
         obs = deepcopy(reference)
     else:
@@ -167,11 +187,15 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables):
                     if obs in dict_diag.keys():
                         break
     diag_obs = dict_diag[obs]
-    metric_value = dict_metric[obs]  # ["ref_" + obs]
+    if isinstance(model, str):
+        metric_value = dict_metric[obs][model]
+    else:
+        metric_value = [dict_metric[obs][mod] for mod in model]
+    # metric_value = dict_metric[obs]  # ["ref_" + obs]
     return diag_mod, diag_obs, metric_value, obs
 
 
-def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric):
+def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, model):
     if len(metric_variables) == 1:
         for obs in observations:
             newvar = varname + obs
@@ -184,31 +208,86 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric):
                 newvar = varname + obs
                 if newvar in variables_in_xml:
                     break
+    # if "_lon__" in newvar or "_hov__" in newvar:
+    #     list_strings = [
+    #         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": reader",
+    #         str().ljust(5) + str(newvar) + " trick: read only between 140E and 96W",
+    #         str().ljust(5) + "this should not stay like that!!!"
+    #     ]
+    #     EnsoErrorsWarnings.MyWarning(list_strings)
+    #     tab_out = xml[newvar].sel(longitude=slice(140, 264))
+    # else:
+    #     tab_out = xml[newvar]
     tab_out = xml[newvar]
-    metric_value = dict_metric[obs]#["ref_" + obs]
+    metric_value = dict_metric[obs][model]#["ref_" + obs]
     return tab_out, metric_value, obs
 
 
-def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric):
-    if isinstance(var_to_read, str):
-        var_to_read = [var_to_read]
+def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric):
     ff = open_dataset(filename_nc, decode_times=False)
     variables_in_file = sorted([var for var in ff.keys()], key=lambda v: v.upper())
     # read model
     tab_mod = list()
     for var in var_to_read:
+        # if "_lon__" in var or "_hov__" in var:
+        #     list_strings = [
+        #         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": reader",
+        #         str().ljust(5) + str(var) + " trick: read only between 140E and 96W",
+        #         str().ljust(5) + "this should not stay like that!!!"
+        #     ]
+        #     EnsoErrorsWarnings.MyWarning(list_strings)
+        #     tab_mod.append(ff[var + model].sel(longitude=slice(140, 264)))
+        # else:
+        #     tab_mod.append(ff[var + model])
         tab_mod.append(ff[var + model])
     # reab obs
     tab_obs = list()
     for var in var_to_read:
         varobs = var + reference
         if varobs in variables_in_file:
+            # if "_lon__" in varobs or "_hov__" in varobs:
+            #     list_strings = [
+            #         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": reader",
+            #         str().ljust(5) + str(varobs) + " trick: read only between 140E and 96W",
+            #         str().ljust(5) + "this should not stay like that!!!"
+            #     ]
+            #     EnsoErrorsWarnings.MyWarning(list_strings)
+            #     tab = ff[varobs].sel(longitude=slice(140, 264))
+            # else:
+            #     tab = ff[varobs]
             tab = ff[varobs]
-            metval = dict_metric[reference]#["ref_" + reference]
+            metval = dict_metric[reference][model]  # ["ref_" + reference]
             obs = deepcopy(reference)
         else:
-            tab, metval, obs = read_obs(ff, variables_in_file, metric_variables, var, dict_metric)
+            tab, metval, obs = read_obs(ff, variables_in_file, metric_variables, var, dict_metric, model)
         tab_obs.append(tab)
     ff.close()
+    return tab_mod, tab_obs, metval, obs
+
+
+def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric):
+    if isinstance(var_to_read, str):
+        var_to_read = [var_to_read]
+    if isinstance(filename_nc, str):
+        tab_mod, tab_obs, metval, obs = reader(filename_nc, model, reference, var_to_read, metric_variables,
+                                               dict_metric)
+    else:
+        tab_mod, metval, obs = list(), list(), list()
+        for ii in range(len(filename_nc)):
+            tmp1, tab_obs, tmp2, tmp3 = reader(filename_nc[ii], model[ii], reference, var_to_read, metric_variables,
+                                               dict_metric)
+            tab_mod.append(tmp1)
+            metval.append(tmp2)
+            obs.append(tmp3)
+        obs = list(set(obs))
+        if len(obs) > 1:
+            list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too many obs",
+                            str().ljust(5) + "var_to_read = "+str(var_to_read),
+                            str().ljust(5) + "filename_nc = " + str(filename_nc),
+                            str().ljust(5) + "model = " + str(model),
+                            str().ljust(5) + "reference = " + str(reference)]
+            EnsoErrorsWarnings.MyError(list_strings)
+        else:
+            obs = obs[0]
     return tab_mod, tab_obs, metval, obs
 
