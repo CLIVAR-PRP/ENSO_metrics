@@ -3,12 +3,15 @@ set -a
 
 # Working conda env in Crunchy: pmp_nightly_20180830
 
-ver=`date +"%Y%m%d"`
+ver=`date +"%Y%m%d-%H%M"`
 
 mips='cmip5 cmip6'
+#mips='cmip5'
 
-#MCs='ENSO_perf ENSO_tel ENSO_proc'
-MCs='ENSO_tel'
+MCs='ENSO_perf ENSO_tel ENSO_proc'
+#MCs='ENSO_tel'
+#MCs='ENSO_perf'
+#MCs='ENSO_tel ENSO_proc'
 
 for mip in $mips; do
     for MC in $MCs; do
