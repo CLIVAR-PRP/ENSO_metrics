@@ -84,20 +84,6 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-"""
-try:
-    list_obs.remove('ERSSTv5')
-except:
-    pass
-try:
-    list_obs.remove('GPCPv2.3')
-except:
-    pass
-
-if mc_name == 'ENSO_tel':
-    list_obs.remove('HadISST')
-print(list_obs)
-"""
 
 #
 # finding file and variable name in file for each observations dataset
