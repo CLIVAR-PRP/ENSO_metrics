@@ -59,6 +59,15 @@ list_metric = sorted(dict_mc['metrics_list'].keys())
 #=================================================
 # Prepare loop iteration
 #-------------------------------------------------
+# Environmental setup
+try:
+    egg_pth = pkg_resources.resource_filename(
+        pkg_resources.Requirement.parse("pcmdi_metrics"), "share/pmp")
+except Exception:
+    # python 2 seems to fail when ran in home directory of source?
+    #egg_pth = os.path.join(os.getcwd(), "share", "pmp")
+    egg_pth = os.path.join(sys.prefix, "share", "pmp")
+
 # Create output directory
 for output_type in ['graphics', 'diagnostic_results', 'metrics_results']:
     if not os.path.exists(outdir(output_type=output_type)):
@@ -242,10 +251,9 @@ print('PMPdriver: model loop end')
 # disclaimer and reference for JSON header
 disclaimer = open(
     os.path.join(
-        sys.prefix,
-        "share",
-        "pmp",
+        egg_pth,
         "disclaimer.txt")).read()
+
 if param.metricsCollection == 'MC1':
     reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
 elif param.metricsCollection == 'ENSO_perf':
