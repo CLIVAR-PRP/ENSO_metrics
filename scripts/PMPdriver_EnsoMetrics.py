@@ -10,6 +10,7 @@ import glob
 import json
 import os
 import pcmdi_metrics
+import pkg_resources
 import sys
 
 from collections import defaultdict
@@ -67,6 +68,7 @@ except Exception:
     # python 2 seems to fail when ran in home directory of source?
     #egg_pth = os.path.join(os.getcwd(), "share", "pmp")
     egg_pth = os.path.join(sys.prefix, "share", "pmp")
+print('egg_pth:', egg_pth)
 
 # Create output directory
 for output_type in ['graphics', 'diagnostic_results', 'metrics_results']:
