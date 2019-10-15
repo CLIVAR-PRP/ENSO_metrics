@@ -1,5 +1,7 @@
-#from pcmdi_metrics.pcmdi.pmp_parser import PMPParser
 from pcmdi_metrics.driver.pmp_parser import PMPParser
+import copy
+import re
+
 
 def ReadOptions():
 
@@ -21,16 +23,23 @@ def ReadOptions():
                    type=str,
                    dest='modpath_lf',
                    help="Directory path to model land fraction field")
-    P.use("--reference_data_path")
-    P.add_argument("--reference_data_lf_path",
-                   type=str,
-                   dest='reference_data_lf_path',
-                   help="Data path to land fraction of reference dataset")
     P.add_argument("--modnames",
                    type=str,
                    nargs='+',
                    default=None,
                    help="List of models")
+    P.add_argument("-r", "--realization",
+                   type=str,
+                   default="r1i1p1",
+                   help="Consider all accessible realizations as idividual\n"
+                        "- r1i1p1: default, consider only 'r1i1p1' member\n"
+                        "          Or, specify realization, e.g, r3i1p1'\n"
+                        "- *: consider all available realizations")
+    P.use("--reference_data_path")
+    P.add_argument("--reference_data_lf_path",
+                   type=str,
+                   dest='reference_data_lf_path',
+                   help="Data path to land fraction of reference dataset")
     P.add_argument("--metricsCollection",
                    type=str,
                    dest='metricsCollection',
@@ -46,15 +55,23 @@ def ReadOptions():
     P.use("--results_dir")
 
     # Switches
-    P.add_argument("-d", "--debug",
+    P.add_argument("-d", "--debug", nargs='?',
+                   const=True, default=False,
                    type=bool,
-                   default=False,
                    help="Option for debug: True / False (defualt)")
-    P.add_argument("--nc_out",
+    P.add_argument("--nc_out", nargs='?',
+                   const=True, default=True,
                    type=bool,
-                   default=True,
                    help="Option for generate netCDF file output: True (default) / False")
     
     param = P.get_parameter()
 
     return param
+
+
+def sort_human(input_list):
+    tmp_list = copy.copy(input_list)
+    convert = lambda text: float(text) if text.isdigit() else text
+    alphanum = lambda key: [convert(c) for c in re.split('([-+]?[0-9]*\.?[0-9]*)', key)]
+    tmp_list.sort(key=alphanum)
+    return tmp_list

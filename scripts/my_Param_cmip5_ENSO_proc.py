@@ -11,8 +11,8 @@ exp = 'historical'
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-#debug = True
-debug = False
+debug = True
+#debug = False
 nc_out = True
 
 #=================================================
@@ -74,4 +74,5 @@ results_dir = os.path.join(
     '%(output_type)', 'enso_metric',
     mip, exp, case_id, metricsCollection)
 json_name = '_'.join([mip, exp, metricsCollection, case_id])
-netcdf_name = json_name + '_%(model)'
+netcdf_name = json_name + '_%(model)' + '_%(realization)'
+
