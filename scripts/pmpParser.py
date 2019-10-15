@@ -5,22 +5,30 @@ def ReadOptions():
 
     P = PMPParser() # Includes all default options
 
-    P.use("--mip")
-    P.use("--exp")
-    P.use("--results_dir")
-    P.use("--reference_data_path")
-    P.use("--modpath")
+    #P.use("--mip")
+    #P.use("--exp")
     
+    P.add_argument("--mip",
+                   type=str,
+                   default="cmip5",
+                   help="A WCRP MIP project such as CMIP3 and CMIP5")
+    P.add_argument("--exp",
+                   type=str,
+                   default="historical",
+                   help="An experiment such as AMIP, historical or pi-contorl")
+    P.use("--modpath")
     P.add_argument("--modpath_lf",
                    type=str,
                    dest='modpath_lf',
                    help="Directory path to model land fraction field")
+    P.use("--reference_data_path")
     P.add_argument("--reference_data_lf_path",
                    type=str,
                    dest='reference_data_lf_path',
                    help="Data path to land fraction of reference dataset")
     P.add_argument("--modnames",
-                   type=list,
+                   type=str,
+                   nargs='+',
                    default=None,
                    help="List of models")
     P.add_argument("--metricsCollection",
@@ -35,6 +43,7 @@ def ReadOptions():
                    type=str,
                    dest='netcdf_name',
                    help="File name for output NetCDF")
+    P.use("--results_dir")
 
     # Switches
     P.add_argument("-d", "--debug",

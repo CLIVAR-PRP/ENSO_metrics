@@ -28,6 +28,8 @@ param = ReadOptions()
 # Pre-defined options
 mip = param.mip
 exp = param.exp
+print('mip:', mip)
+print('exp:', exp)
 
 # Path to model data as string template
 modpath = param.process_templated_argument("modpath")
@@ -47,6 +49,19 @@ if 'all' in [m.lower() for m in models]:
     # remove duplicates
     models = sorted(list(dict.fromkeys(models)), key=lambda s: s.lower())
 
+# Include all models if conditioned
+if ('all' in [m.lower() for m in models]) or (models == 'all'):
+    models = [p.split('.')[1]
+        for p in glob.glob(modpath(
+            mip=mip,
+            exp=exp,
+            model='*',
+            realization='*',
+            variable=var))]
+    # remove duplicates
+    models = sorted(list(dict.fromkeys(models)), key=lambda s: s.lower())
+
+
 print('models:', models)
 
 # Output
@@ -56,6 +71,8 @@ netcdf_path = outdir(output_type='diagnostic_results')
 mc_name = param.metricsCollection 
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
+
+sys.exit('PARSER-TEST-DONE')
 
 #=================================================
 # Prepare loop iteration
@@ -187,7 +204,7 @@ for mod in models:
             #
             if mip == 'cmip5': realization = 'r1i1p1'
             elif mip == 'cmip6': realization = 'r1i1p1f1'
-            file_name = modpath(mip=mip, model=mod, realization=realization, variable=var0)
+            file_name = modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var0)
             file_areacell = None ## temporary for now
             file_landmask = modpath_lf(mip=mip, model=mod)
             # -- TEMPORARY --
@@ -205,7 +222,7 @@ for mod in models:
     
             if isinstance(var_in_file, list):
                 list_files = list()
-                list_files = [modpath(mip=mip, model=mod, realization=realization, variable=var1) for var1 in var_in_file]
+                list_files = [modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var1) for var1 in var_in_file]
                 list_areacell = [file_areacell for var1 in var_in_file]
                 list_name_area = [areacell_in_file for var1 in var_in_file]
                 list_landmask = [modpath_lf(mip=mip, model=mod) for var1 in var_in_file]
