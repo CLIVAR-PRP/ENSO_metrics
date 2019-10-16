@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-#=================================================
+# =================================================
 # Dependencies
-#-------------------------------------------------
+# -------------------------------------------------
 from __future__ import print_function
 
 import collections
@@ -21,9 +21,9 @@ from pmpParser import sort_human
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 
-#=================================================
+# =================================================
 # Collect user defined options
-#-------------------------------------------------
+# -------------------------------------------------
 param = ReadOptions()
 
 # Pre-defined options
@@ -57,24 +57,34 @@ print('models:', models)
 realization = param.realization
 print('realization: ', realization)
 
-# Output
-outdir = param.process_templated_argument("results_dir")
-netcdf_path = outdir(output_type='diagnostic_results')
-json_name = param.json_name
-
 # Metrics Collection
 mc_name = param.metricsCollection 
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 print('mc_name:', mc_name)
 
+# Output
+outdir_template = param.process_templated_argument("results_dir")
+outdir = StringConstructor(str(outdir_template(
+    output_type='%(output_type)',
+    mip=mip, exp=exp, metricsCollection=mc_name)))
+netcdf_path = outdir(output_type='diagnostic_results')
+json_name_template = param.process_templated_argument("json_name")
+json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name)
+
+print('outdir:', str(outdir_template(
+    output_type='%(output_type)',
+    mip=mip, exp=exp, metricsCollection=mc_name))) 
+print('netcdf_path:', netcdf_path)
+print('json_name:', json_name)
+
 # Switches
 debug = param.debug
 print('debug:', debug)
 
-#=================================================
+# =================================================
 # Prepare loop iteration
-#-------------------------------------------------
+# -------------------------------------------------
 # Environmental setup
 try:
     egg_pth = pkg_resources.resource_filename(
@@ -155,7 +165,6 @@ for obs in list_obs:
                     list_files = [param.reference_data_path[obs].replace('VAR',var1) for var1 in var_in_file]
                     list_areacell = [file_areacell for var1 in var_in_file]
                     list_name_area = [areacell_in_file for var1 in var_in_file]
-                    #list_landmask = [param.reference_data_lf_path[obs] for var1 in var_in_file]
                     try:
                         list_landmask = [param.reference_data_lf_path[obs] for var1 in var_in_file]
                     except:
@@ -175,9 +184,9 @@ for obs in list_obs:
 
 print('PMPdriver: dict_obs readin end')
 
-#=================================================
+# =================================================
 # Prepare outputing metrics to JSON file
-#-------------------------------------------------
+# -------------------------------------------------
 # Dictionary to save result 
 def tree(): return defaultdict(tree)
 
@@ -246,9 +255,9 @@ def metrics_to_json(dict_obs, dict_metric, dict_dive, json_name, mod=None, run=N
             ': '),
         sort_keys=True)
 
-#=================================================
+# =================================================
 # Loop for Models 
-#-------------------------------------------------
+# -------------------------------------------------
 # finding file and variable name in file for each observations dataset
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
@@ -264,17 +273,20 @@ for mod in models:
         variable='ts')).readlines()
 
     model_path_list = sort_human(model_path_list)
-
-    print('model_path_list:', model_path_list)
+    if debug:
+        print('model_path_list:', model_path_list)
 
     # Find where run can be gripped from given filename template for modpath
     run_in_modpath = modpath(mip=mip, exp=exp, model=mod, realization=realization,
         variable=var).split('/')[-1].split('.').index(realization)
-
+    # Collect available runs
     runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+    if debug:
+        print('runs_list:', runs_list)
 
-    print('runs_list:', runs_list)
-
+    # =================================================
+    # Loop for Realizations
+    # -------------------------------------------------
     for run in runs_list:
 
         print(' --- ', run, ' ---')
@@ -336,6 +348,7 @@ for mod in models:
                 dictDatasets = {'model': dict_mod, 'observations': dict_obs}
                 print('dictDatasets:')
                 print(json.dumps(dictDatasets, indent=4, sort_keys=True))
+
                 # regridding dictionary (only if you want to specify the regridding)
                 dict_regrid = {}
                 """
@@ -346,16 +359,26 @@ for mod in models:
                         'newgrid_name': 'generic 1x1deg'},
                 }
                 """
-                # Computes the metric collection
+
+                # Prepare netcdf file setup
                 netcdf_name = StringConstructor(param.netcdf_name)(model=mod, realization=run)
                 netcdf = os.path.join(netcdf_path, netcdf_name)
-                print('file_name:', file_name)
-                print('list_files:', list_files)
-                print('netcdf_name:', netcdf_name)
+                if debug:
+                    print('file_name:', file_name)
+                    print('list_files:', list_files)
+                    print('netcdf_name:', netcdf_name)
+
+                # Computes the metric collection
                 dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=param.nc_out,
                                                      netcdf_name=netcdf, debug=debug)
-                print('dict_metric:')
-                print(json.dumps(dict_metric, indent=4, sort_keys=True))
+                if debug:
+                    print('file_name:', file_name)
+                    print('list_files:', list_files)
+                    print('netcdf_name:', netcdf_name)
+                    print('dict_metric:')
+                    print(json.dumps(dict_metric, indent=4, sort_keys=True))
+
+                # OUTPUT METRICS TO JSON FILE
                 metrics_to_json(dict_obs, dict_metric, dict_dive, json_name, mod=mod, run=run)
 
             except Exception as e: 
@@ -366,7 +389,7 @@ for mod in models:
       
 print('PMPdriver: model loop end')
 
-#=================================================
-#  OUTPUT METRICS TO JSON FILE
-#-------------------------------------------------
+# =================================================
+# OUTPUT METRICS TO JSON FILE
+# -------------------------------------------------
 metrics_to_json(dict_obs, dict_metric, dict_dive, json_name)
