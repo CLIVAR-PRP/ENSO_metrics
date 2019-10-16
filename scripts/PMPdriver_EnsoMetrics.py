@@ -178,7 +178,10 @@ print('PMPdriver: dict_obs readin end')
 #=================================================
 # Prepare outputing metrics to JSON file
 #-------------------------------------------------
-def metrics_to_json(dict_obs, dict_metric, dict_dive):
+# Dictionary to save result 
+def tree(): return defaultdict(tree)
+
+def metrics_to_json(dict_obs, dict_metric, dict_dive, json_name, mod=None, run=None):
     # disclaimer and reference for JSON header
     disclaimer = open(
         os.path.join(
@@ -196,9 +199,15 @@ def metrics_to_json(dict_obs, dict_metric, dict_dive):
     else:
         reference = mc_name
     
+    enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
+
     # First JSON for metrics results
     enso_stat_dic['obs'] = dict_obs
-    enso_stat_dic['model'] = dict_metric
+    if mod is not None and run is not None:
+        enso_stat_dic['model'][mod][run] = dict_metric[mod][run]
+        json_name = '_'.join([json_name, mod, run])
+    else:
+        enso_stat_dic['model'] = dict_metric
     metrics_dictionary = collections.OrderedDict()
     metrics_dictionary["DISCLAIMER"] = disclaimer
     metrics_dictionary["REFERENCE"] = reference
@@ -219,7 +228,13 @@ def metrics_to_json(dict_obs, dict_metric, dict_dive):
     diveDown_dictionary["DISCLAIMER"] = disclaimer
     diveDown_dictionary["REFERENCE"] = reference
     diveDown_dictionary["RESULTS"] = {}
-    diveDown_dictionary["RESULTS"]["model"] = dict_dive
+    if mod is not None and run is not None:
+        diveDown_dictionary["RESULTS"]["model"] = {}
+        diveDown_dictionary["RESULTS"]["model"][mod] = {}
+        diveDown_dictionary["RESULTS"]["model"][mod][run] = {}
+        diveDown_dictionary["RESULTS"]["model"][mod][run] = dict_dive[mod][run]
+    else:
+        diveDown_dictionary["RESULTS"]["model"] = dict_dive
     
     OUT2 = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), json_name+'_diveDown.json')
     OUT2.write(
@@ -234,10 +249,6 @@ def metrics_to_json(dict_obs, dict_metric, dict_dive):
 #=================================================
 # Loop for Models 
 #-------------------------------------------------
-# Dictionary to save result 
-def tree(): return defaultdict(tree)
-enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
-
 # finding file and variable name in file for each observations dataset
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
@@ -345,6 +356,7 @@ for mod in models:
                                                      netcdf_name=netcdf, debug=debug)
                 print('dict_metric:')
                 print(json.dumps(dict_metric, indent=4, sort_keys=True))
+                metrics_to_json(dict_obs, dict_metric, dict_dive, json_name, mod=mod, run=run)
 
             except Exception as e: 
                 print('failed for ', mod, run)
@@ -357,4 +369,4 @@ print('PMPdriver: model loop end')
 #=================================================
 #  OUTPUT METRICS TO JSON FILE
 #-------------------------------------------------
-metrics_to_json(dict_obs, dict_metric, dict_dive)
+metrics_to_json(dict_obs, dict_metric, dict_dive, json_name)
