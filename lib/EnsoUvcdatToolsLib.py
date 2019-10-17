@@ -3,6 +3,7 @@ from calendar import monthrange
 from copy import deepcopy
 from datetime import date
 from inspect import stack as INSPECTstack
+from numpy import arange as NParange
 from numpy import array as NParray
 from numpy import exp as NPexp
 from numpy import nonzero as NPnonzero
@@ -16,8 +17,11 @@ import EnsoErrorsWarnings
 from EnsoToolsLib import StringInDict
 
 # uvcdat based functions:
-import adamsregrid
 from cdms2 import createAxis as CDMS2createAxis
+from cdms2 import createRectGrid as CDMS2createRectGrid
+from cdms2 import createUniformLatitudeAxis as CDMS2createUniformLatitudeAxis
+from cdms2 import createUniformLongitudeAxis as CDMS2createUniformLongitudeAxis
+from cdms2 import createVariable as CDMS2createVariable
 from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
 from cdtime import comptime as CDTIMEcomptime
@@ -32,6 +36,7 @@ from MV2 import average as MV2average
 from MV2 import compress as MV2compress
 from MV2 import divide as MV2divide
 from MV2 import masked_where as MV2masked_where
+from MV2 import maximum as MV2maximum
 from MV2 import minimum as MV2minimum
 from MV2 import multiply as MV2multiply
 from MV2 import subtract as MV2subtract
@@ -39,6 +44,7 @@ from MV2 import sum as MV2sum
 from MV2 import take as MV2take
 from MV2 import where as MV2where
 from MV2 import zeros as MV2zeros
+from regrid2.horizontal import Horizontal as REGRID2horizontal__Horizontal
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -470,7 +476,7 @@ def Std(tab, weights=None, axis=0, centered=1, biased=1):
     import genutil
     help(genutil.statistics.std)
     """
-    return float(GENUTILstd(tab, weights=weights, axis=axis, centered=centered, biased=biased))
+    return GENUTILstd(tab, weights=weights, axis=axis, centered=centered, biased=biased)
 
 
 def TimeBounds(tab):
@@ -491,6 +497,51 @@ def TimeBounds(tab):
 #
 # Set of more complex functions (based on uvcdat) used in EnsoMetricsLib.py
 #
+def annualcycle(tab):
+    """
+    #################################################################################
+    Description:
+    Computes the annual cycle (climatological value of each calendar month) of tab
+    #################################################################################
+
+    :param tab: masked_array
+    :return: tab: array
+        array of the monthly annual cycle
+    """
+    initorder = tab.getOrder()
+    tab = tab.reorder('t...')
+    axes = tab.getAxisList()
+    time_ax = tab.getTime().asComponentTime()
+    months = MV2array(list(tt.month for tt in time_ax))
+    cyc = []
+    for ii in range(12):
+        cyc.append(MV2average(tab.compress(months == (ii + 1), axis=0), axis=0))
+    cyc = MV2array(cyc)
+    time = CDMS2createAxis(NParange(0.5, 12, 1, dtype='f'), id='time')
+    time.units = "months since 0001-01-01"
+    moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
+    moy = moy.reorder(initorder)
+    cdutil.setTimeBoundsMonthly(moy)
+    return moy
+
+
+def arrayToList(tab):
+    tmp = NParray(MV2where(tab.mask, 1e20, tab))
+    if len(tab.shape)==1:
+        tab_out = list(tmp)
+    elif len(tab.shape)==2:
+        tab_out = [list(tmp[ii]) for ii in range(len(tab))]
+    else:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": bad shape",
+            str().ljust(5) + "cannot transform this array to a list",
+            str().ljust(10) + "the length (" + str(len(tab.shape)) + ") of the shape (" + str(tab.shape) +
+            ") is too large",
+            str().ljust(10) + "it is not programed yet",
+        ]
+        EnsoErrorsWarnings.MyError(list_strings)
+    return tab_out
+
 def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', **kwargs):
     """
     #################################################################################
@@ -592,16 +643,16 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                 tab = dict_operations['minus'](tab, 273.15)
                 units = "degC"
             else:
-                tab = dict_operations['minus'](tab, 273.15)
-                units = "degC"
-                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, INSPECTstack())
+                minmax = [MV2minimum(tab),MV2maximum(tab)]
+                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, minmax, INSPECTstack())
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
                        'degrees C']:
             # check if the temperature units is really degC
             if float(MV2minimum(tab)) < 50:
                 units = "degC"
             else:
-                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, units, INSPECTstack())
+                minmax = [MV2minimum(tab), MV2maximum(tab)]
+                EnsoErrorsWarnings.UnlikelyUnits(var_name, name_in_file, minmax, units, INSPECTstack())
         else:
             EnsoErrorsWarnings.UnknownUnits(var_name, name_in_file, units, INSPECTstack())
     elif var_name in ['precipitations']:
@@ -719,6 +770,17 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
             axes = [axis0]
         composite.setAxisList(axes)
     else:
+        time_ax = tab.getTime().asComponentTime() # gets component time of tab
+        list_years = [yy.year for yy in time_ax[:]] # listing years in tab (from component time)
+        indices = MV2arange(tab.size)
+        # creates a tab of 'condition' where True is set when the event is found, False otherwise
+        try:
+            condition = [True if yy in list_event_years else False for yy in list_years]
+        except:
+            list_event_years = [str(yy) for yy in list_event_years]
+            condition = [True if str(yy) in list_event_years else False for yy in list_years]
+        ids = MV2compress(condition, indices) # gets indices of events
+        tab = MV2take(tab, ids, axis=0) # gets events
         composite = MV2average(tab, axis=0)
     return composite
 
@@ -832,7 +894,7 @@ def get_num_axis(tab, name_axis):
         tab of data to normalize by the standard deviation
     :param name_axis: string
         name of an axis
-        e.g., frequency='latitude'
+        e.g., name_axis='latitude'
     :return number: int
         position of the axis named "name_axis"
     """
@@ -965,7 +1027,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
 #            tab = fi(varname, nbox, time=time_bounds)
             tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
     fi.close()
-    if time_bounds is not None:
+    if time_bounds is not None and not isinstance(time_bounds, slice):
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
         # this section checks if one time step has not been included by error at the beginning or the end of the time
         # series
@@ -1039,7 +1101,8 @@ def ReadAreaSelectRegion(filename, box=None, **kwargs):
     return areacell
 
 
-def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTool='esmf', regridMethod='linear'):
+def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridder='cdms', regridTool='esmf',
+           regridMethod='linear', **kwargs):
     """
     #################################################################################
     Description:
@@ -1049,16 +1112,6 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTo
     for more information:
     import cdms2
     help(cdms2.avariable)
-    or (if the case of regridTool='adamsregrid'
-    import adamsregrid
-    To obtain a prescription for making an instance, type
-        adamsregrid.help('Regrid')
-    To acquire instructions on the use of the rgrd function, type
-        adamsregrid.help('rgrd')
-    To look at a general one dimensional example, type
-        adamsregrid.help('OneDexample')
-    To look at a general four dimensional example, type
-        adamsregrid.help('FourDexample')
 
     :param tab_to_regrid: masked_array
         masked_array to regrid (must include a CDMS grid!)
@@ -1070,68 +1123,124 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridTo
         axis order (form "tzyx", "tyx", etc.)
     :param mask: array of booleans, optional
         mask of the new grid (either 2-D or the same shape as togrid)
+    :param regridder: string, optional
+        regridders (either 'cdms', 'cdmsHorizontal')
+        default value is 'cdms'
     :param regridTool: string, optional
-        regridding tools (either 'regrid2', 'esmf', 'libcf', 'adamsregrid')
+        only if regrider is set to 'cdms'
+        regridding tools (either 'regrid2', 'esmf', 'libcf')
         default value is 'esmf'
     :param regridMethod: string, optional
-        regridding methods:
-            regridTool='regrid2'     -> 'linear'
-            regridTool='esmf'        -> 'conserve', 'linear', 'patch'
-            regridTool='libcf'       -> 'linear'
-            regridTool='adamsregrid' -> 'linear', 'linearLog', 'cubic', 'cubicLog'
+        regridding methods depend on regridder and regridTool
+        'cdms'
+            regridTool='regrid2' -> 'linear'
+            regridTool='esmf'    -> 'conserve', 'linear', 'patch'
+            regridTool='libcf'   -> 'linear'
+        'cdmsHorizontal' -> None
         default value is 'linear'
+
+    usual kwargs:
+    :param newgrid_name: string, optional
+        if 'newgrid' is not defined (is string) this will be used to create a grid:
+            this string must contain two keywords: the grid type and the resolution (same resolution in lon and lat)
+            grid type  -> 'equalarea', 'gaussian', 'generic', 'uniform'
+            resolution -> '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
+            e.g., newgrid_name='gaussian 1x1deg'
+        default value is 'generic 1x1deg'
+    :param region: string, optional
+        if 'newgrid' is not defined (is string) this will be used to create a grid
+        name of a region, domain where the grid will be defined, must be defined in EnsoCollectionsLib.ReferenceRegions
+
     :return new_tab: masked_array
         tab_to_regrid regridded on newgrid
     """
-    if regridTool not in ['regrid2', 'esmf', 'libcf', 'adamsregrid']:
+    known_args = {'newgrid_name', 'region'}
+    extra_args = set(kwargs) - known_args
+    if extra_args:
+        EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+    # test given arguments
+    known_regridder = ['cdms', 'cdmsHorizontal']
+    if regridder not in known_regridder:
         list_strings = [
-            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
-            str().ljust(5) + "unknown regridTool: " + str(regridTool),
-            str().ljust(10) + "known regridTool: " + str(['regrid2', 'esmf', 'libcf'])
+            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridder",
+            str().ljust(5) + "unknown regridder: " + str(regridder),
+            str().ljust(10) + "known regridder: " + str(known_regridder)
         ]
         EnsoErrorsWarnings.MyError(list_strings)
-    if (regridTool == 'esmf' and regridMethod not in ['conserve', 'patch', 'linear']) or \
-            (regridTool in ['regrid2', 'libcf'] and regridMethod != 'linear'):
-        list_strings = [
-            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
-            str().ljust(5) + "unknown regridMethod for this regridTool (" + str(regridMethod) + "): "
-            + str(regridMethod),
-            str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
-        ]
-        EnsoErrorsWarnings.MyError(list_strings)
-    if (regridTool == 'adamsregrid' and regridMethod not in ['linear', 'linearLog', 'cubic', 'cubicLog']):
-        list_strings = [
-            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
-            str().ljust(5) + "unknown regridMethod for this regridTool (" + str(regridMethod) + "): "
-            + str(regridMethod),
-            str().ljust(10) + "known regridTool: " + str(['conserve', 'patch', 'linear'])
-        ]
-        EnsoErrorsWarnings.MyError(list_strings)
-    if regridTool in ['regrid2', 'esmf', 'libcf']:
+    elif regridder == 'cdms':
+        if regridTool in ['regrid2', 'libcf']:
+            list_method = [None, 'linear']
+        elif regridTool == 'esmf':
+            list_method = [None, 'conserve', 'linear', 'patch']
+        if (regridTool is not None) and (regridTool not in ['regrid2', 'esmf', 'libcf']):
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
+                str().ljust(5) + "unknown regridTool: " + str(regridTool),
+                str().ljust(10) + "known regridTool: " + str(['regrid2', 'esmf', 'libcf'])
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+        elif regridMethod not in list_method:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridMethod",
+                str().ljust(5) + "unknown regridMethod (" + str(regridMethod) + ") for this regridTool ("
+                + str(regridTool) + ")",
+                str().ljust(10) + "known regridMethod: " + str(list_method)
+            ]
+            EnsoErrorsWarnings.MyError(list_strings)
+    # test the given 'newgrid'
+    if isinstance(newgrid, basestring) or newgrid is None:
+        #
+        # newgrid is not a grid, so a grid will be created
+        # to do this, kwargs['newgrid_name'] and kwargs['region'] must be defined
+        #
+        # define the grid type
+        for gtype in ['equalarea', 'gaussian', 'generic', 'uniform']:
+            if gtype in kwargs['newgrid_name']:
+                GridType = gtype
+                break
+        try:
+            GridType
+        except:
+            GridType = 'generic'
+        # define resolution (same resolution in lon and lat)
+        for res in ['0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg']:
+            if res in kwargs['newgrid_name']:
+                if res == '0.25x0.25deg':
+                    GridRes = 0.25
+                elif res == '0.5x0.5deg':
+                    GridRes = 0.5
+                elif res == '1x1deg':
+                    GridRes = 1.
+                else:
+                    GridRes = 2.
+                break
+        try:
+            GridRes
+        except:
+            GridRes = 1.
+        # define bounds of 'region'
+        region_ref = ReferenceRegions(kwargs['region'])
+        lat1, lat2 = region_ref['latitude'][0], region_ref['latitude'][1]
+        lon1, lon2 = region_ref['longitude'][0], region_ref['longitude'][1]
+        # create uniform axis
+        nlat = lat2 - lat1
+        lat = CDMS2createUniformLatitudeAxis(lat1 + (GridRes / 2.), nlat, GridRes)
+        nlon = lon2 - lon1
+        lon = CDMS2createUniformLongitudeAxis(lon1 + (GridRes / 2.), nlon, GridRes)
+        # create grid
+        newgrid = CDMS2createRectGrid(lat, lon, "yx", type=GridType, mask=None)
+        newgrid.id = kwargs['newgrid_name']
+    #
+    # regrid
+    #
+    if regridder == 'cdms':
         new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
                                        regridMethod=regridMethod)
-    else:
-        axis = tab_to_regrid.getAxis(0)[:]
-        if axis[0] > newgrid.getAxis(0)[0]:
-            axis[0] = newgrid.getAxis(0)[0]
-        if axis[-1] < newgrid.getAxis(0)[-1]:
-            axis[-1] = newgrid.getAxis(0)[-1]
-        if len(tab_to_regrid.shape) == 1:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0)
-        elif len(tab_to_regrid.shape) == 2:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
-                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1)
-        elif len(tab_to_regrid.shape) == 3:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
-                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1,
-                                   tab_to_regrid.getAxis(2)[:], newgrid.getAxis(2)[:], regridMethod, 2)
-        else:
-            r = adamsregrid.Regrid(tab_to_regrid.getAxis(0)[:], newgrid.getAxis(0)[:], regridMethod, 0,
-                                   tab_to_regrid.getAxis(1)[:], newgrid.getAxis(1)[:], regridMethod, 1,
-                                   tab_to_regrid.getAxis(2)[:], newgrid.getAxis(2)[:], regridMethod, 2,
-                                   tab_to_regrid.getAxis(3)[:], newgrid.getAxis(3)[:], regridMethod, 3)
-        new_tab = MV2array(r.rgrd(tab_to_regrid))
-        new_tab.setAxisList(newgrid.getAxisList())
+        if tab_to_regrid.getGrid().shape == newgrid.shape:
+            new_tab = MV2masked_where(tab_to_regrid.mask, new_tab)
+    elif regridder == 'cdmsHorizontal':
+        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid)
+        new_tab = regridFCT(tab_to_regrid)
     return new_tab
 
 
@@ -1535,7 +1644,7 @@ def MyDerive(project, internal_variable_name, dict_var):
         EnsoErrorsWarnings.ObjectTypeError('project', 'dictionary', type(dict_var), INSPECTstack())
 
     # get dictionary of observations
-    dict_obs = ReferenceObservations(False)
+    dict_obs = ReferenceObservations()
 
     # compute 'internal_variable_name' in 'CMIP' case
     if 'CMIP' in project:
@@ -1653,7 +1762,7 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True):
         return [float(all_values)], [float(positive_values)], [float(negative_values)]
 
 
-def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, **kwargs):
+def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom:
         tab = cdutil.ANNUALCYCLE.departures(tab)
@@ -1676,13 +1785,15 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, **
         if extra_args:
             EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
         tab, info = Smoothing(tab, info, **kwargs['smoothing'])
+    # computes mean annual cycle
+    if compute_sea_cycle:
+        tab = annualcycle(tab)
     # average
     if average is not False:
         print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib PreProcessTS" + '\033[0m'
         print '\033[93m' + str().ljust(20) + "averaging to perform: " + str(average) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
         print '\033[93m' + str().ljust(25) + "tab.axes = " + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
-        print '\033[93m' + str().ljust(25) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
         if isinstance(average, basestring):
             try: dict_average[average]
             except:
@@ -1700,7 +1811,6 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, **
                     print '\033[93m' + str().ljust(25) + "tab.shape = " + str(tab.shape) + '\033[0m'
                     print '\033[93m' + str().ljust(25) + "tab.axes = "\
                           + str([ax.id for ax in tab.getAxisList()]) + '\033[0m'
-                    print '\033[93m' + str().ljust(25) + "tab.grid = " + str(tab.getGrid()) + '\033[0m'
         else:
             EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
     return tab, info
@@ -1801,8 +1911,7 @@ def TimeAnomaliesStd(tab):
     return std
 
 
-def TwoVarRegrid(model, obs, info, model_to_obs=True, obs_to_model=False, model_and_obs_to_newgrid = False,
-                 newgrid=None, **keyarg):
+def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None, **keyarg):
     """
     #################################################################################
     Description:
@@ -1817,58 +1926,80 @@ def TwoVarRegrid(model, obs, info, model_to_obs=True, obs_to_model=False, model_
         observations data
     :param info: string
         information about what was done to 'model' and 'obs'
-    :param model_to_obs: boolean, optional
-        True if you want to regrid model data toward observations data, if you don't want it pass anything but True
-    :param obs_to_model: boolean, optional
-        True if you want to regrid observations data toward model data, if you don't want it pass anything but True
-    :param model_and_obs_to_newgrid: boolean, optional
-        True if you want to regrid model data and observations data toward 'newgrid', if you don't want it pass anything
-        but True
+    :param region: string
+        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+    :param model_orand_obs: integer, optional
+        0 if you want to regrid model data toward observations data
+        1 if you want to regrid observations data toward model data
+        2 if you want to regrid model AND observations data toward 'newgrid'
+        default value = 0
     :param newgrid: CDMS grid
-        grid toward which model data and observations data are regridded if model_and_obs_to_newgrid=True
-    :param keyarg:
-        see EnsoUvcdatToolsLib.Regrid for regridding options
+        grid toward which model data and observations data are regridded if model_orand_obs=2
+
+    usual kwargs:
+    :param newgrid_name: string, optional
+        generates 'newgrid' depending on the given string using cdms2
+        'newgrid_name' must contain a name of a grid type:
+            'equalarea', 'gaussian', 'generic', 'uniform'
+        and a name of a grid resolution:
+            '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
+        default value = 'generic 1x1deg'
+        for more information:
+        import cdms2
+        help(cdms2.createUniformLatitudeAxis)
+        help(cdms2.createUniformLongitudeAxis)
+        help(cdms2.createRectGrid)
+    see EnsoUvcdatToolsLib.Regrid for regridding options
+
     :return: model, obs, info
         model and obs on the same grid, and information about what has been done to 'model' and 'obs'
     """
-    known_args = {'missing', 'order', 'mask', 'regridTool', 'regridMethod'}
+    known_args = {'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool', 'regridMethod'}
     extra_args = set(keyarg) - known_args
     if extra_args:
         EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
-    # if regridTool='adamsregrid', the grid is not sent but the masked_array
-    if keyarg['regridTool'] == 'adamsregrid':
-        grid_obs = deepcopy(obs)
-        grid_model = deepcopy(model)
-    else:
-        grid_obs = obs.getGrid()
-        grid_model = model.getGrid()
+    grid_obs = obs.getGrid()
+    grid_model = model.getGrid()
     # select case:
-    if model_to_obs:
+    if model_orand_obs == 0:
         model = Regrid(model, grid_obs, **keyarg)
         info = info + ', model regridded to observations'
-    elif obs_to_model:
+    elif model_orand_obs == 1:
         obs = Regrid(obs, grid_model, **keyarg)
         info = info + ', observations regridded to model'
-    elif model_and_obs_to_newgrid:
-        model = Regrid(model, newgrid, **keyarg)
-        obs = Regrid(obs, newgrid, **keyarg)
+    elif model_orand_obs == 2:
+        model = Regrid(model, newgrid, region=region, **keyarg)
+        obs = Regrid(obs, newgrid, region=region, **keyarg)
         try: grid_name = newgrid.id
         except:
             try: grid_name = newgrid.name
-            except: grid_name = 'newgrid'
+            except:
+                try: grid_name = keyarg['newgrid_name']
+                except: grid_name = 'newgrid'
         info = info + ', observations and model regridded to ' + str(grid_name)
+    else:
+        info = info + ', observations and model NOT regridded'
     if model.shape == obs.shape:
-        mask = model.mask
-        mask = MV2where(obs.mask, obs.mask, mask)
+        if model.mask.shape != ():
+            mask = model.mask
+            if obs.mask.shape != ():
+                mask = MV2where(obs.mask, obs.mask, mask)
+        else:
+            if obs.mask.shape != ():
+                mask = obs.mask
+            else:
+                mask = MV2where(MV2zeros(model.shape)==0, False, True)
         model = MV2masked_where(mask, model)
         obs = MV2masked_where(mask, obs)
     else:
-        tab = MV2zeros(model.shape)
-        for tt in range(len(tab)):
-            tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
-        model = MV2masked_where(tab.mask, model)
-        tab = MV2zeros(obs.shape)
-        for tt in range(len(tab)):
-            tab[tt] = MV2masked_where(model[0].mask, tab[tt])
-        obs = MV2masked_where(tab.mask, obs)
+        if obs[0].mask.shape != ():
+            tab = MV2zeros(model.shape)
+            for tt in range(len(tab)):
+                tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
+            model = MV2masked_where(tab.mask, model)
+        if model[0].mask != ():
+            tab = MV2zeros(obs.shape)
+            for tt in range(len(tab)):
+                tab[tt] = MV2masked_where(model[0].mask, tab[tt])
+            obs = MV2masked_where(tab.mask, obs)
     return model, obs, info

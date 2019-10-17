@@ -11,29 +11,16 @@ from EnsoComputeMetricsLib import ComputeCollection
 xmldir = environ['XMLDIR']
 
 
-def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
+def find_xml_cmip(model, project, experiment, ensemble, frequency, variable):
     file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
-                          '_glob_' + str(frequency) + '_' + str(realm) + '.xml')
+                          '_eq_pac_' + str(frequency) + '_regular_1x1_grid.xml')
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
-        if realm == 'O':
-            new_realm = 'A'
-        elif realm == 'A':
-            new_realm = 'O'
-        # if var is not in realm 'O' (for ocean), look for it in realm 'A' (for atmosphere)
-        file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
-                              '_glob_' + str(frequency) + '_' + str(new_realm) + '.xml')
-        xml = CDMS2open(file_name)
-        listvar2 = sorted(xml.listvariables())
-        if variable not in listvar2:
-            print '\033[95m' + str().ljust(5) + "CMIP var " + str(variable) +\
-                  " cannot be found (realm A and O)" + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "AND" + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "variables = " + str(listvar2) + '\033[0m'
-            exit(1)
+        print '\033[95m' + str().ljust(5) + "CMIP var " + str(variable) + " cannot be found " + '\033[0m'
+        print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
+        print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
+        exit(1)
     return file_name
 
 
@@ -56,7 +43,7 @@ list_metric = sorted(dict_mc['metrics_list'].keys())
 
 # parameters
 project = 'CMIP5'
-experiment = 'historical'
+experiment = 'piControl'#'historical'
 ensemble = 'r1i1p1'
 frequency = 'mon'
 realm = 'A'
@@ -83,7 +70,7 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['Tropflux','GPCPv2.3']#['HadISST','GPCPv2.3']#
+    list_obs = ['Tropflux','GPCPv2.3']
 elif mc_name == 'ENSO_tel':
     list_obs = ['HadISST','GPCPv2.3']
 print '\033[95m' + str(list_obs) + '\033[0m'
@@ -130,11 +117,15 @@ for obs in list_obs:
             dict_obs[obs][var] = {'path + filename': list_files, 'varname': var_in_file}
 
 # models
-list_models = ['CNRM-CM5']#['IPSL-CM5B-LR']
-#
+list_models = ['ACCESS1-0', 'ACCESS1-3', 'BNU-ESM', 'CCSM4', 'CESM1-BGC', 'CESM1-CAM5', 'CESM1-FASTCHEM', 'CESM1-WACCM',
+               'CMCC-CESM', 'CMCC-CMS', 'CMCC-CM', 'CNRM-CM5-2', 'CNRM-CM5', 'CSIRO-Mk3-6-0', 'CanESM2', 'FGOALS-s2',
+               'FIO-ESM', 'GFDL-CM3', 'GFDL-ESM2G', 'GFDL-ESM2M', 'GISS-E2-H-CC', 'GISS-E2-R-CC',
+               'HadGEM2-CC', 'HadGEM2-ES', 'IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR', 'MIROC-ESM-CHEM',
+               'MIROC-ESM', 'MIROC4h', 'MIROC5', 'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P', 'MRI-CGCM3', 'NorESM1-ME',
+               'NorESM1-M', 'bcc-csm1-1-m', 'bcc-csm1-1', 'inmcm4']
 # finding file and variable name in file for each observations dataset
 #
-dict_metric = dict()
+dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     dict_mod = {mod: {}}
@@ -149,24 +140,19 @@ for mod in list_models:
         # finding variable name in file
         #
         var_in_file = dict_var[var]['var_name']
-        if isinstance(var_in_file, list):
-            var0 = var_in_file[0]
-        else:
-            var0 = var_in_file
+        if var == 'pr':
+            var0 = 'pr'
+        elif var == 'sst':
+            var0 = 'sst'
+        elif var == 'taux':
+            var0 = 'tauu'
         #
         # finding file for 'mod', 'var'
         #
         # @jiwoo: first try in the realm 'O' (for ocean)
-        file_name = find_xml_cmip(mod, project, experiment, ensemble, frequency, realm, var0)
-        file = CDMS2open(file_name)
-        if isinstance(var_in_file, list):
-            list_files = list()
-            for var1 in var_in_file:
-                list_files.append(file_name)
-        else:
-            list_files = file_name
+        file_name = find_xml_cmip(mod, project, experiment, ensemble, frequency, var0)
         # ------------------------------------------------
-        dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
+        dict_mod[mod][var] = {'path + filename': file_name, 'varname': var0}
     # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
     # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
     # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
@@ -174,14 +160,8 @@ for mod in list_models:
     # every variables needed by the metric collection [lhf, lwr, swr, shf, sst, taux, thf] even if its coming from
     # another dataset
     dictDatasets = {'model': dict_mod, 'observations': dict_obs}
-    # regridding dictionary
-    dict_regrid = {
-        'regridding': {
-            'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-            'newgrid_name': 'generic 1x1deg'},
-    }
     # Computes the metric collection
-    dict_metric[mod] = ComputeCollection(mc_name, dictDatasets, user_regridding=dict_regrid)
+    dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, dive_down=True)
     # Prints the metrics values
     for ii in range(3): print ''
     print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
@@ -192,4 +172,18 @@ for mod in list_models:
         for ref in metric_dict.keys():
             print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) \
                   + ', error = ' + str(metric_dict[ref]['value_error']) + '\033[0m'
+
+# import plot_frame as PFRAME
+# path_plot = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Plots'
+# list_metric = sorted(dict_metric[list_models[0]]['value'].keys())
+# for met in list_metric:
+#     list_mod = dict_metric.keys()
+#     list_mod.sort(key=lambda v: v.upper())
+#     ref = dict_metric[list_models[0]]['value'][met]['metric'].keys()[0]
+#     tab = [dict_metric[mod]['value'][met]['metric'][ref]['value'] for mod in list_mod]
+#     x_dict = dict((elt,mod) if elt%3==0 else (elt,'') for elt,mod in enumerate(list_mod))
+#     print str(max(tab))+' for model '+str(list_mod[tab.index(max(tab))])
+#     name_png = path_plot+'/'+met+'_'+str(len(list_mod))+'models'
+#     PFRAME.plot_enso_stat(tab, x_axis=[-1,len(list_mod)], x_dico=x_dict, name_in_xlabel=True, draw_all_ylines=True, name=met, colormap='bl_to_darkred', \
+#                           path_plus_name_png=name_png, save_ps=False, draw_white_background=True, bg=1)
 
