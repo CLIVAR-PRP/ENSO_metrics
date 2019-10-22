@@ -5,6 +5,8 @@ def ReadOptions():
 
     P = PMPParser() # Includes all default options
 
+    P.use("--mip")
+    P.use("--exp")
     P.use("--results_dir")
     P.use("--reference_data_path")
     P.use("--modpath")
@@ -33,10 +35,16 @@ def ReadOptions():
                    type=str,
                    dest='netcdf_name',
                    help="File name for output NetCDF")
+
+    # Switches
     P.add_argument("-d", "--debug",
                    type=bool,
                    default=False,
-                   help="Option for debug: False (defualt) or True")
+                   help="Option for debug: True / False (defualt)")
+    P.add_argument("--nc_out",
+                   type=bool,
+                   default=True,
+                   help="Option for generate netCDF file output: True (default) / False")
     
     param = P.get_parameter()
 

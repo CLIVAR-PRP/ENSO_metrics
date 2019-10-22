@@ -10,6 +10,7 @@ import glob
 import json
 import os
 import pcmdi_metrics
+import pkg_resources
 import sys
 
 from collections import defaultdict
@@ -59,6 +60,16 @@ list_metric = sorted(dict_mc['metrics_list'].keys())
 #=================================================
 # Prepare loop iteration
 #-------------------------------------------------
+# Environmental setup
+try:
+    egg_pth = pkg_resources.resource_filename(
+        pkg_resources.Requirement.parse("pcmdi_metrics"), "share/pmp")
+except Exception:
+    # python 2 seems to fail when ran in home directory of source?
+    #egg_pth = os.path.join(os.getcwd(), "share", "pmp")
+    egg_pth = os.path.join(sys.prefix, "share", "pmp")
+print('egg_pth:', egg_pth)
+
 # Create output directory
 for output_type in ['graphics', 'diagnostic_results', 'metrics_results']:
     if not os.path.exists(outdir(output_type=output_type)):
@@ -84,18 +95,6 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-try:
-    list_obs.remove('ERSSTv5')
-except:
-    pass
-try:
-    list_obs.remove('GPCPv2.3')
-except:
-    pass
-
-if mc_name == 'ENSO_tel':
-    list_obs.remove('HadISST')
-print(list_obs)
 
 #
 # finding file and variable name in file for each observations dataset
@@ -254,10 +253,9 @@ print('PMPdriver: model loop end')
 # disclaimer and reference for JSON header
 disclaimer = open(
     os.path.join(
-        sys.prefix,
-        "share",
-        "pmp",
+        egg_pth,
         "disclaimer.txt")).read()
+
 if param.metricsCollection == 'MC1':
     reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
 elif param.metricsCollection == 'ENSO_perf':
@@ -266,6 +264,8 @@ elif param.metricsCollection == 'ENSO_tel':
     reference = "MC for ENSO Teleconnection..."
 elif param.metricsCollection == 'ENSO_proc':
     reference = "MC for ENSO Process..."
+else:
+    reference = param.metricsCollection
 
 # First JSON for metrics results
 enso_stat_dic['obs'] = dict_obs
