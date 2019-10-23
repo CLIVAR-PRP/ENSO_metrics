@@ -20,6 +20,7 @@ from os.path import join as OSpath__join
 from os.path import split as OSpath__split
 from scipy.signal import detrend as SCIPYsignal_detrend
 from scipy.stats import skew as SCIPYstats__skew
+from sys import prefix as SYS_prefix
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import CmipVariables
@@ -877,7 +878,7 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     # check basin file
     basin_generic_ncfile = OSpath__join(this_dir, '../share/EnsoMetrics/basin_generic_1x1deg.nc') 
     if not OSpath__isfile(basin_generic_ncfile):
-        basin_generic_ncfile = OSpath__join(sys.prefix, 'share', 'EnsoMetrics', 'basin_generic_1x1deg.nc')
+        basin_generic_ncfile = OSpath__join(SYS_prefix, 'share', 'EnsoMetrics', 'basin_generic_1x1deg.nc')
     if debug is True:
         dict_debug = {'line1': '(path) ' + str(this_dir), 'line2': '(file) ' + str(this_filename),
                       'line3': '(basin) ' + str(basin_generic_ncfile)}
