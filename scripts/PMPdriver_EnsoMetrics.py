@@ -392,4 +392,4 @@ print('PMPdriver: model loop end')
 # =================================================
 # OUTPUT METRICS TO JSON FILE
 # -------------------------------------------------
-metrics_to_json(dict_obs, dict_metric, dict_dive, json_name)
+#metrics_to_json(dict_obs, dict_metric, dict_dive, json_name)

@@ -878,7 +878,10 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
         dict_debug = {'line1': '(path) ' + str(this_dir), 'line2': '(file) ' + str(this_filename),
                       'line3': '(basin) ' + str(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'OSpath__split', 20, **dict_debug)
-    ff = CDMS2open(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))
+    try:
+        ff = CDMS2open(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))
+    except Exception:
+        ff = CDMS2open('/export/lee1043/git/ENSO_metrics_20191003/ENSO_metrics/data/basin_generic_1x1deg.nc')  ## TEMPORARY FIX
     # read basins
     if box is not None:
         region_ref = ReferenceRegions(box)
