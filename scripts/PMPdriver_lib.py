@@ -1,7 +1,10 @@
+from __future__ import print_function
 from pcmdi_metrics.driver.pmp_parser import PMPParser
-import copy
-import re
 
+import copy
+import os
+import pcmdi_metrics
+import re
 
 def ReadOptions():
 
@@ -75,3 +78,73 @@ def sort_human(input_list):
     alphanum = lambda key: [convert(c) for c in re.split('([-+]?[0-9]*\.?[0-9]*)', key)]
     tmp_list.sort(key=alphanum)
     return tmp_list
+
+
+# Dictionary to save result 
+def tree(): return defaultdict(tree)
+
+
+# Prepare outputing metrics to JSON file
+def metrics_to_json(dict_obs, dict_metric, dict_dive, outdir, json_name, mod=None, run=None):
+    # disclaimer and reference for JSON header
+    disclaimer = open(
+        os.path.join(
+            egg_pth,
+            "disclaimer.txt")).read()
+
+    if mc_name == 'MC1':
+        reference = "The statistics in this file are based on Bellenger, H et al. Clim Dyn (2014) 42:1999-2018. doi:10.1007/s00382-013-1783-z"
+    elif mc_name == 'ENSO_perf':
+        reference = "MC for ENSO Performance..."
+    elif mc_name == 'ENSO_tel':
+        reference = "MC for ENSO Teleconnection..."
+    elif mc_name == 'ENSO_proc':
+        reference = "MC for ENSO Process..."
+    else:
+        reference = mc_name
+
+    enso_stat_dic = tree() # Use tree dictionary to avoid declearing everytime
+
+    # First JSON for metrics results
+    enso_stat_dic['obs'] = dict_obs
+    if mod is not None and run is not None:
+        enso_stat_dic['model'][mod][run] = dict_metric[mod][run]
+    else:
+        enso_stat_dic['model'] = dict_metric
+    metrics_dictionary = collections.OrderedDict()
+    metrics_dictionary["DISCLAIMER"] = disclaimer
+    metrics_dictionary["REFERENCE"] = reference
+    metrics_dictionary["RESULTS"] = enso_stat_dic
+
+    OUT = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), json_name+'.json')
+    OUT.write(
+        metrics_dictionary,
+        json_structure=["type", "data", "metric", "item", "value or description"],
+        indent=4,
+        separators=(
+            ',',
+            ': '),
+        sort_keys=True)
+
+    # Second JSON for dive down information
+    diveDown_dictionary = collections.OrderedDict()
+    diveDown_dictionary["DISCLAIMER"] = disclaimer
+    diveDown_dictionary["REFERENCE"] = reference
+    diveDown_dictionary["RESULTS"] = {}
+    if mod is not None and run is not None:
+        diveDown_dictionary["RESULTS"]["model"] = {}
+        diveDown_dictionary["RESULTS"]["model"][mod] = {}
+        diveDown_dictionary["RESULTS"]["model"][mod][run] = {}
+        diveDown_dictionary["RESULTS"]["model"][mod][run] = dict_dive[mod][run]
+    else:
+        diveDown_dictionary["RESULTS"]["model"] = dict_dive
+
+    OUT2 = pcmdi_metrics.io.base.Base(outdir(output_type='metrics_results'), json_name+'_diveDown.json')
+    OUT2.write(
+        dict_dive,
+        json_structure=["type", "data", "metric", "item", "value or description"],
+        indent=4,
+        separators=(
+            ',',
+            ': '),
+        sort_keys=True)
