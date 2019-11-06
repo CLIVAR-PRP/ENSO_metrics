@@ -41,6 +41,10 @@ modpath_lf = param.process_templated_argument("modpath_lf")
 # Check given model option
 models = param.modnames
 
+# Realizations
+realization = param.realization
+print('realization: ', realization)
+
 # Include all models if conditioned
 if ('all' in [m.lower() for m in models]) or (models == 'all'):
     models = [p.split('.')[1]
@@ -48,16 +52,13 @@ if ('all' in [m.lower() for m in models]) or (models == 'all'):
             mip=mip,
             exp=exp,
             model='*',
-            realization='*',
+            realization=realization,
             variable='ts'))]
     # remove duplicates
     models = sorted(list(dict.fromkeys(models)), key=lambda s: s.lower())
 
 print('models:', models)
 
-# Realizations
-realization = param.realization
-print('realization: ', realization)
 
 # Metrics Collection
 mc_name = param.metricsCollection 
