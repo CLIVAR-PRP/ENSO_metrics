@@ -312,7 +312,7 @@ for mod in models:
                     print(json.dumps(dict_metric, indent=4, sort_keys=True))
 
                 # OUTPUT METRICS TO JSON FILE
-                metrics_to_json(dict_obs, dict_metric, dict_dive, outdir, json_name, mod=mod, run=run)
+                metrics_to_json(dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
             except Exception as e: 
                 print('failed for ', mod, run)
