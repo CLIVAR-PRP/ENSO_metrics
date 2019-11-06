@@ -238,14 +238,14 @@ def defCollection(MC=True):
                 'BiasSstLatRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.3_LatExt'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'BiasSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
@@ -287,14 +287,14 @@ def defCollection(MC=True):
                 'SeasonalSstLatRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.3_LatExt'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
                 'SeasonalSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
@@ -315,7 +315,7 @@ def defCollection(MC=True):
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'ratio',
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
@@ -335,7 +335,7 @@ def defCollection(MC=True):
                 'EnsoDuration': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'nbr_years_window': 6,
@@ -347,7 +347,7 @@ def defCollection(MC=True):
                 'EnsoSeasonality': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'ratio',
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
@@ -355,7 +355,7 @@ def defCollection(MC=True):
                 'EnsoSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -365,7 +365,7 @@ def defCollection(MC=True):
                 'EnsoSstSkew': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'ratio',
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
@@ -373,7 +373,7 @@ def defCollection(MC=True):
                 'EnsoPrTsRmse': {
                     'variables': ['sst', 'pr'],
                     'regions': {'sst': 'nino3.4', 'pr': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST'], 'pr': ['ERA-Interim', 'GPCPv2.3']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'nbr_years_window': 6,
@@ -384,7 +384,7 @@ def defCollection(MC=True):
                 'EnsoSstTsRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'nbr_years_window': 6,
@@ -395,7 +395,7 @@ def defCollection(MC=True):
                 'EnsoTauxTsRmse': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3.4', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST'], 'taux': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'nbr_years_window': 6,
@@ -440,7 +440,7 @@ def defCollection(MC=True):
                 'NinaSstDur_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': False},
@@ -450,7 +450,7 @@ def defCollection(MC=True):
                 'NinaSstDur_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': True},
@@ -460,7 +460,7 @@ def defCollection(MC=True):
                 'NinaSstLonRmse_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -470,7 +470,7 @@ def defCollection(MC=True):
                 'NinaSstLonRmse_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -480,7 +480,7 @@ def defCollection(MC=True):
                 'NinaSstTsRmse_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': False},
@@ -491,7 +491,7 @@ def defCollection(MC=True):
                 'NinaSstTsRmse_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': True},
@@ -526,7 +526,7 @@ def defCollection(MC=True):
                 'NinoSstDiversity_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -537,7 +537,7 @@ def defCollection(MC=True):
                 'NinoSstDiversity_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -558,7 +558,7 @@ def defCollection(MC=True):
                 'NinoSstDur_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 4,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
@@ -568,7 +568,7 @@ def defCollection(MC=True):
                 'NinoSstDur_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 4,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
@@ -578,7 +578,7 @@ def defCollection(MC=True):
                 'NinoSstLonRmse_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -588,7 +588,7 @@ def defCollection(MC=True):
                 'NinoSstLonRmse_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -598,7 +598,7 @@ def defCollection(MC=True):
                 'NinoSstTsRmse_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
@@ -609,7 +609,7 @@ def defCollection(MC=True):
                 'NinoSstTsRmse_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'nbr_years_window': 6,
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
@@ -655,7 +655,7 @@ def defCollection(MC=True):
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'ratio',
                 },
                 # 'EnsoPrJjaTel': {
@@ -685,7 +685,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSlpMap': {
                     'variables': ['sst', 'slp'],
@@ -694,7 +694,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSstMap': {
                     'variables': ['sst'],
@@ -703,7 +703,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 # 'NinaPrNdjTel': {
                 #     'variables': ['sst', 'pr'],
@@ -733,7 +733,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinaPrMap_2': {
                     'variables': ['sst', 'pr'],
@@ -743,7 +743,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinaSlpMap_1': {
                     'variables': ['sst', 'slp'],
@@ -753,7 +753,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinaSlpMap_2': {
                     'variables': ['sst', 'slp'],
@@ -763,12 +763,12 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinaSstLonRmse_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -778,7 +778,7 @@ def defCollection(MC=True):
                 'NinaSstLonRmse_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -793,7 +793,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinaSstMap_2': {
                     'variables': ['sst'],
@@ -803,7 +803,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 # 'NinoPrNdjTel': {
                 #     'variables': ['sst', 'pr'],
@@ -833,7 +833,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinoPrMap_2': {
                     'variables': ['sst', 'pr'],
@@ -843,7 +843,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'pr': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinoSlpMap_1': {
                     'variables': ['sst', 'slp'],
@@ -853,7 +853,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinoSlpMap_2': {
                     'variables': ['sst', 'slp'],
@@ -863,12 +863,12 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim']},
+                    'obs_name': {'slp': ['ERA-Interim'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinoSstLonRmse_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -878,7 +878,7 @@ def defCollection(MC=True):
                 'NinoSstLonRmse_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific_LonRed'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -893,7 +893,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'NinoSstMap_2': {
                     'variables': ['sst'],
@@ -903,7 +903,7 @@ def defCollection(MC=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                    'obs_name': {'sst': ['ERA-Interim']},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
             },
             'common_collection_parameters': {
@@ -1796,9 +1796,9 @@ def CmipVariables():
             'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
             'landmask': {'var_name': 'sftlf', 'cf_name': 'cell_area', 'cf_units': '1'},
-            # latent heat flux
-            'lhf': {'var_name': 'hfls', 'cf_name': 'land_area_fraction', 'cf_units': 'W m-2'},
-            # longwave radiation computed from these variables IN THAT ORDER
+            # latent heat flux (on ocean grid or ocean points only)
+            'lhf': {'var_name': 'hfls', 'cf_name': 'surface_upward_latent_heat_flux', 'cf_units': 'W m-2'},
+            # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
             # lwr = rlds - rlus
             # sometimes lwr is included in the datasets in a variable called 'rls'
             'lwr': {

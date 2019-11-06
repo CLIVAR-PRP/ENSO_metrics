@@ -20,6 +20,7 @@ from os.path import join as OSpath__join
 from os.path import split as OSpath__split
 from scipy.signal import detrend as SCIPYsignal_detrend
 from scipy.stats import skew as SCIPYstats__skew
+from sys import prefix as SYS_prefix
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import CmipVariables
@@ -874,14 +875,15 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     CDMS2setAutoBounds('on')
     # open file
     this_dir, this_filename = OSpath__split(__file__)
+    # check basin file
+    basin_generic_ncfile = OSpath__join(this_dir, '../share/EnsoMetrics/basin_generic_1x1deg.nc') 
+    if not OSpath__isfile(basin_generic_ncfile):
+        basin_generic_ncfile = OSpath__join(SYS_prefix, 'share', 'EnsoMetrics', 'basin_generic_1x1deg.nc')
     if debug is True:
         dict_debug = {'line1': '(path) ' + str(this_dir), 'line2': '(file) ' + str(this_filename),
-                      'line3': '(basin) ' + str(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))}
+                      'line3': '(basin) ' + str(basin_generic_ncfile)}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'OSpath__split', 20, **dict_debug)
-    try:
-        ff = CDMS2open(OSpath__join(this_dir, '../data/basin_generic_1x1deg.nc'))
-    except Exception:
-        ff = CDMS2open('/export/lee1043/git/ENSO_metrics_20191003/ENSO_metrics/data/basin_generic_1x1deg.nc')  ## TEMPORARY FIX
+    ff = CDMS2open(basin_generic_ncfile)
     # read basins
     if box is not None:
         region_ref = ReferenceRegions(box)

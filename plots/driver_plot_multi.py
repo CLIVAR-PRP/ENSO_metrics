@@ -19,13 +19,15 @@ from EnsoMetricPlot import main_plotter
 # Arguments
 # ---------------------------------------------------#
 metric_collection = "ENSO_perf"
-models = ["CNRM-CM5", "CNRM-CM6-1", "CNRM-CM6-1",]# "CNRM-ESM2-1", "IPSL-CM6A-LR"]
-experiment = "piControl"
-members = ["r1i1p1", "r1i1p1f2", "r1i1p2f2"]#, "r1i1p1f2", "r1i1p1f1"]
+models = ["IPSL-CM6A-LR"] * 32 + ["IPSL-CM5A-LR"] * 6 #["CNRM-CM5", "CNRM-CM6-1", "CNRM-CM6-1"]# "CNRM-ESM2-1", "IPSL-CM6A-LR"]
+experiment = "historical" #"piControl" #
+members = ["r"+str(ii+1)+"i1p1f1" for ii in range(32)] + ["r"+str(ii+1)+"i1p1" for ii in range(6)] #["r1i1p1", "r1i1p1f2", "r1i1p2f2"]#, "r1i1p1f2", "r1i1p1f1"]
 
 
-path_in = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/Eval_CNRM/v20190901/Data"
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/Eval_CNRM/v20190901/Plots_v2"
+path_in = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/eval_IPSL-CM6/2019_06_24_eval/Data"
+#"/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/Eval_CNRM/v20190901/Data"
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/eval_IPSL-CM6/2019_06_24_eval/Plots_v2"
+#"/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/Eval_CNRM/v20190901/Plots_v2"
 
 expe = "hist" if experiment == "historical" else "pi"
 pattern = "yplanton_" + metric_collection + "_modelname_" + experiment + "_membername"
@@ -48,7 +50,7 @@ if metric_collection == "ENSO_perf":
     #     "EnsoAmpl", "EnsoDuration", "EnsoPrTsRmse", "EnsoSeasonality", "EnsoSstLonRmse", "EnsoSstSkew", "EnsoSstTsRmse",
     #     "EnsoTauxTsRmse", "NinoSstDiversity_1", "NinoSstDiversity_2", "SeasonalPrLatRmse", "SeasonalPrLonRmse",
     #     "SeasonalSstLatRmse", "SeasonalSstLonRmse", "SeasonalTauxLatRmse", "SeasonalTauxLonRmse"]
-    metrics = ["EnsoPrTsRmse", "EnsoSstTsRmse", "EnsoTauxTsRmse"]
+    metrics = ["SeasonalPrLonRmse", "SeasonalSstLonRmse", "SeasonalTauxLonRmse"]
 elif metric_collection == "ENSO_proc":
     # metrics = ["EnsoAmpl", "EnsoFbSshSst", "EnsoFbSstLhf", "EnsoFbSstLwr", "EnsoFbSstShf", "EnsoFbSstSwr",
     #            "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh", "EnsodSstOce_1", "EnsodSstOce_2"]
