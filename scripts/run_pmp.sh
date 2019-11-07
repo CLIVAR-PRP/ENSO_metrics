@@ -9,9 +9,9 @@ mips='cmip5 cmip6'
 mips='cmip5'
 
 MCs='ENSO_perf ENSO_tel ENSO_proc'
-MCs='ENSO_tel'
-#MCs='ENSO_perf'
-#MCs='ENSO_tel ENSO_proc'
+MCs='ENSO_perf'
+#MCs='ENSO_tel'
+#MCs='ENSO_proc'
 
 for mip in $mips; do
     for MC in $MCs; do

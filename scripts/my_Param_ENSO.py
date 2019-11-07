@@ -44,8 +44,8 @@ modnames = ['all']
 if debug:
     modnames = ['IPSL-CM5A-LR']
 
-#realization = 'r1i1p1'  # r1i1p1 (cmip5), r1i1p1f1 (cmip6), * (all)
-realization = '*'
+realization = 'r1i1p1'  # r1i1p1 (cmip5), r1i1p1f1 (cmip6), * (all)
+#realization = '*'
 
 #=================================================
 # Metrics Collection
