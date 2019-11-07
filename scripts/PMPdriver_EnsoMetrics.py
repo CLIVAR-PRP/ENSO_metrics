@@ -312,7 +312,7 @@ for mod in models:
                 print('dict_metric:')
                 print(json.dumps(dict_metric, indent=4, sort_keys=True))
 
-            # OUTPUT METRICS TO JSON FILE
+            # OUTPUT METRICS TO JSON FILE (per simulation)
             metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
         except Exception as e: 
@@ -324,7 +324,7 @@ for mod in models:
 print('PMPdriver: model loop end')
 
 # =================================================
-# OUTPUT METRICS TO JSON FILE
+# OUTPUT METRICS TO JSON FILE (for all simulations)
 # -------------------------------------------------
 json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model='all', realization='all')
 metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name)
