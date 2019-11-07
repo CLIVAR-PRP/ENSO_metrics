@@ -193,8 +193,10 @@ print('PMPdriver: dict_obs readin end')
 dict_metric, dict_dive = dict(), dict()
 dict_var = CmipVariables()['variable_name_in_file']
 
+print('models:', models)
+
 for mod in models:
-    print(' ----- ', mod, ' ---------------------')
+    print(' ----- model: ', mod, ' ---------------------')
     print('PMPdriver: var loop start for model ', mod)
     dict_mod = {mod: {}}
     dict_metric[mod], dict_dive[mod] = dict(), dict()
@@ -220,12 +222,16 @@ for mod in models:
     # -------------------------------------------------
     for run in runs_list:
 
-        print(' --- ', run, ' ---')
+        print(' --- run: ', run, ' ---')
         dict_mod = {mod: {}}
         #dict_mod[mod][run] = {}
+
+        if debug:
+            print('list_variables:', list_variables)
     
         for var in list_variables:
             try:
+                print(' --- var: ', var, ' ---')
                 # finding variable name in file
                 var_in_file = dict_var[var]['var_name']
                 if isinstance(var_in_file, list):
@@ -313,10 +319,10 @@ for mod in models:
                     print(json.dumps(dict_metric, indent=4, sort_keys=True))
 
                 # OUTPUT METRICS TO JSON FILE
-                metrics_to_json(dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
+                metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
             except Exception as e: 
-                print('failed for ', mod, run)
+                print('failed for ', mod, run, var)
                 print(e)
                 if not debug:
                     pass
@@ -327,4 +333,4 @@ print('PMPdriver: model loop end')
 # OUTPUT METRICS TO JSON FILE
 # -------------------------------------------------
 json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model='all', realization='all')
-metrics_to_json(dict_obs, dict_metric, dict_dive, outdir, json_name)
+metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name)
