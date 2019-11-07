@@ -4,15 +4,14 @@ import os
 # =================================================
 # Background Information
 # -------------------------------------------------
-mip = 'cmip5'
-#exp = 'piControl'
-exp = 'historical'
+mip = 'cmip5'  # cmip5, cmip6
+exp = 'historical'  # historical, piControl
 
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-debug = True
 #debug = False
+debug = True
 nc_out = True
 
 #=================================================
@@ -40,24 +39,18 @@ reference_data_lf_path = {
 modpath = '/work/lee1043/ESGF/xmls/%(mip)/%(exp)/mon/%(variable)/%(mip).%(model).%(exp).%(realization).mon.%(variable).xml'
 modpath_lf = '/work/lee1043/ESGF/xmls/%(mip)/historical/fx/sftlf/%(mip).%(model).historical.r0i0p0.fx.sftlf.xml'
 
-modnames = ['ACCESS1-0', 'ACCESS1-3', 'BCC-CSM1-1', 'BCC-CSM1-1-M', 'BNU-ESM',
-            'CanCM4', 'CanESM2', 'CCSM4', 'CESM1-BGC', 'CESM1-CAM5', 'CESM1-FASTCHEM', 'CESM1-WACCM',
-            'CMCC-CESM', 'CMCC-CM', 'CMCC-CMS', 'CNRM-CM5', 'CNRM-CM5-2', 'CSIRO-Mk3-6-0',
-            'EC-EARTH', 'FGOALS-g2', 'FGOALS-s2', 'FIO-ESM',
-            'GFDL-CM2p1', 'GFDL-CM3', 'GFDL-ESM2G', 'GFDL-ESM2M',
-            'GISS-E2-H', 'GISS-E2-H-CC', 'GISS-E2-R', 'GISS-E2-R-CC',
-            'HadCM3', 'HadGEM2-AO', 'HadGEM2-CC', 'HadGEM2-ES',
-            'INMCM4', 'IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IPSL-CM5B-LR',
-            'MIROC-ESM', 'MIROC-ESM-CHEM', 'MIROC4h', 'MIROC5',
-            'MPI-ESM-LR', 'MPI-ESM-MR', 'MPI-ESM-P', 'NorESM1-M', 'NorESM1-ME']
+modnames = ['all']
 
 if debug:
     modnames = ['IPSL-CM5A-LR']
 
+realization = 'r1i1p1'  # r1i1p1 (cmip5), r1i1p1f1 (cmip6), * (all)
+#realization = '*'
+
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
-metricsCollection = 'ENSO_tel'
+metricsCollection = 'ENSO_perf'  # ENSO_perf, ENSO_tel, ENSO_proc
 
 #=================================================
 # Output
@@ -73,5 +66,5 @@ results_dir = os.path.join(
     pmprdir,
     '%(output_type)', 'enso_metric',
     '%(mip)', '%(exp)', case_id, '%(metricsCollection)')
-json_name = '_'.join(['%(mip)_%(exp)_%(metricsCollection)', case_id])
-netcdf_name = json_name + '_%(model)' + '_%(realization)'
+json_name = '_'.join(['%(mip)_%(exp)_%(metricsCollection)', case_id, '%(model)', '%(realization)'])
+netcdf_name = json_name

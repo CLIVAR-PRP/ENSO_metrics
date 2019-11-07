@@ -1,10 +1,13 @@
 from __future__ import print_function
+from collections import defaultdict
 from pcmdi_metrics.driver.pmp_parser import PMPParser
 
 import copy
+import collections
 import os
 import pcmdi_metrics
 import re
+
 
 def ReadOptions():
 
@@ -85,7 +88,7 @@ def tree(): return defaultdict(tree)
 
 
 # Prepare outputing metrics to JSON file
-def metrics_to_json(dict_obs, dict_metric, dict_dive, outdir, json_name, mod=None, run=None):
+def metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=None, run=None):
     # disclaimer and reference for JSON header
     disclaimer = open(
         os.path.join(
