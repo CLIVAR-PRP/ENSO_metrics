@@ -229,8 +229,8 @@ for mod in models:
         if debug:
             print('list_variables:', list_variables)
     
-        for var in list_variables:
-            try:
+        try:
+            for var in list_variables:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
                 var_in_file = dict_var[var]['var_name']
@@ -281,51 +281,51 @@ for mod in models:
         
                 print('PMPdriver: var loop end')
             
-                # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
-                dictDatasets = {'model': dict_mod, 'observations': dict_obs}
-                print('dictDatasets:')
-                print(json.dumps(dictDatasets, indent=4, sort_keys=True))
+            # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
+            dictDatasets = {'model': dict_mod, 'observations': dict_obs}
+            print('dictDatasets:')
+            print(json.dumps(dictDatasets, indent=4, sort_keys=True))
 
-                # regridding dictionary (only if you want to specify the regridding)
-                dict_regrid = {}
-                """
-                # Usage of dict_regrid (select option as below):
-                dict_regrid = {
-                    'regridding': {
-                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                        'newgrid_name': 'generic 1x1deg'},
-                }
-                """
+            # regridding dictionary (only if you want to specify the regridding)
+            dict_regrid = {}
+            """
+            # Usage of dict_regrid (select option as below):
+            dict_regrid = {
+                'regridding': {
+                    'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                    'newgrid_name': 'generic 1x1deg'},
+            }
+            """
 
-                # Prepare netcdf file setup
-                json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model=mod, realization=run)
-                netcdf_name = netcdf_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model=mod, realization=run)
-                netcdf = os.path.join(netcdf_path, netcdf_name)
+            # Prepare netcdf file setup
+            json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model=mod, realization=run)
+            netcdf_name = netcdf_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model=mod, realization=run)
+            netcdf = os.path.join(netcdf_path, netcdf_name)
 
-                if debug:
-                    print('file_name:', file_name)
-                    print('list_files:', list_files)
-                    print('netcdf_name:', netcdf_name)
-                    print('json_name:', json_name)
+            if debug:
+                print('file_name:', file_name)
+                print('list_files:', list_files)
+                print('netcdf_name:', netcdf_name)
+                print('json_name:', json_name)
 
-                # Computes the metric collection
-                dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=param.nc_out,
+            # Computes the metric collection
+            dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=param.nc_out,
                                                      netcdf_name=netcdf, debug=debug)
-                if debug:
-                    print('file_name:', file_name)
-                    print('list_files:', list_files)
-                    print('netcdf_name:', netcdf_name)
-                    print('dict_metric:')
-                    print(json.dumps(dict_metric, indent=4, sort_keys=True))
+            if debug:
+                print('file_name:', file_name)
+                print('list_files:', list_files)
+                print('netcdf_name:', netcdf_name)
+                print('dict_metric:')
+                print(json.dumps(dict_metric, indent=4, sort_keys=True))
 
-                # OUTPUT METRICS TO JSON FILE
-                metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
+            # OUTPUT METRICS TO JSON FILE
+            metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
-            except Exception as e: 
-                print('failed for ', mod, run, var)
-                print(e)
-                if not debug:
-                    pass
+        except Exception as e: 
+            print('failed for ', mod, run)
+            print(e)
+            if not debug:
+                pass
       
 print('PMPdriver: model loop end')
 
