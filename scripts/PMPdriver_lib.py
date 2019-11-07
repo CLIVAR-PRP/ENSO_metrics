@@ -1,10 +1,12 @@
 from __future__ import print_function
+from collections import defaultdict
 from pcmdi_metrics.driver.pmp_parser import PMPParser
 
 import copy
 import os
 import pcmdi_metrics
 import re
+
 
 def ReadOptions():
 

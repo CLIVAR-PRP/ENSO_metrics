@@ -4,22 +4,16 @@
 # -------------------------------------------------
 from __future__ import print_function
 
-import collections
-import copy
 import glob
 import json
 import os
-import pcmdi_metrics
 import pkg_resources
 import sys
 
-from collections import defaultdict
 from genutil import StringConstructor
-from pcmdi_metrics.driver.pmp_parser import PMPParser
 from PMPdriver_lib import ReadOptions
 from PMPdriver_lib import metrics_to_json
 from PMPdriver_lib import sort_human
-from PMPdriver_lib import tree
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 
