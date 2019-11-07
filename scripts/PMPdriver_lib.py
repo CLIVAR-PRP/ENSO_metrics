@@ -3,6 +3,7 @@ from collections import defaultdict
 from pcmdi_metrics.driver.pmp_parser import PMPParser
 
 import copy
+import collections
 import os
 import pcmdi_metrics
 import re
