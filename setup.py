@@ -1,3 +1,4 @@
+from __future__ import print_function
 from distutils.core import setup
 import subprocess
 import glob
@@ -32,18 +33,23 @@ try:
 except:
     commit = ""
 f = open("lib/version.py", "w")
-print >>f, "__version__ = '%s'" % Version
-print >>f, "__git_tag_describe__ = '%s'" % descr
-print >>f, "__git_sha1__ = '%s'" % commit
+print("__version__ = '%s'" % Version, file=f)
+print("__git_tag_describe__ = '%s'" % descr, file=f)
+print("__git_sha1__ = '%s'" % commit, file=f)
 f.close()
 
-setup (name = "EnsoMetrics",
+data_files = (
+              ('share/EnsoMetrics', ['share/EnsoMetrics/basin_generic_1x1deg.nc']),
+             )
+
+setup (name="EnsoMetrics",
        author="Eric Guilyardi",
        version=Version,
        description = "Library for ENSO Metrics",
-       url = "https://github.com/eguil/ENSO_metrics",
-       packages = ['EnsoMetrics'],
-       package_dir = {'EnsoMetrics': 'lib'},
-       scripts= glob.glob("scripts/*.py"),
+       url="https://github.com/eguil/ENSO_metrics",
+       packages=['EnsoMetrics'],
+       package_dir={'EnsoMetrics': 'lib'},
+       scripts=glob.glob("scripts/*.py"),
+       data_files=data_files,
       )
     

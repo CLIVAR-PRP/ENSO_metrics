@@ -84,7 +84,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print var + " in not available for " + str(obs) + " or unscripted"
+            print var + " is not available for " + str(obs) + " or unscripted"
         else:
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]
