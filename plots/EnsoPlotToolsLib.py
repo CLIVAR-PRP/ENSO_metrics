@@ -6,7 +6,11 @@ from math import floor as MATHfloor
 from numpy import arange as NUMPYarange
 from numpy import around as NUMPYaround
 from numpy import array as NUMPYarray
+from numpy import mean as NUMPYmean
+from numpy import nan as NUMPYnan
+from numpy import where as NUMPYwhere
 from numpy.ma import masked_invalid as NUMPYma__masked_invalid
+from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # xarray based functions
 from xarray import open_dataset
 # ENSO_metrics functions
@@ -82,11 +86,15 @@ def format_metric(metric_type, metric_value, metric_units):
     return mytext + ": " + "{0:.2f}".format(metric_value) + " " + metric_units
 
 
+def minimaxi(tab):
+    tmp = [my_mask(tmp, remove_masked=True) for tmp in tab]
+    tmp = [tt.min() for tt in tmp] + [tt.max() for tt in tmp]
+    return min(tmp), max(tmp)
+
+
 def minmax_plot(tab, metric=False):
     # define minimum and maximum
-    tmp = [NUMPYma__masked_invalid(NUMPYarray(tmp)) for tmp in tab]
-    tmp = [tt.min() for tt in tmp] + [tt.max() for tt in tmp]
-    mini, maxi = min(tmp), max(tmp)
+    mini, maxi = minimaxi(tab)
     if mini < 0 and maxi > 0:
         locmaxi = max([abs(mini), abs(maxi)])
         locmini = -deepcopy(locmaxi)
@@ -168,29 +176,62 @@ def minmax_plot(tab, metric=False):
     return tick_labels
 
 
-def read_diag(dict_diag, dict_metric, model, reference, metric_variables):
+def my_average(tab, axis=None, remove_masked=False):
+    tmp = my_mask(tab, remove_masked=remove_masked)
+    return NUMPYmean(tmp, axis=axis)
+
+
+def my_mask(tab, remove_masked=False):
+    tmp = NUMPYarray(tab, dtype=float)
+    tmp = NUMPYwhere(tmp == None, NUMPYnan, tmp)
+    tmp = NUMPYma__masked_invalid(tmp)
+    if remove_masked is True:
+        # tmp = tmp[~tmp.mask]
+        tmp = tmp.compressed()
+    return tmp
+
+
+def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shading=False):
     if isinstance(model, str):
         diag_mod = dict_diag[model]
     else:
-        diag_mod = [dict_diag[mod] for mod in model]
-    if reference in dict_diag.keys():
+        if shading is True:
+            diag_mod =\
+                [[dict_diag[mod][mm] for mm in sorted(dict_diag[mod].keys(), key=lambda v: v.upper())] for mod in model]
+        else:
+            diag_mod = [dict_diag[mod] for mod in model]
+    if shading is True:
+        my_ref = dict_diag["obs"].keys()
+    else:
+        my_ref = dict_diag.keys()
+    if reference in my_ref:
         obs = deepcopy(reference)
     else:
         if len(metric_variables) == 1:
             for obs in observations:
-                if obs in dict_diag.keys():
+                if obs in my_ref:
                     break
         else:
             for obs1 in observations:
                 for obs2 in observations:
                     obs = obs1 + "_" + obs2
-                    if obs in dict_diag.keys():
+                    if obs in my_ref:
                         break
-    diag_obs = dict_diag[obs]
+    if shading is True:
+        diag_obs = dict_diag["obs"][obs]
+    else:
+        diag_obs = dict_diag[obs]
     if isinstance(model, str):
         metric_value = dict_metric[obs][model]
     else:
-        metric_value = [dict_metric[obs][mod] for mod in model]
+        if shading is True:
+            metric_value = [
+                my_average([dict_metric[mod][obs][mm]
+                            for mm in sorted(dict_metric[mod][obs].keys(), key=lambda v: v.upper())],
+                           remove_masked=True)
+                for mod in model]
+        else:
+            metric_value = [dict_metric[obs][mod] for mod in model]
     # metric_value = dict_metric[obs]  # ["ref_" + obs]
     return diag_mod, diag_obs, metric_value, obs
 
@@ -202,12 +243,16 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
             if newvar in variables_in_xml:
                 break
     else:
+        my_break = False
         for obs1 in observations:
             for obs2 in observations:
                 obs = obs1 + "_" + obs2
                 newvar = varname + obs
                 if newvar in variables_in_xml:
+                    my_break = True
                     break
+            if my_break is True:
+                break
     # if "_lon__" in newvar or "_hov__" in newvar:
     #     list_strings = [
     #         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": reader",
@@ -265,7 +310,7 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
     return tab_mod, tab_obs, metval, obs
 
 
-def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric):
+def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric, models2=None, shading=False):
     if isinstance(var_to_read, str):
         var_to_read = [var_to_read]
     if isinstance(filename_nc, str):
@@ -273,12 +318,24 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
                                                dict_metric)
     else:
         tab_mod, metval, obs = list(), list(), list()
-        for ii in range(len(filename_nc)):
-            tmp1, tab_obs, tmp2, tmp3 = reader(filename_nc[ii], model[ii], reference, var_to_read, metric_variables,
-                                               dict_metric)
-            tab_mod.append(tmp1)
-            metval.append(tmp2)
-            obs.append(tmp3)
+        if shading is True:
+            for jj in range(len(model)):
+                tmp1, tmp2 = list(), list()
+                for ii in range(len(filename_nc[model[jj]])):
+                    ttt1, tab_obs, ttt2, tmp3 = reader(filename_nc[model[jj]][ii], models2[model[jj]][ii], reference,
+                                                       var_to_read, metric_variables, dict_metric[model[jj]])
+                    tmp1.append(ttt1)
+                    tmp2.append(ttt2)
+                    obs.append(tmp3)
+                tab_mod.append(tmp1)
+                metval.append(tmp2)
+        else:
+            for ii in range(len(filename_nc)):
+                tmp1, tab_obs, tmp2, tmp3 = reader(filename_nc[ii], model[ii], reference, var_to_read, metric_variables,
+                                                   dict_metric)
+                tab_mod.append(tmp1)
+                metval.append(tmp2)
+                obs.append(tmp3)
         obs = list(set(obs))
         if len(obs) > 1:
             list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too many obs",
@@ -290,4 +347,9 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
         else:
             obs = obs[0]
     return tab_mod, tab_obs, metval, obs
+
+
+def shading_levels(tab, lev=[5, 25, 75, 95], axis=None):
+    return [SCIPYstats__scoreatpercentile(tab, ll, axis=axis) for ll in lev] + [my_average(tab, axis=axis)]
+
 
