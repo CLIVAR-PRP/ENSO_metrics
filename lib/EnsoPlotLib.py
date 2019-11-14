@@ -2,6 +2,7 @@
 #
 # Define ENSO metrics plots
 #
+from copy import deepcopy
 from numpy import arange as NUMPYarange
 # ENSO_metrics functions
 from EnsoCollectionsLib import defCollection
@@ -680,6 +681,22 @@ plot_parameters = {
             'zname': 'regression',
         },
     },
+    'EnsoPrMap': {
+        'netcdf_variables': ['reg_pr_over_sst_map__', 'reg_pr_over_sst_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['PRA'],
+            "maskland": False,
+            'title': ['reg(ENSO SSTA, PRA)', 'reg(ENSO SSTA, PRA)'],
+            #'varpattern': 'sst_over_sst_map__',
+            'varpattern': 'reg_pr_over_sst_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'regression',
+        },
+    },
     'EnsoPrTsRmse': {
         'netcdf_variables': ['pr_over_sst_ts__', 'pr_over_sst_hov__', 'Nina_pr_ts__', 'Nino_pr_ts__', 'Nina_pr_hov__',
                              'Nino_pr_hov__'],
@@ -725,6 +742,22 @@ plot_parameters = {
             'xname': 'longitude',
             'yname': 'months',
             'zname': 'PRA',
+        },
+    },
+    'EnsoSlpMap': {
+        'netcdf_variables': ['reg_slp_over_sst_map__', 'reg_slp_over_sst_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['REG2'],
+            "maskland": False,
+            'title': ['reg(ENSO SSTA, SLPA)', 'reg(ENSO SSTA, SLPA)'],
+            #'varpattern': 'ts_over_sst_map__',
+            'varpattern': 'reg_slp_over_sst_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'regression',
         },
     },
     'EnsoSstLonRmse': {
@@ -777,13 +810,13 @@ plot_parameters = {
         },
     },
     'EnsoSstMap': {
-        'netcdf_variables': ['ts_over_sst_map__'],
+        'netcdf_variables': ['reg_ts_over_sst_map__', 'reg_ts_over_sst_map__'],
         'diagnostic': {
             'plot_type': 'map',
             'nbr_panel': 2,
             'colorbar': dict_colorbar['anomalies'],
-            'label': dict_label['SKEW'],
-            "maskland": True,
+            'label': dict_label['PRA'],
+            "maskland": False,
             'title': ['reg(ENSO SSTA, TSA)', 'reg(ENSO SSTA, TSA)'],
             #'varpattern': 'ts_over_sst_map__',
             'varpattern': 'reg_ts_over_sst_map__',
@@ -936,7 +969,7 @@ plot_parameters = {
             'varpattern': ["sstStd_NDJ_map__", "sstStd_MAM_map__"],
             'xname': 'longitude',
             'yname': 'latitude',
-            'zname': 'SSTA std',
+            'zname': 'monthly SSTA std',
         },
     },
     'EnsoSstSkew': {
@@ -967,6 +1000,54 @@ plot_parameters = {
             'xname': 'longitude',
             'yname': 'latitude',
             'zname': 'SSTA skew',
+        },
+    },
+    'NinaPrMap': {
+        'netcdf_variables': ['prComp_map__', 'prComp_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['REG2'],
+            "maskland": False,
+            'title': ['La Nina composite', 'La Nina composite'],
+            #'varpattern': 'sst_over_sst_map__',
+            'varpattern': 'prComp_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'PRA',
+        },
+    },
+    'NinaSlpMap': {
+        'netcdf_variables': ['slp_map__', 'slp_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['REG3'],
+            "maskland": False,
+            'title': ['La Nina composite', 'La Nina composite'],
+            #'varpattern': 'sst_over_sst_map__',
+            'varpattern': 'slp_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'SLPA',
+        },
+    },
+    'NinaSstMap': {
+        'netcdf_variables': ['ts_map__', 'ts_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['SKEW'],
+            "maskland": False,
+            'title': ['La Nina composite', 'La Nina composite'],
+            #'varpattern': 'sst_over_sst_map__',
+            'varpattern': 'ts_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'SSTA',
         },
     },
     'NinaSstDur': {
@@ -1000,7 +1081,7 @@ plot_parameters = {
             'plot_type': 'map',
             'nbr_panel': 2,
             'colorbar': dict_colorbar['anomalies'],
-            'label': dict_label['SKEW'],
+            'label': dict_label['dSST'],
             "maskland": True,
             'title': 'La Nina SSTA',
             'varpattern': 'sst_map__',
@@ -1031,6 +1112,54 @@ plot_parameters = {
             'zname': 'SSTA',
         },
     },
+    'NinoPrMap': {
+        'netcdf_variables': ['pr_map__', 'pr_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['SKEW'],
+            "maskland": False,
+            'title': ['El Nino composite', 'El Nino composite'],
+            #'varpattern': 'sst_over_sst_map__',
+            'varpattern': 'pr_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'PRA',
+        },
+    },
+    'NinoSlpMap': {
+        'netcdf_variables': ['slp_map__', 'slp_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['REG3'],
+            "maskland": False,
+            'title': ['El Nino composite', 'El Nino composite'],
+            #'varpattern': 'sst_over_sst_map__',
+            'varpattern': 'slp_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'SLPA',
+        },
+    },
+    'NinoSstMap': {
+        'netcdf_variables': ['ts_map__', 'ts_map__'],
+        'diagnostic': {
+            'plot_type': 'map',
+            'nbr_panel': 2,
+            'colorbar': dict_colorbar['anomalies'],
+            'label': dict_label['SKEW'],
+            "maskland": False,
+            'title': ['El Nino composite', 'El Nino composite'],
+            #'varpattern': 'sst_over_sst_map__',
+            'varpattern': 'ts_map__',
+            'xname': 'longitude',
+            'yname': 'latitude',
+            'zname': 'SSTA',
+        },
+    },
     "NinoSstDiversity": {
         'netcdf_variables': ['Nina_lon_pos_minSSTA__', "Nino_lon_pos_maxSSTA__"],
         'diagnostic': {
@@ -1046,6 +1175,7 @@ plot_parameters = {
             'title': ['La Nina diversity', 'El Nino diversity'],
             'varpattern': ['Nina_lon_pos_minSSTA__', 'Nino_lon_pos_maxSSTA__'],
             'yname': ['longitude of min SSTA', 'longitude of max SSTA'],
+            "custom_label": "longitude",
         },
     },
     'NinoSstDur': {
@@ -1079,7 +1209,7 @@ plot_parameters = {
             'plot_type': 'map',
             'nbr_panel': 2,
             'colorbar': dict_colorbar['anomalies'],
-            'label': dict_label['SKEW'],
+            'label': dict_label['dSST'],
             "maskland": True,
             'title': 'El Nino SSTA',
             'varpattern': 'sst_map__',
@@ -1323,7 +1453,7 @@ plot_parameters = {
 # }
 reference_observations = {
     'ssh': 'AVISO', 'pr': 'GPCPv2.3', 'sst': 'Tropflux', 'lhf': 'Tropflux', 'lwr': 'Tropflux', 'shf': 'Tropflux',
-    'swr': 'Tropflux', 'taux': 'Tropflux', 'thf': 'Tropflux'
+    'slp': 'ERA-Interim', 'swr': 'Tropflux', 'taux': 'Tropflux', 'thf': 'Tropflux'
 }
 
 
@@ -1333,7 +1463,9 @@ def plot_param(metric_collection, metric):
     # get plot parameters
     dict_out = plot_parameters[metric.replace("_1", "").replace("_2", "").replace("_3", "")]
     # get metric computation
-    if "rmse" in metric.lower():
+    if metric_collection == "ENSO_tel" and "Map" in metric:
+        computation = ["CORR", "RMSE"]
+    elif "rmse" in metric.lower():
         computation = "RMSE"
     elif "corr" in metric.lower():
         computation = "CORR"
