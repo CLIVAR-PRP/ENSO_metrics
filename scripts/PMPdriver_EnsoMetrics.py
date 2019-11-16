@@ -11,7 +11,7 @@ import pkg_resources
 import sys
 
 from genutil import StringConstructor
-from PMPdriver_lib import ReadOptions
+from PMPdriver_lib import AddParserArgument
 from PMPdriver_lib import metrics_to_json
 from PMPdriver_lib import sort_human
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
@@ -20,7 +20,7 @@ from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 # =================================================
 # Collect user defined options
 # -------------------------------------------------
-param = ReadOptions()
+param = AddParserArgument()
 
 # Pre-defined options
 mip = param.mip
@@ -35,24 +35,18 @@ modpath_lf = param.process_templated_argument("modpath_lf")
 # Check given model option
 models = param.modnames
 
-# Realizations
-realization = param.realization
-print('realization: ', realization)
-
 # Include all models if conditioned
 if ('all' in [m.lower() for m in models]) or (models == 'all'):
-    models = [p.split('.')[1]
-        for p in glob.glob(modpath(
-            mip=mip,
-            exp=exp,
-            model='*',
-            realization=realization,
-            variable='ts'))]
+    models = ([p.split('.')[1] for p in glob.glob(modpath(
+                mip=mip, exp=exp, model='*', realization='*', variable='ts'))])
     # remove duplicates
     models = sorted(list(dict.fromkeys(models)), key=lambda s: s.lower())
 
 print('models:', models)
 
+# Realizations
+realization = param.realization
+print('realization: ', realization)
 
 # Metrics Collection
 mc_name = param.metricsCollection 
@@ -239,11 +233,11 @@ for mod in models:
                 file_areacell = None ## temporary for now
                 file_landmask = modpath_lf(mip=mip, model=mod)
                 # -- TEMPORARY --
-                if mip == 'cmip6' and mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
-                    try:
+                if mip == 'cmip6':
+                    if mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
                         file_landmask = '/work/lee1043/ESGF/CMIP6/CMIP/'+mod+'/sftlf_fx_'+mod+'_historical_r1i1p1f1_gr.nc'
-                    except:
-                        pass
+                    elif mod in ['GFDL-ESM4']:
+                        file_landmask = modpath_lf(mip=mip, model='GFDL-CM4')
                 # -- TEMPORARY END --
                 try:
                     areacell_in_file = dict_var['areacell']['var_name']
@@ -326,5 +320,5 @@ print('PMPdriver: model loop end')
 # =================================================
 # OUTPUT METRICS TO JSON FILE (for all simulations)
 # -------------------------------------------------
-json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model='all', realization='all')
-metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name)
+#json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model='all', realization='all')
+#metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name)

@@ -1,0 +1,147 @@
+#!/usr/bin/env python
+
+"""
+Usage example:
+1. First realization per model
+./parallel_driver.py -p my_Param_ENSO.py --mip cmip6 --modnames all --realization r1i1p1f1 --metricsCollection ENSO_perf
+2. All realizations of individual models
+./parallel_driver.py -p my_Param_ENSO.py --mip cmip6 --modnames all --realization all --metricsCollection ENSO_perf
+"""
+
+from __future__ import print_function
+from argparse import RawTextHelpFormatter
+from genutil import StringConstructor
+from subprocess import Popen
+
+from PMPdriver_lib import AddParserArgument
+from PMPdriver_lib import sort_human
+
+import datetime
+import glob
+import os
+import pcmdi_metrics
+import sys
+
+# Must be done before any CDAT library is called.
+# https://github.com/CDAT/cdat/issues/2213
+if 'UVCDAT_ANONYMOUS_LOG' not in os.environ:
+    os.environ['UVCDAT_ANONYMOUS_LOG'] = 'no'
+
+# =================================================
+# Collect user defined options
+# -------------------------------------------------
+param = AddParserArgument()
+
+# Pre-defined options
+mip = param.mip
+exp = param.exp
+print('mip:', mip)
+print('exp:', exp)
+
+# Path to model data as string template
+modpath = param.process_templated_argument("modpath")
+
+# Check given model option
+models = param.modnames
+print('models:', models)
+
+# Include all models if conditioned
+if ('all' in [m.lower() for m in models]) or (models == 'all'):
+    models = ([p.split('.')[1] for p in glob.glob(modpath(
+                mip=mip, exp=exp, model='*', realization='*', variable='ts'))])
+    # remove duplicates
+    models = sorted(list(dict.fromkeys(models)), key=lambda s: s.lower())
+
+print('models:', models)
+print('number of models:', len(models))
+
+# Realizations
+realization = param.realization
+if ('all' in [r.lower() for r in realization]) or (realization == 'all'):
+    realization = '*'
+print('realization: ', realization)
+
+# Metrics Collection
+mc_name = param.metricsCollection
+
+# Output
+outdir_template = param.process_templated_argument("results_dir")
+outdir = StringConstructor(str(outdir_template(
+    output_type='%(output_type)',
+    mip=mip, exp=exp, metricsCollection=mc_name)))
+
+# Debug
+debug = param.debug
+print('debug:', debug)
+
+# =================================================
+# Create output directories
+# -------------------------------------------------
+for output_type in ['graphics', 'diagnostic_results', 'metrics_results']:
+    if not os.path.exists(outdir(output_type=output_type)):
+        os.makedirs(outdir(output_type=output_type))
+    print(outdir(output_type=output_type))
+
+# =================================================
+# Generates list of command
+# -------------------------------------------------
+param_file = './my_Param_ENSO.py'
+
+cmds_list = []
+for model in models:
+    print(' ----- model: ', model, ' ---------------------')
+    model_path_list = os.popen(
+        'ls '+modpath(mip=mip, exp=exp, model=model, realization=realization,
+        variable='ts')).readlines()
+
+    model_path_list = sort_human(model_path_list)
+    if debug:
+        print('model_path_list:', model_path_list)
+
+    # Find where run can be gripped from given filename template for modpath
+    run_in_modpath = modpath(mip=mip, exp=exp, model=model, realization=realization,
+        variable='ts').split('/')[-1].split('.').index(realization)
+    # Collect available runs
+    runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+    if debug:
+        print('runs_list:', runs_list)
+    for run in runs_list:
+        cmd = ['python', 'PMPdriver_EnsoMetrics.py',
+               '-p', param_file,
+               '--mip', mip, '--metricsCollection', mc_name,
+               '--modnames', model,
+               '--realization', run]
+        cmds_list.append(cmd)
+
+# =================================================
+# Run subprocesses in parallel
+# -------------------------------------------------
+# log dir
+case_id = "{:v%Y%m%d}".format(datetime.datetime.now())
+log_dir = "./log_"+case_id
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+# number of tasks to submit at the same time
+num_workers = 10
+num_workers = 30
+
+# submit tasks and wait for subset of tasks to complete
+for p, cmd in enumerate(cmds_list):
+    print(p, cmd)
+    model = cmd[-3]
+    run = cmd[-1]
+    if (p % num_workers == 0):
+        procs_list = []
+    log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, case_id])
+    log_file = os.path.join(log_dir, log_filename)
+    with open(log_file+"_stdout.txt", "wb") as out, open(log_file+"_stderr.txt", "wb") as err:
+        procs_list.append(Popen(cmd, stdout=out, stderr=err))
+    if ((p > 0 and p % num_workers == 0) or (p == len(cmds_list)-1)):
+        print('wait...')
+        for proc in procs_list:
+            proc.wait()
+
+# tasks done
+sys.exit('DONE')
