@@ -1683,14 +1683,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     else:  # box given by the user
         # define box
         region_ref = ReferenceRegions(box)
-        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         if time_bounds is None:  # no time period given
             #  read file
-#            tab = fi(varname, nbox)
             tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         else:
             # read file
-#            tab = fi(varname, nbox, time=time_bounds)
             tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
     fi.close()
     # sign correction
@@ -1776,22 +1773,17 @@ def ReadAreaSelectRegion(filename, areaname='', box=None, **kwargs):
     else:  # box given by the user
         # define box
         region_ref = ReferenceRegions(box)
-        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         # read file
         try:
-#            areacell = fi(areaname, nbox)
             areacell = fi(areaname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
         except:
             try:
-#                areacell = fi('areacell', nbox)
                 areacell = fi('areacell', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
             except:
                 try:
-#                    areacell = fi('areacella', nbox)
                     areacell = fi('areacella', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
                 except:
                     try:
-#                        areacell = fi('areacello', nbox)
                         areacell = fi('areacello', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
                     except:
                         areacell = None
@@ -1799,7 +1791,7 @@ def ReadAreaSelectRegion(filename, areaname='', box=None, **kwargs):
     return areacell
 
 
-def ReadLandmaskSelectRegion(filename, landmaskname='', box=None, **kwargs):
+def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs):
     """
     #################################################################################
     Description:
@@ -1820,47 +1812,78 @@ def ReadLandmaskSelectRegion(filename, landmaskname='', box=None, **kwargs):
     """
     # Temp corrections for cdms2 to find the right axis
     CDMS2setAutoBounds('on')
-    # Open file and get time dimension
-    fi = CDMS2open(filename)
-    if box is None:  # no box given
-        # read file
-        try:
-            landmask = fi(landmaskname)
-        except:
+    # Get landmask
+    if OSpath__isfile(filename):
+        # Open file and get time dimension
+        fi = CDMS2open(filename)
+        if box is None:  # no box given
+            # read file
             try:
-                landmask = fi('landmask')
+                landmask = fi(landmaskname)
             except:
                 try:
-                    landmask = fi('lsmask')
+                    landmask = fi('landmask')
                 except:
                     try:
-                        landmask = fi('sftlf')
+                        landmask = fi('lsmask')
                     except:
-                        landmask = None
-    else:  # box given by the user
-        # define box
-        region_ref = ReferenceRegions(box)
-        nbox = cdutil.region.domain(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
-        # read file
-        try:
-#            landmask = fi(landmaskname, nbox)
-            landmask = fi(landmaskname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
-        except:
+                        try:
+                            landmask = fi('sftlf')
+                        except:
+                            landmask = None
+        else:  # box given by the user
+            # define box
+            region_ref = ReferenceRegions(box)
+            # read file
             try:
-#                landmask = fi('landmask', nbox)
-                landmask = fi('landmask', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                landmask = fi(landmaskname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
             except:
                 try:
-#                    landmask = fi('lsmask', nbox)
-                    landmask = fi('lsmask', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                    landmask = fi('landmask', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
                 except:
                     try:
-#                        landmask = fi('sftlf', nbox)
-                        landmask = fi('sftlf', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                        landmask = fi('lsmask', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
                     except:
-                        landmask = None
-    fi.close()
+                        try:
+                            landmask = fi('sftlf', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+                        except:
+                            landmask = None
+        fi.close()
+    else:
+        # Estimate landmask
+        landmask = EstimateLandmask(tab)
+        if box is not None:
+            # define box
+            region_ref = ReferenceRegions(box)
+            # subset
+            landmask = landmask(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+    # Return
     return landmask
+
+
+def EstimateLandmask(d):
+    """
+    #################################################################################
+    Description:
+    Estimate landmask (when landmask was not given) 
+    Uses cdutil (uvcdat) to create estimated landmask for model resolution
+    #################################################################################
+
+    :param d: array (CDMS)
+        model variable 
+
+    :return landmask: masked_array
+        masked_array containing landmask
+    """
+    EnsoErrorsWarnings.DebugMode('\033[93m', 'Estimated landmask applied', 25, **dict_debug)
+    n = 1
+    sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n)) * 100.0
+    sft[:] = sft.filled(100.0)
+    lmsk = sft
+    lmsk.setAxis(0, d.getAxis(1))
+    lmsk.setAxis(1, d.getAxis(2))
+    lmsk.id = 'sftlf'
+    return lmsk
 
 
 def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridder='cdms', regridTool='esmf',
@@ -3240,9 +3263,9 @@ def Read_mask_area(tab, file_data, type_data, region, file_area='', name_area=''
             EnsoErrorsWarnings.DebugMode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
     if file_mask:
-        landmask = ReadLandmaskSelectRegion(file_mask, landmaskname=name_mask, box=region, **kwargs)
+        landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)
     else:
-        landmask = ReadLandmaskSelectRegion(file_data, landmaskname=name_mask, box=region, **kwargs)
+        landmask = ReadLandmaskSelectRegion(tab, file_data, landmaskname=name_mask, box=region, **kwargs)
     if debug is True:
         if landmask is not None:
             dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in landmask.getAxisList()]),

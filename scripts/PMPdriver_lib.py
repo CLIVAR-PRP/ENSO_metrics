@@ -9,7 +9,7 @@ import pcmdi_metrics
 import re
 
 
-def ReadOptions():
+def AddParserArgument():
 
     P = PMPParser() # Includes all default options
 
