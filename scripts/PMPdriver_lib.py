@@ -59,7 +59,11 @@ def AddParserArgument():
                    dest='netcdf_name',
                    help="File name for output NetCDF")
     P.use("--results_dir")
-
+    P.add_argument("--case_id",
+                   type=str,
+                   dest="case_id",
+                   default="{:v%Y%m%d}".format(datetime.datetime.now()),
+                   help="version as date, e.g., v20191116 (yyyy-mm-dd)")
     # Switches
     P.add_argument("-d", "--debug", nargs='?',
                    const=True, default=False,
