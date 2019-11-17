@@ -54,11 +54,14 @@ dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 print('mc_name:', mc_name)
 
+# case id
+case_id = param.case_id
+
 # Output
 outdir_template = param.process_templated_argument("results_dir")
 outdir = StringConstructor(str(outdir_template(
     output_type='%(output_type)',
-    mip=mip, exp=exp, metricsCollection=mc_name)))
+    mip=mip, exp=exp, metricsCollection=mc_name, case_id=case_id)))
 netcdf_path = outdir(output_type='diagnostic_results')
 json_name_template = param.process_templated_argument("json_name")
 netcdf_name_template = param.process_templated_argument("netcdf_name")
@@ -286,8 +289,8 @@ for mod in models:
             """
 
             # Prepare netcdf file setup
-            json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model=mod, realization=run)
-            netcdf_name = netcdf_name_template(mip=mip, exp=exp, metricsCollection=mc_name, model=mod, realization=run)
+            json_name = json_name_template(mip=mip, exp=exp, metricsCollection=mc_name, case_id=case_id, model=mod, realization=run)
+            netcdf_name = netcdf_name_template(mip=mip, exp=exp, metricsCollection=mc_name, case_id=case_id, model=mod, realization=run)
             netcdf = os.path.join(netcdf_path, netcdf_name)
 
             if debug:
