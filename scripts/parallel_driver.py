@@ -113,6 +113,7 @@ for model in models:
         cmd = ['python', 'PMPdriver_EnsoMetrics.py',
                '-p', param_file,
                '--mip', mip, '--metricsCollection', mc_name,
+               '--case_id', case_id,
                '--modnames', model,
                '--realization', run]
         cmds_list.append(cmd)
