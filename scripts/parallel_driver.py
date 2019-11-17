@@ -64,11 +64,15 @@ print('realization: ', realization)
 # Metrics Collection
 mc_name = param.metricsCollection
 
+# case id
+case_id = param.case_id
+print('case_id:', case_id)
+
 # Output
 outdir_template = param.process_templated_argument("results_dir")
 outdir = StringConstructor(str(outdir_template(
     output_type='%(output_type)',
-    mip=mip, exp=exp, metricsCollection=mc_name)))
+    mip=mip, exp=exp, metricsCollection=mc_name, case_id=case_id)))
 
 # Debug
 debug = param.debug
@@ -117,7 +121,6 @@ for model in models:
 # Run subprocesses in parallel
 # -------------------------------------------------
 # log dir
-case_id = "{:v%Y%m%d}".format(datetime.datetime.now())
 log_dir = "./log_"+case_id
 
 if not os.path.exists(log_dir):
