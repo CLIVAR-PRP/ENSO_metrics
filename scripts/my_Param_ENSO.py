@@ -66,5 +66,6 @@ results_dir = os.path.join(
     pmprdir,
     '%(output_type)', 'enso_metric',
     '%(mip)', '%(exp)', '%(case_id)', '%(metricsCollection)')
-json_name = '_'.join(['%(mip)_%(exp)_%(metricsCollection)', '%(case_id)', '%(model)', '%(realization)'])
+
+json_name = '%(mip)_%(exp)_%(metricsCollection)_%(case_id)_%(model)_%(realization)'
 netcdf_name = json_name
