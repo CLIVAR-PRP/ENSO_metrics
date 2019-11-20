@@ -21,6 +21,11 @@ import glob
 import os
 import pcmdi_metrics
 import sys
+import time
+
+# To avoid below error
+# OpenBLAS blas_thread_init: pthread_create failed for thread XX of 96: Resource temporarily unavailable
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
 
 # Must be done before any CDAT library is called.
 # https://github.com/CDAT/cdat/issues/2213
@@ -122,18 +127,21 @@ for model in models:
 # Run subprocesses in parallel
 # -------------------------------------------------
 # log dir
-log_dir = "./log_"+case_id
+log_dir = "./log_"+case_id + "/" + mc_name
 
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
 # number of tasks to submit at the same time
-num_workers = 10
-num_workers = 30
+num_workers = 8 
+#num_workers = 10
+#num_workers = 30
+#num_workers = 25
 
 # submit tasks and wait for subset of tasks to complete
 for p, cmd in enumerate(cmds_list):
-    print(p, cmd)
+    timenow = time.ctime()
+    print(timenow, p, cmd)
     model = cmd[-3]
     run = cmd[-1]
     if (p % num_workers == 0):
@@ -142,6 +150,7 @@ for p, cmd in enumerate(cmds_list):
     log_file = os.path.join(log_dir, log_filename)
     with open(log_file+"_stdout.txt", "wb") as out, open(log_file+"_stderr.txt", "wb") as err:
         procs_list.append(Popen(cmd, stdout=out, stderr=err))
+        time.sleep(1)
     if ((p > 0 and p % num_workers == 0) or (p == len(cmds_list)-1)):
         print('wait...')
         for proc in procs_list:

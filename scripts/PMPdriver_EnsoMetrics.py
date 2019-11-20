@@ -17,6 +17,10 @@ from PMPdriver_lib import sort_human
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 
+# To avoid below error when using multi cores
+# OpenBLAS blas_thread_init: pthread_create failed for thread XX of 96: Resource temporarily unavailable
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 # =================================================
 # Collect user defined options
 # -------------------------------------------------
