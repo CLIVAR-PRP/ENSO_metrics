@@ -138,7 +138,7 @@ num_workers = 8
 #num_workers = 30
 #num_workers = 25
 
-print "Start : %s" % time.ctime()
+print("Start : %s" % time.ctime())
 
 # submit tasks and wait for subset of tasks to complete
 for p, cmd in enumerate(cmds_list):
@@ -159,5 +159,5 @@ for p, cmd in enumerate(cmds_list):
             proc.wait()
 
 # tasks done
-print "End : %s" % time.ctime()
+print("End : %s" % time.ctime())
 sys.exit('DONE')
