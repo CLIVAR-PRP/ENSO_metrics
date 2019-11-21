@@ -196,9 +196,13 @@ for mod in models:
     dict_mod = {mod: {}}
     dict_metric[mod], dict_dive[mod] = dict(), dict()
 
+    """
     model_path_list = os.popen(
         'ls '+modpath(mip=mip, exp=exp, model=mod, realization=realization,
         variable='ts')).readlines()
+    """
+    model_path_list = glob.glob(
+        modpath(mip=mip, exp=exp, model=mod, realization=realization, variable='ts'))
 
     model_path_list = sort_human(model_path_list)
     if debug:

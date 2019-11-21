@@ -1,4 +1,5 @@
 # -*- coding:UTF-8 -*-
+from __future__ import print_function
 from calendar import monthrange
 from copy import deepcopy
 from datetime import date
@@ -112,9 +113,9 @@ def AverageHorizontal(tab, areacell=None):
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
         except:
-            print " AverageHorizontal"
-            print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m'
-            print '\033[93m' + str().ljust(20) + "axes = " + str(snum) + '\033[0m'
+            print("AverageHorizontal")
+            print('\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m')
+            print('\033[93m' + str().ljust(20) + "axes = " + str(snum) + '\033[0m')
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
                 list_strings = [
@@ -1875,7 +1876,7 @@ def EstimateLandmask(d):
     :return landmask: masked_array
         masked_array containing landmask
     """
-    EnsoErrorsWarnings.DebugMode('\033[93m', 'Estimated landmask applied', 25, **dict_debug)
+    print('\033[93m' + str().ljust(25) + 'NOTE: Estimated landmask applied' + '\033[0m')
     n = 1
     sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n)) * 100.0
     sft[:] = sft.filled(100.0)

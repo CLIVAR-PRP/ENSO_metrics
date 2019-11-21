@@ -99,9 +99,13 @@ param_file = './my_Param_ENSO.py'
 cmds_list = []
 for model in models:
     print(' ----- model: ', model, ' ---------------------')
+    """
     model_path_list = os.popen(
         'ls '+modpath(mip=mip, exp=exp, model=model, realization=realization,
         variable='ts')).readlines()
+    """
+    model_path_list = glob.glob(
+        modpath(mip=mip, exp=exp, model=model, realization=realization, variable='ts'))
 
     model_path_list = sort_human(model_path_list)
     if debug:
@@ -146,8 +150,6 @@ for p, cmd in enumerate(cmds_list):
     print(timenow, p, cmd)
     model = cmd[-3]
     run = cmd[-1]
-    if (p % num_workers == 0):
-        procs_list = []
     log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, case_id])
     log_file = os.path.join(log_dir, log_filename)
     with open(log_file+"_stdout.txt", "wb") as out, open(log_file+"_stderr.txt", "wb") as err:
@@ -157,6 +159,8 @@ for p, cmd in enumerate(cmds_list):
         print('wait...')
         for proc in procs_list:
             proc.wait()
+        print("Tasks end : %s" % time.ctime())
+        procs_list = []
 
 # tasks done
 print("End : %s" % time.ctime())

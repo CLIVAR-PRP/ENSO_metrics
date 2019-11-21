@@ -36,6 +36,6 @@ for mip in $mips; do
         echo $mip $MC $realization $case_id
         ./parallel_driver.py -p my_Param_ENSO.py --mip $mip --case_id=$case_id --modnames $modnames --metricsCollection $MC --realization $realization >& log_parallel.${mip}.${MC}.all.v${ver}.txt &
         disown
-        sleep 5
+        sleep 1
     done
 done

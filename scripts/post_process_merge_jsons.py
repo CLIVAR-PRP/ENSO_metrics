@@ -11,11 +11,11 @@ import sys
 
 # -------------------------------
 mip = 'cmip5'
-mip = 'cmip6'
+#mip = 'cmip6'
 exp = 'historical'
-case_id = 'v20191115'
-#metricsCollection = 'ENSO_perf'
-metricsCollection = 'ENSO_proc'
+case_id = 'v20191120'
+metricsCollection = 'ENSO_perf'
+#metricsCollection = 'ENSO_proc'
 #metricsCollection = 'ENSO_tel'
 # -------------------------------
 
