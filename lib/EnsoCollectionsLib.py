@@ -1379,7 +1379,7 @@ def defCollection(MC=True):
                 'EnsoFbSshSst': {
                     'variables': ['sst', 'ssh'],
                     'regions': {'sst': 'nino3', 'ssh': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2', 'AVISO']},
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'ratio',
