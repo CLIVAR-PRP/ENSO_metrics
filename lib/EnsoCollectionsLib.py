@@ -961,7 +961,7 @@ def defCollection(MC=True):
                 'EnsodSstOce_1': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['ERA-Interim', 'Tropflux', 'AVISO']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': False},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -972,7 +972,7 @@ def defCollection(MC=True):
                 'EnsodSstOce_2': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['ERA-Interim', 'Tropflux', 'AVISO']},
                     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
                                          'normalization': True},
                     'smoothing': {'window': 5, 'method': 'triangle'},
@@ -983,7 +983,7 @@ def defCollection(MC=True):
                 'EnsoFbSshSst': {
                     'variables': ['sst', 'ssh'],
                     'regions': {'sst': 'nino3', 'ssh': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2', 'AVISO']},
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'ratio',
@@ -1039,7 +1039,7 @@ def defCollection(MC=True):
                 'EnsoFbTauxSsh': {
                     'variables': ['taux', 'ssh'],
                     'regions': {'ssh': 'nino3', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2', 'AVISO']},
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'ratio',
@@ -1436,7 +1436,7 @@ def defCollection(MC=True):
                 'EnsoFbTauxSsh': {
                     'variables': ['taux', 'ssh'],
                     'regions': {'ssh': 'nino3', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2']},
+                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux'], 'ssh': ['GODAS', 'SODA3.4.2', 'AVISO']},
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'ratio',
