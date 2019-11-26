@@ -4,6 +4,7 @@ from __future__ import print_function
 from genutil import StringConstructor
 from pcmdi_metrics.variability_mode.lib import dict_merge
 
+import copy
 import glob
 import json
 import os
@@ -13,7 +14,7 @@ import sys
 mip = 'cmip5'
 #mip = 'cmip6'
 exp = 'historical'
-case_id = 'v20191120'
+case_id = 'v20191121'
 metricsCollection = 'ENSO_perf'
 #metricsCollection = 'ENSO_proc'
 #metricsCollection = 'ENSO_tel'
@@ -40,19 +41,18 @@ json_files = sorted(glob.glob(
             mip=mip, exp=exp, metricsCollection=metricsCollection, case_id=case_id, model='*', realization='*')+'.json')))
 
 # Remove diveDown JSONs and previously generated merged JSONs if included
-try:
-    for j in json_files:
-        if 'diveDown' in j.split('/')[-1].split('.')[0].split('_'):
-            json_files.remove(j)
-        if 'allModels' in j.split('/')[-1].split('.')[0].split('_'):
-            json_files.remove(j)
-        if 'allRuns' in j.split('/')[-1].split('.')[0].split('_'):
-            json_files.remove(j)
-except:
-    pass
+json_files_revised = copy.copy(json_files)
+for j, json_file in enumerate(json_files):
+    filename_component = json_file.split('/')[-1].split('.')[0].split('_')
+    if 'diveDown' in filename_component:
+        json_files_revised.remove(json_file)
+    elif 'allModels' in filename_component:
+        json_files_revised.remove(json_file)
+    elif 'allRuns' in filename_component:
+        json_files_revised.remove(json_file)
 
 # Load individual JSON and merge to one big dictionary
-for j, json_file in enumerate(json_files):
+for j, json_file in enumerate(json_files_revised):
     print(j, json_file)
     f = open(json_file)
     dict_tmp = json.loads(f.read())
