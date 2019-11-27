@@ -34,15 +34,14 @@ from EnsoPlotLib import plot_param
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collections = ["ENSO_perf", "ENSO_tel", "ENSO_proc"]
+metric_collections = ["ENSO_perf", "ENSO_proc", "ENSO_tel"]
 experiment = "historical"  # "piControl" #
-member = "r1i1p1"
 list_project = ["cmip5", "cmip6"]
 selection = "select8"
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
-path_in = deepcopy(path_main)
-path_out = OSpath__join(path_main, "Plots_v4")
+path_in = OSpath__join(path_main, "Data_grouped")
+path_out = OSpath__join(path_main, "Plots_v5")
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -94,20 +93,42 @@ dict_selection = {
 }
 dict_mc = {"ENSO_perf": "ENSO performance", "ENSO_proc": "ENSO processes", "ENSO_tel": "ENSO teleconnections"}
 
+
 # ---------------------------------------------------#
 # Main
 # ---------------------------------------------------#
 def remove_metrics(list_met, metric_collection):
     list_met1 = deepcopy(list_met)
     if mc == "ENSO_perf":
-        to_remove = ['BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse',
-                     'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2',
-                     'NinaSstTsRmse_1', 'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1', 'NinoSstDur_2',
-                     'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1', 'NinoSstTsRmse_2']
+        # to_remove = ['BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse',
+        #              'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2',
+        #              'NinaSstTsRmse_1', 'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1', 'NinoSstDur_2',
+        #              'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1', 'NinoSstTsRmse_2']
+        to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse', 'NinaSstDur_1',
+                     'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
+                     'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
+                     'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
+                     'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
     elif mc == "ENSO_proc":
-        to_remove = ['EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf']
+        to_remove = ['EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf', 'EnsoFbSstSwr']
     else:
-        to_remove = ['EnsoPrMapStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd', 'EnsoSstMapStd',
+        # to_remove = ['EnsoPrMapStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd',
+        #              'EnsoSstMapStd', 'EnsoSstLonRmse',
+        #              'NinaPrMap_1Corr', 'NinaPrMap_1Rmse', 'NinaPrMap_1Std',
+        #              'NinaPrMap_2Corr', 'NinaPrMap_2Rmse', 'NinaPrMap_2Std',
+        #              'NinaSlpMap_1Corr', 'NinaSlpMap_1Rmse', 'NinaSlpMap_1Std',
+        #              'NinaSlpMap_2Corr', 'NinaSlpMap_2Rmse', 'NinaSlpMap_2Std',
+        #              'NinaSstMap_1Corr', 'NinaSstMap_1Rmse', 'NinaSstMap_1Std',
+        #              'NinaSstMap_2Corr', 'NinaSstMap_2Rmse', 'NinaSstMap_2Std',
+        #              'NinaSstLonRmse_1', 'NinaSstLonRmse_2',
+        #              'NinoPrMap_1Corr', 'NinoPrMap_1Rmse', 'NinoPrMap_1Std',
+        #              'NinoPrMap_2Corr', 'NinoPrMap_2Rmse', 'NinoPrMap_2Std',
+        #              'NinoSlpMap_1Corr', 'NinoSlpMap_1Rmse', 'NinoSlpMap_1Std',
+        #              'NinoSlpMap_2Corr', 'NinoSlpMap_2Rmse', 'NinoSlpMap_2Std',
+        #              'NinoSstMap_1Corr', 'NinoSstMap_1Rmse', 'NinoSstMap_1Std',
+        #              'NinoSstMap_2Corr', 'NinoSstMap_2Rmse', 'NinoSstMap_2Std',
+        #              'NinoSstLonRmse_1', 'NinoSstLonRmse_2']
+        to_remove = ['EnsoPrMapStd', 'EnsoSlpMapStd', 'EnsoSstMapStd',
                      'NinaPrMap_1Corr', 'NinaPrMap_1Rmse', 'NinaPrMap_1Std',
                      'NinaPrMap_2Corr', 'NinaPrMap_2Rmse', 'NinaPrMap_2Std',
                      'NinaSlpMap_1Corr', 'NinaSlpMap_1Rmse', 'NinaSlpMap_1Std',
@@ -121,7 +142,7 @@ def remove_metrics(list_met, metric_collection):
                      'NinoSlpMap_2Corr', 'NinoSlpMap_2Rmse', 'NinoSlpMap_2Std',
                      'NinoSstMap_1Corr', 'NinoSstMap_1Rmse', 'NinoSstMap_1Std',
                      'NinoSstMap_2Corr', 'NinoSstMap_2Rmse', 'NinoSstMap_2Std',
-                     'NinoSstLonRmse_1', 'NinoSstLonRmse_2',]
+                     'NinoSstLonRmse_1', 'NinoSstLonRmse_2', ]
     # remove given metrics
     list_met2 = deepcopy(list_met1)
     for met in list_met2:
@@ -130,13 +151,13 @@ def remove_metrics(list_met, metric_collection):
                 list_met1.remove(met)
     del list_met2
     # !!!!! temporary: start !!!!!
-    # ssh metrics are not computed yet (ask jiwoo)
-    list_met2 = deepcopy(list_met1)
-    for met in list_met2:
-        if "Ssh" in met:
-            while met in list_met1:
-                list_met1.remove(met)
-    del list_met2
+    # # ssh metrics are not computed yet (ask jiwoo)
+    # list_met2 = deepcopy(list_met1)
+    # for met in list_met2:
+    #     if "Ssh" in met:
+    #         while met in list_met1:
+    #             list_met1.remove(met)
+    # del list_met2
     # slp metrics are wrong (error in observation?)
     list_met2 = deepcopy(list_met1)
     for met in list_met2:
@@ -233,7 +254,8 @@ def portraitplot(tab, name_plot, x_names, y_names, title='portraitplot', write_m
     return
 
 
-def multiportraitplot(tab, name_plot, x_names, y_names, title='portraitplot', write_metrics=False):
+def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='portraitplot', write_metrics=False,
+                      my_text=""):
     nbrl = sum([len(tab[ii]) for ii in range(len(tab))]) + (len(tab) - 1) * 3
     fig = plt.figure(0, figsize=(0.5 * len(tab[0][0]), 0.5 * nbrl))
     gs = GridSpec(nbrl, 1)
@@ -246,8 +268,9 @@ def multiportraitplot(tab, name_plot, x_names, y_names, title='portraitplot', wr
         cs = ax.pcolormesh(tmp, cmap=cmap, norm=norm)
         # title
         yy1, yy2 = ax.get_ylim()
-        dy = 1 + (0.5 / (yy2 - yy1))
-        ax.set_title(title[kk], fontsize=40, y=dy, loc="center")
+        dy = 0.5 / (yy2 - yy1)
+        try: ax.set_title(title[kk], fontsize=40, y=1+dy, loc="center")
+        except: ax.set_title(title, fontsize=40, y=1+dy, loc="center")
         # x axis
         ticks = [ii + 0.5 for ii in range(len(x_names))]
         ax.set_xticks(ticks)
@@ -259,12 +282,23 @@ def multiportraitplot(tab, name_plot, x_names, y_names, title='portraitplot', wr
                 tick.label.set_fontsize(20)
             for tick in ax.get_xticklabels():
                 tick.set_rotation(90)
+        try: ax.set_xlabel(xlabel[kk], y=dy, fontsize=40)
+        except: ax.set_xlabel(xlabel, y=dy, fontsize=40)
         # y axis
         ticks = [ii + 0.5 for ii in range(len(y_names[kk]))]
         ax.set_yticks(ticks)
         ax.set_yticklabels(y_names[kk])
         for tick in ax.yaxis.get_major_ticks():
             tick.label.set_fontsize(20)
+        xx1, xx2 = ax.get_xlim()
+        dx = 0.5 / (xx2 - xx1)
+        try: ax.set_ylabel(ylabel[kk], fontsize=40, verticalalignment='top')
+        except: ax.set_ylabel(ylabel, fontsize=40, verticalalignment='top')
+        ax.yaxis.set_label_coords(-20 * dx, 0.5)
+        # if kk == 1:
+        #     ax.yaxis.set_label_coords(-7 * dx, 0.5)
+        # else:
+        #     ax.yaxis.set_label_coords(-9 * dx, 0.5)
         # lines
         for ii in range(1, len(tmp)):
             ax.axhline(ii, color='k', linestyle='-', linewidth=1)
@@ -283,11 +317,13 @@ def multiportraitplot(tab, name_plot, x_names, y_names, title='portraitplot', wr
         if kk == len(tab) - 1:
             y1 = ax.get_position().y0
         count += len(tmp) + 3
+    plt.text(0., -14 * dy, my_text, fontsize=30, horizontalalignment='right', verticalalignment='center',
+             transform=ax.transAxes)
     # color bar
     levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
-    cax = plt.axes([x2 + 0.02, y1, 0.02, y2 - y1])
+    cax = plt.axes([x2 + 0.02, y1, 0.015, y2 - y1])
     cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend='both', aspect=40)
-    cbar.ax.tick_params(labelsize=20)
+    cbar.ax.tick_params(labelsize=25)
     # save fig
     plt.savefig(name_plot, bbox_inches='tight')
     plt.close()
@@ -335,22 +371,22 @@ for mc in metric_collections:
                         my_ref = "ERA-Interim"
                     elif "ERA-Interim_ERA-Interim" in list_ref:
                         my_ref = "ERA-Interim_ERA-Interim"
-                    else:
-                        list_strings = [
-                            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                            ": cannot fing a proper reference",
-                            str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
-                            met + "'",
-                            str().ljust(10) + "input references = " + str(list_ref)]
-                        EnsoErrorsWarnings.MyError(list_strings)
-                    list_strings = [
-                        "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                        ": reference changed",
-                        str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
-                        met + "'",
-                        str().ljust(10) + "reference set to '" + my_ref +"' instead of '" + ref + "'"]
-                    EnsoErrorsWarnings.MyWarning(list_strings)
-                if ("Taux" in met and mod == "BCC-ESM1") or data_met[my_ref]["value"] is None:
+                    # else:
+                    #     list_strings = [
+                    #         "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                    #         ": cannot fing a proper reference",
+                    #         str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
+                    #         met + "'",
+                    #         str().ljust(10) + "input references = " + str(list_ref)]
+                    #     EnsoErrorsWarnings.MyError(list_strings)
+                    # list_strings = [
+                    #     "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                    #     ": reference changed",
+                    #     str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
+                    #     met + "'",
+                    #     str().ljust(10) + "reference set to '" + my_ref +"' instead of '" + ref + "'"]
+                    # EnsoErrorsWarnings.MyWarning(list_strings)
+                if data_met[my_ref]["value"] is None:
                     dict2[met] = 1e20
                 else:
                     dict2[met] = data_met[my_ref]["value"]
@@ -359,14 +395,32 @@ for mc in metric_collections:
             del data_mod, dict2, list_metrics
         del data_json, list_models
     # shape data
-    my_models = ["ACCESS1-0", "ACCESS1-3", "BCC-CSM1-1", "BCC-CSM1-1-M", "BCC-ESM1", "BNU-ESM", "CCSM4", "CESM1-BGC",
+    # my_models = ["ACCESS1-0", "ACCESS1-3", "BCC-CSM1-1", "BCC-CSM1-1-M", "BCC-ESM1", "BNU-ESM", "CCSM4", "CESM1-BGC",
+    #              "CESM1-CAM5", "CESM1-FASTCHEM", "CESM1-WACCM", "CESM2", "CESM2-WACCM", "CMCC-CESM", "CMCC-CM",
+    #              "CMCC-CMS", "CNRM-CM5", "CNRM-CM5-2", "CSIRO-Mk3-6-0", "CanCM4", "CanESM2", "EC-Earth3-Veg",
+    #              "FGOALS-g2", "GFDL-CM2p1", "GFDL-CM3", "GFDL-CM4", "GFDL-ESM2G", "GFDL-ESM2M", "GISS-E2-H",
+    #              "GISS-E2-H-CC", "GISS-E2-R", "GISS-E2-R-CC", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H", "HadCM3",
+    #              "HadGEM2-AO", "HadGEM2-CC", "HadGEM2-ES", "INMCM4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR",
+    #              "IPSL-CM6A-LR", "MIROC4h", "MIROC5", "MIROC6", "MIROC-ESM", "MIROC-ESM-CHEM", "MPI-ESM-LR",
+    #              "MPI-ESM-MR", "MPI-ESM-P", "MRI-ESM2-0", "NorESM1-M", "NorESM1-ME", "SAM0-UNICON"]
+    # my_models = ["ACCESS1-0", "ACCESS1-3", "BCC-CSM1-1", "BCC-CSM1-1-M", "BCC-ESM1", "CCSM4", "CESM1-BGC",
+    #              "CESM1-CAM5", "CESM1-FASTCHEM", "CESM1-WACCM", "CESM2", "CESM2-WACCM", "CMCC-CESM", "CMCC-CM",
+    #              "CMCC-CMS", "CNRM-CM5", "CNRM-CM5-2", "CSIRO-Mk3-6-0", "CanCM4", "CanESM2", "EC-Earth3-Veg",
+    #              "FGOALS-g2", "GFDL-CM2p1", "GFDL-CM3", "GFDL-CM4", "GFDL-ESM2G", "GFDL-ESM2M", "GISS-E2-H",
+    #              "GISS-E2-H-CC", "GISS-E2-R", "GISS-E2-R-CC", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
+    #              "HadGEM2-AO", "HadGEM2-CC", "HadGEM2-ES", "INMCM4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR",
+    #              "IPSL-CM6A-LR", "MIROC4h", "MIROC5", "MIROC6", "MIROC-ESM", "MIROC-ESM-CHEM", "MPI-ESM-LR",
+    #              "MPI-ESM-MR", "MPI-ESM-P", "MRI-ESM2-0", "NorESM1-M", "NorESM1-ME", "SAM0-UNICON"]
+    my_models = ["ACCESS1-0", "ACCESS1-3", "BCC-CSM1-1", "BCC-CSM1-1-M", "BCC-ESM1", "CCSM4", "CESM1-BGC",
                  "CESM1-CAM5", "CESM1-FASTCHEM", "CESM1-WACCM", "CESM2", "CESM2-WACCM", "CMCC-CESM", "CMCC-CM",
-                 "CMCC-CMS", "CNRM-CM5", "CNRM-CM5-2", "CSIRO-Mk3-6-0", "CanCM4", "CanESM2", "EC-Earth3-Veg",
-                 "FGOALS-g2", "GFDL-CM2p1", "GFDL-CM3", "GFDL-CM4", "GFDL-ESM2G", "GFDL-ESM2M", "GISS-E2-H",
-                 "GISS-E2-H-CC", "GISS-E2-R", "GISS-E2-R-CC", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H", "HadCM3",
-                 "HadGEM2-AO", "HadGEM2-CC", "HadGEM2-ES", "INMCM4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR",
-                 "IPSL-CM6A-LR", "MIROC4h", "MIROC5", "MIROC6", "MIROC-ESM", "MIROC-ESM-CHEM", "MPI-ESM-LR",
-                 "MPI-ESM-MR", "MPI-ESM-P", "MRI-ESM2-0", "NorESM1-M", "NorESM1-ME", "SAM0-UNICON"]
+                 "CMCC-CMS", "CNRM-CM5", "CNRM-CM5-2", "CNRM-CM6-1", "CNRM-ESM2-1", "CSIRO-Mk3-6-0", "CanCM4",
+                 "CanESM2", "CanESM5", "EC-Earth3-Veg", "FGOALS-g2", "FGOALS-s2", "GFDL-CM2p1", "GFDL-CM3", "GFDL-CM4",
+                 "GFDL-ESM2G", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-H", "GISS-E2-H-CC",
+                 "GISS-E2-1-H",  "GISS-E2-R", "GISS-E2-R-CC", "HadGEM2-AO", "HadGEM2-CC",
+                 "HadGEM2-ES", "HadGEM3-GC31-LL", "INMCM4", "IPSL-CM5A-LR", "IPSL-CM5A-MR", "IPSL-CM5B-LR",
+                 "IPSL-CM6A-LR", "MIROC4h", "MIROC5", "MIROC6", "MIROC-ES2L", "MIROC-ESM", "MIROC-ESM-CHEM",
+                 "MPI-ESM-LR", "MPI-ESM-MR", "MPI-ESM-P", "MRI-CGCM3", "MRI-ESM1", "MRI-ESM2-0", "NorESM1-M",
+                 "NorESM1-ME", "NorCPM1", "NorESM2-LM", "SAM0-UNICON", "UKESM1-0-LL"]
     for mod in my_models:
         try: dict1[mod]
         except: pass
@@ -375,7 +429,16 @@ for mc in metric_collections:
             except: my_metrics = dict1[mod].keys()
             else: my_metrics += dict1[mod].keys()
     my_metrics = sorted(list(set(my_metrics)), key=lambda v: v.upper())
-    tab = NUMPYma__zeros((len(my_models) + 3, len(my_metrics)))
+    if mc == "ENSO_perf":
+        my_metrics = [
+            "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "BiasTauxLonRmse", "SeasonalPrLatRmse",
+            "SeasonalPrLonRmse", "SeasonalSstLonRmse", "SeasonalTauxLonRmse", "EnsoSstLonRmse", "EnsoSstTsRmse",
+            "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration", "NinoSstDiversity_2"]
+    elif mc == "ENSO_proc":
+        my_metrics = [
+            "BiasSstLonRmse", "BiasTauxLonRmse", "EnsoSstLonRmse", "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew",
+            "EnsodSstOce_2", "EnsoFbSshSst", "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh"]
+    tab = NUMPYma__zeros((len(my_models) + 2, len(my_metrics)))
     for ii, mod in enumerate(my_models):
         for jj, met in enumerate(my_metrics):
             try: dict1[mod][met]
@@ -386,20 +449,25 @@ for mc in metric_collections:
         tmp = tab[:-3, jj].compressed()
         med = float(SCIPYstats__scoreatpercentile(list(tmp), 50))
         mea = float(NUMPYmean(tmp))
-        tmp = [tab[ii, jj] for ii, mod in enumerate(my_models) if mod in dict_selection[selection]]
+        tmp = [tab[ii, jj] for ii, mod in enumerate(my_models) if mod in dict_mod["cmip5"]]
         tmp = NUMPYma__array(tmp).compressed()
-        sel = float(NUMPYmean(tmp))
+        sel1 = float(NUMPYmean(tmp))
+        tmp = [tab[ii, jj] for ii, mod in enumerate(my_models) if mod in dict_mod["cmip6"]]
+        tmp = NUMPYma__array(tmp).compressed()
+        sel2 = float(NUMPYmean(tmp))
         tab[len(my_models), jj] = med
         tab[len(my_models) + 1, jj] = mea
-        tab[len(my_models) + 2, jj] = sel
+        # tab[len(my_models) + 2, jj] = sel1
+        # tab[len(my_models) + 3, jj] = sel2
         tab[:, jj] = (tab[:, jj] - med) / med
-        del mea, med, sel, tmp
+        print met.rjust(20) + " = " + str(round(med, 1))
+        del mea, med, sel1, sel2, tmp
     tab = NUMPYmoveaxis(tab, 0, 1)
     # plot
     figure_name = OSpath__join(path_out, "portraitplot_" + str(mc) + "_modified")
     title = str(dict_mc[mc]) + ": normalized by median (each row)"
     x_names = ["* " + mod if mod in dict_mod["cmip6"] else mod for mod in my_models] +\
-              ["(median)", "(CMIP)", "(selection)"]
+              ["(median)", "(CMIP)"]
     portraitplot(tab, figure_name, x_names, my_metrics, title=title)
     tab_all.append(tab)
     y_names_all.append(my_metrics)
@@ -412,5 +480,6 @@ for mc in metric_collections:
 if ' ':
     # plot
     figure_name = OSpath__join(path_out, "portraitplot_" + str(len(metric_collections)) + "metric_collections_modified")
-    title = [str(dict_mc[mc]) + ": normalized by median (each row)" for mc in metric_collections]
-    multiportraitplot(tab_all, figure_name, x_names_all, y_names_all, title=title)
+    ylabel = [dict_mc[mc].replace(" ", "\n") if mc == "ENSO_tel" else dict_mc[mc] for mc in metric_collections]
+    text = "* = CMIP6 model"
+    multiportraitplot(tab_all, figure_name, "", ylabel, x_names_all, y_names_all, title="", my_text=text)

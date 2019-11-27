@@ -1488,6 +1488,10 @@ def plot_param(metric_collection, metric):
     refname = references[variables[0]]
     for var in variables[1:]:
         refname = refname + "_" + references[var]
+    if metric_collection == "ENSO_tel" and metric in ["EnsoPrMap", "EnsoSlpMap"]:
+        refname = "ERA-Interim_ERA-Interim"
+    elif metric_collection == "ENSO_tel" and metric in ["EnsoSstMap"]:
+        refname = "ERA-Interim"
     dict_out['metric_reference'] = refname
     # get variable regions
     dict_out['metric_regions'] = dict_MCm['regions']

@@ -33,15 +33,14 @@ from EnsoPlotLib import plot_param
 # ---------------------------------------------------#
 metric_collection = ["ENSO_perf", "ENSO_proc", "ENSO_tel"]
 experiment = "historical"  # "piControl" #
-member = "r1i1p1"
 list_project = ["cmip5", "cmip6"]
 my_project = ["CMIP"]
 big_ensemble = True
 reduced_set = True  # False  #
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
-path_in = OSpath__join(path_main, "Data")
-path_out = OSpath__join(path_main, "Plots_v2")
+path_in = OSpath__join(path_main, "Data_grouped")
+path_out = OSpath__join(path_main, "Plots_v5")
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -120,6 +119,15 @@ def compute_correlation(tab):
             del intercept, p_value, r_value, slope, std_err, tmp2, tmpf1, tmpf2
         del tmp1
     return rval, pval
+
+
+def get_reference(metric_collection, metric):
+    if metric_collection == "ENSO_tel" and "Map" in metric:
+        my_met = metric.replace("Corr", "").replace("Rmse", "").replace("Std", "")
+    else:
+        my_met = deepcopy(metric)
+    return plot_param(metric_collection, my_met)['metric_reference']
+
 
 
 def get_ref(metric):
@@ -218,6 +226,84 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
     return
 
 
+def read_data(project, metric_collection):
+    #lpath = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
+    lname = project + "_" + experiment + "_" + metric_collection + "_v2019????_modified.json"
+    filename_js = list(GLOBiglob(OSpath__join(path_in, lname)))[0]
+    with open(filename_js) as ff:
+        data = json.load(ff)
+    ff.close()
+    return data["RESULTS"]["model"]
+
+
+def remove_metrics(list_met, metric_collection):
+    list_met1 = deepcopy(list_met)
+    if reduced_set is True:
+        if metric_collection == "ENSO_perf":
+            # to_remove = ['BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse', 'NinaSstDur_1',
+            #              'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
+            #              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
+            #              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
+            #              'NinoSstTsRmse_2']
+            to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse', 'NinaSstDur_1',
+                         'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
+                         'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
+                         'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
+                         'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
+        elif metric_collection == "ENSO_proc":
+            # to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
+            #              'EnsoFbTauxSsh']
+            to_remove = ['BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse',
+                         'EnsoSstSkew', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
+                         'EnsoFbSstSwr']
+        else:
+            to_remove = ['EnsoAmpl', 'EnsoPrMapStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd',
+                         'EnsoSstMapStd', 'EnsoSstLonRmse',
+                         'NinaPrMap_1Corr', 'NinaPrMap_1Rmse', 'NinaPrMap_1Std',
+                         'NinaPrMap_2Corr', 'NinaPrMap_2Rmse', 'NinaPrMap_2Std',
+                         'NinaSlpMap_1Corr', 'NinaSlpMap_1Rmse', 'NinaSlpMap_1Std',
+                         'NinaSlpMap_2Corr', 'NinaSlpMap_2Rmse', 'NinaSlpMap_2Std',
+                         'NinaSstLonRmse_1', 'NinaSstLonRmse_2',
+                         'NinaSstMap_1Corr', 'NinaSstMap_1Rmse', 'NinaSstMap_1Std',
+                         'NinaSstMap_2Corr', 'NinaSstMap_2Rmse', 'NinaSstMap_2Std',
+                         'NinoPrMap_1Corr', 'NinoPrMap_1Rmse', 'NinoPrMap_1Std',
+                         'NinoPrMap_2Corr', 'NinoPrMap_2Rmse', 'NinoPrMap_2Std',
+                         'NinoSlpMap_1Corr', 'NinoSlpMap_1Rmse', 'NinoSlpMap_1Std',
+                         'NinoSlpMap_2Corr', 'NinoSlpMap_2Rmse', 'NinoSlpMap_2Std',
+                         'NinoSstLonRmse_1', 'NinoSstLonRmse_2',
+                         'NinoSstMap_1Corr', 'NinoSstMap_1Rmse', 'NinoSstMap_1Std',
+                         'NinoSstMap_2Corr', 'NinoSstMap_2Rmse', 'NinoSstMap_2Std']
+    else:
+        if metric_collection == "ENSO_perf":
+            to_remove = []
+        elif metric_collection == "ENSO_proc":
+            to_remove = ['BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse',
+                         'EnsoSstSkew']
+        else:
+            to_remove = ['EnsoAmpl', 'EnsoSstLonRmse', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinoSstLonRmse_1',
+                         'NinoSstLonRmse_2']
+    for met in to_remove:
+        while met in list_met1:
+            list_met1.remove(met)
+    # !!!!! temporary: start !!!!!
+    # # ssh metrics are not computed yet (ask jiwoo)
+    # list_met2 = deepcopy(list_met1)
+    # for met in list_met2:
+    #     if "Ssh" in met:
+    #         while met in list_met1:
+    #             list_met1.remove(met)
+    # del list_met2
+    # # slp metrics are wrong (error in observation?)
+    # list_met2 = deepcopy(list_met1)
+    # for met in list_met2:
+    #     if "Slp" in met:
+    #         while met in list_met1:
+    #             list_met1.remove(met)
+    # del list_met2
+    # !!!!! temporary: end !!!!!
+    return list_met1
+
+
 # ---------------------------------------------------#
 # Main
 # ---------------------------------------------------#
@@ -227,91 +313,56 @@ for proj in list_project:
     if big_ensemble is not True or (big_ensemble is True and proj == list_project[0]):
         dict_mc = dict()
     for mc in metric_collection:
-        # get metrics list
-        list_metrics = sorted(defCollection(mc)['metrics_list'].keys(), key=lambda v: v.upper())
-        if reduced_set is True:
-            if mc == "ENSO_perf":
-                to_remove = ['BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse', 'NinaSstDur_1',
-                             'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
-                             'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
-                             'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
-                             'NinoSstTsRmse_2']
-            elif mc == "ENSO_proc":
-                to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
-                             'EnsoFbTauxSsh']
-            else:
-                to_remove = ['EnsoAmpl', 'EnsoSlpMap', 'NinaPrMap_1', 'NinaPrMap_2', 'NinaSlpMap_1', 'NinaSlpMap_2',
-                             'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstMap_1', 'NinaSstMap_2', 'NinoPrMap_1',
-                             'NinoPrMap_2', 'NinoSlpMap_1', 'NinoSlpMap_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2',
-                             'NinoSstMap_1', 'NinoSstMap_2']
-        else:
-            if mc == "ENSO_perf":
-                to_remove = []
-            elif mc == "ENSO_proc":
-                to_remove = ['EnsoAmpl']
-            else:
-                to_remove = ['EnsoAmpl', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2']
-        for met in to_remove:
-            while met in list_metrics:
-                list_metrics.remove(met)
-        if mc == "ENSO_tel":
-            list_metrics = add_suffix(list_metrics)
-        # !!!!! temporary: start !!!!!
-        # ssh metrics are not computed yet (ask jiwoo)
-        list_metrics2 = deepcopy(list_metrics)
-        for met in list_metrics2:
-            if "Ssh" in met:
-                while met in list_metrics:
-                    list_metrics.remove(met)
-        del list_metrics2
-        # slp metrics are wrong (error in observation?)
-        list_metrics2 = deepcopy(list_metrics)
-        for met in list_metrics2:
-            if "Slp" in met:
-                while met in list_metrics:
-                    list_metrics.remove(met)
-        del list_metrics2
-        # !!!!! temporary: end !!!!!
         # read json
-        lpath = OSpath__join(path_in, proj + "/" + experiment + "/" + mc)
-        lname = proj + "_" + experiment + "_" + mc + "_v2019????.json"
-        filename_js = list(GLOBiglob(OSpath__join(lpath, lname)))[0]
-        with open(filename_js) as ff:
-            data = json.load(ff)
-        ff.close()
-        list_models = sorted(data["RESULTS"]["model"].keys(), key=lambda v: v.upper())
+        data_json = read_data(proj, mc)
+        list_models = sorted(data_json.keys(), key=lambda v: v.upper())
         # read metrics
+        list_models = sorted(data_json.keys(), key=lambda v: v.upper())
         dict1 = dict()
         for mod in list_models:
+            data_mod = data_json[mod]["value"]
+            list_metrics = sorted(data_mod.keys(), key=lambda v: v.upper())
+            list_metrics = remove_metrics(list_metrics, mc)
             dict2 = dict()
             for met in list_metrics:
-                try: defCollection(mc)["metrics_list"][met]["metric_computation"]
+                try:
+                    ref = get_reference(mc, met)
                 except:
-                    tmp = data["RESULTS"]["model"][mod]["value"][met]["metric"]
-                    dict2[met] = dict(
-                        (key, 1e20 if (("Taux" in met and mod == "BCC-ESM1")
-                                       or tmp[key]["value"] is None) else tmp[key]["value"]) for key in tmp.keys())
-                    del tmp
+                    ref = "Tropflux"
+                data_met = data_mod[met]["metric"]
+                list_ref = sorted(data_met.keys(), key=lambda v: v.upper())
+                if ref in list_ref:
+                    my_ref = deepcopy(ref)
                 else:
-                    tmp = data["RESULTS"]["model"][mod]["value"][met]["diagnostic"]
-                    list1 = sorted(tmp.keys())
-                    list1.remove(mod)
-                    mod_val = tmp[mod]["value"]
-                    dict3 = dict()
-                    for key in list1:
-                        obs_val = tmp[key]["value"]
-                        if ("Taux" in met and mod == "BCC-ESM1") or obs_val is None or mod_val is None:
-                            dict3[key] = 1e20
-                        else:
-                            dict3[key] = abs((mod_val - obs_val) / obs_val)
-                        del obs_val
-                    dict2[met] = dict3
-                    del dict3, list1, mod_val, tmp
+                    if "ERA-Interim" in list_ref:
+                        my_ref = "ERA-Interim"
+                    elif "ERA-Interim_ERA-Interim" in list_ref:
+                        my_ref = "ERA-Interim_ERA-Interim"
+                    else:
+                        list_strings = [
+                            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                            ": cannot fing a proper reference",
+                            str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
+                            met + "'",
+                            str().ljust(10) + "input references = " + str(list_ref)]
+                        EnsoErrorsWarnings.MyError(list_strings)
+                    # list_strings = [
+                    #     "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                    #     ": reference changed",
+                    #     str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
+                    #     met + "'",
+                    #     str().ljust(10) + "reference set to '" + my_ref +"' instead of '" + ref + "'"]
+                    # EnsoErrorsWarnings.MyWarning(list_strings)
+                if data_met[my_ref]["value"] is None:
+                    dict2[met] = 1e20
+                else:
+                    dict2[met] = data_met[my_ref]["value"]
+                del data_met, my_ref, list_ref, ref
             dict1[mod] = dict2
-            del dict2
+            del data_mod, dict2
         # save in common dictionary
         dict_mc = common_save(dict1, dict_out=dict_mc)
-        del data, dict1, ff, filename_js, list_metrics, list_models, lname, lpath
+        del data_json, dict1, list_metrics, list_models
     if big_ensemble is not True:
         dict_met[proj] = dict_mc
         del dict_mc
@@ -320,115 +371,140 @@ if big_ensemble is True:
     del dict_mc
 
 
-# show dictionary levels
-lev1 = sorted(dict_met.keys(), key=lambda v: v.upper())
-print "level1 (" + str(len(lev1)) + ") = " + str(lev1)
-print ""
-# check metrics
-if big_ensemble is True:
-    list1 = list(set([len(dict_met[key1].keys()) for key1 in lev1]))
-    for key1 in lev1:
-        if len(dict_met[key1].keys()) == max(list1):
-            list_metrics = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
-            pass
-    # !!!!! temporary: start !!!!!
-    # some models are not used in all metric collection (ask jiwoo)
-    for key2 in list_metrics:
-        for key1 in lev1:
-            if key2 not in dict_met[key1].keys():
-                dict_met[key1][key2] = dict((ref, 1e20) for ref in dict_met["ACCESS1-0"][key2].keys())
-    list1 = list(set([len(dict_met[key1].keys()) for key1 in lev1]))
-    # !!!!! temporary: end !!!!!
-else:
-    list1 = list(set([len(dict_met[key1][key2].keys()) for key1 in lev1 for key2 in dict_met[key1].keys()]))
-    for key1 in lev1:
-        for key2 in dict_met[key1].keys():
-            if len(dict_met[key1][key2].keys()) == max(list1):
-                list_metrics = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())
-                pass
-if len(list1) != 1:
-    for key1 in lev1:
-        lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
-        if big_ensemble is True:
-            if len(lev2) != len(list_metrics):
-                print key1.rjust(15) + " (" + str(len(lev2)).zfill(2) + "), missing = " +\
-                      str(list(set(list_metrics) - set(lev2)))
-        else:
-            for key2 in lev2:
-                lev3 = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())
-                if len(lev3) != len(list_metrics):
-                    print key2.rjust(15) + " (" + str(len(lev3)).zfill(2) + "), missing = " +\
-                          str(list(set(list_metrics) - set(lev3)))
-                del lev3
-        del lev2
-    list_strings = [
-        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-        ": not the same number of metrics for all models",
-        str().ljust(5) + "metric number = " + str(list1),
-    ]
-    EnsoErrorsWarnings.MyError(list_strings)
-else:
-    print str().ljust(5) + "metrics (" + str(len(list_metrics)) + ") = " + str(list_metrics)
-del list1
-for ii in range(3): print ""
+# # show dictionary levels
+# lev1 = sorted(dict_met.keys(), key=lambda v: v.upper())
+# print "level1 (" + str(len(lev1)) + ") = " + str(lev1)
+# print ""
+# # check metrics
+# if big_ensemble is True:
+#     list1 = list(set([len(dict_met[key1].keys()) for key1 in lev1]))
+#     for key1 in lev1:
+#         if len(dict_met[key1].keys()) == max(list1):
+#             list_metrics = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
+#             pass
+#     # !!!!! temporary: start !!!!!
+#     # some models are not used in all metric collection (ask jiwoo)
+#     for key2 in list_metrics:
+#         for key1 in lev1:
+#             if key2 not in dict_met[key1].keys():
+#                 dict_met[key1][key2] = dict((ref, 1e20) for ref in dict_met["ACCESS1-0"][key2].keys())
+#     list1 = list(set([len(dict_met[key1].keys()) for key1 in lev1]))
+#     # !!!!! temporary: end !!!!!
+# else:
+#     list1 = list(set([len(dict_met[key1][key2].keys()) for key1 in lev1 for key2 in dict_met[key1].keys()]))
+#     for key1 in lev1:
+#         for key2 in dict_met[key1].keys():
+#             if len(dict_met[key1][key2].keys()) == max(list1):
+#                 list_metrics = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())
+#                 pass
+# if len(list1) != 1:
+#     for key1 in lev1:
+#         lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
+#         if big_ensemble is True:
+#             if len(lev2) != len(list_metrics):
+#                 print key1.rjust(15) + " (" + str(len(lev2)).zfill(2) + "), missing = " +\
+#                       str(list(set(list_metrics) - set(lev2)))
+#         else:
+#             for key2 in lev2:
+#                 lev3 = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())
+#                 if len(lev3) != len(list_metrics):
+#                     print key2.rjust(15) + " (" + str(len(lev3)).zfill(2) + "), missing = " +\
+#                           str(list(set(list_metrics) - set(lev3)))
+#                 del lev3
+#         del lev2
+#     list_strings = [
+#         "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+#         ": not the same number of metrics for all models",
+#         str().ljust(5) + "metric number = " + str(list1),
+#     ]
+#     EnsoErrorsWarnings.MyError(list_strings)
+# else:
+#     print str().ljust(5) + "metrics (" + str(len(list_metrics)) + ") = " + str(list_metrics)
+# del list1
+# for ii in range(3): print ""
 
 
-# set reference observation
-dict_out = dict()
-for met in list_metrics:
-    ref = get_ref(met)
-    for key1 in lev1:
-        if big_ensemble is True:
-            try: tmp = dict_met[key1][met][ref]
-            except:
-                ref2 = sorted(dict_met[key1][met].keys(), key=lambda v: v.upper())[0]
-                list_strings = [
-                    "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                    ": reference (" + ref + ") not available",
-                    str().ljust(5) + key1.rjust(15) + ", " + str(met),
-                    str().ljust(5) + "another reference is used (" + ref2 + ")",
-                ]
-                # EnsoErrorsWarnings.MyWarning(list_strings)
-                tmp = dict_met[key1][met][ref2]
-            try: dict_out[key1]
-            except: dict_out[key1] = {met: tmp}
-            else: dict_out[key1][met] = tmp
-            del tmp
-        else:
-            lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
-            for key2 in lev2:
-                try: tmp = dict_met[key1][key2][met][ref]
-                except:
-                    ref2 = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())[0]
-                    list_strings = [
-                        "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                        ": reference (" + ref + ") not available",
-                        str().ljust(5) + key1.rjust(15) + ", " + str(met),
-                        str().ljust(5) + "another reference is used (" + ref2 + ")",
-                    ]
-                    # EnsoErrorsWarnings.MyWarning(list_strings)
-                    tmp = dict_met[key1][key2][ref2]
-                try: dict_out[key1]
-                except: dict_out[key1] = {key2: {met: tmp}}
-                else:
-                    try: dict_out[key1][key2]
-                    except: dict_out[key1][key2] = {met: tmp}
-                    else: dict_out[key1][key2][met] = tmp
-                del tmp
-            del lev2
-    del ref
+# # set reference observation
+# dict_out = dict()
+# for met in list_metrics:
+#     ref = get_ref(met)
+#     for key1 in lev1:
+#         if big_ensemble is True:
+#             try: tmp = dict_met[key1][met][ref]
+#             except:
+#                 ref2 = sorted(dict_met[key1][met].keys(), key=lambda v: v.upper())[0]
+#                 list_strings = [
+#                     "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+#                     ": reference (" + ref + ") not available",
+#                     str().ljust(5) + key1.rjust(15) + ", " + str(met),
+#                     str().ljust(5) + "another reference is used (" + ref2 + ")",
+#                 ]
+#                 # EnsoErrorsWarnings.MyWarning(list_strings)
+#                 tmp = dict_met[key1][met][ref2]
+#             try: dict_out[key1]
+#             except: dict_out[key1] = {met: tmp}
+#             else: dict_out[key1][met] = tmp
+#             del tmp
+#         else:
+#             lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
+#             for key2 in lev2:
+#                 try: tmp = dict_met[key1][key2][met][ref]
+#                 except:
+#                     ref2 = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())[0]
+#                     list_strings = [
+#                         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+#                         ": reference (" + ref + ") not available",
+#                         str().ljust(5) + key1.rjust(15) + ", " + str(met),
+#                         str().ljust(5) + "another reference is used (" + ref2 + ")",
+#                     ]
+#                     # EnsoErrorsWarnings.MyWarning(list_strings)
+#                     tmp = dict_met[key1][key2][ref2]
+#                 try: dict_out[key1]
+#                 except: dict_out[key1] = {key2: {met: tmp}}
+#                 else:
+#                     try: dict_out[key1][key2]
+#                     except: dict_out[key1][key2] = {met: tmp}
+#                     else: dict_out[key1][key2][met] = tmp
+#                 del tmp
+#             del lev2
+#     del ref
 
+# if ' ':
+#     met = "EnsodSstOce_2"
+#     tmp = [dict_out[mod][met] for jj, mod in enumerate(lev1) if dict_out[mod][met] < 1e10]
+#     print met + " ranges from "+str(round(min(tmp), 1))+" to "+str(round(max(tmp), 1))
+#     myset = [mod for jj, mod in enumerate(lev1) if dict_out[mod][met] < 1.]
+#     print "model weakly driven by ocean: "+str(myset)
+#     met = "EnsoFbSstThf"
+#     for ii in NUMPYarange(0, -15.01, -0.1):
+#         tmp = [mod for jj, mod in enumerate(lev1) if (dict_out[mod][met] > ii and dict_out[mod][met] < 1e10)]
+#         allmod = True
+#         for mod in myset:
+#             if mod not in tmp:
+#                 allmod = False
+#         if allmod is True:
+#             break
+#     print "model weakly driven by fluxes (fb>"+str(round(ii, 1))+"): " + str(tmp)
+#     stop
 
 # ---------------------------------------------------#
 # Plot
 # ---------------------------------------------------#
+dict_out = deepcopy(dict_met)
+lev1 = sorted(dict_out.keys(), key=lambda v: v.upper())
 # correlation
 if ' ':
     if big_ensemble is True:
+        dict_out = deepcopy(dict_met)
+        lev1 = sorted(dict_out.keys(), key=lambda v: v.upper())
+        list_metrics = sorted(dict_out[lev1[0]].keys(), key=lambda v: v.upper())
         tab = NUMPYma__zeros((len(list_metrics), len(lev1)))
         for ii, met in enumerate(list_metrics):
             for jj, mod in enumerate(lev1):
-                tab[ii, jj] = -dict_out[mod][met] if "Corr" in met else dict_out[mod][met]
+                try: dict_out[mod][met]
+                except: tab[ii, jj] = 1e20
+                else: tab[ii, jj] = dict_out[mod][met]
+                # tab[ii, jj] = 1 - dict_out[mod][met] if "Corr" in met else dict_out[mod][met]
         tab = NUMPYmasked_where(tab == 1e20, tab)
         # compute inter model correlations
         rval, pval = compute_correlation(tab)
@@ -444,33 +520,39 @@ if ' ':
         # title = "inter model correlations"
         # plot_correlation(rval, name_plot, list_metrics, tab_pval=pval, write_corr=True, title=title)
 
-if ' ':
-    tmp1 = [dict_out[mod]["EnsoSeasonality"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.25 / Q2 ~ 0.34
-    tmp2 = [dict_out[mod]["BiasSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.64 / Q2 ~ 1.00
-    tmp3 = [dict_out[mod]["BiasPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.73 / Q2 ~ 1.00
-    tmp4 = [dict_out[mod]["SeasonalSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.18 / Q2 ~ 0.21
-    tmp5 = [dict_out[mod]["SeasonalPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.44 / Q2 ~ 0.63
-    tmp6 = [dict_out[mod]["EnsoFbSstTaux"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.39 / Q2 ~ 0.47
-    tmp7 = [dict_out[mod]["EnsoFbSstThf"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.23 / Q2 ~ 0.48
-    tmp8 = [dict_out[mod]["EnsoFbSstSwr"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.54 / Q2 ~ 1.18
-    tmp9 = [dict_out[mod]["EnsodSstOce_2"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.17 / Q2 ~ 0.33
-    tmp10 = [dict_out[mod]["EnsoSstSkew"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.52 / Q2 ~ 0.82
-    selections = [
-        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp2[ii] < 1.0],
-        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp3[ii] < 1.0],
-        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp4[ii] < 0.25],
-        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp5[ii] < SCIPYstats__scoreatpercentile(tmp5, 50)],
-        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp6[ii] < 0.5],
-        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp7[ii] < 0.5],
-        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp8[ii] < 1.0],
-        [lev1[ii] for ii in range(len(tmp1)) if tmp6[ii] < 0.4 and tmp7[ii] < 0.25],
-        [lev1[ii] for ii in range(len(tmp1))
-         if tmp6[ii] < SCIPYstats__scoreatpercentile(tmp6, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
-        [lev1[ii] for ii in range(len(tmp1))
-         if tmp7[ii] < SCIPYstats__scoreatpercentile(tmp7, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
-        [lev1[ii] for ii in range(len(tmp1)) if
-         tmp1[ii] < SCIPYstats__scoreatpercentile(tmp1, 50) and tmp10[ii] < SCIPYstats__scoreatpercentile(tmp10, 50)],
-    ]
-    for ii, tmp in enumerate(selections):
-        print "selection" + str(ii+1).zfill(2) + " (" + str(len(tmp)).zfill(2) + "): "+str(tmp)
+# if ' ':
+#     lev1.remove("BNU-ESM")
+#     lev1.remove("GFDL-CM2p1")
+#     lev1.remove("GFDL-CM4")
+#     lev1.remove("HadCM3")
+#     lev1.remove("HadGEM2-AO")
+#     tmp1 = [dict_out[mod]["EnsoSeasonality"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.25 / Q2 ~ 0.34
+#     tmp2 = [dict_out[mod]["BiasSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.64 / Q2 ~ 1.00
+#     tmp3 = [dict_out[mod]["BiasPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.73 / Q2 ~ 1.00
+#     tmp4 = [dict_out[mod]["SeasonalSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.18 / Q2 ~ 0.21
+#     tmp5 = [dict_out[mod]["SeasonalPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.44 / Q2 ~ 0.63
+#     tmp6 = [dict_out[mod]["EnsoFbSstTaux"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.39 / Q2 ~ 0.47
+#     tmp7 = [dict_out[mod]["EnsoFbSstThf"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.23 / Q2 ~ 0.48
+#     tmp8 = [dict_out[mod]["EnsoFbSstSwr"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.54 / Q2 ~ 1.18
+#     tmp9 = [dict_out[mod]["EnsodSstOce_2"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.17 / Q2 ~ 0.33
+#     tmp10 = [dict_out[mod]["EnsoSstSkew"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.52 / Q2 ~ 0.82
+#     selections = [
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp2[ii] < 1.0],
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp3[ii] < 1.0],
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp4[ii] < 0.25],
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp5[ii] < SCIPYstats__scoreatpercentile(tmp5, 50)],
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp6[ii] < 0.5],
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp7[ii] < 0.5],
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp8[ii] < 1.0],
+#         [lev1[ii] for ii in range(len(tmp1)) if tmp6[ii] < SCIPYstats__scoreatpercentile(tmp6, 25)
+#          and tmp7[ii] < SCIPYstats__scoreatpercentile(tmp7, 25)],
+#         [lev1[ii] for ii in range(len(tmp1))
+#          if tmp6[ii] < SCIPYstats__scoreatpercentile(tmp6, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
+#         [lev1[ii] for ii in range(len(tmp1))
+#          if tmp7[ii] < SCIPYstats__scoreatpercentile(tmp7, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
+#         [lev1[ii] for ii in range(len(tmp1)) if
+#          tmp1[ii] < SCIPYstats__scoreatpercentile(tmp1, 50) and tmp10[ii] < SCIPYstats__scoreatpercentile(tmp10, 50)],
+#     ]
+#     for ii, tmp in enumerate(selections):
+#         print "selection" + str(ii+1).zfill(2) + " (" + str(len(tmp)).zfill(2) + "): "+str(tmp)
 

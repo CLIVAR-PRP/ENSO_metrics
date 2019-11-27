@@ -570,6 +570,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
 
     multimetric = False
 
+    # sst only datasets (not good for surface temperature teleconnection)
+    sst_only = ["CFSR", "ERSSTv5", "GODAS", "HadISST", "OISST", "ORAS4", "Tropflux"]
+
     if metric in dict_oneVar_modelAndObs.keys() or metric in dict_twoVar_modelAndObs.keys():
         #
         # this part regroups all diagnostics comparing model and obs (rmse)
@@ -581,13 +584,17 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             # computes the diagnostic/metric
             if metric in dict_oneVar_modelAndObs.keys():
                 output_name = obsNameVar1[ii]
-                print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " + modelName\
-                      + " and " + output_name + '\033[0m'
-                diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
-                    modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
-                    obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], regionVar1, dataset1=modelName, dataset2=output_name, debug=debug,
-                    netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
+                if metric == "EnsoSstMap" and output_name in sst_only:
+                    pass
+                else:
+                    print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " \
+                          + modelName + " and " + output_name + '\033[0m'
+                    diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
+                        modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
+                        modelLandmaskName1, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii],
+                        obsFileLandmask1[ii], obsLandmaskName1[ii], regionVar1, dataset1=modelName,
+                        dataset2=output_name, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric,
+                        **keyarg)
             elif metric in dict_twoVar_modelAndObs.keys():
                 for jj in range(len(obsNameVar2)):
                     output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
