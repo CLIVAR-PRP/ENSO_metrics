@@ -19,11 +19,11 @@ from EnsoMetricPlot import main_plotter
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collection = "ENSO_proc"
+metric_collection = "ENSO_tel"
 experiment = "historical"  # "piControl" #
 member = "r1i1p1"
 list_project = ["cmip5", "cmip6"]
-my_project = ["CMIP", "select8"]
+my_project = ["CMIP"]#["CMIP", "select8"]
 big_ensemble = True
 dict_selection = {
     #
@@ -53,8 +53,10 @@ dict_selection = {
     #
     # EnsoFbSstTaux & EnsoFbSstThf within Q1 (approximately)
     #
-    "select8": ["CCSM4", "CESM1-FASTCHEM", "CNRM-CM5", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
-                "GISS-E2-R", "GISS-E2-R-CC", "MIROC6"],
+    # "select8": ["CCSM4", "CESM1-FASTCHEM", "CNRM-CM5", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
+    #             "GISS-E2-R", "GISS-E2-R-CC", "MIROC6"],
+    "select8": ["CCSM4", "CESM1-FASTCHEM", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
+                "GISS-E2-R", "GISS-E2-R-CC", "MIROC-ES2L", "MIROC6"],
     #
     # EnsoFbSstTaux within Q2 & EnsodSstOce_2 within Q1
     #
@@ -73,8 +75,8 @@ dict_selection = {
 }
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
-path_in = OSpath__join(path_main, "Data")
-path_out = OSpath__join(path_main, "Plots_v4")
+path_in = OSpath__join(path_main, "Data_grouped")
+path_out = OSpath__join(path_main, "Plots_v5")
 
 expe = "hist" if experiment == "historical" else "pi"
 pattern = "cmip?_" + experiment + "_" + metric_collection + "_v2019????_"
@@ -97,24 +99,32 @@ for proj in list_project:
 # loop on metrics
 list_metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=lambda v: v.upper())
 if metric_collection == "ENSO_perf":
+    # list_metrics = [
+    #     'BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLatRmse', 'BiasSstLonRmse', 'BiasTauxLatRmse', 'BiasTauxLonRmse',
+    #     'EnsoAmpl', 'EnsoDuration', 'EnsoPrTsRmse', 'EnsoSeasonality', 'EnsoSstLonRmse', 'EnsoSstSkew', 'EnsoSstTsRmse',
+    #     'EnsoTauxTsRmse', 'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
+    #     'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDiversity_2', 'NinoSstDur_1', 'NinoSstDur_2',
+    #     'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1', 'NinoSstTsRmse_2', 'SeasonalPrLatRmse',
+    #     'SeasonalPrLonRmse', 'SeasonalSstLatRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLatRmse', 'SeasonalTauxLonRmse']
     list_metrics = [
         'BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLatRmse', 'BiasSstLonRmse', 'BiasTauxLatRmse', 'BiasTauxLonRmse',
         'EnsoAmpl', 'EnsoDuration', 'EnsoPrTsRmse', 'EnsoSeasonality', 'EnsoSstLonRmse', 'EnsoSstSkew', 'EnsoSstTsRmse',
-        'EnsoTauxTsRmse', 'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
-        'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDiversity_2', 'NinoSstDur_1', 'NinoSstDur_2',
-        'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1', 'NinoSstTsRmse_2', 'SeasonalPrLatRmse',
+        'EnsoTauxTsRmse', 'SeasonalPrLatRmse',
         'SeasonalPrLonRmse', 'SeasonalSstLatRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLatRmse', 'SeasonalTauxLonRmse']
 elif metric_collection == "ENSO_proc":
     # list_metrics = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsodSstOce_2', 'EnsoFbSshSst', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
     #                 'EnsoFbSstShf', 'EnsoFbSstSwr', 'EnsoFbSstTaux', 'EnsoFbSstThf', 'EnsoFbTauxSsh']
-    list_metrics = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsodSstOce_2', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
-                    'EnsoFbSstShf', 'EnsoFbSstSwr', 'EnsoFbSstTaux', 'EnsoFbSstThf']
+    # list_metrics = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsodSstOce_2', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
+    #                 'EnsoFbSstShf', 'EnsoFbSstSwr', 'EnsoFbSstTaux', 'EnsoFbSstThf']
+    list_metrics = ['EnsodSstOce_1', 'EnsodSstOce_2', 'EnsoFbSshSst', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
+                    'EnsoFbSstShf', 'EnsoFbSstSwr', 'EnsoFbSstTaux', 'EnsoFbSstThf', 'EnsoFbTauxSsh']
 elif metric_collection == "ENSO_tel":
-    list_metrics = [
-        'EnsoAmpl', 'EnsoPrMap', 'EnsoSlpMap', 'EnsoSstMap', 'NinaPrMap_1', 'NinaPrMap_2', 'NinaSlpMap_1',
-        'NinaSlpMap_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstMap_1', 'NinaSstMap_2', 'NinoPrMap_1',
-        'NinoPrMap_2', 'NinoSlpMap_1', 'NinoSlpMap_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstMap_1',
-        'NinoSstMap_2']
+    # list_metrics = [
+    #     'EnsoAmpl', 'EnsoPrMap', 'EnsoSlpMap', 'EnsoSstMap', 'NinaPrMap_1', 'NinaPrMap_2', 'NinaSlpMap_1',
+    #     'NinaSlpMap_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstMap_1', 'NinaSstMap_2', 'NinoPrMap_1',
+    #     'NinoPrMap_2', 'NinoSlpMap_1', 'NinoSlpMap_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstMap_1',
+    #     'NinoSstMap_2']
+    list_metrics = ['EnsoPrMap', 'EnsoSlpMap', 'EnsoSstMap']
     # for selection2:
     # list_metrics = [
     #     'NinaSstMap_1', 'NinaSstMap_2', 'NinoPrMap_1',
@@ -129,15 +139,15 @@ for met in list_metrics:
         for proj in list_project:
             lpath = OSpath__join(path_in, proj + "/" + experiment + "/" + metric_collection)
             list_models = sorted(data_json[proj].keys(), key=lambda v: v.upper())
-            # one model has wrong wind direction
-            if "BCC-ESM1" in list_models:
-                if "Taux" in met:
-                    list_models.remove("BCC-ESM1")
+            # # one model has wrong wind direction
+            # if "BCC-ESM1" in list_models:
+            #     if "Taux" in met:
+            #         list_models.remove("BCC-ESM1")
             dict1 = dict()
             tab1, tab2 = list(), list()
             for mod in list_models:
                 # NetCDF file names
-                try: tab1.append(list(GLOBiglob(OSpath__join(lpath, pattern + mod + "_" + met + ".nc")))[0])
+                try: tab1.append(list(GLOBiglob(OSpath__join(lpath, pattern + mod + "_" + met + "_???.nc")))[0])
                 except: pass
                 else:
                     # models
@@ -170,9 +180,9 @@ for met in list_metrics:
                     my_mod = dict_selection[grp]
                     list_models = [mod for mod in list_models if mod in my_mod]
                     del my_mod
-                # one model has wrong wind direction
-                if "BCC-ESM1" in list_models and "Taux" in met:
-                    list_models.remove("BCC-ESM1")
+                # # one model has wrong wind direction
+                # if "BCC-ESM1" in list_models and "Taux" in met:
+                #     list_models.remove("BCC-ESM1")
                 # several models do not work...
                 if "BNU-ESM" in list_models:
                     list_models.remove("BNU-ESM")
@@ -181,7 +191,7 @@ for met in list_metrics:
                 tmp = list()
                 for mod in list_models:
                     # NetCDF file names
-                    try: tab1.append(list(GLOBiglob(OSpath__join(lpath, pattern + mod + "_" + met + ".nc")))[0])
+                    try: tab1.append(list(GLOBiglob(OSpath__join(lpath, pattern + mod + "_" + met + "_???.nc")))[0])
                     except: pass
                     else:
                         # models
@@ -216,7 +226,9 @@ for met in list_metrics:
                                         dict2[key1]
                                     except:
                                         dict2[key1] = dict(
-                                            (mod, [data_json[proj][mod]["value"][met+suffix]["metric"][key1]["value"]])
+                                            (mod, [data_json[proj][mod]["value"][met+suffix]["metric"][key1]["value"]]
+                                             if key1 in data_json[proj][mod]["value"][met+suffix]["metric"].keys()
+                                             else [None])
                                             for mod in tmp)
                                     else:
                                         for mod in tmp:
@@ -224,27 +236,33 @@ for met in list_metrics:
                                                 dict2[key1][mod]
                                             except:
                                                 dict2[key1][mod] = [
-                                                    data_json[proj][mod]["value"][met+suffix]["metric"][key1]["value"]]
+                                                    data_json[proj][mod]["value"][met+suffix]["metric"][key1]["value"]
+                                                if key1 in data_json[proj][mod]["value"][met+suffix]["metric"].keys() else None]
                                             else:
                                                 dict2[key1][mod] += \
-                                                    [data_json[proj][mod]["value"][met+suffix]["metric"][key1]["value"]]
+                                                    [data_json[proj][mod]["value"][met+suffix]["metric"][key1]["value"]
+                                                     if key1 in data_json[proj][mod]["value"][met+suffix]["metric"].keys() else None]
                     else:
                         for key1 in data_json[proj][list_models[0]]["value"][met]["metric"].keys():
                             try:
                                 dict2
                             except:
-                                dict2 = {key1: dict((mod, data_json[proj][mod]["value"][met]["metric"][key1]["value"])
-                                                    for mod in tmp)}
+                                dict2 = {key1: dict(
+                                    (mod, data_json[proj][mod]["value"][met]["metric"][key1]["value"]
+                                     if key1 in data_json[proj][mod]["value"][met]["metric"].keys() else None)
+                                    for mod in tmp)}
                             else:
                                 try:
                                     dict2[key1]
                                 except:
                                     dict2[key1] = dict(
-                                        (mod, data_json[proj][mod]["value"][met]["metric"][key1]["value"])
+                                        (mod, data_json[proj][mod]["value"][met]["metric"][key1]["value"]
+                                         if key1 in data_json[proj][mod]["value"][met]["metric"].keys() else None)
                                         for mod in tmp)
                                 else:
                                     for mod in tmp:
-                                        dict2[key1][mod] = data_json[proj][mod]["value"][met]["metric"][key1]["value"]
+                                        dict2[key1][mod] = data_json[proj][mod]["value"][met]["metric"][key1]["value"]\
+                                            if key1 in data_json[proj][mod]["value"][met]["metric"].keys() else None
                 del lpath, tmp
             my_data["diagnostic_values"][grp] = dict1
             my_data["metric_values"][grp] = dict2

@@ -80,6 +80,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             for jj in range(nbr_val):
                 tmp3 = list()
                 for kk in range(len(tab_mod[ii])):
+                    # tmp3.append(tab_mod[ii][kk][jj])
                     tmp3 += list(tab_mod[ii][kk][jj])
                 tmp2.append(tmp3)
             tmp1.append(tmp2)

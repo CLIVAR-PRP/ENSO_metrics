@@ -35,9 +35,9 @@ from EnsoPlotToolsLib import minmax_plot
 metric_collection = ["ENSO_perf", "ENSO_proc", "ENSO_tel"]
 experiment = "historical"  # "piControl" #
 member = "r1i1p1"
-list_project = ["cmip5", "cmip6"]
+list_project = ["cmip6", "cmip5"]
 my_project = ["select8", "CMIP"]
-big_ensemble = True
+big_ensemble = False  # True
 reduced_set = True  # False  #
 dict_selection = {
     #
@@ -87,8 +87,8 @@ dict_selection = {
 }
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
-path_in = OSpath__join(path_main, "Data")
-path_out = OSpath__join(path_main, "Plots_v3")
+path_in = OSpath__join(path_main, "Data_grouped")
+path_out = OSpath__join(path_main, "Plots_v5")
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -179,7 +179,8 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
     ytick = minmax_plot(tmp)
     ax.set_yticks(ytick)
     ax.set_yticklabels(ytick)
-    ax.set_ylim([min(ytick), max(ytick)])
+    # ax.set_ylim([min(ytick), max(ytick)])
+    ax.set_ylim([min(ytick), 2.5])
     ax.set_ylabel(y_name, fontsize=15)
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(12)
@@ -200,17 +201,26 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
         del col
     # text
     if legend is not None:
+        x1, x2 = ax.get_xlim()
+        dx = (x2 - x1) / 100.
+        y1, y2 = ax.get_ylim()
+        dy = (y2 - y1) / 100.
         for ii in range(len(legend)):
-            y1, y2 = ax.get_ylim()
-            dy = (y2 - y1) / 100.
+
             if isinstance(colors, list):
                 col = colors[len(colors) - 1 - ii]
             else:
                 col = "k"
             font = {'color': col, 'weight': 'normal', 'size': 15}
-            ax.text(0, y2 - (ii + 1) * 6 * dy, legend[len(legend) - 1 - ii], horizontalalignment="left",
+            ax.text(x2 - 2 * dx, y2 - (ii + 1) * 7 * dy, legend[len(legend) - 1 - ii], horizontalalignment="right",
                     verticalalignment="center", fontdict=font)
             del col, font
+        ax.add_line(Line2D([25 * dx - 0.3, 25 * dx + 0.3], [2.3, 2.3], c="k", lw=1))
+        ax.add_line(Line2D([25 * dx - 0.3, 25 * dx + 0.3], [1.7, 1.7], c="k", lw=1))
+        ax.add_line(Line2D([25 * dx, 25 * dx], [1.7, 2.3], c="k", lw=1))
+        font = {'weight': 'normal', 'size': 15}
+        ax.text(26 * dx, 2., "95% confidence interval\n(Monte Carlo Method)", horizontalalignment="left",
+                verticalalignment="center", fontdict=font, transform=ax.transData)
     # save fig
     plt.savefig(name_plot, bbox_inches='tight')
     plt.close()
@@ -235,16 +245,22 @@ for proj in list_project:
                 #              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
                 #              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
                 #              'NinoSstTsRmse_2']
-                to_remove = ['BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse', 'NinaSstDur_1',
-                             'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
+                # to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse',
+                #              'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
+                #              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
+                #              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
+                #              'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse", "SeasonalTauxLonRmse"]
+                to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse',
+                             'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
                              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
                              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
-                             'NinoSstTsRmse_2', 'SeasonalTauxLatRmse', 'SeasonalTauxLonRmse']
+                             'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse", "SeasonalTauxLonRmse"]
             elif mc == "ENSO_proc":
-                to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
-                             'EnsoFbTauxSsh']
+                to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstSwr',
+                             'EnsoFbSstShf']
             else:
-                to_remove = ['EnsoAmpl', 'EnsoSlpMap', 'NinaPrMap_1', 'NinaPrMap_2', 'NinaSlpMap_1', 'NinaSlpMap_2',
+                to_remove = ['EnsoAmpl', 'EnsoSlpMap', 'EnsoSstLonRmse', 'NinaPrMap_1', 'NinaPrMap_2', 'NinaSlpMap_1',
+                             'NinaSlpMap_2',
                              'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstMap_1', 'NinaSstMap_2', 'NinoPrMap_1',
                              'NinoPrMap_2', 'NinoSlpMap_1', 'NinoSlpMap_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2',
                              'NinoSstMap_1', 'NinoSstMap_2']
@@ -256,31 +272,34 @@ for proj in list_project:
             elif mc == "ENSO_proc":
                 to_remove = ['EnsoAmpl']
             else:
-                to_remove = ['EnsoAmpl', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2']
+                to_remove = ['EnsoAmpl', 'EnsoSstLonRmse', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2',
+                             'NinoSstLonRmse_1', 'NinoSstLonRmse_2']
         for met in to_remove:
             while met in list_metrics:
                 list_metrics.remove(met)
         if mc == "ENSO_tel":
             list_metrics = add_suffix(list_metrics)
-        # !!!!! temporary: start !!!!!
-        # ssh metrics are not computed yet (ask jiwoo)
-        list_metrics2 = deepcopy(list_metrics)
-        for met in list_metrics2:
-            if "Ssh" in met:
-                while met in list_metrics:
-                    list_metrics.remove(met)
-        del list_metrics2
-        # slp metrics are wrong (error in observation?)
-        list_metrics2 = deepcopy(list_metrics)
-        for met in list_metrics2:
-            if "Slp" in met:
-                while met in list_metrics:
-                    list_metrics.remove(met)
-        del list_metrics2
-        # !!!!! temporary: end !!!!!
+        # # !!!!! temporary: start !!!!!
+        # # ssh metrics are not computed yet (ask jiwoo)
+        # list_metrics2 = deepcopy(list_metrics)
+        # for met in list_metrics2:
+        #     if "Ssh" in met:
+        #         while met in list_metrics:
+        #             list_metrics.remove(met)
+        # del list_metrics2
+        # # slp metrics are wrong (error in observation?)
+        # list_metrics2 = deepcopy(list_metrics)
+        # for met in list_metrics2:
+        #     if "Slp" in met:
+        #         while met in list_metrics:
+        #             list_metrics.remove(met)
+        # del list_metrics2
+        # # !!!!! temporary: end !!!!!
         # read json
-        lpath = OSpath__join(path_in, proj + "/" + experiment + "/" + mc)
-        lname = proj + "_" + experiment + "_" + mc + "_v2019????.json"
+        # lpath = OSpath__join(path_in, proj + "/" + experiment + "/" + mc)
+        lpath = deepcopy(path_in)
+        # lname = proj + "_" + experiment + "_" + mc + "_v2019????.json"
+        lname = proj + "_" + experiment + "_" + mc + "_v2019*.json"
         filename_js = list(GLOBiglob(OSpath__join(lpath, lname)))[0]
         with open(filename_js) as ff:
             data = json.load(ff)
@@ -291,29 +310,37 @@ for proj in list_project:
         for mod in list_models:
             dict2 = dict()
             for met in list_metrics:
-                try:
-                    defCollection(mc)["metrics_list"][met]["metric_computation"]
-                except:
-                    tmp = data["RESULTS"]["model"][mod]["value"][met]["metric"]
-                    dict2[met] = dict(
-                        (key, 1e20 if (("Taux" in met and mod == "BCC-ESM1")
-                                       or tmp[key]["value"] is None) else tmp[key]["value"]) for key in tmp.keys())
-                    del tmp
+                try: data["RESULTS"]["model"][mod]["value"][met]["metric"]
+                except: tmp = 1e20
                 else:
-                    tmp = data["RESULTS"]["model"][mod]["value"][met]["diagnostic"]
-                    list1 = tmp.keys()
-                    list1.remove(mod)
-                    mod_val = tmp[mod]["value"]
-                    dict3 = dict()
-                    for key in list1:
-                        obs_val = tmp[key]["value"]
-                        if ("Taux" in met and mod == "BCC-ESM1") or obs_val is None or mod_val is None:
-                            dict3[key] = 1e20
-                        else:
-                            dict3[key] = abs((mod_val - obs_val) / obs_val)
-                        del obs_val
-                    dict2[met] = dict3
-                    del dict3, list1, mod_val, tmp
+                    key1 = data["RESULTS"]["model"][mod]["value"][met]["metric"].keys()[0]
+                    tmp = 1e20 if data["RESULTS"]["model"][mod]["value"][met]["metric"][key1]["value"] is None \
+                        else data["RESULTS"]["model"][mod]["value"][met]["metric"][key1]["value"]
+                dict2[met] = tmp
+                del tmp
+                # try:
+                #     defCollection(mc)["metrics_list"][met]["metric_computation"]
+                # except:
+                #     tmp = data["RESULTS"]["model"][mod]["value"][met]["metric"]
+                #     dict2[met] = dict(
+                #         (key, 1e20 if (("Taux" in met and mod == "BCC-ESM1")
+                #                        or tmp[key]["value"] is None) else tmp[key]["value"]) for key in tmp.keys())
+                #     del tmp
+                # else:
+                #     tmp = data["RESULTS"]["model"][mod]["value"][met]["diagnostic"]
+                #     list1 = tmp.keys()
+                #     list1.remove(mod)
+                #     mod_val = tmp[mod]["value"]
+                #     dict3 = dict()
+                #     for key in list1:
+                #         obs_val = tmp[key]["value"]
+                #         if ("Taux" in met and mod == "BCC-ESM1") or obs_val is None or mod_val is None:
+                #             dict3[key] = 1e20
+                #         else:
+                #             dict3[key] = abs(float(mod_val - obs_val) / obs_val)
+                #         del obs_val
+                #     dict2[met] = dict3
+                #     del dict3, list1, mod_val, tmp
             dict1[mod] = dict2
             del dict2
         # save in common dictionary
@@ -353,6 +380,19 @@ else:
             if len(dict_met[key1][key2].keys()) == max(list1):
                 list_metrics = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())
                 pass
+    # !!!!! temporary: start !!!!!
+    # some models are not used in all metric collection (ask jiwoo)
+    for key3 in list_metrics:
+        for key1 in lev1:
+            for key2 in dict_met[key1].keys():
+                if key3 not in dict_met[key1][key2].keys():
+                    if isinstance(dict_met["cmip5"]["ACCESS1-0"][key3], dict):
+                        dict_met[key1][key2][key3] = dict((ref, 1e20)
+                                                          for ref in dict_met["cmip5"]["ACCESS1-0"][key3].keys())
+                    else:
+                        dict_met[key1][key2][key3] = 1e20
+    list1 = list(set([len(dict_met[key1][key2].keys()) for key1 in lev1 for key2 in dict_met[key1].keys()]))
+    # !!!!! temporary: end !!!!!
 if len(list1) != 1:
     for key1 in lev1:
         lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
@@ -380,55 +420,62 @@ del list1
 for ii in range(3): print ""
 
 
-# set reference observation
-dict_out = dict()
-for met in list_metrics:
-    ref = get_ref(met)
-    for key1 in lev1:
-        if big_ensemble is True:
-            try: tmp = dict_met[key1][met][ref]
-            except:
-                ref2 = sorted(dict_met[key1][met].keys(), key=lambda v: v.upper())[0]
-                list_strings = [
-                    "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                    ": reference (" + ref + ") not available",
-                    str().ljust(5) + key1.rjust(15) + ", " + str(met),
-                    str().ljust(5) + "another reference is used (" + ref2 + ")",
-                ]
-                EnsoErrorsWarnings.MyWarning(list_strings)
-                tmp = dict_met[key1][met][ref2]
-            try: dict_out[key1]
-            except: dict_out[key1] = {met: tmp}
-            else: dict_out[key1][met] = tmp
-            del tmp
-        else:
-            lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
-            for key2 in lev2:
-                try: tmp = dict_met[key1][key2][met][ref]
-                except:
-                    ref2 = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())[0]
-                    list_strings = [
-                        "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                        ": reference (" + ref + ") not available",
-                        str().ljust(5) + key1.rjust(15) + ", " + str(met),
-                        str().ljust(5) + "another reference is used (" + ref2 + ")",
-                    ]
-                    EnsoErrorsWarnings.MyWarning(list_strings)
-                    tmp = dict_met[key1][key2][ref2]
-                try: dict_out[key1]
-                except: dict_out[key1] = {key2: {met: tmp}}
-                else:
-                    try: dict_out[key1][key2]
-                    except: dict_out[key1][key2] = {met: tmp}
-                    else: dict_out[key1][key2][met] = tmp
-                del tmp
-            del lev2
-    del ref
+# # set reference observation
+# dict_out = dict()
+# for met in list_metrics:
+#     ref = get_ref(met)
+#     for key1 in lev1:
+#         if big_ensemble is True:
+#             try: tmp = dict_met[key1][met][ref]
+#             except:
+#                 ref2 = sorted(dict_met[key1][met].keys(), key=lambda v: v.upper())[0]
+#                 list_strings = [
+#                     "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+#                     ": reference (" + ref + ") not available",
+#                     str().ljust(5) + key1.rjust(15) + ", " + str(met),
+#                     str().ljust(5) + "another reference is used (" + ref2 + ")",
+#                 ]
+#                 EnsoErrorsWarnings.MyWarning(list_strings)
+#                 tmp = dict_met[key1][met][ref2]
+#             try: dict_out[key1]
+#             except: dict_out[key1] = {met: tmp}
+#             else: dict_out[key1][met] = tmp
+#             del tmp
+#         else:
+#             lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
+#             for key2 in lev2:
+#                 try: tmp = dict_met[key1][key2][met][ref]
+#                 except:
+#                     ref2 = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())[0]
+#                     list_strings = [
+#                         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+#                         ": reference (" + ref + ") not available",
+#                         str().ljust(5) + key1.rjust(15) + ", " + str(met),
+#                         str().ljust(5) + "another reference is used (" + ref2 + ")",
+#                     ]
+#                     EnsoErrorsWarnings.MyWarning(list_strings)
+#                     tmp = dict_met[key1][key2][ref2]
+#                 try: dict_out[key1]
+#                 except: dict_out[key1] = {key2: {met: tmp}}
+#                 else:
+#                     try: dict_out[key1][key2]
+#                     except: dict_out[key1][key2] = {met: tmp}
+#                     else: dict_out[key1][key2][met] = tmp
+#                 del tmp
+#             del lev2
+#     del ref
+dict_out = deepcopy(dict_met)
 
 
 # ---------------------------------------------------#
 # Plot
 # ---------------------------------------------------#
+list_metrics = [
+    "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSstLonRmse",
+    "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration", "NinoSstDiversity_2", "EnsodSstOce_2", "EnsoFbSshSst",
+    "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh", "EnsoPrMapCorr", "EnsoPrMapRmse", "EnsoSstMapCorr",
+    "EnsoSstMapRmse", "EnsoSstLonRmse", "EnsoSstTsRmse",
+]
 # mean metric evaluation
 if ' ':
     if big_ensemble is True:
@@ -470,4 +517,53 @@ if ' ':
         plot_metrics(tab_val, figure_name, title=title, x_names=list_metrics, y_name="", colors=colors, tab_bst=tab_bst,
                      legend=my_project)
         del colors, figure_name, tab_bst, tab_val, title
+    else:
+        tab_bst, tab_val = list(), list()
+        for met in list_metrics:
+            tab1, tab2 = list(), list()
+            for grp in list_project:
+                tmp = dict_out[grp]
+                tab = NUMPYarray([tmp[mod][met] for mod in tmp.keys() if tmp[mod][met] != 1e20])
+                tab1.append(float(NUMPYmean(tab)))
+                if grp == "cmip6":
+                    nbr = len(tab)
+                    tab2.append([1e20, 1e20])
+                else:
+                    bst = bootstrap(tab, nech=nbr)
+                    tab2.append(bst)
+                    del bst, nbr
+                del tab, tmp
+            tab_bst.append(tab2)
+            tab_val.append(tab1)
+        tab_bst = NUMPYmoveaxis(NUMPYarray(tab_bst), 0, 1)
+        tab_bst = NUMPYma__masked_where(tab_bst == 1e20, tab_bst)
+        tab_val = NUMPYmoveaxis(NUMPYarray(tab_val), 0, -1)
+        # figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
+        #                            "metrics_" + str(len(my_project)).zfill(2) + "selections_"+my_project[0] + "_v2")
+        figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
+                                   "metrics_cmip5_vs_cmip6")
+        title = "metrics comparison"
+        colors = ["r", "dodgerblue"]
+        legend = [proj.upper() for proj in list_project]
+        plot_metrics(tab_val, figure_name, title=title, x_names=list_metrics, y_name="", colors=colors, tab_bst=tab_bst,
+                     legend=legend)
+        nbr_bet, nbr_wor = 0, 0
+        for ii, met in enumerate(list_metrics):
+            if tab_val[0][ii] < min(tab_bst[1][ii]):
+                print list_project[0] + " significantly better: " + met
+                nbr_bet += 1
+            elif tab_val[0][ii] > max(tab_bst[1][ii]):
+                print list_project[0] + " significantly  worse: " + met
+                nbr_wor += 1
+        print list_project[0] + " significantly better (" + str(nbr_bet).zfill(2) + ") and worse (" +\
+              str(nbr_wor).zfill(2) + ")"
+        del colors, figure_name, legend, tab_bst, tab_val, title
+
+models = [
+    "AWI-CM-1-1-MR", "BCC-CSM2-MR", "BCC-ESM1", "CAMS-CSM1-0", "FGOALS-f3-L", "FGOALS-g3", "CanESM5", "IITM-ESM",
+    "CNRM-CM6-1", "CNRM-ESM2-1", "E3SM-1-0", "EC-Earth3", "EC-Earth3-Veg", "FIO-ESM-2-0", "IPSL-CM6A-LR", "MIROC6",
+    "MIROC-ES2L", "HadGEM3-GC31-LL", "HadGEM3-GC31-MM", "UKESM1-0-LL", "MRI-ESM2-0", "GISS-E2-1-G", "GISS-E2-1-H",
+    "CESM2", "CESM2-WACCM", "NorCPM1", "NorESM2-LM", "GFDL-AM4", "GFDL-CM4", "GFDL-ESM4", "NESM3", "SAM0-UNICON",
+    "MCM-UA-1-0"
+]
 
