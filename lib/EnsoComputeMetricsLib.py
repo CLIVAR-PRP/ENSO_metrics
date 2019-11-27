@@ -807,6 +807,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
 
     multimetric = False
 
+<<<<<<< HEAD
     # test files
     if isinstance(modelFile1, list):
         noerror = all(isinstance(file1, str) is True for file1 in modelFile1)
