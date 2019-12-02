@@ -228,6 +228,7 @@ for mod in models:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
                 var_in_file = dict_var[var]['var_name']
+                print('var_in_file:', var_in_file)
                 if isinstance(var_in_file, list):
                     var0 = var_in_file[0]
                 else:
@@ -267,6 +268,10 @@ for mod in models:
                     list_name_area = areacell_in_file
                     list_landmask = file_landmask
                     list_name_land = landmask_in_file
+
+                # Variable from ocean grid
+                if var in ['ssh']:
+                    list_landmask = None
 
                 dict_mod[mod][var] = {
                     'path + filename': list_files, 'varname': var_in_file,
