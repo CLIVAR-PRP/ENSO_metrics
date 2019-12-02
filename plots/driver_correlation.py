@@ -40,7 +40,8 @@ reduced_set = True  # False  #
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
 path_in = OSpath__join(path_main, "Data_grouped")
-path_out = OSpath__join(path_main, "Plots_v5")
+# path_out = OSpath__join(path_main, "Plots_v5")
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -201,11 +202,11 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
         for ii in range(len(tab_plot)):
             nbr1 = str(sum([1 for jj in range(len(tab_plot[ii])) if tab_plot[ii][jj] < 0]))
             nbr2 = str(int(len(tab_plot) - 1 - sum(tab_plot[ii].mask.astype('f')))).zfill(2)
-            plt.text(len(tab_plot) + 0.5, ii + 0.5, nbr1, fontsize=18, horizontalalignment='center',
+            plt.text(len(tab_plot) + 0.5, ii + 0.5, nbr1, fontsize=15, horizontalalignment='center',
                      verticalalignment='center')
             plt.text(len(tab_plot) + 0.5, -0.5, "nbr < 0", fontsize=15, horizontalalignment='center',
                      verticalalignment='top', rotation=90)
-            plt.text(len(tab_plot) + 1 + 0.5, ii + 0.5, nbr2, fontsize=18, horizontalalignment='center',
+            plt.text(len(tab_plot) + 1 + 0.5, ii + 0.5, nbr2, fontsize=15, horizontalalignment='center',
                      verticalalignment='center')
             plt.text(len(tab_plot) + 1 + 0.5, -0.5, "nbr significant", fontsize=15, horizontalalignment='center',
                      verticalalignment='top', rotation=90)
@@ -510,8 +511,9 @@ if ' ':
         rval, pval = compute_correlation(tab)
         name_plot = OSpath__join(path_out, "correlations_inter_metrics_" + str(len(list_metrics)).zfill(2) +
                                  "metrics_" + str(len(lev1)).zfill(2) + "models")
-        title = "inter metric correlations"
-        plot_correlation(rval, name_plot, list_metrics, tab_pval=pval, write_corr=True, title=title)
+        title = ""  # "inter metric correlations"
+        list_metrics2 = [met.replace("_2", "") for met in list_metrics]
+        plot_correlation(rval, name_plot, list_metrics2, tab_pval=pval, write_corr=True, title=title)
         # # compute inter model correlations
         # tab = tab.reorder('10')
         # rval, pval = compute_correlation(tab)

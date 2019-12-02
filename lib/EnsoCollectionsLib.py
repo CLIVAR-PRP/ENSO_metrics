@@ -1229,11 +1229,11 @@ def ReferenceRegions(AR=True):
         'INO': {'long_name': 'Indian Ocean', 'latitude': (-25., 0.), 'longitude': (55., 95.), 'maskland': True,
                 'maskocean': False},
         # YYP regions
-        'africaSE': {'long_name': 'South and East Africa', 'latitude': (-35, 15.), 'longitude': (5., 55.),
+        'africaSE': {'long_name': 'South and East Africa', 'latitude': (-40, 15.), 'longitude': (0., 55.),
                      'maskland': False, 'maskocean': True},
         'americaN': {'long_name': 'North America', 'latitude': (10., 60.), 'longitude': (235., 300.),
                      'maskland': False, 'maskocean': True},
-        'americaS': {'long_name': 'South America', 'latitude': (-60., 15.), 'longitude': (275., 320.),
+        'americaS': {'long_name': 'South America', 'latitude': (-60., 15.), 'longitude': (275., 330.),
                      'maskland': False, 'maskocean': True},
         'asiaS': {'long_name': 'South Asia', 'latitude': (-10., 30.), 'longitude': (65., 130.),
                      'maskland': False, 'maskocean': True},

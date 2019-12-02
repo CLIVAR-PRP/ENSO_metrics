@@ -16,11 +16,13 @@ import json
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm, ListedColormap, to_rgba
 from matplotlib.gridspec import GridSpec
+from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
 from numpy import arange as NUMPYarange
 from numpy import linspace as NUMPYlinspace
 from numpy import mean as NUMPYmean
 from numpy import moveaxis as NUMPYmoveaxis
+from numpy import std as NUMPYstd
 from numpy.ma import array as NUMPYma__array
 from numpy.ma import masked_where as NUMPYmasked_where
 from numpy.ma import zeros as NUMPYma__zeros
@@ -34,14 +36,17 @@ from EnsoPlotLib import plot_param
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collections = ["ENSO_perf", "ENSO_proc", "ENSO_tel"]
+metric_collections = ["ENSO_perf", "ENSO_tel", "ENSO_proc"]
+# metric_collections = ["ENSO_perf", "ENSO_proc", "ENSO_tel"]
 experiment = "historical"  # "piControl" #
 list_project = ["cmip5", "cmip6"]
 selection = "select8"
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
 path_in = OSpath__join(path_main, "Data_grouped")
-path_out = OSpath__join(path_main, "Plots_v5")
+# path_out = OSpath__join(path_main, "Plots_v5")
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v02"
+# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -201,14 +206,16 @@ def my_colorbar(mini=-1., maxi=1., nbins=20):
     newcmp1.set_bad(color='grey')
     newcmp1.set_over(newcmp2[-30])  # color='darkred')
     newcmp1.set_under(newcmp2[29])
-    norm = BoundaryNorm(levels, ncolors=cmap.N)
+    norm = BoundaryNorm(levels, ncolors=newcmp1.N)
     return newcmp1, norm
 
 
-def portraitplot(tab, name_plot, x_names, y_names, title='portraitplot', write_metrics=False):
+def portraitplot(tab, name_plot, x_names, y_names, title='portraitplot', write_metrics=False, levels=None):
+    if levels is None:
+        levels = [-1.0, -0.5, 0.0, 0.5, 1.0]
     fig, ax = plt.subplots(figsize=(0.5 * len(tab[0]), 0.5 * len(tab)))
     # shading
-    cmap, norm = my_colorbar()
+    cmap, norm = my_colorbar(mini=min(levels), maxi=max(levels))
     cs = plt.pcolormesh(tab, cmap=cmap, norm=norm)
     # title
     yy1, yy2 = ax.get_ylim()
@@ -241,7 +248,6 @@ def portraitplot(tab, name_plot, x_names, y_names, title='portraitplot', write_m
                     plt.text(jj + 0.5, ii + 0.5, str(round(tab[ii, jj], 1)), fontsize=10, horizontalalignment='center',
                              verticalalignment='center')
     # color bar
-    levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
     x2 = ax.get_position().x1
     y1 = ax.get_position().y0
     y2 = ax.get_position().y1
@@ -255,12 +261,14 @@ def portraitplot(tab, name_plot, x_names, y_names, title='portraitplot', write_m
 
 
 def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='portraitplot', write_metrics=False,
-                      my_text=""):
+                      my_text="", levels=None):
+    if levels is None:
+        levels = [-1.0, -0.5, 0.0, 0.5, 1.0]
     nbrl = sum([len(tab[ii]) for ii in range(len(tab))]) + (len(tab) - 1) * 3
     fig = plt.figure(0, figsize=(0.5 * len(tab[0][0]), 0.5 * nbrl))
     gs = GridSpec(nbrl, 1)
     # colorbar
-    cmap, norm = my_colorbar()
+    cmap, norm = my_colorbar(mini=min(levels), maxi=max(levels))
     count = 0
     for kk, tmp in enumerate(tab):
         ax = plt.subplot(gs[count: count + len(tmp), 0])
@@ -269,8 +277,10 @@ def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='p
         # title
         yy1, yy2 = ax.get_ylim()
         dy = 0.5 / (yy2 - yy1)
-        try: ax.set_title(title[kk], fontsize=40, y=1+dy, loc="center")
-        except: ax.set_title(title, fontsize=40, y=1+dy, loc="center")
+        # try: ax.set_title(title[kk], fontsize=40, y=1+dy, loc="center")
+        # except: ax.set_title(title, fontsize=40, y=1+dy, loc="center")
+        try: ax.set_title(title[kk], fontsize=40, y=1+dy, loc="left")
+        except: ax.set_title(title, fontsize=40, y=1+dy, loc="left")
         # x axis
         ticks = [ii + 0.5 for ii in range(len(x_names))]
         ax.set_xticks(ticks)
@@ -295,10 +305,6 @@ def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='p
         try: ax.set_ylabel(ylabel[kk], fontsize=40, verticalalignment='top')
         except: ax.set_ylabel(ylabel, fontsize=40, verticalalignment='top')
         ax.yaxis.set_label_coords(-20 * dx, 0.5)
-        # if kk == 1:
-        #     ax.yaxis.set_label_coords(-7 * dx, 0.5)
-        # else:
-        #     ax.yaxis.set_label_coords(-9 * dx, 0.5)
         # lines
         for ii in range(1, len(tmp)):
             ax.axhline(ii, color='k', linestyle='-', linewidth=1)
@@ -317,14 +323,23 @@ def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='p
         if kk == len(tab) - 1:
             y1 = ax.get_position().y0
         count += len(tmp) + 3
-    plt.text(0., -14 * dy, my_text, fontsize=30, horizontalalignment='right', verticalalignment='center',
+    # plt.text(0., -14 * dy, my_text, fontsize=30, horizontalalignment='right', verticalalignment='center',
+    #          transform=ax.transAxes)
+    plt.text(0., -14 * dy, my_text, fontsize=25, horizontalalignment='right', verticalalignment='center',
              transform=ax.transAxes)
     # color bar
-    levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
-    cax = plt.axes([x2 + 0.02, y1, 0.015, y2 - y1])
+    cax = plt.axes([x2 + 0.01, y1, 0.015, y2 - y1])
     cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend='both', aspect=40)
-    cbar.ax.tick_params(labelsize=25)
-    # save fig
+    # cbar.ax.set_yticklabels(levels, fontsize=30, weight='bold')
+    cbar.ax.set_yticks(levels)
+    fontdict = {"fontsize": 30, "fontweight": "bold"}
+    cbar.ax.set_yticklabels(["-2 $\sigma$", "-1", "MMM", "1", "2 $\sigma$"], fontdict=fontdict)
+    cax.annotate('better', xy=(2.5, 0.05), xycoords='axes fraction', xytext=(2.5, 0.35), fontsize=30, weight="bold",
+                 rotation="vertical", horizontalalignment="center", verticalalignment='bottom',
+                 arrowprops=dict(facecolor="k", width=8, headwidth=30, headlength=30, shrink=0.05))
+    cax.annotate('worse', xy=(2.5, 0.95), xycoords='axes fraction', xytext=(2.5, 0.65), fontsize=30, weight="bold",
+                 rotation="vertical", horizontalalignment="center", verticalalignment='top',
+                 arrowprops=dict(facecolor="k", width=8, headwidth=30, headlength=30, shrink=0.05))
     plt.savefig(name_plot, bbox_inches='tight')
     plt.close()
     return
@@ -437,8 +452,13 @@ for mc in metric_collections:
     elif mc == "ENSO_proc":
         my_metrics = [
             "BiasSstLonRmse", "BiasTauxLonRmse", "EnsoSstLonRmse", "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew",
-            "EnsodSstOce_2", "EnsoFbSshSst", "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh"]
-    tab = NUMPYma__zeros((len(my_models) + 2, len(my_metrics)))
+            "EnsodSstOce_2", "EnsoFbSstThf", "EnsoFbSstTaux", "EnsoFbTauxSsh", "EnsoFbSshSst"]
+    else:
+        my_metrics = [
+            "EnsoAmpl", "EnsoSstLonRmse", "EnsoPrMapCorr", "EnsoPrMapRmse", "EnsoSstMapCorr", "EnsoSstMapRmse"]
+    my_metrics = list(reversed(my_metrics))
+    # tab = NUMPYma__zeros((len(my_models) + 5, len(my_metrics)))
+    tab = NUMPYma__zeros((len(my_models) + 3, len(my_metrics)))
     for ii, mod in enumerate(my_models):
         for jj, met in enumerate(my_metrics):
             try: dict1[mod][met]
@@ -449,28 +469,41 @@ for mc in metric_collections:
         tmp = tab[:-3, jj].compressed()
         med = float(SCIPYstats__scoreatpercentile(list(tmp), 50))
         mea = float(NUMPYmean(tmp))
+        std = float(NUMPYstd(tmp))
         tmp = [tab[ii, jj] for ii, mod in enumerate(my_models) if mod in dict_mod["cmip5"]]
         tmp = NUMPYma__array(tmp).compressed()
         sel1 = float(NUMPYmean(tmp))
         tmp = [tab[ii, jj] for ii, mod in enumerate(my_models) if mod in dict_mod["cmip6"]]
         tmp = NUMPYma__array(tmp).compressed()
         sel2 = float(NUMPYmean(tmp))
-        tab[len(my_models), jj] = med
-        tab[len(my_models) + 1, jj] = mea
+        tmp = [tab[ii, jj] for ii, mod in enumerate(my_models) if mod in dict_selection[selection]]
+        tmp = NUMPYma__array(tmp).compressed()
+        sel3 = float(NUMPYmean(tmp))
+        # tab[len(my_models), jj] = med
+        # tab[len(my_models) + 1, jj] = mea
         # tab[len(my_models) + 2, jj] = sel1
         # tab[len(my_models) + 3, jj] = sel2
-        tab[:, jj] = (tab[:, jj] - med) / med
+        # tab[len(my_models) + 4, jj] = sel3
+        tab[len(my_models), jj] = mea
+        tab[len(my_models) + 1, jj] = sel1
+        tab[len(my_models) + 2, jj] = sel2
+        # tab[:, jj] = (tab[:, jj] - med) / med
+        tab[:, jj] = (tab[:, jj] - mea) / std
         print met.rjust(20) + " = " + str(round(med, 1))
         del mea, med, sel1, sel2, tmp
     tab = NUMPYmoveaxis(tab, 0, 1)
     # plot
-    figure_name = OSpath__join(path_out, "portraitplot_" + str(mc) + "_modified")
+    # levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
+    levels = list(range(-2, 3))  # [round(ii, 1) for ii in NUMPYarange(-1.5, 1.6, 0.5)]
+    figure_name = OSpath__join(path_out, "portraitplot_" + str(mc) + "_modified_v2")
     title = str(dict_mc[mc]) + ": normalized by median (each row)"
-    x_names = ["* " + mod if mod in dict_mod["cmip6"] else mod for mod in my_models] +\
-              ["(median)", "(CMIP)"]
-    portraitplot(tab, figure_name, x_names, my_metrics, title=title)
+    # x_names = ["* " + mod if mod in dict_mod["cmip6"] else mod for mod in my_models] +\
+    #           ["(median)", "(CMIP)", "(CMIP5)", "(CMIP6)", "(selection)"]
+    x_names = ["* " + mod if mod in dict_mod["cmip6"] else mod for mod in my_models] + \
+              ["(CMIP MMM)", "(CMIP5)", "(CMIP6)"]
+    portraitplot(tab, figure_name, x_names, my_metrics, title=title, levels=levels)
     tab_all.append(tab)
-    y_names_all.append(my_metrics)
+    y_names_all.append([met.replace("_2", "") for met in my_metrics])
     if mc == metric_collections[0]:
         x_names_all = deepcopy(x_names)
     del dict1, figure_name, my_metrics, my_models, tab, title, x_names
@@ -479,7 +512,14 @@ for mc in metric_collections:
 # all portraitplots in one plot
 if ' ':
     # plot
-    figure_name = OSpath__join(path_out, "portraitplot_" + str(len(metric_collections)) + "metric_collections_modified")
-    ylabel = [dict_mc[mc].replace(" ", "\n") if mc == "ENSO_tel" else dict_mc[mc] for mc in metric_collections]
+    figure_name = OSpath__join(path_out, "portraitplot_" + str(len(metric_collections)) +
+                               "metric_collections_modified_v2")
+    tmp_num = ["a) ", "b) ", "c) "]
+    title = [tmp_num[ii] + dict_mc[mc] + " metric collection" for ii, mc in enumerate(metric_collections)]
+    # title = ""
+    xlabel = ""
+    ylabel = ""
+    # ylabel = [dict_mc[mc].replace(" ", "\n") if mc == "ENSO_tel" else dict_mc[mc] for mc in metric_collections]
     text = "* = CMIP6 model"
-    multiportraitplot(tab_all, figure_name, "", ylabel, x_names_all, y_names_all, title="", my_text=text)
+    multiportraitplot(tab_all, figure_name, xlabel, ylabel, x_names_all, y_names_all, title=title, my_text=text,
+                      levels=levels)

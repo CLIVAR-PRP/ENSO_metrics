@@ -14,6 +14,7 @@ from glob import iglob as GLOBiglob
 from inspect import stack as INSPECTstack
 import json
 from matplotlib.lines import Line2D
+from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
 from numpy import array as NUMPYarray
 from numpy import mean as NUMPYmean
@@ -88,7 +89,9 @@ dict_selection = {
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
 path_in = OSpath__join(path_main, "Data_grouped")
-path_out = OSpath__join(path_main, "Plots_v5")
+# path_out = OSpath__join(path_main, "Plots_v5")
+# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v02"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -159,7 +162,7 @@ def get_ref(metric):
 def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=None, tab_bst=None, legend=None):
     fig, ax = plt.subplots(figsize=(0.5 * len(tab_val[0]), 4))
     # title
-    plt.title(title, fontsize=15, y=1.01, loc='center')
+    plt.title(title, fontsize=20, y=1.01, loc='center')
     # x axis
     axis = list(range(len(tab_val[0])))
     ax.set_xticks(axis)
@@ -177,13 +180,13 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
     if tab_bst is not None:
         tmp += [tab_bst.min(), tab_bst.max()]
     ytick = minmax_plot(tmp)
-    ax.set_yticks(ytick)
+    ax.set_yticks([ii / 2. for ii in ytick], minor=True)
+    ax.set_yticks(ytick, minor=False)
     ax.set_yticklabels(ytick)
+    ax.set_yticklabels(ytick, fontdict={"fontsize": 12, "fontweight": "normal"})
     # ax.set_ylim([min(ytick), max(ytick)])
-    ax.set_ylim([min(ytick), 2.5])
+    ax.set_ylim([min(ytick), 2.])
     ax.set_ylabel(y_name, fontsize=15)
-    for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(12)
     # plot marker
     for ii in range(len(tab_val)):
         if isinstance(colors, list):
@@ -191,14 +194,18 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
         else:
             col = "k"
         ind = len(tab_val) - 1 - ii
-        ax.scatter(axis, list(tab_val[ind]), s=60, c=col, marker="D")
+        ax.scatter(axis, list(tab_val[ind]), s=200, c=col, marker="D", zorder=2)
         if tab_bst is not None:
             for jj in range(len(tab_bst[ind])):
                 if tab_bst[ind][jj][0] > 0 and tab_bst[ind][jj][1] > 0:
-                    ax.add_line(Line2D([jj - 0.3, jj + 0.3], [tab_bst[ind][jj][0], tab_bst[ind][jj][0]], c=col, lw=1))
-                    ax.add_line(Line2D([jj - 0.3, jj + 0.3], [tab_bst[ind][jj][1], tab_bst[ind][jj][1]], c=col, lw=1))
-                    ax.add_line(Line2D([jj, jj], [tab_bst[ind][jj][0], tab_bst[ind][jj][1]], c=col, lw=1))
+                    ax.add_line(Line2D([jj - 0.3, jj + 0.3], [tab_bst[ind][jj][0], tab_bst[ind][jj][0]], c=col, lw=2,
+                                       zorder=3))
+                    ax.add_line(Line2D([jj - 0.3, jj + 0.3], [tab_bst[ind][jj][1], tab_bst[ind][jj][1]], c=col, lw=2,
+                                       zorder=3))
+                    ax.add_line(Line2D([jj, jj], [tab_bst[ind][jj][0], tab_bst[ind][jj][1]], c=col, lw=2, zorder=3))
         del col
+    # grid
+    ax.grid(linestyle="--", linewidth=1, axis="y", which="both", zorder=1)
     # text
     if legend is not None:
         x1, x2 = ax.get_xlim()
@@ -211,16 +218,24 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
                 col = colors[len(colors) - 1 - ii]
             else:
                 col = "k"
-            font = {'color': col, 'weight': 'normal', 'size': 15}
-            ax.text(x2 - 2 * dx, y2 - (ii + 1) * 7 * dy, legend[len(legend) - 1 - ii], horizontalalignment="right",
+            font = {'color': col, 'weight': 'bold', 'size': 15}
+            ax.text(x2 - 2 * dx, y2 - (ii + 1) * 8 * dy, legend[len(legend) - 1 - ii], horizontalalignment="right",
                     verticalalignment="center", fontdict=font)
             del col, font
-        ax.add_line(Line2D([25 * dx - 0.3, 25 * dx + 0.3], [2.3, 2.3], c="k", lw=1))
-        ax.add_line(Line2D([25 * dx - 0.3, 25 * dx + 0.3], [1.7, 1.7], c="k", lw=1))
-        ax.add_line(Line2D([25 * dx, 25 * dx], [1.7, 2.3], c="k", lw=1))
-        font = {'weight': 'normal', 'size': 15}
-        ax.text(26 * dx, 2., "95% confidence interval\n(Monte Carlo Method)", horizontalalignment="left",
-                verticalalignment="center", fontdict=font, transform=ax.transData)
+        xxx, ddx, yyy, ddy = 50, 0.3, 1.75, 0.2
+        ax.add_line(Line2D([xxx * dx - ddx, xxx * dx + ddx], [yyy + ddy, yyy + ddy], c=colors[1], lw=2))
+        ax.add_line(Line2D([xxx * dx - ddx, xxx * dx + ddx], [yyy - ddy, yyy - ddy], c=colors[1], lw=2))
+        ax.add_line(Line2D([xxx * dx, xxx * dx], [yyy - ddy, yyy + ddy], c=colors[1], lw=2))
+        dicttext = {"horizontalalignment": "left", "verticalalignment": "center",
+                    "fontdict": {'weight': 'normal', 'size': 12}, "transform": ax.transData}
+        ax.text((xxx + 1.5) * dx, yyy, "95% confidence interval of MMM\n(Monte Carlo sampling method)", **dicttext)
+        # dictellipse = {"facecolor": "w", "linewidth": 3, "transform": ax.transData}
+        # yyy = 1.36
+        # ax.add_artist(Ellipse((xxx * dx, yyy), 0.3, 0.17, edgecolor="b", **dictellipse))
+        # ax.text((xxx + 1.5) * dx, yyy, "significantly improved", **dicttext)
+        # yyy = 1.14
+        # ax.add_artist(Ellipse((xxx * dx, yyy), 0.3, 0.17, edgecolor="r", **dictellipse))
+        # ax.text((xxx + 1.5) * dx, yyy, "significantly worsened", **dicttext)
     # save fig
     plt.savefig(name_plot, bbox_inches='tight')
     plt.close()
@@ -250,11 +265,11 @@ for proj in list_project:
                 #              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
                 #              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
                 #              'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse", "SeasonalTauxLonRmse"]
-                to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'BiasTauxLonRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse',
+                to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse',
                              'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
                              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
                              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
-                             'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse", "SeasonalTauxLonRmse"]
+                             'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
             elif mc == "ENSO_proc":
                 to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstSwr',
                              'EnsoFbSstShf']
@@ -470,12 +485,16 @@ dict_out = deepcopy(dict_met)
 # ---------------------------------------------------#
 # Plot
 # ---------------------------------------------------#
+# list_metrics = [
+#     "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSstLonRmse",
+#     "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration", "NinoSstDiversity_2", "EnsodSstOce_2", "EnsoFbSshSst",
+#     "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh", "EnsoPrMapCorr", "EnsoPrMapRmse", "EnsoSstMapCorr",
+#     "EnsoSstMapRmse", "EnsoSstLonRmse", "EnsoSstTsRmse"]
 list_metrics = [
-    "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSstLonRmse",
-    "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration", "NinoSstDiversity_2", "EnsodSstOce_2", "EnsoFbSshSst",
-    "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh", "EnsoPrMapCorr", "EnsoPrMapRmse", "EnsoSstMapCorr",
-    "EnsoSstMapRmse", "EnsoSstLonRmse", "EnsoSstTsRmse",
-]
+    "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "BiasTauxLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse",
+    "SeasonalSstLonRmse", "SeasonalTauxLonRmse", "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration",
+    "NinoSstDiversity_2", "EnsodSstOce_2", "EnsoFbSshSst", "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh",
+    "EnsoPrMapCorr", "EnsoPrMapRmse", "EnsoSstMapCorr", "EnsoSstMapRmse", "EnsoSstLonRmse", "EnsoSstTsRmse"]
 # mean metric evaluation
 if ' ':
     if big_ensemble is True:
@@ -524,6 +543,10 @@ if ' ':
             for grp in list_project:
                 tmp = dict_out[grp]
                 tab = NUMPYarray([tmp[mod][met] for mod in tmp.keys() if tmp[mod][met] != 1e20])
+                if met in ["BiasPrLatRmse", "SeasonalTauxLonRmse"]:
+                    tab = tab / 2.
+                elif met in ["BiasTauxLonRmse"]:
+                    tab = tab / 5.
                 tab1.append(float(NUMPYmean(tab)))
                 if grp == "cmip6":
                     nbr = len(tab)
@@ -542,11 +565,24 @@ if ' ':
         #                            "metrics_" + str(len(my_project)).zfill(2) + "selections_"+my_project[0] + "_v2")
         figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
                                    "metrics_cmip5_vs_cmip6")
-        title = "metrics comparison"
+        title = "Multi-model mean (MMM) of all metrics"
+        # colors = ["lime", "sienna"]
         colors = ["r", "dodgerblue"]
         legend = [proj.upper() for proj in list_project]
-        plot_metrics(tab_val, figure_name, title=title, x_names=list_metrics, y_name="", colors=colors, tab_bst=tab_bst,
-                     legend=legend)
+        list_metrics2 = [met.replace("_2", "").replace("BiasPrLatRmse", "BiasPrLatRmse / 2").replace("SeasonalTauxLonRmse", "SeasonalTauxLonRmse / 2").replace("BiasTauxLonRmse", "BiasTauxLonRmse / 5")
+                         for met in list_metrics]
+        plot_metrics(tab_val, figure_name, title=title, x_names=list_metrics2, y_name="", colors=colors,
+                     tab_bst=tab_bst, legend=legend)
+        nbr_bet, nbr_wor = 0, 0
+        for ii, met in enumerate(list_metrics):
+            if tab_val[0][ii] < tab_val[1][ii]:
+                print list_project[0] + " better: " + met
+                nbr_bet += 1
+            elif tab_val[0][ii] > tab_val[1][ii]:
+                print list_project[0] + "  worse: " + met
+                nbr_wor += 1
+        print list_project[0] + " better (" + str(nbr_bet).zfill(2) + ") and worse (" + str(nbr_wor).zfill(2) + ")"
+        print ""
         nbr_bet, nbr_wor = 0, 0
         for ii, met in enumerate(list_metrics):
             if tab_val[0][ii] < min(tab_bst[1][ii]):
