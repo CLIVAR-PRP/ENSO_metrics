@@ -1,4 +1,6 @@
 # -*- coding:UTF-8 -*-
+from copy import deepcopy
+from datetime import datetime
 from os.path import join as OSpath__join
 # ENSO_metrics functions
 from EnsoPlotLib import plot_param
@@ -38,20 +40,32 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
     plt_typ = dict_diag['plot_type']
     if plt_typ == "dot" and shading is True:
         plt_typ = "dot_to_box"
-    print str().ljust(20) + plt_typ
+    t1 = datetime.now()
+    print str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2)
     dict_plot[plt_typ](
         model, filename_nc, dict_diag, reference, list_var, fig_name, models2=models2, metric_type=met_type,
         metric_values=metric_values, metric_units=metric_units, diagnostic_values=diagnostic_values,
         diagnostic_units=diagnostic_units, regions=dict_reg, shading=shading)
+    dt = datetime.now() - t1
+    dt = str(int(round(dt.seconds / 60.)))
+    print str().ljust(30) + "took " + dt + " minute(s)"
     # dive downs
     list_dd = sorted([key for key in dict_param.keys() if "dive_down" in key], key=lambda v: v.upper())
     for ii, dd in enumerate(list_dd):
         dict_diag = dict_param[dd]
         fig_name = OSpath__join(path_png, pattern + "_divedown" + str(ii+1).zfill(2))
         plt_typ = dict_diag['plot_type']
-        print str().ljust(20) + plt_typ
+        t1 = datetime.now()
+        print str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2)
+        if metric == "EnsoPrMap":
+            metype = deepcopy(met_type)
+        else:
+            metype = None
         dict_plot[plt_typ](
-            model, filename_nc, dict_diag, reference, list_var, fig_name, models2=models2, metric_type=None,
+            model, filename_nc, dict_diag, reference, list_var, fig_name, models2=models2, metric_type=metype,
             metric_values=metric_values, metric_units=metric_units, diagnostic_values=diagnostic_values,
             diagnostic_units=diagnostic_units, regions=dict_reg, shading=shading)
+        dt = datetime.now() - t1
+        dt = str(int(round(dt.seconds / 60.)))
+        print str().ljust(30) + "took " + dt + " minute(s)"
 

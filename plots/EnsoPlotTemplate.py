@@ -680,15 +680,24 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
 def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_name, models2=None, metric_type=None,
            metric_values=None, metric_units=None, diagnostic_values=None, diagnostic_units=None, regions=None,
            shading=False):
+    article_fig = True
     # get data
     variables = dict_param["varpattern"]
     if isinstance(variables, str):
         nbr_val = 1
     else:
         nbr_val = len(variables)
+    if "africaSE" in variables or "america" in variables or "asiaS" in variables or "oceania" in variables:
+        met_in_file = True
+        my_reg = "africaSE" if "africaSE" in variables else (
+            "americaN" if "americaN" in variables else (
+                "americaS" if "americaS" in variables else ("asiaS" if "asiaS" in variables else "oceania")))
+    else:
+        met_in_file = False
+        my_reg = ""
     tab_mod, tab_obs, metval, obsname = \
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
-                 shading=shading)
+                 shading=shading, met_in_file=met_in_file, met_type=metric_type, met_pattern=my_reg)
     if metric_type is not None:
         plot_metric = True
     else:
@@ -710,6 +719,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     xname = dict_param["xname"]
     yname = dict_param["yname"]
     zname = dict_param["zname"]
+    if isinstance(filename_nc, str) is True:
+        nbr_mod = 2
+    else:
+        nbr_mod = len(model) + 1
     if isinstance(filename_nc, list) is True:
         if nbr_val == 1:
             title = [obsname] + mod_nicknames # model
@@ -738,12 +751,22 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         maskland = dict_param["maskland"]
     else:
         maskland = False
+    if "maskocean" in dict_param.keys():
+        maskocean = dict_param["maskocean"]
+    else:
+        maskocean = False
     if shading is True and len(model) + 1 == 3:
         nbrl = int(round(nbr_panel / 3.))
         nbrc = 1 if nbr_panel == 1 else 3
     else:
         nbrl = int(round(nbr_panel / 2.))
         nbrc = 1 if nbr_panel == 1 else 2
+    # if article_fig is True:
+    #     if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
+    #         pass
+    #     else:
+    #         nbrc = 1
+    #         nbrl = 3
     fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     hspa1 = 0.1
     hspa2 = 0.01
@@ -760,6 +783,8 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         plt.subplots_adjust(hspace=-0.9, wspace=0.2)
     else:
         plt.subplots_adjust(hspace=hspa1, wspace=0.2)
+    if article_fig is True and nbrl == 3:
+        plt.subplots_adjust(hspace=-0.7, wspace=0.2)
     xlabel_ticks = list(range(int(MATHfloor(min(lon))), int(MATHceil(max(lon))) + 1))
     xlabel_ticks, xlabel = create_labels(xname, xlabel_ticks)
     ylabel_ticks = list(range(int(MATHfloor(min(lat))), int(MATHceil(max(lat))) + 1))
@@ -786,8 +811,11 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     for ii in range(nbr_panel):
         if nbr_panel == 1:
             ax = axes
-        elif nbrl == 1 and nbrc != 1:
-            ax = axes[ii % nbrc]
+        elif (nbrl == 1 and nbrc != 1) or (nbrl != 1 and nbrc == 1):
+            if nbrl == 1 and nbrc != 1:
+                ax = axes[ii % nbrc]
+            else:
+                ax = axes[ii % nbrl]
         else:
             ax = axes[ii / nbrc, ii % nbrc]
         if isinstance(filename_nc, str):
@@ -797,10 +825,12 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                         verticalalignment="center", transform=ax.transAxes)
         else:
             if nbrc == 2 or plot_metric is True:
-                if ii % nbrc == 0:
-                    ax.set_title(title[ii], fontsize=15, y=1. + hspa2, loc="left")
+                if ii == 0 or (ii % nbr_mod == 0):
+                    location = "left"
                 else:
-                    ax.set_title(title[ii], fontsize=15, y=1. + hspa2, loc="right")
+                    location = "right"
+                ax.set_title(title[ii], fontsize=15, y=1. + hspa2, loc=location)
+                del location
             else:
                 ax.set_title(title[ii], fontsize=15, y=1. + hspa2, loc="center")
             if nbr_val > 1:
@@ -835,6 +865,8 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         # fill continents
         if maskland is True:
             locmap.fillcontinents(color="gainsboro")
+        if maskocean is True:
+            locmap.drawmapboundary(fill_color="white")
         # draw parallels
         locmap.drawparallels(ylabel_ticks, labels=[1, 0, 0, 0], fontsize=12, dashes=[3, 1], linewidth=1)
         # draw meridians
@@ -853,7 +885,22 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                     for jj in range(len(metric_type)):
                         tmp = [metval[ii - 1][kk][jj] for kk in range(len(metval[ii - 1]))]
                         txt = format_metric(metric_type[jj], my_average(tmp, remove_masked=True), metric_units[jj])
-                        ax.text(-0.1, 1.25 - jj * 0.15, txt, fontsize=11, color="k", horizontalalignment="left",
+                        if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
+                            if my_reg in ["africaSE"]:
+                                xxx, yyy = -0.12, 1.12 - jj * 0.07
+                            elif my_reg in ["americaN"]:
+                                xxx, yyy = -0.12, 1.16 - jj * 0.10
+                            elif my_reg in ["americaS"]:
+                                xxx, yyy = 0.00, -0.18 + jj * 0.06
+                            elif my_reg in ["asiaS"]:
+                                xxx, yyy = -0.12, 1.15 - jj * 0.09
+                            else:
+                                xxx, yyy = -0.12, 1.17 - jj * 0.10
+                        elif "reg_pr_over_sst_map" in variables:
+                            xxx, yyy = -0.12, 1.29 - jj * 0.18
+                        else:
+                            xxx, yyy = -0.12, 1.26 - jj * 0.16
+                        ax.text(xxx, yyy, txt, fontsize=11, color="k", horizontalalignment="left",
                                 verticalalignment="center", transform=ax.transAxes)
         # if ii == 0 and plot_metric is True:
         #     x1 = ax.get_position().x1
@@ -872,16 +919,34 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             x2 = ax.get_position().x1
             y1 = ax.get_position().y0
     # add colorbar
-    if nbrl == 2:
+    if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
+        if my_reg in ["africaSE"]:
+            cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.03])
+        elif my_reg in ["americaN"]:
+            cax = plt.axes([x1, y1 + 0.01, x2 - x1, 0.03])
+        elif my_reg in ["americaS"]:
+            cax = plt.axes([x1 + 0.04, y1 - 0.23, x2 - x1 - 0.08, 0.035])
+        elif my_reg in ["asiaS"]:
+            cax = plt.axes([x1, y1 + 0.03, x2 - x1, 0.03])
+        else:
+            cax = plt.axes([x1, y1 + 0.05, x2 - x1, 0.03])
+    elif nbrl == 2:
         cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])  # cax = plt.axes([x1, y1 + 0.21, x2 - x1, 0.015])
     elif nbrl == 3:
-        cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])
+        if article_fig is True and nbrl == 3 and "reg_pr_over_sst_map" in variables:
+            cax = plt.axes([x1, y1 + 0.15, x2 - x1, 0.015])
+        else:
+            cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])
     elif nbrl == 4:
         cax = plt.axes([x1, y1 + 0.21, x2 - x1, 0.01])
     elif nbrl == 6:
         cax = plt.axes([x1, y1 + 0.22, x2 - x1, 0.005])
     else:
-        cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.03])
+        if "reg_pr_over_sst_map" in variables:
+            cax = plt.axes([x1, y1 + 0.17, x2 - x1, 0.03])
+        else:
+            cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.03])
+        # cax = plt.axes([x1, y1 + 0.15, x2 - x1, 0.03])
     cbar = plt.colorbar(cs, cax=cax, orientation="horizontal", ticks=labelbar, pad=0.35, extend="both")
     cbar.set_label(zname, fontsize=15)
     cbar.ax.tick_params(labelsize=12)
@@ -955,6 +1020,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             legend = ["ref: " + obsname, model]
         elif isinstance(filename_nc, dict):
             legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
+            # legend = ["ref: " + obsname] + [mod.upper() for mod in model]
         else:
             legend = ["ref: " + obsname] + mod_nicknames# model
     keys1 = ["", "_neg", "_pos"]
@@ -1016,6 +1082,14 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         # x axis
         ax.set_xticks(xtick_labels)
         ax.set_xlim(xmin=min(xtick_labels), xmax=max(xtick_labels))
+        # ax.set_xticks([-100, -50, 0, 50, 100], minor=False)
+        # ax.set_xticklabels([-100, -50, 0, 50, 100])
+        # ax.set_xticks([-75, -25, 25, 75], minor=True)
+        # ax.set_xlim([-125, 125])
+        # ax.set_xticks([-6, -3, 0, 3, 6], minor=False)
+        # ax.set_xticklabels([-6, -3, 0, 3, 6])
+        # ax.set_xticks([-4.5, -1.5, 1.5, 4.5], minor=True)
+        # ax.set_xlim([-6, 6])
         if (one_xaxis is True and (ii >= (nbrc * nbrl) - nbrc)) or one_xaxis is False:
             xlabel = xname[ii]
             for kk in regions.keys():
@@ -1030,6 +1104,18 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         # y axis
         ax.set_yticks(ytick_labels)
         ax.set_ylim(ymin=min(ytick_labels), ymax=max(ytick_labels))
+        # ax.set_yticks([-30, -15, 0, 15, 30], minor=False)
+        # ax.set_yticklabels([-30, -15, 0, 15, 30])
+        # ax.set_yticks([-22.5, -7.5, 0, 7.5, 22.5], minor=True)
+        # ax.set_ylim([-37.5, 37.5])
+        # ax.set_yticks([-150, -75, 0, 75, 150], minor=False)
+        # ax.set_yticklabels([-150, -75, 0, 75, 150])
+        # ax.set_yticks([-112.5, -37.5, 37.5, 112.5], minor=True)
+        # ax.set_ylim([-150, 150])
+        # ax.set_yticks([-100, -50, 0, 50, 100], minor=False)
+        # ax.set_yticklabels([-100, -50, 0, 50, 100])
+        # ax.set_yticks([-75, -25, 25, 75], minor=True)
+        # ax.set_ylim([-125, 125])
         if (one_yaxis is True and ii % nbrc == 0) or one_yaxis is False:
             ylabel = yname[ii]
             for kk in regions.keys():
@@ -1094,7 +1180,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                         yy = [kk * slope + intercept for kk in xx]
                         ax.plot(xx, yy, lw=2, c=col)
                         txt = "slope(" + keys2[jj] + ") = " + "{0:+.2f}".format(round(slope, 2))
-                        ax.text(dx + x1, ((97 - 5 * jj) * dy) + y1, txt, fontsize=12, color=col,
+                        ax.text(dx + x1, ((93 - 6 * jj) * dy) + y1, txt, fontsize=12, color=col,
                                 horizontalalignment="left", verticalalignment="center")
         else:
             tmp = list()
@@ -1122,7 +1208,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                         slope = float(my_average(slope, remove_masked=True))
                     xx = [x1, x2]
                     yy = [kk * slope + intercept for kk in xx]
-                    ax.plot(xx, yy, lw=2, c=col)
+                    if jj == 0:
+                        ax.plot(xx, yy, lw=4, c=col)
+                    else:
+                        ax.plot(xx, yy, lw=2, c=col)
                     tmp.append("slope = " + "{0:+.2f}".format(round(slope, 2)))
                 else:
                     if "slope" in tab1[jj].attrs.keys() and "intercept" in tab1[jj].attrs.keys():
@@ -1134,8 +1223,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                         tmp.append("slope = " + "{0:+.2f}".format(round(slope, 2)))
             for jj in range(len(tmp)):
                 col = mcolors[len(tmp) - 1 - jj]
-                ax.text(dx + x1, ((97 - 5 * jj) * dy) + y1, tmp[len(tmp) - 1 - jj], fontsize=12,
+                ax.text(2 * dx + x1, ((93 - 6 * jj) * dy) + y1, tmp[len(tmp) - 1 - jj], fontsize=12,
                         color=col, horizontalalignment="left", verticalalignment="center")
+                # ax.text(2 * dx + x1, ((13 - 6 * jj) * dy) + y1, tmp[len(tmp) - 1 - jj], fontsize=12,
+                #         color=col, horizontalalignment="left", verticalalignment="center")
             if nbr_panel == 1 or ii == nbrc - 1:
                 if metric_type is not None:
                     for jj in range(1, len(legend)):
@@ -1143,8 +1234,13 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                             tmp = my_average(metval[jj - 1], remove_masked=True)
                         else:
                             tmp = metval[jj - 1]
-                        legend[jj] = legend[jj] + " (" + "{0:.2f}".format(tmp) + " " + metric_units + ")"
+                        # metric_units = "N/m2/$^\circ$C / N/m2/$^\circ$C"
+                        # metric_units = "cm/N/m2 / cm/N/m2"
+                        # legend[jj] = legend[jj] + " (" + "{0:.2f}".format(tmp) + " " + metric_units + ")"
+                        # metric_units = "%"
+                        legend[jj] = legend[jj] + " (" + "{0:}".format(int(round(tmp))) + " " + metric_units + ")"
                 ax.legend(lines, legend, bbox_to_anchor=(1, 1), loc="upper left", ncol=1)
+                # ax.legend(lines, legend, bbox_to_anchor=(1, 0), loc="lower right", ncol=1)
         # my text
         if plot_metric is True:
             txt = format_metric(metric_type, metval, metric_units)
@@ -1168,6 +1264,7 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
     ax.set_xticks(label_ticks)
     ax.set_xticklabels(label)
     ax.set_xlim([min(axis), max(axis)])
+    # ax.set_xlim([-13, 13])
     ax.set_xlabel(xname, fontsize=15)
     for tick in ax.xaxis.get_major_ticks():
         tick.label.set_fontsize(12)
@@ -1175,6 +1272,19 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
     ax.set_yticks(ytick_labels)
     ax.set_yticklabels(ytick_labels)
     ax.set_ylim([min(ytick_labels), max(ytick_labels)])
+    # ax.set_yticks([0, 3, 6, 9], minor=False)
+    # ax.set_yticklabels([0, 3, 6, 9])
+    # ax.set_yticks([1.5, 4.5, 7.5], minor=True)
+    # ax.set_ylim([0, 9.5])
+    # ax.set_yticks([-1.0, -0.5, 0.0, 0.5, 1.0], minor=False)
+    # ax.set_yticklabels([-1.0, -0.5, 0.0, 0.5, 1.0])
+    # ax.set_yticks([-0.75, -0.25, 0.25, 0.75], minor=True)
+    # ax.set_ylim([-1.1, 1.1])
+    # ax.add_line(Line2D([29, 39], [0.25, 0.25], c="orange", lw=2))
+    # ax.scatter([29], 0.25, s=80, c="orange", marker="<", zorder=10)
+    # ax.scatter([39], 0.25, s=80, c="orange", marker=">", zorder=10)
+    # plt.text(34, 0.1, "duration", fontsize=18, color="orange", horizontalalignment='center',
+    #          verticalalignment='center')
     ax.set_ylabel(yname, fontsize=15)
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(12)
@@ -1182,7 +1292,7 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
         ax.axhline(0, color='k', linestyle='-', linewidth=2)
     # plot curves
     if len(tab_mod) + len(tab_obs) > 2:
-        lw = 2
+        lw = 4  # 2  #
     else:
         lw = 4
     for ii, tab in enumerate(tab_mod):
@@ -1193,8 +1303,8 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
             #     ax.fill_between(axis, list(tab_sh[0]), list(tab_sh[3]), facecolor=linecolors["model"][ii], alpha=0.3)
             #     ax.fill_between(axis, list(tab_sh[1]), list(tab_sh[2]), facecolor=linecolors["model"][ii], alpha=0.4)
             # # !!!!! temporary: end !!!!!
-            ax.fill_between(axis, list(tab_sh[0]), list(tab_sh[3]), facecolor=linecolors["model"][ii], alpha=0.3)
-            ax.fill_between(axis, list(tab_sh[1]), list(tab_sh[2]), facecolor=linecolors["model"][ii], alpha=0.4)
+            # ax.fill_between(axis, list(tab_sh[0]), list(tab_sh[3]), facecolor=linecolors["model"][ii], alpha=0.3)
+            # ax.fill_between(axis, list(tab_sh[1]), list(tab_sh[2]), facecolor=linecolors["model"][ii], alpha=0.4)
             ax.plot(axis, list(tab_sh[4]), lw=lw, color=linecolors["model"][ii], ls=linestyles["model"][ii])
         else:
             ax.plot(axis, list(tab), c=linecolors["model"][ii], lw=lw, ls=linestyles["model"][ii])
@@ -1235,6 +1345,7 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
                     else:
                         tmp = metval[jj - 1]
                     legend[jj] = legend[jj] + " (" + "{0:.2f}".format(tmp) + " " + metric_units + ")"
+            # ax.legend(lines, legend, bbox_to_anchor=(0, 1), loc="upper left", ncol=1)
             ax.legend(lines, legend, bbox_to_anchor=(1, 1), loc="upper left", ncol=1)
     ax.grid(linestyle='--', linewidth=1, which='major')
     return

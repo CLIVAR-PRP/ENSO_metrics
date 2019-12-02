@@ -268,7 +268,8 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
     return tab_out, metric_value, obs
 
 
-def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric):
+def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric, met_in_file=False, met_type=None,
+           met_pattern=""):
     ff = open_dataset(filename_nc, decode_times=False)
     variables_in_file = sorted([var for var in ff.keys()], key=lambda v: v.upper())
     # read model
@@ -306,11 +307,31 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
         else:
             tab, metval, obs = read_obs(ff, variables_in_file, metric_variables, var, dict_metric, model)
         tab_obs.append(tab)
+    if met_in_file is True:
+        if isinstance(met_type, str):
+            for key in ff.attrs.keys():
+                if met_type + "_" + obs + "_" + met_pattern == key:
+                    val = ff.attrs[key]
+            try: val
+            except: val = None
+            metval = deepcopy(val)
+            del val
+        elif isinstance(met_type, list):
+            metval = list()
+            for mety in met_type:
+                for key in ff.attrs.keys():
+                    if mety + "_" + obs + "_" + met_pattern == key:
+                        val = ff.attrs[key]
+                try: val
+                except: val = None
+                metval.append(val)
+                del val
     ff.close()
     return tab_mod, tab_obs, metval, obs
 
 
-def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric, models2=None, shading=False):
+def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric, models2=None, shading=False,
+             met_in_file=False, met_type=None, met_pattern=""):
     if isinstance(var_to_read, str):
         var_to_read = [var_to_read]
     if isinstance(filename_nc, str):
@@ -322,8 +343,9 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
             for jj in range(len(model)):
                 tmp1, tmp2 = list(), list()
                 for ii in range(len(filename_nc[model[jj]])):
-                    ttt1, tab_obs, ttt2, tmp3 = reader(filename_nc[model[jj]][ii], models2[model[jj]][ii], reference,
-                                                       var_to_read, metric_variables, dict_metric[model[jj]])
+                    ttt1, tab_obs, ttt2, tmp3 = reader(
+                        filename_nc[model[jj]][ii], models2[model[jj]][ii], reference, var_to_read, metric_variables,
+                        dict_metric[model[jj]], met_in_file=met_in_file, met_type=met_type, met_pattern=met_pattern)
                     tmp1.append(ttt1)
                     tmp2.append(ttt2)
                     obs.append(tmp3)
