@@ -59,12 +59,12 @@ case_id = "{:v%Y%m%d}".format(datetime.datetime.now())
 pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
 
 if debug:
-    #case_id = "{:v%Y%m%d-%H%M}".format(datetime.datetime.now())
     pmprdir = '/work/lee1043/imsi/result_test'
 
 results_dir = os.path.join(
     pmprdir,
     '%(output_type)', 'enso_metric',
-    '%(mip)', '%(exp)', case_id, '%(metricsCollection)')
-json_name = '_'.join(['%(mip)_%(exp)_%(metricsCollection)', case_id, '%(model)', '%(realization)'])
+    '%(mip)', '%(exp)', '%(case_id)', '%(metricsCollection)')
+
+json_name = '%(mip)_%(exp)_%(metricsCollection)_%(case_id)_%(model)_%(realization)'
 netcdf_name = json_name

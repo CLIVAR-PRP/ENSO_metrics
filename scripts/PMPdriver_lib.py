@@ -4,12 +4,13 @@ from pcmdi_metrics.driver.pmp_parser import PMPParser
 
 import copy
 import collections
+import datetime
 import os
 import pcmdi_metrics
 import re
 
 
-def ReadOptions():
+def AddParserArgument():
 
     P = PMPParser() # Includes all default options
 
@@ -59,7 +60,11 @@ def ReadOptions():
                    dest='netcdf_name',
                    help="File name for output NetCDF")
     P.use("--results_dir")
-
+    P.add_argument("--case_id",
+                   type=str,
+                   dest="case_id",
+                   default="{:v%Y%m%d}".format(datetime.datetime.now()),
+                   help="version as date, e.g., v20191116 (yyyy-mm-dd)")
     # Switches
     P.add_argument("-d", "--debug", nargs='?',
                    const=True, default=False,
