@@ -8,16 +8,15 @@ import copy
 import glob
 import json
 import os
-import sys
 
 # -------------------------------
 mip = 'cmip5'
-#mip = 'cmip6'
+mip = 'cmip6'
 exp = 'historical'
 case_id = 'v20191121'
 metricsCollection = 'ENSO_perf'
-#metricsCollection = 'ENSO_proc'
-#metricsCollection = 'ENSO_tel'
+metricsCollection = 'ENSO_proc'
+metricsCollection = 'ENSO_tel'
 # -------------------------------
 
 pmprdir = '/work/lee1043/imsi/result_test'
