@@ -289,6 +289,11 @@ for mod in models:
                     'path + filename': list_files, 'varname': var_in_file,
                     'path + filename_area': list_areacell, 'areaname': list_name_area,
                     'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
+
+                # ad-hoc temporary solution for models not providing ssh (i.e., zos)
+                if var in ['ssh']:
+                    if dict_mod[mod][var]['path + filename'] is None: 
+                        del dict_mod[mod][var]
         
                 print('PMPdriver: var loop end')
             
