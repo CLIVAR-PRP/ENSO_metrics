@@ -256,13 +256,25 @@ for mod in models:
                     landmask_in_file = None
         
                 if isinstance(var_in_file, list):
-                    list_files = list()
-                    list_files = [modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var1) for var1 in var_in_file]
-                    list_areacell = [file_areacell for var1 in var_in_file]
-                    list_name_area = [areacell_in_file for var1 in var_in_file]
-                    list_landmask = [modpath_lf(mip=mip, model=mod) for var1 in var_in_file]
-                    list_name_land = [landmask_in_file for var1 in var_in_file]
+                    list_areacell, list_files, list_landmask, list_name_area, list_name_land = \
+                        list(), list(), list(), list(), list()
+                    for var1 in var_in_file:
+                        modpath_tmp = modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var1)
+                        modpath_lf_tmp = modpath_lf(mip=mip, model=mod)
+                        if not os.path.isfile(modpath_tmp):
+                            modpath_tmp = None
+                        if not os.path.isfile(modpath_lf_tmp):
+                            modpath_lf_tmp = None
+                        list_files.append(modpath_tmp)
+                        list_areacell.append(file_areacell)
+                        list_name_area.append(areacell_in_file)
+                        list_landmask.append(modpath_lf_tmp)
+                        list_name_land.append(landmask_in_file)
                 else:
+                    if not os.path.isfile(file_name):
+                        file_name = None
+                    if not os.path.isfile(file_landmask):
+                        file_landmask = None
                     list_files = file_name
                     list_areacell = file_areacell
                     list_name_area = areacell_in_file
