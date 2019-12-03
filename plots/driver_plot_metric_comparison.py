@@ -38,7 +38,7 @@ experiment = "historical"  # "piControl" #
 member = "r1i1p1"
 list_project = ["cmip6", "cmip5"]
 my_project = ["select8", "CMIP"]
-big_ensemble = False  # True
+big_ensemble = True  # False  #
 reduced_set = True  # False  #
 dict_selection = {
     #
@@ -68,8 +68,10 @@ dict_selection = {
     #
     # EnsoFbSstTaux & EnsoFbSstThf within Q1 (approximately)
     #
-    "select8": ["CCSM4", "CESM1-FASTCHEM", "CNRM-CM5", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
-                "GISS-E2-R", "GISS-E2-R-CC", "MIROC6"],
+    "select8": ["CCSM4", "CESM1-FASTCHEM", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
+                "GISS-E2-R", "GISS-E2-R-CC", "MIROC-ES2L", "MIROC6"],
+    # "select8": ["CCSM4", "CESM1-FASTCHEM", "CNRM-CM5", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
+    #             "GISS-E2-R", "GISS-E2-R-CC", "MIROC6"],
     #
     # EnsoFbSstTaux within Q2 & EnsodSstOce_2 within Q1
     #
@@ -385,7 +387,8 @@ if big_ensemble is True:
     for key2 in list_metrics:
         for key1 in lev1:
             if key2 not in dict_met[key1].keys():
-                dict_met[key1][key2] = dict((ref, 1e20) for ref in dict_met["ACCESS1-0"][key2].keys())
+                # dict_met[key1][key2] = dict((ref, 1e20) for ref in dict_met["ACCESS1-0"][key2].keys())
+                dict_met[key1][key2] = 1e20
     list1 = list(set([len(dict_met[key1].keys()) for key1 in lev1]))
     # !!!!! temporary: end !!!!!
 else:
@@ -506,17 +509,27 @@ if ' ':
                     tab = list()
                     for mod in dict_selection[grp]:
                         if dict_out[mod][met] != 1e20:
-                            if "Corr" in met:
-                                tab.append(1 - dict_out[mod][met])
-                            else:
-                                tab.append(dict_out[mod][met])
+                            # if "Corr" in met:
+                            #     tab.append(1 - dict_out[mod][met])
+                            # else:
+                            #     tab.append(dict_out[mod][met])
+                            tab.append(dict_out[mod][met])
                     nbr = len(tab)
+                    tab = NUMPYarray(tab)
+                    if met in ["BiasPrLatRmse", "SeasonalTauxLonRmse"]:
+                        tab = tab / 2.
+                    elif met in ["BiasTauxLonRmse"]:
+                        tab = tab / 5.
                     tab = NUMPYmean(tab)
                     tab1.append(tab)
                     tab2.append([1e20, 1e20])
                     del tab
                 else:
                     tab = NUMPYarray([dict_out[mod][met] for mod in lev1 if dict_out[mod][met] != 1e20])
+                    if met in ["BiasPrLatRmse", "SeasonalTauxLonRmse"]:
+                        tab = tab / 2.
+                    elif met in ["BiasTauxLonRmse"]:
+                        tab = tab / 5.
                     bst = bootstrap(tab, nech=nbr)
                     tab = NUMPYmean(tab)
                     tab1.append(tab)
@@ -532,9 +545,16 @@ if ' ':
         figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
                                    "metrics_" + str(len(my_project)).zfill(2) + "selections_" + my_project[0])
         title = "metrics comparison"
-        colors = ["r", "dodgerblue"]
-        plot_metrics(tab_val, figure_name, title=title, x_names=list_metrics, y_name="", colors=colors, tab_bst=tab_bst,
-                     legend=my_project)
+        colors = ["orange", "forestgreen"]
+        list_metrics2 = [met.replace("_2",
+                                     "").replace("BiasPrLatRmse",
+                                                 "BiasPrLatRmse / 2").replace("SeasonalTauxLonRmse",
+                                                                              "SeasonalTauxLonRmse / 2").replace(
+            "BiasTauxLonRmse", "BiasTauxLonRmse / 5")
+            for met in list_metrics]
+        list_names2 = [str(len(dict_selection[my_project[0]])) + " models", my_project[1]]
+        plot_metrics(tab_val, figure_name, title=title, x_names=list_metrics2, y_name="", colors=colors,
+                     tab_bst=tab_bst, legend=list_names2)
         del colors, figure_name, tab_bst, tab_val, title
     else:
         tab_bst, tab_val = list(), list()
@@ -565,9 +585,10 @@ if ' ':
         #                            "metrics_" + str(len(my_project)).zfill(2) + "selections_"+my_project[0] + "_v2")
         figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
                                    "metrics_cmip5_vs_cmip6")
-        title = "Multi-model mean (MMM) of all metrics"
-        # colors = ["lime", "sienna"]
-        colors = ["r", "dodgerblue"]
+        title = ""
+        colors = ["lime", "sienna"]
+        # title = "Multi-model mean (MMM) of all metrics"
+        # colors = ["r", "dodgerblue"]
         legend = [proj.upper() for proj in list_project]
         list_metrics2 = [met.replace("_2", "").replace("BiasPrLatRmse", "BiasPrLatRmse / 2").replace("SeasonalTauxLonRmse", "SeasonalTauxLonRmse / 2").replace("BiasTauxLonRmse", "BiasTauxLonRmse / 5")
                          for met in list_metrics]
