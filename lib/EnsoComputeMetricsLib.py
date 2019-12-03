@@ -602,13 +602,13 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 tmp = str([modelVarName2[kk] for kk, file1 in enumerate(modelFile2) if isinstance(file1, str) is False])
             else:
                 tmp = str(modelVarName2)
+            try:
+                tmperr
+            except:
+                tmperr = "model var2(" + tmp + ") not given"
+            else:
+                tmperr = tmperr + " ; model var2(" + tmp + ") not given"
         noerror = False if noerror is False or noerror2 is False else True
-        try:
-            tmperr
-        except:
-            tmperr = "model var2(" + tmp + ") not given"
-        else:
-            tmperr = tmperr + " ; model var2(" + tmp + ") not given"
     if noerror is False:
         dict_metrics = {
             'metric': {'value': None, 'value_error': None}, 'diagnostic': {'value': None, 'value_error': None}}
