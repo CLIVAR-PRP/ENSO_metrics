@@ -573,239 +573,283 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     # sst only datasets (not good for surface temperature teleconnection)
     sst_only = ["CFSR", "ERSSTv5", "GODAS", "HadISST", "OISST", "ORAS4", "Tropflux"]
 
-    if metric in dict_oneVar_modelAndObs.keys() or metric in dict_twoVar_modelAndObs.keys():
-        #
-        # this part regroups all diagnostics comparing model and obs (rmse)
-        # so the diagnostic is the metric
-        #
-        description_metric = "The metric is the statistical value between the model and the observations"
-        diagnostic1 = dict()
-        for ii in range(len(obsNameVar1)):
-            # computes the diagnostic/metric
-            if metric in dict_oneVar_modelAndObs.keys():
-                output_name = obsNameVar1[ii]
-                if metric == "EnsoSstMap" and output_name in sst_only:
-                    pass
-                else:
-                    print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " \
-                          + modelName + " and " + output_name + '\033[0m'
-                    diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
-                        modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
-                        modelLandmaskName1, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii],
-                        obsFileLandmask1[ii], obsLandmaskName1[ii], regionVar1, dataset1=modelName,
-                        dataset2=output_name, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric,
-                        **keyarg)
-            elif metric in dict_twoVar_modelAndObs.keys():
-                for jj in range(len(obsNameVar2)):
-                    output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
-                    print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " + modelName\
-                          + " and " + output_name + '\033[0m'
-                    diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
-                        modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
-                        modelLandmaskName1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2,
-                        modelFileLandmask2, modelLandmaskName2, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii],
-                        obsAreaName1[ii], obsFileLandmask1[ii], obsLandmaskName1[ii], obsFile2[jj], obsVarName2[jj],
-                        obsFileArea2[jj], obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar1,
-                        regionVar2, dataset1=modelName, dataset2=output_name, debug=debug, netcdf=netcdf,
-                        netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
-        for obs in diagnostic1.keys():
-            # puts metric values in its proper dictionary
-            if 'value' in diagnostic1[obs].keys():
-                dict_metric_val[obs] = {
-                    'value': diagnostic1[obs]['value'], 'value_error': diagnostic1[obs]['value_error']}
-                dict_diagnostic[modelName] = {'value': None, 'value_error': None}
-                dict_diagnostic[obs] = {'value': None, 'value_error': None}
-            else:
-                multimetric = True
-                lkeys = list(set([key.split('__')[0] for key in diagnostic1[obs].keys() if 'value' in key]))
-                for key in lkeys:
-                    try:
-                        dict_metric_val[obs]
-                    except:
-                        dict_metric_val[obs] = {key + '__value': diagnostic1[obs][key + '__value'],
-                                                         key + '__value_error': diagnostic1[obs][key + '__value_error']}
-                        dict_diagnostic[modelName] = {key + '__value': None, key + '__value_error': None}
-                        dict_diagnostic[obs] = {key + '__value': None, key + '__value_error': None}
-                    else:
-                        dict_metric_val[obs][key + '__value'] = diagnostic1[obs][key + '__value']
-                        dict_metric_val[obs][key + '__value_error'] = diagnostic1[obs][key + '__value_error']
-                        dict_diagnostic[modelName][key + '__value'] = None
-                        dict_diagnostic[modelName][key + '__value_error'] = None
-                        dict_diagnostic[obs][key + '__value'] = None
-                        dict_diagnostic[obs][key + '__value_error'] = None
-            if 'dive_down_diag' in diagnostic1[obs].keys():
-                dict_dive_down[modelName] = diagnostic1[obs]['dive_down_diag']['model']
-                dict_dive_down[obs] = diagnostic1[obs]['dive_down_diag']['observations']
-                dict1 = {}
-                for elt in diagnostic1[obs]['dive_down_diag'].keys():
-                    if elt not in ['model', 'observations']:
-                        dict1[elt] = diagnostic1[obs]['dive_down_diag'][elt]
-                dict_dive_down_metadata[obs] = dict1
-                del dict1
-            # puts diagnostic metadata in its proper dictionary
-            dict_diagnostic_metadata[modelName] = {'name': modelName, 'nyears': diagnostic1[obs]['nyears_model'],
-                                                   'time_period': diagnostic1[obs]['time_period_model']}
-            dict_diagnostic_metadata[obs] = {'name': obs, 'nyears': diagnostic1[obs]['nyears_observations'],
-                                             'time_period': diagnostic1[obs]['time_period_observations']}
-            if 'events_model' in diagnostic1[obs].keys():
-                dict_diagnostic_metadata[modelName]['events'] = diagnostic1[obs]['events_model']
-                dict_diagnostic_metadata[obs]['events'] = diagnostic1[obs]['events_observations']
-        units = diagnostic1[obs]['units']
-        diagnostic1 = diagnostic1[obs]
+    # test files
+    if isinstance(modelFile1, list):
+        noerror = all(isinstance(file1, str) is True for file1 in modelFile1)
     else:
-        #
-        # model diagnostic
-        #
-        keyarg['time_bounds'] = keyarg['time_bounds_mod']
-        keyarg['project_interpreter_var1'] = keyarg['project_interpreter']
-        if metric in dict_oneVar.keys():
-            # computes diagnostic that needs only one variable
-            print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
-            diagnostic1 = dict_oneVar[metric](
-                modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
-                regionVar1, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric,
-                **keyarg)
-        elif metric in dict_twoVar.keys():
-            # computes diagnostic that needs two variables
-            print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
-            keyarg['project_interpreter_var2'] = keyarg['project_interpreter']
-            diagnostic1 = dict_twoVar[metric](
-                modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
-                regionVar1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2,
-                modelLandmaskName2, regionVar2, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
-                metname=tmp_metric, **keyarg)
+        noerror = True if isinstance(modelFile1, str) is True else False
+    if noerror is False:
+        if isinstance(modelFile1, list):
+            tmp = str([modelVarName1[kk] for kk, file1 in enumerate(modelFile1) if isinstance(file1, str) is False])
         else:
-            diagnostic1 = None
-            list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric", str().ljust(5) +
-                            "unknown metric name: " + str(metric)]
-            EnsoErrorsWarnings.MyError(list_strings)
-        # puts metric / diagnostic values in its proper dictionary
-        dict_diagnostic[modelName] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
-        if 'nonlinearity' in diagnostic1.keys():
-            dict_diagnostic[modelName]['nonlinearity'] = diagnostic1['nonlinearity']
-            dict_diagnostic[modelName]['nonlinearity_error'] = diagnostic1['nonlinearity_error']
-        if 'dive_down_diag' in diagnostic1.keys():
-            dict_dive_down[modelName] = diagnostic1['dive_down_diag']['value']
-            for elt in diagnostic1['dive_down_diag'].keys():
-                if elt not in ['value']:
-                    try:
-                        dict_dive_down_metadata[modelName]
-                    except:
-                        dict_dive_down_metadata[modelName] = {elt: diagnostic1['dive_down_diag'][elt]}
-                    else:
-                        dict_dive_down_metadata[modelName][elt] = diagnostic1['dive_down_diag'][elt]
-        # puts diagnostic metadata in its proper dictionary
-        dict_diagnostic_metadata[modelName] = {
-            'name': modelName, 'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
+            tmp = str(modelVarName1)
+        tmperr = "model var1 (" + tmp + ") not given"
+    if metric in dict_twoVar.keys()+dict_twoVar_modelAndObs.keys():
+        if isinstance(modelFile2, list):
+            noerror2 = all(isinstance(file1, str) is True for file1 in modelFile2)
+        else:
+            noerror2 = True if isinstance(modelFile2, str) is True else False
+        if noerror2 is False:
+            if isinstance(modelFile2, list):
+                tmp = str([modelVarName2[kk] for kk, file1 in enumerate(modelFile2) if isinstance(file1, str) is False])
+            else:
+                tmp = str(modelVarName2)
+        noerror = False if noerror is False or noerror2 is False else True
+        try:
+            tmperr
+        except:
+            tmperr = "model var2(" + tmp + ") not given"
+        else:
+            tmperr = tmperr + " ; model var2(" + tmp + ") not given"
+    if noerror is False:
+        dict_metrics = {
+            'metric': {'value': None, 'value_error': None}, 'diagnostic': {'value': None, 'value_error': None}}
+        dict_metadata = {
+            'metric': {'name': metric, 'method': None, 'datasets': modelName, 'units': None},
+            'diagnostic': {{modelName: {'method': None, 'name': None, 'ref': None, 'time_frequency': None,
+                                        'units': None, 'keyerror': tmperr}}},
         }
-        if 'events_model' in diagnostic1.keys():
-            dict_diagnostic_metadata[modelName]['events'] = diagnostic1['events']
-        #
-        # observations diag
-        #
-        diag_obs = dict()
-        keyarg['time_bounds'] = keyarg['time_bounds_obs']
-        for ii in range(len(obsNameVar1)):
-            # sets observations
-            obs1 = obsNameVar1[ii]
-            keyarg['project_interpreter_var1'] = obs1
-            #            keyarg['project_interpreter'] = 'CMIP'
+        dict_dive_down, dict_dive_down_metadata = {}, {}
+    else:
+        if metric in dict_oneVar_modelAndObs.keys() or metric in dict_twoVar_modelAndObs.keys():
+            #
+            # this part regroups all diagnostics comparing model and obs (rmse)
+            # so the diagnostic is the metric
+            #
+            description_metric = "The metric is the statistical value between the model and the observations"
+            diagnostic1 = dict()
+            for ii in range(len(obsNameVar1)):
+                # computes the diagnostic/metric
+                if metric in dict_oneVar_modelAndObs.keys():
+                    output_name = obsNameVar1[ii]
+                    if metric == "EnsoSstMap" and output_name in sst_only:
+                        pass
+                    else:
+                        print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " \
+                              + modelName + " and " + output_name + '\033[0m'
+                        diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
+                            modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
+                            modelLandmaskName1, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii],
+                            obsFileLandmask1[ii], obsLandmaskName1[ii], regionVar1, dataset1=modelName,
+                            dataset2=output_name, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
+                            metname=tmp_metric, **keyarg)
+                elif metric in dict_twoVar_modelAndObs.keys():
+                    for jj in range(len(obsNameVar2)):
+                        output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
+                        print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +\
+                              modelName + " and " + output_name + '\033[0m'
+                        diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
+                            modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
+                            modelLandmaskName1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2,
+                            modelFileLandmask2, modelLandmaskName2, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii],
+                            obsAreaName1[ii], obsFileLandmask1[ii], obsLandmaskName1[ii], obsFile2[jj], obsVarName2[jj],
+                            obsFileArea2[jj], obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar1,
+                            regionVar2, dataset1=modelName, dataset2=output_name, debug=debug, netcdf=netcdf,
+                            netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
+            for obs in diagnostic1.keys():
+                # puts metric values in its proper dictionary
+                if 'value' in diagnostic1[obs].keys():
+                    dict_metric_val[obs] = {
+                        'value': diagnostic1[obs]['value'], 'value_error': diagnostic1[obs]['value_error']}
+                    dict_diagnostic[modelName] = {'value': None, 'value_error': None}
+                    dict_diagnostic[obs] = {'value': None, 'value_error': None}
+                else:
+                    multimetric = True
+                    lkeys = list(set([key.split('__')[0] for key in diagnostic1[obs].keys() if 'value' in key]))
+                    for key in lkeys:
+                        try:
+                            dict_metric_val[obs]
+                        except:
+                            dict_metric_val[obs] = {key + '__value': diagnostic1[obs][key + '__value'],
+                                                    key + '__value_error': diagnostic1[obs][key + '__value_error']}
+                            dict_diagnostic[modelName] = {key + '__value': None, key + '__value_error': None}
+                            dict_diagnostic[obs] = {key + '__value': None, key + '__value_error': None}
+                        else:
+                            dict_metric_val[obs][key + '__value'] = diagnostic1[obs][key + '__value']
+                            dict_metric_val[obs][key + '__value_error'] = diagnostic1[obs][key + '__value_error']
+                            dict_diagnostic[modelName][key + '__value'] = None
+                            dict_diagnostic[modelName][key + '__value_error'] = None
+                            dict_diagnostic[obs][key + '__value'] = None
+                            dict_diagnostic[obs][key + '__value_error'] = None
+                if 'dive_down_diag' in diagnostic1[obs].keys():
+                    dict_dive_down[modelName] = diagnostic1[obs]['dive_down_diag']['model']
+                    dict_dive_down[obs] = diagnostic1[obs]['dive_down_diag']['observations']
+                    dict1 = {}
+                    for elt in diagnostic1[obs]['dive_down_diag'].keys():
+                        if elt not in ['model', 'observations']:
+                            dict1[elt] = diagnostic1[obs]['dive_down_diag'][elt]
+                    dict_dive_down_metadata[obs] = dict1
+                    del dict1
+                # puts diagnostic metadata in its proper dictionary
+                dict_diagnostic_metadata[modelName] = {'name': modelName, 'nyears': diagnostic1[obs]['nyears_model'],
+                                                       'time_period': diagnostic1[obs]['time_period_model']}
+                dict_diagnostic_metadata[obs] = {'name': obs, 'nyears': diagnostic1[obs]['nyears_observations'],
+                                                 'time_period': diagnostic1[obs]['time_period_observations']}
+                if 'events_model' in diagnostic1[obs].keys():
+                    dict_diagnostic_metadata[modelName]['events'] = diagnostic1[obs]['events_model']
+                    dict_diagnostic_metadata[obs]['events'] = diagnostic1[obs]['events_observations']
+                if 'keyerror' in diagnostic1[obs].keys():
+                    dict_diagnostic_metadata[modelName]['keyerror'] = diagnostic1[obs]['keyerror']
+            units = diagnostic1[obs]['units']
+            diagnostic1 = diagnostic1[obs]
+        else:
+            #
+            # model diagnostic
+            #
+            keyarg['time_bounds'] = keyarg['time_bounds_mod']
+            keyarg['project_interpreter_var1'] = keyarg['project_interpreter']
             if metric in dict_oneVar.keys():
-                print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(obs1) + '\033[0m'
-                output_name = obs1
-                diag_obs[output_name] = dict_oneVar[metric](
-                    obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                    obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
-                    netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
+                # computes diagnostic that needs only one variable
+                print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
+                diagnostic1 = dict_oneVar[metric](
+                    modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
+                    regionVar1, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
+                    metname=tmp_metric, **keyarg)
             elif metric in dict_twoVar.keys():
-                for jj in range(len(obsNameVar2)):
-                    obs2 = obsNameVar2[jj]
-                    output_name = obs1 + '_' + obs2
-                    keyarg['project_interpreter_var2'] = obs2
-                    print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) + '\033[0m'
-                    diag_obs[output_name] = dict_twoVar[metric](
-                        obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
-                        obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
-                        obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2, dataset=output_name,
-                        debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
-        for obs in diag_obs.keys():
-            # computes the metric
-            metric_val, metric_err, description_metric = MathMetriComputation(
-                diagnostic1['value'], diagnostic1['value_error'], obs=diag_obs[obs]['value'],
-                obs_err=diag_obs[obs]['value_error'], keyword=keyarg['metric_computation'])
-            dict_metric_val[obs] = {'value': metric_val, 'value_error': metric_err}
+                # computes diagnostic that needs two variables
+                print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
+                keyarg['project_interpreter_var2'] = keyarg['project_interpreter']
+                diagnostic1 = dict_twoVar[metric](
+                    modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
+                    regionVar1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2, modelFileLandmask2,
+                    modelLandmaskName2, regionVar2, dataset=modelName, debug=debug, netcdf=netcdf,
+                    netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
+            else:
+                diagnostic1 = None
+                list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric",
+                                str().ljust(5) + "unknown metric name: " + str(metric)]
+                EnsoErrorsWarnings.MyError(list_strings)
             # puts metric / diagnostic values in its proper dictionary
-            dict_diagnostic[obs] = {'value': diag_obs[obs]['value'], 'value_error': diag_obs[obs]['value_error']}
-            if 'nonlinearity' in diag_obs[obs].keys():
-                dict_diagnostic[obs]['nonlinearity'] = diag_obs[obs]['nonlinearity']
-                dict_diagnostic[obs]['nonlinearity_error'] = diag_obs[obs]['nonlinearity_error']
-            if 'dive_down_diag' in diag_obs[obs].keys():
-                dict_dive_down[obs] = diag_obs[obs]['dive_down_diag']['value']
-                for elt in diag_obs[obs]['dive_down_diag'].keys():
+            dict_diagnostic[modelName] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
+            if 'nonlinearity' in diagnostic1.keys():
+                dict_diagnostic[modelName]['nonlinearity'] = diagnostic1['nonlinearity']
+                dict_diagnostic[modelName]['nonlinearity_error'] = diagnostic1['nonlinearity_error']
+            if 'dive_down_diag' in diagnostic1.keys():
+                dict_dive_down[modelName] = diagnostic1['dive_down_diag']['value']
+                for elt in diagnostic1['dive_down_diag'].keys():
                     if elt not in ['value']:
                         try:
-                            dict_dive_down_metadata[obs]
+                            dict_dive_down_metadata[modelName]
                         except:
-                            dict_dive_down_metadata[obs] = {elt: diag_obs[obs]['dive_down_diag'][elt]}
+                            dict_dive_down_metadata[modelName] = {elt: diagnostic1['dive_down_diag'][elt]}
                         else:
-                            dict_dive_down_metadata[obs][elt] = diag_obs[obs]['dive_down_diag'][elt]
+                            dict_dive_down_metadata[modelName][elt] = diagnostic1['dive_down_diag'][elt]
             # puts diagnostic metadata in its proper dictionary
-            dict_diagnostic_metadata[obs] = {
-                'name': obs, 'nyears': diag_obs[obs]['nyears'], 'time_period': diag_obs[obs]['time_period'],
+            dict_diagnostic_metadata[modelName] = {
+                'name': modelName, 'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
             }
-            if 'events_model' in diag_obs[obs].keys():
-                dict_diagnostic_metadata[obs]['events'] = diag_obs[obs]['events']
-        if keyarg['metric_computation'] in ['ratio', 'relative_difference']:
-            units = diagnostic1['units'] + ' / ' + diagnostic1['units']
-        else:
-            units = diagnostic1['units']
-    # finishes to fill the diagnostic dictionary
-    list_keys = ['method', 'name', 'ref', 'time_frequency', 'units']
-    for key in list_keys:
-        if key == 'method':
-            dict_diagnostic_metadata[key] = diagnostic1['method']
-            dict_dive_down_metadata[key] = diagnostic1['method']
-            try:
-                diagnostic1['nonlinearity']
-            except:
-                pass
+            if 'events_model' in diagnostic1.keys():
+                dict_diagnostic_metadata[modelName]['events'] = diagnostic1['events']
+            if 'keyerror' in diagnostic1.keys():
+                dict_diagnostic_metadata[modelName]['keyerror'] = diagnostic1['keyerror']
+            #
+            # observations diag
+            #
+            diag_obs = dict()
+            keyarg['time_bounds'] = keyarg['time_bounds_obs']
+            for ii in range(len(obsNameVar1)):
+                # sets observations
+                obs1 = obsNameVar1[ii]
+                keyarg['project_interpreter_var1'] = obs1
+                #            keyarg['project_interpreter'] = 'CMIP'
+                if metric in dict_oneVar.keys():
+                    print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(obs1) + '\033[0m'
+                    output_name = obs1
+                    diag_obs[output_name] = dict_oneVar[metric](
+                        obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
+                        obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
+                        netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
+                elif metric in dict_twoVar.keys():
+                    for jj in range(len(obsNameVar2)):
+                        obs2 = obsNameVar2[jj]
+                        output_name = obs1 + '_' + obs2
+                        keyarg['project_interpreter_var2'] = obs2
+                        print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name)\
+                              + '\033[0m'
+                        diag_obs[output_name] = dict_twoVar[metric](
+                            obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
+                            obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
+                            obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2,
+                            dataset=output_name, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
+                            metname=tmp_metric, **keyarg)
+            for obs in diag_obs.keys():
+                # computes the metric
+                metric_val, metric_err, description_metric = MathMetriComputation(
+                    diagnostic1['value'], diagnostic1['value_error'], obs=diag_obs[obs]['value'],
+                    obs_err=diag_obs[obs]['value_error'], keyword=keyarg['metric_computation'])
+                dict_metric_val[obs] = {'value': metric_val, 'value_error': metric_err}
+                # puts metric / diagnostic values in its proper dictionary
+                dict_diagnostic[obs] = {'value': diag_obs[obs]['value'], 'value_error': diag_obs[obs]['value_error']}
+                if 'nonlinearity' in diag_obs[obs].keys():
+                    dict_diagnostic[obs]['nonlinearity'] = diag_obs[obs]['nonlinearity']
+                    dict_diagnostic[obs]['nonlinearity_error'] = diag_obs[obs]['nonlinearity_error']
+                if 'dive_down_diag' in diag_obs[obs].keys():
+                    dict_dive_down[obs] = diag_obs[obs]['dive_down_diag']['value']
+                    for elt in diag_obs[obs]['dive_down_diag'].keys():
+                        if elt not in ['value']:
+                            try:
+                                dict_dive_down_metadata[obs]
+                            except:
+                                dict_dive_down_metadata[obs] = {elt: diag_obs[obs]['dive_down_diag'][elt]}
+                            else:
+                                dict_dive_down_metadata[obs][elt] = diag_obs[obs]['dive_down_diag'][elt]
+                # puts diagnostic metadata in its proper dictionary
+                dict_diagnostic_metadata[obs] = {
+                    'name': obs, 'nyears': diag_obs[obs]['nyears'], 'time_period': diag_obs[obs]['time_period'],
+                }
+                if 'events_model' in diag_obs[obs].keys():
+                    dict_diagnostic_metadata[obs]['events'] = diag_obs[obs]['events']
+                if 'keyerror' in diag_obs[obs].keys():
+                    dict_diagnostic_metadata[obs]['keyerror'] = diag_obs[obs]['keyerror']
+            if keyarg['metric_computation'] in ['ratio', 'relative_difference']:
+                units = diagnostic1['units'] + ' / ' + diagnostic1['units']
             else:
-                dict_diagnostic_metadata['method_nonlinearity'] = diagnostic1['method_nonlinearity']
-        else:
-            dict_diagnostic_metadata[key] = diagnostic1[key]
-            dict_dive_down_metadata[key] = diagnostic1[key]
-    # creates the output dictionaries
-    dict_metrics = {
-        'metric': dict_metric_val, 'diagnostic': dict_diagnostic,
-    }
-    datasets = modelName + "; "
-    for ii in range(len(obsNameVar1)):
-        datasets = datasets + obsNameVar1[ii] + "'s " + obsVarName1[ii]
-        if ii != len(obsNameVar1) - 1:
-            datasets = datasets + " & "
-        else:
-            datasets = datasets + "; "
-    if len(obsNameVar2) > 0:
-        for ii in range(len(obsNameVar2)):
-            if isinstance(obsVarName2[ii], list):
-                datasets = datasets + obsNameVar2[ii] + "'s "
-                for jj in range(len(obsVarName2[ii])):
-                    datasets += obsVarName2[ii][jj]
-                    if jj != len(obsVarName2[ii])-1:
-                        datasets += " & "
+                units = diagnostic1['units']
+        # finishes to fill the diagnostic dictionary
+        list_keys = ['method', 'name', 'ref', 'time_frequency', 'units']
+        for key in list_keys:
+            if key == 'method':
+                dict_diagnostic_metadata[key] = diagnostic1['method']
+                dict_dive_down_metadata[key] = diagnostic1['method']
+                try:
+                    diagnostic1['nonlinearity']
+                except:
+                    pass
+                else:
+                    dict_diagnostic_metadata['method_nonlinearity'] = diagnostic1['method_nonlinearity']
             else:
-                datasets = datasets + obsNameVar2[ii] + "'s " + obsVarName2[ii]
-            if ii != len(obsNameVar2) - 1:
+                dict_diagnostic_metadata[key] = diagnostic1[key]
+                dict_dive_down_metadata[key] = diagnostic1[key]
+        # creates the output dictionaries
+        dict_metrics = {'metric': dict_metric_val, 'diagnostic': dict_diagnostic}
+        datasets = modelName + "; "
+        for ii in range(len(obsNameVar1)):
+            datasets = datasets + obsNameVar1[ii] + "'s " + obsVarName1[ii]
+            if ii != len(obsNameVar1) - 1:
                 datasets = datasets + " & "
-    if multimetric is True:
-        tmp = {'name': metric, 'method': description_metric, 'datasets': datasets}
-        for key in lkeys:
-            tmp[key + '__units'] = diagnostic1[key + '__units']
-        dict_metadata = {'metric': tmp, 'diagnostic': dict_diagnostic_metadata}
-    else:
-        dict_metadata = {
-            'metric': {'name': metric, 'method': description_metric, 'datasets': datasets, 'units': units},
-            'diagnostic': dict_diagnostic_metadata,
-        }
+            else:
+                datasets = datasets + "; "
+        if len(obsNameVar2) > 0:
+            for ii in range(len(obsNameVar2)):
+                if isinstance(obsVarName2[ii], list):
+                    datasets = datasets + obsNameVar2[ii] + "'s "
+                    for jj in range(len(obsVarName2[ii])):
+                        datasets += obsVarName2[ii][jj]
+                        if jj != len(obsVarName2[ii])-1:
+                            datasets += " & "
+                else:
+                    datasets = datasets + obsNameVar2[ii] + "'s " + obsVarName2[ii]
+                if ii != len(obsNameVar2) - 1:
+                    datasets = datasets + " & "
+        if multimetric is True:
+            tmp = {'name': metric, 'method': description_metric, 'datasets': datasets}
+            for key in lkeys:
+                tmp[key + '__units'] = diagnostic1[key + '__units']
+            dict_metadata = {'metric': tmp, 'diagnostic': dict_diagnostic_metadata}
+        else:
+            dict_metadata = {
+                'metric': {'name': metric, 'method': description_metric, 'datasets': datasets, 'units': units},
+                'diagnostic': dict_diagnostic_metadata,
+            }
     return dict_metrics, dict_metadata, dict_dive_down, dict_dive_down_metadata
 # ---------------------------------------------------------------------------------------------------------------------#

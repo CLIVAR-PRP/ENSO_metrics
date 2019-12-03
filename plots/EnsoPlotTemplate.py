@@ -1116,6 +1116,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         # ax.set_yticklabels([-100, -50, 0, 50, 100])
         # ax.set_yticks([-75, -25, 25, 75], minor=True)
         # ax.set_ylim([-125, 125])
+        # ax.set_yticks([-100, -50, 0, 50, 100], minor=False)
+        # ax.set_yticklabels([-100, -50, 0, 50, 100])
+        # ax.set_yticks([-75, -25, 25, 75], minor=True)
+        # ax.set_ylim([-100, 100])
         if (one_yaxis is True and ii % nbrc == 0) or one_yaxis is False:
             ylabel = yname[ii]
             for kk in regions.keys():
@@ -1164,8 +1168,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                     yy = [kk * slope + intercept for kk in xx]
                     ax.plot(xx, yy, lw=2, c=col)
                     txt = "slope(" + keys2[jj] + ") = " + "{0:+.2f}".format(round(slope, 2))
-                    ax.text(dx + x1, ((97 - 5 * jj) * dy) + y1, txt, fontsize=12, color=col, horizontalalignment="left",
-                            verticalalignment="center")
+                    # ax.text(dx + x1, ((97 - 5 * jj) * dy) + y1, txt, fontsize=12, color=col, horizontalalignment="left",
+                    #         verticalalignment="center")
+                    ax.text(2 * dx + x1, ((93 - 6 * jj) * dy) + y1, txt, fontsize=12, color=col,
+                            horizontalalignment="left", verticalalignment="center")
                 else:
                     if "slope" + keys1[jj] in tab1[ii].attrs.keys() and\
                             "intercept" + keys1[jj] in tab1[ii].attrs.keys():
@@ -1180,7 +1186,9 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                         yy = [kk * slope + intercept for kk in xx]
                         ax.plot(xx, yy, lw=2, c=col)
                         txt = "slope(" + keys2[jj] + ") = " + "{0:+.2f}".format(round(slope, 2))
-                        ax.text(dx + x1, ((93 - 6 * jj) * dy) + y1, txt, fontsize=12, color=col,
+                        # ax.text(dx + x1, ((93 - 6 * jj) * dy) + y1, txt, fontsize=12, color=col,
+                        #         horizontalalignment="left", verticalalignment="center")
+                        ax.text(2 * dx + x1, ((93 - 6 * jj) * dy) + y1, txt, fontsize=12, color=col,
                                 horizontalalignment="left", verticalalignment="center")
         else:
             tmp = list()
