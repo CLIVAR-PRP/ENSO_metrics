@@ -261,7 +261,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
             print '\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m'
             if modelFile1 is None:
                 print '\033[94m' + str().ljust(11) + "no modeled " + list_variables[0] + " given" + '\033[0m'
-            if len(list_variables) > 1 and len(arg_var2['modelFile2']) == 0:
+            if len(list_variables) > 1 and arg_var2['modelFile2']is None:
                 print '\033[94m' + str().ljust(11) + "no modeled " + list_variables[1] + " given" + '\033[0m'
         elif len(modelFile1) == 0 or (len(list_variables) > 1 and len(arg_var2['modelFile2']) == 0):
             print '\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
