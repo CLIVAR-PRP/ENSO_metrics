@@ -513,7 +513,7 @@ if ' ':
                                  "metrics_" + str(len(lev1)).zfill(2) + "models")
         title = ""  # "inter metric correlations"
         list_metrics2 = [met.replace("_2", "") for met in list_metrics]
-        plot_correlation(rval, name_plot, list_metrics2, tab_pval=pval, write_corr=True, title=title)
+        # plot_correlation(rval, name_plot, list_metrics2, tab_pval=pval, write_corr=True, title=title)
         # # compute inter model correlations
         # tab = tab.reorder('10')
         # rval, pval = compute_correlation(tab)
@@ -522,39 +522,39 @@ if ' ':
         # title = "inter model correlations"
         # plot_correlation(rval, name_plot, list_metrics, tab_pval=pval, write_corr=True, title=title)
 
-# if ' ':
-#     lev1.remove("BNU-ESM")
-#     lev1.remove("GFDL-CM2p1")
-#     lev1.remove("GFDL-CM4")
-#     lev1.remove("HadCM3")
-#     lev1.remove("HadGEM2-AO")
-#     tmp1 = [dict_out[mod]["EnsoSeasonality"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.25 / Q2 ~ 0.34
-#     tmp2 = [dict_out[mod]["BiasSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.64 / Q2 ~ 1.00
-#     tmp3 = [dict_out[mod]["BiasPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.73 / Q2 ~ 1.00
-#     tmp4 = [dict_out[mod]["SeasonalSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.18 / Q2 ~ 0.21
-#     tmp5 = [dict_out[mod]["SeasonalPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.44 / Q2 ~ 0.63
-#     tmp6 = [dict_out[mod]["EnsoFbSstTaux"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.39 / Q2 ~ 0.47
-#     tmp7 = [dict_out[mod]["EnsoFbSstThf"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.23 / Q2 ~ 0.48
-#     tmp8 = [dict_out[mod]["EnsoFbSstSwr"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.54 / Q2 ~ 1.18
-#     tmp9 = [dict_out[mod]["EnsodSstOce_2"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.17 / Q2 ~ 0.33
-#     tmp10 = [dict_out[mod]["EnsoSstSkew"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.52 / Q2 ~ 0.82
-#     selections = [
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp2[ii] < 1.0],
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp3[ii] < 1.0],
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp4[ii] < 0.25],
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp5[ii] < SCIPYstats__scoreatpercentile(tmp5, 50)],
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp6[ii] < 0.5],
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp7[ii] < 0.5],
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp8[ii] < 1.0],
-#         [lev1[ii] for ii in range(len(tmp1)) if tmp6[ii] < SCIPYstats__scoreatpercentile(tmp6, 25)
-#          and tmp7[ii] < SCIPYstats__scoreatpercentile(tmp7, 25)],
-#         [lev1[ii] for ii in range(len(tmp1))
-#          if tmp6[ii] < SCIPYstats__scoreatpercentile(tmp6, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
-#         [lev1[ii] for ii in range(len(tmp1))
-#          if tmp7[ii] < SCIPYstats__scoreatpercentile(tmp7, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
-#         [lev1[ii] for ii in range(len(tmp1)) if
-#          tmp1[ii] < SCIPYstats__scoreatpercentile(tmp1, 50) and tmp10[ii] < SCIPYstats__scoreatpercentile(tmp10, 50)],
-#     ]
-#     for ii, tmp in enumerate(selections):
-#         print "selection" + str(ii+1).zfill(2) + " (" + str(len(tmp)).zfill(2) + "): "+str(tmp)
+if ' ':
+    lev1.remove("BNU-ESM")
+    lev1.remove("GFDL-CM2p1")
+    lev1.remove("GFDL-CM4")
+    lev1.remove("HadCM3")
+    lev1.remove("HadGEM2-AO")
+    tmp1 = [dict_out[mod]["EnsoSeasonality"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.25 / Q2 ~ 0.34
+    tmp2 = [dict_out[mod]["BiasSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.64 / Q2 ~ 1.00
+    tmp3 = [dict_out[mod]["BiasPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.73 / Q2 ~ 1.00
+    tmp4 = [dict_out[mod]["SeasonalSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.18 / Q2 ~ 0.21
+    tmp5 = [dict_out[mod]["SeasonalPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.44 / Q2 ~ 0.63
+    tmp6 = [dict_out[mod]["EnsoFbSstTaux"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.39 / Q2 ~ 0.47
+    tmp7 = [dict_out[mod]["EnsoFbSstThf"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.23 / Q2 ~ 0.48
+    #tmp8 = [dict_out[mod]["EnsoFbSstSwr"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.54 / Q2 ~ 1.18
+    tmp9 = [dict_out[mod]["EnsodSstOce_2"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.17 / Q2 ~ 0.33
+    tmp10 = [dict_out[mod]["EnsoSstSkew"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.52 / Q2 ~ 0.82
+    selections = [
+        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp2[ii] < 1.0],
+        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp3[ii] < 1.0],
+        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp4[ii] < 0.25],
+        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp5[ii] < SCIPYstats__scoreatpercentile(tmp5, 50)],
+        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp6[ii] < 0.5],
+        [lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp7[ii] < 0.5],
+        #[lev1[ii] for ii in range(len(tmp1)) if tmp1[ii] < 0.25 and tmp8[ii] < 1.0],
+        [lev1[ii] for ii in range(len(tmp1)) if tmp6[ii] < SCIPYstats__scoreatpercentile(tmp6, 25)
+         and tmp7[ii] < SCIPYstats__scoreatpercentile(tmp7, 25)],
+        [lev1[ii] for ii in range(len(tmp1))
+         if tmp6[ii] < SCIPYstats__scoreatpercentile(tmp6, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
+        [lev1[ii] for ii in range(len(tmp1))
+         if tmp7[ii] < SCIPYstats__scoreatpercentile(tmp7, 50) and tmp9[ii] < SCIPYstats__scoreatpercentile(tmp9, 25)],
+        [lev1[ii] for ii in range(len(tmp1)) if
+         tmp1[ii] < SCIPYstats__scoreatpercentile(tmp1, 50) and tmp10[ii] < SCIPYstats__scoreatpercentile(tmp10, 50)],
+    ]
+    for ii, tmp in enumerate(selections):
+        print "selection" + str(ii+1).zfill(2) + " (" + str(len(tmp)).zfill(2) + "): "+str(tmp)
 
