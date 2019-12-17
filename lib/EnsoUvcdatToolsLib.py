@@ -96,7 +96,7 @@ def ArrayZeros(tab, id='new_variable_zeros'):
     return CDMS2createVariable(MV2zeros(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=id)
 
 
-def AverageHorizontal(tab, areacell=None):
+def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     """
     #################################################################################
     Description:
@@ -113,16 +113,27 @@ def AverageHorizontal(tab, areacell=None):
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
         except:
-            print("AverageHorizontal")
-            print('\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m')
-            print('\033[93m' + str().ljust(20) + "axes = " + str(snum) + '\033[0m')
+            print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
+            print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
-                list_strings = [
-                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
-                    str().ljust(5) + "cdutil.averager cannot perform horizontal average"
-                ]
-                EnsoErrorsWarnings.MyError(list_strings)
+                if 'regridding' not in kwargs.keys() or isinstance(kwargs['regridding'], dict) is False:
+                    kwargs2 = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                               'newgrid_name': 'generic_1x1deg'}
+                else:
+                    kwargs2 = kwargs['regridding']
+                kwargs2["newgrid_name"] =\
+                    closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
+                print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
+                      " to perform average \033[0m")
+                tmp = Regrid(tab, None, region=region, **kwargs2)
+                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights='weighted', action='average')
+                except:
+                    list_strings = [
+                        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": horizontal average",
+                        str().ljust(5) + "cdutil.averager cannot perform horizontal average"
+                    ]
+                    EnsoErrorsWarnings.MyError(list_strings)
     else:
         if tab.getGrid().shape != areacell.getGrid().shape:
             list_strings = [
@@ -139,7 +150,7 @@ def AverageHorizontal(tab, areacell=None):
     return averaged_tab
 
 
-def AverageMeridional(tab, areacell=None):
+def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     """
     #################################################################################
     Description:
@@ -151,17 +162,32 @@ def AverageMeridional(tab, areacell=None):
     help(cdutil.averager)
     """
     lat_num = get_num_axis(tab, 'latitude')
+    lon_num = get_num_axis(tab, 'longitude')
     snum = str(lat_num)
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='y', weights='weighted', action='average')
         except:
+            print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageMeridional" + "\033[0m")
+            print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
-                list_strings = [
-                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional average",
-                    str().ljust(5) + "cdutil.averager cannot perform meridional average"
-                ]
-                EnsoErrorsWarnings.MyError(list_strings)
+                if 'regridding' not in kwargs.keys() or isinstance(kwargs['regridding'], dict) is False:
+                    kwargs2 = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                               'newgrid_name': 'generic_1x1deg'}
+                else:
+                    kwargs2 = kwargs['regridding']
+                kwargs2["newgrid_name"] = \
+                    closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
+                print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
+                      " to perform average \033[0m")
+                tmp = Regrid(tab, None, region=region, **kwargs2)
+                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights='weighted', action='average')
+                except:
+                    list_strings = [
+                        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": meridional average",
+                        str().ljust(5) + "cdutil.averager cannot perform meridional average"
+                    ]
+                    EnsoErrorsWarnings.MyError(list_strings)
     else:
         if tab.getGrid().shape != areacell.getGrid().shape:
             list_strings = [
@@ -210,7 +236,7 @@ def AverageTemporal(tab, areacell=None):
     return averaged_tab
 
 
-def AverageZonal(tab, areacell=None):
+def AverageZonal(tab, areacell=None, region=None, **kwargs):
     """
     #################################################################################
     Description:
@@ -221,18 +247,33 @@ def AverageZonal(tab, areacell=None):
     import cdutil
     help(cdutil.averager)
     """
+    lat_num = get_num_axis(tab, 'latitude')
     lon_num = get_num_axis(tab, 'longitude')
     snum = str(lon_num)
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='x', weights='weighted', action='average')
         except:
+            print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageZonal" + "\033[0m")
+            print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
-                list_strings = [
-                    "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal average",
-                    str().ljust(5) + "cdutil.averager cannot perform zonal average"
-                ]
-                EnsoErrorsWarnings.MyError(list_strings)
+                if 'regridding' not in kwargs.keys() or isinstance(kwargs['regridding'], dict) is False:
+                    kwargs2 = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                               'newgrid_name': 'generic_1x1deg'}
+                else:
+                    kwargs2 = kwargs['regridding']
+                kwargs2["newgrid_name"] = \
+                    closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
+                print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
+                      " to perform average \033[0m")
+                tmp = Regrid(tab, None, region=region, **kwargs2)
+                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights='weighted', action='average')
+                except:
+                    list_strings = [
+                        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": zonal average",
+                        str().ljust(5) + "cdutil.averager cannot perform zonal average"
+                    ]
+                    EnsoErrorsWarnings.MyError(list_strings)
     else:
         if tab.getGrid().shape != areacell.getGrid().shape:
             list_strings = [
@@ -260,6 +301,27 @@ def AverageZonal(tab, areacell=None):
 # Dictionary of averaging methods
 dict_average = {'horizontal': AverageHorizontal, 'meridional': AverageMeridional, 'time': AverageTemporal,
                 'zonal': AverageZonal}
+
+
+def closest_grid(region, nlat, nlon):
+    res = [0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75]
+    region_ref = ReferenceRegions(region)
+    lats = region_ref['latitude']
+    dy = float(abs(max(lats) - min(lats))) / nlat
+    lyy = [abs(dy - ii) for ii in res]
+    lyy = res[lyy.index(min(lyy))]
+    lons = region_ref['longitude']
+    dx = float(abs(max(lons) - min(lons))) / nlon
+    lxx = [abs(dx - ii) for ii in res]
+    lxx = res[lxx.index(min(lxx))]
+    if lxx == lyy:
+        grid = "generic_" + str(lxx) + "x" + str(lxx) + "deg"
+    else:
+        dx = abs(lxx + lyy) / 2.
+        lxx = [abs(dx - ii) for ii in res]
+        lxx = res[lxx.index(min(lxx))]
+        grid = "generic_" + str(lxx) + "x" + str(lxx) + "deg"
+    return grid
 
 
 def ComputeInterannualAnomalies(tab):
@@ -1989,16 +2051,31 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         except:
             GridType = 'generic'
         # define resolution (same resolution in lon and lat)
-        for res in ['0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg']:
+        for res in ['0.25x0.25deg', '0.5x0.5deg', '0.75x0.75deg', '1x1deg', '1.25x1.25deg', '1.5x1.5deg',
+                    '1.75x1.75deg', '2x2deg', '2.25x2.25deg', '2.5x2.5deg', '2.75x2.75deg']:
             if res in kwargs['newgrid_name']:
                 if res == '0.25x0.25deg':
                     GridRes = 0.25
                 elif res == '0.5x0.5deg':
                     GridRes = 0.5
+                elif res == '0.75x0.75deg':
+                    GridRes = 0.75
                 elif res == '1x1deg':
                     GridRes = 1.
-                else:
+                elif res == '1.25x1.25deg':
+                    GridRes = 1.25
+                elif res == '1.5x1.5deg':
+                    GridRes = 1.5
+                elif res == '1.75x1.75deg':
+                    GridRes = 1.75
+                elif res == '2x2deg':
                     GridRes = 2.
+                elif res == '2.25x2.25deg':
+                    GridRes = 2.25
+                elif res == '2.5x2.5deg':
+                    GridRes = 2.5
+                else:
+                    GridRes = 2.75
                 break
         try:
             GridRes
@@ -3040,7 +3117,7 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
 
 
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
-                 **kwargs):
+                 region=None, **kwargs):
     # removes annual cycle (anomalies with respect to the annual cycle)
     if compute_anom is True:
         tab = ComputeInterannualAnomalies(tab)
@@ -3077,7 +3154,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
             except:
                 EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
             else:
-                tab = dict_average[average](tab, areacell)
+                tab = dict_average[average](tab, areacell, region=region, **kwargs)
                 if debug is True:
                     dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
                     EnsoErrorsWarnings.DebugMode('\033[93m', "performed " + str(average), 25, **dict_debug)
@@ -3087,7 +3164,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
                 except:
                     EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
                 else:
-                    tab = dict_average[av](tab, areacell)
+                    tab = dict_average[av](tab, areacell, region=region, **kwargs)
                     if debug is True:
                         dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
                         EnsoErrorsWarnings.DebugMode('\033[93m', "performed " + str(av), 25, **dict_debug)
