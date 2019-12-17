@@ -87,8 +87,6 @@ try:
     egg_pth = pkg_resources.resource_filename(
         pkg_resources.Requirement.parse("pcmdi_metrics"), "share/pmp")
 except Exception:
-    # python 2 seems to fail when ran in home directory of source?
-    #egg_pth = os.path.join(os.getcwd(), "share", "pmp")
     egg_pth = os.path.join(sys.prefix, "share", "pmp")
 print('egg_pth:', egg_pth)
 
@@ -217,7 +215,9 @@ for mod in models:
     for run in runs_list:
 
         print(' --- run: ', run, ' ---')
-        dict_mod = {mod: {}}
+        mod_run = '_'.join([mod, run])
+        #dict_mod = {mod: {}}
+        dict_mod = {mod_run: {}}
         #dict_mod[mod][run] = {}
 
         if debug:
@@ -237,17 +237,24 @@ for mod in models:
                 # finding file for 'mod', 'var'
                 #
                 file_name = modpath(mip=mip, exp=exp, model=mod, realization=run, variable=var0)
-                file_areacell = None ## temporary for now
-                file_landmask = modpath_lf(mip=mip, model=mod)
+                file_areacella = modpath_lf(mip=mip, model=mod, variable="areacella")
+                file_areacello = modpath_lf(mip=mip, model=mod, variable="areacello")
+                if var in ['ssh']:
+                    file_areacell = file_areacello
+                else:
+                    file_areacell = file_areacella
+                file_landmask = modpath_lf(mip=mip, model=mod, variable="sftlf")
                 # -- TEMPORARY --
                 if mip == 'cmip6':
                     if mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
                         file_landmask = '/work/lee1043/ESGF/CMIP6/CMIP/'+mod+'/sftlf_fx_'+mod+'_historical_r1i1p1f1_gr.nc'
                     elif mod in ['GFDL-ESM4']:
-                        file_landmask = modpath_lf(mip=mip, model='GFDL-CM4')
+                        file_landmask = modpath_lf(mip=mip, model='GFDL-CM4', variable="sftlf")
                 # -- TEMPORARY END --
                 try:
                     areacell_in_file = dict_var['areacell']['var_name']
+                    if var == 'ssh':
+                        areacell_in_file = "areacello"
                 except:
                     areacell_in_file = None
                 try:
@@ -260,7 +267,7 @@ for mod in models:
                         list(), list(), list(), list(), list()
                     for var1 in var_in_file:
                         modpath_tmp = modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var1)
-                        modpath_lf_tmp = modpath_lf(mip=mip, model=mod)
+                        modpath_lf_tmp = modpath_lf(mip=mip, model=mod, variable="sftlf")
                         if not os.path.isfile(modpath_tmp):
                             modpath_tmp = None
                         if not os.path.isfile(modpath_lf_tmp):
@@ -285,18 +292,12 @@ for mod in models:
                 if var in ['ssh']:
                     list_landmask = None
 
-                dict_mod[mod][var] = {
+                #dict_mod[mod][var] = {
+                dict_mod[mod_run][var] = {
                     'path + filename': list_files, 'varname': var_in_file,
                     'path + filename_area': list_areacell, 'areaname': list_name_area,
                     'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
 
-                """
-                # ad-hoc temporary solution for models not providing ssh (i.e., zos)
-                if var in ['ssh']:
-                    if dict_mod[mod][var]['path + filename'] is None: 
-                        del dict_mod[mod][var]
-                """
- 
                 print('PMPdriver: var loop end')
             
             # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
@@ -327,7 +328,7 @@ for mod in models:
                 print('json_name:', json_name)
 
             # Computes the metric collection
-            dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=param.nc_out,
+            dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod_run, netcdf=param.nc_out,
                                                      netcdf_name=netcdf, debug=debug)
             if debug:
                 print('file_name:', file_name)
