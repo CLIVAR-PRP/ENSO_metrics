@@ -50,7 +50,7 @@ plot_parameters = {
         'diagnostic': {
             'plot_type': 'curve',
             'nbr_panel': 1,
-            'title': 'Mean PR',
+            'title': 'a) Mean meridional PR',  # 'Mean PR',
             'varpattern': 'pr_lat__',
             'xname': 'latitude',
             'yname': 'PR',
@@ -334,7 +334,7 @@ plot_parameters = {
         'diagnostic': {
             'plot_type': 'scatterplot',
             'nbr_panel': 1,
-            'title': 'Thermocline feedback',
+            'title': 'c) SSH-to-SST coupling',  # 'SSH-to-SST coupling',
             'varpattern': ['ssh__', 'sst__'],
             'xname': 'SSHA',
             'yname': 'SSTA',
@@ -555,7 +555,7 @@ plot_parameters = {
         'diagnostic': {
             'plot_type': 'scatterplot',
             'nbr_panel': 1,
-            'title': 'Wind-SST feedback',
+            'title': 'a) SST-to-Taux coupling',  # 'SST-to-Taux coupling',
             'varpattern': ['sst__', 'taux__'],
             'xname': 'SSTA',
             'yname': 'TAUXA',
@@ -643,7 +643,7 @@ plot_parameters = {
         'diagnostic': {
             'plot_type': 'scatterplot',
             'nbr_panel': 1,
-            'title': 'SSH-Wind feedback',
+            'title': 'b) Taux-to-SSH coupling',  # 'Taux-to-SSH coupling',
             'varpattern': ['taux__', 'ssh__'],
             'xname': 'TAUXA',
             'yname': 'SSHA',
@@ -1554,9 +1554,11 @@ def plot_param(metric_collection, metric):
     refname = references[variables[0]]
     for var in variables[1:]:
         refname = refname + "_" + references[var]
-    if metric_collection == "ENSO_tel" and metric in ["EnsoPrMap", "EnsoSlpMap"]:
-        refname = "ERA-Interim_ERA-Interim"
-    elif metric_collection == "ENSO_tel" and metric in ["EnsoSstMap"]:
+    # if metric_collection == "ENSO_tel" and metric in ["EnsoPrMap", "EnsoSlpMap"]:
+    #     refname = "ERA-Interim_ERA-Interim"
+    # elif metric_collection == "ENSO_tel" and metric in ["EnsoSstMap", "NinaSstMap", "NinoSstMap"]:
+    #     refname = "ERA-Interim"
+    if metric_collection == "ENSO_tel" and metric in ["EnsoSstMap", "NinaSstMap", "NinoSstMap"]:
         refname = "ERA-Interim"
     dict_out['metric_reference'] = refname
     # get variable regions

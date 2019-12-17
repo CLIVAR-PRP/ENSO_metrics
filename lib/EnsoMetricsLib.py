@@ -173,21 +173,16 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr = None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -395,21 +390,16 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -461,14 +451,14 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
-                                               compute_anom=False, **kwargs)
+                                             compute_anom=False, region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
-                map_mod, map_obs, unneeded = TwoVarRegrid(map_mod, map_obs, '',
-                                                          region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+                map_mod, map_obs, unneeded = TwoVarRegrid(map_mod, map_obs, '', region='equatorial_pacific_LatExt2',
+                                                          **kwargs['regridding'])
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
@@ -654,21 +644,16 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                       **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -719,15 +704,15 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
-            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
-                                             compute_anom=False, **kwargs)
+            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
-                map_mod, map_obs, unneeded = TwoVarRegrid(map_mod, map_obs, '',
-                                                        region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+                map_mod, map_obs, unneeded = TwoVarRegrid(map_mod, map_obs, '', region='equatorial_pacific_LatExt2',
+                                                          **kwargs['regridding'])
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
@@ -916,21 +901,16 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
 
     if keyerror_mod is not None or keyerror_obs is not None:
         skeRmse, skeRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axi': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average=False, compute_anom=True,
-                                       **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=True,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -991,9 +971,9 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average=False, compute_anom=True,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=True,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
@@ -1015,8 +995,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after SkewnessTemporal: netcdf', 15, **dict_debug)
             # Regridding
             if isinstance(kwargs['regridding'], dict):
-                ske_map_mod, ske_map_obs, unneeded = TwoVarRegrid(ske_map_mod, ske_map_obs, '',
-                                                        region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+                ske_map_mod, ske_map_obs, unneeded = TwoVarRegrid(
+                    ske_map_mod, ske_map_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ske_map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in ske_map_obs.getAxisList()]),
@@ -1206,21 +1186,16 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr = None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                      region=box, **kwargs)
         pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                        region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -1428,21 +1403,16 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                      region=box, **kwargs)
         pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                        region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -1493,10 +1463,10 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                                     file_area=prareafileobs, name_area=prareanameobs, file_mask=prlandmaskfileobs,
                                     name_mask=prlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
-            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
-                                               compute_anom=False, **kwargs)
+            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
@@ -1688,21 +1658,16 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                      region=box, **kwargs)
         pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                         **kwargs)
+                                        region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -1753,10 +1718,10 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                                     file_area=prareafileobs, name_area=prareanameobs, file_mask=prlandmaskfileobs,
                                     name_mask=prlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
-            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time',
-                                             compute_anom=False, **kwargs)
+            map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
@@ -1948,21 +1913,16 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr = None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                        **kwargs)
+                                        region=box, **kwargs)
         taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                          **kwargs)
+                                          region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -2174,21 +2134,16 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                        **kwargs)
+                                        region=box, **kwargs)
         taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                          **kwargs)
+                                          region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -2240,9 +2195,9 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                                     name_mask=tauxlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
@@ -2436,21 +2391,16 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
         taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=mod_areacell, average='time', compute_anom=False,
-                                        **kwargs)
+                                        region=box, **kwargs)
         taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                          **kwargs)
+                                          region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -2502,9 +2452,9 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                                     name_mask=tauxlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             # Regridding
             if isinstance(kwargs['regridding'], dict):
@@ -2671,7 +2621,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lhf, keyerror3 = CheckTime(sst, lhf, metric_name=metric, **kwargs)
+    sst, lhf, keyerror3 = CheckTime(sst, lhf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -2688,9 +2638,9 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=sstbox, **kwargs)
         lhf, unneeded = PreProcessTS(lhf, '', areacell=lhf_areacell, average='horizontal', compute_anom=True,
-                                     **kwargs)
+                                     region=lhfbox, **kwargs)
         del sst_areacell, lhf_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -2717,12 +2667,12 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                     name_area=lhfareaname, file_mask=lhflandmaskfile, name_mask=lhflandmaskname,
                                     maskland=True, maskocean=False, debug=debug, **kwargs)
             # Checks if the same time period is used for both variables
-            sst_map, lhf_map, unneeded = CheckTime(sst_map, lhf_map, metric_name=metric, **kwargs)
+            sst_map, lhf_map, unneeded = CheckTime(sst_map, lhf_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             lhf_map, unneeded = PreProcessTS(lhf_map, Method, areacell=lhf_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             del lhf_map_areacell, sst_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -2967,7 +2917,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                       interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, lwr, keyerror3 = CheckTime(sst, lwr, metric_name=metric, **kwargs)
+    sst, lwr, keyerror3 = CheckTime(sst, lwr, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -2984,8 +2934,9 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
-        lwr, unneeded = PreProcessTS(lwr, '', areacell=lwr_areacell, average='horizontal', compute_anom=True, **kwargs)
+                                   region=sstbox, **kwargs)
+        lwr, unneeded = PreProcessTS(lwr, '', areacell=lwr_areacell, average='horizontal', compute_anom=True,
+                                     region=lwrbox, **kwargs)
         del sst_areacell, lwr_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -3013,12 +2964,12 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                               name_mask=lwrlandmaskname, maskland=True, maskocean=False, debug=debug,
                                               interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
-            sst_map, lwr_map, unneeded = CheckTime(sst_map, lwr_map, metric_name=metric, **kwargs)
+            sst_map, lwr_map, unneeded = CheckTime(sst_map, lwr_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region='equatorial_pacific', **kwargs)
             lwr_map, unneeded = PreProcessTS(lwr_map, Method, areacell=lwr_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region='equatorial_pacific', **kwargs)
             del lwr_map_areacell, sst_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -3258,7 +3209,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, shf, keyerror3 = CheckTime(sst, shf, metric_name=metric, **kwargs)
+    sst, shf, keyerror3 = CheckTime(sst, shf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3275,9 +3226,9 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=sstbox, **kwargs)
         shf, unneeded = PreProcessTS(shf, '', areacell=shf_areacell, average='horizontal', compute_anom=True,
-                                     **kwargs)
+                                     region=shfbox, **kwargs)
         del sst_areacell, shf_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -3304,12 +3255,12 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                     name_area=shfareaname, file_mask=shflandmaskfile, name_mask=shflandmaskname,
                                     maskland=True, maskocean=False, debug=debug, **kwargs)
             # Checks if the same time period is used for both variables
-            sst_map, shf_map, unneeded = CheckTime(sst_map, shf_map, metric_name=metric, **kwargs)
+            sst_map, shf_map, unneeded = CheckTime(sst_map, shf_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             shf_map, unneeded = PreProcessTS(shf_map, Method, areacell=shf_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             del shf_map_areacell, sst_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -3554,7 +3505,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                       interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, swr, keyerror3 = CheckTime(sst, swr, metric_name=metric, **kwargs)
+    sst, swr, keyerror3 = CheckTime(sst, swr, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3571,8 +3522,9 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
-        swr, unneeded = PreProcessTS(swr, '', areacell=swr_areacell, average='horizontal', compute_anom=True, **kwargs)
+                                   region=sstbox, **kwargs)
+        swr, unneeded = PreProcessTS(swr, '', areacell=swr_areacell, average='horizontal', compute_anom=True,
+                                     region=swrbox, **kwargs)
         del sst_areacell, swr_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -3600,12 +3552,12 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                               name_mask=swrlandmaskname, maskland=True, maskocean=False, debug=debug,
                                               interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
-            sst_map, swr_map, unneeded = CheckTime(sst_map, swr_map, metric_name=metric, **kwargs)
+            sst_map, swr_map, unneeded = CheckTime(sst_map, swr_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             swr_map, unneeded = PreProcessTS(swr_map, Method, areacell=swr_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             del swr_map_areacell, sst_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -3855,7 +3807,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                       interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, thf, keyerror3 = CheckTime(sst, thf, metric_name=metric, **kwargs)
+    sst, thf, keyerror3 = CheckTime(sst, thf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -3872,8 +3824,9 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
-        thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True, **kwargs)
+                                   region=sstbox, **kwargs)
+        thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True,
+                                     region=thfbox, **kwargs)
         del sst_areacell, thf_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -3901,12 +3854,12 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                               name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
                                               interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
-            sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, **kwargs)
+            sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             thf_map, unneeded = PreProcessTS(thf_map, Method, areacell=thf_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             del thf_map_areacell, sst_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -4135,7 +4088,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=sstbox, **kwargs)
         del sst_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -4163,8 +4116,10 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                                     file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=True, **kwargs)
-            sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True, **kwargs)
+            sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=True,
+                                          region="equatorial_pacific_LatExt2", **kwargs)
+            sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True,
+                                          region="equatorial_pacific", **kwargs)
             del sst_areacell1, sst_areacell2
             if debug is True:
                 dict_debug = {'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
@@ -4356,7 +4311,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     else:
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False, **kwargs)
+        sst, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False,
+                                     region=region_ev, **kwargs)
         del areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -4383,7 +4339,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average=False, compute_anom=False, **kwargs)
+        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average=False, compute_anom=False, region=box,
+                                   **kwargs)
         del areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -4444,13 +4401,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
         if keyerror_nino is not None or keyerror_nina is not None:
             StdErr, dive_down_diag = None, {'value': None, 'axis': None}
-            keyerror = ''
-            if keyerror_nino is not None:
-                keyerror = keyerror_nino
-            if len(keyerror) > 0 and keyerror_nina is not None:
-                keyerror += " ; "
-            if keyerror_nina is not None:
-                keyerror += keyerror_nina
+            tmp = [keyerror_nino, keyerror_nina]
+            keyerror = add_up_errors(tmp)
         else:
             # Standard Error of the Standard Deviation (function of nyears)
             StdErr = None
@@ -4613,7 +4565,8 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # ------------------------------------------------
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        enso, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False, **kwargs)
+        enso, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False,
+                                      region=region_ev, **kwargs)
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in enso.getAxisList()]), 'shape1': str(enso.shape),
                           'time1': str(TimeBounds(enso))}
@@ -4631,7 +4584,8 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # ------------------------------------------------
         # 2.1 SSTA in 'box' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average='horizontal', compute_anom=True, **kwargs)
+        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average='horizontal', compute_anom=True,
+                                   region=region_ev, **kwargs)
         del areacell
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
@@ -4902,8 +4856,8 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                       interpreter='project_interpreter_var2', **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, thf, keyerror4 = CheckTime(sst, thf, metric_name=metric, **kwargs)
-    sst, enso, unneeded = CheckTime(sst, enso, metric_name=metric, **kwargs)
+    sst, thf, keyerror4 = CheckTime(sst, thf, metric_name=metric, debug=debug, **kwargs)
+    sst, enso, unneeded = CheckTime(sst, enso, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -4919,13 +4873,14 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         enso, unneeded = PreProcessTS(enso, '', areacell=enso_areacell, average='horizontal', compute_anom=False,
-                                      **kwargs)
+                                      region=region_ev, **kwargs)
         # if 'smoothing' in kwargs.keys():
         #     smooth = deepcopy(kwargs['smoothing'])
         #     kwargs['smoothing'] = False
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
-        thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True, **kwargs)
+                                   region=sstbox, **kwargs)
+        thf, unneeded = PreProcessTS(thf, '', areacell=thf_areacell, average='horizontal', compute_anom=True,
+                                     region=thfbox, **kwargs)
         del enso_areacell, sst_areacell, thf_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -4959,12 +4914,12 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                               name_mask=thflandmaskname, maskland=True, maskocean=False, debug=debug,
                                               interpreter='project_interpreter_var2', **kwargs)
             # Checks if the same time period is used for both variables
-            sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, **kwargs)
+            sst_map, thf_map, unneeded = CheckTime(sst_map, thf_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             thf_map, unneeded = PreProcessTS(thf_map, Method, areacell=thf_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             del thf_map_areacell, sst_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -5185,7 +5140,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, taux, keyerror3 = CheckTime(sst, taux, metric_name=metric, **kwargs)
+    sst, taux, keyerror3 = CheckTime(sst, taux, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -5202,9 +5157,9 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=sstbox, **kwargs)
         taux, unneeded = PreProcessTS(taux, '', areacell=taux_areacell, average='horizontal', compute_anom=True,
-                                      **kwargs)
+                                      region=tauxbox, **kwargs)
         del sst_areacell, taux_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -5227,10 +5182,10 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                                     file_area=tauxareafile, name_area=tauxareaname, file_mask=tauxlandmaskfile,
                                     name_mask=tauxlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
             # Checks if the same time period is used for both variables
-            sst, taux_map, unneeded = CheckTime(sst, taux_map, metric_name=metric, **kwargs)
+            sst, taux_map, unneeded = CheckTime(sst, taux_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             taux_map, unneeded = PreProcessTS(taux_map, Method, areacell=taux_map_areacell, average=False,
-                                              compute_anom=True, **kwargs)
+                                              compute_anom=True, region="equatorial_pacific", **kwargs)
             del taux_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -5467,7 +5422,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst, ssh, keyerror3 = CheckTime(sst, ssh, metric_name=metric, **kwargs)
+    sst, ssh, keyerror3 = CheckTime(sst, ssh, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -5484,8 +5439,9 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
-        ssh, unneeded = PreProcessTS(ssh, '', areacell=ssh_areacell, average='horizontal', compute_anom=True, **kwargs)
+                                   region=sstbox, **kwargs)
+        ssh, unneeded = PreProcessTS(ssh, '', areacell=ssh_areacell, average='horizontal', compute_anom=True,
+                                     region=sshbox, **kwargs)
         del sst_areacell, ssh_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -5513,12 +5469,12 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                     file_area=sshareafile, name_area=sshareaname, file_mask=sshlandmaskfile,
                                     name_mask=sshlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
             # Checks if the same time period is used for both variables
-            sst_map, ssh_map, unneeded = CheckTime(sst_map, ssh_map, metric_name=metric, **kwargs)
+            sst_map, ssh_map, unneeded = CheckTime(sst_map, ssh_map, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             sst_map, unneeded = PreProcessTS(sst_map, Method, areacell=sst_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             ssh_map, unneeded = PreProcessTS(ssh_map, Method, areacell=ssh_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             del ssh_map_areacell, sst_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -5760,7 +5716,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    ssh, taux, keyerror3 = CheckTime(ssh, taux, metric_name=metric, **kwargs)
+    ssh, taux, keyerror3 = CheckTime(ssh, taux, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN = ssh.shape[0] / 12
@@ -5777,9 +5733,9 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         ssh, Method = PreProcessTS(ssh, Method, areacell=ssh_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=sshbox, **kwargs)
         taux, unneeded = PreProcessTS(taux, '', areacell=taux_areacell, average='horizontal', compute_anom=True,
-                                      **kwargs)
+                                      region=tauxbox, **kwargs)
         del ssh_areacell, taux_areacell
         if debug is True:
             dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh.getAxisList()]),
@@ -5803,10 +5759,10 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                                     file_area=sshareafile, name_area=sshareaname, file_mask=sshlandmaskfile,
                                     name_mask=sshlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
             # Checks if the same time period is used for both variables
-            ssh_map, taux, unneeded = CheckTime(ssh_map, taux, metric_name=metric, **kwargs)
+            ssh_map, taux, unneeded = CheckTime(ssh_map, taux, metric_name=metric, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
             ssh_map, unneeded = PreProcessTS(ssh_map, Method, areacell=ssh_map_areacell, average=False,
-                                             compute_anom=True, **kwargs)
+                                             compute_anom=True, region="equatorial_pacific", **kwargs)
             del ssh_map_areacell
             # Regridding
             if 'regridding' not in kwargs.keys():
@@ -6103,8 +6059,8 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, **kwargs)
-    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, **kwargs)
+    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -6128,9 +6084,9 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -6155,8 +6111,10 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # ------------------------------------------------
         # 2.1 PRA in 'prbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess pr (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, compute_anom=False, **kwargs)
-        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, **kwargs)
+        pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, compute_anom=False, region=prbox,
+                                      **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, region=prbox,
+                                        **kwargs)
         del pr_mod_areacell, pr_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -6207,13 +6165,8 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         pr_obs_slope, keyerror_obs = BasinMask(pr_obs_slope, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between',
                                                debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
@@ -6247,11 +6200,13 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                     name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs,
                                     maskland=False, maskocean=True, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                                     **kwargs)
-            sst_mod, pr_mod, unneeded = CheckTime(sst_mod, pr_mod, metric_name=metric, **kwargs)
-            sst_obs, pr_obs, unneeded = CheckTime(sst_obs, pr_obs, metric_name=metric, **kwargs)
+            sst_mod, pr_mod, unneeded = CheckTime(sst_mod, pr_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, pr_obs, unneeded = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
             # process
-            pr_mod, unneeded = PreProcessTS(pr_mod, '', areacell=pr_mod_areacell, compute_anom=False, **kwargs)
-            pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, **kwargs)
+            pr_mod, unneeded = PreProcessTS(pr_mod, '', areacell=pr_mod_areacell, compute_anom=False, region=prbox,
+                                            **kwargs)
+            pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, region=prbox,
+                                            **kwargs)
             del pr_mod_areacell, pr_obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -6544,8 +6499,8 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, **kwargs)
-    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, **kwargs)
+    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -6560,29 +6515,8 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         compRmse, compRmseErr, signAgreement, signAgreementErr = None, None, None, None
         nina_years_mod, nina_years_obs, nino_years_mod, nino_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -6591,9 +6525,9 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -6666,9 +6600,9 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 loop_box.append(reg)
                 # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
                 pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='horizontal',
-                                              compute_anom=False, **kwargs)
+                                              compute_anom=False, region=reg, **kwargs)
                 pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal',
-                                                compute_anom=False, **kwargs)
+                                                compute_anom=False, region=reg, **kwargs)
                 del mod_areacell, obs_areacell
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -7349,8 +7283,8 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, **kwargs)
-    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, **kwargs)
+    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -7365,29 +7299,8 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         compRmse, compRmseErr, signAgreement, signAgreementErr = None, None, None, None
         nina_years_mod, nina_years_obs, nino_years_mod, nino_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -7396,9 +7309,9 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -7471,9 +7384,9 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 loop_box.append(reg)
                 # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
                 pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='horizontal',
-                                              compute_anom=False, **kwargs)
+                                              compute_anom=False, region=reg, **kwargs)
                 pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal',
-                                                compute_anom=False, **kwargs)
+                                                compute_anom=False, region=reg, **kwargs)
                 del mod_areacell, obs_areacell
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -7664,7 +7577,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_ts, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=False,
-                                      **kwargs)
+                                      region=sstbox, **kwargs)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_ts.getAxisList()]),
                           'shape1': '(sst) ' + str(sst_ts.shape),
@@ -7694,7 +7607,8 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
             (sst_MAM_std * sst_NDJ_std_err + sst_NDJ_std * sst_MAM_std_err) / NUMPYsquare(sst_MAM_std))
 
         # Dive down diagnostic
-        sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, average='horizontal', compute_anom=True, **kwargs)
+        sst, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, average='horizontal', compute_anom=True,
+                                     region=sstbox, **kwargs)
         del sst_areacell
         sstStd_monthly = StdMonthly(sst)
         dive_down_diag = {'value': ArrayToList(sstStd_monthly), 'axis': list(sstStd_monthly.getAxis(0)[:])}
@@ -7710,9 +7624,12 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                                     file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=False, **kwargs)
-            sst3, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=False, **kwargs)
-            sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True, **kwargs)
+            sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=False,
+                                          region="equatorial_pacific_LatExt2", **kwargs)
+            sst3, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=False,
+                                          region="equatorial_pacific", **kwargs)
+            sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True,
+                                          region="equatorial_pacific", **kwargs)
             del sst_areacell1, sst_areacell2
             if debug is True:
                 dict_debug = {'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
@@ -7917,7 +7834,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     else:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=sstbox, **kwargs)
         del sst_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -7945,8 +7862,10 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                     file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile,
                                     name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=True, **kwargs)
-            sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True, **kwargs)
+            sst1, unneeded = PreProcessTS(sst1, '', areacell=sst_areacell1, compute_anom=True,
+                                          region="equatorial_pacific_LatExt2", **kwargs)
+            sst2, unneeded = PreProcessTS(sst2, '', areacell=sst_areacell2, compute_anom=True,
+                                          region="equatorial_pacific", **kwargs)
             del sst_areacell1, sst_areacell2
             if debug is True:
                 dict_debug = {'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
@@ -8208,9 +8127,9 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -8234,8 +8153,10 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # ------------------------------------------------
         # 2.1 SLPA in 'prbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess pr (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, **kwargs)
-        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, **kwargs)
+        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, region=slpbox,
+                                       **kwargs)
+        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, region=slpbox,
+                                         **kwargs)
         del slp_mod_areacell, slp_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
@@ -8287,13 +8208,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         slp_obs_slope, keyerror_obs = BasinMask(slp_obs_slope, 'pacific', box=slpbox, lat1=-15, lat2=15,
                                                 latkey='between', debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs_slope.getAxisList()]),
@@ -8330,11 +8246,13 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                     name_mask=slplandmasknameobs,
                                     maskland=False, maskocean=True, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                                     **kwargs)
-            sst_mod, slp_mod, unneeded = CheckTime(sst_mod, slp_mod, metric_name=metric, **kwargs)
-            sst_obs, slp_obs, unneeded = CheckTime(sst_obs, slp_obs, metric_name=metric, **kwargs)
+            sst_mod, slp_mod, unneeded = CheckTime(sst_mod, slp_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, slp_obs, unneeded = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
             # process
-            slp_mod, unneeded = PreProcessTS(slp_mod, '', areacell=slp_mod_areacell, compute_anom=False, **kwargs)
-            slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, **kwargs)
+            slp_mod, unneeded = PreProcessTS(slp_mod, '', areacell=slp_mod_areacell, compute_anom=False, region=slpbox,
+                                             **kwargs)
+            slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, region=slpbox,
+                                             **kwargs)
             del slp_mod_areacell, slp_obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
@@ -8592,8 +8510,8 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, sstmap_mod, keyerror_mod3 = CheckTime(sst_mod, sstmap_mod, metric_name=metric, **kwargs)
-    sst_obs, sstmap_obs, keyerror_obs3 = CheckTime(sst_obs, sstmap_obs, metric_name=metric, **kwargs)
+    sst_mod, sstmap_mod, keyerror_mod3 = CheckTime(sst_mod, sstmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, sstmap_obs, keyerror_obs3 = CheckTime(sst_obs, sstmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -8617,9 +8535,9 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -8644,8 +8562,9 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 2.1 SSTA in 'box' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sstmap_mod, Method = PreProcessTS(sstmap_mod, Method, areacell=sstmap_mod_areacell, compute_anom=False,
-                                          **kwargs)
-        sstmap_obs, unneeded = PreProcessTS(sstmap_obs, '', areacell=sstmap_obs_areacell, compute_anom=False, **kwargs)
+                                          region=box, **kwargs)
+        sstmap_obs, unneeded = PreProcessTS(sstmap_obs, '', areacell=sstmap_obs_areacell, compute_anom=False,
+                                            region=box, **kwargs)
         del sstmap_mod_areacell, sstmap_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
@@ -8728,9 +8647,9 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sstmap_mod, unneeded = PreProcessTS(sstmap_mod, '', areacell=sstmap_mod_areacell, compute_anom=False,
-                                                **kwargs)
+                                                region="equatorial_pacific_LatExt2", **kwargs)
             sstmap_obs, unneeded = PreProcessTS(sstmap_obs, '', areacell=sstmap_obs_areacell, compute_anom=False,
-                                                **kwargs)
+                                                region="equatorial_pacific_LatExt2", **kwargs)
             del sstmap_mod_areacell, sstmap_obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
@@ -9031,8 +8950,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, tsmap_mod, keyerror_mod3 = CheckTime(sst_mod, tsmap_mod, metric_name=metric, **kwargs)
-    sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, **kwargs)
+    sst_mod, tsmap_mod, keyerror_mod3 = CheckTime(sst_mod, tsmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -9056,9 +8975,9 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -9082,8 +9001,10 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # ------------------------------------------------
         # 2.1 TSA in 'tsbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        tsmap_mod, Method = PreProcessTS(tsmap_mod, Method, areacell=tsmap_mod_areacell, compute_anom=False, **kwargs)
-        tsmap_obs, unneeded = PreProcessTS(tsmap_obs, '', areacell=tsmap_obs_areacell, compute_anom=False, **kwargs)
+        tsmap_mod, Method = PreProcessTS(tsmap_mod, Method, areacell=tsmap_mod_areacell, compute_anom=False,
+                                         region=tsbox, **kwargs)
+        tsmap_obs, unneeded = PreProcessTS(tsmap_obs, '', areacell=tsmap_obs_areacell, compute_anom=False, region=tsbox,
+                                           **kwargs)
         del tsmap_mod_areacell, tsmap_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
@@ -9137,13 +9058,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         ts_obs_slope, keyerror_obs = BasinMask(ts_obs_slope, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                                debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ts_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ts_obs_slope.getAxisList()]),
@@ -9179,11 +9095,13 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                     name_mask=sstlandmasknameobs,
                                     maskland=False, maskocean=True, time_bounds=kwargs['time_bounds_obs'], debug=debug,
                                     **kwargs)
-            sst_mod, ts_mod, unneeded = CheckTime(sst_mod, ts_mod, metric_name=metric, **kwargs)
-            sst_obs, ts_obs, unneeded = CheckTime(sst_obs, ts_obs, metric_name=metric, **kwargs)
+            sst_mod, ts_mod, unneeded = CheckTime(sst_mod, ts_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, ts_obs, unneeded = CheckTime(sst_obs, ts_obs, metric_name=metric, debug=debug, **kwargs)
             # process
-            ts_mod, unneeded = PreProcessTS(ts_mod, '', areacell=ts_mod_areacell, compute_anom=False, **kwargs)
-            ts_obs, unneeded = PreProcessTS(ts_obs, '', areacell=ts_obs_areacell, compute_anom=False, **kwargs)
+            ts_mod, unneeded = PreProcessTS(ts_mod, '', areacell=ts_mod_areacell, compute_anom=False, region=tsbox,
+                                            **kwargs)
+            ts_obs, unneeded = PreProcessTS(ts_obs, '', areacell=ts_obs_areacell, compute_anom=False, region=tsbox,
+                                            **kwargs)
             del ts_mod_areacell, ts_obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ts_mod.getAxisList()]),
@@ -9473,8 +9391,8 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, **kwargs)
-    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, **kwargs)
+    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -9498,9 +9416,9 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         enso_mod, unneeded = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
-                                          compute_anom=False, **kwargs)
+                                          compute_anom=False, region=region_ev, **kwargs)
         enso_obs, unneeded = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
-                                          compute_anom=False, **kwargs)
+                                          compute_anom=False, region=region_ev, **kwargs)
         del sst_mod_areacell, sst_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
@@ -9527,9 +9445,9 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 2.1 PRA in 'prbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, average='horizontal', compute_anom=True,
-                                      **kwargs)
+                                      region=prbox, **kwargs)
         pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, average='horizontal', compute_anom=True,
-                                        **kwargs)
+                                        region=prbox, **kwargs)
         del pr_mod_areacell, pr_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -9577,9 +9495,9 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             prmap_mod, unneeded = PreProcessTS(prmap_mod, '', areacell=prmap_mod_areacell, compute_anom=True,
-                                               **kwargs)
+                                               region="equatorial_pacific_LonRed", **kwargs)
             prmap_obs, unneeded = PreProcessTS(prmap_obs, '', areacell=prmap_obs_areacell, compute_anom=True,
-                                               **kwargs)
+                                               region="equatorial_pacific_LonRed", **kwargs)
             del prmap_mod_areacell, prmap_obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prmap_mod.getAxisList()]),
@@ -9902,9 +9820,9 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         enso_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                          **kwargs)
+                                          region=region_ev, **kwargs)
         enso_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                          **kwargs)
+                                          region=region_ev, **kwargs)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
@@ -9930,9 +9848,9 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         # 2.1 SSTA in 'box' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average='horizontal', compute_anom=True,
-                                       **kwargs)
+                                       region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=True,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -9980,9 +9898,9 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sstmap_mod, unneeded = PreProcessTS(sstmap_mod, '', areacell=sstmap_mod_areacell, compute_anom=True,
-                                                **kwargs)
+                                                region="equatorial_pacific_LonRed", **kwargs)
             sstmap_obs, unneeded = PreProcessTS(sstmap_obs, '', areacell=sstmap_obs_areacell, compute_anom=True,
-                                                **kwargs)
+                                                region="equatorial_pacific_LonRed", **kwargs)
             del sstmap_mod_areacell, sstmap_obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstmap_mod.getAxisList()]),
@@ -10323,8 +10241,8 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, taux_mod, keyerror_mod3 = CheckTime(sst_mod, taux_mod, metric_name=metric, **kwargs)
-    sst_obs, taux_obs, keyerror_obs3 = CheckTime(sst_obs, taux_obs, metric_name=metric, **kwargs)
+    sst_mod, taux_mod, keyerror_mod3 = CheckTime(sst_mod, taux_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, taux_obs, keyerror_obs3 = CheckTime(sst_obs, taux_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -10348,9 +10266,9 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         enso_mod, unneeded = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
-                                          compute_anom=False, **kwargs)
+                                          compute_anom=False, region=region_ev, **kwargs)
         enso_obs, unneeded = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
-                                          compute_anom=False, **kwargs)
+                                          compute_anom=False, region=region_ev, **kwargs)
         del sst_mod_areacell, sst_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso_mod.getAxisList()]),
@@ -10377,9 +10295,9 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 2.1 TAUXA in 'tauxbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         taux_mod, Method = PreProcessTS(taux_mod, Method, areacell=taux_mod_areacell, average='horizontal',
-                                        compute_anom=True, **kwargs)
+                                        compute_anom=True, region=tauxbox, **kwargs)
         taux_obs, unneeded = PreProcessTS(taux_obs, '', areacell=taux_obs_areacell, average='horizontal',
-                                          compute_anom=True, **kwargs)
+                                          compute_anom=True, region=tauxbox, **kwargs)
         del taux_mod_areacell, taux_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -10430,9 +10348,9 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             tauxmap_mod, unneeded = PreProcessTS(tauxmap_mod, '', areacell=tauxmap_mod_areacell, compute_anom=True,
-                                                 **kwargs)
+                                                 region="equatorial_pacific_LonRed", **kwargs)
             tauxmap_obs, unneeded = PreProcessTS(tauxmap_obs, '', areacell=tauxmap_obs_areacell, compute_anom=True,
-                                                 **kwargs)
+                                                 region="equatorial_pacific_LonRed", **kwargs)
             # Change units
             tauxmap_mod = tauxmap_mod * 1e3
             tauxmap_obs = tauxmap_obs * 1e3
@@ -10712,8 +10630,8 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     Output:
     ------
     :return EnsoPrTelMetric: dict
-		name, Rmse__value (rms [NinaPr]), Rmse__value_error, Rmse__units, method,
-		SignAgree__value (sign agreement [NinaPr]), SignAgree__value_error, SignAgree__units, nyears_model,
+        name, Rmse__value (rms [NinaPr]), Rmse__value_error, Rmse__units, method,
+        SignAgree__value (sign agreement [NinaPr]), SignAgree__value_error, SignAgree__units, nyears_model,
         nyears_observations, nina_model, nina_observations, time_frequency, time_period_model, time_period_observations,
         ref, keyerror, dive_down_diag, units
 
@@ -10777,8 +10695,8 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, **kwargs)
-    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, **kwargs)
+    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -10793,29 +10711,8 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         compRmse, compRmseErr, signAgreement, signAgreementErr = None, None, None, None
         nina_years_mod, nina_years_obs = None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -10824,9 +10721,9 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -10896,9 +10793,9 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 loop_box.append(reg)
                 # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
                 pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='horizontal',
-                                              compute_anom=False, **kwargs)
+                                              compute_anom=False, region=reg, **kwargs)
                 pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal',
-                                                compute_anom=False, **kwargs)
+                                                compute_anom=False, region=reg, **kwargs)
                 del mod_areacell, obs_areacell
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -11160,8 +11057,8 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, **kwargs)
-    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, **kwargs)
+    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -11176,29 +11073,8 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         compRmse, compRmseErr, signAgreement, signAgreementErr = None, None, None, None
         nina_years_mod, nina_years_obs = None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -11207,9 +11083,9 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -11279,9 +11155,9 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 loop_box.append(reg)
                 # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
                 pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='horizontal',
-                                              compute_anom=False, **kwargs)
+                                              compute_anom=False, region=reg, **kwargs)
                 pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal',
-                                                compute_anom=False, **kwargs)
+                                                compute_anom=False, region=reg, **kwargs)
                 del mod_areacell, obs_areacell
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -11550,8 +11426,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, **kwargs)
-    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, **kwargs)
+    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -11565,29 +11441,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
         prCorr, prCorrErr, prRmse, prRmseErr, prStd, prStdErr = None, None, None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -11596,9 +11451,9 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -11620,8 +11475,10 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # ------------------------------------------------
         # 2.1 PRA in 'prbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess pr (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, compute_anom=False, **kwargs)
-        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, **kwargs)
+        pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, compute_anom=False, region=prbox,
+                                      **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, region=prbox,
+                                        **kwargs)
         del pr_mod_areacell, pr_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -11667,13 +11524,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
         pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -11862,7 +11714,8 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     else:
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False, **kwargs)
+        sst, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False,
+                                     region=region_ev, **kwargs)
         del areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -11887,7 +11740,8 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average=False, compute_anom=False, **kwargs)
+        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average=False, compute_anom=False, region=box,
+                                   **kwargs)
         del areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -12127,21 +11981,16 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     if keyerror_mod is not None or keyerror_obs is not None:
         pdfRmse, pdfRmseErr, event_years_mod, event_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                           **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -12176,9 +12025,9 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
-                                       **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -12410,7 +12259,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=region_ev, **kwargs)
         del sst_areacell
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
@@ -12630,21 +12479,16 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     if keyerror_mod is not None or keyerror_obs is not None:
         compRmse, compRmseErr, event_years_mod, event_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -12679,9 +12523,9 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
-                                       **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -12752,9 +12596,9 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, unneeded = PreProcessTS(map_mod, '', areacell=mod_areacell, average=False, compute_anom=False,
-                                           **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
@@ -13004,8 +12848,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, **kwargs)
-    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, **kwargs)
+    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -13019,29 +12863,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
         slpCorr, slpCorrErr, slpRmse, slpRmseErr, slpStd, slpStdErr = None, None, None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -13050,9 +12873,9 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -13074,8 +12897,10 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # ------------------------------------------------
         # 2.1 SLPA in 'slpbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess slp (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, **kwargs)
-        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, **kwargs)
+        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, region=slpbox,
+                                       **kwargs)
+        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, region=slpbox,
+                                         **kwargs)
         del slp_mod_areacell, slp_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
@@ -13123,13 +12948,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
                                           debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
@@ -13344,8 +13164,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, tsmap_mod, keyerror_mod3 = CheckTime(sst_mod, tsmap_mod, metric_name=metric, **kwargs)
-    sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, **kwargs)
+    sst_mod, tsmap_mod, keyerror_mod3 = CheckTime(sst_mod, tsmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -13359,29 +13179,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
         tsCorr, tsCorrErr, tsRmse, tsRmseErr, tsStd, tsStdErr = None, None, None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -13390,9 +13189,9 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -13414,8 +13213,10 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # ------------------------------------------------
         # 2.1 TSA in 'tsbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        tsmap_mod, Method = PreProcessTS(tsmap_mod, Method, areacell=tsmap_mod_areacell, compute_anom=False, **kwargs)
-        tsmap_obs, unneeded = PreProcessTS(tsmap_obs, '', areacell=tsmap_obs_areacell, compute_anom=False, **kwargs)
+        tsmap_mod, Method = PreProcessTS(tsmap_mod, Method, areacell=tsmap_mod_areacell, compute_anom=False,
+                                         region=tsbox, **kwargs)
+        tsmap_obs, unneeded = PreProcessTS(tsmap_obs, '', areacell=tsmap_obs_areacell, compute_anom=False, region=tsbox,
+                                           **kwargs)
         del tsmap_mod_areacell, tsmap_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
@@ -13466,13 +13267,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                             debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
@@ -13679,21 +13475,16 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     if keyerror_mod is not None or keyerror_obs is not None:
         compRmse, compRmseErr, event_years_mod, event_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -13750,9 +13541,9 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sst_hov_mod, unneeded = PreProcessTS(sst_hov_mod, Method, areacell=mod_areacell, average=False,
-                                                 compute_anom=True, **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
             sst_hov_obs, unneeded = PreProcessTS(sst_hov_obs, '', areacell=obs_areacell, average=False,
-                                                 compute_anom=True, **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_hov_mod.getAxisList()]),
@@ -14022,8 +13813,8 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, **kwargs)
-    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, **kwargs)
+    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -14038,29 +13829,8 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         compRmse, compRmseErr, signAgreement, signAgreementErr = None, None, None, None
         nino_years_mod, nino_years_obs = None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -14069,9 +13839,9 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -14141,9 +13911,9 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 loop_box.append(reg)
                 # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
                 pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='horizontal',
-                                              compute_anom=False, **kwargs)
+                                              compute_anom=False, region=reg, **kwargs)
                 pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal',
-                                                compute_anom=False, **kwargs)
+                                                compute_anom=False, region=reg, **kwargs)
                 del mod_areacell, obs_areacell
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -14405,8 +14175,8 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, **kwargs)
-    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, **kwargs)
+    sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -14421,29 +14191,8 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         compRmse, compRmseErr, signAgreement, signAgreementErr = None, None, None, None
         nino_years_mod, nino_years_obs = None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -14452,9 +14201,9 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -14524,9 +14273,9 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 loop_box.append(reg)
                 # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
                 pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=mod_areacell, average='horizontal',
-                                              compute_anom=False, **kwargs)
+                                              compute_anom=False, region=reg, **kwargs)
                 pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=obs_areacell, average='horizontal',
-                                                compute_anom=False, **kwargs)
+                                                compute_anom=False, region=reg, **kwargs)
                 del mod_areacell, obs_areacell
                 if debug is True:
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -14795,8 +14544,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, **kwargs)
-    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, **kwargs)
+    sst_mod, pr_mod, keyerror_mod3 = CheckTime(sst_mod, pr_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -14810,29 +14559,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
         prCorr, prCorrErr, prRmse, prRmseErr, prStd, prStdErr = None, None, None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -14841,9 +14569,9 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -14865,8 +14593,10 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         # ------------------------------------------------
         # 2.1 PRA in 'prbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess pr (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, compute_anom=False, **kwargs)
-        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, **kwargs)
+        pr_mod, Method = PreProcessTS(pr_mod, Method, areacell=pr_mod_areacell, compute_anom=False, region=prbox,
+                                      **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', areacell=pr_obs_areacell, compute_anom=False, region=prbox,
+                                        **kwargs)
         del pr_mod_areacell, pr_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -14912,13 +14642,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
         pr_obs, keyerror_obs = BasinMask(pr_obs, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -15105,7 +14830,8 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     else:
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False, **kwargs)
+        sst, unneeded = PreProcessTS(sst, '', areacell=areacell, average='horizontal', compute_anom=False,
+                                     region=region_ev, **kwargs)
         del areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -15130,7 +14856,8 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average=False, compute_anom=False, **kwargs)
+        sst, Method = PreProcessTS(sst, Method, areacell=areacell, average=False, compute_anom=False, region=box,
+                                   **kwargs)
         del areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
@@ -15359,7 +15086,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         enso, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, average='horizontal', compute_anom=False,
-                                      **kwargs)
+                                      region=region_ev, **kwargs)
         del sst_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in enso.getAxisList()]),
@@ -15379,7 +15106,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sstmap, Method = PreProcessTS(sstmap, Method, areacell=sstmap_areacell, average=False, compute_anom=False,
-                                      **kwargs)
+                                      region=box, **kwargs)
         del sstmap_areacell
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
@@ -15672,21 +15399,16 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     if keyerror_mod is not None or keyerror_obs is not None:
         pdfRmse, pdfRmseErr, event_years_mod, event_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -15721,9 +15443,9 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
-                                       **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -15953,7 +15675,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
-                                   **kwargs)
+                                   region=region_ev, **kwargs)
         del sst_areacell
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
@@ -16173,21 +15895,16 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     if keyerror_mod is not None or keyerror_obs is not None:
         compRmse, compRmseErr, event_years_mod, event_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -16222,9 +15939,9 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 2.1 zonal SSTA at the peak of the event is computed for each selected event
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, Method = PreProcessTS(sst_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
-                                       **kwargs)
+                                       region=box, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
-                                         **kwargs)
+                                         region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -16290,9 +16007,9 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             map_mod, Method = PreProcessTS(map_mod, Method, areacell=mod_areacell, average=False, compute_anom=False,
-                                           **kwargs)
+                                           region="equatorial_pacific_LatExt2", **kwargs)
             map_obs, unneeded = PreProcessTS(map_obs, '', areacell=obs_areacell, average=False, compute_anom=False,
-                                             **kwargs)
+                                             region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
@@ -16543,8 +16260,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, **kwargs)
-    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, **kwargs)
+    sst_mod, slp_mod, keyerror_mod3 = CheckTime(sst_mod, slp_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -16558,29 +16275,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
         slpCorr, slpCorrErr, slpRmse, slpRmseErr, slpStd, slpStdErr = None, None, None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -16589,9 +16285,9 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -16613,8 +16309,10 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # ------------------------------------------------
         # 2.1 SLPA in 'slpbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess slp (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, **kwargs)
-        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, **kwargs)
+        slp_mod, Method = PreProcessTS(slp_mod, Method, areacell=slp_mod_areacell, compute_anom=False, region=slpbox,
+                                       **kwargs)
+        slp_obs, unneeded = PreProcessTS(slp_obs, '', areacell=slp_obs_areacell, compute_anom=False, region=slpbox,
+                                         **kwargs)
         del slp_mod_areacell, slp_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
@@ -16662,13 +16360,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         slp_obs, keyerror_obs = BasinMask(slp_obs, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
                                           debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
@@ -16882,8 +16575,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                             **kwargs)
 
     # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
-    sst_mod, tsmap_mod, keyerror_mod3 = CheckTime(sst_mod, tsmap_mod, metric_name=metric, **kwargs)
-    sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, **kwargs)
+    sst_mod, tsmap_mod, keyerror_mod3 = CheckTime(sst_mod, tsmap_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = sst_mod.shape[0] / 12
@@ -16897,29 +16590,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
         tsCorr, tsCorrErr, tsRmse, tsRmseErr, tsStd, tsStdErr = None, None, None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
-        keyerror = ''
-        if keyerror_mod1 is not None:
-            keyerror = keyerror_mod1
-        if len(keyerror) > 0 and keyerror_obs1 is not None:
-            keyerror += " ; "
-        if keyerror_obs1 is not None:
-            keyerror += keyerror_obs1
-        if len(keyerror) > 0 and keyerror_mod2 is not None:
-            keyerror += " ; "
-        if keyerror_mod2 is not None:
-            keyerror += keyerror_mod2
-        if len(keyerror) > 0 and keyerror_obs2 is not None:
-            keyerror += " ; "
-        if keyerror_obs2 is not None:
-            keyerror += keyerror_obs2
-        if len(keyerror) > 0 and keyerror_mod3 is not None:
-            keyerror += " ; "
-        if keyerror_mod3 is not None:
-            keyerror += keyerror_mod3
-        if len(keyerror) > 0 and keyerror_obs3 is not None:
-            keyerror += " ; "
-        if keyerror_obs3 is not None:
-            keyerror += keyerror_obs3
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # ------------------------------------------------
@@ -16928,9 +16600,9 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -16952,8 +16624,10 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         # ------------------------------------------------
         # 2.1 TSA in 'tsbox' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-        tsmap_mod, Method = PreProcessTS(tsmap_mod, Method, areacell=tsmap_mod_areacell, compute_anom=False, **kwargs)
-        tsmap_obs, unneeded = PreProcessTS(tsmap_obs, '', areacell=tsmap_obs_areacell, compute_anom=False, **kwargs)
+        tsmap_mod, Method = PreProcessTS(tsmap_mod, Method, areacell=tsmap_mod_areacell, compute_anom=False,
+                                         region=tsbox, **kwargs)
+        tsmap_obs, unneeded = PreProcessTS(tsmap_obs, '', areacell=tsmap_obs_areacell, compute_anom=False, region=tsbox,
+                                           **kwargs)
         del tsmap_mod_areacell, tsmap_obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
@@ -17004,13 +16678,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         tsmap_obs, keyerror_obs = BasinMask(tsmap_obs, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
                                             debug=debug)
         if keyerror_mod is not None or keyerror_obs is not None:
-            keyerror = ''
-            if keyerror_mod is not None:
-                keyerror = keyerror_mod
-            if len(keyerror) > 0 and keyerror_obs is not None:
-                keyerror += " ; "
-            if keyerror_obs is not None:
-                keyerror += keyerror_obs
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
@@ -17216,21 +16885,16 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     if keyerror_mod is not None or keyerror_obs is not None:
         compRmse, compRmseErr, event_years_mod, event_years_obs = None, None, None, None
         dive_down_diag = {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
         # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst_mod, unneeded = PreProcessTS(sst_mod, '', areacell=mod_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         sst_obs, unneeded = PreProcessTS(sst_obs, '', areacell=obs_areacell, average='horizontal', compute_anom=False,
-                                         **kwargs)
+                                         region=region_ev, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -17287,9 +16951,9 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sst_hov_mod, unneeded = PreProcessTS(sst_hov_mod, '', areacell=mod_areacell, average=False,
-                                                 compute_anom=True, **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
             sst_hov_obs, unneeded = PreProcessTS(sst_hov_obs, '', areacell=obs_areacell, average=False,
-                                                 compute_anom=True, **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_hov_mod.getAxisList()]),
@@ -17527,19 +17191,14 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
-        pr_mod, Method = PreProcessTS(pr_mod, Method, compute_sea_cycle=True, **kwargs)
-        pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
+        pr_mod, Method = PreProcessTS(pr_mod, Method, compute_sea_cycle=True, region=box, **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -17602,8 +17261,10 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                                     name_mask=prlandmaskfileobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            prMap_mod, unneeded = PreProcessTS(prMap_mod, '', compute_sea_cycle=True, **kwargs)
-            prMap_obs, unneeded = PreProcessTS(prMap_obs, '', compute_sea_cycle=True, **kwargs)
+            prMap_mod, unneeded = PreProcessTS(prMap_mod, '', compute_sea_cycle=True,
+                                               region="equatorial_pacific_LatExt2", **kwargs)
+            prMap_obs, unneeded = PreProcessTS(prMap_obs, '', compute_sea_cycle=True,
+                                               region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prMap_mod.getAxisList()]),
@@ -17832,19 +17493,14 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
     if keyerror_mod is not None or keyerror_obs is not None:
         prRmse, prRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
-        pr_mod, Method = PreProcessTS(pr_mod, Method, compute_sea_cycle=True, **kwargs)
-        pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, **kwargs)
+        pr_mod, Method = PreProcessTS(pr_mod, Method, compute_sea_cycle=True, region=box, **kwargs)
+        pr_obs, unneeded = PreProcessTS(pr_obs, '', compute_sea_cycle=True, region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
@@ -17907,8 +17563,10 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                                     name_mask=prlandmaskfileobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            prMap_mod, unneeded = PreProcessTS(prMap_mod, '', compute_sea_cycle=True, **kwargs)
-            prMap_obs, unneeded = PreProcessTS(prMap_obs, '', compute_sea_cycle=True, **kwargs)
+            prMap_mod, unneeded = PreProcessTS(prMap_mod, '', compute_sea_cycle=True,
+                                               region="equatorial_pacific_LatExt2", **kwargs)
+            prMap_obs, unneeded = PreProcessTS(prMap_obs, '', compute_sea_cycle=True,
+                                               region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prMap_mod.getAxisList()]),
@@ -18135,19 +17793,14 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
-        sst_mod, Method = PreProcessTS(sst_mod, Method, compute_sea_cycle=True, **kwargs)
-        sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
+        sst_mod, Method = PreProcessTS(sst_mod, Method, compute_sea_cycle=True, region=box, **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -18211,8 +17864,10 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                                     name_mask=sstlandmaskfileobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            sstMap_mod, unneeded = PreProcessTS(sstMap_mod, '', compute_sea_cycle=True, **kwargs)
-            sstMap_obs, unneeded = PreProcessTS(sstMap_obs, '', compute_sea_cycle=True, **kwargs)
+            sstMap_mod, unneeded = PreProcessTS(sstMap_mod, '', compute_sea_cycle=True,
+                                                region="equatorial_pacific_LatExt2", **kwargs)
+            sstMap_obs, unneeded = PreProcessTS(sstMap_obs, '', compute_sea_cycle=True,
+                                                region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstMap_mod.getAxisList()]),
@@ -18442,19 +18097,14 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     if keyerror_mod is not None or keyerror_obs is not None:
         sstRmse, sstRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
-        sst_mod, Method = PreProcessTS(sst_mod, Method, compute_sea_cycle=True, **kwargs)
-        sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, **kwargs)
+        sst_mod, Method = PreProcessTS(sst_mod, Method, compute_sea_cycle=True, region=box, **kwargs)
+        sst_obs, unneeded = PreProcessTS(sst_obs, '', compute_sea_cycle=True, region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
@@ -18517,8 +18167,10 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                                     name_mask=sstlandmaskfileobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            sstMap_mod, unneeded = PreProcessTS(sstMap_mod, '', compute_sea_cycle=True, **kwargs)
-            sstMap_obs, unneeded = PreProcessTS(sstMap_obs, '', compute_sea_cycle=True, **kwargs)
+            sstMap_mod, unneeded = PreProcessTS(sstMap_mod, '', compute_sea_cycle=True,
+                                                region="equatorial_pacific_LatExt2", **kwargs)
+            sstMap_obs, unneeded = PreProcessTS(sstMap_obs, '', compute_sea_cycle=True,
+                                                region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstMap_mod.getAxisList()]),
@@ -18746,19 +18398,14 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
 
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
-        taux_mod, Method = PreProcessTS(taux_mod, Method, compute_sea_cycle=True, **kwargs)
-        taux_obs, unneeded = PreProcessTS(taux_obs, '', compute_sea_cycle=True, **kwargs)
+        taux_mod, Method = PreProcessTS(taux_mod, Method, compute_sea_cycle=True, region=box, **kwargs)
+        taux_obs, unneeded = PreProcessTS(taux_obs, '', compute_sea_cycle=True, region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -18823,8 +18470,10 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                                     name_mask=tauxlandmaskfileobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess taux (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            tauxMap_mod, unneeded = PreProcessTS(tauxMap_mod, '', compute_sea_cycle=True, **kwargs)
-            tauxMap_obs, unneeded = PreProcessTS(tauxMap_obs, '', compute_sea_cycle=True, **kwargs)
+            tauxMap_mod, unneeded = PreProcessTS(tauxMap_mod, '', compute_sea_cycle=True,
+                                                 region="equatorial_pacific_LatExt2", **kwargs)
+            tauxMap_obs, unneeded = PreProcessTS(tauxMap_obs, '', compute_sea_cycle=True,
+                                                 region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxMap_mod.getAxisList()]),
@@ -19056,19 +18705,14 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
 
     if keyerror_mod is not None or keyerror_obs is not None:
         tauxRmse, tauxRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
-        keyerror = ''
-        if keyerror_mod is not None:
-            keyerror = keyerror_mod
-        if len(keyerror) > 0 and keyerror_obs is not None:
-            keyerror += " ; "
-        if keyerror_obs is not None:
-            keyerror += keyerror_obs
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
     else:
         keyerror = None
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         # here only the detrending (if applicable) and time averaging are performed
-        taux_mod, Method = PreProcessTS(taux_mod, Method, compute_sea_cycle=True, **kwargs)
-        taux_obs, unneeded = PreProcessTS(taux_obs, '', compute_sea_cycle=True, **kwargs)
+        taux_mod, Method = PreProcessTS(taux_mod, Method, compute_sea_cycle=True, region=box, **kwargs)
+        taux_obs, unneeded = PreProcessTS(taux_obs, '', compute_sea_cycle=True, region=box, **kwargs)
         del mod_areacell, obs_areacell
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
@@ -19133,8 +18777,10 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                                     name_mask=tauxlandmaskfileobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
             # Preprocess taux (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
-            tauxMap_mod, unneeded = PreProcessTS(tauxMap_mod, '', compute_sea_cycle=True, **kwargs)
-            tauxMap_obs, unneeded = PreProcessTS(tauxMap_obs, '', compute_sea_cycle=True, **kwargs)
+            tauxMap_mod, unneeded = PreProcessTS(tauxMap_mod, '', compute_sea_cycle=True,
+                                                 region="equatorial_pacific_LatExt2", **kwargs)
+            tauxMap_obs, unneeded = PreProcessTS(tauxMap_obs, '', compute_sea_cycle=True,
+                                                 region="equatorial_pacific_LatExt2", **kwargs)
             del mod_areacell, obs_areacell
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxMap_mod.getAxisList()]),
