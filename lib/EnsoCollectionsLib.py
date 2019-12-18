@@ -7,7 +7,7 @@
 
 
 # Define metrics collections
-def defCollection(MC=True):
+def defCollection(mc=True):
     # Name, list of metrics
     metrics_collection = {
         'ENSO_perf': {
@@ -444,7 +444,7 @@ def defCollection(MC=True):
                 'min_time_steps': 204,
                 'normalization': False,
                 'project_interpreter': 'CMIP',
-                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),
                 'modeled_period': ('1850-01-01 00:00:00', '2015-12-31 23:59:60.0'),
             },
             'plot_order': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse',
@@ -726,7 +726,7 @@ def defCollection(MC=True):
                 'min_time_steps': 204,
                 'normalization': False,
                 'project_interpreter': 'CMIP',
-                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),#('1905-01-01 00:00:00', '2005-12-31 23:59:60.0'),
+                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),
                 'modeled_period': ('1850-01-01 00:00:00', '2015-12-31 23:59:60.0'),
             },
             'plot_order': ['EnsoAmpl', 'EnsoSstLonRmse', 'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoSstMapCorr',
@@ -891,14 +891,14 @@ def defCollection(MC=True):
             'description': 'Describe which science question this collection is about',
         },
     }
-    if MC is True:
+    if mc is True:
         return metrics_collection
     else:
-        return metrics_collection[MC]
+        return metrics_collection[mc]
 
 
 # List of reference observations for each variables
-def ReferenceObservations(DATASET=True):
+def ReferenceObservations(dataset=True):
     dict_ref_obs = {
         'AVISO': {
             'website': 'see https://www.aviso.altimetry.fr/en/data/products/sea-surface-height-products/global.html',
@@ -906,19 +906,19 @@ def ReferenceObservations(DATASET=True):
             'variable_name_in_file': {'ssh': {'var_name': 'sla'}, },
         },
         'CFSR': {
-            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/', # do not use 'source' keyword
+            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
             'file_name': '<var_name>' + '_Omon_reanalysis_CFSR_*.nc',
             'variable_name_in_file': {
                 'ssh': {'var_name': 'zos'},
                 'so': {'var_name': 'so'},
                 'thetao': {'var_name': 'thetao'},
-                'thf': {'var_name': 'hfds'}, # I'm not sure yet if it is the total heat flux
+                'thf': {'var_name': 'hfds'},  # I'm not sure yet if it is the total heat flux
                 'uo': {'var_name': 'uo'},
                 'vo': {'var_name': 'vo'},
             },
         },
         'ERA-Interim': {
-            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/', # do not use 'source' keyword
+            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
             'file_name': '<var_name>' + '_Amon_reanalysis_IFS-Cy31r2_*.nc',
             'variable_name_in_file': {
                 'landmask': {'var_name': 'lsmask'},
@@ -974,8 +974,8 @@ def ReferenceObservations(DATASET=True):
             },
         },
         'GPCPv2.3': {
-            'website': 'see https://www.esrl.noaa.gov/psd/cgi-bin/db_search/DBSearch.pl?Dataset=GPCP+Version+2.3+'
-                      + 'Combined+Precipitation+Dataset&group=0&submit=Search',
+            'website': 'see https://www.esrl.noaa.gov/psd/cgi-bin/db_search/DBSearch.pl?Dataset=GPCP+Version+2.3+' +
+                       'Combined+Precipitation+Dataset&group=0&submit=Search',
             'file_name': 'precip.mon.mean.nc',
             'variable_name_in_file': {
                 'landmask': {'var_name': 'lsmask'},
@@ -1041,13 +1041,13 @@ def ReferenceObservations(DATASET=True):
             },
         },
     }
-    if DATASET is True:
+    if dataset is True:
         return dict_ref_obs
     else:
-        return dict_ref_obs[DATASET]
+        return dict_ref_obs[dataset]
 
 
-def ReferenceRegions(AR=True):
+def ReferenceRegions(region=True):
     dict_reference_regions = {
         'global': {'long_name': 'Global 60S-60N', 'latitude': (-60., 60.), 'longitude': (0., 360.)},
         'global2': {'long_name': 'Global', 'latitude': (-90., 90.), 'longitude': (0., 360.)},
@@ -1152,14 +1152,14 @@ def ReferenceRegions(AR=True):
         'americaS': {'long_name': 'South America', 'latitude': (-60., 15.), 'longitude': (275., 330.),
                      'maskland': False, 'maskocean': True},
         'asiaS': {'long_name': 'South Asia', 'latitude': (-10., 30.), 'longitude': (65., 130.),
-                     'maskland': False, 'maskocean': True},
+                  'maskland': False, 'maskocean': True},
         'oceania': {'long_name': 'oceania', 'latitude': (-50., 0.), 'longitude': (110., 180.), 'maskland': False,
                     'maskocean': True},
     }
-    if AR is True:
+    if region is True:
         return dict_reference_regions
     else:
-        return dict_reference_regions[AR]
+        return dict_reference_regions[region]
 
 
 def CmipVariables():
@@ -1167,7 +1167,8 @@ def CmipVariables():
         'reference': 'http://cfconventions.org/Data/cf-standard-names/46/build/cf-standard-name-table.html',
         'variable_name_in_file': {
             # line keys:
-            # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>, 'cf_unit':'<unit_in_file>'}
+            # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>,
+            #                                     'cf_unit':'<unit_in_file>'}
             # areacell
             'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
@@ -1179,7 +1180,7 @@ def CmipVariables():
             # sometimes lwr is included in the datasets in a variable called 'rls'
             'lwr': {
                 'var_name': ['rlds', 'rlus'],
-                'cf_name': ['surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air',],
+                'cf_name': ['surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air'],
                 'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']},
             # Rainfall Flux
             'pr': {'var_name': 'pr', 'cf_name': 'rainfall_flux', 'cf_units': 'kg m-2 s-1'},
@@ -1215,4 +1216,3 @@ def CmipVariables():
         },
     }
     return dict_cmip_variables
-
