@@ -28,7 +28,7 @@ from EnsoCollectionsLib import CmipVariables
 from EnsoCollectionsLib import ReferenceObservations
 from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
-from EnsoToolsLib import FindXYMinMax, StringInDict
+from EnsoToolsLib import add_up_errors, FindXYMinMax, StringInDict
 
 # uvcdat based functions:
 from cdms2 import createAxis as CDMS2createAxis
@@ -1022,7 +1022,6 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
         dict_debug = {'shape1': 'tab1.shape = ' + str(tab1.shape), 'shape2': 'tab2.shape = ' + str(tab2.shape),
                       'time1': 'tab1.time = ' + str(TimeBounds(tab1)), 'time2': 'tab2.time = ' + str(TimeBounds(tab2))}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'in CheckTime (input)', 20, **dict_debug)
-    keyerror = None
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
@@ -1092,15 +1091,27 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
                       'time3': 'tab2.time = ' + str(TimeBounds(tab2_sliced)),
                       'time4': 'tab2.time = ' + str(tab2_sliced.getTime().asComponentTime()[:])}
         EnsoErrorsWarnings.DebugMode('\033[93m', 'in CheckTime (output)', 20, **dict_debug)
-    tab2_sliced.setAxis(0, tab1_sliced.getTime())
+    if len(tab1_sliced.getTime()[:]) != len(tab2_sliced.getTime()[:]):
+        keyerror1 = "missing time step within the given period"
+    else:
+        keyerror1 = None
+        tab2_sliced.setAxis(0, tab1_sliced.getTime())
 
     # checks if the remaining time-period fulfills the minimum length criterion
     if min_time_steps is not None:
-        if len(tab1_sliced)<min_time_steps or len(tab2_sliced)<min_time_steps:
+        if len(tab1_sliced) < min_time_steps or len(tab2_sliced) < min_time_steps:
             shortest = min(len(tab1_sliced), len(tab2_sliced))
             EnsoErrorsWarnings.TooShortTimePeriod(metric_name, shortest, min_time_steps, INSPECTstack())
-            keyerror = "too short time period (variable1:" + str(len(tab1_sliced)) + " ; variable2:" +\
-                       str(len(tab2_sliced)) + ")"
+            keyerror2 = "too short time period (variable1:" + str(len(tab1_sliced)) + " ; variable2:" +\
+                        str(len(tab2_sliced)) + ")"
+    else:
+        keyerror2 = None
+
+    # errors
+    if keyerror1 is not None or keyerror2 is not None:
+        keyerror = add_up_errors([keyerror1, keyerror2])
+    else:
+        keyerror = None
     return tab1_sliced, tab2_sliced, keyerror
 
 
