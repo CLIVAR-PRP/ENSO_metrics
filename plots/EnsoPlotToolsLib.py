@@ -336,7 +336,8 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
         var_to_read = [var_to_read]
     if isinstance(filename_nc, str):
         tab_mod, tab_obs, metval, obs = reader(filename_nc, model, reference, var_to_read, metric_variables,
-                                               dict_metric)
+                                               dict_metric, met_in_file=met_in_file, met_type=met_type,
+                                               met_pattern=met_pattern)
     else:
         tab_mod, metval, obs = list(), list(), list()
         if shading is True:

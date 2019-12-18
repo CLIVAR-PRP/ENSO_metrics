@@ -8262,8 +8262,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                               'time2': '(obs) ' + str(TimeBounds(slp_obs))}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
             # anomalies
-            slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True)
-            slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True)
+            slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
+            slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True) * 1e-2
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
