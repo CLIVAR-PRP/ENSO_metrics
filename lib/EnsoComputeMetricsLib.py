@@ -344,7 +344,7 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
     :param keyword_metric_computation:
     :return:
     """
-    if keyword not in ['difference', 'ratio', 'relative_difference']:
+    if keyword not in ['difference', 'ratio', 'relative_difference', 'abs_relative_difference']:
         metric, metric_err, description_metric =\
             None, None, "unknown keyword for the mathematical computation of the metric: " + str(keyword)
         list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": keyword",
@@ -358,11 +358,15 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
                 metric = model - obs
             elif keyword == 'ratio':
                 description_metric = "The metric is the ratio between model and observations values (M = model / obs)"
-                metric = model / obs
+                metric = model / float(obs)
+            elif keyword == 'relative_difference':
+                description_metric = "The metric is the relative difference between model and observations values " +\
+                                     "(M = [model-obs] / obs)"
+                metric = (model - obs) / float(obs)
             else:
-                description_metric = \
-                    "The metric is the relative difference between model and observations values (M = [model-obs] / obs)"
-                metric = (model - obs) / obs
+                description_metric = "The metric is the absolute relative difference between model and observations " +\
+                                     "values (M = 100 * abs[[model-obs] / obs])"
+                metric = 100 * abs((model - obs) / float(obs))
         else:
             metric, description_metric = None, ''
         if model_err is not None or obs_err is not None:
@@ -378,7 +382,7 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
             else:
                 # mathematical definition of the error on division
                 if model is not None and obs is not None:
-                    metric_err = float((obs * (model_err + obs_err) + (model-obs) * obs_err) / NUMPYsquare(obs))
+                    metric_err = float((obs * (model_err + obs_err) + (model - obs) * obs_err) / NUMPYsquare(obs))
                 else:
                     metric_err = None
         else:
@@ -827,6 +831,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     dict_diagnostic_metadata[obs]['keyerror'] = diag_obs[obs]['keyerror']
             if keyarg['metric_computation'] in ['ratio', 'relative_difference']:
                 units = diagnostic1['units'] + ' / ' + diagnostic1['units']
+            elif keyarg['metric_computation'] in ['abs_relative_difference']:
+                units = "%"
             else:
                 units = diagnostic1['units']
         # finishes to fill the diagnostic dictionary
