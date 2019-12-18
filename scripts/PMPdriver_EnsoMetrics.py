@@ -239,6 +239,10 @@ for mod in models:
                 file_name = modpath(mip=mip, exp=exp, model=mod, realization=run, variable=var0)
                 file_areacella = modpath_lf(mip=mip, model=mod, variable="areacella")
                 file_areacello = modpath_lf(mip=mip, model=mod, variable="areacello")
+                if not os.path.isfile(file_areacella):
+                    file_areacella = None
+                if not os.path.isfile(file_areacello):
+                    file_areacello = None
                 if var in ['ssh']:
                     file_areacell = file_areacello
                 else:
