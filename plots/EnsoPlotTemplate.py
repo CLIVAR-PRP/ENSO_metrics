@@ -1280,7 +1280,9 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             if nbr_panel == 1 or ii == nbrc - 1:
                 if metric_type is not None:
                     for jj in range(1, len(legend)):
-                        if shading is True:
+                        if isinstance(model, basestring):
+                            tmp = deepcopy(metval)
+                        elif shading is True:
                             tmp = my_average(metval[jj - 1], remove_masked=True)
                         else:
                             tmp = metval[jj - 1]
