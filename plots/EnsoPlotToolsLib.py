@@ -14,8 +14,8 @@ from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # xarray based functions
 from xarray import open_dataset
 # ENSO_metrics functions
-from EnsoCollectionsLib import ReferenceObservations
-import EnsoErrorsWarnings
+from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
+from EnsoMetrics import EnsoErrorsWarnings
 
 
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
