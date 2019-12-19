@@ -30,26 +30,18 @@ experiment = "historical"
 member = "r1i1p1"
 modname = model + "_" + member
 
-#path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
-"""
-path_main = "/work/lee1043/cdat/pmp/ENSO_metrics/plot_test_json_20191218"
-path_in = OSpath__join(path_main, "Data_lee")
-path_out = OSpath__join(path_main, "Plots_wiki")
-"""
-path_in_js = "/work/lee1043/imsi/result_test/metrics_results/enso_metric/cmip5/historical/v20191204/" + metric_collection
-path_in_nc = "/work/lee1043/imsi/result_test/diagnostic_results/enso_metric/cmip5/historical/v20191204/" + metric_collection
+path_js = "/work/lee1043/imsi/result_test/metrics_results/enso_metric/cmip5/historical/v20191204/" + metric_collection
+path_nc = "/work/lee1043/imsi/result_test/diagnostic_results/enso_metric/cmip5/historical/v20191204/" + metric_collection
 path_out = "/work/lee1043/imsi/result_test/graphics/enso_metric/cmip5/historical/v20191204/"+metric_collection
 
 expe = "hist" if experiment == "historical" else "pi"
-#pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
 pattern = "_".join([project, experiment, metric_collection, "v????????", model, member])
 
 # ---------------------------------------------------#
 # Main
 # ---------------------------------------------------#
 # read json file
-#filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
-filename_js = list(GLOBiglob(OSpath__join(path_in_js, pattern + ".json")))[0]
+filename_js = list(GLOBiglob(OSpath__join(path_js, pattern + ".json")))[0]
 print('filename_js:', filename_js)
 with open(filename_js) as ff:
     data_json = json.load(ff)['RESULTS']['model'][model][member]
@@ -60,12 +52,6 @@ metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=la
 for met in metrics:
     print('met:', met)
     # get NetCDF file name
-    #path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
-    #path_nc = OSpath__join(path_in_nc, project + "/" + experiment + "/" + metric_collection)
-    path_nc = path_in_nc
-    #print('tmp:', OSpath__join(path_nc, pattern + "_" + model + "_" + member + "_" + met + ".nc"))
-    #print('tmp:', OSpath__join(path_nc, pattern + "_" + met + ".nc"))
-    #filename_nc = list(GLOBiglob(OSpath__join(path_nc, pattern + "_" + model + "_" + member + "_" + met + ".nc")))
     filename_nc = list(GLOBiglob(OSpath__join(path_nc, pattern + "_" + met + ".nc")))
     if len(filename_nc) != 1:
         print('    Pass for metric', met, ': no NC file detected.')
