@@ -8,19 +8,21 @@ import copy
 import glob
 import json
 import os
-import sys
 
 # -------------------------------
 mip = 'cmip5'
 #mip = 'cmip6'
 exp = 'historical'
-case_id = 'v20191121'
+case_id = 'v20191204'
 metricsCollection = 'ENSO_perf'
 #metricsCollection = 'ENSO_proc'
 #metricsCollection = 'ENSO_tel'
+#metricsCollection = 'test_perf'
+#metricsCollection = 'test_proc'
+#metricsCollection = 'test_tel'
+pmprdir = '/work/lee1043/imsi/result_test'
 # -------------------------------
 
-pmprdir = '/work/lee1043/imsi/result_test'
 json_file_dir_template = os.path.join(
     pmprdir,
     '%(output_type)', 'enso_metric',

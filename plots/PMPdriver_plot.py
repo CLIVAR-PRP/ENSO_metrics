@@ -13,7 +13,6 @@ from glob import iglob as GLOBiglob
 import json
 from os.path import join as OSpath__join
 # ENSO_metrics functions
-#from EnsoCollectionsLib import defCollection
 from EnsoMetrics.EnsoCollectionsLib import defCollection
 from EnsoMetricPlot import main_plotter
 
@@ -26,19 +25,16 @@ metric_collection = "ENSO_perf"
 metric_collection = "ENSO_proc"
 project = "cmip5"
 model = "CNRM-CM5"
-#model = "IPSL-CM5A-LR"
 experiment = "historical"
 member = "r1i1p1"
 modname = model + "_" + member
 
-#path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_main = "/work/lee1043/cdat/pmp/ENSO_metrics/plot_test_json_20191218"
 path_in = OSpath__join(path_main, "Data_lee")
 path_out = OSpath__join(path_main, "Plots_wiki")
 
 expe = "hist" if experiment == "historical" else "pi"
 pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
-
 
 # ---------------------------------------------------#
 # Main

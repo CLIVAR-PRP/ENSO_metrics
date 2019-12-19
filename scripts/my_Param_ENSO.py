@@ -37,7 +37,7 @@ reference_data_lf_path = {
 # Models
 #-------------------------------------------------
 modpath = '/work/lee1043/ESGF/xmls/%(mip)/%(exp)/mon/%(variable)/%(mip).%(model).%(exp).%(realization).mon.%(variable).xml'
-modpath_lf = '/work/lee1043/ESGF/xmls/%(mip)/historical/fx/sftlf/%(mip).%(model).historical.r0i0p0.fx.sftlf.xml'
+modpath_lf = '/work/lee1043/ESGF/xmls/%(mip)/historical/fx/%(variable)/%(mip).%(model).historical.r0i0p0.fx.%(variable).xml'
 
 modnames = ['all']
 
