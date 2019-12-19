@@ -40,7 +40,6 @@ pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
 # Main
 # ---------------------------------------------------#
 # read json file
-print('tmp:', OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json"))
 filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
 print('filename_js:', filename_js)
 with open(filename_js) as ff:
@@ -59,6 +58,7 @@ for met in metrics:
         pass
     else:
         filename_nc = filename_nc[0]
+        print('filename_nc:', filename_nc)
         # get diagnostic values for the given model and observations
         if metric_collection == "ENSO_tel" and "Map" in met:
             dict_dia = data_json["value"][met+"Corr"]["diagnostic"]
