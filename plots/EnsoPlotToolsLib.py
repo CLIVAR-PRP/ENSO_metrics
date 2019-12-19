@@ -81,8 +81,10 @@ def format_metric(metric_type, metric_value, metric_units):
             mytext = "model-ref"
         elif metric_type == "ratio":
             mytext = r"$\frac{model}{ref}$"
-        else:
+        elif metric_type == "relative_difference":
             mytext = r"$\frac{model-ref}{ref}$"
+        else:
+            mytext = r"$abs\left(\frac{model-ref}{ref}\right)$"
     return mytext + ": " + "{0:.2f}".format(metric_value) + " " + metric_units
 
 
