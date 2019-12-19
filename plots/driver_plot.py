@@ -20,7 +20,7 @@ from EnsoMetricPlot import main_plotter
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collection = "ENSO_tel"
+metric_collection = "ENSO_proc"
 project = "cmip5"
 model = "CNRM-CM5"
 experiment = "historical"
@@ -47,11 +47,14 @@ ff.close()
 del ff, filename_js
 # loop on metrics
 metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=lambda v: v.upper())
-for met in metrics:
+for met in metrics[6:]:
     print met
     # get NetCDF file name
     path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
-    filename_nc = list(GLOBiglob(OSpath__join(path_nc, pattern + "_" + model + "_" + member + "_" + met + ".nc")))[0]
+    filename_nc = pattern + "_" + model + "_" + member + "_" + met + ".nc"
+    if metric_collection == "ENSO_proc" and "Ssh" in met:
+        filename_nc = filename_nc.replace("ENSO_proc", "test_proc")
+    filename_nc = list(GLOBiglob(OSpath__join(path_nc, filename_nc)))[0]
     # get diagnostic values for the given model and observations
     if metric_collection == "ENSO_tel" and "Map" in met:
         dict_dia = data_json["value"][met+"Corr"]["diagnostic"]

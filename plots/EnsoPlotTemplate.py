@@ -62,7 +62,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             elif shading is True and plot_metric is True:
                 legend = ["ref: " + obsname] + [mod.upper() for mod in model]
             else:
-                legend = ["ref: " + obsname] + model # mod_nicknames #
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
     if "custom_label" in dict_param.keys():
         custom_label = dict_param["custom_label"]
     else:
@@ -158,7 +158,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                 y1, y2 = ax.get_xlim()
                 dy = (y2 - y1) / 100.
                 txt = format_metric(metric_type, metval, metric_units)
-                ax.text(x2 - (2 * dx), y2 - (5 * dy), txt, fontsize=12, color="k", horizontalalignment="right",
+                ax.text(x2 - (2 * dx), y2 - (6 * dy), txt, fontsize=12, color="k", horizontalalignment="right",
                         verticalalignment="center")
             # legend
             if (nbr_panel == 1 and ii == 0) or (nbr_panel != 1 and ii == 1):
@@ -245,7 +245,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             elif shading is True and plot_metric is True:
                 legend = ["ref: " + obsname] + [mod.upper() for mod in model]
             else:
-                legend = ["ref: " + obsname] + model  # mod_nicknames #
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
     nbr = len(tab_mod[0]) if isinstance(filename_nc, basestring) else\
         (len(tab_mod[0][0][0]) if isinstance(filename_nc, dict) is True and shading is True else len(tab_mod[0][0]))
     if isinstance(filename_nc, basestring):
@@ -358,7 +358,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
             elif shading is True and plot_metric is True:
                 legend = ["ref: " + obsname] + [mod.upper() for mod in model]
             else:
-                legend = ["ref: " + obsname] + model  # mod_nicknames #
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
     fig, ax = plt.subplots(figsize=(4, 4))
     if isinstance(filename_nc, basestring):
         tab = [diag_obs, diag_mod]
@@ -393,7 +393,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
             y1, y2 = ax.get_ylim()
             dy = (y2 - y1) / 100.
             txt = format_metric(metric_type, metval, metric_units)
-            plt.text(x2 - (2 * dx), y2 - (5 * dy), txt, fontsize=12, color='k', horizontalalignment='right',
+            plt.text(x2 - (2 * dx), y2 - (6 * dy), txt, fontsize=12, color='k', horizontalalignment='right',
                      verticalalignment='center')
         # legend
         lines = [Line2D([0], [0], marker=markers[kk], c="w", markerfacecolor=mcolors[kk], markersize=12)
@@ -452,7 +452,7 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
             elif shading is True and plot_metric is True:
                 legend = ["ref: " + obsname] + [mod.upper() for mod in model]
             else:
-                legend = ["ref: " + obsname] + model  # mod_nicknames #
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
     fig, ax = plt.subplots(figsize=(4, 4))
     if isinstance(filename_nc, basestring):
         tab = [diag_mod]
@@ -528,9 +528,9 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     title = dict_param["title"]
     if isinstance(filename_nc, list):
         if nbr_val == 1:
-            title = [obsname] + mod_nicknames # model[ii]
+            title = [obsname] + model  # mod_nicknames  #
         else:
-            title = [obsname] + mod_nicknames # list()
+            title = [obsname] + model  # mod_nicknames  #
             title = title * nbr_val
             # for tt in dict_param["title"]:
             #     title.append(tt + ": " + obsname)
@@ -726,9 +726,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         nbr_mod = len(model) + 1
     if isinstance(filename_nc, list) is True:
         if nbr_val == 1:
-            title = [obsname] + mod_nicknames # model
+            title = [obsname] + model  # mod_nicknames  #
         else:
-            title = [obsname] + mod_nicknames #list()
+            title = [obsname] + model  # mod_nicknames  #
             title = title * nbr_val
             # for tt in dict_param["title"]:
             #     title.append(tt + ": " + obsname)
@@ -1280,7 +1280,9 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             if nbr_panel == 1 or ii == nbrc - 1:
                 if metric_type is not None:
                     for jj in range(1, len(legend)):
-                        if shading is True:
+                        if isinstance(model, basestring):
+                            tmp = deepcopy(metval)
+                        elif shading is True:
                             tmp = my_average(metval[jj - 1], remove_masked=True)
                         else:
                             tmp = metval[jj - 1]
@@ -1299,7 +1301,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         # my text
         if plot_metric is True:
             txt = format_metric(metric_type, metval, metric_units)
-            ax.text(x2 - (2 * dx), y2 - (5 * dy), txt, fontsize=12, color="k", horizontalalignment="right",
+            ax.text(x2 - (2 * dx), y1 + (6 * dy), txt, fontsize=12, color="k", horizontalalignment="right",
                     verticalalignment="center")
         # grid
         ax.grid(linestyle="--", linewidth=1, which="major")
@@ -1386,7 +1388,7 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
         # my text
         if plot_metric is True:
             txt = format_metric(metric_type, metval, metric_units)
-            plt.text(x2 - (2 * dx), y2 - (5 * dy), txt, fontsize=12, color='k', horizontalalignment='right',
+            plt.text(x2 - (2 * dx), y2 - (6 * dy), txt, fontsize=12, color='k', horizontalalignment='right',
                      verticalalignment='center')
     else:
         # legend
