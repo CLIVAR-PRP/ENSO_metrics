@@ -15,7 +15,7 @@ def defCollection(mc=True):
             'metrics_list': {
                 'BiasPrLatRmse': {
                     'variables': ['pr'],
-                    'regions': {'pr': 'nino3.3_LatExt'},
+                    'regions': {'pr': 'nino3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
@@ -29,7 +29,7 @@ def defCollection(mc=True):
                 },
                 'BiasSshLatRmse': {
                     'variables': ['ssh'],
-                    'regions': {'ssh': 'nino3.3_LatExt'},
+                    'regions': {'ssh': 'nino3_LatExt'},
                     'obs_name': {'ssh': ['AVISO']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
@@ -43,7 +43,7 @@ def defCollection(mc=True):
                 },
                 'BiasSstLatRmse': {
                     'variables': ['sst'],
-                    'regions': {'sst': 'nino3.3_LatExt'},
+                    'regions': {'sst': 'nino3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
@@ -78,7 +78,7 @@ def defCollection(mc=True):
                 # },
                 'SeasonalPrLatRmse': {
                     'variables': ['pr'],
-                    'regions': {'pr': 'nino3.3_LatExt'},
+                    'regions': {'pr': 'nino3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
@@ -92,7 +92,7 @@ def defCollection(mc=True):
                 },
                 'SeasonalSshLatRmse': {
                     'variables': ['ssh'],
-                    'regions': {'ssh': 'nino3.3_LatExt'},
+                    'regions': {'ssh': 'nino3_LatExt'},
                     'obs_name': {'ssh': ['AVISO']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
@@ -106,7 +106,7 @@ def defCollection(mc=True):
                 },
                 'SeasonalSstLatRmse': {
                     'variables': ['sst'],
-                    'regions': {'sst': 'nino3.3_LatExt'},
+                    'regions': {'sst': 'nino3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
@@ -890,6 +890,71 @@ def defCollection(mc=True):
                            'EnsoFbTauxSsh', 'EnsoFbSshSst'],
             'description': 'Describe which science question this collection is about',
         },
+        'test_perf': {
+            'long_name': 'Metrics Collection for ENSO performance',
+            'metrics_list': {
+                'BiasSshLatRmse': {
+                    'variables': ['ssh'],
+                    'regions': {'ssh': 'nino3_LatExt'},
+                    'obs_name': {'ssh': ['AVISO']},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                },
+                'BiasSshLonRmse': {
+                    'variables': ['ssh'],
+                    'regions': {'ssh': 'equatorial_pacific'},
+                    'obs_name': {'ssh': ['AVISO']},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                },
+                'SeasonalSshLatRmse': {
+                    'variables': ['ssh'],
+                    'regions': {'ssh': 'nino3_LatExt'},
+                    'obs_name': {'ssh': ['AVISO']},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                },
+                'SeasonalSshLonRmse': {
+                    'variables': ['ssh'],
+                    'regions': {'ssh': 'equatorial_pacific'},
+                    'obs_name': {'ssh': ['AVISO']},
+                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
+                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                },
+                'EnsoSstDiversity_1': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific'},
+                    'obs_name': {'sst': ['Tropflux']},
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                                         'normalization': False},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'abs_relative_difference',
+                },
+                'EnsoSstDiversity_2': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'equatorial_pacific'},
+                    'obs_name': {'sst': ['Tropflux']},
+                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                                         'normalization': True},
+                    'smoothing': {'window': 5, 'method': 'triangle'},
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                    'metric_computation': 'abs_relative_difference',
+                },
+            },
+            'common_collection_parameters': {
+                'detrending': {'method': 'linear'},
+                'frequency': 'monthly',
+                'min_time_steps': 204,
+                'normalization': False,
+                'project_interpreter': 'CMIP',
+                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),
+                'modeled_period': ('1850-01-01 00:00:00', '2015-12-31 23:59:60.0'),
+            },
+            'description': 'Describe which science question this collection is about',
+        },
     }
     if mc is True:
         return metrics_collection
@@ -1071,7 +1136,7 @@ def ReferenceRegions(region=True):
         },
         'nino1+2': {'long_name': 'Niño 1+2', 'latitude': (-10., 0.), 'longitude': (270., 280.)},
         'nino3': {'long_name': 'Niño 3', 'latitude': (-5., 5.), 'longitude': (210., 270.)},
-        'nino3.3_LatExt': {
+        'nino3_LatExt': {
             'long_name': 'Niño 3 extended in latitude', 'latitude': (-15., 15.), 'longitude': (210., 270.)
         },
         'nino3.4': {'long_name': 'Niño 3.4', 'latitude': (-5., 5.), 'longitude': (190., 240.)},

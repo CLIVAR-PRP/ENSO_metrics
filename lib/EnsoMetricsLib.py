@@ -10,11 +10,11 @@ from EnsoCollectionsLib import ReferenceRegions
 import EnsoErrorsWarnings
 from EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
 from EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
-    Composite, ComputeInterannualAnomalies, ComputePDF, Correlation, DetectEvents, DurationAllEvent, DurationEvent,\
-    Event_selection, FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap,\
-    LinearRegressionTsAgainstTs, MinMax, MyDerive, MyEmpty, PreProcessTS, Read_data_mask_area,\
-    Read_data_mask_area_multifile, Regrid, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean,\
-    SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
+    Composite, ComputeInterannualAnomalies, ComputePDF, Concatenate, Correlation, DetectEvents, DurationAllEvent,\
+    DurationEvent, Event_selection, FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity,\
+    LinearRegressionTsAgainstMap, LinearRegressionTsAgainstTs, MinMax, MyEmpty, OperationMultiply, PreProcessTS,\
+    Read_data_mask_area, Read_data_mask_area_multifile, Regrid, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal,\
+    SaveNetcdf, SeasonalMean, SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
 from KeyArgLib import DefaultArgValues
 
 
@@ -247,7 +247,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                   metname='', **kwargs):
     """
     The BiasPrLatRmse() function computes the PR meridional (latitude) root mean square error (RMSE) in a 'box'
-    (usually 'nino3.3_LatExt')
+    (usually 'nino3_LatExt')
 
     Inputs:
     ------
@@ -276,7 +276,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     :param prlandmasknameobs: string
         name of landmask variable (sftlf, lsmask, landmask) in 'prlandmaskfileobs'
     :param box: string
-        name of box ('nino3.3_LatExt') for PR
+        name of box ('nino3_LatExt') for PR
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -978,7 +978,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                    metname='', **kwargs):
     """
     The BiasSshLatRmse() function computes the SSH meridional (latitude) root mean square error (RMSE) in a 'box'
-    (usually 'nino3.3_LatExt')
+    (usually 'nino3_LatExt')
 
     Inputs:
     ------
@@ -1007,7 +1007,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
     :param sshlandmasknameobs: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sshlandmaskfileobs'
     :param box: string
-        name of box ('nino3.3_LatExt') for SSH
+        name of box ('nino3_LatExt') for SSH
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -1710,7 +1710,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    metname='', **kwargs):
     """
     The BiasSstLatRmse() function computes the SST meridional (latitude) root mean square error (RMSE) in a 'box'
-    (usually 'nino3.3_LatExt')
+    (usually 'nino3_LatExt')
 
     Inputs:
     ------
@@ -1739,7 +1739,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     :param sstlandmasknameobs: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
-        name of box ('nino3.3_LatExt') for SST
+        name of box ('nino3_LatExt') for SST
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -8453,6 +8453,353 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
     }
     return seaMetric
+
+
+def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box,
+                     event_definition, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoSstDiversity() function computes a zonal composite of El Nino and La Nina events during the peak of the
+    event.
+        1.) detect events
+            1.1) SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+            1.2) SSTA > 'threshold' (SSTA < -'threshold') during 'season' are considered as El Nino (La Nina) events
+        2.) diversity of the zonal location of the maximum SSTA
+            2.1) zonal SSTA at the peak of the event is computed for each selected event
+            2.2) find the zonal position of the maximum SSTA for each selected event
+            2.3) compute the spread of the distribution
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of the SST
+    :param sstname: string
+        name of SST variable (tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param box: string
+        name of box ('nino3') for SST
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param treshold_ep_ev: float, optional
+        see EnsoToolsLib.percentage_val_eastward
+        longitude, in degree east, of the westward boundary of eastern Pacific event
+        default value is -140°E (i.e., 140°W)
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoDivMetric: dict
+        name, value, value_error, units, method, nyears, events, time_frequency, time_period, ref, keyerror,
+        dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    my_thresh = 'std' if normalize is True else 'C'
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
+                    'time_bounds']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = DefaultArgValues(arg)
+
+    # Define metric attributes
+    Name = "ENSO Diversity (interquartile range)"
+    lat = ReferenceRegions(box)['latitude']
+    lon = ReferenceRegions(box)['longitude']
+
+    Method = "Nino (Nina) events = " + region_ev + " sstA > " + str(threshold) + " (< -" + str(threshold) + ") during "\
+             + season_ev + ", zonal SSTA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1])\
+             + "]), the zonal SSTA maximum (minimum) is located for each event, the diversity is the interquartile "\
+             + "range (IQR = Q3 - Q1)"
+    Units = 'long'
+    Ref = 'Using CDAT regridding'
+    metric = 'EnsoSstDiversity'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # ------------------------------------------------
+    # 1. detect events
+    # ------------------------------------------------
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+    sst, sst_areacell, keyerror1 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+    sstmap, sstmap_areacell, keyerror2 = \
+        Read_data_mask_area(sstfile, sstname, 'temperature', metric, box, file_area=sstareafile,
+                            name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+                            maskland=True, maskocean=False, debug=debug, **kwargs)
+
+    # Number of years
+    yearN = sst.shape[0] / 12
+
+    # Time period
+    actualtimebounds = TimeBounds(sst)
+
+    if keyerror1 is not None or keyerror2 is not None:
+        dispersion1, dispersion1_err, dispersion2, dispersion2_err, event_years = None, None, None, None, None
+        dive_down_diag = None, None, {'value': None, 'axis': None}
+        keyerror = add_up_errors([keyerror1, keyerror2])
+        nina_years, nino_years = [], []
+    else:
+        keyerror = None
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso, unneeded = PreProcessTS(sst, '', areacell=sst_areacell, average='horizontal', compute_anom=False,
+                                      region=region_ev, **kwargs)
+        del sst_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in enso.getAxisList()]),
+                          'shape1': '(sst) ' + str(enso.shape), 'time1': '(sst) ' + str(TimeBounds(enso))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # 1.2 SSTA > 'threshold' (SSTA < -'threshold') during 'season' are considered as El Nino (La Nina) events
+        # Lists event years
+        nina_years = DetectEvents(enso, season_ev, -threshold, normalization=normalize, nino=False, compute_season=True)
+        nino_years = DetectEvents(enso, season_ev, threshold, normalization=normalize, nino=True, compute_season=True)
+        if debug is True:
+            dict_debug = {"nina1": "nbr(" + str(len(nina_years)) + "): " + str(nina_years),
+                          "nino1": "nbr(" + str(len(nino_years)) + "): " + str(nino_years)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 2. diversity of the zonal location of the maximum SSTA
+        # ------------------------------------------------
+        # 2.1 zonal SSTA at the peak of the event is computed for each selected event
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        sstmap, Method = PreProcessTS(sstmap, Method, areacell=sstmap_areacell, average=False, compute_anom=False,
+                                      region=box, **kwargs)
+        del sstmap_areacell
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
+                          'shape1': '(sst) ' + str(sstmap.shape), 'time1': '(sst) ' + str(TimeBounds(sstmap))}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+        # Seasonal mean
+        sstmap = SeasonalMean(sstmap, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
+                          'shape1': '(sst) ' + str(sstmap.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+        # Regridding
+        if isinstance(kwargs['regridding'], dict):
+            known_args = {'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool',
+                          'regridMethod'}
+            extra_args = set(kwargs['regridding']) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+            sstmap = Regrid(sstmap, None, region=box, **kwargs['regridding'])
+            if debug is True:
+                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
+                              'shape1': '(sst) ' + str(sstmap.shape)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+        # Meridional average
+        sstlon = AverageMeridional(sstmap)
+        if debug is True:
+            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstlon.getAxisList()]),
+                          'shape1': '(sst) ' + str(sstlon.shape)}
+            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+        if len(nina_years) > 0:
+            # samples
+            sample_ln = Event_selection(sstlon, kwargs['frequency'], list_event_years=nina_years)
+
+            # 2.2 find the zonal position of the minimum SSTA for each selected event
+            lon_ln = FindXYMinMaxInTs(sample_ln, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
+            if debug is True:
+                dict_debug = {'line1': 'longitude of the minimum SSTA: ' + str(lon_ln)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+        else:
+            sample_ln = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
+            lon_ln = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
+
+        if len(nino_years) > 0:
+            # samples
+            sample_en = Event_selection(sstlon, kwargs['frequency'], list_event_years=nino_years)
+
+            # 2.2 find the zonal position of the maximum SSTA for each selected event
+            lon_en = FindXYMinMaxInTs(sample_en, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
+            if debug is True:
+                dict_debug = {'line1': 'longitude of the maximum SSTA: ' + str(lon_en)}
+                EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+        else:
+            sample_en = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
+            lon_en = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
+
+        if len(nina_years) > 0 or len(nino_years) > 0:
+            sample_lnen = Concatenate(-1 * sample_ln, sample_en, events1=nina_years, events2=nino_years)
+            lon_lnen = Concatenate(lon_ln, lon_en, events1=nina_years, events2=nino_years)
+            # 2.3 compute the spread of the distribution
+            dispersion1 = statistical_dispersion(lon_lnen, method='IQR')
+            dispersion2 = statistical_dispersion(lon_lnen, method='MAD')
+            dispersion1_err, dispersion2_err = None, None
+            if len(nina_years) > 0:
+                dispersion3 = statistical_dispersion(lon_ln, method='IQR')
+                dispersion4 = statistical_dispersion(lon_ln, method='MAD')
+                dispersion3_err, dispersion4_err = None, None
+            else:
+                dispersion3, dispersion4, dispersion3_err, dispersion4_err = None, None, None, None
+            if len(nino_years) > 0:
+                dispersion5 = statistical_dispersion(lon_en, method='IQR')
+                dispersion6 = statistical_dispersion(lon_en, method='MAD')
+                dispersion5_err, dispersion6_err = None, None
+            else:
+                dispersion5, dispersion6, dispersion5_err, dispersion6_err = None, None, None, None
+        else:
+            if len(nina_years) > 0:
+                sample_lnen = -1 * deepcopy(sample_ln)
+                lon_lnen = deepcopy(lon_ln)
+            else:
+                sample_lnen = deepcopy(sample_en)
+                lon_lnen = deepcopy(lon_en)
+            dispersion1, dispersion2, dispersion3, dispersion4, dispersion5 = None, None, None, None, None
+            dispersion6, dispersion1_err, dispersion2_err, dispersion3_err = None, None, None, None
+            dispersion4_err, dispersion5_err, dispersion6_err = None, None, None
+
+        # Dive down diagnostic
+        dive_down_diag = {'value': ArrayToList(lon_lnen), 'axis': list(lon_lnen.getAxis(0)[:])}
+
+        if netcdf is True:
+            # save
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {
+                'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                'nina_years': str(nina_years), 'nino_years': str(nino_years),
+                'description': "Nino (Nina) events = " + region_ev + " SSTA > " + str(threshold) + my_thresh
+                               + " (SSTA < -" + str(threshold) + my_thresh + ") during " + season_ev + ", zonal SSTA "
+                               + "(meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) + "]), the zonal SSTA "
+                               + "maximum (minimum) is located for each event, the diversity is the interquartile "
+                               + "range (IQR = Q3 - Q1), second value is the median absolute deviation "
+                               + "(MAD = median([Xi - median(tab)]))",
+                'diagnostic_value_' + dataset: dispersion1, 'diagnostic_value_error_' + dataset: dispersion1_err,
+                'diagnostic_value2_' + dataset: dispersion2, 'diagnostic_value_error2_' + dataset: dispersion2_err}
+            dict2 = {
+                'units': "C", 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                'nina_years': str(nina_years), 'nino_years': str(nino_years),
+                'description': "Nino (Nina) events = " + region_ev + " SSTA > " + str(threshold) + my_thresh
+                               + " (SSTA < -" + str(threshold) + my_thresh + ") during " + season_ev + " (Nina * -1)"}
+            dict3 = {
+                'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                'nina_years': str(nina_years),
+                'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh + " during "
+                               + season_ev + ", zonal SSTA " + "(meridional averaged [" + str(lat[0]) + " ; "
+                               + str(lat[1]) + "]), the zonal SSTA minimum is located for each event, the diversity is "
+                               + "the interquartile range (IQR = Q3 - Q1), second value is the median absolute "
+                               + "deviation (MAD = median([Xi - median(tab)]))",
+                'diagnostic_value_' + dataset: dispersion3, 'diagnostic_value_error_' + dataset: dispersion3_err,
+                'diagnostic_value2_' + dataset: dispersion4, 'diagnostic_value_error2_' + dataset: dispersion4_err}
+            dict4 = {
+                'units': "C", 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                'nina_years': str(nina_years),
+                'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh + " during "
+                               + season_ev}
+            dict5 = {
+                'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                'nino_years': str(nino_years),
+                'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh + " during "
+                               + season_ev + ", zonal SSTA " + "(meridional averaged [" + str(lat[0]) + " ; "
+                               + str(lat[1]) + "]), the zonal SSTA maximum is located for each event, the diversity is "
+                               + "the interquartile range (IQR = Q3 - Q1), second value is the median absolute "
+                               + "deviation (MAD = median([Xi - median(tab)]))",
+                'diagnostic_value_' + dataset: dispersion5, 'diagnostic_value_error_' + dataset: dispersion5_err,
+                'diagnostic_value2_' + dataset: dispersion6, 'diagnostic_value_error2_' + dataset: dispersion6_err}
+            dict6 = {
+                'units': "C", 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                'nino_years': str(nino_years),
+                'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh + " during "
+                               + season_ev}
+            dict7 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                     'frequency': kwargs['frequency']}
+            SaveNetcdf(file_name,
+                       var1=lon_lnen, var1_attributes=dict1, var1_name='Enso_lon_pos_maxSSTA__' + dataset,
+                       var2=sample_lnen, var2_attributes=dict2, var2_name='Enso_sst_lon__' + dataset,
+                       var3=lon_ln, var3_attributes=dict3, var3_name='Nina_lon_pos_minSSTA__' + dataset,
+                       var4=sample_ln, var4_attributes=dict4, var4_name='Nina_sst_lon__' + dataset,
+                       var5=lon_en, var5_attributes=dict5, var5_name='Nino_lon_pos_maxSSTA__' + dataset,
+                       var6=sample_en, var6_attributes=dict6, var6_name='Nino_sst_lon__' + dataset,
+                       global_attributes=dict7)
+            del dict1, dict2, dict3, dict4, dict5, dict6, dict7
+
+    # metric value
+    if debug is True:
+        dict_debug = {
+            'line1': 'diagnostic (IQR) value: ' + str(dispersion1),
+            'line2': 'diagnostic (IQR) value_error: ' + str(dispersion1_err),
+            'line3': 'diagnostic (MAD) value: ' + str(dispersion2),
+            'line4': 'diagnostic (MAD) value_error: ' + str(dispersion2_err),
+        }
+        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+
+    # Create output
+    EnsoDivMetric = {
+        'name': Name, 'value': dispersion1, 'value_error': dispersion1_err, 'value2': dispersion2,
+        'value_error2': dispersion2_err, 'units': Units, 'method': Method, 'nyears': yearN,
+        'events': nina_years + nino_years, 'time_frequency': kwargs['frequency'], 'time_period': actualtimebounds,
+        'ref': Ref, 'keyerror': keyerror, 'dive_down_diag': dive_down_diag,
+    }
+    return EnsoDivMetric
 
 
 def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset='',
@@ -17782,7 +18129,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                       netcdf_name='', metname='', **kwargs):
     """
     The SeasonalPrLatRmse() function computes the climatological (12 months) PR (precipitation) meridional (latitude)
-    standard deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
+    standard deviation root mean square error (RMSE) in a 'box' (usually the nino3_LatExt)
 
     Inputs:
     ------
@@ -17811,7 +18158,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     :param prlandmasknameobs: string
         name of landmask variable (sftlf, lsmask, landmask) in 'prlandmaskfileobs'
     :param box: string
-        name of box ('nino3.3_LatExt') for PR
+        name of box ('nino3x_LatExt') for PR
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -18386,7 +18733,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                         dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The SeasonalSshLatRmse() function computes the climatological (12 months) SSH meridional (latitude) standard
-    deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
+    deviation root mean square error (RMSE) in a 'box' (usually the nino3_LatExt)
 
     Inputs:
     ------
@@ -18613,8 +18960,10 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'shape2': '(obs) ' + str(sshMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
-            sshMap_mod = Std(sshMap_mod) * 1e2
-            sshMap_obs = Std(sshMap_obs) * 1e2
+            sshMap_mod = Std(sshMap_mod)
+            sshMap_mod = OperationMultiply(sshMap_mod, 1e2)
+            sshMap_obs = Std(sshMap_obs)
+            sshMap_obs = OperationMultiply(sshMap_obs, 1e2)
             # Regridding
             if 'regridding' not in kwargs.keys():
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
@@ -18920,8 +19269,10 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'shape2': '(obs) ' + str(sshMap_obs.shape)}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
-            sshMap_mod = Std(sshMap_mod) * 1e2
-            sshMap_obs = Std(sshMap_obs) * 1e2
+            sshMap_mod = Std(sshMap_mod)
+            sshMap_mod = OperationMultiply(sshMap_mod, 1e2)
+            sshMap_obs = Std(sshMap_obs)
+            sshMap_obs = OperationMultiply(sshMap_obs, 1e2)
             # Regridding
             if 'regridding' not in kwargs.keys():
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
@@ -18998,7 +19349,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                        netcdf_name='', metname='', **kwargs):
     """
     The SeasonalSstLatRmse() function computes the climatological (12 months) SST meridional (latitude) standard
-    deviation root mean square error (RMSE) in a 'box' (usually the nino3.3_LatExt)
+    deviation root mean square error (RMSE) in a 'box' (usually the nino3_LatExt)
 
     Inputs:
     ------
@@ -19027,7 +19378,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     :param sstlandmasknameobs: string
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
-        name of box ('nino3.3_LatExt') for SST
+        name of box ('nino3_LatExt') for SST
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
