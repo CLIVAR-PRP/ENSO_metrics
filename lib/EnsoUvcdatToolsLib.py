@@ -212,7 +212,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     return averaged_tab
 
 
-def AverageTemporal(tab, areacell=None):
+def AverageTemporal(tab, areacell=None, **kwargs):
     """
     #################################################################################
     Description:
@@ -302,6 +302,41 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
 dict_average = {'horizontal': AverageHorizontal, 'meridional': AverageMeridional, 'time': AverageTemporal,
                 'zonal': AverageZonal}
 
+
+def Concatenate(tab1, tab2, events1=[], events2=[]):
+    my_events = events1 + events2
+    if len(my_events) > 0:
+        my_events_sort = sorted(my_events)
+        for yy in my_events_sort:
+            try:
+                tab_out
+            except:
+                if yy in events1:
+                    tab_out = MV2array([tab1[events1.index(yy)]])
+                else:
+                    tab_out = MV2array([tab2[events2.index(yy)]])
+            else:
+                if yy in events1:
+                    tab_out = MV2concatenate((tab_out, MV2array([tab1[events1.index(yy)]])))
+                else:
+                    tab_out = MV2concatenate((tab_out, MV2array([tab2[events2.index(yy)]])))
+        axes = CDMS2createAxis(MV2array(my_events_sort, dtype='int32'), id='years')
+        if len(events1):
+            tmp = deepcopy(tab1)
+        else:
+            tmp = deepcopy(tab2)
+        att = tmp.attributes
+        if len(tmp.shape) > 1:
+            mask = tmp[0].mask
+            mask2 = MV2zeros(tab_out.shape)
+            mask2[:] = mask
+            dictvar = {"axes": [axes] + tab1[0].getAxisList(), "mask": mask2, "grid": tmp.getGrid(), "attributes": att}
+        else:
+            dictvar = {"axes": [axes], "attributes": att}
+        tab_out = CDMS2createVariable(tab_out, **dictvar)
+    else:
+        tab_out = MyEmpty(tab1[:5, 0], time=True, time_id='years')
+    return tab_out
 
 def closest_grid(region, nlat, nlon):
     res = [0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75]
@@ -401,7 +436,16 @@ def OperationMultiply(tab, number_or_tab):
     if not isinstance(number_or_tab, int) and not isinstance(number_or_tab, float):
         if tab.shape != number_or_tab.shape:
             EnsoErrorsWarnings.MismatchShapesError(tab, number_or_tab, INSPECTstack())
-    return MV2multiply(tab, number_or_tab)
+    tab_out = MV2multiply(tab, number_or_tab)
+    axes = tab.getAxisList()
+    att = tab.attributes
+    if len(tab.shape) > 1:
+        mask = tab.mask
+        dictvar = {"axes": axes, "mask": tab.mask, "grid": tab.getGrid(), "attributes": att}
+    else:
+        dictvar = {"axes": axes, "attributes": att}
+    tab_out = CDMS2createVariable(tab_out, **dictvar)
+    return tab_out
 
 
 def OperationSubtract(tab, number_or_tab):
@@ -768,7 +812,9 @@ def annualcycle(tab):
     months = MV2array(list(tt.month for tt in time_ax))
     cyc = []
     for ii in range(12):
-        tmp = tab.compress(months == (ii + 1), axis=0)
+        ids = MV2compress(months == (ii + 1), range(len(tab)))
+        tmp = MV2take(tab, ids, axis=0)
+        # tmp = tab.compress(months == (ii + 1), axis=0)
         tmp = MV2average(tmp, axis=0)
         cyc.append(tmp)
         del tmp
@@ -1104,6 +1150,8 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
             EnsoErrorsWarnings.TooShortTimePeriod(metric_name, shortest, min_time_steps, INSPECTstack())
             keyerror2 = "too short time period (variable1:" + str(len(tab1_sliced)) + " ; variable2:" +\
                         str(len(tab2_sliced)) + ")"
+        else:
+            keyerror2 = None
     else:
         keyerror2 = None
 
@@ -2013,12 +2061,12 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     :return new_tab: masked_array
         tab_to_regrid regridded on newgrid
     """
-    known_args = {'newgrid_name', 'region'}
+    known_args = {"newgrid_name", "region"}
     extra_args = set(kwargs) - known_args
     if extra_args:
         EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
     # test given arguments
-    known_regridder = ['cdms', 'cdmsHorizontal']
+    known_regridder = ["cdms", "cdmsHorizontal"]
     if regridder not in known_regridder:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridder",
@@ -2026,16 +2074,16 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
             str().ljust(10) + "known regridder: " + str(known_regridder)
         ]
         EnsoErrorsWarnings.MyError(list_strings)
-    elif regridder == 'cdms':
-        if regridTool in ['regrid2', 'libcf']:
-            list_method = [None, 'linear']
-        elif regridTool == 'esmf':
-            list_method = [None, 'conserve', 'linear', 'patch']
-        if (regridTool is not None) and (regridTool not in ['regrid2', 'esmf', 'libcf']):
+    elif regridder == "cdms":
+        if regridTool in ["regrid2", "libcf"]:
+            list_method = [None, "linear"]
+        elif regridTool == "esmf":
+            list_method = [None, "conserve", "linear", "patch"]
+        if (regridTool is not None) and (regridTool not in ["regrid2", "esmf", "libcf"]):
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": regridTool",
                 str().ljust(5) + "unknown regridTool: " + str(regridTool),
-                str().ljust(10) + "known regridTool: " + str(['regrid2', 'esmf', 'libcf'])
+                str().ljust(10) + "known regridTool: " + str(["regrid2", "esmf", "libcf"])
             ]
             EnsoErrorsWarnings.MyError(list_strings)
         elif regridMethod not in list_method:
@@ -2053,37 +2101,37 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         # to do this, kwargs['newgrid_name'] and kwargs['region'] must be defined
         #
         # define the grid type
-        for gtype in ['equalarea', 'gaussian', 'generic', 'uniform']:
+        for gtype in ["equalarea", "gaussian", "generic", "uniform"]:
             if gtype in kwargs['newgrid_name']:
                 GridType = gtype
                 break
         try:
             GridType
         except:
-            GridType = 'generic'
+            GridType = "generic"
         # define resolution (same resolution in lon and lat)
-        for res in ['0.25x0.25deg', '0.5x0.5deg', '0.75x0.75deg', '1x1deg', '1.25x1.25deg', '1.5x1.5deg',
-                    '1.75x1.75deg', '2x2deg', '2.25x2.25deg', '2.5x2.5deg', '2.75x2.75deg']:
+        for res in ["0.25x0.25deg", "0.5x0.5deg", "0.75x0.75deg", "1x1deg", "1.25x1.25deg", "1.5x1.5deg",
+                    "1.75x1.75deg", "2x2deg", "2.25x2.25deg", "2.5x2.5deg", "2.75x2.75deg"]:
             if res in kwargs['newgrid_name']:
-                if res == '0.25x0.25deg':
+                if res == "0.25x0.25deg":
                     GridRes = 0.25
-                elif res == '0.5x0.5deg':
+                elif res == "0.5x0.5deg":
                     GridRes = 0.5
-                elif res == '0.75x0.75deg':
+                elif res == "0.75x0.75deg":
                     GridRes = 0.75
-                elif res == '1x1deg':
+                elif res == "1x1deg":
                     GridRes = 1.
-                elif res == '1.25x1.25deg':
+                elif res == "1.25x1.25deg":
                     GridRes = 1.25
-                elif res == '1.5x1.5deg':
+                elif res == "1.5x1.5deg":
                     GridRes = 1.5
-                elif res == '1.75x1.75deg':
+                elif res == "1.75x1.75deg":
                     GridRes = 1.75
-                elif res == '2x2deg':
+                elif res == "2x2deg":
                     GridRes = 2.
-                elif res == '2.25x2.25deg':
+                elif res == "2.25x2.25deg":
                     GridRes = 2.25
-                elif res == '2.5x2.5deg':
+                elif res == "2.5x2.5deg":
                     GridRes = 2.5
                 else:
                     GridRes = 2.75
@@ -2093,9 +2141,9 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         except:
             GridRes = 1.
         # define bounds of 'region'
-        region_ref = ReferenceRegions(kwargs['region'])
-        lat1, lat2 = region_ref['latitude'][0], region_ref['latitude'][1]
-        lon1, lon2 = region_ref['longitude'][0], region_ref['longitude'][1]
+        region_ref = ReferenceRegions(kwargs["region"])
+        lat1, lat2 = region_ref["latitude"][0], region_ref["latitude"][1]
+        lon1, lon2 = region_ref["longitude"][0], region_ref["longitude"][1]
         # create uniform axis
         nlat = lat2 - lat1
         lat = CDMS2createUniformLatitudeAxis(lat1 + (GridRes / 2.), nlat, GridRes)
@@ -2103,16 +2151,24 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         lon = CDMS2createUniformLongitudeAxis(lon1 + (GridRes / 2.), nlon, GridRes)
         # create grid
         newgrid = CDMS2createRectGrid(lat, lon, "yx", type=GridType, mask=None)
-        newgrid.id = kwargs['newgrid_name']
+        newgrid.id = kwargs["newgrid_name"]
     #
     # regrid
     #
-    if regridder == 'cdms':
+    if regridder == "cdms":
+        axis = tab_to_regrid.getAxis(0)
+        idname = deepcopy(axis.id)
+        if len(tab_to_regrid.shape) == 3 and (axis.id == "months" or axis.id == "years"):
+            axis.id = "time"
+            tab_to_regrid.setAxis(0, axis)
         new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
                                        regridMethod=regridMethod)
+        axis = tab_to_regrid.getAxis(0)
+        axis.id = idname
+        tab_to_regrid.setAxis(0, axis)
         if tab_to_regrid.getGrid().shape == newgrid.shape:
             new_tab = MV2masked_where(tab_to_regrid.mask, new_tab)
-    elif regridder == 'cdmsHorizontal':
+    elif regridder == "cdmsHorizontal":
         regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid)
         new_tab = regridFCT(tab_to_regrid)
     return new_tab
@@ -3460,7 +3516,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
     dt = dt.reorder('10')
     dt[:] = dSST[:, -1]
     dt = dt.reorder('10')
-    dt = MV2masked_where(abs(dt) < 0.05, dt)
+    dt = MV2masked_where(abs(dt) < 0.1, dt)
     dSSTthf[:] = fraction * dSSTthf[:] / dt
     # normalized SST change
     dSST[:] = dSST[:] / dt
