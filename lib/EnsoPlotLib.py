@@ -50,7 +50,7 @@ plot_parameters = {
         'diagnostic': {
             'plot_type': 'curve',
             'nbr_panel': 1,
-            'title': 'a) Mean meridional PR',  # 'Mean PR',
+            'title': 'Mean PR',  # 'a) Mean meridional PR',  #
             'varpattern': 'pr_lat__',
             'xname': 'latitude',
             'yname': 'PR',
@@ -304,13 +304,13 @@ plot_parameters = {
 
     },
     'EnsoDuration': {
-        'netcdf_variables': ["sst_against_sst_ts__", 'Nina_duration__', 'Nino_duration__'],#['sst_over_sst_ts__', 'Nina_duration__', 'Nino_duration__'],
+        'netcdf_variables': ["sst_against_sst_ts__", 'Nina_duration__', 'Nino_duration__'],
         'diagnostic': {
             'plot_type': 'dot',
             'nbr_panel': 1,
             'title': 'ENSO duration',
             'varpattern': 'diagnostic',
-            'yname': 'duration (reg>0)',
+            'yname': 'duration (reg>0.25)',
         },
         'dive_down01': {
             'plot_type': 'curve',
@@ -334,7 +334,7 @@ plot_parameters = {
         'diagnostic': {
             'plot_type': 'scatterplot',
             'nbr_panel': 1,
-            'title': 'c) SSH-to-SST coupling',  # 'SSH-to-SST coupling',
+            'title': 'SSH-to-SST coupling',
             'varpattern': ['ssh__', 'sst__'],
             'xname': 'SSHA',
             'yname': 'SSTA',
@@ -555,7 +555,7 @@ plot_parameters = {
         'diagnostic': {
             'plot_type': 'scatterplot',
             'nbr_panel': 1,
-            'title': 'a) SST-to-Taux coupling',  # 'SST-to-Taux coupling',
+            'title': 'SST-to-Taux coupling',
             'varpattern': ['sst__', 'taux__'],
             'xname': 'SSTA',
             'yname': 'TAUXA',
@@ -638,12 +638,13 @@ plot_parameters = {
         },
     },
     'EnsoFbTauxSsh': {
-        'netcdf_variables': ['taux__', 'ssh__', 'taux_over_ssh_lon__', 'tauxPOS_over_ssh_lon__', 'tauxNEG_over_ssh_lon__',
-                             'taux_over_ssh_hov__', 'tauxPOS_over_ssh_hov__', 'tauxNEG_over_ssh_hov__'],
+        'netcdf_variables': [
+            'taux__', 'ssh__', 'taux_over_ssh_lon__', 'tauxPOS_over_ssh_lon__', 'tauxNEG_over_ssh_lon__',
+            'taux_over_ssh_hov__', 'tauxPOS_over_ssh_hov__', 'tauxNEG_over_ssh_hov__'],
         'diagnostic': {
             'plot_type': 'scatterplot',
             'nbr_panel': 1,
-            'title': 'b) Taux-to-SSH coupling',  # 'Taux-to-SSH coupling',
+            'title': 'Taux-to-SSH coupling',
             'varpattern': ['taux__', 'ssh__'],
             'xname': 'TAUXA',
             'yname': 'SSHA',

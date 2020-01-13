@@ -6,15 +6,16 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSstLonRmse, BiasSstLatRmse, BiasSstSkLonRmse,\
-    BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse, EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration,\
-    EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh,\
-    EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoPrTsRmse, EnsoSeasonality, EnsoSlpMap, EnsoSstLonRmse, EnsoSstMap,\
-    EnsoSstSkew, EnsoSstTsRmse, EnsoTauxTsRmse, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv,\
-    NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap,\
-    NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse,\
-    SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalTauxLatRmse,\
-    SeasonalTauxLonRmse
+from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshRmse,\
+    BiasSstLatRmse, BiasSstLonRmse, BiasSstSkLonRmse, BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse,\
+    EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf,\
+    EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoPrTsRmse,\
+    EnsoSeasonality, EnsoSlpMap, EnsoSstDiversity, EnsoSstLonRmse, EnsoSstMap, EnsoSstSkew, EnsoSstTsRmse,\
+    EnsoTauxTsRmse, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur,\
+    NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap, NinoSlpMap, NinoSstDiv,\
+    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
+    SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse,\
+    SeasonalTauxLatRmse, SeasonalTauxLonRmse
 from KeyArgLib import DefaultArgValues
 
 
@@ -397,6 +398,7 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
 #
 dict_oneVar_modelAndObs = {
     'BiasPrLatRmse': BiasPrLatRmse, 'BiasPrLonRmse': BiasPrLonRmse, 'BiasPrRmse': BiasPrRmse,
+    'BiasSshLatRmse': BiasSshLatRmse, 'BiasSshLonRmse': BiasSshLonRmse, 'BiasSshRmse': BiasSshRmse,
     'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
     'BiasSstSkLonRmse': BiasSstSkLonRmse,
@@ -405,6 +407,7 @@ dict_oneVar_modelAndObs = {
     'EnsoSstTsRmse': EnsoSstTsRmse, 'NinaSstTsRmse': NinaSstTsRmse, 'NinoSstLonRmse': NinoSstLonRmse,
     'NinaSstDivRmse': NinaSstDivRmse, 'NinoSstDivRmse': NinoSstDivRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
+    'SeasonalSshLatRmse': SeasonalSshLatRmse, 'SeasonalSshLonRmse': SeasonalSshLonRmse,
     'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
     'SeasonalTauxLatRmse': SeasonalTauxLatRmse, 'SeasonalTauxLonRmse': SeasonalTauxLonRmse,
 }
@@ -418,8 +421,9 @@ dict_twoVar_modelAndObs = {
 
 dict_oneVar = {
     'EnsoAmpl': EnsoAmpl, 'EnsoDuration': EnsoDuration, 'EnsoDiversity': EnsoDiversity,
-    'EnsoSeasonality': EnsoSeasonality, 'EnsoSstSkew': EnsoSstSkew, 'NinaSstDiv': NinaSstDiv, 'NinaSstDur': NinaSstDur,
-    'NinoSstDiv': NinoSstDiv, 'NinoSstDiversity': NinoSstDiversity, 'NinoSstDur': NinoSstDur,
+    'EnsoSeasonality': EnsoSeasonality, 'EnsoSstDiversity': EnsoSstDiversity, 'EnsoSstSkew': EnsoSstSkew,
+    'NinaSstDiv': NinaSstDiv, 'NinaSstDur': NinaSstDur, 'NinoSstDiv': NinoSstDiv, 'NinoSstDiversity': NinoSstDiversity,
+    'NinoSstDur': NinoSstDur,
 }
 
 dict_twoVar = {
