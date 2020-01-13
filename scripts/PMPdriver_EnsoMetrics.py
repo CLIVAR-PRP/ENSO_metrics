@@ -87,8 +87,6 @@ try:
     egg_pth = pkg_resources.resource_filename(
         pkg_resources.Requirement.parse("pcmdi_metrics"), "share/pmp")
 except Exception:
-    # python 2 seems to fail when ran in home directory of source?
-    #egg_pth = os.path.join(os.getcwd(), "share", "pmp")
     egg_pth = os.path.join(sys.prefix, "share", "pmp")
 print('egg_pth:', egg_pth)
 
@@ -217,7 +215,9 @@ for mod in models:
     for run in runs_list:
 
         print(' --- run: ', run, ' ---')
-        dict_mod = {mod: {}}
+        mod_run = '_'.join([mod, run])
+        #dict_mod = {mod: {}}
+        dict_mod = {mod_run: {}}
         #dict_mod[mod][run] = {}
 
         if debug:
@@ -228,6 +228,7 @@ for mod in models:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
                 var_in_file = dict_var[var]['var_name']
+                print('var_in_file:', var_in_file)
                 if isinstance(var_in_file, list):
                     var0 = var_in_file[0]
                 else:
@@ -236,17 +237,28 @@ for mod in models:
                 # finding file for 'mod', 'var'
                 #
                 file_name = modpath(mip=mip, exp=exp, model=mod, realization=run, variable=var0)
-                file_areacell = None ## temporary for now
-                file_landmask = modpath_lf(mip=mip, model=mod)
+                file_areacella = modpath_lf(mip=mip, model=mod, variable="areacella")
+                file_areacello = modpath_lf(mip=mip, model=mod, variable="areacello")
+                if not os.path.isfile(file_areacella):
+                    file_areacella = None
+                if not os.path.isfile(file_areacello):
+                    file_areacello = None
+                if var in ['ssh']:
+                    file_areacell = file_areacello
+                else:
+                    file_areacell = file_areacella
+                file_landmask = modpath_lf(mip=mip, model=mod, variable="sftlf")
                 # -- TEMPORARY --
                 if mip == 'cmip6':
                     if mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
                         file_landmask = '/work/lee1043/ESGF/CMIP6/CMIP/'+mod+'/sftlf_fx_'+mod+'_historical_r1i1p1f1_gr.nc'
                     elif mod in ['GFDL-ESM4']:
-                        file_landmask = modpath_lf(mip=mip, model='GFDL-CM4')
+                        file_landmask = modpath_lf(mip=mip, model='GFDL-CM4', variable="sftlf")
                 # -- TEMPORARY END --
                 try:
                     areacell_in_file = dict_var['areacell']['var_name']
+                    if var == 'ssh':
+                        areacell_in_file = "areacello"
                 except:
                     areacell_in_file = None
                 try:
@@ -255,24 +267,41 @@ for mod in models:
                     landmask_in_file = None
         
                 if isinstance(var_in_file, list):
-                    list_files = list()
-                    list_files = [modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var1) for var1 in var_in_file]
-                    list_areacell = [file_areacell for var1 in var_in_file]
-                    list_name_area = [areacell_in_file for var1 in var_in_file]
-                    list_landmask = [modpath_lf(mip=mip, model=mod) for var1 in var_in_file]
-                    list_name_land = [landmask_in_file for var1 in var_in_file]
+                    list_areacell, list_files, list_landmask, list_name_area, list_name_land = \
+                        list(), list(), list(), list(), list()
+                    for var1 in var_in_file:
+                        modpath_tmp = modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var1)
+                        modpath_lf_tmp = modpath_lf(mip=mip, model=mod, variable="sftlf")
+                        if not os.path.isfile(modpath_tmp):
+                            modpath_tmp = None
+                        if not os.path.isfile(modpath_lf_tmp):
+                            modpath_lf_tmp = None
+                        list_files.append(modpath_tmp)
+                        list_areacell.append(file_areacell)
+                        list_name_area.append(areacell_in_file)
+                        list_landmask.append(modpath_lf_tmp)
+                        list_name_land.append(landmask_in_file)
                 else:
+                    if not os.path.isfile(file_name):
+                        file_name = None
+                    if not os.path.isfile(file_landmask):
+                        file_landmask = None
                     list_files = file_name
                     list_areacell = file_areacell
                     list_name_area = areacell_in_file
                     list_landmask = file_landmask
                     list_name_land = landmask_in_file
 
-                dict_mod[mod][var] = {
+                # Variable from ocean grid
+                if var in ['ssh']:
+                    list_landmask = None
+
+                #dict_mod[mod][var] = {
+                dict_mod[mod_run][var] = {
                     'path + filename': list_files, 'varname': var_in_file,
                     'path + filename_area': list_areacell, 'areaname': list_name_area,
                     'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
-        
+
                 print('PMPdriver: var loop end')
             
             # dictionary needed by EnsoMetrics.ComputeMetricsLib.ComputeCollection
@@ -303,7 +332,7 @@ for mod in models:
                 print('json_name:', json_name)
 
             # Computes the metric collection
-            dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=param.nc_out,
+            dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod_run, netcdf=param.nc_out,
                                                      netcdf_name=netcdf, debug=debug)
             if debug:
                 print('file_name:', file_name)
