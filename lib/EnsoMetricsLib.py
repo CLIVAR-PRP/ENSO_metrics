@@ -7036,6 +7036,8 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                        var1_name='reg_pr_over_sst_map__' + dataset1, var2=pr_obs_slope, var2_attributes=dict2,
                        var2_name='reg_pr_over_sst_map__' + dataset2, global_attributes=dict3,  **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, list_met_name, list_region
+        if prCorr is not None:
+            prCorr = 1 - prCorr
 
     # Create output
     EnsoPrMapMetric = {
@@ -9427,6 +9429,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                        var1_name='reg_slp_over_sst_map__' + dataset1, var2=slp_obs_slope, var2_attributes=dict2,
                        var2_name='reg_slp_over_sst_map__' + dataset2, global_attributes=dict3, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, list_met_name, list_region
+        if slpCorr is not None:
+            slpCorr = 1 - slpCorr
 
     # Create output
     EnsoSlpMapMetric = {
@@ -10276,6 +10280,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                        var1_name='reg_ts_over_sst_map__' + dataset1, var2=ts_obs_slope, var2_attributes=dict2,
                        var2_name='reg_ts_over_sst_map__' + dataset2, global_attributes=dict3, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, list_met_name, list_region
+        if tsCorr is not None:
+            tsCorr = 1 - tsCorr
 
     # Create output
     EnsoSstMapMetric = {
@@ -12647,6 +12653,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='prComp_map__' + dataset1, var2=pr_obs,
                        var2_attributes=dict2, var2_name='prComp_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
+        if prCorr is not None:
+            prCorr = 1 - prCorr
 
     # Create output
     NinaPrMapMetric = {
@@ -14072,6 +14080,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                        var2=slp_obs, var2_attributes=dict2, var2_name='slp_map__' + dataset2,
                        global_attributes=dict3)
             del dict1, dict2, dict3
+        if slpCorr is not None:
+            slpCorr = 1 - slpCorr
 
     # Create output
     NinaSlpMapMetric = {
@@ -14391,6 +14401,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                        var2=tsmap_obs, var2_attributes=dict2, var2_name='ts_map__' + dataset2,
                        global_attributes=dict3)
             del dict1, dict2, dict3
+        if tsCorr is not None:
+            tsCorr = 1 - tsCorr
 
     # Create output
     NinaSstMapMetric = {
@@ -15765,6 +15777,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             SaveNetcdf(file_name, var1=pr_mod, var1_attributes=dict1, var1_name='pr_map__' + dataset1, var2=pr_obs,
                        var2_attributes=dict2, var2_name='pr_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
+        if prCorr is not None:
+            prCorr = 1 -prCorr
 
     # Create output
     NinoPrMapMetric = {
@@ -17483,6 +17497,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             SaveNetcdf(file_name, var1=slp_mod, var1_attributes=dict1, var1_name='slp_map__' + dataset1,
                        var2=slp_obs, var2_attributes=dict2, var2_name='slp_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
+        if slpCorr is not None:
+            slpCorr = 1 - slpCorr
 
     # Create output
     NinoSlpMapMetric = {
@@ -17801,6 +17817,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             SaveNetcdf(file_name, var1=tsmap_mod, var1_attributes=dict1, var1_name='ts_map__' + dataset1,
                        var2=tsmap_obs, var2_attributes=dict2, var2_name='ts_map__' + dataset2, global_attributes=dict3)
             del dict1, dict2, dict3
+        if tsCorr is not None:
+            tsCorr = 1 - tsCorr
 
     # Create output
     NinoSstMapMetric = {
