@@ -11,16 +11,18 @@ import os
 
 # -------------------------------
 mip = 'cmip5'
-#mip = 'cmip6'
+mip = 'cmip6'
 exp = 'historical'
-case_id = 'v20191204'
+#case_id = 'v20191204'
+case_id = 'v20200113'
 metricsCollection = 'ENSO_perf'
-#metricsCollection = 'ENSO_proc'
-#metricsCollection = 'ENSO_tel'
+metricsCollection = 'ENSO_proc'
+metricsCollection = 'ENSO_tel'
 #metricsCollection = 'test_perf'
 #metricsCollection = 'test_proc'
 #metricsCollection = 'test_tel'
-pmprdir = '/work/lee1043/imsi/result_test'
+#pmprdir = '/work/lee1043/imsi/result_test'
+pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
 # -------------------------------
 
 json_file_dir_template = os.path.join(

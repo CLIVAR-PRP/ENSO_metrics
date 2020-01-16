@@ -10,8 +10,8 @@ exp = 'historical'  # historical, piControl
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-#debug = False
-debug = True
+debug = False
+#debug = True
 nc_out = True
 
 #=================================================
