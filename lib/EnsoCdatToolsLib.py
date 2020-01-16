@@ -77,7 +77,7 @@ def average_horizontal(tab, areacell=None, region=None, **kwargs):
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
         except:
-            print("\033[93m" + str().ljust(15) + "EnsoCDATToolsLib AverageHorizontal" + "\033[0m")
+            print("\033[93m" + str().ljust(15) + "EnsoCdatToolsLib average_horizontal" + "\033[0m")
             print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
@@ -131,7 +131,7 @@ def average_meridional(tab, areacell=None, region=None, **kwargs):
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='y', weights='weighted', action='average')
         except:
-            print("\033[93m" + str().ljust(15) + "EnsoCDATToolsLib AverageMeridional" + "\033[0m")
+            print("\033[93m" + str().ljust(15) + "EnsoCdatToolsLib average_meridional" + "\033[0m")
             print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
@@ -218,7 +218,7 @@ def average_zonal(tab, areacell=None, region=None, **kwargs):
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='x', weights='weighted', action='average')
         except:
-            print("\033[93m" + str().ljust(15) + "EnsoCDATToolsLib AverageZonal" + "\033[0m")
+            print("\033[93m" + str().ljust(15) + "EnsoCdatToolsLib average_zonal" + "\033[0m")
             print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
@@ -436,10 +436,8 @@ def apply_landmask(tab, landmask, mask_land=True, mask_ocean=False):
                        ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": applying landmask",
-                str().ljust(5) + keyerror,
-                str().ljust(5) + "cannot apply landmask",
-                str().ljust(5) + "this metric will be skipped"
-            ]
+                str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask",
+                str().ljust(5) + "this metric will be skipped"]
             EnsoErrorsWarnings.my_warning(list_strings)
         else:
             landmask_nd = MV2zeros(tab.shape)
@@ -456,9 +454,7 @@ def apply_landmask(tab, landmask, mask_land=True, mask_ocean=False):
                                    str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
                         list_strings = [
                             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": landmask shape",
-                            str().ljust(5) + keyerror,
-                            str().ljust(5) + "cannot reshape landmask"
-                        ]
+                            str().ljust(5) + keyerror, str().ljust(5) + "cannot reshape landmask"]
                         EnsoErrorsWarnings.my_warning(list_strings)
             if keyerror is None:
                 tab = MV2masked_where(landmask_nd.mask, tab)
@@ -503,9 +499,7 @@ def apply_landmask_to_area(area, landmask, mask_land=True, mask_ocean=False):
                        str(landmask.getGrid().shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": applying landmask to areacell",
-                str().ljust(5) + keyerror,
-                str().ljust(5) + "cannot apply landmask to areacell"
-            ]
+                str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask to areacell"]
             EnsoErrorsWarnings.my_warning(list_strings)
         if keyerror is None:
             # if land = 100 instead of 1, divides landmask by 100
@@ -1049,23 +1043,21 @@ def detrend_time_series(tab, info, axis=0, method='linear', bp=0):
     if method not in ['linear', 'constant']:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": method",
-            str().ljust(5) + "unknown method: " + str(method)
-        ]
+            str().ljust(5) + "unknown method: " + str(method)]
         EnsoErrorsWarnings.my_error(list_strings)
-    if method in ['linear', 'constant']:
-        axes = tab.getAxisList()
-        grid = tab.getGrid()
-        mask = tab.mask
-        mean = average_temporal(tab)
-        tab_out = MV2array(SCIPYsignal_detrend(tab, axis=axis, type=method, bp=bp))
-        tab_out = tab_out + mean
-        tab_out = MV2masked_where(mask, tab_out)
-        tab_out.setAxisList(axes)
-        tab_out.setGrid(grid)
-        if method == 'linear':
-            info = info + ', time series are linearly detrended'
-        else:
-            info = info + ', the mean value of the time series is subtracted'
+    axes = tab.getAxisList()
+    grid = tab.getGrid()
+    mask = tab.mask
+    mean = average_temporal(tab)
+    tab_out = MV2array(SCIPYsignal_detrend(tab, axis=axis, type=method, bp=bp))
+    tab_out = tab_out + mean
+    tab_out = MV2masked_where(mask, tab_out)
+    tab_out.setAxisList(axes)
+    tab_out.setGrid(grid)
+    if method == 'linear':
+        info = info + ', time series are linearly detrended'
+    else:
+        info = info + ', the mean value of the time series is subtracted'
     return tab_out, info
 
 
@@ -1088,7 +1080,7 @@ def get_num_axis(tab, name_axis):
     if name_axis == 'depth':
         axis_nick = 'lev'
         axis_nicks = ['z', 'Z', 'st_ocean', 'sw_ocean']
-    if name_axis == 'latitude':
+    elif name_axis == 'latitude':
         axis_nick = 'lat'
         axis_nicks = ['j', 'y', 'Y', 'yt_ocean', 'yu_ocean']
     elif name_axis == 'longitude':
@@ -1428,8 +1420,7 @@ def save_netcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_t
     if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": given path does not exist",
-            str().ljust(5) + "netcdf_name = " + str(netcdf_name)
-        ]
+            str().ljust(5) + "netcdf_name = " + str(netcdf_name)]
         EnsoErrorsWarnings.my_error(list_strings)
     if OSpath__isfile(netcdf_name) is True:
         o = CDMS2open(netcdf_name, 'a')
@@ -1535,14 +1526,12 @@ def smooth_gaussian(tab, axis=0, window=5):
     if window % 2 == 0:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": smoothing window (running mean)",
-            str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)
-        ]
+            str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)]
         EnsoErrorsWarnings.my_error(list_strings)
     if axis > len(tab.shape) - 1:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": axis",
-            str().ljust(5) + "axis number too big: " + str(axis)
-        ]
+            str().ljust(5) + "axis number too big: " + str(axis)]
         EnsoErrorsWarnings.my_error(list_strings)
     # Reorder tab in order to put 'axis' in first position
     indices = range(len(tab.shape))
@@ -1609,14 +1598,12 @@ def smooth_square(tab, axis=0, window=5):
     if window % 2 == 0:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": smoothing window (running mean)",
-            str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)
-        ]
+            str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)]
         EnsoErrorsWarnings.my_error(list_strings)
     if axis > len(tab.shape)-1:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": axis",
-            str().ljust(5) + "axis number too big: " + str(axis)
-        ]
+            str().ljust(5) + "axis number too big: " + str(axis)]
         EnsoErrorsWarnings.my_error(list_strings)
     # Reorder tab in order to put 'axis' in first position
     indices = range(len(tab.shape))
@@ -1625,13 +1612,11 @@ def smooth_square(tab, axis=0, window=5):
     for ii in indices:
         newOrder = newOrder+str(ii)
     new_tab = tab.reorder(newOrder)
-
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
     smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
     for ii in range(len(smoothed_tab)):
         smoothed_tab[ii] = sum(new_tab[ii:ii + window]) / float(window)
-
     # Axes list
     axes0 = new_tab[(window/2):len(new_tab)-(window/2)].getAxisList()[0]
     if len(tab.shape) > 1:
@@ -1639,7 +1624,6 @@ def smooth_square(tab, axis=0, window=5):
     else:
         axes = [axes0]
     smoothed_tab.setAxisList(axes)
-
     # Reorder to the input order
     for ii in range(axis):
         smoothed_tab = smoothed_tab.reorder(newOrder)
@@ -1668,14 +1652,12 @@ def smooth_triangle(tab, axis=0, window=5):
     if window % 2 == 0:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": smoothing window (running mean)",
-            str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)
-        ]
+            str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)]
         EnsoErrorsWarnings.my_error(list_strings)
     if axis > len(tab.shape)-1:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": axis",
-            str().ljust(5) + "axis number too big: " + str(axis)
-        ]
+            str().ljust(5) + "axis number too big: " + str(axis)]
         EnsoErrorsWarnings.my_error(list_strings)
     # Reorder tab in order to put 'axis' in first position
     indices = range(len(tab.shape))
@@ -1684,10 +1666,8 @@ def smooth_triangle(tab, axis=0, window=5):
     for ii in indices:
         newOrder = newOrder+str(ii)
     new_tab = tab.reorder(newOrder)
-
     # degree
     degree = window / 2
-
     # Create the weight array (triangle)
     weight = list()
     for ii in range(0, (2 * degree)+1):
@@ -1695,14 +1675,12 @@ def smooth_triangle(tab, axis=0, window=5):
         ww.fill(float(1 + degree - abs(degree - ii)))
         weight.append(ww)
     weight = MV2array(weight)
-
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
     smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
     sum_weight = MV2sum(weight, axis=0)
     for ii in range(len(smoothed_tab)):
         smoothed_tab[ii] = MV2sum(MV2array(new_tab[ii:ii + window]) * weight, axis=0) / sum_weight
-
     # Axes list
     axes0 = new_tab[(window / 2):len(new_tab) - (window / 2)].getAxisList()[0]
     if len(tab.shape) > 1:
@@ -1715,7 +1693,6 @@ def smooth_triangle(tab, axis=0, window=5):
             smoothed_tab.setGrid(tab.getGrid())
         except:
             pass
-
     # Reorder to the input order
     for ii in range(axis):
         smoothed_tab = smoothed_tab.reorder(newOrder)
@@ -1757,8 +1734,7 @@ def smooth_data(tab, info, axis=0, window=5, method='triangle'):
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": smoothing method (running mean)",
             str().ljust(5) + "unkwown smoothing method: " + str(method),
-            str().ljust(10) + "known smoothing method: " + str(sorted(dict_smooth.keys(), key=lambda v: v.upper())),
-        ]
+            str().ljust(10) + "known smoothing method: " + str(sorted(dict_smooth.keys(), key=lambda v: v.upper()))]
         EnsoErrorsWarnings.my_error(list_strings)
     info = info + ', smoothing using a ' + str(method) + ' shaped window of ' + str(window) + ' points'
     return dict_smooth[method](tab, axis=axis, window=window), info
