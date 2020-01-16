@@ -2,6 +2,7 @@
 from copy import deepcopy
 from inspect import stack as INSPECTstack
 from numpy import array as NUMPYarray
+from numpy import square as NUMPYsquare
 from numpy import unravel_index as NUMPYunravel_index
 from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # ENSO_metrics package functions:
@@ -34,7 +35,7 @@ def add_up_errors(list_keyerror):
     return keyerror
 
 
-def FindXYMinMax(tab, return_val='both'):
+def find_xy_min_max(tab, return_val='both'):
     """
     #################################################################################
     Description:
@@ -77,7 +78,84 @@ def FindXYMinMax(tab, return_val='both'):
     return tab_out
 
 
-def percentage_val_eastward(val_longitude, metric, region, threshold=-140):
+def math_metric_computation(model, model_err, obs=None, obs_err=None, keyword='difference'):
+    """
+    #################################################################################
+    Description:
+    Computes the metric value, i.e., distance between a model and an observational dataset
+    #################################################################################
+
+    :param model: float or None
+        scalar value computed with a model
+    :param model_err: float or None
+        error value on the scalar value computed with a model
+    :param obs: float or None, optional
+        scalar value computed with an observational dataset
+        default value is None
+    :param obs_err: float or None, optional
+        error value on the scalar value computed with an observational dataset
+        default value is None
+    :param keyword: string, optional
+        name of a mathematical method to apply to compute the metric value (distance between a model and an
+        observational dataset): 'difference', 'ratio', 'relative_difference', 'abs_relative_difference'
+        default value is 'difference'
+    :return metric: float or None
+        distance between a model and an observational dataset or None if 'model' and/or 'obs' is/are None
+    :return metric_err: float or None
+        error on the distance between a model and an observational dataset or None if 'model' and/or 'obs' and/or
+        'metric_err' and/or 'obs_err' is/are None
+    :return description_metric: string
+        description of the mathematical method used to compute the metric value
+    """
+    if keyword not in ['difference', 'ratio', 'relative_difference', 'abs_relative_difference']:
+        metric, metric_err, description_metric = \
+            None, None, "unknown keyword for the mathematical computation of the metric: " + str(keyword)
+        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": keyword",
+                        str().ljust(5) + description_metric]
+        EnsoErrorsWarnings.my_warning(list_strings)
+    else:
+        if model is not None and obs is not None:
+            if keyword == 'difference':
+                description_metric = \
+                    "The metric is the difference between model and observations values (M = model - obs)"
+                metric = model - obs
+            elif keyword == 'ratio':
+                description_metric = "The metric is the ratio between model and observations values (M = model / obs)"
+                metric = model / float(obs)
+            elif keyword == 'relative_difference':
+                description_metric = "The metric is the relative difference between model and observations values " + \
+                                     "(M = [model-obs] / obs)"
+                metric = (model - obs) / float(obs)
+            else:
+                description_metric = "The metric is the absolute value of the relative difference between model " + \
+                                     "and observations values (M = 100 * abs[[model-obs] / obs])"
+                metric = 100. * abs((model - obs) / float(obs))
+        else:
+            metric, description_metric = None, ''
+        if model_err is not None or obs_err is not None:
+            if keyword == 'difference':
+                # mathematical definition of the error on addition / subtraction
+                metric_err = model_err + obs_err
+            elif keyword == 'ratio':
+                # mathematical definition of the error on division
+                if model is not None and obs is not None:
+                    metric_err = float((obs * model_err + model * obs_err) / NUMPYsquare(obs))
+                else:
+                    metric_err = None
+            else:
+                # mathematical definition of the error on division
+                if model is not None and obs is not None:
+                    metric_err = float((obs * (model_err + obs_err) + (model - obs) * obs_err) / NUMPYsquare(obs))
+                    if keyword == 'abs_relative_difference':
+                        metric_err = 100. * metric_err
+                else:
+                    metric_err = None
+        else:
+            metric_err = None
+    return metric, metric_err, description_metric
+
+
+def percentage_val_eastward(val_longitude, metric_name, region, threshold=-140):
     """
     #################################################################################
     Description:
@@ -86,8 +164,13 @@ def percentage_val_eastward(val_longitude, metric, region, threshold=-140):
 
     :param val_longitude: list
         list of longitude
+    :param metric_name: string, optional
+        name of the metric calling the function
+    :param region: string
+        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
     :param threshold: float, optional
         threshold to define the westward boundary of the region
+
     :return ep: float
         percentage of given values eastward of 'threshold'
     """
@@ -96,9 +179,9 @@ def percentage_val_eastward(val_longitude, metric, region, threshold=-140):
         ('neg' if all(ii <= 0 for ii in val_longitude) is True else False)
     if pos_lon is False:
         keyerror = "longitude in lon_axis are neither all positive nor all negative"
-        list_strings = ["ERROR " + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": unknown longitude",
-                        str().ljust(5) + metric + ": " + str(region) + ": " + keyerror + ": " + str(val_longitude)]
-        EnsoErrorsWarnings.MyWarning(list_strings)
+        list_strings = ["ERROR " + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": unknown longitude",
+                        str().ljust(5) + metric_name + ": " + str(region) + ": " + keyerror + ": " + str(val_longitude)]
+        EnsoErrorsWarnings.my_warning(list_strings)
         ep_event = None
     else:
         if pos_lon == 'pos':
@@ -117,12 +200,13 @@ def statistical_dispersion(tab, method='IQR'):
     #################################################################################
 
     :param tab: list or `cdms2` variable
-        A list or a `cdms2` variable containing the data to be analysed.
+        A list or a `cdms2` variable containing the data to be analysed
     :param method: string, optional
         method to compute the statistical dispersion
         'IQR': interquartile range, IQR = Q3 - Q1
         'MAD': median absolute deviation, MAD = median([Xi - median(tab)])
-        Default is 'IQR'.
+        Default is 'IQR'
+
     :return stat_disp: float
         statistical_dispersion
     """
@@ -130,11 +214,11 @@ def statistical_dispersion(tab, method='IQR'):
     if method not in known_methods:
         # if 'method' is not defined -> raise error
         list_strings = [
-            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": unknown method",
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": unknown method",
             str().ljust(5) + "method " + str(method) + " is not defined",
             str().ljust(10) + "known methods: " + str(known_methods)
         ]
-        EnsoErrorsWarnings.MyError(list_strings)
+        EnsoErrorsWarnings.my_error(list_strings)
     if method == 'IQR':
         stat_disp = abs(float(SCIPYstats__scoreatpercentile(tab, 75) - SCIPYstats__scoreatpercentile(tab, 25)))
     else:
@@ -143,7 +227,7 @@ def statistical_dispersion(tab, method='IQR'):
     return stat_disp
 
 
-def StringInDict(string_or_list, dictionary, inspect_stack):
+def string_in_dict(string_or_list, dictionary, inspect_stack):
     """
     #################################################################################
     Description:
@@ -160,18 +244,17 @@ def StringInDict(string_or_list, dictionary, inspect_stack):
     """
     # test input parameters
     if not isinstance(dictionary, dict):
-        EnsoErrorsWarnings.ObjectTypeError('dictionary', 'dictionary', type(dictionary), INSPECTstack())
-
+        EnsoErrorsWarnings.object_type_error('dictionary', 'dictionary', type(dictionary), INSPECTstack())
     if isinstance(string_or_list, basestring):
         # 'string_or_list' is a string
         if string_or_list not in dictionary.keys():
             # key 'string_or_list' is not in 'dictionary' -> raise error
             list_strings = [
-                "ERROR" + EnsoErrorsWarnings.MessageFormating(inspect_stack) + ": item not included",
+                "ERROR" + EnsoErrorsWarnings.message_formating(inspect_stack) + ": item not included",
                 str().ljust(5) + " key: " + str(string_or_list) + " is not in the given dictionary",
                 str().ljust(10) + "key(s) in the dictionary: " + str(sorted(dictionary.keys()))
             ]
-            EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.my_error(list_strings)
     elif isinstance(string_or_list, list):
         # 'string_or_list' is a list
         key_not_included = list()
@@ -182,13 +265,12 @@ def StringInDict(string_or_list, dictionary, inspect_stack):
         if key_not_included:
             # if 'key_not_included' is not empty -> raise error
             list_strings = [
-                "ERROR" + EnsoErrorsWarnings.MessageFormating(inspect_stack) + ": item not included",
+                "ERROR" + EnsoErrorsWarnings.message_formating(inspect_stack) + ": item not included",
                 str().ljust(5) + " key(s): " + str(key_not_included) + " are (is) not in the given dictionary",
                 str().ljust(10) + "key(s) in the dictionary: " + str(sorted(dictionary.keys()))
             ]
-            EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.my_error(list_strings)
     else:
         # 'string_or_list' is neither a string nor a list -> raise error
-        EnsoErrorsWarnings.ObjectTypeError('string_or_list', '[string, list]', type(string_or_list), INSPECTstack())
+        EnsoErrorsWarnings.object_type_error('string_or_list', '[string, list]', type(string_or_list), INSPECTstack())
     return
-

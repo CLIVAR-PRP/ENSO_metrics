@@ -1,7 +1,6 @@
 # -*- coding:UTF-8 -*-
 from copy import deepcopy
 from inspect import stack as INSPECTstack
-from numpy import square as NUMPYsquare
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
@@ -16,7 +15,8 @@ from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSshLatR
     NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
     SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse,\
     SeasonalTauxLatRmse, SeasonalTauxLonRmse
-from KeyArgLib import DefaultArgValues
+from EnsoToolsLib import math_metric_computation
+from KeyArgLib import default_arg_values
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -332,66 +332,6 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
-
-# ---------------------------------------------------------------------------------------------------------------------#
-#
-# Mathematical definition of ENSO metrics
-#
-def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='difference'):
-    """
-
-    :param model:
-    :param obs:
-    :param keyword_metric_computation:
-    :return:
-    """
-    if keyword not in ['difference', 'ratio', 'relative_difference', 'abs_relative_difference']:
-        metric, metric_err, description_metric =\
-            None, None, "unknown keyword for the mathematical computation of the metric: " + str(keyword)
-        list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": keyword",
-                        str().ljust(5) + description_metric]
-        EnsoErrorsWarnings.MyWarning(list_strings)
-    else:
-        if model is not None and obs is not None:
-            if keyword == 'difference':
-                description_metric =\
-                    "The metric is the difference between model and observations values (M = model - obs)"
-                metric = model - obs
-            elif keyword == 'ratio':
-                description_metric = "The metric is the ratio between model and observations values (M = model / obs)"
-                metric = model / float(obs)
-            elif keyword == 'relative_difference':
-                description_metric = "The metric is the relative difference between model and observations values " +\
-                                     "(M = [model-obs] / obs)"
-                metric = (model - obs) / float(obs)
-            else:
-                description_metric = "The metric is the absolute relative difference between model and observations " +\
-                                     "values (M = 100 * abs[[model-obs] / obs])"
-                metric = 100 * abs((model - obs) / float(obs))
-        else:
-            metric, description_metric = None, ''
-        if model_err is not None or obs_err is not None:
-            if keyword == 'difference':
-                # mathematical definition of the error on addition / subtraction
-                metric_err = model_err + obs_err
-            elif keyword == 'ratio':
-                # mathematical definition of the error on division
-                if model is not None and obs is not None:
-                    metric_err = float((obs * model_err + model * obs_err) / NUMPYsquare(obs))
-                else:
-                    metric_err = None
-            else:
-                # mathematical definition of the error on division
-                if model is not None and obs is not None:
-                    metric_err = float((obs * (model_err + obs_err) + (model - obs) * obs_err) / NUMPYsquare(obs))
-                else:
-                    metric_err = None
-        else:
-            metric_err = None
-    return metric, metric_err, description_metric
-# ---------------------------------------------------------------------------------------------------------------------#
-
-
 # ---------------------------------------------------------------------------------------------------------------------#
 #
 # Computation of the metric
@@ -559,19 +499,19 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     try:
         keyarg['metric_computation']
     except:
-        keyarg['metric_computation'] = DefaultArgValues('metric_computation')
+        keyarg['metric_computation'] = default_arg_values('metric_computation')
     # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
     try:
         keyarg['time_bounds_mod'] = keyarg['modeled_period']
     except:
-        keyarg['time_bounds_mod'] = DefaultArgValues('time_bounds_mod')
+        keyarg['time_bounds_mod'] = default_arg_values('time_bounds_mod')
     # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
     try:
         keyarg['time_bounds_obs'] = keyarg['observed_period']
     except:
-        keyarg['time_bounds_obs'] = DefaultArgValues('time_bounds_obs')
+        keyarg['time_bounds_obs'] = default_arg_values('time_bounds_obs')
     # if the user gave a specific regridding Tool / method, use it
     if tmp_metric in user_regridding.keys():
         keyarg['regridding'] = user_regridding[tmp_metric]
@@ -748,9 +688,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
             else:
                 diagnostic1 = None
-                list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric",
+                list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": metric",
                                 str().ljust(5) + "unknown metric name: " + str(metric)]
-                EnsoErrorsWarnings.MyError(list_strings)
+                EnsoErrorsWarnings.my_error(list_strings)
             # puts metric / diagnostic values in its proper dictionary
             dict_diagnostic[modelName] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
             if 'nonlinearity' in diagnostic1.keys():
@@ -806,7 +746,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             metname=tmp_metric, **keyarg)
             for obs in diag_obs.keys():
                 # computes the metric
-                metric_val, metric_err, description_metric = MathMetriComputation(
+                metric_val, metric_err, description_metric = math_metric_computation(
                     diagnostic1['value'], diagnostic1['value_error'], obs=diag_obs[obs]['value'],
                     obs_err=diag_obs[obs]['value_error'], keyword=keyarg['metric_computation'])
                 dict_metric_val[obs] = {'value': metric_val, 'value_error': metric_err}
