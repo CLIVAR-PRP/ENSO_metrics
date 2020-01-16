@@ -6,7 +6,7 @@ from copy import deepcopy
 from numpy import arange as NUMPYarange
 # ENSO_metrics functions
 from EnsoCollectionsLib import defCollection
-from KeyArgLib import DefaultArgValues
+from KeyArgLib import default_arg_values
 
 
 dict_colorbar = {
@@ -1703,7 +1703,7 @@ def plot_param(metric_collection, metric):
             try:
                 computation = dict_MC['common_collection_parameters']['metric_computation']
             except:
-                computation = DefaultArgValues('metric_computation')
+                computation = default_arg_values('metric_computation')
     dict_out['metric_computation'] = computation
     # get metric variables
     variables = dict_MCm['variables']
