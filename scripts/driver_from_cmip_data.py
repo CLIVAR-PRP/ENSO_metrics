@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from cdms2 import open as CDMS2open
 from copy import deepcopy
 from getpass import getuser as GETPASSgetuser
@@ -15,8 +17,10 @@ user_name = GETPASSgetuser()
 sys.path.insert(0, "/home/" + user_name + "/Test001/ENSO_metrics/lib")
 sys.path.insert(0, "/home/" + user_name + "/Test001/ENSO_metrics/plots")
 sys.path.insert(1, "/home/" + user_name + "/Test001/ENSO_metrics/scripts")
-from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
-from EnsoComputeMetricsLib import ComputeCollection
+from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+from EnsoMetrics.EnsoComputeMetricsLib import compute_collection
+# from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
+# from EnsoComputeMetricsLib import compute_collection
 
 # My (YYP) package
 # set new path where to find programs
@@ -52,23 +56,29 @@ def find_xml(name, frequency, variable, project='', experiment='', ensemble='', 
 
 
 def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
-    try: pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project, rea=realm, var=variable)
+    try:
+        pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project,
+                                             rea=realm, var=variable)
     except:
         if realm == 'O':
             new_realm = 'A'
         elif realm == 'A':
             new_realm = 'O'
         # if var is not in realm 'O' (for ocean), look for it in realm 'A' (for atmosphere), and conversely
-        try: pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project, rea=new_realm, var=variable)
+        try:
+            pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project,
+                                                 rea=new_realm, var=variable)
         except:
             # given variable is neither in realm 'A' nor 'O'
-            print bcolors.FAIL + '%%%%%     -----     %%%%%'
-            print 'ERROR: function: '+str(INSPECTstack()[0][3])+', line: '+str(INSPECTstack()[0][2])
-            print 'given variable cannot be found in either realm A or O: '+str(variable)
-            print 'param: '+str(model)+', '+str(project)+', '+str(experiment)+', '+str(ensemble)+', '+str(frequency)+', '+str(realm)
-            print '%%%%%     -----     %%%%%' + bcolors.ENDC
+            print(bcolors.FAIL + '%%%%%     -----     %%%%%')
+            print('ERROR: function: ' + str(INSPECTstack()[0][3]) + ', line: ' + str(INSPECTstack()[0][2]))
+            print('given variable cannot be found in either realm A or O: ' + str(variable))
+            print('param: ' + str(model) + ', '+str(project) + ', ' + str(experiment) + ', ' + str(ensemble) + ', ' +\
+                  str(frequency) + ', ' + str(realm))
+            print('%%%%%     -----     %%%%%' + bcolors.ENDC)
             sys.exit('')
-        file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble, realm=new_realm)
+        file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble,
+                                       realm=new_realm)
     else:
         file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble, realm=realm)
     file_name = OSpath__join(pathnc, filenc[0])
@@ -122,9 +132,9 @@ def find_xml_obs(obs, frequency, variable):
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
-        print '\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m'
-        print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
-        print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
+        print('\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m')
+        print('\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m')
+        print('\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m')
         sys.exit('')
     file_area, file_land = find_fx(obs)
     return file_name, file_area, file_land
@@ -201,7 +211,7 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-print '\033[95m' + str(list_variables) + '\033[0m'
+print('\033[95m' + str(list_variables) + '\033[0m')
 
 # list of observations
 list_obs = list()
@@ -222,7 +232,7 @@ elif mc_name == 'ENSO_proc':
     list_obs = ['ERA-Interim']#['ERA-Interim', 'HadISST', 'GPCPv2.3']
 elif mc_name == 'ENSO_test':
     list_obs = ['AVISO', 'ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']
-print '\033[95m' + str(list_obs) + '\033[0m'
+print('\033[95m' + str(list_obs) + '\033[0m')
 
 
 #
@@ -245,7 +255,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
+            print('\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m')
         else:
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
@@ -281,14 +291,14 @@ list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['IPSL-CM5A-LR', 'IPSL-CM5A-MR', 'IP
 #
 # finding file and variable name in file for each observations dataset
 #
-dict_metric, dict_dive = dict(), dict()
+dict_metric = dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
     list_ens = ['r1i1p1']#get_ensembles(exp=experiment, fre=frequency, mod=mod, pro=project, rea=realm)
     pattern_out = OSpath__join(netcdf_path, user_name + '_' + mc_name + '_' + mod + '_' + experiment)
     files_in = list(GLOBiglob(pattern_out + '*.json'))
     #list_ens = list_ens[len(files_in):]
-    dict_ens, dict_ens_dive = dict(), dict()
+    dict_ens = dict()
     for ens in list_ens:
         dict_mod = {mod + '_' + ens: {}}
         # ------------------------------------------------
@@ -336,8 +346,8 @@ for mod in list_models:
                  'areaname': list_name_area, 'path + filename_landmask': list_landmask, 'landmaskname': list_name_land}
             del areacell_in_file, file_areacell, file_landmask, file_name, landmask_in_file, list_areacell, list_files,\
                 list_landmask, list_name_area, list_name_land, var_in_file
-            # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
-            # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
+            # dictionary needed by EnsoMetrics.ComputeMetricsLib.compute_collection
+            # @jiwoo the compute_collection function it still on development and it does not read the observations requirement
             # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
             # so the function does not take a specific obs to compute the metric so for every obs in 'dict_obs' we must include
             # every variables needed by the metric collection [lhf, lwr, swr, shf, sst, taux, thf] even if its coming from
@@ -353,54 +363,13 @@ for mod in list_models:
         # Computes the metric collection
         netcdf_name = user_name + '_' + mc_name + '_' + mod + '_' + experiment + '_' + ens
         netcdf = pattern_out + '_' + ens #OSpath__join(netcdf_path, netcdf_name)
-        dict_ens[mod + '_' + ens], dict_ens_dive[mod + '_' + ens] =\
-            ComputeCollection(mc_name, dictDatasets, mod + '_' + ens, netcdf=True, netcdf_name=netcdf, debug=False)
+        dict_ens[mod + '_' + ens] =\
+            compute_collection(mc_name, dictDatasets, mod + '_' + ens, netcdf=True, netcdf_name=netcdf, debug=False)
         # save json
         save_json({mod + '_' + ens: dict_ens[mod + '_' + ens]}, netcdf, metric_only=True)
         with open(netcdf + '_raw.json', 'w') as outfile:
             json.dump(dict_ens[mod + '_' + ens], outfile, sort_keys=True)
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
-    dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
-    del dict_ens, dict_ens_dive, files_in, list_ens, pattern_out
-print str(sys.argv[0]) + ": done"
-# ------------------------------------------------
-# reshape dictionary
-# listm = sorted(dict_metric.keys())
-# liste = dict((mod, sorted(dict_metric[mod].keys())) for mod in listm)
-# dict_dive, dict_metr = dict(), dict()
-# for met in list_metric:
-#     dict1, dict2 = dict(), dict()
-#     for mod in listm:
-#         for ens in liste[mod]:
-#             # dive down diagnostics & metadata (nyears)
-#             dict3 = dict()
-#             for key4 in dict_metric[mod][ens]['value'][met]['diagnostic'].keys():
-#                 # dive
-#                 tmp = dict_metric[mod][ens]['value'][met]['diagnostic'][key4]['value']
-#                 if key4 == 'model':
-#                     dict1[mod + '__' + ens] = tmp
-#                 else:
-#                     dict1[key4] = tmp
-#                 del tmp
-#                 # meta
-#                 tmp = dict_metric[mod][ens]['metadata']['metrics'][met]['diagnostic'][key4]['nyears']
-#                 if key4 != 'model':
-#                     dict3[key4] = tmp
-#                 del tmp
-#             # metrics
-#             dict4 = dict()
-#             for key4 in dict_metric[mod][ens]['value'][met]['metric'].keys():
-#                 tmp = dict_metric[mod][ens]['value'][met]['metric'][key4]['value']
-#                 tmp_key = key4.replace("ref_", "")
-#                 dict4[tmp_key] = {'metric': tmp, 'nyears_obs': dict3[tmp_key]}
-#                 del tmp, tmp_key
-#             dict2[mod + '__' + ens] = dict4
-#             del dict3, dict4
-#     dict_dive[met], dict_metr[met] = dict1, dict2
-#     del dict1, dict2
-# # ------------------------------------------------
-# # save as json file
-# name = today + '_YANN_PLANTON_' + mc_name + '.json'
-# with open(name, 'w') as outfile:
-#     json.dump(dict_metr, outfile)
-# del name
+    dict_metric[mod] = dict_ens
+    del dict_ens, files_in, list_ens, pattern_out
+print(str(sys.argv[0]) + ": done")

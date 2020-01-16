@@ -1,10 +1,21 @@
 <component name="ProjectDictionaryState">
   <dictionary name="yannplanton">
     <words>
+      <w>areacell</w>
+      <w>dataset</w>
+      <w>detrend</w>
+      <w>detrended</w>
       <w>detrending</w>
       <w>detrends</w>
+      <w>interannual</w>
+      <w>keyerror</w>
+      <w>landmask</w>
+      <w>netcdf</w>
+      <w>nino</w>
       <w>preprocess</w>
+      <w>regrid</w>
       <w>regridding</w>
+      <w>taux</w>
     </words>
   </dictionary>
 </component>

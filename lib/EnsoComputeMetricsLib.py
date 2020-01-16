@@ -1,4 +1,5 @@
 # -*- coding:UTF-8 -*-
+from __future__ import print_function
 from copy import deepcopy
 from inspect import stack as INSPECTstack
 from numpy import square as NUMPYsquare
@@ -6,16 +7,7 @@ from numpy import square as NUMPYsquare
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection
 import EnsoErrorsWarnings
-from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshRmse,\
-    BiasSstLatRmse, BiasSstLonRmse, BiasSstSkLonRmse, BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse,\
-    EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf,\
-    EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoPrTsRmse,\
-    EnsoSeasonality, EnsoSlpMap, EnsoSstDiversity, EnsoSstLonRmse, EnsoSstMap, EnsoSstSkew, EnsoSstTsRmse,\
-    EnsoTauxTsRmse, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur,\
-    NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap, NinoSlpMap, NinoSstDiv,\
-    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
-    SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse,\
-    SeasonalTauxLatRmse, SeasonalTauxLonRmse
+from EnsoMetricsLib import EnsoAmpl
 from KeyArgLib import DefaultArgValues
 
 
@@ -23,8 +15,8 @@ from KeyArgLib import DefaultArgValues
 #
 # Computation of the metric collection
 #
-def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding={}, debug=False, dive_down=False,
-                      netcdf=False, netcdf_name=''):
+def compute_collection(metricCollection, dictDatasets, modelName, user_regridding={}, debug=False, netcdf=False,
+                       netcdf_name=''):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -79,9 +71,6 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
     :param debug: boolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-    :param dive_down: boolean, optional
-        default value = False dive_down are not saved in a dictionary
-        If you want to save the dive down diagnostics set it to True
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
@@ -136,15 +125,11 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
     dict_col_meta = {
         'name': dict_mc['long_name'], 'description_of_the_collection': dict_mc['description'], 'metrics': {},
     }
-    dict_col_dd_meta = {
-        'name': dict_mc['long_name'], 'description_of_the_collection': dict_mc['description'], 'metrics': {},
-    }
     dict_col_valu = dict()
-    dict_col_dd_valu = dict()
     dict_m = dict_mc['metrics_list']
     list_metrics = sorted(dict_m.keys(), key=lambda v: v.upper())
     for metric in list_metrics:
-        print '\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m'
+        print('\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m')
         # sets arguments for this metric
         list_variables = dict_m[metric]['variables']
         dict_regions = dict_m[metric]['regions']
@@ -260,44 +245,44 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 (len(list_variables) > 1 and
                  (arg_var2['modelFile2'] is None or len(arg_var2['modelFile2']) == 0 or
                  (isinstance(arg_var2['modelFile2'], list) and None in arg_var2['modelFile2']))):
-            print '\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
-                  + str(metric) + " not computed" + '\033[0m'
-            print '\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m'
+            print('\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
+                  + str(metric) + " not computed" + '\033[0m')
+            print('\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m')
             if modelFile1 is None or len(modelFile1) == 0:
-                print '\033[94m' + str().ljust(11) + "no modeled " + list_variables[0] + " given" + '\033[0m'
+                print('\033[94m' + str().ljust(11) + "no modeled " + list_variables[0] + " given" + '\033[0m')
             if isinstance(modelFile1, list) and None in modelFile1:
                 for ff, vv in zip(modelFile1, modelVarName1):
                     if ff is None or vv is None:
-                        print '\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m'
+                        print('\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m')
             if (len(list_variables) > 1 and arg_var2['modelFile2'] is None) or\
                     (len(list_variables) > 1 and len(arg_var2['modelFile2']) == 0):
-                print '\033[94m' + str().ljust(11) + "no modeled " + list_variables[1] + " given" + '\033[0m'
+                print('\033[94m' + str().ljust(11) + "no modeled " + list_variables[1] + " given" + '\033[0m')
             if isinstance(arg_var2['modelFile2'], list) and None in arg_var2['modelFile2']:
                 for ff, vv in zip(arg_var2['modelFile2'], arg_var2['modelVarName2']):
                     if ff is None or vv is None:
-                        print '\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m'
+                        print('\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m')
         elif obsFile1 is None or len(obsFile1) == 0 or (isinstance(obsFile1, list) and None in obsFile1) or\
                 (len(list_variables) > 1 and
                  (arg_var2['obsFile2'] is None or len(arg_var2['obsFile2']) == 0 or
                  (isinstance(arg_var2['obsFile2'], list) and None in arg_var2['obsFile2']))):
-            print '\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
-                  + str(metric) + " not computed" + '\033[0m'
-            print '\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m'
+            print('\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
+                  + str(metric) + " not computed" + '\033[0m')
+            print('\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m')
             if obsFile1 is None or len(obsFile1) == 0:
-                print '\033[94m' + str().ljust(11) + "no observed " + list_variables[0] + " given" + '\033[0m'
+                print('\033[94m' + str().ljust(11) + "no observed " + list_variables[0] + " given" + '\033[0m')
             if isinstance(obsFile1, list) and None in obsFile1:
                 for ff, vv in zip(obsFile1, obsVarName1):
                     if ff is None or vv is None:
-                        print '\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m'
+                        print('\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m')
             if (len(list_variables) > 1 and arg_var2['obsFile2'] is None) or\
                     (len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0):
-                print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
+                print('\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m')
             if isinstance(arg_var2['obsFile2'], list) and None in arg_var2['obsFile2']:
                 for ff, vv in zip(arg_var2['obsFile2'], arg_var2['obsVarName2']):
                     if ff is None or vv is None:
-                        print '\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m'
+                        print('\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m')
         else:
-            valu, vame, dive, dime = ComputeMetric(
+            valu, vame = compute_metric(
                 metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                 dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
                 netcdf_name=netcdf_name, **arg_var2)
@@ -319,38 +304,49 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                     mm = dict((ii, vame['metric'][ii]) for ii in vame['metric'].keys() if 'units' not in ii)
                     mm['units'] = vame['metric'][kk + '__units']
                     dict_col_meta['metrics'][metric + kk] = {'metric': mm, 'diagnostic': vame['diagnostic']}
-                    dict_col_dd_valu[metric + kk], dict_col_dd_meta['metrics'][metric + kk] = dive, dime
                     del mm, dd
             else:
                 dict_col_valu[metric], dict_col_meta['metrics'][metric] = valu, vame
-                dict_col_dd_valu[metric], dict_col_dd_meta['metrics'][metric] = dive, dime
-    if dive_down is True:
-        return {'value': dict_col_valu, 'metadata': dict_col_meta},\
-               {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}
-    else:
-        return {'value': dict_col_valu, 'metadata': dict_col_meta}, {}
+    return {'value': dict_col_valu, 'metadata': dict_col_meta}, {}
 # ---------------------------------------------------------------------------------------------------------------------#
-
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
 #
 # Mathematical definition of ENSO metrics
 #
-def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='difference'):
+def math_metric_computation(model, model_err, obs=None, obs_err=None, keyword='difference'):
     """
 
-    :param model:
-    :param obs:
-    :param keyword_metric_computation:
-    :return:
+    :param model: float or None
+        scalar value computed with a model
+    :param model_err: float or None
+        error value on the scalar value computed with a model
+    :param obs: float or None, optional
+        scalar value computed with an observational dataset
+        default value is None
+    :param obs_err: float or None, optional
+        error value on the scalar value computed with an observational dataset
+        default value is None
+    :param keyword: string, optional
+        name of a mathematical method to apply to compute the metric value (distance between a model and an
+        observational dataset): 'difference', 'ratio', 'relative_difference', 'abs_relative_difference'
+        default value is 'difference'
+
+    :return metric: float or None
+        distance between a model and an observational dataset or None if 'model' and/or 'obs' is/are None
+    :return metric_err: float or None
+        error on the distance between a model and an observational dataset or None if 'model' and/or 'obs' and/or
+        'metric_err' and/or 'obs_err' is/are None
+    :return description_metric: string
+        description of the mathematical method used to compute the metric value
     """
     if keyword not in ['difference', 'ratio', 'relative_difference', 'abs_relative_difference']:
         metric, metric_err, description_metric =\
             None, None, "unknown keyword for the mathematical computation of the metric: " + str(keyword)
-        list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": keyword",
+        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": keyword",
                         str().ljust(5) + description_metric]
-        EnsoErrorsWarnings.MyWarning(list_strings)
+        EnsoErrorsWarnings.my_warning(list_strings)
     else:
         if model is not None and obs is not None:
             if keyword == 'difference':
@@ -365,9 +361,9 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
                                      "(M = [model-obs] / obs)"
                 metric = (model - obs) / float(obs)
             else:
-                description_metric = "The metric is the absolute relative difference between model and observations " +\
-                                     "values (M = 100 * abs[[model-obs] / obs])"
-                metric = 100 * abs((model - obs) / float(obs))
+                description_metric = "The metric is the absolute values of the relative difference between model and" +\
+                                     " observations values (M = 100 * abs[[model-obs] / obs])"
+                metric = 100. * abs((model - obs) / float(obs))
         else:
             metric, description_metric = None, ''
         if model_err is not None or obs_err is not None:
@@ -384,6 +380,8 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
                 # mathematical definition of the error on division
                 if model is not None and obs is not None:
                     metric_err = float((obs * (model_err + obs_err) + (model - obs) * obs_err) / NUMPYsquare(obs))
+                    if keyword == 'abs_relative_difference':
+                        metric_err = metric_err * 100.
                 else:
                     metric_err = None
         else:
@@ -396,50 +394,22 @@ def MathMetriComputation(model, model_err, obs=None, obs_err=None, keyword='diff
 #
 # Computation of the metric
 #
-dict_oneVar_modelAndObs = {
-    'BiasPrLatRmse': BiasPrLatRmse, 'BiasPrLonRmse': BiasPrLonRmse, 'BiasPrRmse': BiasPrRmse,
-    'BiasSshLatRmse': BiasSshLatRmse, 'BiasSshLonRmse': BiasSshLonRmse, 'BiasSshRmse': BiasSshRmse,
-    'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
-    'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
-    'BiasSstSkLonRmse': BiasSstSkLonRmse,
-    'EnsoSstLonRmse': EnsoSstLonRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
-    'EnsoSstMap': EnsoSstMap, 'NinaSstMap': NinaSstMap, 'NinoSstMap': NinoSstMap,
-    'EnsoSstTsRmse': EnsoSstTsRmse, 'NinaSstTsRmse': NinaSstTsRmse, 'NinoSstLonRmse': NinoSstLonRmse,
-    'NinaSstDivRmse': NinaSstDivRmse, 'NinoSstDivRmse': NinoSstDivRmse,
-    'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
-    'SeasonalSshLatRmse': SeasonalSshLatRmse, 'SeasonalSshLonRmse': SeasonalSshLonRmse,
-    'SeasonalSstLatRmse': SeasonalSstLatRmse, 'SeasonalSstLonRmse': SeasonalSstLonRmse,
-    'SeasonalTauxLatRmse': SeasonalTauxLatRmse, 'SeasonalTauxLonRmse': SeasonalTauxLonRmse,
-}
+dict_oneVar_modelAndObs = {}
 
-dict_twoVar_modelAndObs = {
-    'EnsoPrMap': EnsoPrMap, 'EnsoPrJjaTel': EnsoPrJjaTel, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoSlpMap': EnsoSlpMap,
-    'NinaPrMap': NinaPrMap, 'NinaPrJjaTel': NinaPrJjaTel, 'NinaPrNdjTel': NinaPrNdjTel, 'NinaSlpMap': NinaSlpMap,
-    'NinoPrMap': NinoPrMap, 'NinoPrJjaTel': NinoPrJjaTel, 'NinoPrNdjTel': NinoPrNdjTel, 'NinoSlpMap': NinoSlpMap,
-    'EnsoPrTsRmse': EnsoPrTsRmse, 'EnsoTauxTsRmse': EnsoTauxTsRmse,
-}
+dict_twoVar_modelAndObs = {}
 
-dict_oneVar = {
-    'EnsoAmpl': EnsoAmpl, 'EnsoDuration': EnsoDuration, 'EnsoDiversity': EnsoDiversity,
-    'EnsoSeasonality': EnsoSeasonality, 'EnsoSstDiversity': EnsoSstDiversity, 'EnsoSstSkew': EnsoSstSkew,
-    'NinaSstDiv': NinaSstDiv, 'NinaSstDur': NinaSstDur, 'NinoSstDiv': NinoSstDiv, 'NinoSstDiversity': NinoSstDiversity,
-    'NinoSstDur': NinoSstDur,
-}
+dict_oneVar = {'EnsoAmpl': EnsoAmpl}
 
-dict_twoVar = {
-    'EnsoFbSshSst': EnsoFbSshSst, 'EnsoFbSstLhf': EnsoFbSstLhf, 'EnsoFbSstLwr': EnsoFbSstLwr,
-    'EnsoFbSstShf': EnsoFbSstShf, 'EnsoFbSstSwr': EnsoFbSstSwr, 'EnsoFbSstTaux': EnsoFbSstTaux,
-    'EnsoFbSstThf': EnsoFbSstThf, 'EnsoFbTauxSsh': EnsoFbTauxSsh, 'EnsodSstOce': EnsodSstOce,
-}
+dict_twoVar = {}
 
 
-def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-                  regionVar1, modelFileArea1='', modelAreaName1='', modelFileLandmask1='', modelLandmaskName1='',
-                  obsFileArea1='', obsAreaName1='', obsFileLandmask1='', obsLandmaskName1='',
-                  modelFile2='', modelVarName2='', modelFileArea2='', modelAreaName2='', modelFileLandmask2='',
-                  modelLandmaskName2='', obsNameVar2='', obsFile2='', obsVarName2='', obsFileArea2='', obsAreaName2='',
-                  obsFileLandmask2='', obsLandmaskName2='', regionVar2='', user_regridding={}, debug=False,
-                  netcdf=False, netcdf_name=''):
+def compute_metric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
+                   regionVar1, modelFileArea1='', modelAreaName1='', modelFileLandmask1='', modelLandmaskName1='',
+                   obsFileArea1='', obsAreaName1='', obsFileLandmask1='', obsLandmaskName1='',
+                   modelFile2='', modelVarName2='', modelFileArea2='', modelAreaName2='', modelFileLandmask2='',
+                   modelLandmaskName2='', obsNameVar2='', obsFile2='', obsVarName2='', obsFileArea2='', obsAreaName2='',
+                   obsFileLandmask2='', obsLandmaskName2='', regionVar2='', user_regridding={}, debug=False,
+                   netcdf=False, netcdf_name=''):
     """
     :param metricCollection: string
         name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
@@ -530,9 +500,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     :param debug: boolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-    :param dive_down: boolean, optional
-        default value = False dive_down are not saved in a dictionary
-        If you want to save the dive down diagnostics set it to True
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
@@ -597,8 +564,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     dict_metric_val = dict()
     dict_diagnostic = dict()
     dict_diagnostic_metadata = dict()
-    dict_dive_down = dict()
-    dict_dive_down_metadata = dict()
 
     multimetric = False
 
@@ -641,7 +606,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             'diagnostic': {{modelName: {'method': None, 'name': None, 'ref': None, 'time_frequency': None,
                                         'units': None, 'keyerror': tmperr}}},
         }
-        dict_dive_down, dict_dive_down_metadata = {}, {}
     else:
         if metric in dict_oneVar_modelAndObs.keys() or metric in dict_twoVar_modelAndObs.keys():
             #
@@ -657,8 +621,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     if metric == "EnsoSstMap" and output_name in sst_only:
                         pass
                     else:
-                        print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " \
-                              + modelName + " and " + output_name + '\033[0m'
+                        print('\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " \
+                              + modelName + " and " + output_name + '\033[0m')
                         diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                             modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
                             modelLandmaskName1, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii],
@@ -668,8 +632,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 elif metric in dict_twoVar_modelAndObs.keys():
                     for jj in range(len(obsNameVar2)):
                         output_name = obsNameVar1[ii] + '_' + obsNameVar2[jj]
-                        print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +\
-                              modelName + " and " + output_name + '\033[0m'
+                        print('\033[94m' + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +\
+                              modelName + " and " + output_name + '\033[0m')
                         diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
                             modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
                             modelLandmaskName1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2,
@@ -703,15 +667,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             dict_diagnostic[modelName][key + '__value_error'] = None
                             dict_diagnostic[obs][key + '__value'] = None
                             dict_diagnostic[obs][key + '__value_error'] = None
-                if 'dive_down_diag' in diagnostic1[obs].keys():
-                    dict_dive_down[modelName] = diagnostic1[obs]['dive_down_diag']['model']
-                    dict_dive_down[obs] = diagnostic1[obs]['dive_down_diag']['observations']
-                    dict1 = {}
-                    for elt in diagnostic1[obs]['dive_down_diag'].keys():
-                        if elt not in ['model', 'observations']:
-                            dict1[elt] = diagnostic1[obs]['dive_down_diag'][elt]
-                    dict_dive_down_metadata[obs] = dict1
-                    del dict1
                 # puts diagnostic metadata in its proper dictionary
                 dict_diagnostic_metadata[modelName] = {'name': modelName, 'nyears': diagnostic1[obs]['nyears_model'],
                                                        'time_period': diagnostic1[obs]['time_period_model']}
@@ -732,14 +687,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             keyarg['project_interpreter_var1'] = keyarg['project_interpreter']
             if metric in dict_oneVar.keys():
                 # computes diagnostic that needs only one variable
-                print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m'
+                print('\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(modelName) + '\033[0m')
                 diagnostic1 = dict_oneVar[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
                     regionVar1, dataset=modelName, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
                     metname=tmp_metric, **keyarg)
             elif metric in dict_twoVar.keys():
                 # computes diagnostic that needs two variables
-                print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m'
+                print('\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + '\033[0m')
                 keyarg['project_interpreter_var2'] = keyarg['project_interpreter']
                 diagnostic1 = dict_twoVar[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
@@ -748,24 +703,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
             else:
                 diagnostic1 = None
-                list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": metric",
+                list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": metric",
                                 str().ljust(5) + "unknown metric name: " + str(metric)]
-                EnsoErrorsWarnings.MyError(list_strings)
+                EnsoErrorsWarnings.my_error(list_strings)
             # puts metric / diagnostic values in its proper dictionary
             dict_diagnostic[modelName] = {'value': diagnostic1['value'], 'value_error': diagnostic1['value_error']}
             if 'nonlinearity' in diagnostic1.keys():
                 dict_diagnostic[modelName]['nonlinearity'] = diagnostic1['nonlinearity']
                 dict_diagnostic[modelName]['nonlinearity_error'] = diagnostic1['nonlinearity_error']
-            if 'dive_down_diag' in diagnostic1.keys():
-                dict_dive_down[modelName] = diagnostic1['dive_down_diag']['value']
-                for elt in diagnostic1['dive_down_diag'].keys():
-                    if elt not in ['value']:
-                        try:
-                            dict_dive_down_metadata[modelName]
-                        except:
-                            dict_dive_down_metadata[modelName] = {elt: diagnostic1['dive_down_diag'][elt]}
-                        else:
-                            dict_dive_down_metadata[modelName][elt] = diagnostic1['dive_down_diag'][elt]
             # puts diagnostic metadata in its proper dictionary
             dict_diagnostic_metadata[modelName] = {
                 'name': modelName, 'nyears': diagnostic1['nyears'], 'time_period': diagnostic1['time_period'],
@@ -785,7 +730,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 keyarg['project_interpreter_var1'] = obs1
                 #            keyarg['project_interpreter'] = 'CMIP'
                 if metric in dict_oneVar.keys():
-                    print '\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(obs1) + '\033[0m'
+                    print('\033[94m' + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(obs1) + '\033[0m')
                     output_name = obs1
                     diag_obs[output_name] = dict_oneVar[metric](
                         obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
@@ -796,8 +741,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         obs2 = obsNameVar2[jj]
                         output_name = obs1 + '_' + obs2
                         keyarg['project_interpreter_var2'] = obs2
-                        print '\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name)\
-                              + '\033[0m'
+                        print('\033[94m' + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name)\
+                              + '\033[0m')
                         diag_obs[output_name] = dict_twoVar[metric](
                             obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                             obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
@@ -806,7 +751,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             metname=tmp_metric, **keyarg)
             for obs in diag_obs.keys():
                 # computes the metric
-                metric_val, metric_err, description_metric = MathMetriComputation(
+                metric_val, metric_err, description_metric = math_metric_computation(
                     diagnostic1['value'], diagnostic1['value_error'], obs=diag_obs[obs]['value'],
                     obs_err=diag_obs[obs]['value_error'], keyword=keyarg['metric_computation'])
                 dict_metric_val[obs] = {'value': metric_val, 'value_error': metric_err}
@@ -815,16 +760,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 if 'nonlinearity' in diag_obs[obs].keys():
                     dict_diagnostic[obs]['nonlinearity'] = diag_obs[obs]['nonlinearity']
                     dict_diagnostic[obs]['nonlinearity_error'] = diag_obs[obs]['nonlinearity_error']
-                if 'dive_down_diag' in diag_obs[obs].keys():
-                    dict_dive_down[obs] = diag_obs[obs]['dive_down_diag']['value']
-                    for elt in diag_obs[obs]['dive_down_diag'].keys():
-                        if elt not in ['value']:
-                            try:
-                                dict_dive_down_metadata[obs]
-                            except:
-                                dict_dive_down_metadata[obs] = {elt: diag_obs[obs]['dive_down_diag'][elt]}
-                            else:
-                                dict_dive_down_metadata[obs][elt] = diag_obs[obs]['dive_down_diag'][elt]
                 # puts diagnostic metadata in its proper dictionary
                 dict_diagnostic_metadata[obs] = {
                     'name': obs, 'nyears': diag_obs[obs]['nyears'], 'time_period': diag_obs[obs]['time_period'],
@@ -844,7 +779,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         for key in list_keys:
             if key == 'method':
                 dict_diagnostic_metadata[key] = diagnostic1['method']
-                dict_dive_down_metadata[key] = diagnostic1['method']
                 try:
                     diagnostic1['nonlinearity']
                 except:
@@ -853,7 +787,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     dict_diagnostic_metadata['method_nonlinearity'] = diagnostic1['method_nonlinearity']
             else:
                 dict_diagnostic_metadata[key] = diagnostic1[key]
-                dict_dive_down_metadata[key] = diagnostic1[key]
         # creates the output dictionaries
         dict_metrics = {'metric': dict_metric_val, 'diagnostic': dict_diagnostic}
         datasets = modelName + "; "
@@ -885,5 +818,5 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 'metric': {'name': metric, 'method': description_metric, 'datasets': datasets, 'units': units},
                 'diagnostic': dict_diagnostic_metadata,
             }
-    return dict_metrics, dict_metadata, dict_dive_down, dict_dive_down_metadata
+    return dict_metrics, dict_metadata
 # ---------------------------------------------------------------------------------------------------------------------#

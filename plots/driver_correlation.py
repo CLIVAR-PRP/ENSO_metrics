@@ -15,6 +15,7 @@ from inspect import stack as INSPECTstack
 import json
 import matplotlib.pyplot as plt
 from matplotlib.colors import BoundaryNorm
+from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
 from numpy import arange as NUMPYarange
 from numpy.ma import masked_where as NUMPYmasked_where
@@ -38,10 +39,11 @@ my_project = ["CMIP"]
 big_ensemble = True
 reduced_set = True  # False  #
 
-path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
+path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_grouped")
 # path_out = OSpath__join(path_main, "Plots_v5")
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v03"
+# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -75,14 +77,14 @@ def common_save(dict_in, dict_out={}):
                     dict_out[mod][met] = dict_in[mod][met]
                 else:
                     list_strings = [
-                        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                        "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
                         ": metric already in output",
                         str().ljust(5) + "metric '" + str(met) + "' for model '" + str(mod) +
                         "' is already in output dictionary",
                         str().ljust(10) + "in  input = " + str(dict_in[mod][met]),
                         str().ljust(10) + "in output = " + str(dict_out[mod][met]),
                     ]
-                    EnsoErrorsWarnings.MyError(list_strings)
+                    EnsoErrorsWarnings.my_error(list_strings)
     return dict_out
 
 
@@ -143,7 +145,7 @@ def get_ref(metric):
     return plot_param(mc, my_met)['metric_reference']
 
 
-def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=False, title='correlations'):
+def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=False, title='correlations', cfram=False):
     """
     Plots the correlations matrix.
 
@@ -188,10 +190,50 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
     # x axis
     xticks = [ii + 0.5 for ii in range(len(tab_plot))]
     xlabel = [met for met in xy_names]
-    plt.xticks(xticks, xlabel, fontsize=15)
-    plt.xticks(rotation=90)
+    ax.set_xticks(xticks)
+    # ax.set_xticklabels(xlabel)
+    ax.set_xticklabels([""] * len(xticks))
+    ax.tick_params(axis="x", labelsize=15, labelrotation=90)
+    mylab = ["BiasPrLatRmse", "SeasonalPrLatRmse", "EnsoSstLonRmse", "EnsoFbSshSst"]
+    jj = 0
+    for ll, txt in enumerate(xlabel):
+        if ll < 8:
+            cc = "yellowgreen"
+        elif 8 <= ll < 15:
+            cc = "orchid"
+        elif 15 <= ll < 19:
+            cc = "gold"
+        else:
+            cc = "darkcyan"
+        boxdict = dict(lw=0, facecolor=cc, pad=3, alpha=1)
+        ax.text(ll + 0.5, -0.3, txt, fontsize=15, ha='right', va='top', rotation=45, color="k", bbox=boxdict)
+        ax.text(-0.4, ll + 0.5, txt, fontsize=15, ha='right', va='center', color="k", bbox=boxdict)
+        if txt == "":
+            ax.text(ll + 0.5, -0.3, mylab[jj], fontsize=18, ha="right", va="top", rotation=45, color="k", weight="bold",
+                    bbox=boxdict)
+            ax.text(-0.4, ll + 0.5, mylab[jj], fontsize=18, ha="right", va="center", color="k", weight="bold",
+                    bbox=boxdict)
+            jj += 1
+    if cfram is True:
+        nbr = len(tab_rval)
+        lic = ["k"] * 6 + ["yellowgreen"] * 4 + ["orchid"] * 4 + ["gold"] * 4 + ["darkcyan"] * 4
+        lis = ["-"] * len(lic)
+        liw = [4] * 6 + [10] * (len(lic) - 6)
+        lix = [[8, 8], [15, 15], [19, 19], [0, nbr], [0, nbr], [0, nbr]] + \
+              [[0, 0], [nbr, nbr], [0, 8], [0, 8]] + [[0, 0], [nbr, nbr], [8.18, 15], [8.18, 15]] +\
+              [[0, 0], [nbr, nbr], [15.18, 19], [15.18, 19]] + [[0, 0], [nbr, nbr], [19.18, nbr], [19.18, nbr]]
+        liy = [[0, nbr], [0, nbr], [0, nbr], [8, 8], [15, 15], [19, 19]] +\
+              [[0, 8], [0, 8], [0, 0], [nbr, nbr]] + [[8.18, 15], [8.18, 15], [0, 0], [nbr, nbr]] +\
+              [[15.18, 19], [15.18, 19], [0, 0], [nbr, nbr]] + [[19.18, nbr], [19.18, nbr], [0, 0], [nbr, nbr]]
+        for lc, ls, lw, lx, ly in zip(lic, lis, liw, lix, liy):
+            line = Line2D(lx, ly, c=lc, lw=lw, ls=ls, zorder=10)
+            line.set_clip_on(False)
+            ax.add_line(line)
     # y axis
-    plt.yticks(xticks, xlabel, fontsize=15)
+    ax.set_yticks(xticks)
+    # ax.set_yticklabels(xlabel)
+    ax.set_yticklabels([""] * len(xticks))
+    ax.tick_params(axis="y", labelsize=15)
     # text
     if write_corr is True:
         for ii in range(len(tab_plot)):
@@ -201,15 +243,25 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
     if tab_pval is not None:
         for ii in range(len(tab_plot)):
             nbr1 = str(sum([1 for jj in range(len(tab_plot[ii])) if tab_plot[ii][jj] < 0]))
-            nbr2 = str(int(len(tab_plot) - 1 - sum(tab_plot[ii].mask.astype('f')))).zfill(2)
-            plt.text(len(tab_plot) + 0.5, ii + 0.5, nbr1, fontsize=15, horizontalalignment='center',
-                     verticalalignment='center')
-            plt.text(len(tab_plot) + 0.5, -0.5, "nbr < 0", fontsize=15, horizontalalignment='center',
-                     verticalalignment='top', rotation=90)
-            plt.text(len(tab_plot) + 1 + 0.5, ii + 0.5, nbr2, fontsize=15, horizontalalignment='center',
-                     verticalalignment='center')
-            plt.text(len(tab_plot) + 1 + 0.5, -0.5, "nbr significant", fontsize=15, horizontalalignment='center',
-                     verticalalignment='top', rotation=90)
+            # nbr2 = str(int(len(tab_plot) - 1 - sum(tab_plot[ii].mask.astype('f')))).zfill(2)
+            nbr2 = str(sum([1 for jj in range(len(tab_plot[ii])) if tab_plot[ii][jj] > 0])).zfill(2)
+            ax.text(len(tab_plot) + 0.5, ii + 0.5, nbr1, fontsize=15, ha='center', va='center')
+            # plt.text(len(tab_plot) + 0.5, -0.5, "nbr corr < 0", fontsize=15, horizontalalignment='center',
+            #          verticalalignment='top', rotation=90)
+            ax.text(len(tab_plot) + 1, 0, "nbr corr < 0", fontsize=15, ha='right', va='top', rotation=45)
+            ax.text(len(tab_plot) + 1 + 0.5, ii + 0.5, nbr2, fontsize=15, ha='center', va='center')
+            # plt.text(len(tab_plot) + 1 + 0.5, -0.5, "nbr corr > 0", fontsize=15, horizontalalignment='center',
+            #          verticalalignment='top', rotation=90)
+            ax.text(len(tab_plot) + 2, 0, "nbr corr > 0", fontsize=15, ha='right', va='top', rotation=45)
+    # mylab = ["BiasPrLatRmse", "SeasonalPrLatRmse", "EnsoSstLonRmse", "EnsoFbSshSst"]
+    # cc = 0
+    # for ii, met in enumerate(xy_names):
+    #     if met == "":
+    #         ax.text(ii + 0.5, -0.2, mylab[cc], horizontalalignment="center", verticalalignment="top", weight="bold",
+    #                 size=15, rotation="vertical")
+    #         ax.text(-0.2, ii + 0.5, mylab[cc], horizontalalignment="right", verticalalignment="center", weight="bold",
+    #                 size=15)
+    #         cc += 1
     # color bar
     levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
     x2 = ax.get_position().x1
@@ -332,28 +384,29 @@ for proj in list_project:
                     ref = "Tropflux"
                 data_met = data_mod[met]["metric"]
                 list_ref = sorted(data_met.keys(), key=lambda v: v.upper())
-                if ref in list_ref:
-                    my_ref = deepcopy(ref)
-                else:
-                    if "ERA-Interim" in list_ref:
-                        my_ref = "ERA-Interim"
-                    elif "ERA-Interim_ERA-Interim" in list_ref:
-                        my_ref = "ERA-Interim_ERA-Interim"
-                    else:
-                        list_strings = [
-                            "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                            ": cannot fing a proper reference",
-                            str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
-                            met + "'",
-                            str().ljust(10) + "input references = " + str(list_ref)]
-                        EnsoErrorsWarnings.MyError(list_strings)
-                    # list_strings = [
-                    #     "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
-                    #     ": reference changed",
-                    #     str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
-                    #     met + "'",
-                    #     str().ljust(10) + "reference set to '" + my_ref +"' instead of '" + ref + "'"]
-                    # EnsoErrorsWarnings.MyWarning(list_strings)
+                my_ref = deepcopy(ref)
+                # if ref in list_ref:
+                #     my_ref = deepcopy(ref)
+                # else:
+                #     if "ERA-Interim" in list_ref:
+                #         my_ref = "ERA-Interim"
+                #     elif "ERA-Interim_ERA-Interim" in list_ref:
+                #         my_ref = "ERA-Interim_ERA-Interim"
+                #     else:
+                #         list_strings = [
+                #             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                #             ": cannot fing a proper reference",
+                #             str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
+                #             met + "'",
+                #             str().ljust(10) + "input references = " + str(list_ref)]
+                #         EnsoErrorsWarnings.MyError(list_strings)
+                #     # list_strings = [
+                #     #     "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                #     #     ": reference changed",
+                #     #     str().ljust(5) + "project '" + proj + "', MC '" + mc + "', model '" + mod + "', metric '" +
+                #     #     met + "'",
+                #     #     str().ljust(10) + "reference set to '" + my_ref +"' instead of '" + ref + "'"]
+                #     # EnsoErrorsWarnings.MyWarning(list_strings)
                 if data_met[my_ref]["value"] is None:
                     dict2[met] = 1e20
                 else:
@@ -493,12 +546,19 @@ if big_ensemble is True:
 # ---------------------------------------------------#
 dict_out = deepcopy(dict_met)
 lev1 = sorted(dict_out.keys(), key=lambda v: v.upper())
+met_order = [
+    "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "BiasTauxLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse",
+    "SeasonalSstLonRmse", "SeasonalTauxLonRmse", "EnsoSstLonRmse", "EnsoSstTsRmse", "EnsoAmpl", "EnsoSeasonality",
+    "EnsoSstSkew", "EnsoDuration", "NinoSstDiversity_1", "NinoSstDiversity_2", "EnsoPrMapCorr", "EnsoPrMapRmse",
+    "EnsoSstMapCorr", "EnsoSstMapRmse", "EnsodSstOce_1", "EnsodSstOce_2", "EnsoFbSstThf", "EnsoFbSstTaux",
+    "EnsoFbTauxSsh", "EnsoFbSshSst"]
 # correlation
 if ' ':
     if big_ensemble is True:
         dict_out = deepcopy(dict_met)
         lev1 = sorted(dict_out.keys(), key=lambda v: v.upper())
         list_metrics = sorted(dict_out[lev1[0]].keys(), key=lambda v: v.upper())
+        list_metrics = [met for met in met_order if met in list_metrics]
         tab = NUMPYma__zeros((len(list_metrics), len(lev1)))
         for ii, met in enumerate(list_metrics):
             for jj, mod in enumerate(lev1):
@@ -510,10 +570,12 @@ if ' ':
         # compute inter model correlations
         rval, pval = compute_correlation(tab)
         name_plot = OSpath__join(path_out, "correlations_inter_metrics_" + str(len(list_metrics)).zfill(2) +
-                                 "metrics_" + str(len(lev1)).zfill(2) + "models")
+                                 "metrics_" + str(len(lev1)).zfill(2) + "models_v3")
         title = ""  # "inter metric correlations"
         list_metrics2 = [met.replace("_2", "") for met in list_metrics]
-        # plot_correlation(rval, name_plot, list_metrics2, tab_pval=pval, write_corr=True, title=title)
+        list_metrics2 = ["" if met in ["BiasPrLatRmse", "SeasonalPrLatRmse", "EnsoSstLonRmse", "EnsoFbSshSst"] else met
+                         for met in list_metrics2]
+        plot_correlation(rval, name_plot, list_metrics2, tab_pval=pval, write_corr=False, title=title, cfram=True)
         # # compute inter model correlations
         # tab = tab.reorder('10')
         # rval, pval = compute_correlation(tab)
@@ -522,12 +584,7 @@ if ' ':
         # title = "inter model correlations"
         # plot_correlation(rval, name_plot, list_metrics, tab_pval=pval, write_corr=True, title=title)
 
-if ' ':
-    lev1.remove("BNU-ESM")
-    lev1.remove("GFDL-CM2p1")
-    lev1.remove("GFDL-CM4")
-    lev1.remove("HadCM3")
-    lev1.remove("HadGEM2-AO")
+if '':
     tmp1 = [dict_out[mod]["EnsoSeasonality"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.25 / Q2 ~ 0.34
     tmp2 = [dict_out[mod]["BiasSstLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.64 / Q2 ~ 1.00
     tmp3 = [dict_out[mod]["BiasPrLonRmse"] for jj, mod in enumerate(lev1)]  # Q1 ~ 0.73 / Q2 ~ 1.00

@@ -160,13 +160,13 @@ def minmax_plot(tab, metric=False):
         tick_labels = list(NUMPYaround(tick_labels, decimals=0).astype(int))
     if len(tick_labels) > 6:
         list_strings = [
-            "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too many ticks for axis",
+            "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many ticks for axis",
             str().ljust(5) + str(len(tick_labels)) + " ticks: " + str(tick_labels),
             str().ljust(5) + "there should not be more than 6"
         ]
-        EnsoErrorsWarnings.MyWarning(list_strings)
+        EnsoErrorsWarnings.my_warning(list_strings)
     if min(tick_labels) > mini or max(tick_labels) < maxi:
-        list_strings = ["WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+        list_strings = ["WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
                         ": wrong bounds in ticks for axis"]
         if min(tick_labels) > mini:
             list_strings += [str().ljust(5) + "ticks minimum (" + str(min(tick_labels)) + ") > tab minimum (" +
@@ -174,7 +174,7 @@ def minmax_plot(tab, metric=False):
         if max(tick_labels) < maxi:
             list_strings += [str().ljust(5) + "ticks maximum (" + str(max(tick_labels)) + ") > tab maximum (" +
                              str(maxi) + ")"]
-        EnsoErrorsWarnings.MyWarning(list_strings)
+        EnsoErrorsWarnings.my_warning(list_strings)
     return tick_labels
 
 
@@ -363,12 +363,12 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
                 obs.append(tmp3)
         obs = list(set(obs))
         if len(obs) > 1:
-            list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too many obs",
-                            str().ljust(5) + "var_to_read = "+str(var_to_read),
+            list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many obs",
+                            str().ljust(5) + "var_to_read = " + str(var_to_read),
                             str().ljust(5) + "filename_nc = " + str(filename_nc),
                             str().ljust(5) + "model = " + str(model),
                             str().ljust(5) + "reference = " + str(reference)]
-            EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.my_error(list_strings)
         else:
             obs = obs[0]
     return tab_mod, tab_obs, metval, obs

@@ -47,7 +47,8 @@ ff.close()
 del ff, filename_js
 # loop on metrics
 metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=lambda v: v.upper())
-for met in metrics[6:]:
+metrics = ["EnsodSstOce_2"]
+for met in metrics:
     print met
     # get NetCDF file name
     path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)

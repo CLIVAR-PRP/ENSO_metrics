@@ -55,7 +55,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + "(" + str(len(models2[mod])) + ")" for mod in model]
@@ -229,7 +229,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     if "colors" in dict_param.keys():
         linecolors = dict_param["colors"]
     else:
-        linecolors = {"model": ["r"], "reference": ["k"]}
+        linecolors = {"model": ["dodgerblue"], "reference": ["k"]}
     if "linestyles" in dict_param.keys():
         linestyles = dict_param["linestyles"]
     else:
@@ -238,7 +238,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
@@ -351,7 +351,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
@@ -445,7 +445,7 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
@@ -569,7 +569,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     ylabel_ticks, ylabel = create_labels(yname, ylabel_ticks)
     tab = list()
     if isinstance(filename_nc, basestring):
-        legend = ["ref: " + obsname, model]
+        legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         for ii in range(len(tab_obs)):
             tab.append(tab_obs[ii])
             tab.append(tab_mod[ii])
@@ -795,7 +795,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     ylabel_ticks, ylabel = create_labels(yname, ylabel_ticks)
     tab = list()
     if isinstance(filename_nc, basestring):
-        legend = ["ref: " + obsname, model]
+        legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         for ii in range(len(tab_mod)):
             tab.append(tab_obs[ii])
             tab.append(tab_mod[ii])
@@ -1043,7 +1043,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         elif isinstance(filename_nc, dict):
             legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
             # legend = ["ref: " + obsname] + [mod.upper() for mod in model]
@@ -1292,7 +1292,9 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                         if ("EnsoFbSshSst" in figure_name or "EnsoFbSstTaux" in figure_name or\
                                 "EnsoFbTauxSsh" in figure_name) and article_fig is True:
                             metric_units = "%"
-                        legend[jj] = legend[jj] + " (" + "{0:}".format(int(round(tmp))) + " " + metric_units + ")"
+                            legend[jj] = legend[jj] + " (" + "{0:}".format(int(round(tmp))) + " " + metric_units + ")"
+                        else:
+                            legend[jj] = legend[jj] + " (" + "{0:.2f}".format(tmp) + " " + metric_units + ")"
                 if ("EnsoFbSshSst" in figure_name or "EnsoFbSstTaux" in figure_name or "EnsoFbTauxSsh" in figure_name) \
                         and article_fig is True:
                     ax.legend(lines, legend, bbox_to_anchor=(1, 0), loc="lower right", ncol=1)
@@ -1329,14 +1331,37 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
     ax.set_yticks(ytick_labels)
     ax.set_yticklabels(ytick_labels)
     ax.set_ylim([min(ytick_labels), max(ytick_labels)])
-    # ax.set_yticks([0, 3, 6, 9], minor=False)
-    # ax.set_yticklabels([0, 3, 6, 9])
-    # ax.set_yticks([1.5, 4.5, 7.5], minor=True)
-    # ax.set_ylim([0, 9.5])
+    # ax.set_yticks([-0.30, -0.15, 0.00, 0.15, 0.30], minor=False)
+    # ax.set_ylim([-0.3, 0.3])
+    # ax.set_yticks([-0.4, -0.2, 0, 0.2, 0.4], minor=False)
+    # ax.set_yticks([-0.3, -0.1, 0.1, 0.3], minor=True)
+    # ax.set_ylim([-0.4, 0.4])
     # ax.set_yticks([-1.0, -0.5, 0.0, 0.5, 1.0], minor=False)
     # ax.set_yticklabels([-1.0, -0.5, 0.0, 0.5, 1.0])
     # ax.set_yticks([-0.75, -0.25, 0.25, 0.75], minor=True)
     # ax.set_ylim([-1.1, 1.1])
+    # ax.set_yticks([-2, -1, 0, 1, 2], minor=False)
+    # ax.set_yticks([-1.5, -0.5, 0.5, 1.5], minor=True)
+    # ax.set_ylim([-2.5, 2.5])
+    # ax.set_yticks([-40, -20, 0, 20, 40], minor=False)
+    # ax.set_yticks([-30, -10, 10, 30], minor=True)
+    # ax.set_ylim([-40, 40])
+    # ax.set_yticks(list(range(-60, 61, 30)), minor=False)
+    # ax.set_yticklabels(list(range(-60, 61, 30)))
+    # ax.set_yticks(list(range(-45, 46, 30)), minor=True)
+    # ax.set_ylim([-60, 60])
+    # ax.set_yticks([0, 3, 6, 9], minor=False)
+    # ax.set_yticklabels([0, 3, 6, 9])
+    # ax.set_yticks([1.5, 4.5, 7.5], minor=True)
+    # ax.set_ylim([0, 9.5])
+    # ax.set_yticks(list(range(24, 31, 2)), minor=False)
+    # ax.set_yticklabels(list(range(24, 31, 2)))
+    # ax.set_yticks(list(range(25, 30, 2)), minor=True)
+    # ax.set_ylim([24, 30])
+    # ax.set_yticks(list(range(-60, 1, 20)), minor=False)
+    # ax.set_yticklabels(list(range(-60, 1, 20)))
+    # ax.set_yticks(list(range(-50, 1, 20)), minor=True)
+    # ax.set_ylim([-60, 0])
     # ax.add_line(Line2D([29, 39], [0.25, 0.25], c="orange", lw=2))
     # ax.scatter([29], 0.25, s=80, c="orange", marker="<", zorder=10)
     # ax.scatter([39], 0.25, s=80, c="orange", marker=">", zorder=10)

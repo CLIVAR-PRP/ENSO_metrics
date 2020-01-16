@@ -2,7 +2,7 @@
 from inspect import stack as INSPECTstack
 
 # ENSO_metrics package functions:
-from EnsoErrorsWarnings import UnknownKeyArg
+from EnsoErrorsWarnings import unknown_key_arg
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -19,6 +19,6 @@ def DefaultArgValues(arg):
     try:
         default[arg]
     except:
-        UnknownKeyArg(arg, INSPECTstack())
+        unknown_key_arg(arg, INSPECTstack())
     return default[arg]
 # ---------------------------------------------------------------------------------------------------------------------#
