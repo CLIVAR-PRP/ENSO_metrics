@@ -1227,7 +1227,7 @@ def read_and_select_region(filename, var_name, region=None, time_bounds=None, fr
     # Open file and get time dimension
     fi = CDMS2open(filename)
     if region is None:  # no region given
-        if time_bounds is None: # no time period given
+        if time_bounds is None:  # no time period given
             # read file
             tab = fi(var_name)
         else:  # time period given by the user
@@ -1953,7 +1953,7 @@ def read_data(filename, var_name, var_family, metric, region, file_area='', name
     if debug is True:
         dict_debug = {'axes1': '(' + var_family + ') ' + str([ax.id for ax in tab_out.getAxisList()]),
                       'shape1': '(' + var_family + ') ' + str(tab_out.shape),
-                      'time1': '(' + var_family + ') ' + str(time_bounds(tab_out))}
+                      'time1': '(' + var_family + ') ' + str(get_time_bounds(tab_out))}
         EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadSelectRegionCheckUnits', 20, **dict_debug)
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):

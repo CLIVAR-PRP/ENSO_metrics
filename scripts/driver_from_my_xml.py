@@ -78,7 +78,7 @@ def find_xml_obs(obs, frequency, variable):
 
 
 # metric collection
-mc_name = 'test_perf'#'EVAL_IPSL'#'ENSO_perf'#'ENSO_tel'#'MC1'#
+mc_name = 'ENSO_perf'#'EVAL_IPSL'#'ENSO_perf'#'ENSO_tel'#'MC1'#
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -108,18 +108,15 @@ for metric in list_metric:
             if obs not in list_obs:
                 list_obs.append(obs)
 list_obs = sorted(list_obs)
-if mc_name == 'MC1':
-    list_obs = ['Tropflux']
-elif mc_name == 'ENSO_perf':
-    list_obs = ['ERA-Interim']#['Tropflux','GPCPv2.3']#['HadISST']#['HadISST','Tropflux','GPCPv2.3']#
+if mc_name == 'ENSO_perf':
+    list_obs = ['ERA-Interim', 'GPCPv2.3', 'HadISST', 'Tropflux']
 elif mc_name == 'ENSO_tel':
-    list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
+    list_obs = ['ERA-Interim', 'GPCPv2.3', 'HadISST', 'Tropflux']
 elif mc_name == 'ENSO_proc':
-    list_obs = ['Tropflux']#['AVISO', 'ERA-Interim', 'Tropflux']#['Tropflux', 'ERA-Interim', 'SODA3.4.2']#['ERA-Interim', 'SODA3.4.2']#['HadISST','GPCPv2.3']
-elif mc_name == 'EVAL_IPSL':
-    list_obs = ['ERA-Interim']#
+    list_obs = ['AVISO', 'ERA-Interim', 'HadISST', 'Tropflux']
 else:
-    list_obs = ['AVISO', 'Tropflux']
+    list_obs = ['AVISO', 'ERA-Interim', 'GPCPv2.3', 'HadISST', 'Tropflux']
+list_obs = ['Tropflux']
 print('\033[95m' + str(list_obs) + '\033[0m')
 
 
