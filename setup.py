@@ -50,6 +50,6 @@ setup (name="EnsoMetrics",
        packages=['EnsoMetrics'],
        package_dir={'EnsoMetrics': 'lib'},
        scripts=glob.glob("scripts/*.py"),
-       data_files=data_files,
-      )
+       data_files=data_files, requires=['numpy']
+       )
     

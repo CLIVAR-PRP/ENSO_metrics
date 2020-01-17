@@ -15,7 +15,7 @@ from EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, Aver
     LinearRegressionTsAgainstMap, LinearRegressionTsAgainstTs, MinMax, MyEmpty, OperationMultiply, PreProcessTS,\
     Read_data_mask_area, Read_data_mask_area_multifile, Regrid, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal,\
     SaveNetcdf, SeasonalMean, SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
-from KeyArgLib import DefaultArgValues
+from KeyArgLib import default_arg_values
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -137,7 +137,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr RMSE'
@@ -150,7 +150,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
@@ -188,7 +188,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -196,13 +196,13 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Computes the root mean square difference
         prRmse = RmsHorizontal(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
@@ -229,7 +229,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     rmseMetric = {
@@ -355,7 +355,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr Meridional RMSE'
@@ -368,7 +368,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
@@ -405,7 +405,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -413,13 +413,13 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         pr_mod = AverageZonal(pr_mod)
@@ -428,7 +428,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         prRmse = RmsMeridional(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
@@ -463,7 +463,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # change units
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -484,7 +484,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -610,7 +610,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr Zonal RMSE'
@@ -623,7 +623,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
@@ -660,7 +660,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -668,13 +668,13 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         pr_mod = AverageMeridional(pr_mod)
@@ -683,7 +683,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         prRmse = RmsZonal(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
@@ -718,7 +718,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -738,7 +738,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -864,7 +864,7 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh RMSE'
@@ -877,7 +877,7 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     ssh_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sshfilemod, sshnamemod, 'sea surface height', metric, box, file_area=sshareafilemod,
                             name_area=sshareanamemod, file_mask=sshlandmaskfilemod, name_mask=sshlandmasknamemod,
@@ -915,7 +915,7 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                           'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -923,13 +923,13 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             ssh_mod, ssh_obs, Method = TwoVarRegrid(ssh_mod, ssh_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # change units
         ssh_mod = ssh_mod * 1e2
@@ -960,7 +960,7 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sshRmse), 'line2': 'metric value_error: ' + str(sshRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     rmseMetric = {
@@ -1086,7 +1086,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh Meridional RMSE'
@@ -1099,7 +1099,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     ssh_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sshfilemod, sshnamemod, 'sea surface height', metric, box, file_area=sshareafilemod,
                             name_area=sshareanamemod, file_mask=sshlandmaskfilemod, name_mask=sshlandmasknamemod,
@@ -1136,7 +1136,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                           'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -1144,13 +1144,13 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             ssh_mod, ssh_obs, Method = TwoVarRegrid(ssh_mod, ssh_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         ssh_mod = AverageZonal(ssh_mod) * 1e2
@@ -1159,7 +1159,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                           'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         sshRmse = RmsMeridional(ssh_mod, ssh_obs, centered=centered_rmse, biased=biased_rmse)
@@ -1194,7 +1194,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # change units
             map_mod = map_mod * 1e2
             map_obs = map_obs * 1e2
@@ -1217,7 +1217,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sshRmse), 'line2': 'metric value_error: ' + str(sshRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -1343,7 +1343,7 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh Zonal RMSE'
@@ -1356,7 +1356,7 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     ssh_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sshfilemod, sshnamemod, 'sea surface height', metric, box, file_area=sshareafilemod,
                             name_area=sshareanamemod, file_mask=sshlandmaskfilemod, name_mask=sshlandmasknamemod,
@@ -1393,7 +1393,7 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                           'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -1401,13 +1401,13 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             ssh_mod, ssh_obs, Method = TwoVarRegrid(ssh_mod, ssh_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         ssh_mod = AverageMeridional(ssh_mod) * 1e2
@@ -1416,7 +1416,7 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                           'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         sshRmse = RmsZonal(ssh_mod, ssh_obs, centered=centered_rmse, biased=biased_rmse)
@@ -1451,7 +1451,7 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # change units
             ssh_mod = ssh_mod * 1e2
             ssh_obs = ssh_obs * 1e2
@@ -1474,7 +1474,7 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sshRmse), 'line2': 'metric value_error: ' + str(sshRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -1600,7 +1600,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst RMSE'
@@ -1613,7 +1613,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -1651,7 +1651,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -1659,13 +1659,13 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Computes the root mean square difference
         sstRmse = RmsHorizontal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
@@ -1692,7 +1692,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     rmseMetric = {
@@ -1818,7 +1818,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst Meridional RMSE'
@@ -1831,7 +1831,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -1868,7 +1868,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -1876,13 +1876,13 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         sst_mod = AverageZonal(sst_mod)
@@ -1891,7 +1891,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         sstRmse = RmsMeridional(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
@@ -1926,7 +1926,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -1946,7 +1946,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -2072,7 +2072,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst Zonal RMSE'
@@ -2085,7 +2085,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -2122,7 +2122,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -2130,13 +2130,13 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst_mod = AverageMeridional(sst_mod)
@@ -2145,7 +2145,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         sstRmse = RmsZonal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
@@ -2180,7 +2180,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -2200,7 +2200,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -2326,7 +2326,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sstA Skewness Zonal RMSE'
@@ -2342,7 +2342,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -2379,7 +2379,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -2387,13 +2387,13 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst_mod = AverageMeridional(sst_mod)
@@ -2402,7 +2402,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # skewness
         sst_mod = SkewnessTemporal(sst_mod)
@@ -2411,7 +2411,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SkewnessTemporal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SkewnessTemporal', 15, **dict_debug)
 
         # Computes the root mean square difference
         skeRmse = RmsZonal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
@@ -2443,7 +2443,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                               'line1': '(model) minmax' + str(MinMax(map_mod)),
                               'line2': '(obs) minmax' + str(MinMax(map_obs)),
                               'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
             del mod_areacell, obs_areacell
             # skewness
             ske_map_mod = SkewnessTemporal(map_mod)
@@ -2455,7 +2455,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                               'line2': '(obs) minmax' + str(MinMax(ske_map_obs)),
                               'shape1': '(model) ' + str(ske_map_mod.shape),
                               'shape2': '(obs) ' + str(ske_map_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after SkewnessTemporal: netcdf', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SkewnessTemporal: netcdf', 15, **dict_debug)
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 ske_map_mod, ske_map_obs, unneeded = TwoVarRegrid(
@@ -2467,7 +2467,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                                   'line2': '(obs) minmax' + str(MinMax(ske_map_obs)),
                                   'shape1': '(model) ' + str(ske_map_mod.shape),
                                   'shape2': '(obs) ' + str(ske_map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -2487,7 +2487,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(skeRmse), 'line2': 'metric value_error: ' + str(skeRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -2613,7 +2613,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux RMSE'
@@ -2626,7 +2626,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
@@ -2664,7 +2664,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -2672,13 +2672,13 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             taux_mod, taux_obs, Method = TwoVarRegrid(taux_mod, taux_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                               'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # change units
         taux_mod = taux_mod * 1e3
@@ -2709,7 +2709,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     rmseMetric = {
@@ -2835,7 +2835,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux Meridional RMSE'
@@ -2848,7 +2848,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
@@ -2885,7 +2885,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -2893,13 +2893,13 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             taux_mod, taux_obs, Method = TwoVarRegrid(taux_mod, taux_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                               'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         taux_mod = AverageZonal(taux_mod) * 1e3
@@ -2908,7 +2908,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         tauxRmse = RmsMeridional(taux_mod, taux_obs, centered=centered_rmse, biased=biased_rmse)
@@ -2943,7 +2943,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # change units
             map_mod = map_mod * 1e3
             map_obs = map_obs * 1e3
@@ -2966,7 +2966,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -3092,7 +3092,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux Zonal RMSE'
@@ -3105,7 +3105,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
@@ -3142,7 +3142,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -3150,13 +3150,13 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             taux_mod, taux_obs, Method = TwoVarRegrid(taux_mod, taux_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                               'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         taux_mod = AverageMeridional(taux_mod) * 1e3
@@ -3165,7 +3165,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         tauxRmse = RmsZonal(taux_mod, taux_obs, centered=centered_rmse, biased=biased_rmse)
@@ -3200,7 +3200,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # change units
             map_mod = map_mod * 1e3
             map_obs = map_obs * 1e3
@@ -3223,7 +3223,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -3332,7 +3332,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Lhf-Sst feedback (alpha_lh)'
@@ -3346,7 +3346,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -3383,7 +3383,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                           'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lhf) ' + str(TimeBounds(lhf))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaLhf, alphaLhfPos, alphaLhfNeg = \
@@ -3424,7 +3424,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             sst_map = AverageMeridional(sst_map)
             lhf_map = AverageMeridional(lhf_map)
@@ -3432,7 +3432,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
             lhf_map, unneeded = Smoothing(lhf_map, '', axis=1, window=31, method='square')
@@ -3440,7 +3440,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Array year by year
             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
             lhf_yby = get_year_by_year(lhf_map, frequency=kwargs['frequency'])
@@ -3448,7 +3448,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lhf) ' + str([ax.id for ax in lhf_yby.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lhf) ' + str(lhf_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
             curAlpha, curAlphaPos, curAlphaNeg = \
                 LinearRegressionAndNonlinearity(lhf_map, sst_map, return_stderr=False, return_intercept=False)
@@ -3459,7 +3459,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                               'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
                               'shape1': '(zonal alpha) ' + str(curAlpha.shape),
                               'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -3627,7 +3627,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Lwr-Sst feedback (alpha_lwr)'
@@ -3641,7 +3641,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -3679,7 +3679,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                           'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lwr) ' + str(TimeBounds(lwr))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaLwr, alphaLwrPos, alphaLwrNeg = \
@@ -3721,7 +3721,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             sst_map = AverageMeridional(sst_map)
             lwr_map = AverageMeridional(lwr_map)
@@ -3729,7 +3729,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
             lwr_map, unneeded = Smoothing(lwr_map, '', axis=1, window=31, method='square')
@@ -3737,7 +3737,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Array year by year
             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
             lwr_yby = get_year_by_year(lwr_map, frequency=kwargs['frequency'])
@@ -3745,7 +3745,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(lwr) ' + str([ax.id for ax in lwr_yby.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(lwr) ' + str(lwr_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
             curAlpha, curAlphaPos, curAlphaNeg = \
                 LinearRegressionAndNonlinearity(lwr_map, sst_map, return_stderr=False, return_intercept=False)
@@ -3756,7 +3756,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                               'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
                               'shape1': '(zonal alpha) ' + str(curAlpha.shape),
                               'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -3920,7 +3920,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Shf-Sst feedback (alpha_sh)'
@@ -3934,7 +3934,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
         # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -3971,7 +3971,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                           'axes2': '(shf) ' + str([ax.id for ax in shf.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(shf) ' + str(shf.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(shf) ' + str(TimeBounds(shf))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaShf, alphaShfPos, alphaShfNeg = \
@@ -4012,7 +4012,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             sst_map = AverageMeridional(sst_map)
             shf_map = AverageMeridional(shf_map)
@@ -4020,7 +4020,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
             shf_map, unneeded = Smoothing(shf_map, '', axis=1, window=31, method='square')
@@ -4028,7 +4028,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Array year by year
             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
             shf_yby = get_year_by_year(shf_map, frequency=kwargs['frequency'])
@@ -4036,7 +4036,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(shf) ' + str([ax.id for ax in shf_yby.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(shf) ' + str(shf_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
             curAlpha, curAlphaPos, curAlphaNeg = \
                 LinearRegressionAndNonlinearity(shf_map, sst_map, return_stderr=False, return_intercept=False)
@@ -4047,7 +4047,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                               'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
                               'shape1': '(zonal alpha) ' + str(curAlpha.shape),
                               'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -4215,7 +4215,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Swr-Sst feedback (alpha_swr)'
@@ -4229,7 +4229,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -4267,7 +4267,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                           'axes2': '(swr) ' + str([ax.id for ax in swr.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(swr) ' + str(swr.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(swr) ' + str(TimeBounds(swr))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaSwr, alphaSwrPos, alphaSwrNeg = \
@@ -4309,7 +4309,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             sst_map = AverageMeridional(sst_map)
             swr_map = AverageMeridional(swr_map)
@@ -4317,7 +4317,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
             swr_map, unneeded = Smoothing(swr_map, '', axis=1, window=31, method='square')
@@ -4325,7 +4325,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Array year by year
             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
             swr_yby = get_year_by_year(swr_map, frequency=kwargs['frequency'])
@@ -4333,7 +4333,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(swr) ' + str([ax.id for ax in swr_yby.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(swr) ' + str(swr_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
             curAlpha, curAlphaPos, curAlphaNeg = \
                 LinearRegressionAndNonlinearity(swr_map, sst_map, return_stderr=False, return_intercept=False)
@@ -4344,7 +4344,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                               'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlphaPos.getAxisList()]),
                               'shape1': '(zonal alpha) ' + str(curAlphaPos.shape),
                               'shape2': '(hovtx alpha) ' + str(hovAlphaPos.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -4517,7 +4517,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Thf-Sst feedback (alpha)'
@@ -4531,7 +4531,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -4569,7 +4569,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                           'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(thf))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
         alphaThf, alphaThfPos, alphaThfNeg = \
@@ -4611,7 +4611,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             sst_map = AverageMeridional(sst_map)
             thf_map = AverageMeridional(thf_map)
@@ -4619,7 +4619,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
             thf_map, unneeded = Smoothing(thf_map, '', axis=1, window=31, method='square')
@@ -4627,7 +4627,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Array year by year
             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
             thf_yby = get_year_by_year(thf_map, frequency=kwargs['frequency'])
@@ -4635,7 +4635,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(thf) ' + str([ax.id for ax in thf_yby.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
             curAlpha, curAlphaPos, curAlphaNeg = \
                 LinearRegressionAndNonlinearity(thf_map, sst_map, return_stderr=False, return_intercept=False)
@@ -4646,7 +4646,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                               'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
                               'shape1': '(zonal alpha) ' + str(curAlpha.shape),
                               'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -4796,7 +4796,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ENSO amplitude'
@@ -4807,7 +4807,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror =\
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -4830,7 +4830,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the standard deviation
         sstStd = float(Std(sst))
@@ -4862,7 +4862,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                               'axes2': '(sst2) ' + str([ax.id for ax in sst2.getAxisList()]),
                               'shape1': '(sst1) ' + str(sst1.shape), 'shape2': '(sst2) ' + str(sst2.shape),
                               'time1': '(sst1) ' + str(TimeBounds(sst1)), 'time2': '(sst2) ' + str(TimeBounds(sst2))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 10, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 10, **dict_debug)
             # std
             sst1 = Std(sst1)
             sst2 = Std(sst2)
@@ -4897,7 +4897,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sstStd), 'line2': 'metric value_error: ' + str(sstStdErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     amplMetric = {
@@ -5009,7 +5009,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ENSO Diversity (percentage of eastern Pacific El Nino / La Nina)'
@@ -5029,7 +5029,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, areacell, keyerror = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
@@ -5053,7 +5053,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > (<) 'threshold' during 'season' are considered as El Nino (La Nina) events
         # Lists event years
@@ -5062,7 +5062,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         if debug is True:
             dict_debug = {'nino1': 'nbr(' + str(len(nino_years)) + '): ' + str(nino_years),
                           'nina1': 'nbr(' + str(len(nina_years)) + '): ' + str(nina_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. diversity of the zonal location of the minimum SSTA
@@ -5081,14 +5081,14 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst = SeasonalMean(sst, season_ev, compute_anom=True)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -5096,19 +5096,19 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                           'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst = Regrid(sst, None, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                               'shape1': '(sst) ' + str(sst.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst = AverageMeridional(sst)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
         sample_nino = Event_selection(sst, kwargs['frequency'], list_event_years=nino_years)
@@ -5120,7 +5120,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         if debug is True:
             dict_debug = {'line1': 'longitude of the maximum SSTA (nino): ' + str(lon_sstmax),
                           'line2': 'longitude of the minimum SSTA (nina): ' + str(lon_sstmin)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
         # 2.3 compute the percentage of EP events (maximum/minimum SSTA eastward of the given threshold)
         ep_event_nino, keyerror_nino = percentage_val_eastward(lon_sstmax, metric, box,
@@ -5130,7 +5130,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         if debug is True:
             dict_debug = {'nino1': 'percentage of EP event + ' + str(ep_event_nino),
                           'nina1': 'percentage of EP event + ' + str(ep_event_nina)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # 2.4 compute the ratio EP events during La Nina divided by EP events during El Nino
         ratioEP = float(ep_event_nina / ep_event_nino)
@@ -5165,7 +5165,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(ratioEP), 'line2': 'metric value_error: ' + str(StdErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     EnsoDivMetric = {
@@ -5265,7 +5265,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO Duration based on life cyle SSTA pattern"
@@ -5280,7 +5280,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, areacell, keyerror = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
@@ -5306,14 +5306,14 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in enso.getAxisList()]), 'shape1': str(enso.shape),
                           'time1': str(TimeBounds(enso))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         enso = SeasonalMean(enso, season_ev, compute_anom=True)
         if debug is True:
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in enso.getAxisList()]),
                           'shape1': '(model) ' + str(enso.shape), 'time1': '(model) ' + str(TimeBounds(enso))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. temporal SSTA
@@ -5326,7 +5326,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
                           'time1': str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Regression map
@@ -5335,7 +5335,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                             frequency=kwargs['frequency'], debug=debug)
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sstts.getAxisList()]), 'shape1': str(sstts.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
 
         # ------------------------------------------------
         # 4. Duration
@@ -5358,7 +5358,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if debug is True:
                 dict_debug = {'nina1': 'nbr(' + str(len(nina_years)) + '): ' + str(nina_years),
                               'nino1': 'nbr(' + str(len(nino_years)) + '): ' + str(nino_years)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
             # composites
             if len(nina_years) > 0:
                 sample = Event_selection(sst, kwargs['frequency'], nbr_years_window=nbr_years_window,
@@ -5391,7 +5391,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if debug is True:
                 dict_debug = {'nina1': 'mean(' + str(nina_dur_mean) + '): ' + str(nina_dur_all),
                               'nino1': 'mean(' + str(nino_dur_mean) + '): ' + str(nino_dur_all)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DurationAllEvent', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DurationAllEvent', 15, **dict_debug)
             # save
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -5425,7 +5425,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                               'axes3': str([ax.id for ax in nino_dur_all.getAxisList()]),
                               'nino3': str(len(str(nino_years)))+" "+str(nina_years), 'shape3': str(nino_dur_all.shape),
                               'var3': 'Nino_duration__' + dataset}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'before SaveNetcdf', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'before SaveNetcdf', 15, **dict_debug)
             SaveNetcdf(file_name,
                        var1=sstts, var1_attributes=dict1, var1_name='sst_against_sst_ts__' + dataset,
                        var2=nina_dur_all, var2_attributes=dict2, var2_name='Nina_duration__' + dataset,
@@ -5561,7 +5561,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'SST change caused by an anomalous ocean circulation (dSSToce)'
@@ -5576,7 +5576,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     enso, enso_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -5623,13 +5623,13 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                           'axes2': '(thf) ' + str([ax.id for ax in thf.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(thf) ' + str(thf.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(thf) ' + str(TimeBounds(thf))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
         # Lists event years
         nina_years = DetectEvents(enso, season_ev, -threshold, normalization=normalize, nino=False, compute_season=True)
         nino_years = DetectEvents(enso, season_ev, threshold, normalization=normalize, nino=True, compute_season=True)
         if debug is True:
             dict_debug = {'nina1': str(nina_years), 'nino1': str(nino_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
         # SST change
         dSST, dSSTthf, dSSToce = SlabOcean(sst, thf, 'JUN', 'DEC', nina_years + nino_years,
                                            frequency=kwargs['frequency'], debug=debug)
@@ -5671,7 +5671,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             sst_map = AverageMeridional(sst_map)
             thf_map = AverageMeridional(thf_map)
@@ -5679,7 +5679,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=51, method='square')
             thf_map, unneeded = Smoothing(thf_map, '', axis=1, window=51, method='square')
@@ -5687,7 +5687,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # SST change
             hovdSST, hovdSSTthf, hovdSSToce = SlabOcean(sst_map, thf_map, 'JUN', 'DEC', nina_years + nino_years,
                                                         frequency=kwargs['frequency'], debug=debug)
@@ -5697,7 +5697,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                               'axes2': '(hovtx hovdSST) ' + str([ax.id for ax in hovdSST.getAxisList()]),
                               'shape1': '(zonal curdSSTthf) ' + str(curdSSTthf.shape),
                               'shape2': '(hovtx hovdSST) ' + str(hovdSST.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after SlabOcean', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SlabOcean', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -5851,7 +5851,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Taux-Sst feedback (mu)'
@@ -5865,7 +5865,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
         # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -5902,7 +5902,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                           'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(taux) ' + str(TimeBounds(taux))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
         # Change units
         taux = taux * 1e3
         # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
@@ -5935,19 +5935,19 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             if debug is True:
                 dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
                               'shape1': '(taux) ' + str(taux_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             taux_map = AverageMeridional(taux_map)
             if debug is True:
                 dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
                               'shape2': '(taux) ' + str(taux_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             taux_map, unneeded = Smoothing(taux_map, '', axis=1, window=31, method='square')
             if debug is True:
                 dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
                               'shape1': '(taux) ' + str(taux_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Change units
             taux_map = taux_map * 1e3
             # Sst to map
@@ -5959,7 +5959,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(taux) ' + str(taux_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
             curMu, curMuPos, curMuNeg = \
                 LinearRegressionAndNonlinearity(taux_map, sst_map, return_stderr=False, return_intercept=False)
@@ -5970,7 +5970,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                               'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovMuPos.getAxisList()]),
                               'shape1': '(zonal alpha) ' + str(curMuPos.shape),
                               'shape2': '(hovtx alpha) ' + str(hovMuPos.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -6133,7 +6133,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Sst-Ssh feedback'
@@ -6147,7 +6147,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -6184,7 +6184,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                           'axes2': '(ssh) ' + str([ax.id for ax in ssh.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'shape2': '(ssh) ' + str(ssh.shape),
                           'time1': '(ssh) ' + str(TimeBounds(sst)), 'time2': '(ssh) ' + str(TimeBounds(ssh))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
         # Change units
         ssh = ssh * 1e2
         # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
@@ -6226,7 +6226,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             sst_map = AverageMeridional(sst_map)
             ssh_map = AverageMeridional(ssh_map)
@@ -6234,7 +6234,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             sst_map, unneeded = Smoothing(sst_map, '', axis=1, window=31, method='square')
             ssh_map, unneeded = Smoothing(ssh_map, '', axis=1, window=31, method='square')
@@ -6242,7 +6242,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Change units
             ssh_map = ssh_map * 1e2
             # Array year by year
@@ -6252,7 +6252,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
                               'axes2': '(ssh) ' + str([ax.id for ax in ssh_yby.getAxisList()]),
                               'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(ssh) ' + str(ssh_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
             curThermoFb, curThermoFbPos, curThermoFbNeg = \
                 LinearRegressionAndNonlinearity(sst_map, ssh_map, return_stderr=False, return_intercept=False)
@@ -6263,7 +6263,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                               'axes2': '(hovtx Thermo Fb) ' + str([ax.id for ax in hovThermoFb.getAxisList()]),
                               'shape1': '(zonal Thermo Fb) ' + str(curThermoFb.shape),
                               'shape2': '(hovtx Thermo Fb) ' + str(hovThermoFb.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -6427,7 +6427,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Ssh-Taux feedback'
@@ -6441,7 +6441,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     ssh, ssh_areacell, keyerror1 = \
         Read_data_mask_area(sshfile, sshname, 'sea surface height', metric, sshbox, file_area=sshareafile,
                             name_area=sshareaname, file_mask=sshlandmaskfile, name_mask=sshlandmaskname, maskland=True,
@@ -6478,7 +6478,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                           'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
                           'shape1': '(ssh) ' + str(ssh.shape), 'shape2': '(taux) ' + str(taux.shape),
                           'time1': '(ssh) ' + str(TimeBounds(ssh)), 'time2': '(taux) ' + str(TimeBounds(taux))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
         # Change units
         ssh = ssh * 1e2
         taux = taux * 1e3
@@ -6512,19 +6512,19 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
             if debug is True:
                 dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
                               'shape1': '(ssh) ' + str(ssh_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Regrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
             # Meridional average
             ssh_map = AverageMeridional(ssh_map)
             if debug is True:
                 dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
                               'shape2': '(ssh) ' + str(ssh_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Zonal smoothing
             ssh_map, unneeded = Smoothing(ssh_map, '', axis=1, window=31, method='square')
             if debug is True:
                 dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
                               'shape1': '(ssh) ' + str(ssh_map.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Smoothing', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
             # Change units
             ssh_map = ssh_map * 1e2
             # Ssh to map
@@ -6536,7 +6536,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                 dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
                               'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
                               'shape1': '(ssh) ' + str(ssh_map.shape), 'shape2': '(taux) ' + str(taux_yby.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
             # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
             curFb, curFbPos, curFbNeg = \
                 LinearRegressionAndNonlinearity(ssh_map, taux_map, return_stderr=False, return_intercept=False)
@@ -6547,7 +6547,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                               'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovFbPos.getAxisList()]),
                               'shape1': '(zonal alpha) ' + str(curFbPos.shape),
                               'shape2': '(hovtx alpha) ' + str(hovFbPos.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -6757,7 +6757,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ENSO PRA pattern'
@@ -6772,7 +6772,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -6829,7 +6829,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         enso_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -6840,7 +6840,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)),
                           'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. PRA
@@ -6857,7 +6857,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(pr_mod)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         pr_mod = SeasonalMean(pr_mod, season_ev, compute_anom=True)
@@ -6867,7 +6867,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(pr_mod)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Regression map
@@ -6878,13 +6878,13 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=prbox, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # regression
         pr_mod_slope = LinearRegressionTsAgainstMap(pr_mod, enso_mod, return_stderr=False)
@@ -6893,7 +6893,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod_slope.shape), 'shape2': '(obs) ' + str(pr_obs_slope.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
         # mask Pacific
         pr_mod_slope, keyerror_mod = BasinMask(pr_mod_slope, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between',
@@ -6907,7 +6907,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod_slope.shape), 'shape2': '(obs) ' + str(pr_obs_slope.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         prRmse = float(RmsAxis(pr_mod_slope, pr_obs_slope, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -6950,7 +6950,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
             # anomalies
             pr_mod = SeasonalMean(pr_mod, season_ev, compute_anom=True)
             pr_obs = SeasonalMean(pr_obs, season_ev, compute_anom=True)
@@ -6960,7 +6960,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after SeasonalMean', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after SeasonalMean', 15, **dict_debug)
             # regridding
             if isinstance(kwargs['regridding'], dict):
                 pr_mod, pr_obs, unneeded = TwoVarRegrid(pr_mod, pr_obs, '', region=prbox, **kwargs['regridding'])
@@ -6968,7 +6968,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after TwoVarRegrid', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after TwoVarRegrid', 15, **dict_debug)
             # regression
             pr_mod = LinearRegressionTsAgainstMap(pr_mod, enso_mod, return_stderr=False)
             pr_obs = LinearRegressionTsAgainstMap(pr_obs, enso_obs, return_stderr=False)
@@ -6977,8 +6977,8 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape),
                               'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15,
-                                             **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15,
+                                              **dict_debug)
             list_region = ["africaSE", "americaN", "americaS", "asiaS", "oceania"]
             list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
                              "STD_" + dataset2, "STD_error_" + dataset2]
@@ -7192,7 +7192,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino composite minus Nina composite during JJA preceeding the events in each region'
@@ -7211,7 +7211,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -7272,7 +7272,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' (SSTA > 'threshold') during 'season' are considered as La Nina (El Nino) events
         # Lists event years
@@ -7283,7 +7283,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs),
                           'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. compute composite
@@ -7297,7 +7297,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         loop_box = list()
         for reg in prbox:
             if debug is True:
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
             if 'maskland' in dict_reg.keys():
@@ -7324,7 +7324,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
             if keyerror_mod is not None or keyerror_obs is not None:
                 if len(loop_keyerror) > 0 and keyerror_mod is not None:
                     loop_keyerror += " ; "
@@ -7348,7 +7348,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                   'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                                   'time1': '(model) ' + str(TimeBounds(pr_mod)),
                                   'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS '+str(reg), 20, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS ' + str(reg), 20, **dict_debug)
 
                 # Seasonal mean
                 pr_mod = SeasonalMean(pr_mod, 'JJA', compute_anom=False)
@@ -7976,7 +7976,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino composite minus Nina composite during NDJ (peak) of the events in each region'
@@ -7995,7 +7995,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -8056,7 +8056,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' (SSTA > 'threshold') during 'season' are considered as La Nina (El Nino) events
         # Lists event years
@@ -8067,7 +8067,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs),
                           'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. compute composite
@@ -8081,7 +8081,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         loop_box = list()
         for reg in prbox:
             if debug is True:
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
             if 'maskland' in dict_reg.keys():
@@ -8108,7 +8108,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
             if keyerror_mod is not None or keyerror_obs is not None:
                 if len(loop_keyerror) > 0 and keyerror_mod is not None:
                     loop_keyerror += " ; "
@@ -8132,7 +8132,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                   'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                                   'time1': '(model) ' + str(TimeBounds(pr_mod)),
                                   'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS '+str(reg), 20, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS ' + str(reg), 20, **dict_debug)
 
                 # Seasonal mean
                 pr_mod = SeasonalMean(pr_mod, 'NDJ', compute_anom=False)
@@ -8282,7 +8282,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ENSO seasonality'
@@ -8298,7 +8298,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -8320,7 +8320,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_ts.getAxisList()]),
                           'shape1': '(sst) ' + str(sst_ts.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst_ts))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst_NDJ = SeasonalMean(sst_ts, 'NDJ', compute_anom=True)
@@ -8330,7 +8330,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                           'shape1': '(sst_NDJ) ' + str(sst_NDJ.shape),
                           'axes2': '(sst_NDJ) ' + str([ax.id for ax in sst_MAM.getAxisList()]),
                           'shape2': '(sst_NDJ) ' + str(sst_MAM.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Compute std dev and ratio
         sst_NDJ_std = Std(sst_NDJ)
@@ -8376,7 +8376,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                               'shape1': '(sst1) ' + str(sst1.shape), 'shape2': '(sst2) ' + str(sst2.shape),
                               'shape3': '(sst3) ' + str(sst3.shape), 'time1': '(sst1) ' + str(TimeBounds(sst1)),
                               'time2': '(sst2) ' + str(TimeBounds(sst2)), 'time3': '(sst3) ' + str(TimeBounds(sst3))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 10, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS: netcdf', 10, **dict_debug)
             # Seasonal mean
             sst1_NDJ = SeasonalMean(sst1, 'NDJ', compute_anom=True)
             sst1_MAM = SeasonalMean(sst1, 'MAM', compute_anom=True)
@@ -8391,7 +8391,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                               'shape2': '(sst1_MAM) ' + str(sst1_MAM.shape),
                               'shape3': '(sst3_NDJ) ' + str(sst3_NDJ.shape),
                               'shape4': '(sst3_MAM) ' + str(sst3_MAM.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean: netcdf', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean: netcdf', 15, **dict_debug)
             # Compute std dev
             sst1_NDJ = Std(sst1_NDJ)
             sst1_MAM = Std(sst1_MAM)
@@ -8446,7 +8446,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(ratioStd), 'line2': 'metric value_error: ' + str(ratio_std_err)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     seaMetric = {
@@ -8557,7 +8557,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO Diversity (interquartile range)"
@@ -8579,7 +8579,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
@@ -8610,7 +8610,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in enso.getAxisList()]),
                           'shape1': '(sst) ' + str(enso.shape), 'time1': '(sst) ' + str(TimeBounds(enso))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > 'threshold' (SSTA < -'threshold') during 'season' are considered as El Nino (La Nina) events
         # Lists event years
@@ -8619,7 +8619,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         if debug is True:
             dict_debug = {"nina1": "nbr(" + str(len(nina_years)) + "): " + str(nina_years),
                           "nino1": "nbr(" + str(len(nino_years)) + "): " + str(nino_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. diversity of the zonal location of the maximum SSTA
@@ -8632,14 +8632,14 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
                           'shape1': '(sst) ' + str(sstmap.shape), 'time1': '(sst) ' + str(TimeBounds(sstmap))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sstmap = SeasonalMean(sstmap, season_ev, compute_anom=True)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
                           'shape1': '(sst) ' + str(sstmap.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -8647,19 +8647,19 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
                           'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sstmap = Regrid(sstmap, None, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
                               'shape1': '(sst) ' + str(sstmap.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sstlon = AverageMeridional(sstmap)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstlon.getAxisList()]),
                           'shape1': '(sst) ' + str(sstlon.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         if len(nina_years) > 0:
             # samples
@@ -8669,7 +8669,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
             lon_ln = FindXYMinMaxInTs(sample_ln, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
             if debug is True:
                 dict_debug = {'line1': 'longitude of the minimum SSTA: ' + str(lon_ln)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
         else:
             sample_ln = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
             lon_ln = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
@@ -8682,7 +8682,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
             lon_en = FindXYMinMaxInTs(sample_en, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
             if debug is True:
                 dict_debug = {'line1': 'longitude of the maximum SSTA: ' + str(lon_en)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
         else:
             sample_en = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
             lon_en = MyEmpty(sstlon[:5, 0], time=True, time_id='years')
@@ -8792,7 +8792,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
             'line3': 'diagnostic (MAD) value: ' + str(dispersion2),
             'line4': 'diagnostic (MAD) value_error: ' + str(dispersion2_err),
         }
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     EnsoDivMetric = {
@@ -8886,7 +8886,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ENSO skewness'
@@ -8902,7 +8902,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror =\
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -8925,7 +8925,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Computes the skewness
         sstSke = float(SkewnessTemporal(sst))
@@ -8957,7 +8957,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                               'axes2': '(sst2) ' + str([ax.id for ax in sst2.getAxisList()]),
                               'shape1': '(sst1) ' + str(sst1.shape), 'shape2': '(sst2) ' + str(sst2.shape),
                               'time1': '(sst1) ' + str(TimeBounds(sst1)), 'time2': '(sst2) ' + str(TimeBounds(sst2))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 10, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 10, **dict_debug)
             # std
             sst1 = SkewnessTemporal(sst1)
             sst2 = SkewnessTemporal(sst2)
@@ -8992,7 +8992,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sstSke), 'line2': 'metric value_error: ' + str(sstSkeErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     skewMetric = {
@@ -9147,7 +9147,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ENSO SLPA pattern '
@@ -9164,7 +9164,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -9221,7 +9221,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         enso_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -9231,7 +9231,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)), 'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. SLPA
@@ -9248,7 +9248,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
@@ -9258,7 +9258,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Regression map
@@ -9269,13 +9269,13 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             slp_mod, slp_obs, Method = TwoVarRegrid(slp_mod, slp_obs, Method, region=slpbox, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                               'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # regression
         slp_mod_slope, slp_mod_stderr = LinearRegressionTsAgainstMap(slp_mod, enso_mod, return_stderr=True)
@@ -9285,7 +9285,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs_slope.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod_slope.shape),
                           'shape2': '(obs) ' + str(slp_obs_slope.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
         # mask Pacific
         slp_mod_slope, keyerror_mod = BasinMask(slp_mod_slope, 'pacific', box=slpbox, lat1=-15, lat2=15,
@@ -9300,7 +9300,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs_slope.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod_slope.shape),
                           'shape2': '(obs) ' + str(slp_obs_slope.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         slpRmse = float(RmsAxis(slp_mod_slope, slp_obs_slope, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -9345,7 +9345,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                               'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(slp_mod)),
                               'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
             # anomalies
             slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
             slp_obs = SeasonalMean(slp_obs, season_ev, compute_anom=True) * 1e-2
@@ -9355,7 +9355,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                               'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(slp_mod)),
                               'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after SeasonalMean', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after SeasonalMean', 15, **dict_debug)
             # regridding
             if isinstance(kwargs['regridding'], dict):
                 slp_mod, slp_obs, unneeded = TwoVarRegrid(slp_mod, slp_obs, '', region=slpbox, **kwargs['regridding'])
@@ -9363,7 +9363,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after TwoVarRegrid', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after TwoVarRegrid', 15, **dict_debug)
             # regression
             slp_mod = LinearRegressionTsAgainstMap(slp_mod, enso_mod, return_stderr=False)
             slp_obs = LinearRegressionTsAgainstMap(slp_obs, enso_obs, return_stderr=False)
@@ -9372,8 +9372,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                               'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                               'shape1': '(model) ' + str(slp_mod.shape),
                               'shape2': '(obs) ' + str(slp_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15,
-                                             **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15,
+                                              **dict_debug)
             list_region = ["africaSE", "americaN", "americaS", "asiaS", "oceania"]
             list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
                              "STD_" + dataset2, "STD_error_" + dataset2]
@@ -9558,7 +9558,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO Zonal SSTA pattern"
@@ -9574,7 +9574,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -9631,7 +9631,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         sst_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -9641,7 +9641,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. spatial SSTA
@@ -9659,7 +9659,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
                           'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         sstmap_mod = SeasonalMean(sstmap_mod, season_ev, compute_anom=True)
@@ -9670,7 +9670,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
                           'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Regression map
@@ -9681,7 +9681,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sstmap_mod, sstmap_obs, Method = TwoVarRegrid(sstmap_mod, sstmap_obs, Method, region=box,
                                                           **kwargs['regridding'])
             if debug is True:
@@ -9689,7 +9689,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sstmap_mod.shape),
                               'shape2': '(obs) ' + str(sstmap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sstlon_mod = AverageMeridional(sstmap_mod)
@@ -9698,7 +9698,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstlon_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sstlon_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sstlon_mod.shape), 'shape2': '(obs) ' + str(sstlon_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # regression
         sst_mod_slope = LinearRegressionTsAgainstMap(sstlon_mod, sst_mod, return_stderr=False)
@@ -9708,7 +9708,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs_slope.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod_slope.shape),
                           'shape2': '(obs) ' + str(sst_obs_slope.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
         # Computes the root mean square difference
         sstRmse = RmsZonal(sst_mod_slope, sst_obs_slope, centered=centered_rmse, biased=biased_rmse)
@@ -9744,7 +9744,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
                               'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Seasonal mean and anomalies
             sstmap_mod = SeasonalMean(sstmap_mod, season_ev, compute_anom=True)
             sstmap_obs = SeasonalMean(sstmap_obs, season_ev, compute_anom=True)
@@ -9754,14 +9754,14 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
                               'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
                               'regridTool', 'regridMethod'}
                 extra_args = set(kwargs['regridding']) - known_args
                 if extra_args:
-                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 sstmap_mod, sstmap_obs, unneeded =\
                     TwoVarRegrid(sstmap_mod, sstmap_obs, '', region='equatorial_pacific_LatExt2',
                                  **kwargs['regridding'])
@@ -9770,7 +9770,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                   'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(sstmap_mod.shape),
                                   'shape2': '(obs) ' + str(sstmap_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Linear regression
             sstmap_mod_slope = LinearRegressionTsAgainstMap(sstmap_mod, sst_mod, return_stderr=False)
             sstmap_obs_slope = LinearRegressionTsAgainstMap(sstmap_obs, sst_obs, return_stderr=False)
@@ -9779,7 +9779,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs_slope.getAxisList()]),
                               'shape1': '(model) ' + str(sstmap_mod_slope.shape),
                               'shape2': '(obs) ' + str(sstmap_obs_slope.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
             # Lists event years
             nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=normalize, nino=False,
                                           compute_season=False)
@@ -9794,7 +9794,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
                               'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
                               'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
             # composites
             if len(nina_years_mod) > 0:
                 nina_sstlon_mod = Composite(sstlon_mod, nina_years_mod, kwargs['frequency'])
@@ -9997,7 +9997,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO TSA pattern"
@@ -10014,7 +10014,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -10071,7 +10071,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         enso_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -10081,7 +10081,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)), 'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. TSA
@@ -10099,7 +10099,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(tsmap_mod)),
                           'time2': '(obs) ' + str(TimeBounds(tsmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         tsmap_mod = SeasonalMean(tsmap_mod, season_ev, compute_anom=True)
@@ -10110,7 +10110,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(tsmap_mod)),
                           'time2': '(obs) ' + str(TimeBounds(tsmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Regression map
@@ -10121,14 +10121,14 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tsmap_mod, tsmap_obs, Method = TwoVarRegrid(tsmap_mod, tsmap_obs, Method, region=tsbox,
                                                         **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # regression
         ts_mod_slope, ts_mod_stderr = LinearRegressionTsAgainstMap(tsmap_mod, enso_mod, return_stderr=True)
@@ -10137,7 +10137,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ts_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ts_obs_slope.getAxisList()]),
                           'shape1': '(model) ' + str(ts_mod_slope.shape), 'shape2': '(obs) ' + str(ts_obs_slope.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
         # mask Pacific
         ts_mod_slope, keyerror_mod = BasinMask(ts_mod_slope, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
@@ -10151,7 +10151,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ts_mod_slope.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ts_obs_slope.getAxisList()]),
                           'shape1': '(model) ' + str(ts_mod_slope.shape), 'shape2': '(obs) ' + str(ts_obs_slope.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         tsRmse = float(RmsAxis(ts_mod_slope, ts_obs_slope, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -10196,7 +10196,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                               'shape1': '(model) ' + str(ts_mod.shape), 'shape2': '(obs) ' + str(ts_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(ts_mod)),
                               'time2': '(obs) ' + str(TimeBounds(ts_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
             # anomalies
             ts_mod = SeasonalMean(ts_mod, season_ev, compute_anom=True)
             ts_obs = SeasonalMean(ts_obs, season_ev, compute_anom=True)
@@ -10206,7 +10206,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                               'shape1': '(model) ' + str(ts_mod.shape), 'shape2': '(obs) ' + str(ts_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(ts_mod)),
                               'time2': '(obs) ' + str(TimeBounds(ts_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after SeasonalMean', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after SeasonalMean', 15, **dict_debug)
             # regridding
             if isinstance(kwargs['regridding'], dict):
                 ts_mod, ts_obs, unneeded = TwoVarRegrid(ts_mod, ts_obs, '', region=tsbox, **kwargs['regridding'])
@@ -10214,7 +10214,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ts_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in ts_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(ts_mod.shape), 'shape2': '(obs) ' + str(ts_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after TwoVarRegrid', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after TwoVarRegrid', 15, **dict_debug)
             # regression
             ts_mod = LinearRegressionTsAgainstMap(ts_mod, enso_mod, return_stderr=False)
             ts_obs = LinearRegressionTsAgainstMap(ts_obs, enso_obs, return_stderr=False)
@@ -10223,8 +10223,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                               'axes2': '(obs) ' + str([ax.id for ax in ts_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ts_mod.shape),
                               'shape2': '(obs) ' + str(ts_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15,
-                                             **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15,
+                                              **dict_debug)
             list_region = ["africaSE", "americaN", "americaS", "asiaS", "oceania"]
             list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
                              "STD_" + dataset2, "STD_error_" + dataset2]
@@ -10440,7 +10440,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO life cyle PRA pattern"
@@ -10457,7 +10457,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, sst_mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -10515,7 +10515,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)),
                           'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
@@ -10526,7 +10526,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)),
                           'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. temporal PRA
@@ -10544,7 +10544,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(pr_mod)),
                           'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Regression map
@@ -10558,7 +10558,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axes2': '(obs) ' + str([ax.id for ax in prts_obs.getAxisList()]),
                           'shape1': '(model) ' + str(prts_mod.shape),
                           'shape2': '(obs) ' + str(prts_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
 
         # Computes the root mean square difference
         prRmse = RmsAxis(prts_mod, prts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
@@ -10594,14 +10594,14 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(prmap_mod.shape), 'shape2': '(obs) ' + str(prmap_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(prmap_mod)),
                               'time2': '(obs) ' + str(TimeBounds(prmap_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
                               'regridTool', 'regridMethod'}
                 extra_args = set(kwargs['regridding']) - known_args
                 if extra_args:
-                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 prmap_mod, prmap_obs, unneeded = \
                     TwoVarRegrid(prmap_mod, prmap_obs, '', region='equatorial_pacific', **kwargs['regridding'])
                 if debug is True:
@@ -10609,7 +10609,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                   'axes2': '(obs) ' + str([ax.id for ax in prmap_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(prmap_mod.shape),
                                   'shape2': '(obs) ' + str(prmap_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             prhov_mod = AverageMeridional(prmap_mod)
             prhov_obs = AverageMeridional(prmap_obs)
@@ -10617,7 +10617,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prhov_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in prhov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(prhov_mod.shape), 'shape2': '(obs) ' + str(prhov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Linear regression
             regprhov_mod = LinearRegressionTsAgainstTs(prhov_mod, enso_mod, nbr_years_window, return_stderr=False,
                                                        frequency=kwargs['frequency'], debug=debug)
@@ -10628,7 +10628,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'axes2': '(obs) ' + str([ax.id for ax in regprhov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(regprhov_mod.shape),
                               'shape2': '(obs) ' + str(regprhov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
             # Lists event years
             nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize, nino=False,
                                           compute_season=False)
@@ -10643,7 +10643,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
                               'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
                               'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
             # composites
             if len(nina_years_mod) > 0:
                 nina_pr_mod = Composite(pr_mod, nina_years_mod, kwargs['frequency'],
@@ -10859,7 +10859,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO life cyle SSTA pattern"
@@ -10876,7 +10876,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -10918,7 +10918,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)),
                           'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
@@ -10929,7 +10929,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)),
                           'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. temporal SSTA
@@ -10947,7 +10947,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)),
                           'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Regression map
@@ -10961,7 +10961,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'axes2': '(obs) ' + str([ax.id for ax in sstts_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sstts_mod.shape),
                           'shape2': '(obs) ' + str(sstts_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
 
         # Computes the root mean square difference
         sstRmse = RmsAxis(sstts_mod, sstts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
@@ -10997,14 +10997,14 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'shape1': '(model) ' + str(sstmap_mod.shape), 'shape2': '(obs) ' + str(sstmap_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(sstmap_mod)),
                               'time2': '(obs) ' + str(TimeBounds(sstmap_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
                               'regridTool', 'regridMethod'}
                 extra_args = set(kwargs['regridding']) - known_args
                 if extra_args:
-                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 sstmap_mod, sstmap_obs, unneeded =\
                     TwoVarRegrid(sstmap_mod, sstmap_obs, '', region='equatorial_pacific', **kwargs['regridding'])
                 if debug is True:
@@ -11012,7 +11012,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                   'axes2': '(obs) ' + str([ax.id for ax in sstmap_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(sstmap_mod.shape),
                                   'shape2': '(obs) ' + str(sstmap_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             ssthov_mod = AverageMeridional(sstmap_mod)
             ssthov_obs = AverageMeridional(sstmap_obs)
@@ -11020,7 +11020,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssthov_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in ssthov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ssthov_mod.shape), 'shape2': '(obs) ' + str(ssthov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Linear regression
             regssthov_mod = LinearRegressionTsAgainstTs(ssthov_mod, enso_mod, nbr_years_window, return_stderr=False,
                                                         frequency=kwargs['frequency'], debug=debug)
@@ -11031,7 +11031,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'axes2': '(obs) ' + str([ax.id for ax in ssthov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ssthov_mod.shape),
                               'shape2': '(obs) ' + str(ssthov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
             # Lists event years
             nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize, nino=False,
                                           compute_season=False)
@@ -11046,7 +11046,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
                               'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
                               'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
             # composites
             if len(nina_years_mod) > 0:
                 nina_sst_mod = Composite(sst_mod, nina_years_mod, kwargs['frequency'],
@@ -11290,7 +11290,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO life cyle TAUXA pattern"
@@ -11307,7 +11307,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, sst_mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -11365,7 +11365,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)),
                           'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 Seasonal mean and anomalies
         enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
@@ -11376,7 +11376,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'shape1': '(model) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(enso_mod)),
                           'time2': '(obs) ' + str(TimeBounds(enso_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. temporal TAUXA
@@ -11394,7 +11394,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(taux_mod)),
                           'time2': '(obs) ' + str(TimeBounds(taux_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
         # Change units
         taux_mod = taux_mod * 1e3
         taux_obs = taux_obs * 1e3
@@ -11411,7 +11411,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in tauxts_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tauxts_mod.shape),
                           'shape2': '(obs) ' + str(tauxts_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
 
         # Computes the root mean square difference
         tauxRmse = RmsAxis(tauxts_mod, tauxts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
@@ -11451,14 +11451,14 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'shape2': '(obs) ' + str(tauxmap_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(tauxmap_mod)),
                               'time2': '(obs) ' + str(TimeBounds(tauxmap_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Regridding
             if isinstance(kwargs['regridding'], dict):
                 known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
                               'regridTool', 'regridMethod'}
                 extra_args = set(kwargs['regridding']) - known_args
                 if extra_args:
-                    EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 tauxmap_mod, tauxmap_obs, unneeded = \
                     TwoVarRegrid(tauxmap_mod, tauxmap_obs, '', region='equatorial_pacific',
                                  **kwargs['regridding'])
@@ -11467,7 +11467,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                   'axes2': '(obs) ' + str([ax.id for ax in tauxmap_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(tauxmap_mod.shape),
                                   'shape2': '(obs) ' + str(tauxmap_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             tauxhov_mod = AverageMeridional(tauxmap_mod)
             tauxhov_obs = AverageMeridional(tauxmap_obs)
@@ -11476,7 +11476,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'axes2': '(obs) ' + str([ax.id for ax in tauxhov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxhov_mod.shape),
                               'shape2': '(obs) ' + str(tauxhov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # Linear regression
             regtauxhov_mod = LinearRegressionTsAgainstTs(tauxhov_mod, enso_mod, nbr_years_window, return_stderr=False,
                                                          frequency=kwargs['frequency'], debug=debug)
@@ -11487,7 +11487,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'axes2': '(obs) ' + str([ax.id for ax in tauxhov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxhov_mod.shape),
                               'shape2': '(obs) ' + str(tauxhov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
             # Lists event years
             nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize, nino=False,
                                           compute_season=False)
@@ -11502,7 +11502,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
                               'nino1': '(model) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
                               'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
             # composites
             if len(nina_years_mod) > 0:
                 nina_taux_mod = Composite(taux_mod, nina_years_mod, kwargs['frequency'],
@@ -11741,7 +11741,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina composite during JJA preceeding the events in each region'
@@ -11758,7 +11758,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -11819,7 +11819,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -11827,7 +11827,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         nina_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. compute composite
@@ -11841,7 +11841,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         loop_box = list()
         for reg in prbox:
             if debug is True:
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
             if 'maskland' in dict_reg.keys():
@@ -11868,7 +11868,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
             if keyerror_mod is not None or keyerror_obs is not None:
                 if len(loop_keyerror) > 0 and keyerror_mod is not None:
                     loop_keyerror += " ; "
@@ -11892,7 +11892,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                   'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                                   'time1': '(model) ' + str(TimeBounds(pr_mod)),
                                   'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS '+str(reg), 20, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS ' + str(reg), 20, **dict_debug)
 
                 # Seasonal mean
                 pr_mod = SeasonalMean(pr_mod, 'JJA', compute_anom=False)
@@ -12103,7 +12103,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina composite during NDJ (peak) of the events in each region'
@@ -12120,7 +12120,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -12181,7 +12181,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -12189,7 +12189,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         nina_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(nina_years_mod), 'nina2': '(obs) ' + str(nina_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. compute composite
@@ -12203,7 +12203,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         loop_box = list()
         for reg in prbox:
             if debug is True:
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
             if 'maskland' in dict_reg.keys():
@@ -12230,7 +12230,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
             if keyerror_mod is not None or keyerror_obs is not None:
                 if len(loop_keyerror) > 0 and keyerror_mod is not None:
                     loop_keyerror += " ; "
@@ -12254,7 +12254,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                   'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                                   'time1': '(model) ' + str(TimeBounds(pr_mod)),
                                   'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS '+str(reg), 20, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS ' + str(reg), 20, **dict_debug)
 
                 # Seasonal mean
                 pr_mod = SeasonalMean(pr_mod, 'NDJ', compute_anom=False)
@@ -12474,7 +12474,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina PRA Composite'
@@ -12492,7 +12492,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -12549,7 +12549,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -12557,7 +12557,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. composite PRA
@@ -12574,7 +12574,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(pr_mod)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         pr_mod = SeasonalMean(pr_mod, season_ev, compute_anom=True)
@@ -12584,7 +12584,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(pr_mod)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -12592,13 +12592,13 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=prbox, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # 2.3 Composites
         pr_mod = Composite(pr_mod, event_years_mod, kwargs['frequency'])
@@ -12607,7 +12607,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
         pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
@@ -12619,7 +12619,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         prRmse = float(RmsAxis(pr_mod, pr_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -12768,7 +12768,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina Diversity (percentage of eastern Pacific La Nina)'
@@ -12788,7 +12788,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, areacell, keyerror = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
@@ -12811,14 +12811,14 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
         event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. diversity of the zonal location of the minimum SSTA
@@ -12837,14 +12837,14 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst = SeasonalMean(sst, season_ev, compute_anom=True)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -12852,19 +12852,19 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                           'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst = Regrid(sst, None, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                               'shape1': '(sst) ' + str(sst.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst = AverageMeridional(sst)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
         sample = Event_selection(sst, kwargs['frequency'], list_event_years=event_years)
@@ -12873,7 +12873,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         lon_sstmax = FindXYMinMaxInTs(sample, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
         if debug is True:
             dict_debug = {'line1': 'longitude of the minimum SSTA: ' + str(lon_sstmax)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
         # 2.3 compute the percentage of EP events (minimum SSTA eastward of the given threshold)
         ep_event, keyerror_metric = percentage_val_eastward(lon_sstmax, metric, box, threshold=kwargs['treshold_ep_ev'])
@@ -12904,7 +12904,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(ep_event), 'line2': 'metric value_error: ' + str(StdErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaDivMetric = {
@@ -13030,7 +13030,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'PDF of zonal min(SSTA) during Nina'
@@ -13049,7 +13049,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -13088,7 +13088,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -13096,7 +13096,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. diversity of the zonal location of the minimum SSTA
@@ -13125,7 +13125,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -13134,7 +13134,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -13142,13 +13142,13 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst_mod = AverageMeridional(sst_mod)
@@ -13157,7 +13157,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
         sample_mod = Event_selection(sst_mod, kwargs['frequency'], list_event_years=event_years_mod)
@@ -13170,13 +13170,13 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         if debug is True:
             dict_debug = {'line1': '(model) longitude  of the maximum SSTA: ' + str(lon_min_mod),
                           'line2': '(obs) longitude  of the maximum SSTA: ' + str(lon_min_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
         # compute PDFs
         if debug is True:
             dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' + str((lon[1] - lon[0]) / 10)
                                    + '  ;  nbr_bins new = ' + str(int((lon[1] - lon[0]) / 10))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'before ComputePDF', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'before ComputePDF', 15, **dict_debug)
         pdf_mod = ComputePDF(lon_min_mod, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
         pdf_obs = ComputePDF(lon_min_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
 
@@ -13207,7 +13207,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(pdfRmse), 'line2': 'metric value_error: ' + str(pdfRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
 
     # Create output
@@ -13315,7 +13315,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina Duration'
@@ -13329,7 +13329,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror =\
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -13355,14 +13355,14 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
                           'time1': str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
         event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': str(event_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. La Nina duration
@@ -13373,7 +13373,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                                  list_event_years=event_years)
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sample.getAxisList()]), 'shape1': str(sample.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Event_selection', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Event_selection', 15, **dict_debug)
 
         # 2.2 count the number of consecutive month bellow a threshold
         if normalize is True:
@@ -13403,7 +13403,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(duration_mean),
                       'line2': 'metric value_error: ' + str(duration_err)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaDurMetric = {
@@ -13526,7 +13526,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina Zonal Composite'
@@ -13547,7 +13547,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -13586,7 +13586,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -13594,7 +13594,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. zonal composite of SSTA
@@ -13623,7 +13623,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -13632,7 +13632,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -13640,13 +13640,13 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst_mod = AverageMeridional(sst_mod)
@@ -13655,7 +13655,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
         sst_mod = Composite(sst_mod, event_years_mod, kwargs['frequency'])
@@ -13664,7 +13664,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # Computes the root mean square difference
         compRmse = RmsZonal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
@@ -13697,7 +13697,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(map_mod)),
                               'time2': '(obs) ' + str(TimeBounds(map_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
             # Seasonal mean
             map_mod = SeasonalMean(map_mod, season_ev, compute_anom=True)
             map_obs = SeasonalMean(map_obs, season_ev, compute_anom=True)
@@ -13709,7 +13709,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # samples
             map_mod = Composite(map_mod, event_years_mod, kwargs['frequency'])
             map_obs = Composite(map_obs, event_years_obs, kwargs['frequency'])
@@ -13736,7 +13736,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaLonMetric = {
@@ -13898,7 +13898,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina SLPA Composite'
@@ -13916,7 +13916,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -13973,7 +13973,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -13981,7 +13981,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. composite SLPA
@@ -13998,7 +13998,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
@@ -14008,7 +14008,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -14016,13 +14016,13 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             slp_mod, slp_obs, Method = TwoVarRegrid(slp_mod, slp_obs, Method, region=slpbox, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                               'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # 2.3 Composites
         slp_mod = Composite(slp_mod, event_years_mod, kwargs['frequency'])
@@ -14031,7 +14031,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
         slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
@@ -14045,7 +14045,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         slpRmse = float(RmsAxis(slp_mod, slp_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -14216,7 +14216,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina TSA Composite'
@@ -14234,7 +14234,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -14291,7 +14291,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -14299,7 +14299,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. composite TSA
@@ -14317,7 +14317,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(tsmap_mod)),
                           'time2': '(obs) '+ str(TimeBounds(tsmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         tsmap_mod = SeasonalMean(tsmap_mod, season_ev, compute_anom=True)
@@ -14328,7 +14328,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(tsmap_mod)),
                           'time2': '(obs) ' + str(TimeBounds(tsmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -14336,14 +14336,14 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tsmap_mod, tsmap_obs, Method = TwoVarRegrid(tsmap_mod, tsmap_obs, Method, region=tsbox,
                                                         **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # 2.3 Composites
         tsmap_mod = Composite(tsmap_mod, event_years_mod, kwargs['frequency'])
@@ -14352,7 +14352,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
         tsmap_mod, keyerror_mod = BasinMask(tsmap_mod, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
@@ -14366,7 +14366,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         tsRmse = float(RmsAxis(tsmap_mod, tsmap_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -14530,7 +14530,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nina Composite Time Series'
@@ -14547,7 +14547,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -14586,7 +14586,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
         # Lists event years
@@ -14594,7 +14594,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
         if debug is True:
             dict_debug = {'nina1': '(model) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. temporal composite of SSTA
@@ -14611,7 +14611,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'axes2': '(obs) ' + str([ax.id for ax in composite_obs.getAxisList()]),
                           'shape1': '(model) ' + str(composite_mod.shape),
                           'shape2': '(obs) ' + str(composite_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # Computes the root mean square difference
         compRmse = RmsAxis(composite_mod, composite_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
@@ -14647,7 +14647,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'shape2': '(obs) ' + str(sst_hov_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(sst_hov_mod)),
                               'time2': '(obs) ' + str(TimeBounds(sst_hov_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Regridding
             if 'regridding' not in kwargs.keys():
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
@@ -14663,7 +14663,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'axes2': '(obs) ' + str([ax.id for ax in sst_hov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_hov_mod.shape),
                               'shape2': '(obs) ' + str(sst_hov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             sst_hov_mod = AverageMeridional(sst_hov_mod)
             sst_hov_obs = AverageMeridional(sst_hov_obs)
@@ -14672,7 +14672,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'axes2': '(obs) ' + str([ax.id for ax in sst_hov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_hov_mod.shape),
                               'shape2': '(obs) ' + str(sst_hov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # samples
             sst_hov_mod = \
                 Composite(sst_hov_mod, event_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
@@ -14683,7 +14683,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'axes2': '(obs) ' + str([ax.id for ax in sst_hov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_hov_mod.shape),
                               'shape2': '(obs) ' + str(sst_hov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -14712,7 +14712,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinaTsMetric = {
@@ -14865,7 +14865,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino composite during JJA preceeding the events in each region'
@@ -14882,7 +14882,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -14943,7 +14943,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -14951,7 +14951,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. compute composite
@@ -14965,7 +14965,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         loop_box = list()
         for reg in prbox:
             if debug is True:
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
             if 'maskland' in dict_reg.keys():
@@ -14992,7 +14992,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
             if keyerror_mod is not None or keyerror_obs is not None:
                 if len(loop_keyerror) > 0 and keyerror_mod is not None:
                     loop_keyerror += " ; "
@@ -15016,7 +15016,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                   'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                                   'time1': '(model) ' + str(TimeBounds(pr_mod)),
                                   'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS '+str(reg), 20, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS ' + str(reg), 20, **dict_debug)
 
                 # Seasonal mean
                 pr_mod = SeasonalMean(pr_mod, 'JJA', compute_anom=False)
@@ -15227,7 +15227,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino composite during NDJ (peak) of the events in each region'
@@ -15244,7 +15244,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -15305,7 +15305,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -15313,7 +15313,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(nino_years_mod), 'nino2': '(obs) ' + str(nino_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. compute composite
@@ -15327,7 +15327,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         loop_box = list()
         for reg in prbox:
             if debug is True:
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
             if 'maskland' in dict_reg.keys():
@@ -15354,7 +15354,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(pr_mod)),
                               'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Read_data_mask_area', 20, **dict_debug)
             if keyerror_mod is not None or keyerror_obs is not None:
                 if len(loop_keyerror) > 0 and keyerror_mod is not None:
                     loop_keyerror += " ; "
@@ -15378,7 +15378,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                   'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                                   'time1': '(model) ' + str(TimeBounds(pr_mod)),
                                   'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS '+str(reg), 20, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS ' + str(reg), 20, **dict_debug)
 
                 # Seasonal mean
                 pr_mod = SeasonalMean(pr_mod, 'NDJ', compute_anom=False)
@@ -15598,7 +15598,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino PRA Composite'
@@ -15616,7 +15616,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -15673,7 +15673,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -15681,7 +15681,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. composite PRA
@@ -15698,7 +15698,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(pr_mod)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         pr_mod = SeasonalMean(pr_mod, season_ev, compute_anom=True)
@@ -15708,7 +15708,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(pr_mod)), 'time2': '(obs) ' + str(TimeBounds(pr_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -15716,13 +15716,13 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=prbox, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # 2.3 Composites
         pr_mod = Composite(pr_mod, event_years_mod, kwargs['frequency'])
@@ -15731,7 +15731,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
         pr_mod, keyerror_mod = BasinMask(pr_mod, 'pacific', box=prbox, lat1=-15, lat2=15, latkey='between', debug=debug)
@@ -15743,7 +15743,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         prRmse = float(RmsAxis(pr_mod, pr_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -15890,7 +15890,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino Diversity (percentage of eastern Pacific El Nino)'
@@ -15910,7 +15910,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, areacell, keyerror = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
@@ -15933,14 +15933,14 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
         event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. diversity of the zonal location of the maximum SSTA
@@ -15959,14 +15959,14 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst = SeasonalMean(sst, season_ev, compute_anom=True)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -15974,19 +15974,19 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                           'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst = Regrid(sst, None, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                               'shape1': '(sst) ' + str(sst.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst = AverageMeridional(sst)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
         sample = Event_selection(sst, kwargs['frequency'], list_event_years=event_years)
@@ -15995,7 +15995,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         lon_sstmax = FindXYMinMaxInTs(sample, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
         if debug is True:
             dict_debug = {'line1': 'longitude of the maximum SSTA: ' + str(lon_sstmax)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
         # 2.3 compute the percentage of EP events (maximum SSTA eastward of the given threshold)
         ep_event, keyerror_metric = percentage_val_eastward(lon_sstmax, metric, box, threshold=kwargs['treshold_ep_ev'])
@@ -16026,7 +16026,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(ep_event), 'line2': 'metric value_error: ' + str(StdErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoDivMetric = {
@@ -16136,7 +16136,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "Nino Diversity (interquartile range)"
@@ -16157,7 +16157,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror1 = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
@@ -16188,14 +16188,14 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in enso.getAxisList()]),
                           'shape1': '(sst) ' + str(enso.shape), 'time1': '(sst) ' + str(TimeBounds(enso))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
         event_years = DetectEvents(enso, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. diversity of the zonal location of the maximum SSTA
@@ -16208,14 +16208,14 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
                           'shape1': '(sst) ' + str(sstmap.shape), 'time1': '(sst) ' + str(TimeBounds(sstmap))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sstmap = SeasonalMean(sstmap, season_ev, compute_anom=True)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
                           'shape1': '(sst) ' + str(sstmap.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -16223,19 +16223,19 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
                           'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sstmap = Regrid(sstmap, None, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstmap.getAxisList()]),
                               'shape1': '(sst) ' + str(sstmap.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sstlon = AverageMeridional(sstmap)
         if debug is True:
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstlon.getAxisList()]),
                           'shape1': '(sst) ' + str(sstlon.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         if len(event_years) > 0:
             # samples
@@ -16245,7 +16245,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
             lon_sstmax = FindXYMinMaxInTs(sample, return_val='maxi', smooth=True, axis=0, window=5, method='triangle')
             if debug is True:
                 dict_debug = {'line1': 'longitude of the maximum SSTA: ' + str(lon_sstmax)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
             # 2.3 compute the spread of the distribution
             dispersion1 = statistical_dispersion(lon_sstmax, method='IQR')
@@ -16273,7 +16273,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
                                               method='triangle')
                 if debug is True:
                     dict_debug = {'line1': 'longitude of the minimum SSTA: ' + str(lon_sstmax)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
                 # 2.3 compute the spread of the distribution
                 nina_disp1 = statistical_dispersion(lon_sstmin, method='IQR')
                 nina_disp2 = statistical_dispersion(lon_sstmin, method='MAD')
@@ -16327,7 +16327,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
             'line3': 'diagnostic (MAD) value: ' + str(dispersion2),
             'line4': 'diagnostic (MAD) value_error: ' + str(dispersion2_err),
         }
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoDivMetric = {
@@ -16454,7 +16454,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'PDF of zonal max(SSTA) during Nino'
@@ -16473,7 +16473,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -16512,7 +16512,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -16520,7 +16520,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. diversity of the zonal location of the maximum SSTA
@@ -16549,7 +16549,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -16558,7 +16558,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -16566,13 +16566,13 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst_mod = AverageMeridional(sst_mod)
@@ -16581,7 +16581,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
         sample_mod = Event_selection(sst_mod, kwargs['frequency'], list_event_years=event_years_mod)
@@ -16594,13 +16594,13 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         if debug is True:
             dict_debug = {'line1': '(model) longitude  of the maximum SSTA: ' + str(lon_min_mod),
                           'line2': '(obs) longitude  of the maximum SSTA: ' + str(lon_min_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
         # compute PDFs
         if debug is True:
             dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' + str((lon[1] - lon[0]) / 10)
                                    + '  ;  nbr_bins new = ' + str(int((lon[1] - lon[0]) / 10))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'before ComputePDF', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'before ComputePDF', 15, **dict_debug)
         pdf_mod = ComputePDF(lon_min_mod, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
         pdf_obs = ComputePDF(lon_min_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
 
@@ -16631,7 +16631,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(pdfRmse), 'line2': 'metric value_error: ' + str(pdfRmse)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoDivMetric = {
@@ -16737,7 +16737,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino Duration'
@@ -16751,7 +16751,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst, sst_areacell, keyerror = \
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, region_ev, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
@@ -16777,14 +16777,14 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sst.getAxisList()]), 'shape1': str(sst.shape),
                           'time1': str(TimeBounds(sst))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
         event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': str(event_years)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. El Nino duration
@@ -16795,7 +16795,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                                  list_event_years=event_years)
         if debug is True:
             dict_debug = {'axes1': str([ax.id for ax in sample.getAxisList()]), 'shape1': str(sample.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Event_selection', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Event_selection', 15, **dict_debug)
 
         # 2.2 count the number of consecutive month bellow a threshold
         if normalize is True:
@@ -16825,7 +16825,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(duration_mean),
                       'line2': 'metric value_error: ' + str(duration_err)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoDurMetric = {
@@ -16948,7 +16948,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino Zonal Composite'
@@ -16969,7 +16969,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # ------------------------------------------------
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -17008,7 +17008,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -17016,7 +17016,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. zonal composite of SSTA
@@ -17045,7 +17045,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # Seasonal mean
         sst_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
@@ -17054,7 +17054,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -17062,13 +17062,13 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_mod, sst_obs, Method = TwoVarRegrid(sst_mod, sst_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sst_mod = AverageMeridional(sst_mod)
@@ -17077,7 +17077,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # samples
         sst_mod = Composite(sst_mod, event_years_mod, kwargs['frequency'])
@@ -17114,7 +17114,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(map_mod)),
                               'time2': '(obs) ' + str(TimeBounds(map_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS: netcdf', 15, **dict_debug)
             # Seasonal mean
             map_mod = SeasonalMean(map_mod, season_ev, compute_anom=True)
             map_obs = SeasonalMean(map_obs, season_ev, compute_anom=True)
@@ -17126,7 +17126,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                     dict_debug = {'axes1': '(model) ' + str([ax.id for ax in map_mod.getAxisList()]),
                                   'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
                                   'shape1': '(model) ' + str(map_mod.shape), 'shape2': '(obs) ' + str(map_obs.shape)}
-                    EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
             # samples
             map_mod = Composite(map_mod, event_years_mod, kwargs['frequency'])
             map_obs = Composite(map_obs, event_years_obs, kwargs['frequency'])
@@ -17154,7 +17154,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoLonMetric = {
@@ -17316,7 +17316,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino SLPA Composite'
@@ -17334,7 +17334,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -17391,7 +17391,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA < 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -17399,7 +17399,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. composite SLPA
@@ -17416,7 +17416,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         slp_mod = SeasonalMean(slp_mod, season_ev, compute_anom=True) * 1e-2
@@ -17426,7 +17426,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(slp_mod)), 'time2': '(obs) ' + str(TimeBounds(slp_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -17434,13 +17434,13 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             slp_mod, slp_obs, Method = TwoVarRegrid(slp_mod, slp_obs, Method, region=slpbox, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                               'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # 2.3 Composites
         slp_mod = Composite(slp_mod, event_years_mod, kwargs['frequency'])
@@ -17449,7 +17449,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
         slp_mod, keyerror_mod = BasinMask(slp_mod, 'pacific', box=slpbox, lat1=-15, lat2=15, latkey='between',
@@ -17463,7 +17463,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in slp_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in slp_obs.getAxisList()]),
                           'shape1': '(model) ' + str(slp_mod.shape), 'shape2': '(obs) ' + str(slp_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         slpRmse = float(RmsAxis(slp_mod, slp_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -17633,7 +17633,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino TSA Composite'
@@ -17651,7 +17651,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod1 = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -17708,7 +17708,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -17716,7 +17716,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. composite TSA
@@ -17734,7 +17734,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(tsmap_mod)),
                           'time2': '(obs) '+ str(TimeBounds(tsmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 2.2 Seasonal mean and anomalies
         tsmap_mod = SeasonalMean(tsmap_mod, season_ev, compute_anom=True)
@@ -17745,7 +17745,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(tsmap_mod)),
                           'time2': '(obs) ' + str(TimeBounds(tsmap_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -17753,14 +17753,14 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tsmap_mod, tsmap_obs, Method = TwoVarRegrid(tsmap_mod, tsmap_obs, Method, region=tsbox,
                                                         **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # 2.3 Composites
         tsmap_mod = Composite(tsmap_mod, event_years_mod, kwargs['frequency'])
@@ -17769,7 +17769,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # mask Pacific
         tsmap_mod, keyerror_mod = BasinMask(tsmap_mod, 'pacific', box=tsbox, lat1=-15, lat2=15, latkey='between',
@@ -17783,7 +17783,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tsmap_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tsmap_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tsmap_mod.shape), 'shape2': '(obs) ' + str(tsmap_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after BasinMask', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
         # Metric 1
         tsRmse = float(RmsAxis(tsmap_mod, tsmap_obs, axis='xy', centered=centered_rmse, biased=biased_rmse))
@@ -17946,7 +17946,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'Nino Composite Time Series'
@@ -17963,7 +17963,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -18002,7 +18002,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
                           'time1': '(model) ' + str(TimeBounds(sst_mod)), 'time2': '(obs) ' + str(TimeBounds(sst_obs))}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
         # Lists event years
@@ -18010,7 +18010,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
         if debug is True:
             dict_debug = {'nino1': '(model) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
         # ------------------------------------------------
         # 2. temporal composite of SSTA
@@ -18027,7 +18027,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                           'axes2': '(obs) ' + str([ax.id for ax in composite_obs.getAxisList()]),
                           'shape1': '(model) ' + str(composite_mod.shape),
                           'shape2': '(obs) ' + str(composite_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
 
         # Computes the root mean square difference
         compRmse = RmsAxis(composite_mod, composite_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
@@ -18063,7 +18063,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'shape2': '(obs) ' + str(sst_hov_obs.shape),
                               'time1': '(model) ' + str(TimeBounds(sst_hov_mod)),
                               'time2': '(obs) ' + str(TimeBounds(sst_hov_obs))}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Regridding
             if 'regridding' not in kwargs.keys():
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
@@ -18079,7 +18079,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'axes2': '(obs) ' + str([ax.id for ax in sst_hov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_hov_mod.shape),
                               'shape2': '(obs) ' + str(sst_hov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             sst_hov_mod = AverageMeridional(sst_hov_mod)
             sst_hov_obs = AverageMeridional(sst_hov_obs)
@@ -18088,7 +18088,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'axes2': '(obs) ' + str([ax.id for ax in sst_hov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_hov_mod.shape),
                               'shape2': '(obs) ' + str(sst_hov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             # samples
             sst_hov_mod = \
                 Composite(sst_hov_mod, event_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
@@ -18099,7 +18099,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'axes2': '(obs) ' + str([ax.id for ax in sst_hov_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_hov_mod.shape),
                               'shape2': '(obs) ' + str(sst_hov_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after Composite', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after Composite', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -18128,7 +18128,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(compRmse), 'line2': 'metric value_error: ' + str(compRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     NinoTsMetric = {
@@ -18257,7 +18257,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr meridional seasonality RMSE'
@@ -18270,7 +18270,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
@@ -18305,7 +18305,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         prStd_mod = Std(pr_mod)
@@ -18314,7 +18314,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in prStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(prStd_mod.shape), 'shape2': '(obs) ' + str(prStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -18322,14 +18322,14 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             prStd_mod, prStd_obs, Method = \
                 TwoVarRegrid(prStd_mod, prStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prStd_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in prStd_obs.getAxisList()]),
                               'shape1': '(model) ' + str(prStd_mod.shape), 'shape2': '(obs) ' + str(prStd_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         prStdLat_mod = AverageZonal(prStd_mod)
@@ -18338,7 +18338,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prStdLat_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in prStdLat_obs.getAxisList()]),
                           'shape1': '(model) ' + str(prStdLat_mod.shape), 'shape2': '(obs) ' + str(prStdLat_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         prRmse = RmsMeridional(prStdLat_mod, prStdLat_obs, centered=centered_rmse, biased=biased_rmse)
@@ -18371,7 +18371,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in prMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             prMap_mod = Std(prMap_mod)
             prMap_obs = Std(prMap_obs)
@@ -18393,7 +18393,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                               'axes4': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape),
                               'shape3': '(model) ' + str(pr_mod.shape), 'shape4': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Zonal average
             pr_mod = AverageZonal(pr_mod)
             pr_obs = AverageZonal(pr_obs)
@@ -18401,7 +18401,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -18431,7 +18431,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -18559,7 +18559,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr zonal seasonality RMSE'
@@ -18572,7 +18572,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     pr_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(prfilemod, prnamemod, 'precipitations', metric, box, file_area=prareafilemod,
                             name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
@@ -18607,7 +18607,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                           'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         prStd_mod = Std(pr_mod)
@@ -18616,7 +18616,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in prStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(prStd_mod.shape), 'shape2': '(obs) ' + str(prStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -18624,14 +18624,14 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             prStd_mod, prStd_obs, Method =\
                 TwoVarRegrid(prStd_mod, prStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prStd_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(prStd_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         prStdLon_mod = AverageMeridional(prStd_mod)
@@ -18640,7 +18640,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prStdLon_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in prStdLon_obs.getAxisList()]),
                           'shape1': '(model) ' + str(prStdLon_mod.shape), 'shape2': '(obs) ' + str(prStdLon_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         prRmse = RmsZonal(prStdLon_mod, prStdLon_obs, centered=centered_rmse, biased=biased_rmse)
@@ -18673,7 +18673,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in prMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in prMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             prMap_mod = Std(prMap_mod)
             prMap_obs = Std(prMap_obs)
@@ -18695,7 +18695,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                               'axes4': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(prMap_mod.shape), 'shape2': '(obs) ' + str(prMap_obs.shape),
                               'shape3': '(model) ' + str(pr_mod.shape), 'shape4': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             pr_mod = AverageMeridional(pr_mod)
             pr_obs = AverageMeridional(pr_obs)
@@ -18703,7 +18703,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in pr_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
                               'shape1': '(model) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -18733,7 +18733,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(prRmse), 'line2': 'metric value_error: ' + str(prRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -18859,7 +18859,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh meridional seasonality RMSE'
@@ -18872,7 +18872,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     ssh_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sshfilemod, sshnamemod, 'sea surface height', metric, box, file_area=sshareafilemod,
                             name_area=sshareanamemod, file_mask=sshlandmaskfilemod, name_mask=sshlandmasknamemod,
@@ -18907,7 +18907,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                           'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         sshStd_mod = Std(ssh_mod)
@@ -18916,7 +18916,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sshStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sshStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sshStd_mod.shape), 'shape2': '(obs) ' + str(sshStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -18924,7 +18924,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sshStd_mod, sshStd_obs, Method = \
                 TwoVarRegrid(sshStd_mod, sshStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
@@ -18932,7 +18932,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'axes2': '(obs) ' + str([ax.id for ax in sshStd_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sshStd_mod.shape),
                               'shape2': '(obs) ' + str(sshStd_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         sshStdLat_mod = AverageZonal(sshStd_mod) * 1e2
@@ -18942,7 +18942,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                           'axes2': '(obs) ' + str([ax.id for ax in sshStdLat_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sshStdLat_mod.shape),
                           'shape2': '(obs) ' + str(sshStdLat_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         sshRmse = RmsMeridional(sshStdLat_mod, sshStdLat_obs, centered=centered_rmse, biased=biased_rmse)
@@ -18976,7 +18976,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'axes2': '(obs) ' + str([ax.id for ax in sshMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sshMap_mod.shape),
                               'shape2': '(obs) ' + str(sshMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             sshMap_mod = Std(sshMap_mod)
             sshMap_mod = OperationMultiply(sshMap_mod, 1e2)
@@ -19001,7 +19001,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'shape1': '(model) ' + str(sshMap_mod.shape),
                               'shape2': '(obs) ' + str(sshMap_obs.shape),
                               'shape3': '(model) ' + str(ssh_mod.shape), 'shape4': '(obs) ' + str(ssh_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Zonal average
             ssh_mod = AverageZonal(ssh_mod) * 1e2
             ssh_obs = AverageZonal(ssh_obs) * 1e2
@@ -19009,7 +19009,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -19040,7 +19040,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sshRmse), 'line2': 'metric value_error: ' + str(sshRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -19168,7 +19168,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh zonal seasonality RMSE'
@@ -19181,7 +19181,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     ssh_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sshfilemod, sshnamemod, 'sea surface height', metric, box, file_area=sshareafilemod,
                             name_area=sshareanamemod, file_mask=sshlandmaskfilemod, name_mask=sshlandmasknamemod,
@@ -19216,7 +19216,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                           'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         sshStd_mod = Std(ssh_mod)
@@ -19225,7 +19225,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sshStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sshStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sshStd_mod.shape), 'shape2': '(obs) ' + str(sshStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -19233,7 +19233,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sshStd_mod, sshStd_obs, Method = \
                 TwoVarRegrid(sshStd_mod, sshStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
@@ -19241,7 +19241,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'axes2': '(obs) ' + str([ax.id for ax in sshStd_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sshStd_mod.shape),
                               'shape2': '(obs) ' + str(sshStd_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sshStdLon_mod = AverageMeridional(sshStd_mod) * 1e2
@@ -19251,7 +19251,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                           'axes2': '(obs) ' + str([ax.id for ax in sshStdLon_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sshStdLon_mod.shape),
                           'shape2': '(obs) ' + str(sshStdLon_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         sshRmse = RmsZonal(sshStdLon_mod, sshStdLon_obs, centered=centered_rmse, biased=biased_rmse)
@@ -19285,7 +19285,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'axes2': '(obs) ' + str([ax.id for ax in sshMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sshMap_mod.shape),
                               'shape2': '(obs) ' + str(sshMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             sshMap_mod = Std(sshMap_mod)
             sshMap_mod = OperationMultiply(sshMap_mod, 1e2)
@@ -19310,7 +19310,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                               'shape1': '(model) ' + str(sshMap_mod.shape),
                               'shape2': '(obs) ' + str(sshMap_obs.shape),
                               'shape3': '(model) ' + str(ssh_mod.shape), 'shape4': '(obs) ' + str(ssh_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             ssh_mod = AverageMeridional(ssh_mod) * 1e2
             ssh_obs = AverageMeridional(ssh_obs) * 1e2
@@ -19318,7 +19318,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in ssh_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in ssh_obs.getAxisList()]),
                               'shape1': '(model) ' + str(ssh_mod.shape), 'shape2': '(obs) ' + str(ssh_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -19349,7 +19349,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sshRmse), 'line2': 'metric value_error: ' + str(sshRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -19475,7 +19475,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst meridional seasonality RMSE'
@@ -19488,7 +19488,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -19523,7 +19523,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         sstStd_mod = Std(sst_mod)
@@ -19532,7 +19532,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sstStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sstStd_mod.shape), 'shape2': '(obs) ' + str(sstStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -19540,14 +19540,14 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sstStd_mod, sstStd_obs, Method = \
                 TwoVarRegrid(sstStd_mod, sstStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstStd_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sstStd_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sstStd_mod.shape), 'shape2': '(obs) ' + str(sstStd_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         sstStdLat_mod = AverageZonal(sstStd_mod)
@@ -19557,7 +19557,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                           'axes2': '(obs) ' + str([ax.id for ax in sstStdLat_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sstStdLat_mod.shape),
                           'shape2': '(obs) ' + str(sstStdLat_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         sstRmse = RmsMeridional(sstStdLat_mod, sstStdLat_obs, centered=centered_rmse, biased=biased_rmse)
@@ -19590,7 +19590,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sstMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             sstMap_mod = Std(sstMap_mod)
             sstMap_obs = Std(sstMap_obs)
@@ -19612,7 +19612,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                               'axes4': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape),
                               'shape3': '(model) ' + str(sst_mod.shape), 'shape4': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Zonal average
             sst_mod = AverageZonal(sst_mod)
             sst_obs = AverageZonal(sst_obs)
@@ -19620,7 +19620,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -19651,7 +19651,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -19779,7 +19779,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst zonal seasonality RMSE'
@@ -19792,7 +19792,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     sst_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
                             name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
@@ -19827,7 +19827,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         sstStd_mod = Std(sst_mod)
@@ -19836,7 +19836,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sstStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sstStd_mod.shape), 'shape2': '(obs) ' + str(sstStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -19844,14 +19844,14 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sstStd_mod, sstStd_obs, Method = \
                 TwoVarRegrid(sstStd_mod, sstStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstStd_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sstStd_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sstStd_mod.shape), 'shape2': '(obs) ' + str(sstStd_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         sstStdLon_mod = AverageMeridional(sstStd_mod)
@@ -19860,7 +19860,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstStdLon_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in sstStdLon_obs.getAxisList()]),
                           'shape1': '(model) ' + str(sstStdLon_mod.shape), 'shape2': '(obs) ' + str(sstStdLon_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         sstRmse = RmsZonal(sstStdLon_mod, sstStdLon_obs, centered=centered_rmse, biased=biased_rmse)
@@ -19893,7 +19893,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sstMap_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sstMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             sstMap_mod = Std(sstMap_mod)
             sstMap_obs = Std(sstMap_obs)
@@ -19915,7 +19915,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                               'axes4': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sstMap_mod.shape), 'shape2': '(obs) ' + str(sstMap_obs.shape),
                               'shape3': '(model) ' + str(sst_mod.shape), 'shape4': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             sst_mod = AverageMeridional(sst_mod)
             sst_obs = AverageMeridional(sst_obs)
@@ -19923,7 +19923,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in sst_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
                               'shape1': '(model) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -19954,7 +19954,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(sstRmse), 'line2': 'metric value_error: ' + str(sstRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
@@ -20080,7 +20080,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
         try: kwargs[arg]
-        except: kwargs[arg] = DefaultArgValues(arg)
+        except: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux meridional seasonality RMSE'
@@ -20093,7 +20093,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
@@ -20128,7 +20128,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         tauxStd_mod = Std(taux_mod)
@@ -20137,7 +20137,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tauxStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tauxStd_mod.shape), 'shape2': '(obs) ' + str(tauxStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -20145,7 +20145,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tauxStd_mod, tauxStd_obs, Method = \
                 TwoVarRegrid(tauxStd_mod, tauxStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
@@ -20153,7 +20153,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                               'axes2': '(obs) ' + str([ax.id for ax in tauxStd_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxStd_mod.shape),
                               'shape2': '(obs) ' + str(tauxStd_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Zonal average
         tauxStdLat_mod = AverageZonal(tauxStd_mod) * 1e3
@@ -20163,7 +20163,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                           'axes2': '(obs) ' + str([ax.id for ax in tauxStdLat_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tauxStdLat_mod.shape),
                           'shape2': '(obs) ' + str(tauxStdLat_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
 
         # Computes the root mean square difference
         tauxRmse = RmsMeridional(tauxStdLat_mod, tauxStdLat_obs, centered=centered_rmse, biased=biased_rmse)
@@ -20197,7 +20197,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                               'axes2': '(obs) ' + str([ax.id for ax in tauxMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxMap_mod.shape),
                               'shape2': '(obs) ' + str(tauxMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             tauxMap_mod = Std(tauxMap_mod) * 1e3
             tauxMap_obs = Std(tauxMap_obs) * 1e3
@@ -20220,7 +20220,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                               'shape1': '(model) ' + str(tauxMap_mod.shape),
                               'shape2': '(obs) ' + str(tauxMap_obs.shape),
                               'shape3': '(model) ' + str(taux_mod.shape), 'shape4': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Zonal average
             taux_mod = AverageZonal(taux_mod) * 1e3
             taux_obs = AverageZonal(taux_obs) * 1e3
@@ -20228,7 +20228,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                               'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -20259,7 +20259,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LatRmseMetric = {
@@ -20387,7 +20387,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
         try:
             kwargs[arg]
         except:
-            kwargs[arg] = DefaultArgValues(arg)
+            kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux zonal seasonality RMSE'
@@ -20400,7 +20400,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
 
     # Read file and select the right region
     if debug is True:
-        EnsoErrorsWarnings.DebugMode('\033[92m', metric, 10)
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
     taux_mod, mod_areacell, keyerror_mod = \
         Read_data_mask_area(tauxfilemod, tauxnamemod, 'wind stress', metric, box, file_area=tauxareafilemod,
                             name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod,
@@ -20435,7 +20435,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                           'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
         # standard deviation computation
         tauxStd_mod = Std(taux_mod)
@@ -20444,7 +20444,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
             dict_debug = {'axes1': '(model) ' + str([ax.id for ax in tauxStd_mod.getAxisList()]),
                           'axes2': '(obs) ' + str([ax.id for ax in tauxStd_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tauxStd_mod.shape), 'shape2': '(obs) ' + str(tauxStd_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after Std', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after Std', 15, **dict_debug)
 
         # Regridding
         if isinstance(kwargs['regridding'], dict):
@@ -20452,7 +20452,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                           'regridTool', 'regridMethod'}
             extra_args = set(kwargs['regridding']) - known_args
             if extra_args:
-                EnsoErrorsWarnings.UnknownKeyArg(extra_args, INSPECTstack())
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tauxStd_mod, tauxStd_obs, Method = \
                 TwoVarRegrid(tauxStd_mod, tauxStd_obs, Method, region=box, **kwargs['regridding'])
             if debug is True:
@@ -20460,7 +20460,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                               'axes2': '(obs) ' + str([ax.id for ax in tauxStd_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxStd_mod.shape),
                               'shape2': '(obs) ' + str(tauxStd_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
         # Meridional average
         tauxStdLon_mod = AverageMeridional(tauxStd_mod) * 1e3
@@ -20470,7 +20470,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                           'axes2': '(obs) ' + str([ax.id for ax in tauxStdLon_obs.getAxisList()]),
                           'shape1': '(model) ' + str(tauxStdLon_mod.shape),
                           'shape2': '(obs) ' + str(tauxStdLon_obs.shape)}
-            EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
         # Computes the root mean square difference
         tauxRmse = RmsZonal(tauxStdLon_mod, tauxStdLon_obs, centered=centered_rmse, biased=biased_rmse)
@@ -20504,7 +20504,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                               'axes2': '(obs) ' + str([ax.id for ax in tauxMap_obs.getAxisList()]),
                               'shape1': '(model) ' + str(tauxMap_mod.shape),
                               'shape2': '(obs) ' + str(tauxMap_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # standard deviation computation
             tauxMap_mod = Std(tauxMap_mod) * 1e3
             tauxMap_obs = Std(tauxMap_obs) * 1e3
@@ -20527,7 +20527,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                               'shape1': '(model) ' + str(tauxMap_mod.shape),
                               'shape2': '(obs) ' + str(tauxMap_obs.shape),
                               'shape3': '(model) ' + str(taux_mod.shape), 'shape4': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
             # Meridional average
             taux_mod = AverageMeridional(taux_mod) * 1e3
             taux_obs = AverageMeridional(taux_obs) * 1e3
@@ -20535,7 +20535,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                 dict_debug = {'axes1': '(model) ' + str([ax.id for ax in taux_mod.getAxisList()]),
                               'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
                               'shape1': '(model) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape)}
-                EnsoErrorsWarnings.DebugMode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
@@ -20566,7 +20566,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
     # metric value
     if debug is True:
         dict_debug = {'line1': 'metric value: ' + str(tauxRmse), 'line2': 'metric value_error: ' + str(tauxRmseErr)}
-        EnsoErrorsWarnings.DebugMode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
 
     # Create output
     LonRmseMetric = {
