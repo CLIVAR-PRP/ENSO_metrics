@@ -1,5 +1,12 @@
 import datetime
+import glob
 import os
+
+
+def find_latest(path):
+    dir_list = [p for p in glob.glob(path+"/v????????")]
+    return sorted(dir_list)[-1]
+
 
 # =================================================
 # Background Information
@@ -35,8 +42,14 @@ reference_data_lf_path = {
 #=================================================
 # Models
 #-------------------------------------------------
-modpath = '/work/lee1043/ESGF/xmls/%(mip)/%(exp)/mon/%(variable)/%(mip).%(model).%(exp).%(realization).mon.%(variable).xml'
-modpath_lf = '/work/lee1043/ESGF/xmls/%(mip)/historical/fx/%(variable)/%(mip).%(model).historical.r0i0p0.fx.%(variable).xml'
+modpath = os.path.join(
+    find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
+    '%(mip)/%(exp)/atmos/mon/%(variable)',
+    '%(mip).%(exp).%(model).%(realization).mon.%(variable).xml')
+
+modpath_lf = os.path.join(
+    find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
+    '%(mip)/historical/atmos/fx/sftlf/%(mip).historical.%(model).r0i0p0.fx.sftlf.xml')
 
 modnames = ['all']
 
