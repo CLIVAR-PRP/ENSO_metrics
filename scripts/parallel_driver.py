@@ -154,7 +154,7 @@ print("Start : %s" % time.ctime())
 procs_list = []
 for p, cmd in enumerate(cmds_list):
     timenow = time.ctime()
-    print(timenow, p, cmd)
+    print(timenow, p, ' '.join(cmd))
     model = cmd[-3]
     run = cmd[-1]
     log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, case_id])
