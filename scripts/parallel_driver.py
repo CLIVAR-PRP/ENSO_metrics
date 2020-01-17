@@ -136,7 +136,7 @@ for model in models:
 # Run subprocesses in parallel
 # -------------------------------------------------
 # log dir
-log_dir = "./log_"+case_id + "/" + mc_name
+log_dir = os.path.join("log", case_id, mc_name)
 
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
