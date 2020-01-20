@@ -23,11 +23,11 @@ from scipy.stats import skew as SCIPYstats__skew
 from sys import prefix as SYS_prefix
 
 # ENSO_metrics package functions:
-from EnsoCollectionsLib import CmipVariables
-from EnsoCollectionsLib import ReferenceObservations
-from EnsoCollectionsLib import ReferenceRegions
-import EnsoErrorsWarnings
-from EnsoToolsLib import FindXYMinMax, StringInDict
+from .EnsoCollectionsLib import CmipVariables
+from .EnsoCollectionsLib import ReferenceObservations
+from .EnsoCollectionsLib import ReferenceRegions
+from . import EnsoErrorsWarnings
+from .EnsoToolsLib import FindXYMinMax, StringInDict
 
 # uvcdat based functions:
 from cdms2 import createAxis as CDMS2createAxis
@@ -112,9 +112,9 @@ def AverageHorizontal(tab, areacell=None):
     if areacell is None:
         try: averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
         except:
-            print " AverageHorizontal"
-            print '\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m'
-            print '\033[93m' + str().ljust(20) + "axes = " + str(snum) + '\033[0m'
+            print(" AverageHorizontal")
+            print('\033[93m' + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + '\033[0m')
+            print('\033[93m' + str().ljust(20) + "axes = " + str(snum) + '\033[0m')
             try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
                 list_strings = [
@@ -709,10 +709,10 @@ def annualcycle(tab):
         tmp = MV2average(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(range(12), id='time')
+    time = CDMS2createAxis(list(range(12)), id='time')
     moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     moy = moy.reorder(initorder)
-    time = CDMS2createAxis(range(12), id='months')
+    time = CDMS2createAxis(list(range(12)), id='months')
     moy.setAxis(get_num_axis(moy, 'time'), time)
     return moy
 
@@ -830,7 +830,7 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
 
 def ArrayListAx(tab, list1, ax_name_ax='', ax_long_name='', ax_ref=''):
     tab_out = MV2array(tab)
-    ax = CDMS2createAxis(range(len(list1)), id=ax_name_ax)
+    ax = CDMS2createAxis(list(range(len(list1))), id=ax_name_ax)
     ax.regions = str(list1)
     if len(ax_long_name) > 0:
         ax.long_name = ax_long_name
@@ -897,7 +897,7 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     # choose basin
     keybasin = {'atlantic': 1, 'pacific': 2, 'indian': 3, 'antarctic': 10, 'arctic': 11}
     mask = MV2zeros(basin.shape)
-    if region_mask.lower() not in keybasin.keys():
+    if region_mask.lower() not in list(keybasin.keys()):
         keyerror = "unknown region: " + region_mask + " (basin_generic_1x1deg.nc, regrided file from NOAA NODC" + \
                    "WOA09 Masks basin Data Files)"
         list_strings = ["WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": region",
@@ -1168,7 +1168,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         else:
             tab_out = MV2zeros((nbr_years_window * 12, tab.shape[1], tab.shape[2]))
         tab_out = MV2masked_where(tab_out == 0, tab_out)
-        axis = CDMS2createAxis(range(len(tab_out)), id='time')
+        axis = CDMS2createAxis(list(range(len(tab_out))), id='time')
         axis.units = units
         tab_out.setAxis(0, axis)
         for ii in range(len(tab)):
@@ -1210,7 +1210,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
                 units = 'months since ' + timebnds[0]
                 units_out = 'months since 0001-01-15 12:00:00'
             elif frequency == 'daily':
-                date1 = date(yy1, 01, 01)
+                date1 = date(yy1, 0o1, 0o1)
                 date2 = date(yy2, 12, 31)
                 length = (date2 - date1).days
                 units = 'days since ' + timebnds[0]
@@ -1224,7 +1224,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         composite = MV2array(composite)
         # axis list
         axis0 = CDMS2createAxis(MV2array(list_event_years, dtype='int32'), id='years')
-        axis1 = CDMS2createAxis(range(len(composite[0])), id='months')
+        axis1 = CDMS2createAxis(list(range(len(composite[0]))), id='months')
         axis1.units = units_out
         axes = [axis0, axis1]
         if tab.shape > 1:
@@ -1530,13 +1530,13 @@ def get_year_by_year(tab, frequency='monthly'):
         days = MV2array(list(tt.day for tt in time_ax))
         months = MV2array(list(tt.month for tt in time_ax))
         months = MV2array([(mm*100)+dd for dd, mm in zip(days, months)])
-        tmm = CDMS2createAxis(range(365), id='days')
+        tmm = CDMS2createAxis(list(range(365)), id='days')
         m1 = time_ax[0].day
         m2 = time_ax[-1].day
         t2 = 365
     elif frequency == 'monthly':
         months = MV2array(list(tt.month for tt in time_ax))
-        tmm = CDMS2createAxis(range(12), id='months')
+        tmm = CDMS2createAxis(list(range(12)), id='months')
         m1 = time_ax[0].month
         m2 = time_ax[-1].month
         t2 = 12
@@ -1710,7 +1710,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
         # this section checks if one time step has not been included by error at the beginning or the end of the time
         # series
-        if isinstance(time_bounds[0], basestring):
+        if isinstance(time_bounds[0], str):
             if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
                 tab = tab[1:]
             if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
@@ -1950,7 +1950,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
             ]
             EnsoErrorsWarnings.MyError(list_strings)
     # test the given 'newgrid'
-    if isinstance(newgrid, basestring) or newgrid is None:
+    if isinstance(newgrid, str) or newgrid is None:
         #
         # newgrid is not a grid, so a grid will be created
         # to do this, kwargs['newgrid_name'] and kwargs['region'] must be defined
@@ -2097,7 +2097,7 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
         if var12_time_name is not None:
             var12 = TimeButNotTime(var12, var12_time_name, frequency)
         o.write(var12, attributes=var12_attributes, dtype='float32', id=var12_name)
-    for att in global_attributes.keys():
+    for att in list(global_attributes.keys()):
         o.__setattr__(att, global_attributes[att])
     o.close()
     return
@@ -2185,7 +2185,7 @@ def SmoothGaussian(tab, axis=0, window=5):
         ]
         EnsoErrorsWarnings.MyError(list_strings)
     # Reorder tab in order to put 'axis' in first position
-    indices = range(len(tab.shape))
+    indices = list(range(len(tab.shape)))
     indices.remove(axis)
     newOrder = str(axis)
     for ii in indices:
@@ -2258,7 +2258,7 @@ def SmoothSquare(tab, axis=0, window=5):
         ]
         EnsoErrorsWarnings.MyError(list_strings)
     # Reorder tab in order to put 'axis' in first position
-    indices = range(len(tab.shape))
+    indices = list(range(len(tab.shape)))
     indices.remove(axis)
     newOrder = str(axis)
     for ii in indices:
@@ -2316,7 +2316,7 @@ def SmoothTriangle(tab, axis=0, window=5):
         ]
         EnsoErrorsWarnings.MyError(list_strings)
     # Reorder tab in order to put 'axis' in first position
-    indices = range(len(tab.shape))
+    indices = list(range(len(tab.shape)))
     indices.remove(axis)
     newOrder = str(axis)
     for ii in indices:
@@ -2491,7 +2491,7 @@ def Smoothing(tab, info, axis=0, window=5, method='triangle'):
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": smoothing method (running mean)",
             str().ljust(5) + "unkwown smoothing method: " + str(method),
-            str().ljust(10) + "known smoothing method: " + str(sorted(dict_smooth.keys(), key=lambda v: v.upper())),
+            str().ljust(10) + "known smoothing method: " + str(sorted(list(dict_smooth.keys()), key=lambda v: v.upper())),
         ]
         EnsoErrorsWarnings.MyError(list_strings)
     info = info + ', smoothing using a ' + str(method) + ' shaped window of ' + str(window) + ' points'
@@ -2520,10 +2520,10 @@ def SkewMonthly(tab):
         tmp = SCIPYstats__skew(tmp)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(range(12), id='time')
+    time = CDMS2createAxis(list(range(12)), id='time')
     skew = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     skew = skew.reorder(initorder)
-    time = CDMS2createAxis(range(12), id='months')
+    time = CDMS2createAxis(list(range(12)), id='months')
     skew.setAxis(get_num_axis(skew, 'time'), time)
     return skew
 
@@ -2550,10 +2550,10 @@ def StdMonthly(tab):
         tmp = Std(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(range(12), id='time')
+    time = CDMS2createAxis(list(range(12)), id='time')
     std = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     std = std.reorder(initorder)
-    time = CDMS2createAxis(range(12), id='months')
+    time = CDMS2createAxis(list(range(12)), id='months')
     std.setAxis(get_num_axis(std, 'time'), time)
     return std
 
@@ -2571,7 +2571,7 @@ def TimeButNotTime(tab, new_time_name, frequency):
         freq = 'years'
     else:
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
-    axis = CDMS2createAxis(range(len(tab_out)), id=new_time_name)
+    axis = CDMS2createAxis(list(range(len(tab_out))), id=new_time_name)
     axis.units = freq + " since " + str(year1) + "-" + str(month1) + "-" + str(day1)
     axis.axis = freq
     tab_out.setAxis(time_num, axis)
@@ -2782,9 +2782,9 @@ def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, met
 
 def MyDerive(project, internal_variable_name, dict_var):
     # test input parameters
-    if not isinstance(project, basestring):
+    if not isinstance(project, str):
         EnsoErrorsWarnings.ObjectTypeError('project', 'string', type(project), INSPECTstack())
-    if not isinstance(internal_variable_name, basestring):
+    if not isinstance(internal_variable_name, str):
         EnsoErrorsWarnings.ObjectTypeError('internal_variable_name', 'string', type(internal_variable_name),
                                            INSPECTstack())
     if not isinstance(dict_var, dict):
@@ -2794,14 +2794,14 @@ def MyDerive(project, internal_variable_name, dict_var):
     dict_obs = ReferenceObservations()
 
     # wrong project?
-    if 'CMIP' not in project and project not in dict_obs.keys():
+    if 'CMIP' not in project and project not in list(dict_obs.keys()):
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
             ": project",
             str().ljust(5) + "unknown 'project' (or observations dataset): " + str(project),
             str().ljust(10) + "it must be either a 'CMIP' project or an observations dataset defined in\
                     EnsoCollectionsLib.ReferenceObservations",
-            str().ljust(10) + "known observations dataset: " + str(sorted(dict_obs.keys(), key=lambda v: v.upper()))
+            str().ljust(10) + "known observations dataset: " + str(sorted(list(dict_obs.keys()), key=lambda v: v.upper()))
         ]
         EnsoErrorsWarnings.MyError(list_strings)
 
@@ -2810,7 +2810,7 @@ def MyDerive(project, internal_variable_name, dict_var):
         # get dictionary of CMIP
         dict_CMIP = CmipVariables()['variable_name_in_file']
         # test if 'internal_variable_name' is defined in EnsoCollectionsLib.CmipVariables
-        if internal_variable_name in dict_CMIP.keys():
+        if internal_variable_name in list(dict_CMIP.keys()):
             list_var = dict_CMIP[internal_variable_name]['var_name']
             outvar = MyDeriveCompute(list_var, dict_var, dict_att=dict_CMIP, variable=internal_variable_name,
                                      project=project)
@@ -2819,7 +2819,7 @@ def MyDerive(project, internal_variable_name, dict_var):
         # 'project' is defined in EnsoCollectionsLib.ReferenceObservations
         dict_obs_var = dict_obs[project]['variable_name_in_file']
         # test if 'internal_variable_name' is defined for this observations dataset
-        if internal_variable_name in dict_obs_var.keys():
+        if internal_variable_name in list(dict_obs_var.keys()):
             list_var = dict_obs_var[internal_variable_name]['var_name']
             outvar = MyDeriveCompute(list_var, dict_var, dict_att=dict_obs_var, variable=internal_variable_name,
                                      isObs=True)
@@ -2829,7 +2829,7 @@ def MyDerive(project, internal_variable_name, dict_var):
 def MyDeriveCompute(list_var, dict_var, dict_att={}, variable='', isObs=False, project=''):
     # test if keys in list_var are in 'dict_var'
     StringInDict(list_var, dict_var, INSPECTstack())
-    if isinstance(list_var, basestring):
+    if isinstance(list_var, str):
         # this 'internal_variable_name' is based on one variable
         outvar = dict_var[list_var]
     else:
@@ -2970,7 +2970,7 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
         EnsoErrorsWarnings.UnknownFrequency(frequency, INSPECTstack())
     tab_yy_mm = Event_selection(y, frequency, nbr_years_window=nbr_years_window)
     myshape = [nbr_timestep] + [ss for ss in y.shape[1:]]
-    tmp_ax = CDMS2createAxis(range(nbr_timestep), id='months')
+    tmp_ax = CDMS2createAxis(list(range(nbr_timestep)), id='months')
     slope_out = MV2zeros(myshape)
     slope_out.setAxisList([tmp_ax] + y.getAxisList()[1:])
     stderr_out = MV2zeros(myshape)
@@ -3048,10 +3048,10 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
             EnsoErrorsWarnings.DebugMode('\033[93m', "EnsoUvcdatToolsLib PreProcessTS", 20)
             dict_debug = {'axes1':  str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
             EnsoErrorsWarnings.DebugMode('\033[93m', "averaging to perform: " + str(average), 25, **dict_debug)
-        if isinstance(average, basestring):
+        if isinstance(average, str):
             try: dict_average[average]
             except:
-                EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+                EnsoErrorsWarnings.UnknownAveraging(average, list(dict_average.keys()), INSPECTstack())
             else:
                 tab = dict_average[average](tab, areacell)
                 if debug is True:
@@ -3061,14 +3061,14 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
             for av in average:
                 try: dict_average[av]
                 except:
-                    EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+                    EnsoErrorsWarnings.UnknownAveraging(average, list(dict_average.keys()), INSPECTstack())
                 else:
                     tab = dict_average[av](tab, areacell)
                     if debug is True:
                         dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
                         EnsoErrorsWarnings.DebugMode('\033[93m', "performed " + str(av), 25, **dict_debug)
         else:
-            EnsoErrorsWarnings.UnknownAveraging(average, dict_average.keys(), INSPECTstack())
+            EnsoErrorsWarnings.UnknownAveraging(average, list(dict_average.keys()), INSPECTstack())
     return tab, info
 
 
@@ -3154,7 +3154,7 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
                                   file_mask='', name_mask='', maskland=False, maskocean=False, debug=False,
                                   interpreter='', **kwargs):
     dict_area, dict_keye, dict_var = dict(), dict(), dict()
-    if isinstance(file_data, basestring):
+    if isinstance(file_data, str):
         tab, areacell, keyerror = \
             Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area=file_area,
                                 name_area=name_area, file_mask=file_mask, name_mask=name_mask, maskland=maskland,
@@ -3209,9 +3209,9 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
                 dict_var[list_var[0]], dict_var[var], unneeded =\
                     CheckTime(dict_var[list_var[0]], dict_var[var], metric_name=metric, **kwargs)
     tab = MyDerive(kwargs[interpreter], variable, dict_var)
-    areacell = dict_area[dict_area.keys()[0]]
+    areacell = dict_area[list(dict_area.keys())[0]]
     keyerror = ''
-    for ii in dict_keye.keys():
+    for ii in list(dict_keye.keys()):
         if len(keyerror) > 0 and dict_keye[ii] is not None:
             keyerror += " ; "
         if dict_keye[ii] is not None:
@@ -3359,7 +3359,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
     dSSTthf = MV2average(dSSTthf, axis=0)
     dSSToce = MV2average(dSSToce, axis=0)
     # axes
-    axes = [CDMS2createAxis(MV2array(range(12-len(dSST), 12)), id='months')]
+    axes = [CDMS2createAxis(MV2array(list(range(12-len(dSST), 12))), id='months')]
     if debug is True:
         dict_debug = {'axes1': 'axes ' + str(axes[0]), 'axes2': 'axes[:] ' + str(axes[0][:]),
                       'shape1': '(dSST) ' + str(dSST.shape), 'shape2': '(dSSTthf) ' + str(dSSTthf.shape),

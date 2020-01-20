@@ -43,7 +43,7 @@ netcdf_path = '/data/yplanton/ENSO_metrics/v20190805'
 
 
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
-    list_obs = ReferenceObservations().keys()
+    list_obs = list(ReferenceObservations().keys())
     if name in list_obs:
         file_name, file_area, file_land = find_xml_obs(name, frequency, variable)
     else:
@@ -62,11 +62,11 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
         try: pathnc, filenc = find_path_and_files(ens=ensemble, exp=experiment, fre=frequency, mod=model, pro=project, rea=new_realm, var=variable)
         except:
             # given variable is neither in realm 'A' nor 'O'
-            print bcolors.FAIL + '%%%%%     -----     %%%%%'
-            print 'ERROR: function: '+str(INSPECTstack()[0][3])+', line: '+str(INSPECTstack()[0][2])
-            print 'given variable cannot be found in either realm A or O: '+str(variable)
-            print 'param: '+str(model)+', '+str(project)+', '+str(experiment)+', '+str(ensemble)+', '+str(frequency)+', '+str(realm)
-            print '%%%%%     -----     %%%%%' + bcolors.ENDC
+            print(bcolors.FAIL + '%%%%%     -----     %%%%%')
+            print('ERROR: function: '+str(INSPECTstack()[0][3])+', line: '+str(INSPECTstack()[0][2]))
+            print('given variable cannot be found in either realm A or O: '+str(variable))
+            print('param: '+str(model)+', '+str(project)+', '+str(experiment)+', '+str(ensemble)+', '+str(frequency)+', '+str(realm))
+            print('%%%%%     -----     %%%%%' + bcolors.ENDC)
             sys.exit('')
         file_area, file_land = find_fx(model, project=project, experiment=experiment, ensemble=ensemble, realm=new_realm)
     else:
@@ -102,7 +102,7 @@ def find_fx(model, project='', experiment='', ensemble='', realm=''):
 
 
 def find_xml_fx(name, project='', experiment='', realm=''):
-    list_obs = ReferenceObservations().keys()
+    list_obs = list(ReferenceObservations().keys())
     if name in list_obs:
         file_area = OSpath__join(xmldir, 'obs_' + str(name) + '_areacell.xml')
         file_land = OSpath__join(xmldir, 'obs_' + str(name) + '_landmask.xml')
@@ -122,9 +122,9 @@ def find_xml_obs(obs, frequency, variable):
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
-        print '\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m'
-        print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
-        print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
+        print('\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m')
+        print('\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m')
+        print('\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m')
         sys.exit('')
     file_area, file_land = find_fx(obs)
     return file_name, file_area, file_land
@@ -140,7 +140,7 @@ def save_json(dict_in, json_name, metric_only=True):
         for ens in liste:
             # metadata (nyears)
             dict_meta = dict()
-            for key1 in dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys():
+            for key1 in list(dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys()):
                 if key1 not in ['time_frequency', 'ref', 'method', 'method_nonlinearity', 'name']:
                     if key1 == "units":
                         dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]
@@ -150,7 +150,7 @@ def save_json(dict_in, json_name, metric_only=True):
             if metric_only is True:
                 # metrics
                 dict2 = dict()
-                for key1 in dict_in[ens]['value'][met]['metric'].keys():
+                for key1 in list(dict_in[ens]['value'][met]['metric'].keys()):
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
                     tmp_key = key1.replace("ref_", "")
                     dict2[tmp_key] = {'metric': tmp, 'nyears_obs': dict_meta[tmp_key], 'units': units}
@@ -158,13 +158,13 @@ def save_json(dict_in, json_name, metric_only=True):
             else:
                 # metrics
                 dict2 = {'metric': {}, 'diagnostic': {}}
-                for key1 in dict_in[ens]['value'][met]['metric'].keys():
+                for key1 in list(dict_in[ens]['value'][met]['metric'].keys()):
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
                     tmp_key = key1.replace("ref_", "")
                     dict2['metric'][tmp_key] = {'value': tmp, 'nyears_obs': dict_meta[tmp_key], 'units': units}
                     del tmp, tmp_key
                 # dive down diagnostics
-                for key1 in dict_in[ens]['value'][met]['diagnostic'].keys():
+                for key1 in list(dict_in[ens]['value'][met]['diagnostic'].keys()):
                     tmp = dict_in[ens]['value'][met]['diagnostic'][key1]['value']
                     if key1 == 'model':
                         dict2['diagnostic'][ens] = \
@@ -201,13 +201,13 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-print '\033[95m' + str(list_variables) + '\033[0m'
+print('\033[95m' + str(list_variables) + '\033[0m')
 
 # list of observations
 list_obs = list()
 for metric in list_metric:
     dict_var_obs = dict_mc['metrics_list'][metric]['obs_name']
-    for var in dict_var_obs.keys():
+    for var in list(dict_var_obs.keys()):
         for obs in dict_var_obs[var]:
             if obs not in list_obs:
                 list_obs.append(obs)
@@ -222,7 +222,7 @@ elif mc_name == 'ENSO_proc':
     list_obs = ['ERA-Interim']#['ERA-Interim', 'HadISST', 'GPCPv2.3']
 elif mc_name == 'ENSO_test':
     list_obs = ['AVISO', 'ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']
-print '\033[95m' + str(list_obs) + '\033[0m'
+print('\033[95m' + str(list_obs) + '\033[0m')
 
 
 #
@@ -245,7 +245,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
+            print('\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m')
         else:
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
@@ -362,7 +362,7 @@ for mod in list_models:
         del dict_mod, dict_regrid, dictDatasets, netcdf, netcdf_name
     dict_metric[mod], dict_dive[mod] = dict_ens, dict_ens_dive
     del dict_ens, dict_ens_dive, files_in, list_ens, pattern_out
-print str(sys.argv[0]) + ": done"
+print(str(sys.argv[0]) + ": done")
 # ------------------------------------------------
 # reshape dictionary
 # listm = sorted(dict_metric.keys())

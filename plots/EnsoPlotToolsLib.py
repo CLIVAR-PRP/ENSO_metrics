@@ -15,7 +15,7 @@ import EnsoErrorsWarnings
 
 
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-observations = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
+observations = sorted(list(ReferenceObservations().keys()), key=lambda v: v.upper())
 
 
 def create_labels(label_name, label_ticks):
@@ -173,18 +173,18 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables):
         diag_mod = dict_diag[model]
     else:
         diag_mod = [dict_diag[mod] for mod in model]
-    if reference in dict_diag.keys():
+    if reference in list(dict_diag.keys()):
         obs = deepcopy(reference)
     else:
         if len(metric_variables) == 1:
             for obs in observations:
-                if obs in dict_diag.keys():
+                if obs in list(dict_diag.keys()):
                     break
         else:
             for obs1 in observations:
                 for obs2 in observations:
                     obs = obs1 + "_" + obs2
-                    if obs in dict_diag.keys():
+                    if obs in list(dict_diag.keys()):
                         break
     diag_obs = dict_diag[obs]
     if isinstance(model, str):
@@ -225,7 +225,7 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
 
 def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric):
     ff = open_dataset(filename_nc, decode_times=False)
-    variables_in_file = sorted([var for var in ff.keys()], key=lambda v: v.upper())
+    variables_in_file = sorted([var for var in list(ff.keys())], key=lambda v: v.upper())
     # read model
     tab_mod = list()
     for var in var_to_read:

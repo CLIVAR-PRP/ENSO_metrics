@@ -11,8 +11,8 @@ mc_name = 'MC2'
 ##mc_name = 'MC1'
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
-print 'jwlee_debug: mc_name:', mc_name
-print 'jwlee_debug: list_metric:', list_metric
+print('jwlee_debug: mc_name:', mc_name)
+print('jwlee_debug: list_metric:', list_metric)
 
 # parameters
 project = 'CMIP5'
@@ -29,13 +29,13 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-print 'list_variables:', list_variables
+print('list_variables:', list_variables)
 
 # list of observations
 list_obs = list()
 for metric in list_metric:
     dict_var_obs = dict_mc['metrics_list'][metric]['obs_name']
-    for var in dict_var_obs.keys():
+    for var in list(dict_var_obs.keys()):
         for obs in dict_var_obs[var]:
             if obs not in list_obs:
                 list_obs.append(obs)
@@ -48,7 +48,7 @@ try:
     list_obs.remove('GPCPv2.3')
 except:
     pass
-print 'list_obs:', list_obs
+print('list_obs:', list_obs)
 
 ################################################
 # Below is something should go back to parameter file
@@ -84,7 +84,7 @@ for obs in list_obs:
         # variable name in file
         try: var_in_file = dict_var[var]['var_name']
         except:
-            print var + " is not available for " + str(obs) + " or unscripted"
+            print(var + " is not available for " + str(obs) + " or unscripted")
         else:
             if isinstance(var_in_file, list):
                 var0 = var_in_file[0]
@@ -107,14 +107,14 @@ for obs in list_obs:
 
 # models
 list_models = ['IPSL-CM5B-LR']
-print 'jwlee_debug: model loop start for ', list_models
+print('jwlee_debug: model loop start for ', list_models)
 #
 # finding file and variable name in file for each observations dataset
 #
 dict_metric = dict()
 dict_var = CmipVariables()['variable_name_in_file']
 for mod in list_models:
-    print 'jwlee_debug: mod:', mod
+    print('jwlee_debug: mod:', mod)
     dict_mod = {mod: {}}
     # ------------------------------------------------
     # @jiwoo: between these dash the program is a bit ad hoc...
@@ -122,7 +122,7 @@ for mod in list_models:
     # on the atmosphere grid
     # if you want to use atmosphere only, do not use this or create your own way to find the equivalent between the
     # variable name in the program and the variable name in the file
-    print 'jwlee_debug: var loop start'
+    print('jwlee_debug: var loop start')
     for var in list_variables:
         ###print 'jwlee_debug: var:', var
         #
@@ -148,7 +148,7 @@ for mod in list_models:
         ###print 'jwlee_debug: list_files:', list_files
         # ------------------------------------------------
         dict_mod[mod][var] = {'path + filename': list_files, 'varname': var_in_file}
-    print 'jwlee_debug: var loop end'
+    print('jwlee_debug: var loop end')
     # dictionary needed by nsoMetrics.ComputeMetricsLib.ComputeCollection
     # @jiwoo the ComputeCollection function it still on development and it does not read the observations requirement
     # defined in the metric collection, i.e., defCollection(mc_name)['metrics_list']['<metric name>']['obs_name']
@@ -157,23 +157,23 @@ for mod in list_models:
     # another dataset
     dictDatasets = {'model': dict_mod, 'observations': dict_obs}
     # Computes the metric collection
-    print 'jwlee_debug: computes metric collection start'
+    print('jwlee_debug: computes metric collection start')
     dict_metric[mod] = ComputeCollection(mc_name, dictDatasets)
-    print 'jwlee_debug: computes metric collection end'
+    print('jwlee_debug: computes metric collection end')
     # Prints the metrics values
-    for ii in range (3): print ''
-    print str().ljust(5) + str(mod)
-    list_metric = dict_metric[mod]['metrics'].keys()
+    for ii in range (3): print('')
+    print(str().ljust(5) + str(mod))
+    list_metric = list(dict_metric[mod]['metrics'].keys())
     for metric in list_metric:
-        print str().ljust(10) + str(metric)
+        print(str().ljust(10) + str(metric))
         metric_dict = dict_metric[mod]['metrics'][metric]['metric_values']
-        for ref in metric_dict.keys():
-            print str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
-                  + str(metric_dict[ref]['value_error'])
+        for ref in list(metric_dict.keys()):
+            print(str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value']) + ', error = '\
+                  + str(metric_dict[ref]['value_error']))
         raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['observations']
-        for ref in raw_dict.keys():
-            print str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = ' + str(raw_dict[ref]['value']) +\
-                  ', error = ' + str(raw_dict[ref]['value_error'])
+        for ref in list(raw_dict.keys()):
+            print(str().ljust(15) + 'raw (diag) obs: ' + str(ref) + ' value = ' + str(raw_dict[ref]['value']) +\
+                  ', error = ' + str(raw_dict[ref]['value_error']))
         raw_dict = dict_metric[mod]['metrics'][metric]['raw_values']['model']
-        print str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
-                  ', error = ' + str(raw_dict['value_error'])
+        print(str().ljust(15) + 'raw (diag) model: ' + str(mod) + ' value = ' + str(raw_dict['value']) +\
+                  ', error = ' + str(raw_dict['value_error']))

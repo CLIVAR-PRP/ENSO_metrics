@@ -40,7 +40,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     else:
         units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, str):
@@ -95,7 +95,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             "medianprops": dict(linestyle="-", linewidth=2, color=legco[0]),
             "whiskerprops": dict(linestyle="-", linewidth=2, color=legco[0]),
         }
-        if isinstance(filename_nc, basestring):
+        if isinstance(filename_nc, str):
             ax.boxplot([tab_obs[ii], [1e20, 1e20]], whis=[5, 95], labels=["", ""], showmeans=True, showfliers=False,
                        **boxproperties)
             boxproperties = {
@@ -167,9 +167,9 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     else:
         plot_metric = False
     if isinstance(filename_nc, str):
-        axis = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].coords.keys()[0]]))
+        axis = list(NUMPYarray(tab_mod[0].coords[list(tab_mod[0].coords.keys())[0]]))
     else:
-        axis = list(NUMPYarray(tab_mod[0][0].coords[tab_mod[0][0].coords.keys()[0]]))
+        axis = list(NUMPYarray(tab_mod[0][0].coords[list(tab_mod[0][0].coords.keys())[0]]))
     # figure initialization
     title = dict_param["title"]
     xname = dict_param["xname"]
@@ -180,15 +180,15 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
         units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     if units != "":
         yname = yname + " (" + units + ")"
-    if "colors" in dict_param.keys():
+    if "colors" in list(dict_param.keys()):
         linecolors = dict_param["colors"]
     else:
         linecolors = {"model": ["r"], "reference": ["k"]}
-    if "linestyles" in dict_param.keys():
+    if "linestyles" in list(dict_param.keys()):
         linestyles = dict_param["linestyles"]
     else:
         linestyles = {"model": ["-"], "reference": ["-"]}
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, str):
@@ -233,7 +233,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
                 ax = axes[kk % 2]
             else:
                 ax = axes[kk / 2, kk % 2]
-            if "legend" in dict_param.keys():
+            if "legend" in list(dict_param.keys()):
                 title_tmp = title + ": " + old_leg[kk]
             else:
                 title_tmp = title
@@ -269,24 +269,24 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     if diagnostic_units != "":
         yname = yname + " (" + diagnostic_units + ")"
     if len(yname) < 20:
-        for kk in regions.keys():
+        for kk in list(regions.keys()):
             if kk in yname.lower():
                 yname = regions[kk] + " " + yname
-    if "colors" in dict_param.keys():
+    if "colors" in list(dict_param.keys()):
         mcolors = dict_param["colors"]
     else:
         mcolors = ["k", "dodgerblue"]
         if isinstance(filename_nc, list):
             for ii in range(len(filename_nc) - 1):
                 mcolors.append(colors_sup[ii])
-    if "markers" in dict_param.keys():
+    if "markers" in list(dict_param.keys()):
         markers = dict_param["markers"]
     else:
         markers = ["D", "o"]
         if isinstance(filename_nc, list):
             for ii in range(len(filename_nc) - 1):
                 markers.append("o")
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, str):
@@ -541,7 +541,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
     labelbar = dict_param["label"]
-    if "maskland" in dict_param.keys():
+    if "maskland" in list(dict_param.keys()):
         maskland = dict_param["maskland"]
     else:
         maskland = False
@@ -690,7 +690,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         one_yaxis = True
     else:
         one_yaxis = False
-    if "colors" in dict_param.keys():
+    if "colors" in list(dict_param.keys()):
         mcolors = dict_param["colors"]
     else:
         mcolors = ["k", "dodgerblue"]
@@ -699,7 +699,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         if isinstance(filename_nc, list):
             for ii in range(len(filename_nc) - 1):
                 mcolors.append(colors_sup[ii])
-    if "markers" in dict_param.keys():
+    if "markers" in list(dict_param.keys()):
         markers = dict_param["markers"]
     else:
         markers = ["D", "."]
@@ -708,10 +708,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         if isinstance(filename_nc, list):
             for ii in range(len(filename_nc) - 1):
                 markers.append(".")
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
-        if isinstance(filename_nc, basestring):
+        if isinstance(filename_nc, str):
             legend = ["ref: " + obsname, model]
         else:
             legend = ["ref: " + obsname] + mod_nicknames# model
@@ -725,7 +725,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     nbrc = 1 if nbr_panel == 1 else 2
     fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     plt.subplots_adjust(hspace=0.3, wspace=0.1)
-    if isinstance(filename_nc, basestring):
+    if isinstance(filename_nc, str):
         tab1 = tab_obs[::2] + tab_mod[::2]
         tab2 = tab_obs[1::2] + tab_mod[1::2]
     else:
@@ -749,7 +749,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         else:
             ax = axes[ii / 2, ii % 2]
         # title
-        if isinstance(filename_nc, basestring):
+        if isinstance(filename_nc, str):
             ax.set_title(title[ii / 2], fontsize=15, y=1.01, loc="left")
             if nbr_panel == len(tab_mod) and ii in [0, 1]:
                 ax.text(0.5, 1.15, legend[ii % 2], fontsize=15, weight="bold", horizontalalignment="center",
@@ -761,7 +761,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         ax.set_xlim(xmin=min(xtick_labels), xmax=max(xtick_labels))
         if (one_xaxis is True and (ii >= (nbrc * nbrl) - 2)) or one_xaxis is False:
             xlabel = xname[ii]
-            for kk in regions.keys():
+            for kk in list(regions.keys()):
                 if kk in xlabel.lower():
                     xlabel = regions[kk] + " " + xlabel
             units = tab1[ii].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
@@ -775,7 +775,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         ax.set_ylim(ymin=min(ytick_labels), ymax=max(ytick_labels))
         if (one_yaxis is True and ii % 2 == 0) or one_yaxis is False:
             ylabel = yname[ii]
-            for kk in regions.keys():
+            for kk in list(regions.keys()):
                 if kk in ylabel.lower():
                     ylabel = regions[kk] + " " + ylabel
             units = tab2[ii].units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
@@ -792,7 +792,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         if (nbr_panel > 1 and nbr_panel == nbr_val / 2.) or (nbr_panel == len(legend)):
             ax.scatter(tab1[ii], tab2[ii], s=10, c="k", marker=markers[ii])
             for jj in range(len(keys1)):
-                if "slope" + keys1[jj] in tab1[ii].attrs.keys() and "intercept" + keys1[jj] in tab1[ii].attrs.keys():
+                if "slope" + keys1[jj] in list(tab1[ii].attrs.keys()) and "intercept" + keys1[jj] in list(tab1[ii].attrs.keys()):
                     col = keys4[jj]
                     slope = tab1[ii].attrs["slope" + keys1[jj]]
                     intercept = tab1[ii].attrs["intercept" + keys1[jj]]
@@ -811,7 +811,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             for jj in range(len(tab1)):
                 col = mcolors[jj]
                 ax.scatter(tab1[jj], tab2[jj], s=10, c=col, marker=markers[jj])
-                if "slope" in tab1[jj].attrs.keys() and "intercept" in tab1[jj].attrs.keys():
+                if "slope" in list(tab1[jj].attrs.keys()) and "intercept" in list(tab1[jj].attrs.keys()):
                     slope = tab1[jj].attrs["slope"]
                     intercept = tab1[jj].attrs["intercept"]
                     xx = [x1, x2]

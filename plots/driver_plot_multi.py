@@ -43,7 +43,7 @@ with open(filename_js) as ff:
 ff.close()
 del ff, filename_js
 # loop on metrics
-metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=lambda v: v.upper())
+metrics = sorted(list(defCollection(metric_collection)['metrics_list'].keys()), key=lambda v: v.upper())
 if metric_collection == "ENSO_perf":
     # metrics = [
     #     "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLatRmse", "BiasSstLonRmse", "BiasTauxLatRmse", "BiasTauxLonRmse",
@@ -57,7 +57,7 @@ elif metric_collection == "ENSO_proc":
     metrics = ["EnsoFbSshSst", "EnsoFbSstLhf", "EnsoFbSstLwr", "EnsoFbSstShf", "EnsoFbSstSwr",
                "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh"]
 for met in metrics:
-    print met
+    print(met)
     filename_nc, modname = list(), list()
     for ii in range(len(models)):
         tmp = pattern.replace("modelname", models[ii]).replace("membername", members[ii]) + "_" + met + ".nc"
@@ -65,10 +65,10 @@ for met in metrics:
         modname.append(models[ii] + "_" + members[ii])
     del tmp
     diagnostic_values = dict((key1, data_json['value'][met]["diagnostic"][key1]["value"])
-                             for key1 in data_json['value'][met]["diagnostic"].keys())
+                             for key1 in list(data_json['value'][met]["diagnostic"].keys()))
     metric_values = dict((key1, dict((key2, data_json['value'][met]["metric"][key1][key2]["value"])
-                                     for key2 in data_json['value'][met]["metric"][key1].keys()))
-                         for key1 in data_json['value'][met]["metric"].keys())
+                                     for key2 in list(data_json['value'][met]["metric"][key1].keys())))
+                         for key1 in list(data_json['value'][met]["metric"].keys()))
     diagnostic_units = data_json['metadata']['metrics'][met]['diagnostic']['units']
     metric_units = data_json['metadata']['metrics'][met]['metric']['units']
     # this function needs:

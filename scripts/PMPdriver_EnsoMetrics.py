@@ -2,7 +2,7 @@
 # =================================================
 # Dependencies
 # -------------------------------------------------
-from __future__ import print_function
+
 
 import glob
 import json
@@ -111,7 +111,7 @@ print(list_variables)
 list_obs = list()
 for metric in list_metric:
     dict_var_obs = dict_mc['metrics_list'][metric]['obs_name']
-    for var in dict_var_obs.keys():
+    for var in list(dict_var_obs.keys()):
         for obs in dict_var_obs[var]:
             if obs not in list_obs:
                 list_obs.append(obs)

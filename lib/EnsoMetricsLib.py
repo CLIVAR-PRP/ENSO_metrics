@@ -6,16 +6,16 @@ from numpy import sqrt as NUMPYsqrt
 from numpy import square as NUMPYsquare
 
 # ENSO_metrics package functions:
-from EnsoCollectionsLib import ReferenceRegions
-import EnsoErrorsWarnings
-from EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
-from EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
+from .EnsoCollectionsLib import ReferenceRegions
+from . import EnsoErrorsWarnings
+from .EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
+from .EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
     Composite, ComputeInterannualAnomalies, ComputePDF, Correlation, DetectEvents, DurationAllEvent, DurationEvent,\
     Event_selection, FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap,\
     LinearRegressionTsAgainstTs, MinMax, MyDerive, MyEmpty, PreProcessTS, Read_data_mask_area,\
     Read_data_mask_area_multifile, Regrid, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean,\
     SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
-from KeyArgLib import DefaultArgValues
+from .KeyArgLib import DefaultArgValues
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -2725,7 +2725,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                              compute_anom=True, **kwargs)
             del lhf_map_areacell, sst_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -3021,7 +3021,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                              compute_anom=True, **kwargs)
             del lwr_map_areacell, sst_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -3312,7 +3312,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                              compute_anom=True, **kwargs)
             del shf_map_areacell, sst_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -3608,7 +3608,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                              compute_anom=True, **kwargs)
             del swr_map_areacell, sst_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -3909,7 +3909,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                              compute_anom=True, **kwargs)
             del thf_map_areacell, sst_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -4176,7 +4176,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             sst1 = Std(sst1)
             sst2 = Std(sst2)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -4967,7 +4967,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                              compute_anom=True, **kwargs)
             del thf_map_areacell, sst_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -5233,7 +5233,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                                               compute_anom=True, **kwargs)
             del taux_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -5521,7 +5521,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                              compute_anom=True, **kwargs)
             del ssh_map_areacell, sst_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -5809,7 +5809,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                                              compute_anom=True, **kwargs)
             del ssh_map_areacell
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -6552,7 +6552,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 2. compute composite
         # ------------------------------------------------
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         list_composite_mod, list_composite_obs = list(), list()
@@ -6563,11 +6563,11 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
-            if 'maskland' in dict_reg.keys():
+            if 'maskland' in list(dict_reg.keys()):
                 maskland = dict_reg['maskland']
             else:
                 maskland = False
-            if 'maskocean' in dict_reg.keys():
+            if 'maskocean' in list(dict_reg.keys()):
                 maskocean = dict_reg['maskocean']
             else:
                 maskocean = False
@@ -6637,7 +6637,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         if len(loop_keyerror) > 0:
             keyerror = deepcopy(loop_keyerror)
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             kwargs['smoothing'] = smooth
             del smooth
 
@@ -7357,7 +7357,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 2. compute composite
         # ------------------------------------------------
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         list_composite_mod, list_composite_obs = list(), list()
@@ -7368,11 +7368,11 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
-            if 'maskland' in dict_reg.keys():
+            if 'maskland' in list(dict_reg.keys()):
                 maskland = dict_reg['maskland']
             else:
                 maskland = False
-            if 'maskocean' in dict_reg.keys():
+            if 'maskocean' in list(dict_reg.keys()):
                 maskocean = dict_reg['maskocean']
             else:
                 maskocean = False
@@ -7442,7 +7442,7 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         if len(loop_keyerror) > 0:
             keyerror = deepcopy(loop_keyerror)
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             kwargs['smoothing'] = smooth
             del smooth
 
@@ -7679,7 +7679,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
             sst3_NDJ = Std(sst3_NDJ)
             sst3_MAM = Std(sst3_MAM)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -7893,7 +7893,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
             sst1 = SkewnessTemporal(sst1)
             sst2 = SkewnessTemporal(sst2)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -10658,7 +10658,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 2. compute composite
         # ------------------------------------------------
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         list_composite_mod, list_composite_obs = list(), list()
@@ -10669,11 +10669,11 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
-            if 'maskland' in dict_reg.keys():
+            if 'maskland' in list(dict_reg.keys()):
                 maskland = dict_reg['maskland']
             else:
                 maskland = False
-            if 'maskocean' in dict_reg.keys():
+            if 'maskocean' in list(dict_reg.keys()):
                 maskocean = dict_reg['maskocean']
             else:
                 maskocean = False
@@ -10741,7 +10741,7 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         if len(loop_keyerror) > 0:
             keyerror = deepcopy(loop_keyerror)
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             kwargs['smoothing'] = smooth
             del smooth
 
@@ -11041,7 +11041,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 2. compute composite
         # ------------------------------------------------
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         list_composite_mod, list_composite_obs = list(), list()
@@ -11052,11 +11052,11 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
-            if 'maskland' in dict_reg.keys():
+            if 'maskland' in list(dict_reg.keys()):
                 maskland = dict_reg['maskland']
             else:
                 maskland = False
-            if 'maskocean' in dict_reg.keys():
+            if 'maskocean' in list(dict_reg.keys()):
                 maskocean = dict_reg['maskocean']
             else:
                 maskocean = False
@@ -11124,7 +11124,7 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         if len(loop_keyerror) > 0:
             keyerror = deepcopy(loop_keyerror)
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             kwargs['smoothing'] = smooth
             del smooth
 
@@ -13574,7 +13574,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'time2': '(obs) ' + str(TimeBounds(sst_hov_obs))}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -13903,7 +13903,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 2. compute composite
         # ------------------------------------------------
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         list_composite_mod, list_composite_obs = list(), list()
@@ -13914,11 +13914,11 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
-            if 'maskland' in dict_reg.keys():
+            if 'maskland' in list(dict_reg.keys()):
                 maskland = dict_reg['maskland']
             else:
                 maskland = False
-            if 'maskocean' in dict_reg.keys():
+            if 'maskocean' in list(dict_reg.keys()):
                 maskocean = dict_reg['maskocean']
             else:
                 maskocean = False
@@ -13986,7 +13986,7 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         if len(loop_keyerror) > 0:
             keyerror = deepcopy(loop_keyerror)
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             kwargs['smoothing'] = smooth
             del smooth
 
@@ -14286,7 +14286,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         # 2. compute composite
         # ------------------------------------------------
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         list_composite_mod, list_composite_obs = list(), list()
@@ -14297,11 +14297,11 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'region = '+str(reg), 15)
             # Read if the given region is defined as a land region, an oceanic region, or both
             dict_reg = ReferenceRegions(reg)
-            if 'maskland' in dict_reg.keys():
+            if 'maskland' in list(dict_reg.keys()):
                 maskland = dict_reg['maskland']
             else:
                 maskland = False
-            if 'maskocean' in dict_reg.keys():
+            if 'maskocean' in list(dict_reg.keys()):
                 maskocean = dict_reg['maskocean']
             else:
                 maskocean = False
@@ -14369,7 +14369,7 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
         if len(loop_keyerror) > 0:
             keyerror = deepcopy(loop_keyerror)
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             kwargs['smoothing'] = smooth
             del smooth
 
@@ -17111,7 +17111,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               'time2': '(obs) ' + str(TimeBounds(sst_hov_obs))}
                 EnsoErrorsWarnings.DebugMode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -17425,7 +17425,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             prMap_mod = Std(prMap_mod)
             prMap_obs = Std(prMap_obs)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -17730,7 +17730,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             prMap_mod = Std(prMap_mod)
             prMap_obs = Std(prMap_obs)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -18034,7 +18034,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             sstMap_mod = Std(sstMap_mod)
             sstMap_obs = Std(sstMap_obs)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -18340,7 +18340,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             sstMap_mod = Std(sstMap_mod)
             sstMap_obs = Std(sstMap_obs)
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -18647,7 +18647,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
             tauxMap_mod = Std(tauxMap_mod) * 1e3
             tauxMap_obs = Std(tauxMap_obs) * 1e3
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:
@@ -18957,7 +18957,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
             tauxMap_mod = Std(tauxMap_mod) * 1e3
             tauxMap_obs = Std(tauxMap_obs) * 1e3
             # Regridding
-            if 'regridding' not in kwargs.keys():
+            if 'regridding' not in list(kwargs.keys()):
                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                         'newgrid_name': 'generic_1x1deg'}
             else:

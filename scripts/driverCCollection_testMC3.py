@@ -11,7 +11,7 @@ from EnsoComputeMetricsLib import ComputeCollection
 xmldir = environ['XMLDIR']
 
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
-    list_obs = ReferenceObservations().keys()
+    list_obs = list(ReferenceObservations().keys())
     if name in list_obs:
         file_name, file_area, file_land = find_xml_obs(name, frequency, variable)
     else:
@@ -34,12 +34,12 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
         xml = CDMS2open(file_name)
         listvar2 = sorted(xml.listvariables())
         if variable not in listvar2:
-            print '\033[95m' + str().ljust(5) + "CMIP var " + str(variable) + " cannot be found (realm A and O)"\
-                  + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "AND" + '\033[0m'
-            print '\033[95m' + str().ljust(10) + "variables = " + str(listvar2) + '\033[0m'
+            print('\033[95m' + str().ljust(5) + "CMIP var " + str(variable) + " cannot be found (realm A and O)"\
+                  + '\033[0m')
+            print('\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m')
+            print('\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m')
+            print('\033[95m' + str().ljust(10) + "AND" + '\033[0m')
+            print('\033[95m' + str().ljust(10) + "variables = " + str(listvar2) + '\033[0m')
             exit(1)
         file_area, file_land = find_xml_fx(model, project=project, experiment=experiment, realm=new_realm)
     else:
@@ -47,7 +47,7 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
     return file_name, file_area, file_land
 
 def find_xml_fx(name, project='', experiment='', realm=''):
-    list_obs = ReferenceObservations().keys()
+    list_obs = list(ReferenceObservations().keys())
     if name in list_obs:
         file_area = join_path(xmldir, 'obs_' + str(name) + '_glob_fx_O_areacell.xml')
         file_land = join_path(xmldir, 'obs_' + str(name) + '_glob_fx_O_landmask.xml')
@@ -67,9 +67,9 @@ def find_xml_obs(obs, frequency, variable):
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
-        print '\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m'
-        print '\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m'
-        print '\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m'
+        print('\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m')
+        print('\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m')
+        print('\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m')
         exit(1)
     file_area, file_land = find_xml_fx(obs)
     return file_name, file_area, file_land
@@ -95,13 +95,13 @@ for metric in list_metric:
         if var not in list_variables:
             list_variables.append(var)
 list_variables = sorted(list_variables)
-print '\033[95m' + str(list_variables) + '\033[0m'
+print('\033[95m' + str(list_variables) + '\033[0m')
 
 # list of observations
 list_obs = list()
 for metric in list_metric:
     dict_var_obs = dict_mc['metrics_list'][metric]['obs_name']
-    for var in dict_var_obs.keys():
+    for var in list(dict_var_obs.keys()):
         for obs in dict_var_obs[var]:
             if obs not in list_obs:
                 list_obs.append(obs)
@@ -116,7 +116,7 @@ elif mc_name == 'ENSO_proc':
     list_obs = ['AVISO', 'ERA-Interim', 'Tropflux']#['Tropflux', 'ERA-Interim', 'SODA3.4.2']#['ERA-Interim', 'SODA3.4.2']#['HadISST','GPCPv2.3']
 elif mc_name == 'EVAL_IPSL':
     list_obs = ['ERA-Interim']#
-print '\033[95m' + str(list_obs) + '\033[0m'
+print('\033[95m' + str(list_obs) + '\033[0m')
 
 
 #
@@ -140,7 +140,7 @@ for obs in list_obs:
         try:
             var_in_file = dict_var[var]['var_name']
         except:
-            print '\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m'
+            print('\033[95m' + str(var) + " is not available for " + str(obs) + " or unscripted" + '\033[0m')
         else:
             try:
                 areacell_in_file = dict_var['areacell']['var_name']
@@ -248,26 +248,26 @@ for mod in list_models:
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True, dive_down=True)
     # dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, netcdf=True, netcdf_name=netcdf, debug=True)
     dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=True, netcdf_name=netcdf, debug=True)
-    tmp = sorted(dict_metric[mod]['value'].keys(), key=lambda v: v.upper())
+    tmp = sorted(list(dict_metric[mod]['value'].keys()), key=lambda v: v.upper())
     for kk in tmp:
-        print kk.ljust(13) + ': ' + str(dict_metric[mod]['value'][kk]['metric'])
+        print(kk.ljust(13) + ': ' + str(dict_metric[mod]['value'][kk]['metric']))
     stop
     # Prints the metrics values
-    for ii in range(3): print ''
-    print '\033[95m' + str().ljust(5) + str(mod) + '\033[0m'
-    list_metric = dict_metric[mod]['value'].keys()
+    for ii in range(3): print('')
+    print('\033[95m' + str().ljust(5) + str(mod) + '\033[0m')
+    list_metric = list(dict_metric[mod]['value'].keys())
     for metric in list_metric:
-        print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
+        print('\033[95m' + str().ljust(10) + str(metric) + '\033[0m')
         metric_dict = dict_metric[mod]['value'][metric]['metric']
-        for ref in metric_dict.keys():
-            print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value'])\
-                  + ', error = ' + str(metric_dict[ref]['value_error']) + '\033[0m'
-            if 'value2' in metric_dict[ref].keys():
-                print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' +\
-                      str(metric_dict[ref]['value2']) + ', error = ' + str(metric_dict[ref]['value_error2']) + '\033[0m'
-            if 'value3' in metric_dict[ref].keys():
-                print '\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + \
-                      str(metric_dict[ref]['value3']) + ', error = ' + str(metric_dict[ref]['value_error3']) + '\033[0m'
+        for ref in list(metric_dict.keys()):
+            print('\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + str(metric_dict[ref]['value'])\
+                  + ', error = ' + str(metric_dict[ref]['value_error']) + '\033[0m')
+            if 'value2' in list(metric_dict[ref].keys()):
+                print('\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' +\
+                      str(metric_dict[ref]['value2']) + ', error = ' + str(metric_dict[ref]['value_error2']) + '\033[0m')
+            if 'value3' in list(metric_dict[ref].keys()):
+                print('\033[95m' + str().ljust(15) + 'metric: ' + str(ref) + ' value = ' + \
+                      str(metric_dict[ref]['value3']) + ', error = ' + str(metric_dict[ref]['value_error3']) + '\033[0m')
 # Plot
 #stop
 #if ' ':
@@ -284,21 +284,21 @@ for mod in list_models:
 #if ' ':
     if ' ':
         for metric in list_metric:
-            print '\033[95m' + str().ljust(10) + str(metric) + '\033[0m'
+            print('\033[95m' + str().ljust(10) + str(metric) + '\033[0m')
             metric_dict = dict_metric[mod]['value'][metric]['metric']
             # metric
             dict_m1, dict_m2, dict_m3 = dict(), dict(), dict()
-            for ref in metric_dict.keys():
+            for ref in list(metric_dict.keys()):
                 dict_m1[ref] = metric_dict[ref]['value']
-                if 'value2' in metric_dict[ref].keys():
+                if 'value2' in list(metric_dict[ref].keys()):
                     dict_m2[ref] = metric_dict[ref]['value2']
-                if 'value3' in metric_dict[ref].keys():
+                if 'value3' in list(metric_dict[ref].keys()):
                     dict_m3[ref] = metric_dict[ref]['value3']
             # dive down
             dive_model = dict_dive[mod]['value'][metric]['model']
             if metric in ['EnsoPrMap', 'EnsoSstMap']:
                 tmp_dive, tmp_axis = dict(), dict()
-                for ref in dict_dive[mod]['value'][metric].keys():
+                for ref in list(dict_dive[mod]['value'][metric].keys()):
                     if ref != 'model':
                         tmp_dive['ref_' + ref] = dict_dive[mod]['value'][metric][ref]
                         tmp1 = dict_dive[mod]['metadata']['metrics'][metric][ref]['axisLat']
@@ -316,10 +316,10 @@ for mod in list_models:
                               ii in range(y_axis[0], y_axis[1] + inc, inc))
                 dom = (y_axis[0], y_axis[1], x_axis[0], x_axis[1])
                 if metric in ['EnsoPrMap']:
-                    label_col = MV2array(range(-3, 3 + 1, 1))
+                    label_col = MV2array(list(range(-3, 3 + 1, 1)))
                 elif metric in ['EnsoSstMap']:
                     label_col = MV2array([round(ii, 1) for ii in NUMPYarange(-1.2, 1.2 + 0.4, 0.4)])
-                for ref in dict_m1.keys():
+                for ref in list(dict_m1.keys()):
                     tab1 = MV2array(dive_model)
                     tab1.setAxisList(tmp_axis[ref])
                     m1 = 'Metric 1: ' + str("%.2f" % round(dict_m1[ref], 2))
@@ -327,8 +327,8 @@ for mod in list_models:
                     m3 = 'Metric 3: ' + str("%.2f" % round(dict_m3[ref], 2))
                     tab2 = MV2array(tmp_dive[ref])
                     tab2.setAxisList(tmp_axis[ref])
-                    print str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2))\
-                          + ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2))
+                    print(str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2))\
+                          + ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2)))
                     name = metric + ' in Historical (' + mod + ')'
                     name_png = path_plot + '/' + metric + '_' + mod
                     PFRAME.plot_my_map(tab1, label_col, dom, white_zero=0, x_dico=x_dict, y_dico=y_dict, name=name,
@@ -340,7 +340,7 @@ for mod in list_models:
                     del m1, m2, m3, name, name_png, tab1, tab2
             elif metric in ['EnsoPrJjaTel', 'EnsoPrNdjTel']:
                 tmp_dive, tmp_axis = dict(), dict()
-                for ref in dict_dive[mod]['value'][metric].keys():
+                for ref in list(dict_dive[mod]['value'][metric].keys()):
                     if ref != 'model':
                         tmp_dive['ref_' + ref] = dict_dive[mod]['value'][metric][ref]
                         tmp_axis['ref_' + ref] = dict_dive[mod]['metadata']['metrics'][metric][ref]['axis']
@@ -349,8 +349,8 @@ for mod in list_models:
                 y_dict = dict((round(elt, 1), "{0:.1f}".format(round(elt, 1)))
                               if (round(elt, 1) * 10) % round(5 * round(inc, 1) * 10, 1) == 0
                               else (round(elt, 1), '') for elt in NUMPYarange(y_axis[0], y_axis[1] + inc, inc))
-                for ref in dict_m1.keys():
-                    axis = CDMS2createAxis(MV2array(range(len(tmp_axis[ref])), dtype='int32'), id='regions')
+                for ref in list(dict_m1.keys()):
+                    axis = CDMS2createAxis(MV2array(list(range(len(tmp_axis[ref]))), dtype='int32'), id='regions')
                     x_dict = dict((elt, tmp_axis[ref][elt]) for elt in range(len(tmp_axis[ref])))
                     x_axis = [-1.0, len(tmp_axis[ref])]
                     tab1 = MV2array(dive_model)
@@ -359,8 +359,8 @@ for mod in list_models:
                     m2 = 'Metric 2: ' + str("%.1f" % round(dict_m2[ref]*100, 1))
                     tab2 = MV2array(tmp_dive[ref])
                     tab2.setAxisList([axis])
-                    print str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2))\
-                          + ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2))
+                    print(str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2))\
+                          + ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2)))
                     list_curve = [tab1, tab2]
                     list_col = ['black', 'red']
                     # strings to write
@@ -369,7 +369,7 @@ for mod in list_models:
                     l_w_si = [30 for ii in range(len(l_w))]
                     l_w_ha = ['right' for ii in range(len(l_w))]
                     # lines to plot
-                    lines_y1y2 = [[round(ii, 1), round(ii, 1)] for ii in y_dict.keys() if y_dict[ii] != '' and
+                    lines_y1y2 = [[round(ii, 1), round(ii, 1)] for ii in list(y_dict.keys()) if y_dict[ii] != '' and
                                   round(ii, 1) != 0 and round(ii, 1) not in y_axis]
                     lines_x1x2 = [x_axis for ii in range(len(lines_y1y2))]
                     lines_colo = ['grey' for ii in range(len(lines_y1y2))]
@@ -387,12 +387,12 @@ for mod in list_models:
             elif metric in ['BiasSstLonRmse', 'BiasSstSkLonRmse', 'SeasonalSstLonRmse', 'NinaSstTsRmse',
                             'NinoSstTsRmse']:
                 tmp_dive, tmp_axis = dict(), dict()
-                for ref in dict_dive[mod]['value'][metric].keys():
+                for ref in list(dict_dive[mod]['value'][metric].keys()):
                     if ref != 'model':
                         tmp_dive['ref_' + ref] = dict_dive[mod]['value'][metric][ref]
                         tmp_axis['ref_' + ref] = dict_dive[mod]['metadata']['metrics'][metric][ref]['axis']
                 # plot
-                for ref in dict_m1.keys():
+                for ref in list(dict_m1.keys()):
                     axis = CDMS2createAxis(MV2array(tmp_axis[ref], dtype='float32'), id='axis')
                     tab1 = MV2array(dive_model)
                     tab1.setAxisList([axis])
@@ -418,8 +418,8 @@ for mod in list_models:
                     tab2 = MV2array(tmp_dive[ref])
                     tab2.setAxisList([axis])
                     tab2 = MV2masked_where(tab2 >= 1e20, tab2)
-                    print str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2))\
-                          + ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2))
+                    print(str().ljust(10) + 'range = ' + str("%.2f" % round(min(MV2minimum(tab1),MV2minimum(tab2)), 2))\
+                          + ' ' + str("%.2f" % round(max(MV2maximum(tab1),MV2maximum(tab2)), 2)))
                     y_axis, y_dict = PF.create_dico([min(MV2minimum(tab1),MV2minimum(tab2)),
                                                     max(MV2maximum(tab1),MV2maximum(tab2))])
                     list_curve = [tab1, tab2]
@@ -430,24 +430,24 @@ for mod in list_models:
                     l_w_si = [30 for ii in range(len(l_w))]
                     l_w_ha = ['right' for ii in range(len(l_w))]
                     # lines to plot
-                    lines_y1y2 = [[round(ii, 1), round(ii, 1)] for ii in y_dict.keys() if y_dict[ii] != '' and
+                    lines_y1y2 = [[round(ii, 1), round(ii, 1)] for ii in list(y_dict.keys()) if y_dict[ii] != '' and
                                   round(ii, 1) != 0 and round(ii, 1) not in y_axis]
                     lines_x1x2 = [x_axis for ii in range(len(lines_y1y2))]
                     if metric in ['BiasSstLonRmse', 'BiasSstSkLonRmse', 'NinoSstLonRmse', 'SeasonalSstLonRmse']:
                         xname = 'longitude'
-                        lines_x1x2 = lines_x1x2 + [[ii, ii] for ii in x_dict.keys() if x_dict[ii] != '' and ii != 0
+                        lines_x1x2 = lines_x1x2 + [[ii, ii] for ii in list(x_dict.keys()) if x_dict[ii] != '' and ii != 0
                                                    and ii not in x_axis]
-                        lines_y1y2 = lines_y1y2 + [y_axis for ii in x_dict.keys() if x_dict[ii] != '' and ii != 0
+                        lines_y1y2 = lines_y1y2 + [y_axis for ii in list(x_dict.keys()) if x_dict[ii] != '' and ii != 0
                                                    and ii not in x_axis]
                     elif metric in ['NinoSstTsRmse']:
                         xname = 'time'
-                        lines_x1x2 = lines_x1x2 + [[ii, ii] for ii in x_dict.keys() if (ii + 1) % 12 == 0 and ii != 0
+                        lines_x1x2 = lines_x1x2 + [[ii, ii] for ii in list(x_dict.keys()) if (ii + 1) % 12 == 0 and ii != 0
                                                    and ii not in x_axis]
-                        lines_y1y2 = lines_y1y2 + [y_axis for ii in x_dict.keys() if (ii + 1) % 12 and ii != 0
+                        lines_y1y2 = lines_y1y2 + [y_axis for ii in list(x_dict.keys()) if (ii + 1) % 12 and ii != 0
                                                    and ii not in x_axis]
                     lines_colo = ['grey' for ii in range(len(lines_y1y2))]
                     name = metric + ' metric (' + mod + ')'
-                    print metric, mod, ref
+                    print(metric, mod, ref)
                     name_png = path_plot + '/' + metric + '_' + mod + '_ ' + ref
                     if metric in ['NinoSstLonRmse', 'NinoSstTsRmse', 'SeasonalSstLonRmse']:
                         yname = 'SSTA (degC)'

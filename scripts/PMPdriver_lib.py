@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from collections import defaultdict
 from pcmdi_metrics.driver.pmp_parser import PMPParser
 

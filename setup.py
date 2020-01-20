@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from distutils.core import setup
 import subprocess
 import glob
@@ -52,4 +52,4 @@ setup (name="EnsoMetrics",
        scripts=glob.glob("scripts/*.py"),
        data_files=data_files,
       )
-    
+

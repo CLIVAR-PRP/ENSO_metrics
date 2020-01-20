@@ -2,7 +2,7 @@
 from inspect import stack as INSPECTstack
 
 # ENSO_metrics package functions:
-from EnsoErrorsWarnings import UnknownKeyArg
+from .EnsoErrorsWarnings import UnknownKeyArg
 
 
 # ---------------------------------------------------------------------------------------------------------------------#

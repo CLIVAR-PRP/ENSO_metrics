@@ -42,7 +42,7 @@ class bcolors:
 # ---------------------------------------------------#
 # Variables initialization
 # ---------------------------------------------------#
-print bcolors.OKGREEN + """ 
+print(bcolors.OKGREEN + """ 
 Needed argument(s):
     1) metric collection: ENSO_perf, ENSO_tel, MC1,...
     2) experiment:        historical, piControl,...
@@ -50,8 +50,8 @@ Needed argument(s):
 Optional argument(s):
 By default:
 python -i zzz_resave_netcdf.py ENSO_perf historical EnsoAmpl
-""" + bcolors.ENDC
-print ''
+""" + bcolors.ENDC)
+print('')
 # ---------------------------------------------------#
 # axes label
 seasons_1m = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
@@ -60,8 +60,8 @@ ref_colors = {'model': 'r', 'obs': 'k'}
 ref_obs = {'ssh': 'AVISO', 'pr': 'GPCPv2.3', 'sst': 'HadISST', 'lhf': 'Tropflux', 'lwr': 'Tropflux', 'shf': 'Tropflux',
            'swr': 'Tropflux', 'taux': 'Tropflux', 'thf': 'Tropflux'}
 # metric collections
-list_MC = sorted(defCollection().keys(), key=lambda v: v.upper())
-list_obs = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
+list_MC = sorted(list(defCollection().keys()), key=lambda v: v.upper())
+list_obs = sorted(list(ReferenceObservations().keys()), key=lambda v: v.upper())
 # model
 model = "CNRM-CM5"
 # path
@@ -72,8 +72,8 @@ path_plot = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018
 try:
     SYSargv[1]
 except:
-    print '     no argument given'
-    print ''
+    print('     no argument given')
+    print('')
     metric_col = 'ENSO_perf'  # 'CM6_perf'
     experiment = 'historical'
 else:
@@ -81,19 +81,19 @@ else:
     experiment = str(SYSargv[2])
 # ---------------------------------------------------#
 # print work to do
-print bcolors.OKGREEN + '%%%%%     -----     %%%%%'
-print str().ljust(5) + "create curve plots for:"
-print str().ljust(10) + 'metric collection: ' + str(metric_col)
-print str().ljust(10) + 'experiment: ' + str(experiment)
-print '%%%%%     -----     %%%%%' + bcolors.ENDC
-for ii in range(3): print ''
+print(bcolors.OKGREEN + '%%%%%     -----     %%%%%')
+print(str().ljust(5) + "create curve plots for:")
+print(str().ljust(10) + 'metric collection: ' + str(metric_col))
+print(str().ljust(10) + 'experiment: ' + str(experiment))
+print('%%%%%     -----     %%%%%' + bcolors.ENDC)
+for ii in range(3): print('')
 
 
 # ---------------------------------------------------#
 # functions
 def create_minmax_plot(tab):
     mini, maxi = min(tab), max(tab)
-    print mini, maxi
+    print(mini, maxi)
     if mini < 0 and maxi > 0:
         locmaxi = max([abs(mini), abs(maxi)])
         locmini = -deepcopy(locmaxi)
@@ -108,7 +108,7 @@ def create_minmax_plot(tab):
     interval = float(interval) / mult
     listbase = [0.1, 0.2, 0.3, 0.4, 0.5, 1, 2, 4, 3, 5]
     list1 = [round(base * 4, 1) if base < 1 else int(round(base * 4, 0)) for base in listbase]
-    print list1
+    print(list1)
     list2 = [abs(ii - interval) for ii in list1]
     tmp = sorted(list2)
     interval = list1[list2.index(tmp[0])]
@@ -118,7 +118,7 @@ def create_minmax_plot(tab):
         interval = list1[list2.index(tmp[ii])]
         base = listbase[list1.index(interval)]
         ii += 1
-    print interval, base
+    print(interval, base)
     if abs(locmini) == locmaxi:
         mini_out = -((interval / 2.) + base)
         maxi_out = (interval / 2.) + base
@@ -128,15 +128,15 @@ def create_minmax_plot(tab):
                 maxi_out -= base
     else:
         tmp_middle = locmini + (locmaxi - locmini) / 2.
-        print "middle = " + str(tmp_middle)
+        print("middle = " + str(tmp_middle))
         tmp2 = str("%e" % abs(tmp_middle))
         exp2 = int(tmp2.split('e')[1])
         mul2 = pow(10, exp2)
-        print tmp2, exp2, mul2
+        print(tmp2, exp2, mul2)
         if mul2 >= 10:
             mul2 = mul2 / 10.
         tmp_middle = round(tmp_middle / mul2) * mul2
-        print "middle = " + str(tmp_middle)
+        print("middle = " + str(tmp_middle))
         if mini >= 0:
             mini_out = max([0, tmp_middle - interval / 2. - base])
         else:
@@ -154,15 +154,15 @@ def create_minmax_plot(tab):
                 maxi_out = tmp_middle + interval / 2. + base
         else:
             maxi_out = min([0, tmp_middle + interval / 2. + base])
-        print maxi_out
+        print(maxi_out)
         for ii in range(4):
             if maxi_out < locmaxi:
                 maxi_out += base
-                print maxi_out
+                print(maxi_out)
         for ii in range(4):
             if maxi_out > locmaxi and maxi_out - base > locmaxi:
                 maxi_out -= base
-                print maxi_out
+                print(maxi_out)
         if maxi_out == 0:
             mini_out = maxi_out - 2 * base
             for ii in range(4):
@@ -191,7 +191,7 @@ def create_minmax_plot(tab):
         mini_out = mini_out / 10
         maxi_out = maxi_out / 10
         mult = mult * 10
-    print [mini_out, maxi_out], mult
+    print([mini_out, maxi_out], mult)
     return [mini_out, maxi_out], mult
 
 
@@ -206,7 +206,7 @@ def format_scale(scale):
 
 
 def plot_curves(tab_mod, tab_obs, name_png, title='', xname='', yname='', units='', mytext=[]):
-    axisname = tab_mod.coords.keys()[0]
+    axisname = list(tab_mod.coords.keys())[0]
     axis = list(NUMPYarray(tab_mod.coords[axisname]))
     tab_mod = NUMPYarray(tab_mod)
     tab_obs = NUMPYarray(tab_obs)
@@ -339,7 +339,7 @@ path_js = OSpath__join(path_main, "JSONs")
 path_nc = OSpath__join(path_main, metric_col + "_cmip5")
 dict_MC = defCollection(metric_col)['metrics_list']
 # ---------------------------------------------------#
-print 'curves'
+print('curves')
 # read data
 dict1 = dict()
 if ' ':
@@ -369,11 +369,11 @@ if ' ':
             # find metric observations and variable(s)
             met_obs = dict_MC[metric]["obs_name"]
             met_var = dict_MC[metric]["variables"]
-            print str().ljust(10) + metric
+            print(str().ljust(10) + metric)
             # open file
             ff = open_dataset(file1, decode_times=False)
             # variables to read
-            var_in = sorted([var for var in ff.keys() if var not in no_var and ff[var].ndim == 1],
+            var_in = sorted([var for var in list(ff.keys()) if var not in no_var and ff[var].ndim == 1],
                             key=lambda v: v.upper())
             var_to_read = [var for var in var_in if model in var]
             for nbr, var in enumerate(var_to_read):
