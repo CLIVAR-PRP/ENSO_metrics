@@ -1,0 +1,9 @@
+# Auto generated files and folders
+*.pyc
+*.egg-info
+__pycache__
+.lastfailure
+
+# IDE generated folders
+.vscode
+.idea
