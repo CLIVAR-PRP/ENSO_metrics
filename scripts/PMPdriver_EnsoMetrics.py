@@ -204,7 +204,7 @@ for mod in models:
 
     # Find where run can be gripped from given filename template for modpath
     run_in_modpath = modpath(mip=mip, exp=exp, model=mod, realization=realization,
-        variable=var).split('/')[-1].split('.').index(realization)
+        variable='ts').split('/')[-1].split('.').index(realization)
     # Collect available runs
     runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
     if debug:
