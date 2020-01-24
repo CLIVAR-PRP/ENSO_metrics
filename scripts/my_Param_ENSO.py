@@ -17,7 +17,8 @@ exp = 'historical'  # historical, piControl
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-debug = False
+#debug = False
+debug = True
 nc_out = True
 
 #=================================================
@@ -42,6 +43,7 @@ reference_data_lf_path = {
 #=================================================
 # Models
 #-------------------------------------------------
+"""
 modpath = os.path.join(
     find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
     '%(mip)/%(exp)/atmos/mon/%(variable)',
@@ -50,6 +52,10 @@ modpath = os.path.join(
 modpath_lf = os.path.join(
     find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
     '%(mip)/historical/atmos/fx/sftlf/%(mip).historical.%(model).r0i0p0.fx.sftlf.xml')
+"""
+
+modpath = '/work/lee1043/ESGF/xmls/%(mip)/%(exp)/mon/%(variable)/%(mip).%(model).%(exp).%(realization).mon.%(variable).xml'
+modpath_lf = '/work/lee1043/ESGF/xmls/%(mip)/historical/fx/%(variable)/%(mip).%(model).historical.r0i0p0.fx.%(variable).xml'
 
 modnames = ['all']
 
