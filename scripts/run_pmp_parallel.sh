@@ -48,7 +48,7 @@ for mip in $mips; do
     fi
     for MC in $MCs; do
         echo $mip $MC $realization $case_id
-        ./parallel_driver.py -p my_Param_ENSO.py --mip $mip --case_id=$case_id --modnames $modnames --metricsCollection $MC --realization $realization >& log/$case_id/log_parallel.${mip}.${MC}.all.${case_id}.txt &
+        python -u ./parallel_driver.py -p my_Param_ENSO.py --mip $mip --case_id=$case_id --modnames $modnames --metricsCollection $MC --realization $realization >& log/$case_id/log_parallel.${mip}.${MC}.all.${case_id}.txt &
         disown
         sleep 1
     done
