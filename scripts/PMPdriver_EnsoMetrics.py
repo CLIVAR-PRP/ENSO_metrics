@@ -14,6 +14,7 @@ from genutil import StringConstructor
 from PMPdriver_lib import AddParserArgument
 from PMPdriver_lib import metrics_to_json
 from PMPdriver_lib import sort_human
+from PMPdriver_lib import find_realm
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 
@@ -196,14 +197,14 @@ for mod in models:
     dict_metric[mod], dict_dive[mod] = dict(), dict()
 
     model_path_list = glob.glob(
-        modpath(mip=mip, exp=exp, model=mod, realization=realization, variable='ts'))
+        modpath(mip=mip, exp=exp, realm='atmos', model=mod, realization=realization, variable='ts'))
 
     model_path_list = sort_human(model_path_list)
     if debug:
         print('model_path_list:', model_path_list)
 
     # Find where run can be gripped from given filename template for modpath
-    run_in_modpath = modpath(mip=mip, exp=exp, model=mod, realization=realization,
+    run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
         variable='ts').split('/')[-1].split('.').index(realization)
     # Collect available runs
     runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
@@ -234,34 +235,33 @@ for mod in models:
                     var0 = var_in_file[0]
                 else:
                     var0 = var_in_file
+                # finding variable type (atmos or ocean)
+                areacell_in_file, realm = find_realm(var0)
+                print('var, areacell_in_file, realm:', var, areacell_in_file, realm)
                 #
                 # finding file for 'mod', 'var'
                 #
-                file_name = modpath(mip=mip, exp=exp, model=mod, realization=run, variable=var0)
-                file_areacella = modpath_lf(mip=mip, model=mod, variable="areacella")
-                file_areacello = modpath_lf(mip=mip, model=mod, variable="areacello")
-                if not os.path.isfile(file_areacella):
-                    file_areacella = None
-                if not os.path.isfile(file_areacello):
-                    file_areacello = None
-                if var in ['ssh']:
-                    file_areacell = file_areacello
-                else:
-                    file_areacell = file_areacella
-                file_landmask = modpath_lf(mip=mip, model=mod, variable="sftlf")
+                file_name = modpath(mip=mip, realm=realm, exp=exp, model=mod, realization=run, variable=var0)
+                file_areacell = modpath_lf(mip=mip, realm=realm, model=mod, variable=areacell_in_file)
+                if not os.path.isfile(file_areacell):
+                    file_areacell = None
+                file_landmask = modpath_lf(mip=mip, realm="atmos", model=mod, variable="sftlf")
+                print("file_landmask:", file_landmask)
+                if not os.path.isfile(file_landmask):
+                    file_landmask = None
                 # -- TEMPORARY --
                 if mip == 'cmip6':
                     if mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
                         file_landmask = '/work/lee1043/ESGF/CMIP6/CMIP/'+mod+'/sftlf_fx_'+mod+'_historical_r1i1p1f1_gr.nc'
                     elif mod in ['GFDL-ESM4']:
-                        file_landmask = modpath_lf(mip=mip, model='GFDL-CM4', variable="sftlf")
+                        file_landmask = modpath_lf(mip=mip, realm="atmos", model='GFDL-CM4', variable="sftlf")
                 # -- TEMPORARY END --
+                """
                 try:
                     areacell_in_file = dict_var['areacell']['var_name']
-                    if var == 'ssh':
-                        areacell_in_file = "areacello"
                 except:
                     areacell_in_file = None
+                """
                 try:
                     landmask_in_file = dict_var['landmask']['var_name']
                 except:
@@ -271,8 +271,9 @@ for mod in models:
                     list_areacell, list_files, list_landmask, list_name_area, list_name_land = \
                         list(), list(), list(), list(), list()
                     for var1 in var_in_file:
-                        modpath_tmp = modpath(mip=mip, exp=exp, model=mod, realization=realization, variable=var1)
-                        modpath_lf_tmp = modpath_lf(mip=mip, model=mod, variable="sftlf")
+                        realm = find_realm(var1)
+                        modpath_tmp = modpath(mip=mip, exp=exp, realm=realm, model=mod, realization=realization, variable=var1)
+                        modpath_lf_tmp = modpath_lf(mip=mip, realm=realm, model=mod, variable="sftlf")
                         if not os.path.isfile(modpath_tmp):
                             modpath_tmp = None
                         if not os.path.isfile(modpath_lf_tmp):
@@ -297,7 +298,6 @@ for mod in models:
                 if var in ['ssh']:
                     list_landmask = None
 
-                #dict_mod[mod][var] = {
                 dict_mod[mod_run][var] = {
                     'path + filename': list_files, 'varname': var_in_file,
                     'path + filename_area': list_areacell, 'areaname': list_name_area,
@@ -350,7 +350,7 @@ for mod in models:
             print(e)
             if not debug:
                 pass
-      
+
 print('PMPdriver: model loop end')
 
 # =================================================
