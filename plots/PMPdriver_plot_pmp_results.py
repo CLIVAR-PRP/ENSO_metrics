@@ -11,6 +11,7 @@
 from __future__ import print_function
 from glob import iglob as GLOBiglob
 import json
+import os
 from os.path import join as OSpath__join
 # ENSO_metrics functions
 #from EnsoCollectionsLib import defCollection
@@ -21,20 +22,22 @@ from EnsoMetricPlot import main_plotter
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-#metric_collection = "ENSO_perf"
-metric_collection = "ENSO_tel"
+metric_collection = "ENSO_perf"
+#metric_collection = "ENSO_tel"
 #metric_collection = "ENSO_proc"
 project = "cmip5"
 model = "CNRM-CM5"
 experiment = "historical"
 member = "r1i1p1"
-modname = model + "_" + member
 
 path_js = "/work/lee1043/imsi/result_test/metrics_results/enso_metric/cmip5/historical/v20191204/" + metric_collection
 path_nc = "/work/lee1043/imsi/result_test/diagnostic_results/enso_metric/cmip5/historical/v20191204/" + metric_collection
-path_out = "/work/lee1043/imsi/result_test/graphics/enso_metric/cmip5/historical/v20191204/"+metric_collection
+path_out = "/work/lee1043/imsi/result_test/graphics/enso_metric/cmip5/historical/v20191204/" + metric_collection
 
-expe = "hist" if experiment == "historical" else "pi"
+if not os.path.exists(path_out):
+    os.makedirs(path_out)
+
+#expe = "hist" if experiment == "historical" else "pi"
 pattern = "_".join([project, experiment, metric_collection, "v????????", model, member])
 
 # ---------------------------------------------------#
@@ -97,6 +100,8 @@ for met in metrics:
         #      - the metric units: metric_units
         #      - (optional) the path where to save the plots: path_out
         #      - (optional) the name of the plots: name_png
+        modName = model + '_' + member
+        #main_plotter(metric_collection, met, modName, experiment, filename_nc, diagnostic_values,
         main_plotter(metric_collection, met, model, experiment, filename_nc, diagnostic_values,
                      diagnostic_units, metric_values, metric_units, path_png=path_out, name_png=figure_name)
 

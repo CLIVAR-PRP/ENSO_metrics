@@ -156,3 +156,13 @@ def metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, 
             ',',
             ': '),
         sort_keys=True)
+
+
+def find_realm(varname):
+    if varname in ["tos", "tauuo", "zos", "areacello"]:
+        realm = "ocean"
+        areacell_in_file = "areacello"
+    else:
+        realm = "atmos"
+        areacell_in_file = "areacella"
+    return areacell_in_file, realm
