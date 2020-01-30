@@ -218,17 +218,12 @@ for mod in models:
 
         print(' --- run: ', run, ' ---')
         mod_run = '_'.join([mod, run])
-        #dict_mod = {mod: {}}
         dict_mod = {mod_run: {}}
-        #dict_mod[mod][run] = {}
 
-        """
         if debug:
             print('list_variables:', list_variables)
     
         try:
-        """
-        if 1:
             for var in list_variables:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
@@ -348,13 +343,11 @@ for mod in models:
             # OUTPUT METRICS TO JSON FILE (per simulation)
             metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
-        """
         except Exception as e: 
             print('failed for ', mod, run)
             print(e)
             if not debug:
                 pass
-        """
 
 print('PMPdriver: model loop end')
 
