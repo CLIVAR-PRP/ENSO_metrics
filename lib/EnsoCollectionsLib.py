@@ -1192,49 +1192,40 @@ def CmipVariables():
             # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>,
             #                                     'cf_unit':'<unit_in_file>'}
             # areacell
-            'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
+            #'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
-            'landmask': {'var_name': 'sftlf', 'cf_name': 'cell_area', 'cf_units': '1'},
+            'landmask': {'var_name': 'LANDFRAC', 'cf_name': 'Fraction of sfc area covered by land', 'cf_units': '1'},
             # latent heat flux (on ocean grid or ocean points only)
-            'lhf': {'var_name': 'hfls', 'cf_name': 'surface_upward_latent_heat_flux', 'cf_units': 'W m-2'},
+            'lhf': {'var_name': 'LHFLX', 'cf_name': 'Surface latent heat flux', 'cf_units': 'W m-2'},
             # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
             # lwr = rlds - rlus
             # sometimes lwr is included in the datasets in a variable called 'rls'
-            'lwr': {
-                'var_name': ['rlds', 'rlus'],
-                'cf_name': ['surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air'],
-                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']},
+            'lwr': {'var_name': 'FLNS', 'cf_name': 'Net longwave flux at surface', 'cf_units': 'W m-2'},
             # Rainfall Flux
-            'pr': {'var_name': 'pr', 'cf_name': 'rainfall_flux', 'cf_units': 'kg m-2 s-1'},
+            'pr': {
+                'var_name': ['PRECC', 'PRECL'],
+                'cf_name': ['Convective precipitation rate (liq + ice)', 'Large-scale (stable) precipitation rate (liq + ice)'],
+                'cf_units': 'kg m-2 s-1', 'algebric_calculation': ['plus', 'plus']
+            },
             # Sea Level Pressure
-            'slp': {'var_name': 'psl', 'cf_name': 'air_pressure_at_mean_sea_level', 'cf_units': 'Pa'},
+            'slp': {'var_name': 'PSL', 'cf_name': 'Sea level pressure', 'cf_units': 'Pa'},
             # sensible heat flux (on ocean grid or ocean points only)
-            'shf': {'var_name': 'hfss', 'cf_name': 'surface_upward_sensible_heat_flux', 'cf_units': 'W m-2'},
+            'shf': {'var_name': 'SHFLX', 'cf_name': 'Surface sensible heat flux', 'cf_units': 'W m-2'},
             # sea surface height
-            'ssh': {'var_name': 'zos', 'cf_name': 'sea_surface_height_above_geoid', 'cf_units': 'm'},
+            'ssh': {'var_name': 'SSH', 'cf_name': 'Sea Surface Height', 'cf_units': 'm'},
             # sea surface temperature
-            'sst': {'var_name': 'ts', 'cf_name': 'sea_surface_temperature', 'cf_units': 'K'},
+            'sst': {'var_name': 'ts', 'cf_name': 'Surface temperature (radiative)', 'cf_units': 'K'},
             # shortwave radiation computed from these variables IN THAT ORDER
             # swr = rsds - rsus
             # sometimes swr is included in the datasets in a variable called 'rss'
-            'swr': {
-                'var_name': ['rsds', 'rsus'],
-                'cf_name': ['surface_downwelling_shortwave_flux_in_air', 'surface_upwelling_shortwave_flux_in_air'],
-                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']
-            },
+            'swr': {'var_name': 'FSNS', 'cf_name': 'Net solar flux at surface', 'cf_units': 'W m-2'},
             # zonal surface wind stress
-            'taux': {'var_name': 'tauu', 'cf_name': 'surface_downward_eastward_stress', 'cf_units': 'Pa'},
+            'taux': {'var_name': 'TAUX', 'cf_name': 'Zonal surface stress', 'cf_units': 'N m-2'},
             # total heat flux computed from these variables IN THAT ORDER
             # tfh = hfls + hfss + rlds - rlus + rsds - rsus
             # sometimes rls = rlds - rlus and rss = rsds - rsus
             # sometimes thf is included in the datasets in a variable called 'hfds', 'netflux', 'thflx',...
-            'thf': {
-                'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
-                'cf_name': ['surface_upward_latent_heat_flux', 'surface_upward_sensible_heat_flux',
-                            'surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air',
-                            'surface_downwelling_shortwave_flux_in_air', 'surface_upwelling_shortwave_flux_in_air'],
-                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus']
-            },
+            'thf': {'var_name': 'SRFRAD', 'cf_name': 'Net radiative flux at surface', 'cf_units': 'W m-2'},
         },
     }
     return dict_cmip_variables

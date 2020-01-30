@@ -197,7 +197,7 @@ for mod in models:
     dict_metric[mod], dict_dive[mod] = dict(), dict()
 
     model_path_list = glob.glob(
-        modpath(mip=mip, exp=exp, realm='atmos', model=mod, realization=realization, variable='ts'))
+        modpath(mip=mip, exp=exp, realm='atmos', model=mod, realization=realization, variable='TS'))
 
     model_path_list = sort_human(model_path_list)
     if debug:
@@ -205,7 +205,7 @@ for mod in models:
 
     # Find where run can be gripped from given filename template for modpath
     run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
-        variable='ts').split('/')[-1].split('.').index(realization)
+        variable='TS').split('/')[-1].split('.').index(realization)
     # Collect available runs
     runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
     if debug:
