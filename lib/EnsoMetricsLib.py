@@ -4808,10 +4808,12 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    #print('jwl ### sstareafile:', sstareafile)
     sst, sst_areacell, keyerror =\
         Read_data_mask_area(sstfile, sstname, 'temperature', metric, sstbox, file_area=sstareafile,
                             name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                             maskocean=False, debug=debug, **kwargs)
+    #print('jwl ### sst_areacell:', sst_areacell)
 
     # Number of years
     yearN = sst.shape[0] / 12
@@ -4822,11 +4824,20 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     if keyerror is not None:
         sstStd, sstStdErr, dive_down_diag = None, None, {'value': None, 'axis': None}
     else:
+        #print('jwl ### sst:', sst)
+        #print('jwl ### sst.shape:', sst.shape)
+        #print('jwl ### type(shape):', type(sst))
+        #print('jwl ### sst.getTime():', sst.getTime())
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
         sst, Method = PreProcessTS(sst, Method, areacell=sst_areacell, average='horizontal', compute_anom=True,
                                    region=sstbox, **kwargs)
         del sst_areacell
         if debug is True:
+            #print('jwl ### AFTER PreProcessTS ###')
+            #print('jwl ### sst:', sst)
+            #print('jwl ### sst.shape:', sst.shape)
+            #print('jwl ### type(shape):', type(sst))
+            #print('jwl ### sst.getTime():', sst.getTime())
             dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
                           'shape1': '(sst) ' + str(sst.shape),
                           'time1': '(sst) ' + str(TimeBounds(sst))}

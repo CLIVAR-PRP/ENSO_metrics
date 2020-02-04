@@ -10,6 +10,30 @@
 def defCollection(mc=True):
     # Name, list of metrics
     metrics_collection = {
+        'test_perf': {
+            'long_name': 'Metrics Collection for ENSO performance',
+            'metrics_list': {
+                'EnsoAmpl': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
+                    'metric_computation': 'abs_relative_difference',
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                },
+            },
+            'common_collection_parameters': {
+                'detrending': {'method': 'linear'},
+                'frequency': 'monthly',
+                'min_time_steps': 204,
+                'normalization': False,
+                'project_interpreter': 'CMIP',
+                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),
+                'modeled_period': ('1850-01-01 00:00:00', '2015-12-31 23:59:60.0'),
+            },
+            'plot_order': ['EnsoAmpl'],
+            'description': 'Describe which science question this collection is about',
+        },
         'ENSO_perf': {
             'long_name': 'Metrics Collection for ENSO performance',
             'metrics_list': {
@@ -1192,40 +1216,43 @@ def CmipVariables():
             # '<internal_metrics_variable_name>':{'var_name':'<var_name_in_file>','cf_name':<as per ref above>,
             #                                     'cf_unit':'<unit_in_file>'}
             # areacell
-            #'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
+            'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
-            'landmask': {'var_name': 'LANDFRAC', 'cf_name': 'Fraction of sfc area covered by land', 'cf_units': '1'},
+            #'landmask': {'var_name': 'LANDFRAC', 'cf_name': 'Fraction of sfc area covered by land', 'cf_units': '1'},
+            'landmask': {'var_name': 'sftlf', 'cf_name': 'cell_area', 'cf_units': '1'},
             # latent heat flux (on ocean grid or ocean points only)
-            'lhf': {'var_name': 'LHFLX', 'cf_name': 'Surface latent heat flux', 'cf_units': 'W m-2'},
+            'lhf': {'var_name': 'hfls', 'cf_name': 'surface_upward_latent_heat_flux', 'cf_units': 'W m-2'},
             # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
             # lwr = rlds - rlus
             # sometimes lwr is included in the datasets in a variable called 'rls'
-            'lwr': {'var_name': 'FLNS', 'cf_name': 'Net longwave flux at surface', 'cf_units': 'W m-2'},
+            'lwr': {'var_name': 'flns', 'cf_name': 'net_longwave_flux_at_surface', 'cf_units': 'W m-2'},
             # Rainfall Flux
-            'pr': {
-                'var_name': ['PRECC', 'PRECL'],
-                'cf_name': ['Convective precipitation rate (liq + ice)', 'Large-scale (stable) precipitation rate (liq + ice)'],
-                'cf_units': 'kg m-2 s-1', 'algebric_calculation': ['plus', 'plus']
-            },
+            'pr': {'var_name': 'pr', 'cf_name': 'precipitation_flux', 'cf_units': 'kg m-2 s-1'},
             # Sea Level Pressure
-            'slp': {'var_name': 'PSL', 'cf_name': 'Sea level pressure', 'cf_units': 'Pa'},
+            'slp': {'var_name': 'psl', 'cf_name': 'air_pressure_at_sea_level', 'cf_units': 'Pa'},
             # sensible heat flux (on ocean grid or ocean points only)
-            'shf': {'var_name': 'SHFLX', 'cf_name': 'Surface sensible heat flux', 'cf_units': 'W m-2'},
+            'shf': {'var_name': 'hfss', 'cf_name': 'surface_upward_sensible_heat_flux', 'cf_units': 'W m-2'},
             # sea surface height
-            'ssh': {'var_name': 'SSH', 'cf_name': 'Sea Surface Height', 'cf_units': 'm'},
+            'ssh': {'var_name': 'ssh', 'cf_name': 'Sea Surface Height', 'cf_units': 'm'},
             # sea surface temperature
-            'sst': {'var_name': 'ts', 'cf_name': 'Surface temperature (radiative)', 'cf_units': 'K'},
+            'sst': {'var_name': 'ts', 'cf_name': 'surface_temperature', 'cf_units': 'K'},
             # shortwave radiation computed from these variables IN THAT ORDER
             # swr = rsds - rsus
             # sometimes swr is included in the datasets in a variable called 'rss'
-            'swr': {'var_name': 'FSNS', 'cf_name': 'Net solar flux at surface', 'cf_units': 'W m-2'},
+            'swr': {'var_name': 'fsns', 'cf_name': 'net_shortwave_flux_at_surface', 'cf_units': 'W m-2'},
             # zonal surface wind stress
-            'taux': {'var_name': 'TAUX', 'cf_name': 'Zonal surface stress', 'cf_units': 'N m-2'},
+            'taux': {'var_name': 'tauu', 'cf_name': 'surface_downward_eastward_stress', 'cf_units': 'Pa'},
             # total heat flux computed from these variables IN THAT ORDER
             # tfh = hfls + hfss + rlds - rlus + rsds - rsus
             # sometimes rls = rlds - rlus and rss = rsds - rsus
             # sometimes thf is included in the datasets in a variable called 'hfds', 'netflux', 'thflx',...
-            'thf': {'var_name': 'SRFRAD', 'cf_name': 'Net radiative flux at surface', 'cf_units': 'W m-2'},
+            'thf': {
+                'var_name': ['hfls', 'hfss', 'flns', 'fsns'],
+                'cf_name': ['surface_upward_latent_heat_flux', 'surface_upward_sensible_heat_flux',
+                            'net_longwave_flux_at_surface',
+                            'net_shortwave_flux_at_surface'],
+                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'plus', 'plus', 'plus']
+            },
         },
     }
     return dict_cmip_variables

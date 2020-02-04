@@ -110,8 +110,16 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     lat_num = get_num_axis(tab, 'latitude')
     lon_num = get_num_axis(tab, 'longitude')
     snum = str(lat_num) + str(lon_num)
+    #print('jwl ### AverageHorizontal')
+    #print('jwl ### AverageHorizontal ### areacell', areacell)
     if areacell is None:
-        try: averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
+        #print('jwl ### AverageHorizontal')
+        try: 
+            #print('jwl ### AverageHorizontal ### tab.shape:', tab.shape)
+            #print('jwl ### AverageHorizontal ### tab.getTime():', tab.getTime())
+            averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
+            #print('jwl ### AverageHorizontal ### averaged_tab.shape:', averaged_tab.shape)
+            #print('jwl ### AverageHorizontal ### averaged_tab.getTime():', averaged_tab.getTime())
         except:
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
             print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
@@ -3210,6 +3218,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
     # computes mean annual cycle
     if compute_sea_cycle is True:
         tab = annualcycle(tab)
+    #print('jwl ### PreProcessTS ### 6. tab.getTime():', tab.getTime())
     # average
     if average is not False:
         if debug is True:
@@ -3217,15 +3226,21 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
             dict_debug = {'axes1':  str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
             EnsoErrorsWarnings.debug_mode('\033[93m', "averaging to perform: " + str(average), 25, **dict_debug)
         if isinstance(average, basestring):
+            #print('jwl ### PreProcessTS ### 6-1')
             try: dict_average[average]
             except:
                 EnsoErrorsWarnings.unknown_averaging(average, dict_average.keys(), INSPECTstack())
             else:
+                #print('jwl ### PreProcessTS ### 6-1-1')
+                #print('jwl ### PreProcessTS ### 6-1-1 average:', average)
+                #print('jwl ### PreProcessTS ### 6-1-1 dict_average:', dict_average)
+                #print('jwl ### PreProcessTS ### 6-1-1 dict_average[average]:', dict_average[average])
                 tab = dict_average[average](tab, areacell, region=region, **kwargs)
                 if debug is True:
                     dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
                     EnsoErrorsWarnings.debug_mode('\033[93m', "performed " + str(average), 25, **dict_debug)
         elif isinstance(average, list):
+            #print('jwl ### PreProcessTS ### 6-2')
             for av in average:
                 try: dict_average[av]
                 except:
@@ -3237,6 +3252,7 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
                         EnsoErrorsWarnings.debug_mode('\033[93m', "performed " + str(av), 25, **dict_debug)
         else:
             EnsoErrorsWarnings.unknown_averaging(average, dict_average.keys(), INSPECTstack())
+    #print('jwl ### PreProcessTS ### 7. tab.getTime():', tab.getTime())
     return tab, info
 
 
@@ -3394,10 +3410,12 @@ def Read_mask_area(tab, file_data, type_data, region, file_area='', name_area=''
     tab_out = deepcopy(tab)
     keyerror1, keyerror2 = None, None
     # Read areacell
+    #print('jwl ### Read_mask_area, file_area:', file_area)
     if file_area:
         areacell = ReadAreaSelectRegion(file_area, areaname=name_area, box=region, **kwargs)
     else:
-        areacell = ReadAreaSelectRegion(file_data, areaname=name_area, box=region, **kwargs)
+        #areacell = ReadAreaSelectRegion(file_data, areaname=name_area, box=region, **kwargs)
+        areacell = None 
     if debug is True:
         if areacell is not None:
             dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in areacell.getAxisList()]),
@@ -3410,7 +3428,8 @@ def Read_mask_area(tab, file_data, type_data, region, file_area='', name_area=''
     if file_mask:
         landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)
     else:
-        landmask = ReadLandmaskSelectRegion(tab, file_data, landmaskname=name_mask, box=region, **kwargs)
+        #landmask = ReadLandmaskSelectRegion(tab, file_data, landmaskname=name_mask, box=region, **kwargs)
+        landmask = None
     if debug is True:
         if landmask is not None:
             dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in landmask.getAxisList()]),

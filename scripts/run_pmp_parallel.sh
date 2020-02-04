@@ -11,9 +11,10 @@ case_id="v"`date +"%Y%m%d"`
 #case_id="v20191115"
 #case_id="v20191121"
 
-mips='cmip5 cmip6'
+#mips='cmip5 cmip6'
 #mips='cmip5'
 #mips='cmip6'
+mips='CLIVAR_LE'
 
 MCs='ENSO_perf ENSO_tel ENSO_proc'
 #MCs='ENSO_perf'
@@ -24,28 +25,11 @@ MCs='ENSO_perf ENSO_tel ENSO_proc'
 #MCs='test_proc'
 
 modnames='all'
-#modnames='IPSL-CM5A-LR'
-#modnames='BNU-ESM'
-#modnames='CESM1-BGC'
-#modnames='FGOALS-f3-L'
-#modnames='MIROC6'
-#modnames='CanESM5 FGOALS-g3'
+realization='all'
 
 mkdir -p log/$case_id
 
 for mip in $mips; do
-    if [ $mip == 'cmip5' ]; then
-        #realization='r1i1p1'
-        realization='all'
-        #modnames="BNU-ESM CESM1-FASTCHEM CMCC-CM FGOALS-g2 HadCM3 HadGEM2-CC IPSL-CM5A-LR IPSL-CM5A-MR MIROC4h MIROC5 MPI-ESM-LR MPI-ESM-MR"
-        #modnames="HadGEM2-CC HadGEM2-ES INMCM4 IPSL-CM5A-LR IPSL-CM5A-MR IPSL-CM5B-LR MIROC-ESM MIROC-ESM-CHEM MIROC4h MIROC5 MPI-ESM-LR MPI-ESM-MR MPI-ESM-P MRI-CGCM3 MRI-ESM1 NorESM1-M NorESM1-ME"
-        #modnames="FGOALS-s2"
-    elif [ $mip == 'cmip6' ]; then
-        #realization='r1i1p1f1'
-        realization='all'
-        #modnames="EC-Earth3 EC-Earth3-Veg"
-        #modnames="CNRM-CM6-1 CNRM-ESM2-1 CanESM5 HadGEM3-GC31-LL MIROC-ES2L NorCPM1 NorESM2-LM UKESM1-0-LL"
-    fi
     for MC in $MCs; do
         echo $mip $MC $realization $case_id
         python -u ./parallel_driver.py -p my_Param_ENSO.py --mip $mip --case_id=$case_id --modnames $modnames --metricsCollection $MC --realization $realization >& log/$case_id/log_parallel.${mip}.${MC}.all.${case_id}.txt &
