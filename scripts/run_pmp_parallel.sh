@@ -24,7 +24,7 @@ MCs='ENSO_perf ENSO_tel ENSO_proc'
 #MCs='test_perf test_proc test_tel'
 #MCs='test_proc'
 
-modnames='all'
+modnames='CESM1-CAM5'
 realization='all'
 
 mkdir -p log/$case_id

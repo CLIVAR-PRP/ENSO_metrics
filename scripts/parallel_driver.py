@@ -109,10 +109,11 @@ for model in models:
     #if debug:
     #    print('model_path_list:', model_path_list)
     # Find where run can be gripped from given filename template for modpath
-    run_in_modpath = modpath(mip=mip, exp=exp, model=model, realization=realization,
-        variable='ts').split('/')[-1].split('.').index(realization)
+    print('realization:', realization)
+    run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=model, realization=realization,
+        variable='ts').split('/')[-1].split('.')[0].split('_').index(realization)
     # Collect available runs
-    runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+    runs_list = [model_path.split('/')[-1].split('.')[0].split('_')[run_in_modpath] for model_path in model_path_list]
     if debug:
         print('runs_list (all):', runs_list)
     # Check if given run member is included. If not for all runs and given run member is not included,
@@ -132,6 +133,9 @@ for model in models:
                '--modnames', model,
                '--realization', run]
         cmds_list.append(cmd)
+
+for cmd in cmds_list:
+    print(' '.join(cmd))
 
 # =================================================
 # Run subprocesses in parallel
@@ -157,7 +161,7 @@ for p, cmd in enumerate(cmds_list):
     print(timenow, p, ' '.join(cmd))
     model = cmd[-3]
     run = cmd[-1]
-    log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, case_id])
+    log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, run, case_id])
     log_file = os.path.join(log_dir, log_filename)
     with open(log_file+"_stdout.txt", "wb") as out, open(log_file+"_stderr.txt", "wb") as err:
         procs_list.append(Popen(cmd, stdout=out, stderr=err))

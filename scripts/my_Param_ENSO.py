@@ -44,7 +44,7 @@ reference_data_lf_path = {
 # Models
 #-------------------------------------------------
 #modpath = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.%(realization).cam.h0.%(variable).????01-200512.nc'
-modpath = '/work/lee1043/ESGF/ESG_NCAR/CLIVAR_LE/CESM1-CAM5/mon/%(variable)/rewrite/%(variable)_%(realm)_CESM1-CAM5_historical_%(realization)_????01-200512_rewrite.nc'
+modpath = '/work/lee1043/ESGF/ESG_NCAR/%(mip)/%(model)/mon/%(variable)/rewrite/%(variable)_%(realm)_%(model)_%(exp)_%(realization)_????01-200512_rewrite.nc'
 #modpath_lf = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.%(realization).cam.h0.%(variable).????01-200512.nc'
 #modpath_lf = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.001.cam.h0.%(variable).????01-200512.nc'
 modpath_lf = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.002.cam.h0.%(variable).????01-200512.nc'
