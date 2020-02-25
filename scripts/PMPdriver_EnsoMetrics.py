@@ -276,8 +276,8 @@ for mod in models:
                     list_areacell, list_files, list_landmask, list_name_area, list_name_land = \
                         list(), list(), list(), list(), list()
                     for var1 in var_in_file:
-                        areacell_in_file, realm = find_realm(dict_var[var1]['var_name'])
-                        modpath_tmp = get_file(modpath(mip=mip, exp=exp, realm=realm, model=mod, realization=realization, variable=dict_var[var1]['var_name']))
+                        areacell_in_file, realm = find_realm(var1)
+                        modpath_tmp = get_file(modpath(mip=mip, exp=exp, realm=realm, model=mod, realization=realization, variable=var1))
                         #modpath_lf_tmp = get_file(modpath_lf(mip=mip, realm=realm2, model=mod, variable=dict_var['landmask']['var_name']))
                         if not os.path.isfile(modpath_tmp):
                             modpath_tmp = None
