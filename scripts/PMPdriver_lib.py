@@ -5,7 +5,9 @@ from pcmdi_metrics.driver.pmp_parser import PMPParser
 import copy
 import collections
 import datetime
+import glob
 import os
+import sys
 import pcmdi_metrics
 import re
 
@@ -159,10 +161,26 @@ def metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, 
 
 
 def find_realm(varname):
-    if varname in ["tos", "tauuo", "zos", "areacello"]:
+    if varname in ["tos", "tauuo", "zos", "areacello", "SSH", "ssh"]:
         realm = "ocean"
+        #realm = "Omon"
         areacell_in_file = "areacello"
     else:
         realm = "atmos"
+        #realm = "Amon"
         areacell_in_file = "areacella"
     return areacell_in_file, realm
+
+
+def get_file(path):
+    file_list = glob.glob(path)
+    print("path: ", path)
+    print("file_list: ", file_list)
+    if len(file_list) > 1:
+        print("Multiple files detected in get_file function. file_list: ", file_list)
+        path_to_return = sorted(file_list)[0]
+    elif len(file_list) == 1:
+        path_to_return = file_list[0]
+    elif len(file_list) == 0:
+        path_to_return = path
+    return path_to_return
