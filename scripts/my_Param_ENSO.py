@@ -11,13 +11,14 @@ def find_latest(path):
 # =================================================
 # Background Information
 # -------------------------------------------------
-mip = 'cmip5'  # cmip5, cmip6
+mip = 'cmip6'  # cmip5, cmip6
 exp = 'historical'  # historical, piControl
 
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
 debug = False
+#debug = True
 nc_out = True
 
 #=================================================
@@ -60,9 +61,9 @@ modpath_lf = '/work/lee1043/ESGF/xmls/%(mip)/historical/fx/%(variable)/%(mip).%(
 modnames = ['all']
 
 if debug:
-    modnames = ['IPSL-CM5A-LR']
+    modnames = ['IPSL-CM6A-LR']
 
-realization = 'r1i1p1'  # r1i1p1 (cmip5), r1i1p1f1 (cmip6), * (all)
+realization = 'r1i1p1f1'  # r1i1p1 (cmip5), r1i1p1f1 (cmip6), * (all)
 #realization = '*'
 
 #=================================================

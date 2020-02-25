@@ -4,6 +4,7 @@
 # -------------------------------------------------
 from __future__ import print_function
 
+import cdms2
 import glob
 import json
 import os
@@ -14,7 +15,7 @@ from genutil import StringConstructor
 from PMPdriver_lib import AddParserArgument
 from PMPdriver_lib import metrics_to_json
 from PMPdriver_lib import sort_human
-from PMPdriver_lib import find_realm
+from PMPdriver_lib import find_realm, get_file
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 
@@ -204,8 +205,10 @@ for mod in models:
         print('model_path_list:', model_path_list)
 
     # Find where run can be gripped from given filename template for modpath
+    print('realization:', realization)
     run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
         variable='ts').split('/')[-1].split('.').index(realization)
+    print('run_in_modpath:', run_in_modpath)
     # Collect available runs
     runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
     if debug:
@@ -220,10 +223,13 @@ for mod in models:
         mod_run = '_'.join([mod, run])
         dict_mod = {mod_run: {}}
 
+        """
         if debug:
             print('list_variables:', list_variables)
     
         try:
+        """
+        if 1:
             for var in list_variables:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
@@ -235,15 +241,21 @@ for mod in models:
                     var0 = var_in_file
                 # finding variable type (atmos or ocean)
                 areacell_in_file, realm = find_realm(var0)
+                if realm == 'Amon':
+                    realm2 = 'atmos'
+                elif realm == 'Omon':
+                    realm2 = 'ocean'
+                else:
+                    realm2 = realm
                 print('var, areacell_in_file, realm:', var, areacell_in_file, realm)
                 #
                 # finding file for 'mod', 'var'
                 #
-                file_name = modpath(mip=mip, realm=realm, exp=exp, model=mod, realization=run, variable=var0)
-                file_areacell = modpath_lf(mip=mip, realm=realm, model=mod, variable=areacell_in_file)
+                file_name = get_file(modpath(mip=mip, realm=realm, exp=exp, model=mod, realization=run, variable=var0))
+                file_areacell = get_file(modpath_lf(mip=mip, realm=realm2, model=mod, variable=areacell_in_file))
                 if not os.path.isfile(file_areacell):
                     file_areacell = None
-                file_landmask = modpath_lf(mip=mip, realm="atmos", model=mod, variable="sftlf")
+                file_landmask = get_file(modpath_lf(mip=mip, realm=realm2, model=mod, variable=dict_var['landmask']['var_name']))
                 print("file_landmask:", file_landmask)
                 if not os.path.isfile(file_landmask):
                     file_landmask = None
@@ -252,7 +264,7 @@ for mod in models:
                     if mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
                         file_landmask = '/work/lee1043/ESGF/CMIP6/CMIP/'+mod+'/sftlf_fx_'+mod+'_historical_r1i1p1f1_gr.nc'
                     elif mod in ['GFDL-ESM4']:
-                        file_landmask = modpath_lf(mip=mip, realm="atmos", model='GFDL-CM4', variable="sftlf")
+                        file_landmask = modpath_lf(mip=mip, realm="atmos", model='GFDL-CM4', variable=dict_var['landmask']['var_name'])
                 # -- TEMPORARY END --
                 """
                 try:
@@ -270,16 +282,19 @@ for mod in models:
                         list(), list(), list(), list(), list()
                     for var1 in var_in_file:
                         areacell_in_file, realm = find_realm(var1)
-                        modpath_tmp = modpath(mip=mip, exp=exp, realm=realm, model=mod, realization=realization, variable=var1)
-                        modpath_lf_tmp = modpath_lf(mip=mip, realm=realm, model=mod, variable="sftlf")
+                        modpath_tmp = get_file(modpath(mip=mip, exp=exp, realm=realm, model=mod, realization=realization, variable=var1))
+                        #modpath_lf_tmp = get_file(modpath_lf(mip=mip, realm=realm2, model=mod, variable=dict_var['landmask']['var_name']))
                         if not os.path.isfile(modpath_tmp):
                             modpath_tmp = None
-                        if not os.path.isfile(modpath_lf_tmp):
-                            modpath_lf_tmp = None
+                        #if not os.path.isfile(modpath_lf_tmp):
+                        #    modpath_lf_tmp = None
+                        file_areacell_tmp = get_file(modpath_lf(mip=mip, realm=realm2, model=mod, variable=areacell_in_file))
+                        print("file_areacell_tmp:", file_areacell_tmp)
                         list_files.append(modpath_tmp)
-                        list_areacell.append(file_areacell)
+                        list_areacell.append(file_areacell_tmp)
                         list_name_area.append(areacell_in_file)
-                        list_landmask.append(modpath_lf_tmp)
+                        #list_landmask.append(modpath_lf_tmp)
+                        list_landmask.append(file_landmask)
                         list_name_land.append(landmask_in_file)
                 else:
                     if not os.path.isfile(file_name):
@@ -331,6 +346,8 @@ for mod in models:
                 print('json_name:', json_name)
 
             # Computes the metric collection
+            print("\n### Compute the metric collection ###\n")
+            cdms2.setAutoBounds('on')
             dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod_run, netcdf=param.nc_out,
                                                      netcdf_name=netcdf, debug=debug)
             if debug:
@@ -343,11 +360,13 @@ for mod in models:
             # OUTPUT METRICS TO JSON FILE (per simulation)
             metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
+        """
         except Exception as e: 
             print('failed for ', mod, run)
             print(e)
             if not debug:
                 pass
+        """
 
 print('PMPdriver: model loop end')
 
