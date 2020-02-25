@@ -226,7 +226,8 @@ for mod in models:
         if debug:
             print('list_variables:', list_variables)
     
-        try:
+        #try:
+        if 1:
             for var in list_variables:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
@@ -253,9 +254,6 @@ for mod in models:
                 if not os.path.isfile(file_areacell):
                     file_areacell = None
                 file_landmask = get_file(modpath_lf(mip=mip, realm=realm2, model=mod, variable=dict_var['landmask']['var_name']))
-                print("file_landmask:", file_landmask)
-                if not os.path.isfile(file_landmask):
-                    file_landmask = None
                 # -- TEMPORARY --
                 if mip == 'cmip6':
                     if mod in ['IPSL-CM6A-LR', 'CNRM-CM6-1']:
@@ -296,6 +294,7 @@ for mod in models:
                 else:
                     if not os.path.isfile(file_name):
                         file_name = None
+                    print("jwlee-test, file_landmask:", file_landmask)
                     if not os.path.isfile(file_landmask):
                         file_landmask = None
                     list_files = file_name
@@ -357,11 +356,13 @@ for mod in models:
             # OUTPUT METRICS TO JSON FILE (per simulation)
             metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
+        """
         except Exception as e: 
             print('failed for ', mod, run)
             print(e)
             if not debug:
                 pass
+        """
 print('PMPdriver: model loop end')
 
 # =================================================
