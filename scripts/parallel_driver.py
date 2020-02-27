@@ -157,7 +157,7 @@ for p, cmd in enumerate(cmds_list):
     print(timenow, p, ' '.join(cmd))
     model = cmd[-3]
     run = cmd[-1]
-    log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, case_id])
+    log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, run, case_id])
     log_file = os.path.join(log_dir, log_filename)
     with open(log_file+"_stdout.txt", "wb") as out, open(log_file+"_stderr.txt", "wb") as err:
         procs_list.append(Popen(cmd, stdout=out, stderr=err))
