@@ -20,9 +20,14 @@ from xarray import open_dataset
 from xarray import where as XARRAYwhere
 
 # ENSO_metrics functions
+<<<<<<< HEAD
 from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
 from EnsoMetrics.EnsoPlotLib import plot_param
 from EnsoMetrics import EnsoErrorsWarnings
+=======
+from EnsoCollectionsLib import ReferenceObservations
+import EnsoErrorsWarnings
+>>>>>>> prints corrected
 
 
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']

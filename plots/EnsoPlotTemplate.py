@@ -222,6 +222,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
     if "legend" in dict_param.keys():
         legend = dict_param["legend"]
     else:
+<<<<<<< HEAD
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
                            shading=shading)
         if plot_for_wiki is True:
@@ -231,6 +232,17 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                 legend[1] = "model"
         if plot_ref is True:
             legend = [legend[0]]
+=======
+        if isinstance(filename_nc, basestring):
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
+        else:
+            if shading is True and plot_metric is False:
+                legend = ["ref: " + obsname] + [mod.upper() + "(" + str(len(models2[mod])) + ")" for mod in model]
+            elif shading is True and plot_metric is True:
+                legend = ["ref: " + obsname] + [mod.upper() for mod in model]
+            else:
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
+>>>>>>> prints corrected
     if "custom_label" in dict_param.keys():
         custom_label = dict_param["custom_label"]
     else:
@@ -431,6 +443,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     if "legend" in dict_param.keys():
         legend = dict_param["legend"]
     else:
+<<<<<<< HEAD
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
                            shading=shading)
         if plot_for_wiki is True:
@@ -439,6 +452,18 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             elif "CNRM-CM5" in legend[1]:
                 legend[1] = "model"
     nbr = len(tab_mod[0]) if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True else\
+=======
+        if isinstance(filename_nc, basestring):
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
+        else:
+            if shading is True and plot_metric is False:
+                legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
+            elif shading is True and plot_metric is True:
+                legend = ["ref: " + obsname] + [mod.upper() for mod in model]
+            else:
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
+    nbr = len(tab_mod[0]) if isinstance(filename_nc, basestring) else\
+>>>>>>> prints corrected
         (len(tab_mod[0][0][0]) if isinstance(filename_nc, dict) is True and shading is True else len(tab_mod[0][0]))
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
         tmp = tab_mod + tab_obs
@@ -541,6 +566,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     if "legend" in dict_param.keys():
         legend = dict_param["legend"]
     else:
+<<<<<<< HEAD
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
                            shading=shading)
         if plot_for_wiki is True:
@@ -550,6 +576,17 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
                 legend[1] = "model"
         if plot_ref is True:
             legend = [legend[0]]
+=======
+        if isinstance(filename_nc, basestring):
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
+        else:
+            if shading is True and plot_metric is False:
+                legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
+            elif shading is True and plot_metric is True:
+                legend = ["ref: " + obsname] + [mod.upper() for mod in model]
+            else:
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
+>>>>>>> prints corrected
     fig, ax = plt.subplots(figsize=(4, 4))
     if plot_ref is True:
         tab = [diag_obs]
@@ -640,10 +677,22 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
     if "legend" in dict_param.keys():
         legend = dict_param["legend"]
     else:
+<<<<<<< HEAD
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
                            shading=shading)
         if plot_for_wiki is True:
             legend[0] = "model"
+=======
+        if isinstance(filename_nc, basestring):
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
+        else:
+            if shading is True and plot_metric is False:
+                legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
+            elif shading is True and plot_metric is True:
+                legend = ["ref: " + obsname] + [mod.upper() for mod in model]
+            else:
+                legend = ["ref: " + obsname] + model  # mod_nicknames  #
+>>>>>>> prints corrected
     fig, ax = plt.subplots(figsize=(4, 4))
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
         tab = [diag_mod]
@@ -773,12 +822,17 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     ylabel_ticks = list(range(int(MATHfloor(min(tim))), int(MATHceil(max(tim))) + 1))
     ylabel_ticks, ylabel = create_labels(yname, ylabel_ticks)
     tab = list()
+<<<<<<< HEAD
     legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, shading=shading)
     if plot_for_wiki is True:
         legend[1] = "model"
     if plot_ref is True:
         legend = [legend[0]]
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+=======
+    if isinstance(filename_nc, basestring):
+        legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
+>>>>>>> prints corrected
         for ii in range(len(tab_obs)):
             tab.append(tab_obs[ii])
             if plot_ref is False:
@@ -1059,6 +1113,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     ylabel_ticks = list(range(int(MATHfloor(min(lat))), int(MATHceil(max(lat))) + 1))
     ylabel_ticks, ylabel = create_labels(yname, ylabel_ticks)
     tab = list()
+<<<<<<< HEAD
     legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
                        shading=shading)
     if plot_for_wiki is True:
@@ -1069,6 +1124,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     if plot_ref is True:
         legend = [legend[0]]
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+=======
+    if isinstance(filename_nc, basestring):
+        legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
+>>>>>>> prints corrected
         for ii in range(len(tab_mod)):
             tab.append(tab_obs[ii])
             if plot_ref is False:
@@ -1388,12 +1447,22 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     if "legend" in dict_param.keys():
         legend = dict_param["legend"]
     else:
+<<<<<<< HEAD
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
                            shading=shading)
         if plot_for_wiki is True:
             legend[1] = "model"
         if plot_ref is True:
             legend = [legend[0]]
+=======
+        if isinstance(filename_nc, basestring):
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
+        elif isinstance(filename_nc, dict):
+            legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
+            # legend = ["ref: " + obsname] + [mod.upper() for mod in model]
+        else:
+            legend = ["ref: " + obsname] + model
+>>>>>>> prints corrected
     keys1 = ["", "_neg", "_pos"]
     keys2 = ["all", "x<0", "x>0"]
     keys3 = [[None, None], [None, 0], [0, None]]
