@@ -8,6 +8,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
+from __future__ import print_function
 from copy import deepcopy
 from glob import iglob as GLOBiglob
 import json
@@ -20,13 +21,13 @@ from EnsoMetricPlot import main_plotter
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collection = "ENSO_proc"
+metric_collection = "ENSO_perf"
 experiment = "historical"  # "piControl" #
 list_project = ["cmip5", "cmip6"]
 # my_project = ["CMIP"]#["CMIP", "select8"]
-my_project = ["CMIP", "10 models"]
+my_project = ["CMIP", "12 models"]
 
-big_ensemble = True  # False  #
+big_ensemble = False  # True  #
 dict_selection = {
     #
     # EnsoSeasonality within 25% of obs &
@@ -59,8 +60,8 @@ dict_selection = {
     #             "GISS-E2-R", "GISS-E2-R-CC", "MIROC6"],
     # "select8": ["CCSM4", "CESM1-FASTCHEM", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
     #             "GISS-E2-R", "GISS-E2-R-CC", "MIROC-ES2L", "MIROC6"],
-    "10 models": ["CCSM4", "CESM1-FASTCHEM", "GFDL-ESM2M", "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-1-H",
-                "GISS-E2-R", "GISS-E2-R-CC", "MIROC-ES2L", "MIROC6"],
+    "12 models": ['CCSM4', 'CESM1-BGC', 'CESM1-FASTCHEM', 'CNRM-CM5', 'GFDL-ESM2M', 'GISS-E2-1-G', 'GISS-E2-1-G-CC',
+                  'GISS-E2-1-H', 'GISS-E2-R', 'GISS-E2-R-CC', 'MIROC-ES2L', 'MIROC6'],
     #
     # EnsoFbSstTaux within Q2 & EnsodSstOce_2 within Q1
     #
@@ -78,11 +79,11 @@ dict_selection = {
                  "GFDL-ESM2G", "GISS-E2-R", "MIROC4h", "MIROC6", "NorESM1-ME"],
 }
 
-path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
+path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_grouped")
-# path_out = OSpath__join(path_main, "Plots_v6")
+path_out = OSpath__join(path_main, "Plots")
 # path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v02"
+# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v02"
 
 expe = "hist" if experiment == "historical" else "pi"
 pattern = "cmip?_" + experiment + "_" + metric_collection + "_v2019????_"
@@ -127,7 +128,7 @@ if metric_collection == "ENSO_perf":
     #     'EnsoAmpl', 'EnsoDuration', 'EnsoPrTsRmse', 'EnsoSeasonality', 'EnsoSstLonRmse', 'EnsoSstSkew', 'EnsoSstTsRmse',
     #     'EnsoTauxTsRmse', 'SeasonalPrLatRmse',
     #     'SeasonalPrLonRmse', 'SeasonalSstLatRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLatRmse', 'SeasonalTauxLonRmse']
-    list_metrics = ['BiasPrLatRmse']
+    list_metrics = ['EnsoDuration']#['BiasPrLatRmse']
 elif metric_collection == "ENSO_proc":
     # list_metrics = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsodSstOce_2', 'EnsoFbSshSst', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
     #                 'EnsoFbSstShf', 'EnsoFbSstSwr', 'EnsoFbSstTaux', 'EnsoFbSstThf', 'EnsoFbTauxSsh']
@@ -135,7 +136,7 @@ elif metric_collection == "ENSO_proc":
     #                 'EnsoFbSstShf', 'EnsoFbSstSwr', 'EnsoFbSstTaux', 'EnsoFbSstThf']
     # list_metrics = ['EnsodSstOce_1', 'EnsodSstOce_2', 'EnsoFbSshSst', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
     #                 'EnsoFbSstSwr', 'EnsoFbSstSwr', 'EnsoFbSstTaux', 'EnsoFbSstThf', 'EnsoFbTauxSsh']
-    list_metrics = ['EnsoFbSstSwr']  # ['EnsoFbSstTaux']  # ['EnsoFbSstThf']  #
+    list_metrics = ['EnsoFbSstSwr']  # ['EnsoFbSstTaux', 'EnsoFbTauxSsh', 'EnsoFbSshSst']
 elif metric_collection == "ENSO_tel":
     # list_metrics = [
     #     'EnsoAmpl', 'EnsoPrMap', 'EnsoSlpMap', 'EnsoSstMap', 'NinaPrMap_1', 'NinaPrMap_2', 'NinaSlpMap_1',
@@ -150,7 +151,7 @@ elif metric_collection == "ENSO_tel":
     #     'NinoSstMap_2']
 # loop on metrics
 for met in list_metrics:
-    print met
+    print(met)
     my_data = {"diagnostic_values": {}, "metric_values": {}, "filenames": {}, "models": {}}
     if big_ensemble is False:
         # one ensemble for CMIP5 and one for CMIP6
@@ -166,9 +167,25 @@ for met in list_metrics:
                 list_models.remove("BNU-ESM")
             if "HadCM3" in list_models:
                 list_models.remove("HadCM3")
-            if metric_collection == "ENSO_tel":
-                if "GFDL-CM4" in list_models:
-                    list_models.remove("GFDL-CM4")
+            # if metric_collection == "ENSO_tel":
+            #     if "CSIRO-Mk3L-1-2" in list_models:
+            #         list_models.remove("CSIRO-Mk3L-1-2")
+            #     if "FIO-ESM" in list_models:
+            #         list_models.remove("FIO-ESM")
+            #     if "MRI-ESM1" in list_models:
+            #         list_models.remove("MRI-ESM1")
+            #     if "BCC-CSM2-MR" in list_models:
+            #         list_models.remove("BCC-CSM2-MR")
+            #     if "CNRM-CM6-1-HR" in list_models:
+            #         list_models.remove("CNRM-CM6-1-HR")
+            #     if "CNRM-CM6-1" in list_models:
+            #         list_models.remove("CNRM-CM6-1")
+            #     if "CNRM-ESM2-1" in list_models:
+            #         list_models.remove("CNRM-ESM2-1")
+            #     if "FGOALS-g3" in list_models:
+            #         list_models.remove("FGOALS-g3")
+            #     if "NESM3" in list_models:
+            #         list_models.remove("NESM3")
             dict1 = dict()
             tab1, tab2 = list(), list()
             for mod in list_models:
@@ -220,10 +237,10 @@ for met in list_metrics:
                                      for mod in my_data["models"][proj]))
                          for key1 in alt_json[proj][list_models[0]]["value"][met]["metric"].keys())
             del lpath
-            print str().ljust(5) + proj + " " + str(len(tab1)).zfill(2) + " file(s) " + \
-                  str(len(list_models)).zfill(2) + " name(s)"
-            # print tab1
-            # print list_models
+            print(str().ljust(5) + proj + " " + str(len(tab1)).zfill(2) + " file(s) " + \
+                  str(len(tab2)).zfill(2) + " name(s)")
+            # print(tab1)
+            # print(list_models)
     else:
         # two project in one big ensemble with CMIP5 and CMIP6
         for grp in my_project:
@@ -345,8 +362,8 @@ for met in list_metrics:
             my_data["metric_values"][grp] = dict2
             my_data["filenames"][grp] = tab1
             my_data["models"][grp] = tab2
-            print str().ljust(5) + grp + " " + str(len(tab1)).zfill(2) + " file(s) " + \
-                  str(len(tab2)).zfill(2) + " name(s)"
+            print(str().ljust(5) + grp + " " + str(len(tab1)).zfill(2) + " file(s) " + \
+                  str(len(tab2)).zfill(2) + " name(s)")
     if metric_collection == "ENSO_tel" and "Map" in met:
         units = ""
     else:
@@ -358,14 +375,19 @@ for met in list_metrics:
         # units = [uni.replace("C", "$^\circ$C").replace("long", "$^\circ$long") for uni in units]
     else:
         units = data_json[proj][data_json[proj].keys()[0]]["metadata"]["metrics"][met]["metric"]["units"]
+        if "Corr" not in met and "Rmse" not in met:
+            units = "%"
         # units = units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     my_data["metric_units"] = units
-    main_plotter(metric_collection, met, my_project, experiment, my_data["filenames"], my_data["diagnostic_values"],
-                 my_data["diagnostic_units"], my_data["metric_values"], my_data["metric_units"], path_png=path_out,
-                 models2=my_data["models"], shading=True)
-    # main_plotter(metric_collection, met, list_project, experiment, my_data["filenames"], my_data["diagnostic_values"],
-    #              my_data["diagnostic_units"], my_data["metric_values"], my_data["metric_units"], path_png=path_out,
-    #              models2=my_data["models"], shading=True)
+    if big_ensemble is True:
+        main_plotter(metric_collection, met, my_project, experiment, my_data["filenames"], my_data["diagnostic_values"],
+                     my_data["diagnostic_units"], my_data["metric_values"], my_data["metric_units"], path_png=path_out,
+                     models2=my_data["models"], shading=True)
+    else:
+        main_plotter(metric_collection, met, list_project, experiment, my_data["filenames"],
+                     my_data["diagnostic_values"],
+                     my_data["diagnostic_units"], my_data["metric_values"], my_data["metric_units"], path_png=path_out,
+                     models2=my_data["models"], shading=True)
     del dict1, list_models, my_data, tab1, tab2, units
     try: del dict2
     except: pass
