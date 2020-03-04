@@ -8,6 +8,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
+from __future__ import print_function
 import json
 from os.path import join as OSpath__join
 # ENSO_metrics functions
@@ -57,7 +58,7 @@ elif metric_collection == "ENSO_proc":
     metrics = ["EnsoFbSshSst", "EnsoFbSstLhf", "EnsoFbSstLwr", "EnsoFbSstShf", "EnsoFbSstSwr",
                "EnsoFbSstTaux", "EnsoFbSstThf", "EnsoFbTauxSsh"]
 for met in metrics:
-    print met
+    print(met)
     filename_nc, modname = list(), list()
     for ii in range(len(models)):
         tmp = pattern.replace("modelname", models[ii]).replace("membername", members[ii]) + "_" + met + ".nc"

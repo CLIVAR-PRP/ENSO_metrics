@@ -55,7 +55,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + "(" + str(len(models2[mod])) + ")" for mod in model]
@@ -229,7 +229,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     if "colors" in dict_param.keys():
         linecolors = dict_param["colors"]
     else:
-        linecolors = {"model": ["r"], "reference": ["k"]}
+        linecolors = {"model": ["dodgerblue"], "reference": ["k"]}
     if "linestyles" in dict_param.keys():
         linestyles = dict_param["linestyles"]
     else:
@@ -238,7 +238,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
@@ -351,7 +351,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
@@ -445,7 +445,7 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         else:
             if shading is True and plot_metric is False:
                 legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
@@ -569,7 +569,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     ylabel_ticks, ylabel = create_labels(yname, ylabel_ticks)
     tab = list()
     if isinstance(filename_nc, basestring):
-        legend = ["ref: " + obsname, model]
+        legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         for ii in range(len(tab_obs)):
             tab.append(tab_obs[ii])
             tab.append(tab_mod[ii])
@@ -795,7 +795,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     ylabel_ticks, ylabel = create_labels(yname, ylabel_ticks)
     tab = list()
     if isinstance(filename_nc, basestring):
-        legend = ["ref: " + obsname, model]
+        legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         for ii in range(len(tab_mod)):
             tab.append(tab_obs[ii])
             tab.append(tab_mod[ii])
@@ -1043,7 +1043,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         legend = dict_param["legend"]
     else:
         if isinstance(filename_nc, basestring):
-            legend = ["ref: " + obsname, model]
+            legend = ["ref: " + obsname, "model"]  #["ref: " + obsname, model]
         elif isinstance(filename_nc, dict):
             legend = ["ref: " + obsname] + [mod.upper() + " (" + str(len(models2[mod])) + ")" for mod in model]
             # legend = ["ref: " + obsname] + [mod.upper() for mod in model]
@@ -1292,7 +1292,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                         if ("EnsoFbSshSst" in figure_name or "EnsoFbSstTaux" in figure_name or\
                                 "EnsoFbTauxSsh" in figure_name) and article_fig is True:
                             metric_units = "%"
-                        legend[jj] = legend[jj] + " (" + "{0:}".format(int(round(tmp))) + " " + metric_units + ")"
+                            legend[jj] = legend[jj] + " (" + "{0:}".format(int(round(tmp))) + " " + metric_units + ")"
                 if ("EnsoFbSshSst" in figure_name or "EnsoFbSstTaux" in figure_name or "EnsoFbTauxSsh" in figure_name) \
                         and article_fig is True:
                     ax.legend(lines, legend, bbox_to_anchor=(1, 0), loc="lower right", ncol=1)

@@ -8,12 +8,12 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
+from __future__ import print_function
 from glob import iglob as GLOBiglob
 import json
 from os.path import join as OSpath__join
 # ENSO_metrics functions
-#from EnsoCollectionsLib import defCollection
-from EnsoMetrics.EnsoCollectionsLib import defCollection
+from EnsoCollectionsLib import defCollection
 from EnsoMetricPlot import main_plotter
 
 
@@ -27,8 +27,7 @@ experiment = "historical"
 member = "r1i1p1"
 modname = model + "_" + member
 
-#path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
-path_main = "/work/lee1043/cdat/pmp/ENSO_metrics/plot_test_json_20191218"
+path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_lee")
 path_out = OSpath__join(path_main, "Plots_wiki")
 
@@ -40,7 +39,7 @@ pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
 # Main
 # ---------------------------------------------------#
 # read json file
-filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_modified.json")))[0]
+filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
 with open(filename_js) as ff:
     data_json = json.load(ff)['RESULTS']['model'][model][member]
 ff.close()
@@ -48,7 +47,7 @@ del ff, filename_js
 # loop on metrics
 metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=lambda v: v.upper())
 for met in metrics[6:]:
-    print met
+    print(met)
     # get NetCDF file name
     path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
     filename_nc = pattern + "_" + model + "_" + member + "_" + met + ".nc"
