@@ -226,8 +226,7 @@ for mod in models:
         if debug:
             print('list_variables:', list_variables)
     
-        #try:
-        if 1:
+        try:
             for var in list_variables:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
@@ -285,6 +284,8 @@ for mod in models:
                         #    modpath_lf_tmp = None
                         file_areacell_tmp = get_file(modpath_lf(mip=mip, realm=realm2, model=mod, variable=areacell_in_file))
                         print("file_areacell_tmp:", file_areacell_tmp)
+                        if not os.path.isfile(file_areacell_tmp):
+                            file_areacell_tmp = None
                         list_files.append(modpath_tmp)
                         list_areacell.append(file_areacell_tmp)
                         list_name_area.append(areacell_in_file)
@@ -356,13 +357,12 @@ for mod in models:
             # OUTPUT METRICS TO JSON FILE (per simulation)
             metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
-        """
         except Exception as e: 
             print('failed for ', mod, run)
             print(e)
             if not debug:
                 pass
-        """
+
 print('PMPdriver: model loop end')
 
 # =================================================
