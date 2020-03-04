@@ -92,7 +92,7 @@ for met in metrics[6:]:
     #      - (optional) the path where to save the plots: path_out
     #      - (optional) the name of the plots: name_png
     main_plotter(metric_collection, met, model, experiment, filename_nc, diagnostic_values,
-                 diagnostic_units, metric_values, metric_units, path_png=path_out, name_png=figure_name)
+                 diagnostic_units, metric_values, metric_units, member=member, path_png=path_out, name_png=figure_name)
 
 
 
