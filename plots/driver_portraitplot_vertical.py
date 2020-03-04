@@ -510,7 +510,7 @@ for mc in metric_collections:
         tab[0, jj] = 0
         tab[:, jj] = (tab[:, jj] - mea) / std  # (tab[:, jj] - mini) / std  #
         # print(met.rjust(20) + " = " + str(round(med, 1)))
-        print(met.rjust(20) + " = " + str(round(tab[0, jj], 1)))
+        # print(met.rjust(20) + " = " + str(round(tab[0, jj], 1)))
         del mea, med, sel1, sel2, tmp
     # plot
     # levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
