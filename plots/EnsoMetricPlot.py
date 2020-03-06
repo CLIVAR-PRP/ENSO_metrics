@@ -1,10 +1,10 @@
 # -*- coding:UTF-8 -*-
+from __future__ import print_function
 from copy import deepcopy
 from datetime import datetime
 from os.path import join as OSpath__join
 # ENSO_metrics functions
-#from EnsoPlotLib import plot_param
-from EnsoMetrics.EnsoPlotLib import plot_param
+from EnsoPlotLib import plot_param
 from EnsoPlotTemplate import my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map, my_scatterplot
 
 
@@ -13,7 +13,8 @@ dict_plot = {"boxplot": my_boxplot, "curve": my_curve, "dot": my_dotplot, "dot_t
 
 
 def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values,
-                 diagnostic_units, metric_values, metric_units, path_png=None, name_png=None, models2=None, shading=False):
+                 diagnostic_units, metric_values, metric_units, member=None, path_png=None, name_png=None, models2=None,
+                 shading=False):
     dict_param = plot_param(metric_collection, metric)
     list_var = dict_param['metric_variables']
     met_type = dict_param['metric_computation']
@@ -37,6 +38,9 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
             name_png = name_png + str(len(model)) + "projects"
         else:
             name_png = name_png + str(len(model)) + "models"
+        if member is not None:
+            if (isinstance(model, basestring) is True and member not in model) or isinstance(model, list) is True:
+                name_png = name_png + "_" + member
     # diagnostic
     dict_diag = dict_param['diagnostic']
     if isinstance(path_png, basestring):
@@ -47,30 +51,30 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
     if plt_typ == "dot" and shading is True:
         plt_typ = "dot_to_box"
     t1 = datetime.now()
-    print str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2)
+    print(str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2))
     dict_plot[plt_typ](
         model, filename_nc, dict_diag, reference, list_var, fig_name + "_divedown01", models2=models2,
-        metric_type=met_type, metric_values=metric_values, metric_units=metric_units,
+        member=member, metric_type=met_type, metric_values=metric_values, metric_units=metric_units,
         diagnostic_values=diagnostic_values, diagnostic_units=diagnostic_units, regions=dict_reg, shading=shading)
     dt = datetime.now() - t1
     dt = str(int(round(dt.seconds / 60.)))
-    print str().ljust(30) + "took " + dt + " minute(s)"
+    print(str().ljust(30) + "took " + dt + " minute(s)")
     # dive downs
     list_dd = sorted([key for key in dict_param.keys() if "dive_down" in key], key=lambda v: v.upper())
     for ii, dd in enumerate(list_dd):
         dict_diag = dict_param[dd]
         plt_typ = dict_diag['plot_type']
         t1 = datetime.now()
-        print str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2)
+        print(str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2))
         if metric_collection == "ENSO_tel" and "Map" in metric:
             metype = deepcopy(met_type)
         else:
             metype = None
         dict_plot[plt_typ](
             model, filename_nc, dict_diag, reference, list_var, fig_name + "_divedown" + str(ii+2).zfill(2),
-            models2=models2, metric_type=metype, metric_values=metric_values, metric_units=metric_units,
+            models2=models2, member=member, metric_type=metype, metric_values=metric_values, metric_units=metric_units,
             diagnostic_values=diagnostic_values, diagnostic_units=diagnostic_units, regions=dict_reg, shading=shading)
         dt = datetime.now() - t1
         dt = str(int(round(dt.seconds / 60.)))
-        print str().ljust(30) + "took " + dt + " minute(s)"
+        print(str().ljust(30) + "took " + dt + " minute(s)")
 

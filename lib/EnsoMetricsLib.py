@@ -6982,8 +6982,6 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             list_region = ["africaSE", "americaN", "americaS", "asiaS", "oceania"]
             list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
                              "STD_" + dataset2, "STD_error_" + dataset2]
-
-
             dict_metric, dict_nc = dict(), dict()
             for ii, reg in enumerate(list_region):
                 # select region

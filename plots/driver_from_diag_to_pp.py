@@ -8,6 +8,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
+from __future__ import print_function
 from copy import deepcopy
 from glob import iglob as GLOBiglob
 from inspect import stack as INSPECTstack
@@ -35,7 +36,7 @@ my_project = ["select8", "CMIP"]
 big_ensemble = True  # False  #
 reduced_set = True  # False  #
 
-path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_10_report"
+path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_grouped")
 # path_out = OSpath__join(path_main, "Plots_v5")
 # path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
@@ -73,14 +74,14 @@ def common_save(dict_in, dict_out={}):
                     dict_out[mod][met] = dict_in[mod][met]
                 else:
                     list_strings = [
-                        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+                        "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
                         ": metric already in output",
                         str().ljust(5) + "metric '" + str(met) + "' for model '" + str(mod) +
                         "' is already in output dictionary",
                         str().ljust(10) + "in  input = " + str(dict_in[mod][met]),
                         str().ljust(10) + "in output = " + str(dict_out[mod][met]),
                     ]
-                    EnsoErrorsWarnings.MyError(list_strings)
+                    EnsoErrorsWarnings.My_rror(list_strings)
     return dict_out
 
 
@@ -112,19 +113,23 @@ def parallelplot(tab, obs_val, ind=0, labels="", title="", uppertitle="", colors
         "medianprops": dict(linestyle="-", linewidth=0, color=col),
         "whiskerprops": dict(linestyle="-", linewidth=3, color=col),
     }
-    ax.set_title(title, fontsize=20, y=1.05, loc='center')
+    ax.set_title(title, fontsize=25, y=1.05, loc='center')
     ax.spines['left'].set_position('zero')
     ax.spines['right'].set_color('none')
     ax.spines['bottom'].set_color('none')
     ax.spines['top'].set_color('none')
     ax.set_xlim([-1, 1])
-    ax.tick_params(axis="x", labelsize=15, rotation=90)
+
+    # ax.tick_params(axis="x", labelsize=15, rotation=90)
+    ax.tick_params(axis="x", labelsize=20)
     ax.set_ylim(ylim)
     ax.set_yticks(ylim)
     ax.set_yticklabels(ylim)
-    ax.tick_params(axis="y", labelsize=15)
-    ax.boxplot(tab, positions=[0], whis=[5, 95], widths=0.7, labels=[labels], showmeans=True, showfliers=True,
+    ax.tick_params(axis="y", labelsize=20)
+    ax.boxplot(tab, positions=[0], whis=[5, 95], widths=0.7, labels=[""], showmeans=True, showfliers=True,
                zorder=4, **boxproperties)
+    ax.set_xticks([0])
+    ax.set_xticklabels([labels], y=-0.05)
     col = colors[1]
     if obs_val is not None and obs_val != 1e20:
         ax.plot([0.2], obs_val, ls='None', marker="<", mec=col, mew=1, mfc=col, markersize=18, zorder=5, clip_on=False)
@@ -151,7 +156,11 @@ def transition(text, yy=0.6, ind=0, nint=2, uppertitle=""):
     dictarrow = dict(facecolor="k", width=5, headwidth=20, headlength=20)
     ax.annotate("", xy=(0.9, 0.45), xycoords='data', xytext=(0.1, 0.45), arrowprops=dictarrow)
     fondict = dict(horizontalalignment="center", verticalalignment="bottom")
-    ax.text(0.5, yy, text, fontsize=19, **fondict)
+    if "corr" in text:
+        fs = 20
+    else:
+        fs = 24
+    ax.text(0.5, yy, text, fontsize=fs, **fondict)
     ax.text(0.5, 1.3, uppertitle, fontsize=30, transform=ax.transAxes, **fondict)
     return
 
@@ -284,8 +293,8 @@ if big_ensemble is True:
 
 # show dictionary levels
 lev1 = sorted(dict_met.keys(), key=lambda v: v.upper())
-print "level1 (" + str(len(lev1)) + ") = " + str(lev1)
-print ""
+print ("level1 (" + str(len(lev1)) + ") = " + str(lev1))
+print ("")
 # check metrics
 if big_ensemble is True:
     list1 = list(set([len(dict_met[key1].keys()) for key1 in lev1]))
@@ -333,26 +342,26 @@ if len(list1) != 1:
         lev2 = sorted(dict_met[key1].keys(), key=lambda v: v.upper())
         if big_ensemble is True:
             if len(lev2) != len(list_metrics):
-                print key1.rjust(15) + " (" + str(len(lev2)).zfill(2) + "), missing = " +\
-                      str(list(set(list_metrics) - set(lev2)))
+                print(key1.rjust(15) + " (" + str(len(lev2)).zfill(2) + "), missing = " +\
+                      str(list(set(list_metrics) - set(lev2))))
         else:
             for key2 in lev2:
                 lev3 = sorted(dict_met[key1][key2].keys(), key=lambda v: v.upper())
                 if len(lev3) != len(list_metrics):
-                    print key2.rjust(15) + " (" + str(len(lev3)).zfill(2) + "), missing = " +\
-                          str(list(set(list_metrics) - set(lev3)))
+                    print(key2.rjust(15) + " (" + str(len(lev3)).zfill(2) + "), missing = " +\
+                          str(list(set(list_metrics) - set(lev3))))
                 del lev3
         del lev2
     list_strings = [
-        "ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+        "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
         ": not the same number of metrics for all models",
         str().ljust(5) + "metric number = " + str(list1),
     ]
-    EnsoErrorsWarnings.MyError(list_strings)
+    EnsoErrorsWarnings.my_error(list_strings)
 else:
-    print str().ljust(5) + "metrics (" + str(len(list_metrics)) + ") = " + str(list_metrics)
+    print(str().ljust(5) + "metrics (" + str(len(list_metrics)) + ") = " + str(list_metrics))
 del list1
-for ii in range(3): print ""
+for ii in range(3): print("")
 
 
 # ---------------------------------------------------#
@@ -375,8 +384,8 @@ if ' ':
     list1 = ["EnsoPrMapRmse", "EnsoFbSstTaux", "EnsoPrMapCorr"]
     list2 = [dict_met, dict_dia, dict_met]
     numtmp = ["a) ", "b) ", "c) "]
-    nbr = sum([4 if "Rmse" in met else 7 for ii, met in enumerate(list1)]) + 3 * len(list1)
-    fig = plt.figure(0, figsize=(1 * nbr, 4))
+    nbr = sum([5 if "Rmse" in met else 9 for ii, met in enumerate(list1)]) + 3 * len(list1)
+    fig = plt.figure(0, figsize=(1 * nbr, 3))
     gs = GridSpec(1, nbr)
     nbr = 0
     for ii, met in enumerate(list1):
@@ -387,13 +396,13 @@ if ' ':
                 tname = "correlation"
                 xlabel = deepcopy(met)
                 my_text = "1 - corr"
-                val = [list2[ii][mod][met][ref] for mod in list2[ii].keys() if list2[ii][mod][met][ref] != 1e20]
+                val = [list2[ii][mod][met][ref] for mod in list2[ii].keys() if list2[ii][mod][met][ref] < 1e15]
                 obs = 1
             else:
-                tname = "statistic"
+                tname = "scalar"
                 xlabel = met + "\n(" + dict_uni[met] + ")"
-                my_text = r'abs$\left(\frac{mod - obs}{obs}\right)$'
-                val = [list2[ii][mod][met][mod] for mod in list2[ii].keys() if list2[ii][mod][met][ref] != 1e20]
+                my_text = r'$\vert\frac{mod - obs}{obs}\vert$'
+                val = [list2[ii][mod][met][mod] for mod in list2[ii].keys() if list2[ii][mod][met][mod] < 1e15]
                 obs = list2[ii][list2[ii].keys()[0]][met][ref]
             my_ylim = mimadict[met]
             parallelplot(val, obs, ind=nbr, labels=xlabel, title=tname, colors=my_col, legend=my_leg,
@@ -406,7 +415,7 @@ if ' ':
         if "Rmse" in met:
             xlabel = met + "\n(" + dict_uni[met] + ")"
             my_ylim = mimadict[met]
-            val = [list2[ii][mod][met][ref] for mod in list2[ii].keys() if list2[ii][mod][met][ref] != 1e20]
+            val = [list2[ii][mod][met][ref] for mod in list2[ii].keys() if list2[ii][mod][met][ref] < 1e15]
             uptitle = ""
         elif "Corr" in met:
             xlabel = "error"
@@ -417,7 +426,7 @@ if ' ':
             xlabel = "% of error"
             val = [abs(100. * (jj - obs) / obs) for jj in val]
             my_ylim = [0, 80]
-            uptitle = numtmp[ii] + "statistic based metrics"
+            uptitle = numtmp[ii] + "scalar based metrics"
         tname = "metric"
         obs = 0
         my_text =r'$\frac{metric - MMM}{\sigma}$'

@@ -6,6 +6,7 @@ from math import floor as MATHfloor
 from numpy import arange as NUMPYarange
 from numpy import around as NUMPYaround
 from numpy import array as NUMPYarray
+from numpy import isnan as NUMPYisnan
 from numpy import mean as NUMPYmean
 from numpy import nan as NUMPYnan
 from numpy import where as NUMPYwhere
@@ -13,9 +14,13 @@ from numpy.ma import masked_invalid as NUMPYma__masked_invalid
 from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # xarray based functions
 from xarray import open_dataset
+from xarray import where as XARRAYwhere
 # ENSO_metrics functions
-from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
-from EnsoMetrics import EnsoErrorsWarnings
+from EnsoCollectionsLib import ReferenceObservations
+import EnsoErrorsWarnings
+
+
+
 
 
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
@@ -160,13 +165,13 @@ def minmax_plot(tab, metric=False):
         tick_labels = list(NUMPYaround(tick_labels, decimals=0).astype(int))
     if len(tick_labels) > 6:
         list_strings = [
-            "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too many ticks for axis",
+            "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many ticks for axis",
             str().ljust(5) + str(len(tick_labels)) + " ticks: " + str(tick_labels),
             str().ljust(5) + "there should not be more than 6"
         ]
-        EnsoErrorsWarnings.MyWarning(list_strings)
+        EnsoErrorsWarnings.my_warning(list_strings)
     if min(tick_labels) > mini or max(tick_labels) < maxi:
-        list_strings = ["WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) +
+        list_strings = ["WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
                         ": wrong bounds in ticks for axis"]
         if min(tick_labels) > mini:
             list_strings += [str().ljust(5) + "ticks minimum (" + str(min(tick_labels)) + ") > tab minimum (" +
@@ -174,13 +179,43 @@ def minmax_plot(tab, metric=False):
         if max(tick_labels) < maxi:
             list_strings += [str().ljust(5) + "ticks maximum (" + str(max(tick_labels)) + ") > tab maximum (" +
                              str(maxi) + ")"]
-        EnsoErrorsWarnings.MyWarning(list_strings)
+        EnsoErrorsWarnings.my_warning(list_strings)
     return tick_labels
 
 
 def my_average(tab, axis=None, remove_masked=False):
     tmp = my_mask(tab, remove_masked=remove_masked)
     return NUMPYmean(tmp, axis=axis)
+
+
+def my_legend(modname, obsname, filename_nc, models2=None, member=None, plot_metric=True, shading=False):
+    legend = ["ref: " + obsname]
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+        if isinstance(modname, str) is True or isinstance(modname, unicode) is True:
+            if isinstance(member, str) is True or isinstance(member, unicode) is True:
+                legend += [modname + " " + member]
+            else:
+                legend += [modname]
+        else:
+            legend += ["model"]
+    else:
+        if shading is True and (isinstance(filename_nc, dict) is True or plot_metric is False):
+            if isinstance(member, list) is True and len(member) == len(modname):
+                legend += [mod.upper() + mem + " (" + str(len(models2[mod])) + ")"
+                           for mod, mem in zip(modname, member)]
+            else:
+                legend += [mod.upper() + "(" + str(len(models2[mod])) + ")" for mod in modname]
+        elif shading is True and plot_metric is True:
+            if isinstance(member, list) is True and len(member) == len(modname):
+                legend += [mod.upper() + mem for mod, mem in zip(modname, member)]
+            else:
+                legend += [mod.upper() for mod in modname]
+        else:
+            if isinstance(member, list) is True and len(member) == len(modname):
+                legend += [mod + mem for mod, mem in zip(modname, member)]
+            else:
+                legend += modname
+    return legend
 
 
 def my_mask(tab, remove_masked=False):
@@ -191,6 +226,10 @@ def my_mask(tab, remove_masked=False):
         # tmp = tmp[~tmp.mask]
         tmp = tmp.compressed()
     return tmp
+
+
+def my_mask_map(tab_ref, tab_mod):
+    return XARRAYwhere(NUMPYisnan(tab_ref), NUMPYnan, tab_mod)
 
 
 def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shading=False):
@@ -257,11 +296,11 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
                 break
     # if "_lon__" in newvar or "_hov__" in newvar:
     #     list_strings = [
-    #         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": reader",
+    #         "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": reader",
     #         str().ljust(5) + str(newvar) + " trick: read only between 140E and 96W",
     #         str().ljust(5) + "this should not stay like that!!!"
     #     ]
-    #     EnsoErrorsWarnings.MyWarning(list_strings)
+    #     EnsoErrorsWarnings.my_warning(list_strings)
     #     tab_out = xml[newvar].sel(longitude=slice(140, 264))
     # else:
     #     tab_out = xml[newvar]
@@ -279,11 +318,11 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
     for var in var_to_read:
         # if "_lon__" in var or "_hov__" in var:
         #     list_strings = [
-        #         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": reader",
+        #         "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": reader",
         #         str().ljust(5) + str(var) + " trick: read only between 140E and 96W",
         #         str().ljust(5) + "this should not stay like that!!!"
         #     ]
-        #     EnsoErrorsWarnings.MyWarning(list_strings)
+        #     EnsoErrorsWarnings.my_warning(list_strings)
         #     tab_mod.append(ff[var + model].sel(longitude=slice(140, 264)))
         # else:
         #     tab_mod.append(ff[var + model])
@@ -295,11 +334,11 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
         if varobs in variables_in_file:
             # if "_lon__" in varobs or "_hov__" in varobs:
             #     list_strings = [
-            #         "WARNING" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": reader",
+            #         "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": reader",
             #         str().ljust(5) + str(varobs) + " trick: read only between 140E and 96W",
             #         str().ljust(5) + "this should not stay like that!!!"
             #     ]
-            #     EnsoErrorsWarnings.MyWarning(list_strings)
+            #     EnsoErrorsWarnings.my_warning(list_strings)
             #     tab = ff[varobs].sel(longitude=slice(140, 264))
             # else:
             #     tab = ff[varobs]
@@ -363,12 +402,12 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
                 obs.append(tmp3)
         obs = list(set(obs))
         if len(obs) > 1:
-            list_strings = ["ERROR" + EnsoErrorsWarnings.MessageFormating(INSPECTstack()) + ": too many obs",
+            list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many obs",
                             str().ljust(5) + "var_to_read = "+str(var_to_read),
                             str().ljust(5) + "filename_nc = " + str(filename_nc),
                             str().ljust(5) + "model = " + str(model),
                             str().ljust(5) + "reference = " + str(reference)]
-            EnsoErrorsWarnings.MyError(list_strings)
+            EnsoErrorsWarnings.my_error(list_strings)
         else:
             obs = obs[0]
     return tab_mod, tab_obs, metval, obs
