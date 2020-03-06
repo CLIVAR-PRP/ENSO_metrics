@@ -52,7 +52,8 @@ print('models:', models)
 
 # Include all models if conditioned
 if ('all' in [m.lower() for m in models]) or (models == 'all'):
-    models = ([p.split('.')[1] for p in glob.glob(modpath(
+    model_index_path = param.modpath.split('/')[-1].split('.').index("%(model)")
+    models = ([p.split('/')[-1].split('.')[model_index_path] for p in glob.glob(modpath(
                 mip=mip, exp=exp, model='*', realization='*', variable='ts'))])
     # remove duplicates
     models = sorted(list(dict.fromkeys(models)), key=lambda s: s.lower())
@@ -95,23 +96,27 @@ for output_type in ['graphics', 'diagnostic_results', 'metrics_results']:
 # Generates list of command
 # -------------------------------------------------
 param_file = './my_Param_ENSO.py'
+#param_file = './my_Param_ENSO_obs2obs.py'
 
 cmds_list = []
 for model in models:
     print(' ----- model: ', model, ' ---------------------')
     # Find all xmls for the given model
     model_path_list = glob.glob(
-        #modpath(mip=mip, exp=exp, model=model, realization=realization, variable='ts'))
         modpath(mip=mip, exp=exp, model=model, realization="*", variable='ts'))
     # sort in nice way
     model_path_list = sort_human(model_path_list)
     #if debug:
     #    print('model_path_list:', model_path_list)
-    # Find where run can be gripped from given filename template for modpath
-    run_in_modpath = modpath(mip=mip, exp=exp, model=model, realization=realization,
-        variable='ts').split('/')[-1].split('.').index(realization)
-    # Collect available runs
-    runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+    try:
+        # Find where run can be gripped from given filename template for modpath
+        run_in_modpath = modpath(mip=mip, exp=exp, model=model, realization=realization,
+            variable='ts').split('/')[-1].split('.').index(realization)
+        # Collect available runs
+        runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+    except:
+        if realization not in ["*", "all"]:
+            runs_list = [realization]
     if debug:
         print('runs_list (all):', runs_list)
     # Check if given run member is included. If not for all runs and given run member is not included,
@@ -132,11 +137,15 @@ for model in models:
                '--realization', run]
         cmds_list.append(cmd)
 
+if debug:
+    for cmd in cmds_list:
+        print(' '.join(cmd))
+
 # =================================================
 # Run subprocesses in parallel
 # -------------------------------------------------
 # log dir
-log_dir = "./log_"+case_id + "/" + mc_name
+log_dir = os.path.join("log", case_id, mc_name)
 
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
@@ -153,10 +162,10 @@ print("Start : %s" % time.ctime())
 procs_list = []
 for p, cmd in enumerate(cmds_list):
     timenow = time.ctime()
-    print(timenow, p, cmd)
+    print(timenow, p, ' '.join(cmd))
     model = cmd[-3]
     run = cmd[-1]
-    log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, case_id])
+    log_filename = '_'.join(['log_enso', mc_name, mip, exp, model, run, case_id])
     log_file = os.path.join(log_dir, log_filename)
     with open(log_file+"_stdout.txt", "wb") as out, open(log_file+"_stderr.txt", "wb") as err:
         procs_list.append(Popen(cmd, stdout=out, stderr=err))

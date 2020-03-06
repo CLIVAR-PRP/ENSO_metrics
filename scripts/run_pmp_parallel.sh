@@ -10,6 +10,7 @@ export OMP_NUM_THREADS=1
 case_id="v"`date +"%Y%m%d"`
 #case_id="v20191115"
 #case_id="v20191121"
+#case_id="v20200224"
 
 mips='cmip5 cmip6'
 #mips='cmip5'
@@ -31,6 +32,8 @@ modnames='all'
 #modnames='MIROC6'
 #modnames='CanESM5 FGOALS-g3'
 
+mkdir -p log/$case_id
+
 for mip in $mips; do
     if [ $mip == 'cmip5' ]; then
         #realization='r1i1p1'
@@ -46,7 +49,7 @@ for mip in $mips; do
     fi
     for MC in $MCs; do
         echo $mip $MC $realization $case_id
-        ./parallel_driver.py -p my_Param_ENSO.py --mip $mip --case_id=$case_id --modnames $modnames --metricsCollection $MC --realization $realization >& log_parallel.${mip}.${MC}.all.${case_id}.txt &
+        python -u ./parallel_driver.py -p my_Param_ENSO.py --mip $mip --case_id=$case_id --modnames $modnames --metricsCollection $MC --realization $realization >& log/$case_id/log_parallel.${mip}.${MC}.all.${case_id}.txt &
         disown
         sleep 1
     done
