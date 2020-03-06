@@ -145,16 +145,8 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
     dict_m = dict_mc['metrics_list']
     list_metrics = sorted(dict_m.keys(), key=lambda v: v.upper())
     for metric in list_metrics:
-<<<<<<< HEAD
-        print('\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m')
-        # sets arguments for this metric
-        list_variables = dict_m[metric]['variables']
-        dict_regions = dict_m[metric]['regions']
-        # model name, file, variable name in file
-=======
->>>>>>> multiple_realization
         try:
-            print '\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m'
+            print('\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m')
             # sets arguments for this metric
             list_variables = dict_m[metric]['variables']
             dict_regions = dict_m[metric]['regions']
@@ -203,82 +195,6 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                         obsFileLandmask1.append(None)
                         obsLandmaskName1.append(None)
                     else:
-<<<<<<< HEAD
-                        obsLandmaskName2.append(dictDatasets['observations'][obs][list_variables[1]]['landmaskname'])
-            arg_var2['obsNameVar2'] = obsNameVar2
-            arg_var2['obsFile2'] = obsFile2
-            arg_var2['obsVarName2'] = obsVarName2
-            arg_var2['obsFileArea2'] = obsFileArea2
-            arg_var2['obsAreaName2'] = obsAreaName2
-            arg_var2['obsFileLandmask2'] = obsFileLandmask2
-            arg_var2['obsLandmaskName2'] = obsLandmaskName2
-        # computes the metric
-        if modelFile1 is None or len(modelFile1) == 0 or (isinstance(modelFile1, list) and None in modelFile1) or\
-                (len(list_variables) > 1 and
-                 (arg_var2['modelFile2'] is None or len(arg_var2['modelFile2']) == 0 or
-                 (isinstance(arg_var2['modelFile2'], list) and None in arg_var2['modelFile2']))):
-            print('\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric "
-                  + str(metric) + " not computed" + '\033[0m')
-            print('\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m')
-            if modelFile1 is None or len(modelFile1) == 0:
-                print('\033[94m' + str().ljust(11) + "no modeled " + list_variables[0] + " given" + '\033[0m')
-            if isinstance(modelFile1, list) and None in modelFile1:
-                for ff, vv in zip(modelFile1, modelVarName1):
-                    if ff is None or vv is None:
-                        print('\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m')
-            if (len(list_variables) > 1 and arg_var2['modelFile2'] is None) or\
-                    (len(list_variables) > 1 and len(arg_var2['modelFile2']) == 0):
-                print('\033[94m' + str().ljust(11) + "no modeled " + list_variables[1] + " given" + '\033[0m')
-            if isinstance(arg_var2['modelFile2'], list) and None in arg_var2['modelFile2']:
-                for ff, vv in zip(arg_var2['modelFile2'], arg_var2['modelVarName2']):
-                    if ff is None or vv is None:
-                        print('\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m')
-        elif obsFile1 is None or len(obsFile1) == 0 or (isinstance(obsFile1, list) and None in obsFile1) or\
-                (len(list_variables) > 1 and
-                 (arg_var2['obsFile2'] is None or len(arg_var2['obsFile2']) == 0 or
-                 (isinstance(arg_var2['obsFile2'], list) and None in arg_var2['obsFile2']))):
-            print('\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric "
-                  + str(metric) + " not computed" + '\033[0m')
-            print('\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m')
-            if obsFile1 is None or len(obsFile1) == 0:
-                print('\033[94m' + str().ljust(11) + "no observed " + list_variables[0] + " given" + '\033[0m')
-            if isinstance(obsFile1, list) and None in obsFile1:
-                for ff, vv in zip(obsFile1, obsVarName1):
-                    if ff is None or vv is None:
-                        print('\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m')
-            if (len(list_variables) > 1 and arg_var2['obsFile2'] is None) or\
-                    (len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0):
-                print('\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m')
-            if isinstance(arg_var2['obsFile2'], list) and None in arg_var2['obsFile2']:
-                for ff, vv in zip(arg_var2['obsFile2'], arg_var2['obsVarName2']):
-                    if ff is None or vv is None:
-                        print('\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m')
-        else:
-            valu, vame, dive, dime = ComputeMetric(
-                metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-                dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
-                netcdf_name=netcdf_name, **arg_var2)
-            keys1 = valu.keys()
-            keys2 = list(set([kk.replace('value', '').replace('__', '').replace('_error', '')
-                              for ll in valu[keys1[0]].keys() for kk in valu[keys1[0]][ll].keys()]))
-            if len(keys2) > 1:
-                for kk in keys2:
-                    mm, dd = dict(), dict()
-                    keys3 = valu['metric'].keys()
-                    for ll in keys3:
-                        mm[ll] = {'value': valu['metric'][ll][kk + '__value'],
-                                  'value_error': valu['metric'][ll][kk + '__value_error']}
-                    keys3 = valu['diagnostic'].keys()
-                    for ll in keys3:
-                        dd[ll] = {'value': valu['diagnostic'][ll][kk + '__value'],
-                                  'value_error': valu['diagnostic'][ll][kk + '__value_error']}
-                    dict_col_valu[metric + kk] = {'metric': mm, 'diagnostic': dd}
-                    mm = dict((ii, vame['metric'][ii]) for ii in vame['metric'].keys() if 'units' not in ii)
-                    mm['units'] = vame['metric'][kk + '__units']
-                    dict_col_meta['metrics'][metric + kk] = {'metric': mm, 'diagnostic': vame['diagnostic']}
-                    dict_col_dd_valu[metric + kk], dict_col_dd_meta['metrics'][metric + kk] = dive, dime
-                    del mm, dd
-=======
                         obsLandmaskName1.append(dictDatasets['observations'][obs][list_variables[0]]['landmaskname'])
             # same if a second variable is needed
             # this time in the form of a keyarg dictionary
@@ -346,43 +262,42 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                     (len(list_variables) > 1 and
                      (arg_var2['modelFile2'] is None or len(arg_var2['modelFile2']) == 0 or
                      (isinstance(arg_var2['modelFile2'], list) and None in arg_var2['modelFile2']))):
-                print '\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
-                      + str(metric) + " not computed" + '\033[0m'
-                print '\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m'
+                print('\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
+                      + str(metric) + " not computed" + '\033[0m')
+                print('\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m')
                 if modelFile1 is None or len(modelFile1) == 0:
-                    print '\033[94m' + str().ljust(11) + "no modeled " + list_variables[0] + " given" + '\033[0m'
+                    print('\033[94m' + str().ljust(11) + "no modeled " + list_variables[0] + " given" + '\033[0m')
                 if isinstance(modelFile1, list) and None in modelFile1:
                     for ff, vv in zip(modelFile1, modelVarName1):
                         if ff is None or vv is None:
-                            print '\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m'
+                            print('\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m')
                 if (len(list_variables) > 1 and arg_var2['modelFile2'] is None) or\
                         (len(list_variables) > 1 and len(arg_var2['modelFile2']) == 0):
-                    print '\033[94m' + str().ljust(11) + "no modeled " + list_variables[1] + " given" + '\033[0m'
+                    print('\033[94m' + str().ljust(11) + "no modeled " + list_variables[1] + " given" + '\033[0m')
                 if isinstance(arg_var2['modelFile2'], list) and None in arg_var2['modelFile2']:
                     for ff, vv in zip(arg_var2['modelFile2'], arg_var2['modelVarName2']):
                         if ff is None or vv is None:
-                            print '\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m'
+                            print('\033[94m' + str().ljust(11) + "no modeled " + str(vv) + " given" + '\033[0m')
             elif obsFile1 is None or len(obsFile1) == 0 or (isinstance(obsFile1, list) and None in obsFile1) or\
                     (len(list_variables) > 1 and
                      (arg_var2['obsFile2'] is None or len(arg_var2['obsFile2']) == 0 or
                      (isinstance(arg_var2['obsFile2'], list) and None in arg_var2['obsFile2']))):
-                print '\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
-                      + str(metric) + " not computed" + '\033[0m'
-                print '\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m'
+                print('\033[94m' + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric " \
+                      + str(metric) + " not computed" + '\033[0m')
+                print('\033[94m' + str().ljust(10) + "reason(s):" + '\033[0m')
                 if obsFile1 is None or len(obsFile1) == 0:
-                    print '\033[94m' + str().ljust(11) + "no observed " + list_variables[0] + " given" + '\033[0m'
+                    print('\033[94m' + str().ljust(11) + "no observed " + list_variables[0] + " given" + '\033[0m')
                 if isinstance(obsFile1, list) and None in obsFile1:
                     for ff, vv in zip(obsFile1, obsVarName1):
                         if ff is None or vv is None:
-                            print '\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m'
+                            print('\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m')
                 if (len(list_variables) > 1 and arg_var2['obsFile2'] is None) or\
                         (len(list_variables) > 1 and len(arg_var2['obsFile2']) == 0):
-                    print '\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m'
+                    print('\033[94m' + str().ljust(11) + "no observed " + list_variables[1] + " given" + '\033[0m')
                 if isinstance(arg_var2['obsFile2'], list) and None in arg_var2['obsFile2']:
                     for ff, vv in zip(arg_var2['obsFile2'], arg_var2['obsVarName2']):
                         if ff is None or vv is None:
-                            print '\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m'
->>>>>>> multiple_realization
+                            print('\033[94m' + str().ljust(11) + "no observed " + str(vv) + " given" + '\033[0m')
             else:
                 valu, vame, dive, dime = ComputeMetric(
                     metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
