@@ -52,11 +52,6 @@ modpath_lf = os.path.join(
     '%(mip)/historical/%(realm)/fx/%(variable)',
     '%(mip).historical.%(model).r0i0p0.fx.%(variable).xml')
 
-"""
-modpath = '/work/lee1043/ESGF/xmls/%(mip)/%(exp)/mon/%(variable)/%(mip).%(model).%(exp).%(realization).mon.%(variable).xml'
-modpath_lf = '/work/lee1043/ESGF/xmls/%(mip)/historical/fx/%(variable)/%(mip).%(model).historical.r0i0p0.fx.%(variable).xml'
-"""
-
 modnames = ['all']
 
 if debug:
