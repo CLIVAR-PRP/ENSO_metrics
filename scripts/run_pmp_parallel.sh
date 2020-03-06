@@ -10,10 +10,11 @@ export OMP_NUM_THREADS=1
 case_id="v"`date +"%Y%m%d"`
 #case_id="v20191115"
 #case_id="v20191121"
+#case_id="v20200224"
 
 mips='cmip5 cmip6'
 #mips='cmip5'
-mips='cmip6'
+#mips='cmip6'
 
 MCs='ENSO_perf ENSO_tel ENSO_proc'
 #MCs='ENSO_perf'

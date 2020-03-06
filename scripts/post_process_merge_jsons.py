@@ -74,8 +74,9 @@ def find_latest(pmprdir, mip, exp, MC):
 
 if __name__ == "__main__":
     mips = ["cmip5", "cmip6"]
+    #mips = ["cmip6"]
     exps = ["historical"]
-    MCs = ["ENSO_perf", "ENSO_proc", "ENSO_tel"]
+    MCs = ["ENSO_perf", "ENSO_tel", "ENSO_proc"]
     pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
 
     for mip in mips:
