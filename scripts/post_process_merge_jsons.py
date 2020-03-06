@@ -75,9 +75,11 @@ def find_latest(pmprdir, mip, exp, MC):
 if __name__ == "__main__":
     mips = ["cmip5", "cmip6"]
     #mips = ["cmip6"]
+    mips = ["obs2obs"]
     exps = ["historical"]
     MCs = ["ENSO_perf", "ENSO_tel", "ENSO_proc"]
     pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
+    pmprdir = "/work/lee1043/imsi/result_test"
 
     for mip in mips:
         for exp in exps:
