@@ -206,11 +206,16 @@ for mod in models:
 
     # Find where run can be gripped from given filename template for modpath
     print('realization:', realization)
-    run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
-        variable='ts').split('/')[-1].split('.').index(realization)
-    print('run_in_modpath:', run_in_modpath)
-    # Collect available runs
-    runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+    try:
+        run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
+            variable='ts').split('/')[-1].split('.').index(realization)
+        print('run_in_modpath:', run_in_modpath)
+        # Collect available runs
+        runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+    except:
+        if realization not in ["all", "*"]:
+            runs_list = [realization]
+
     if debug:
         print('runs_list:', runs_list)
 
