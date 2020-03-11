@@ -40,7 +40,8 @@ path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018
 path_in = OSpath__join(path_main, "Data_grouped")
 # path_out = OSpath__join(path_main, "Plots_v5")
 # path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v02"
+# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v02"
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/Review/r01"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -98,7 +99,7 @@ def get_ref(metric):
 
 
 def parallelplot(tab, obs_val, ind=0, labels="", title="", uppertitle="", colors=None, legend=None, plot_legend=True,
-                 ylim=None):
+                 ytic=None, ylab=None, ylim=None):
     ax = plt.subplot(gs[0, ind])
     if colors is None:
         colors = ["dodgerblue", "k"]
@@ -111,20 +112,25 @@ def parallelplot(tab, obs_val, ind=0, labels="", title="", uppertitle="", colors
         "flierprops": dict(marker="o", markersize=6.0, markeredgecolor=col, markerfacecolor=col, markeredgewidth=0),
         "meanprops":  dict(marker="D", markersize=15.0, markeredgecolor=col, markerfacecolor=col, markeredgewidth=0),
         "medianprops": dict(linestyle="-", linewidth=0, color=col),
-        "whiskerprops": dict(linestyle="-", linewidth=3, color=col),
-    }
+        "whiskerprops": dict(linestyle="-", linewidth=3, color=col)}
     ax.set_title(title, fontsize=25, y=1.05, loc='center')
     ax.spines['left'].set_position('zero')
     ax.spines['right'].set_color('none')
-    ax.spines['bottom'].set_color('none')
-    ax.spines['top'].set_color('none')
+    # ax.spines['bottom'].set_color('none')
+    # ax.spines['top'].set_color('none')
     ax.set_xlim([-1, 1])
-
     # ax.tick_params(axis="x", labelsize=15, rotation=90)
     ax.tick_params(axis="x", labelsize=20)
+    if ytic is None:
+        ax.set_yticks(ylim)
+        ax.set_yticklabels(ylim, x=-0.5)
+    else:
+        ax.set_yticks(ytic)
+        ax.set_yticklabels(ylab, x=-0.5)
+        for jj in ytic:
+            if jj not in ylim:
+                ax.axhline(y=jj, color="k", lw=1)
     ax.set_ylim(ylim)
-    ax.set_yticks(ylim)
-    ax.set_yticklabels(ylim)
     ax.tick_params(axis="y", labelsize=20)
     ax.boxplot(tab, positions=[0], whis=[5, 95], widths=0.7, labels=[""], showmeans=True, showfliers=True,
                zorder=4, **boxproperties)
@@ -178,20 +184,22 @@ for proj in list_project:
         list_metrics = sorted(defCollection(mc)['metrics_list'].keys(), key=lambda v: v.upper())
         if reduced_set is True:
             if mc == "ENSO_perf":
-                to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse',
+                to_remove = ['BiasSshLatRmse', 'BiasSshLonRmse', 'BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse',
+                             'EnsoSstDiversity_1', 'EnsoSstDiversity_2', 'EnsoTauxTsRmse',
                              'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
                              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
                              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
-                             'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
+                             'NinoSstTsRmse_2', "SeasonalSshLatRmse", "SeasonalSshLonRmse", "SeasonalSstLatRmse",
+                             "SeasonalTauxLatRmse"]
             elif mc == "ENSO_proc":
-                to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstSwr',
-                             'EnsoFbSstShf']
+                to_remove = ['BiasSshLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsodSstOce_1',
+                             'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstSwr', 'EnsoFbSstShf',
+                             'EnsoSeasonality', 'EnsoSstLonRmse', 'EnsoSstSkew']
             else:
-                to_remove = ['EnsoAmpl', 'EnsoSlpMap', 'EnsoSstLonRmse', 'NinaPrMap_1', 'NinaPrMap_2', 'NinaSlpMap_1',
-                             'NinaSlpMap_2',
-                             'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstMap_1', 'NinaSstMap_2', 'NinoPrMap_1',
-                             'NinoPrMap_2', 'NinoSlpMap_1', 'NinoSlpMap_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2',
-                             'NinoSstMap_1', 'NinoSstMap_2']
+                to_remove = ['EnsoAmpl', 'EnsoSlpMap', 'EnsoSstLonRmse', 'NinaPrMap_1', 'NinaPrMap_2',
+                             'NinaSlpMap_1', 'NinaSlpMap_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2',
+                             'NinaSstMap_1', 'NinaSstMap_2', 'NinoPrMap_1', 'NinoPrMap_2', 'NinoSlpMap_1',
+                             'NinoSlpMap_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstMap_1', 'NinoSstMap_2']
         else:
             if mc == "ENSO_perf":
                 # to_remove = []
@@ -429,7 +437,7 @@ if ' ':
             uptitle = numtmp[ii] + "scalar based metrics"
         tname = "metric"
         obs = 0
-        my_text =r'$\frac{metric - MMM}{\sigma}$'
+        my_text =r'$\frac{metric - mean}{\sigma}$'
         parallelplot(val, obs, ind=nbr, labels=xlabel, title=tname, uppertitle=uptitle, colors=my_col, legend=my_leg,
                      plot_legend=False, ylim=my_ylim)
         nbr += 1
@@ -446,13 +454,21 @@ if ' ':
         mmm = float(NUMPYmean(val))
         std = float(NUMPYstd(val))
         val = [float(jj - mmm) / std for jj in val]
-        my_ylim = [-2.5, 2.5]
+        if ii == 0:
+            ytic = [-2.2, -2, 2, 2.2]
+        elif ii == 1:
+            ytic = [-3., -2, 2, 2.4]
+        else:
+            ytic = [-2.2, -2, 2, 2.3]
+        ylab = ["{0:+0}".format(int(round(jj, 0))) + "$\sigma$" if jj == 2. or jj == -2. else "" for jj in ytic]
+        my_ylim = [min(ytic), max(ytic)]
+        print(min(val), max(val))
         plotleg = True if ii == 0 else False
         obs = 1e20  # float(obs - mmm) / std
         parallelplot(val, obs, ind=nbr, labels=xlabel, title=tname, colors=my_col, legend=my_leg,
-                     plot_legend=plotleg, ylim=my_ylim)
+                     plot_legend=plotleg, ytic=ytic, ylab=ylab, ylim=my_ylim)
         nbr += 4
-        del mmm, my_ylim, obs, std, tname, xlabel
+        del mmm, my_ylim, obs, std, tname, xlabel, ylab, ytic
     plt.savefig(figure_name, bbox_inches='tight')
     plt.close()
 

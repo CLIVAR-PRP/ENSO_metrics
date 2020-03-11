@@ -39,7 +39,7 @@ experiment = "historical"  # "piControl" #
 member = "r1i1p1"
 list_project = ["cmip6", "cmip5"]
 my_project = ["12 models", "CMIP"]
-big_ensemble = False  # True  #
+big_ensemble = True  # False  #
 reduced_set = True  # False  #
 dict_selection = {
     #
@@ -94,9 +94,7 @@ dict_selection = {
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_grouped")
-# path_out = OSpath__join(path_main, "Plots_v5")
-# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v03"
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/Review/r01"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -192,7 +190,7 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
             else:
                 ax.text(ll, 0, txt, fontsize=12, ha='right', va='top', rotation=45, color="k")
             if txt == "":
-                if ll == 15:
+                if ll == 20:
                     text = "EnsoFbSstTaux"
                 else:
                     text = "EnsoFbSstThf"
@@ -207,11 +205,16 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
         ax.set_xticklabels(axis)
     if cfram is True:
         nbr = len(x_names) - 0.5
-        lic = ["yellowgreen"] * 4 + ["orchid"] * 4 + ["gold"] * 4 + ["darkcyan"] * 4
-        lis = ["-", "-", "-", "-", (0, (5, 5)), "-", "-", "-", (0, (5, 5)), "-", "-", "-", (0, (5, 5)), "-", "-", "-"]
-        lix = [[-0.5, -0.5], [-0.5, 7.5], [7.5, 7.5], [-0.5, 7.5], [7.5, 7.5], [7.5, 14.5], [14.5, 14.5], [7.5, 14.5]] \
-              + [[14.5, 14.5], [14.5, 18.5], [18.5, 18.5], [14.5, 18.5], [18.5, 18.5], [18.5, nbr], [nbr, nbr], [18.5, nbr]]
-        liy = [[0, 2], [2, 2], [0, 2], [0, 0]] * 4
+        # lic = ["yellowgreen"] * 4 + ["orchid"] * 4 + ["gold"] * 4 + ["darkcyan"] * 4
+        # lis = ["-", "-", "-", "-", (0, (5, 5)), "-", "-", "-", (0, (5, 5)), "-", "-", "-", (0, (5, 5)), "-", "-", "-"]
+        # lix = [[-0.5, -0.5], [-0.5, 7.5], [7.5, 7.5], [-0.5, 7.5], [7.5, 7.5], [7.5, 14.5], [14.5, 14.5], [7.5, 14.5]] \
+        #       + [[14.5, 14.5], [14.5, 18.5], [18.5, 18.5], [14.5, 18.5], [18.5, 18.5], [18.5, nbr], [nbr, nbr], [18.5, nbr]]
+        # liy = [[0, 2], [2, 2], [0, 2], [0, 0]] * 4
+        lic = ["yellowgreen"] * 2 + ["orchid"] * 2 + ["gold"] * 2 + ["darkcyan"] * 2
+        lis = ["-"] * len(lic)
+        lix = [[-0.4, 7.5], [-0.4, 7.5], [7.5, 14.5], [7.5, 14.5], [14.5, 18.5], [14.5, 18.5], [18.5, nbr - 0.1],
+               [18.5, nbr - 0.1]]
+        liy = [[2, 2], [0, 0]] * int(len(lic) / 2)
         for lc, ls, lx, ly in zip(lic, lis, lix, liy):
             line = Line2D(lx, ly, c=lc, lw=5, ls=ls, zorder=10)
             line.set_clip_on(False)
@@ -625,7 +628,7 @@ if ' ':
         #                            "metrics_" + str(len(my_project)).zfill(2) + "selections_"+my_project[0] + "_v2")
         figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
                                    "metrics_" + str(len(my_project)).zfill(2) + "selections_" + my_project[0] + "")
-        title = "a) Multi-model mean (MMM) relative to CMIP"
+        title = "a) Mean metric values of a subset of models relative to CMIP"
         colors = ["orange", "forestgreen"]
         # list_metrics2 = list()
         # for met in list_metrics:
@@ -681,7 +684,7 @@ if ' ':
                                    "metrics_cmip5_vs_cmip6")
         # title = ""
         # colors = ["lime", "sienna"]
-        title = "Multi-model mean (MMM) relative to CMIP5"
+        title = "Mean metric values relative to CMIP5"
         colors = ["r", "dodgerblue"]
         legend = [proj.upper() for proj in list_project]
         # list_metrics2 = list()

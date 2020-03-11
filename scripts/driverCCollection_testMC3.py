@@ -1,6 +1,7 @@
 # -*- coding:UTF-8 -*-
 from __future__ import print_function
 from cdms2 import open as CDMS2open
+import json
 from os.path import join as join_path
 from os import environ
 from sys import exit
@@ -12,6 +13,7 @@ from EnsoComputeMetricsLib import ComputeCollection, ComputeCollection_ObsOnly
 
 xmldir = environ['XMLDIR']
 
+
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
     list_obs = ReferenceObservations().keys()
     if name in list_obs:
@@ -19,6 +21,7 @@ def find_xml(name, frequency, variable, project='', experiment='', ensemble='', 
     else:
         file_name, file_area, file_land = find_xml_cmip(name, project, experiment, ensemble, frequency, realm, variable)
     return file_name, file_area, file_land
+
 
 def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
     file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
@@ -48,6 +51,7 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
         file_area, file_land = find_xml_fx(model, project=project, experiment=experiment, realm=realm)
     return file_name, file_area, file_land
 
+
 def find_xml_fx(name, project='', experiment='', realm=''):
     list_obs = ReferenceObservations().keys()
     if name in list_obs:
@@ -64,6 +68,7 @@ def find_xml_fx(name, project='', experiment='', realm=''):
     except: file_land = None
     return file_area, file_land
 
+
 def find_xml_obs(obs, frequency, variable):
     file_name = join_path(xmldir, 'obs_' + str(obs) + '_glob_' + str(frequency) + '_O.xml')
     xml = CDMS2open(file_name)
@@ -77,8 +82,16 @@ def find_xml_obs(obs, frequency, variable):
     return file_name, file_area, file_land
 
 
+def save_json_obs(dict_in, json_name):
+    dict_out = {"RESULTS": {"model": dict_in}}
+    # save as json file
+    with open(json_name + '.json', 'w') as outfile:
+        json.dump(dict_out, outfile, sort_keys=True)
+    return
+
+
 # metric collection
-mc_name = 'ENSO_perf'#'ENSO_proc'#'EVAL_IPSL'#'ENSO_tel'#'MC1'#
+mc_name = 'ENSO_tel'  # 'ENSO_perf'  # 'ENSO_proc'  #
 dict_mc = defCollection(mc_name)
 list_metric = sorted(dict_mc['metrics_list'].keys())
 
@@ -111,13 +124,13 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['ERA-Interim', 'HadISST', 'Tropflux', 'GPCPv2.3']#['Tropflux','GPCPv2.3']#['HadISST']#
+    list_obs = ['AVISO', 'ERA-Interim', 'GODAS', 'GPCPv2.3', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
 elif mc_name == 'ENSO_tel':
-    list_obs = ['ERA-Interim']#['HadISST','GPCPv2.3']
+    list_obs = ['ERA-Interim', 'GPCPv2.3', 'HadISST', 'NCEP2', 'Tropflux']
 elif mc_name == 'ENSO_proc':
-    list_obs = ['AVISO', 'ERA-Interim', 'Tropflux']#['Tropflux', 'ERA-Interim', 'SODA3.4.2']#['ERA-Interim', 'SODA3.4.2']#['HadISST','GPCPv2.3']
+    list_obs = ['AVISO', 'ERA-Interim', 'GODAS', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
 elif mc_name == 'EVAL_IPSL':
-    list_obs = ['ERA-Interim']#
+    list_obs = ['ERA-Interim']
 print('\033[95m' + str(list_obs) + '\033[0m')
 
 
@@ -178,9 +191,10 @@ dictDatasets = {'observations': dict_obs}
 netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
 netcdf_name = 'YANN_PLANTON_' + mc_name + "_OBSNAME"
 netcdf = join_path(netcdf_path, netcdf_name)
-dict_metric, dict_dive = ComputeCollection_ObsOnly(mc_name, dictDatasets, debug=True, netcdf=True, netcdf_name=netcdf)
+dict_metric, dict_dive = ComputeCollection_ObsOnly(mc_name, dictDatasets, debug=False, netcdf=True, netcdf_name=netcdf)
+netcdf = netcdf.replace("OBSNAME", "observation")
+save_json_obs(dict_metric, netcdf)
 stop
-
 
 # models
 list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
