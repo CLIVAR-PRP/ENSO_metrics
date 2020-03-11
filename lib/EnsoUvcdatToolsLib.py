@@ -1193,77 +1193,86 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     """
     keyerror = None
     if var_name in ['temperature']:
-        if units in ['degK', 'K', 'Kelvin', 'Kelvins']:
+        if units in ['K', 'Kelvin', 'Kelvins', 'degree K', 'degree Kelvin', 'degree Kelvins', 'degree_K',
+                     'degree_Kelvin', 'degree_Kelvins', 'degreeK', 'degreeKelvin', 'degreeKelvins', 'degrees K',
+                     'degrees Kelvin', 'degrees Kelvins', 'degrees_K', 'degrees_Kelvin', 'degrees_Kelvins', 'degreesK',
+                     'degreesKelvin', 'degreesKelvins', 'deg K', 'deg Kelvin', 'deg Kelvins', 'deg_K', 'deg_Kelvin',
+                     'deg_Kelvins', 'degK', 'degKelvin', 'degKelvins', 'deg. K', 'deg. Kelvin', 'deg. Kelvins']:
             # check if the temperature units is really K
             if float(MV2minimum(tab)) > 150:
                 # unit change of the temperature: from K to degC
                 tab = dict_operations['minus'](tab, 273.15)
-                units = "degC"
             else:
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, units, minmax, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
-        elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
-                       'degrees C']:
+        elif units in ['C', 'celsius', 'Celsius', 'degree C', 'degree celsius', 'degree Celsius', 'degree_C',
+                       'degree_celsius', 'degree_Celsius', 'degreeC', 'degreecelsius', 'degreeCelsius', 'degrees C',
+                       'degrees celsius', 'degrees Celsius', 'degrees_C', 'degrees_celsius', 'degrees_Celsius',
+                       'degreesC', 'degreescelsius', 'degreesCelsius', 'deg C', 'deg celsius', 'deg Celsius', 'deg_C',
+                       'deg_celsius', 'deg_Celsius', 'degC', 'degcelsius', 'degCelsius', 'deg. C', 'deg. celsius',
+                       'deg. Celsius']:
             # check if the temperature units is really degC
-            if float(MV2minimum(tab)) < 50:
-                units = "degC"
-            else:
+            if float(MV2minimum(tab)) > 50:
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, minmax, units, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "degC"
     elif var_name in ['precipitations']:
-        if units in ["kg m-2 s-1", "Kg/m^2/s", "Kg/m2/s"]:
+        if units in ["kg/m2/s", "kg m-2 s-1", "kg/m^2/s", "kg/m**2/s", "kg m**-2 s**-1", "Kg/m2/s", "Kg m-2 s-1",
+                     "Kg/m^2/s", "Kg/m**2/s", "Kg m**-2 s**-1"]:
             # changes units of the precipitation flux: from kg/(m2.s) to mm/day
             # it must be divided by the density of water = 1000 kg/m3
             #     and multiplied by 1000 (m to mm) and by 60*60*24 (s to day)
             tab = dict_operations['multiply'](tab, 86400)
-        elif units in ["mm day-1", "mm/day"]:
+        elif units in ["mm/day", "mm day-1", 'mm day**-1', "mm/d", "mm d-1", 'mm d**-1']:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "mm/day"
     elif var_name in ['wind stress']:
-        if units in ['N/m^2', 'Pa', 'Pascal', 'Pascals', 'N m-2', 'N/m2']:
-            units = "N/m2"
-        else:
+        if units not in ['N/m2', 'N m-2', 'N/m^2', 'N/m**2', 'N m**-2', 'Pa', 'pascal', 'pascals', 'Pascal', 'Pascals']:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "N/m2"
     elif var_name in ['velocity']:
-        if units in ['cm s-1', 'cm/s', 'cm s**-1']:
+        if units in ['cm/s', 'cm s-1', 'cm s**-1', 'cm/sec', 'cm sec-1', 'cm sec**-1']:
             # unit change of the velocity: from cm/s to m/s
             tab = dict_operations['multiply'](tab, 1e-2)
-            units = "m/s"
-        elif units in ['m s-1', 'm/s', 'm s**-1', 'm/sec']:
-            units = "m/s"
+        elif units in ['m/s', 'm s-1', 'm s**-1', 'm/sec', 'm sec-1', 'm sec**-1']:
+            pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "m/s"
     elif var_name in ['heat flux']:
-        if units in ['W/m2', 'W m-2', 'W/m^2']:
-            units = "W/m2"
+        if units in ['W/m2', 'W m-2', 'W/m^2', 'W/m**2', 'W m**-2']:
+            pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "W/m2"
     elif var_name in ['pressure']:
-        if units in ['N/m^2', 'Pa', 'Pascal', 'Pascals', 'N m-2', 'N/m2']:
-            units = "Pa"
+        if units in ['N/m2', 'N m-2', 'N/m^2', 'N/m**2', 'N m**-2', 'Pa', 'pascal', 'pascals', 'Pascal', 'Pascals']:
+            pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "Pa"
     elif var_name in ['sea surface height']:
         if units in ['cm', 'centimeter']:
             # unit change of the sea surface height: from cm to m
             tab = dict_operations['multiply'](tab, 1e-2)
-            units = "m"
         elif units in ['m', 'meter']:
-            units = "m"
+            pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "m"
     else:
         list_strings = ["WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": variable name",
                         str().ljust(5) + "unknown variable name: " + var_name + " (" + name_in_file + ")"]
