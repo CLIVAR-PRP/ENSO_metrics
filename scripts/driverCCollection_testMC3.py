@@ -70,7 +70,8 @@ def find_xml_fx(name, project='', experiment='', realm=''):
 
 
 def find_xml_obs(obs, frequency, variable):
-    file_name = join_path(xmldir, 'obs_' + str(obs) + '_glob_' + str(frequency) + '_O.xml')
+    # file_name = join_path(xmldir, 'obs_' + str(obs) + '_glob_' + str(frequency) + '_O.xml')
+    file_name = join_path(xmldir, "obs_ENSO_metrics_" + str(obs) + ".xml")
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
@@ -124,11 +125,12 @@ list_obs = sorted(list_obs)
 if mc_name == 'MC1':
     list_obs = ['Tropflux']
 elif mc_name == 'ENSO_perf':
-    list_obs = ['AVISO', 'ERA-Interim', 'GODAS', 'GPCPv2.3', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
+    list_obs = ['20CRv2', 'AVISO', 'CMAP', 'ERA-Interim', 'ERSSTv5', 'GODAS', 'GPCPv2.3', 'HadISST', 'NCEP2',
+                'SODA3.4.2', 'Tropflux']
 elif mc_name == 'ENSO_tel':
-    list_obs = ['ERA-Interim', 'GPCPv2.3', 'HadISST', 'NCEP2', 'Tropflux']
+    list_obs = ['20CRv2', 'CMAP', 'ERA-Interim', 'ERSSTv5', 'GPCPv2.3', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
 elif mc_name == 'ENSO_proc':
-    list_obs = ['AVISO', 'ERA-Interim', 'GODAS', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
+    list_obs = ['20CRv2', 'AVISO', 'ERA-Interim', 'ERSSTv5', 'GODAS', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
 elif mc_name == 'EVAL_IPSL':
     list_obs = ['ERA-Interim']
 print('\033[95m' + str(list_obs) + '\033[0m')

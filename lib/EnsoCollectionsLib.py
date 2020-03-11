@@ -926,6 +926,7 @@ def ReferenceObservations(dataset=True):
             'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.20thC_ReanV2.monolevel.mm.html',
             'file_name': '<var_name>' + '*.mon.mean.nc',
             'variable_name_in_file': {
+                'landmask': {'var_name': 'land'},
                 'lhf': {'var_name': 'lhtfl'},
                 # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
                 # lwr = dlwrf - ulwrf
