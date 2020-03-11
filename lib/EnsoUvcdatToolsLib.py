@@ -1193,14 +1193,14 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     """
     keyerror = None
     if var_name in ['temperature']:
-        if units in ['degK', 'K']:
+        if units in ['degK', 'K', 'Kelvin', 'Kelvins']:
             # check if the temperature units is really K
             if float(MV2minimum(tab)) > 150:
                 # unit change of the temperature: from K to degC
                 tab = dict_operations['minus'](tab, 273.15)
                 units = "degC"
             else:
-                minmax = [MV2minimum(tab),MV2maximum(tab)]
+                minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, units, minmax, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
         elif units in ['C', 'degree_Celsius', 'deg_Celsius', 'deg. C', 'degCelsius', 'degree_C', 'deg_C', 'degC',
@@ -1227,7 +1227,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['wind stress']:
-        if units in ['N/m^2', 'Pa', 'Pascals', 'N m-2', 'N/m2']:
+        if units in ['N/m^2', 'Pa', 'Pascal', 'Pascals', 'N m-2', 'N/m2']:
             units = "N/m2"
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
@@ -1249,7 +1249,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['pressure']:
-        if units in ['N/m^2', 'Pa', 'Pascals', 'N m-2', 'N/m2']:
+        if units in ['N/m^2', 'Pa', 'Pascal', 'Pascals', 'N m-2', 'N/m2']:
             units = "Pa"
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
