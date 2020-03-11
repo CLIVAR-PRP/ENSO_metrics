@@ -197,31 +197,31 @@ def get_reference(metric_collection, metric):
     return plot_param(metric_collection, my_met)['metric_reference']
 
 
-# def my_colorbar(mini=-1., maxi=1., nbins=20):
-#     levels = MaxNLocator(nbins=nbins).tick_values(mini, maxi)
-#     cmap = plt.get_cmap("cmo.balance")  # plt.get_cmap("coolwarm")
-#     newcmp1 = cmap(NUMPYlinspace(0.15, 0.85, 256))
-#     newcmp2 = cmap(NUMPYlinspace(0.0, 1.0, 256))
-#     # newcmp1[120:136, :] = to_rgba('snow')
-#     newcmp1 = ListedColormap(newcmp1)
-#     # newcmp1.set_bad(color="w")
-#     newcmp1.set_bad(color="k")
-#     newcmp1.set_over(newcmp2[-30])  # color='darkred')
-#     newcmp1.set_under(newcmp2[29])
-#     norm = BoundaryNorm(levels, ncolors=newcmp1.N)
-#     return newcmp1, norm
 def my_colorbar(mini=-1., maxi=1., nbins=20):
     levels = MaxNLocator(nbins=nbins).tick_values(mini, maxi)
-    cmap = plt.get_cmap("cmo.amp")  # plt.get_cmap("coolwarm")
-    newcmp1 = cmap(NUMPYlinspace(0.0, 1.0, 256))
+    cmap = plt.get_cmap("cmo.balance")  # plt.get_cmap("coolwarm")
+    newcmp1 = cmap(NUMPYlinspace(0.15, 0.85, 256))
     newcmp2 = cmap(NUMPYlinspace(0.0, 1.0, 256))
+    # newcmp1[120:136, :] = to_rgba('snow')
     newcmp1 = ListedColormap(newcmp1)
+    # newcmp1.set_bad(color="w")
     newcmp1.set_bad(color="k")
-    newcmp1.set_over(newcmp2[-1])  # color='darkred')
-    # newcmp1.set_under(color="w")
-    newcmp1.set_under(color="limegreen")
+    newcmp1.set_over(newcmp2[-30])  # color='darkred')
+    newcmp1.set_under(newcmp2[29])
     norm = BoundaryNorm(levels, ncolors=newcmp1.N)
     return newcmp1, norm
+# def my_colorbar(mini=-1., maxi=1., nbins=20):
+#     levels = MaxNLocator(nbins=nbins).tick_values(mini, maxi)
+#     cmap = plt.get_cmap("cmo.amp")  # plt.get_cmap("coolwarm")
+#     newcmp1 = cmap(NUMPYlinspace(0.0, 1.0, 256))
+#     newcmp2 = cmap(NUMPYlinspace(0.0, 1.0, 256))
+#     newcmp1 = ListedColormap(newcmp1)
+#     newcmp1.set_bad(color="k")
+#     newcmp1.set_over(newcmp2[-1])  # color='darkred')
+#     # newcmp1.set_under(color="w")
+#     newcmp1.set_under(color="limegreen")
+#     norm = BoundaryNorm(levels, ncolors=newcmp1.N)
+#     return newcmp1, norm
 
 
 def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='portraitplot', write_metrics=False,
@@ -326,34 +326,34 @@ def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='p
     # color bar
     cax = plt.axes([x2 + 0.03, y1, 0.02, y2 - y1])
     cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend='both', aspect=40)
+    cbar.ax.set_yticklabels(["-2 $\sigma$", "-1", "MMM", "1", "2 $\sigma$"], fontdict=fontdict)
+    cax.annotate("", xy=(3.7, 0.06), xycoords='axes fraction', xytext=(3.7, 0.45), fontsize=40,
+                 weight="bold", rotation="vertical", ha="center", va='bottom',
+                 arrowprops=dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0))
+    cax.text(5.2, 0.45, "closer to reference", fontsize=40, rotation="vertical", ha="center", va='top', weight="bold")
+    cax.annotate("", xy=(3.7, 0.94), xycoords='axes fraction', xytext=(3.7, 0.55), fontsize=40,
+                 weight="bold", rotation="vertical", ha="center", va='top',
+                 arrowprops=dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0))
+    cax.text(5.2, 0.55, "further from reference", fontsize=40, rotation="vertical", ha="center", va='bottom',
+             weight="bold")
     # cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend='max', aspect=40)
     # cbar.ax.set_yticklabels(levels, fontsize=30, weight='bold')
-    cbar.ax.set_yticks(levels)
+    # cbar.ax.set_yticks(levels)
     # cbar.ax.set_yticklabels(levels, fontdict=fontdict)
-    # cbar.ax.set_yticklabels(["-2 $\sigma$", "-1", "MMM", "1", "2 $\sigma$"], fontdict=fontdict)
-    cbar.ax.set_yticklabels(["best\nmodel", "+1 $\sigma$", "+2 $\sigma$", "+3 $\sigma$", "+4 $\sigma$"],
-                            fontdict=fontdict)
+    # cbar.ax.set_yticklabels(["best\nmodel", "+1 $\sigma$", "+2 $\sigma$", "+3 $\sigma$", "+4 $\sigma$"],
+    #                         fontdict=fontdict)
     # cbar.ax.set_yticklabels(["0", "1 $\sigma$", "2 $\sigma$", "3 $\sigma$", "4 $\sigma$"], fontdict=fontdict)
     # cbar.ax.set_yticklabels(["-2", "-1", "MMM", "1", "2"], fontdict=fontdict)
-    # cax.annotate("", xy=(3.7, 0.06), xycoords='axes fraction', xytext=(3.7, 0.45), fontsize=40,
-    #              weight="bold", rotation="vertical", ha="center", va='bottom',
-    #              arrowprops=dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0))
-    # cax.text(5.2, 0.45, "closer to reference", fontsize=40, rotation="vertical", ha="center", va='top', weight="bold")
-    # cax.annotate("", xy=(3.7, 0.94), xycoords='axes fraction', xytext=(3.7, 0.55), fontsize=40,
-    #              weight="bold", rotation="vertical", ha="center", va='top',
-    #              arrowprops=dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0))
-    # cax.text(5.2, 0.55, "further from reference", fontsize=40, rotation="vertical", ha="center", va='bottom',
-    #          weight="bold")
     # cax.annotate("", xy=(5, 0.94), xycoords='axes fraction', xytext=(5, 0.00), fontsize=40,
     #              weight="bold", rotation="vertical", ha="center", va='top',
     #              arrowprops=dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0))
     # cax.text(6.5, 0.5, "further from reference", fontsize=40, rotation="vertical", ha="center", va='center',
     #          weight="bold")
-    cax.annotate("", xy=(6, 0.94), xycoords='axes fraction', xytext=(6, 0.06), fontsize=40,
-                 weight="bold", rotation="vertical", ha="center", va='top',
-                 arrowprops=dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0))
-    cax.text(7.5, 0.5, "further from reference", fontsize=40, rotation="vertical", ha="center", va='center',
-             weight="bold")
+    # cax.annotate("", xy=(6, 0.94), xycoords='axes fraction', xytext=(6, 0.06), fontsize=40,
+    #              weight="bold", rotation="vertical", ha="center", va='top',
+    #              arrowprops=dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0))
+    # cax.text(7.5, 0.5, "further from reference", fontsize=40, rotation="vertical", ha="center", va='center',
+    #          weight="bold")
     plt.savefig(name_plot, bbox_inches='tight')
     plt.close()
     return
@@ -514,7 +514,7 @@ for mc in metric_collections:
         del mea, med, sel1, sel2, tmp
     # plot
     # levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
-    levels = list(range(0, 5))  # list(range(-2, 3))  # [round(ii, 1) for ii in NUMPYarange(-1.5, 1.6, 0.5)]
+    levels = list(range(-2, 3))  # list(range(0, 5))  # [round(ii, 1) for ii in NUMPYarange(-1.5, 1.6, 0.5)]
     figure_name = OSpath__join(path_out, "portraitplot_" + str(mc) + "_modified_v2")
     title = str(dict_mc[mc]) + ": normalized by median (each row)"
     # x_names = ["* " + mod if mod in dict_mod["cmip6"] else mod for mod in my_models] +\
@@ -531,7 +531,7 @@ for mc in metric_collections:
 # all portraitplots in one plot
 if ' ':
     # plot
-    figure_name = OSpath__join(path_out, "portraitplot_" + str(len(metric_collections)) + "metric_collections_v5")
+    figure_name = OSpath__join(path_out, "portraitplot_" + str(len(metric_collections)) + "metric_collections_v1")
     tmp_num = ["a) ", "b) ", "c) "]
     title = [tmp_num[ii] + dict_mc[mc] for ii, mc in enumerate(metric_collections)]
     # title = ""

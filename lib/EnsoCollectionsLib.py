@@ -779,6 +779,12 @@ def defCollection(mc=True):
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
+                'EnsoAmpl': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
+                    'metric_computation': 'abs_relative_difference',
+                },
                 'EnsoSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
@@ -788,12 +794,6 @@ def defCollection(mc=True):
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
-                },
-                'EnsoAmpl': {
-                    'variables': ['sst'],
-                    'regions': {'sst': 'nino3.4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoSeasonality': {
                     'variables': ['sst'],
@@ -979,20 +979,13 @@ def ReferenceObservations(dataset=True):
             },
         },
         'GODAS': {
-            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
-            'file_name': '<var_name>' + '_Omon_ORAreanalysis_GODAS_*.nc',
+            'website': 'see https://www.esrl.noaa.gov/psd/data/gridded/data.godas.html',
+            'file_name': '<var_name>' + '_YYYY.nc',
             'variable_name_in_file': {
                 'ssh': {'var_name': 'sshg'},
-                'so': {'var_name': 'so'},
-                'thetao': {'var_name': 'thetao'},
-                'uo': {'var_name': 'uo'},
-                'vo': {'var_name': 'vo'},
-                # many variables are missing from https://www.esrl.noaa.gov/psd/data/gridded/data.godas.html
-                #   taux = uflx, tauy = vflx, thf = thflx
-                #   and
-                #   salt flux = sltfl, Sea Surface Height Relative to Geoid = sshg,
-                #   Geometric Depth Below Sea Surface = dbss_obil, Geometric Depth Below Sea Surface = dbss_obml,
-                #   Geometric vertical velocity (dz/dt) = dzdt
+                'taux': {'var_name': 'uflx'},
+                'tauy': {'var_name': 'vflx'},
+                'thf': {'var_name': 'thflx'},
             },
         },
         'GPCPv2.3': {
@@ -1009,6 +1002,30 @@ def ReferenceObservations(dataset=True):
             'file_name': 'HadISST_' + '<var_name>' + '.nc',
             'variable_name_in_file': {
                 'sst': {'var_name': 'sst'},
+            },
+        },
+        'NCEP2': {
+            'website': 'see https://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis2.gaussian.html',
+            'file_name': '<var_name>' + '.sfc.mon.mean.nc',
+            'variable_name_in_file': {
+                'landmask': {'var_name': 'land'},
+                'lhf': {'var_name': 'lhtfl'},
+                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # lwr = rlds - rlus
+                'lwr': {'var_name': ['dlwrf', 'ulwrf'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'prate'},
+                'shf': {'var_name': 'shtfl'},
+                'slp': {'var_name': 'pres'},
+                'sst': {'var_name': 'skt'},
+                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # swr = rsds - rsus
+                'swr': {'var_name': ['dswrf', 'uswrf'], 'algebric_calculation': ['plus', 'minus']},
+                'taux': {'var_name': 'uflx'},
+                'tauy': {'var_name': 'vflx'},
+                'thf': {
+                    'var_name': ['lhtfl', 'shtfl', 'dlwrf', 'ulwrf', 'dswrf', 'uswrf'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
             },
         },
         'OAFlux': {

@@ -1065,8 +1065,10 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     :return:
     """
     if debug is True:
-        dict_debug = {'shape1': 'tab1.shape = ' + str(tab1.shape), 'shape2': 'tab2.shape = ' + str(tab2.shape),
-                      'time1': 'tab1.time = ' + str(TimeBounds(tab1)), 'time2': 'tab2.time = ' + str(TimeBounds(tab2))}
+        # dict_debug = {'shape1': 'tab1.shape = ' + str(tab1.shape), 'shape2': 'tab2.shape = ' + str(tab2.shape),
+        #               'time1': 'tab1.time = ' + str(TimeBounds(tab1)),
+        #               'time2': 'tab2.time = ' + str(TimeBounds(tab2))}
+        dict_debug = {'shape1': 'tab1.shape = ' + str(tab1.shape), 'shape2': 'tab2.shape = ' + str(tab2.shape)}
         EnsoErrorsWarnings.debug_mode('\033[93m', 'in CheckTime (input)', 20, **dict_debug)
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
@@ -1130,12 +1132,14 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     tab1_sliced = tab1(time=(stime_adjust, etime_adjust))
     tab2_sliced = tab2(time=(stime_adjust, etime_adjust))
     if debug is True:
+        # dict_debug = {'shape1': 'tab1.shape = ' + str(tab1_sliced.shape),
+        #               'shape2': 'tab2.shape = ' + str(tab2_sliced.shape),
+        #               'time1': 'tab1.time = ' + str(TimeBounds(tab1_sliced)),
+        #               'time2': 'tab1.time = ' + str(tab1_sliced.getTime().asComponentTime()[:]),
+        #               'time3': 'tab2.time = ' + str(TimeBounds(tab2_sliced)),
+        #               'time4': 'tab2.time = ' + str(tab2_sliced.getTime().asComponentTime()[:])}
         dict_debug = {'shape1': 'tab1.shape = ' + str(tab1_sliced.shape),
-                      'shape2': 'tab2.shape = ' + str(tab2_sliced.shape),
-                      'time1': 'tab1.time = ' + str(TimeBounds(tab1_sliced)),
-                      'time2': 'tab1.time = ' + str(tab1_sliced.getTime().asComponentTime()[:]),
-                      'time3': 'tab2.time = ' + str(TimeBounds(tab2_sliced)),
-                      'time4': 'tab2.time = ' + str(tab2_sliced.getTime().asComponentTime()[:])}
+                      'shape2': 'tab2.shape = ' + str(tab2_sliced.shape)}
         EnsoErrorsWarnings.debug_mode('\033[93m', 'in CheckTime (output)', 20, **dict_debug)
     if len(tab1_sliced.getTime()[:]) != len(tab2_sliced.getTime()[:]):
         keyerror1 = "missing time step within the given period"
@@ -1189,7 +1193,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     """
     keyerror = None
     if var_name in ['temperature']:
-        if units == 'K':
+        if units in ['degK', 'K']:
             # check if the temperature units is really K
             if float(MV2minimum(tab)) > 150:
                 # unit change of the temperature: from K to degC
@@ -1212,18 +1216,18 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['precipitations']:
-        if units == 'kg m-2 s-1':
+        if units in ["kg m-2 s-1", "Kg/m^2/s", "Kg/m2/s"]:
             # changes units of the precipitation flux: from kg/(m2.s) to mm/day
             # it must be divided by the density of water = 1000 kg/m3
             #     and multiplied by 1000 (m to mm) and by 60*60*24 (s to day)
             tab = dict_operations['multiply'](tab, 86400)
-        elif units == 'mm/day':
+        elif units in ["mm day-1", "mm/day"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['wind stress']:
-        if units in ['N/m^2', 'Pa', 'N m-2', 'N/m2']:
+        if units in ['N/m^2', 'Pa', 'Pascals', 'N m-2', 'N/m2']:
             units = "N/m2"
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
@@ -1245,7 +1249,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
     elif var_name in ['pressure']:
-        if units in ['N/m^2', 'Pa', 'N m-2', 'N/m2']:
+        if units in ['N/m^2', 'Pa', 'Pascals', 'N m-2', 'N/m2']:
             units = "Pa"
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
