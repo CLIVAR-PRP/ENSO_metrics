@@ -11,13 +11,15 @@ def find_latest(path):
 # =================================================
 # Background Information
 # -------------------------------------------------
-mip = 'cmip6'  # cmip5, cmip6
+#mip = 'cmip6'  # cmip5, cmip6
+mip = 'obs2obs'  # cmip5, cmip6
 exp = 'historical'  # historical, piControl
 
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-debug = False
+#debug = False
+debug = True
 nc_out = True
 
 #=================================================
@@ -43,19 +45,19 @@ reference_data_lf_path = {
 # Models
 #-------------------------------------------------
 modpath = os.path.join(
-    find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
-    '%(mip)/%(exp)/%(realm)/mon/%(variable)',
-    '%(mip).%(exp).%(model).%(realization).mon.%(variable).xml')
+    '/p/user_pub/PCMDIobs/PCMDIobs2.0-beta/%(realm)/mon/%(variable)',
+    '%(model)/gn/latest',
+    '%(variable)_mon_%(model)_BE_gn_??????-??????.nc')
 
 modpath_lf = os.path.join(
     find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
     '%(mip)/historical/%(realm)/fx/%(variable)',
     '%(mip).historical.%(model).r0i0p0.fx.%(variable).xml')
 
-modnames = ['all']
+modnames = ['20CR', 'ERA-20C', 'ERA-INT', 'TropFlux-1-0', 'CMAP-V1902', 'GPCP-2-3', 'TRMM-3B43v-7', 'ERA-5', 'CERES-EBAF-4-0', 'CERES-EBAF-4-1', 'AVISO-1-0']
 
 if debug:
-    modnames = ['IPSL-CM6A-LR']
+    modnames = ['ERA-INT']
 
 realization = 'r1i1p1f1'  # r1i1p1 (cmip5), r1i1p1f1 (cmip6), * (all)
 #realization = '*'
