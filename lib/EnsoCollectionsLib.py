@@ -922,6 +922,55 @@ def defCollection(mc=True):
 # List of reference observations for each variables
 def ReferenceObservations(dataset=True):
     dict_ref_obs = {
+        '20CRv2': {
+            'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.20thC_ReanV2.monolevel.mm.html',
+            'file_name': '<var_name>' + '*.mon.mean.nc',
+            'variable_name_in_file': {
+                'lhf': {'var_name': 'lhtfl'},
+                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # lwr = dlwrf - ulwrf
+                'lwr': {'var_name': ['dlwrf', 'ulwrf'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'prate'},
+                'slp': {'var_name': 'press'},
+                'shf': {'var_name': 'shtfl'},
+                'sst': {'var_name': 'air'},
+                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # swr = dswrf - uswrf
+                'swr': {'var_name': ['dswrf', 'uswrf'], 'algebric_calculation': ['plus', 'minus']},
+                'taux': {'var_name': 'uflx'},
+                'tauy': {'var_name': 'vflx'},
+                # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # tfh = lhtfl + shtfl + dlwrf - ulwrf + dswrf - uswrf
+                'thf': {
+                    'var_name': ['lhtfl', 'shtfl', 'dlwrf', 'ulwrf', 'dswrf', 'uswrf'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
+            },
+        },
+        '20CRv3': {
+            'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.20thC_ReanV3.monolevel.html',
+            'file_name': '<var_name>' + '*.mon.mean.nc',
+            'variable_name_in_file': {
+                'landmask': {'var_name': 'land'},
+                'lhf': {'var_name': 'lhtfl'},
+                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # lwr = dlwrf - ulwrf
+                'lwr': {'var_name': ['dlwrf', 'ulwrf'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'prate'},
+                'slp': {'var_name': 'prmsl'},
+                'shf': {'var_name': 'shtfl'},
+                'sst': {'var_name': 'skt'},
+                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # swr = dswrf - uswrf
+                'swr': {'var_name': ['dswrf', 'uswrf'], 'algebric_calculation': ['plus', 'minus']},
+                # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # tfh = lhtfl + shtfl + dlwrf - ulwrf + dswrf - uswrf
+                'thf': {
+                    'var_name': ['lhtfl', 'shtfl', 'dlwrf', 'ulwrf', 'dswrf', 'uswrf'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
+            },
+        },
         'AVISO': {
             'website': 'see https://www.aviso.altimetry.fr/en/data/products/sea-surface-height-products/global.html',
             'file_name': 'dt_global_allsat_msla_h_y????_m??.nc',
@@ -937,6 +986,13 @@ def ReferenceObservations(dataset=True):
                 'thf': {'var_name': 'hfds'},  # I'm not sure yet if it is the total heat flux
                 'uo': {'var_name': 'uo'},
                 'vo': {'var_name': 'vo'},
+            },
+        },
+        'CMAP': {
+            'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.cmap.html',
+            'file_name': '<var_name>' + '.mon.mean.nc',
+            'variable_name_in_file': {
+                'pr': {'var_name': 'precip'},
             },
         },
         'ERA-Interim': {
