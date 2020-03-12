@@ -10580,6 +10580,9 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                     file_area=prareafileobs, name_area=prareanameobs, file_mask=prlandmaskfileobs,
                                     name_mask=prlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            sst_mod, prmap_mod, keyerror_mod3 = CheckTime(sst_mod, prmap_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
             # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             prmap_mod, unneeded = PreProcessTS(prmap_mod, '', areacell=prmap_mod_areacell, compute_anom=True,
                                                region="equatorial_pacific", **kwargs)
@@ -10983,6 +10986,11 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                     file_area=sstareafileobs, name_area=sstareanameobs, file_mask=sstlandmaskfileobs,
                                     name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            sst_mod, sstmap_mod, keyerror_mod3 = CheckTime(sst_mod, sstmap_mod, metric_name=metric, debug=debug,
+                                                           **kwargs)
+            sst_obs, sstmap_obs, keyerror_obs3 = CheckTime(sst_obs, sstmap_obs, metric_name=metric, debug=debug,
+                                                           **kwargs)
             # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             sstmap_mod, unneeded = PreProcessTS(sstmap_mod, '', areacell=sstmap_mod_areacell, compute_anom=True,
                                                 region="equatorial_pacific", **kwargs)
@@ -11433,6 +11441,11 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                     file_area=tauxareafileobs, name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs,
                                     name_mask=tauxlandmasknameobs, maskland=True, maskocean=False,
                                     time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+            # Checks if the same time period is used for both variables
+            sst_mod, tauxmap_mod, keyerror_mod3 = CheckTime(sst_mod, tauxmap_mod, metric_name=metric, debug=debug,
+                                                            **kwargs)
+            sst_obs, tauxmap_obs, keyerror_obs3 = CheckTime(sst_obs, tauxmap_obs, metric_name=metric, debug=debug,
+                                                            **kwargs)
             # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
             tauxmap_mod, unneeded = PreProcessTS(tauxmap_mod, '', areacell=tauxmap_mod_areacell, compute_anom=True,
                                                  region="equatorial_pacific", **kwargs)
