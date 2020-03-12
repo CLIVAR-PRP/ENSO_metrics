@@ -1278,7 +1278,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                         str().ljust(5) + "unknown variable name: " + var_name + " (" + name_in_file + ")"]
         EnsoErrorsWarnings.my_warning(list_strings)
     if return_tab_only is True:
-       return tab
+        return tab
     else:
         return tab, units, keyerror
 
@@ -1809,7 +1809,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     # Open file and get time dimension
     fi = CDMS2open(filename)
     if box is None:  # no box given
-        if time_bounds is None: # no time period given
+        if time_bounds is None:  # no time period given
             # read file
             tab = fi(varname)
         else:  # time period given by the user
@@ -1847,6 +1847,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
                 tab = tab[1:]
             if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
                 tab = tab[:-1]
+    time_ax = tab.getTime()
+    time_units = "days since " + str(time_ax.asComponentTime()[0].year) + "-01-01 12:00:00"
+    time_ax.id = "time"
+    time_ax.toRelativeTime(time_units)
+    tab.setAxis(0, time_ax)
     if frequency is None:  # no frequency given
         pass
     elif frequency == 'daily':

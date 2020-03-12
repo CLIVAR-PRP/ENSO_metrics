@@ -973,7 +973,7 @@ def ReferenceObservations(dataset=True):
             },
         },
         'AVISO': {
-            'website': 'see https://www.aviso.altimetry.fr/en/data/products/sea-surface-height-products/global.html',
+            'website': 'https://www.aviso.altimetry.fr/en/data/products/sea-surface-height-products/global.html',
             'file_name': 'dt_global_allsat_msla_h_y????_m??.nc',
             'variable_name_in_file': {'ssh': {'var_name': 'sla'}, },
         },
@@ -1036,7 +1036,7 @@ def ReferenceObservations(dataset=True):
             },
         },
         'GODAS': {
-            'website': 'see https://www.esrl.noaa.gov/psd/data/gridded/data.godas.html',
+            'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.godas.html',
             'file_name': '<var_name>' + '_YYYY.nc',
             'variable_name_in_file': {
                 'ssh': {'var_name': 'sshg'},
