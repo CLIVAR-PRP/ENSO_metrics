@@ -39,7 +39,7 @@ experiment = "historical"  # "piControl" #
 member = "r1i1p1"
 list_project = ["cmip6", "cmip5"]
 my_project = ["12 models", "CMIP"]
-big_ensemble = True  # False  #
+big_ensemble = False  # True  #
 reduced_set = True  # False  #
 dict_selection = {
     #
@@ -177,11 +177,11 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
             if ll < 8:
                 cc = "yellowgreen"
             elif 8 <= ll < 15:
-                cc = "orchid"
+                cc = "plum"
             elif 15 <= ll < 19:
                 cc = "gold"
             else:
-                cc = "darkcyan"
+                cc = "turquoise"
             boxdict = dict(lw=0, facecolor=cc, pad=3, alpha=1)
             if cname is True:
                 ax.text(ll, 0, txt, fontsize=12, ha='right', va='top', rotation=45, color=cc)
@@ -205,12 +205,12 @@ def plot_metrics(tab_val, name_plot, title="", x_names=None, y_name="", colors=N
         ax.set_xticklabels(axis)
     if cfram is True:
         nbr = len(x_names) - 0.5
-        # lic = ["yellowgreen"] * 4 + ["orchid"] * 4 + ["gold"] * 4 + ["darkcyan"] * 4
+        # lic = ["yellowgreen"] * 4 + ["plum"] * 4 + ["gold"] * 4 + ["turquoise"] * 4
         # lis = ["-", "-", "-", "-", (0, (5, 5)), "-", "-", "-", (0, (5, 5)), "-", "-", "-", (0, (5, 5)), "-", "-", "-"]
         # lix = [[-0.5, -0.5], [-0.5, 7.5], [7.5, 7.5], [-0.5, 7.5], [7.5, 7.5], [7.5, 14.5], [14.5, 14.5], [7.5, 14.5]] \
         #       + [[14.5, 14.5], [14.5, 18.5], [18.5, 18.5], [14.5, 18.5], [18.5, 18.5], [18.5, nbr], [nbr, nbr], [18.5, nbr]]
         # liy = [[0, 2], [2, 2], [0, 2], [0, 0]] * 4
-        lic = ["yellowgreen"] * 2 + ["orchid"] * 2 + ["gold"] * 2 + ["darkcyan"] * 2
+        lic = ["yellowgreen"] * 2 + ["plum"] * 2 + ["gold"] * 2 + ["turquoise"] * 2
         lis = ["-"] * len(lic)
         lix = [[-0.4, 7.5], [-0.4, 7.5], [7.5, 14.5], [7.5, 14.5], [14.5, 18.5], [14.5, 18.5], [18.5, nbr - 0.1],
                [18.5, nbr - 0.1]]
@@ -626,8 +626,9 @@ if ' ':
         tab_val = tab_val / tab_val[1]
         # figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
         #                            "metrics_" + str(len(my_project)).zfill(2) + "selections_"+my_project[0] + "_v2")
-        figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
-                                   "metrics_" + str(len(my_project)).zfill(2) + "selections_" + my_project[0] + "")
+        # figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
+        #                            "metrics_" + str(len(my_project)).zfill(2) + "selections_" + my_project[0])
+        figure_name = OSpath__join(path_out, "Figure_07a_cmip_vs_" + my_project[0].replace(" ", ""))
         title = "a) Mean metric values of a subset of models relative to CMIP"
         colors = ["orange", "forestgreen"]
         # list_metrics2 = list()
@@ -680,8 +681,9 @@ if ' ':
         tab_val = tab_val / tab_val[1]
         # figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
         #                            "metrics_" + str(len(my_project)).zfill(2) + "selections_"+my_project[0] + "_v2")
-        figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
-                                   "metrics_cmip5_vs_cmip6")
+        # figure_name = OSpath__join(path_out, "metrics_comparison_" + str(len(list_metrics)).zfill(2) +
+        #                            "metrics_cmip5_vs_cmip6")
+        figure_name = OSpath__join(path_out, "Figure_03_cmip5_vs_cmip6")
         # title = ""
         # colors = ["lime", "sienna"]
         title = "Mean metric values relative to CMIP5"

@@ -45,9 +45,7 @@ selection = "select8"
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_grouped")
-# path_out = OSpath__join(path_main, "Plots_v5")
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v03"
-# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/Review/r01"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -258,11 +256,11 @@ def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='p
             if (kk == 0 and ll < 8) or (kk == 2 and ll < 2):
                 cc = "yellowgreen"
             elif (kk == 0 and ll >= 8) or (kk == 1 and ll < 2) or (kk == 2 and 2 <= ll < 6):
-                cc = "orchid"
+                cc = "plum"
             elif kk == 1:
                 cc = "gold"
             else:
-                cc = "darkcyan"
+                cc = "turquoise"
             if cname is True:
                 ax.text(ll + 0.5, 0, txt, fontsize=15, ha='right', va='top', rotation=45, color=cc)
             elif chigh is True:
@@ -272,25 +270,42 @@ def multiportraitplot(tab, name_plot, xlabel, ylabel, x_names, y_names, title='p
                 ax.text(ll + 0.5, 0, txt, fontsize=20, ha='right', va='top', rotation=45, color="k")
         if cfram is True:
             nbr = len(x_names[kk])
-            liy = [[0, len(tab[0])], [len(tab[0]), len(tab[0])], [0, len(tab[0])], [0, 0]]
+            liy = [[0, len(tab[0])], [0, len(tab[0])]]
             if kk == 0:
-                lic = ["yellowgreen"] * 4 + ["orchid"] * 4
-                lis = ["-", "-", "-", "-", (0, (5, 5)), "-", "-", "-"]
-                lix = [[0, 0], [0, 8], [8, 8], [0, 8], [8, 8], [8, nbr], [nbr, nbr], [8, nbr]]
+                lix = [[0, 0], [8, 8], [8, 8], [nbr, nbr]]
                 liy = liy * 2
             elif kk == 1:
-                lic = ["orchid"] * 4 + ["gold"] * 4
-                lis = ["-", "-", "-", "-", (0, (5, 5)), "-", "-", "-"]
-                lix = [[0, 0], [0, 2], [2, 2], [0, 2], [2, 2], [2, nbr], [nbr, nbr], [2, nbr]]
+                lix = [[0, 0], [2, 2], [2, 2], [nbr, nbr]]
                 liy = liy * 2
             else:
-                lic = ["yellowgreen"] * 4 + ["orchid"] * 4 + ["darkcyan"] * 4
-                lis = ["-", "-", "-", "-", (0, (5, 5)), "-", "-", "-", (0, (5, 5)), "-", "-", "-"]
-                lix = [[0, 0], [0, 2], [2, 2], [0, 2], [2, 2], [2, 6], [6, 6], [2, 6], [6, 6], [6, nbr], [nbr, nbr],
-                       [6, nbr]]
+                lix = [[0, 0], [2, 2], [2, 2], [6, 6], [6, 6], [nbr, nbr]]
                 liy = liy * 3
+            lic, lis = ["k"] * len(lix), ["-"] * len(lix)
             for lc, ls, lx, ly in zip(lic, lis, lix, liy):
-                line = Line2D(lx, ly, c=lc, lw=10, ls=ls, zorder=10)
+                line = Line2D(lx, ly, c=lc, lw=7, ls=ls, zorder=10)
+                line.set_clip_on(False)
+                ax.add_line(line)
+            liy = [[len(tab[0]), len(tab[0])], [0, 0]]
+            if kk == 0:
+                lic = ["yellowgreen"] * 2 + ["plum"] * 2
+                lix = [[0, 8], [0, 8], [8.2, nbr], [8.2, nbr]]
+                liy = liy * 2
+            elif kk == 1:
+                lic = ["plum"] * 2 + ["gold"] * 2
+                lix = [[0, 2], [0, 2], [2.2, nbr], [2.2, nbr]]
+                liy = liy * 2
+            else:
+                lic = ["yellowgreen"] * 2 + ["plum"] * 2 + ["turquoise"] * 2
+                lix = [[0, 2], [0, 2], [2.2, 6], [2.2, 6], [6.2, nbr], [6.2, nbr]]
+                liy = liy * 3
+            lis = ["-"] * len(lic)
+            for mm, (lc, ls, lx, ly) in enumerate(zip(lic, lis, lix, liy)):
+                if mm < 2:
+                    line = Line2D([lx[0] + 0.05, lx[1]], ly, c=lc, lw=10, ls=ls, zorder=10)
+                elif mm > len(lis) - 3:
+                    line = Line2D([lx[0], lx[1] - 0.05], ly, c=lc, lw=10, ls=ls, zorder=10)
+                else:
+                    line = Line2D(lx, ly, c=lc, lw=10, ls=ls, zorder=10)
                 line.set_clip_on(False)
                 ax.add_line(line)
         try: ax.set_xlabel(xlabel[kk], y=dy, fontsize=40)
@@ -531,7 +546,9 @@ for mc in metric_collections:
 # all portraitplots in one plot
 if ' ':
     # plot
-    figure_name = OSpath__join(path_out, "portraitplot_" + str(len(metric_collections)) + "metric_collections_v1")
+    # figure_name = OSpath__join(path_out, "portraitplot_" + str(len(metric_collections)) + "metric_collections_v1")
+    figure_name =\
+        OSpath__join(path_out, "Figure_02_portraitplot_" + str(len(metric_collections)) + "metric_collections")
     tmp_num = ["a) ", "b) ", "c) "]
     title = [tmp_num[ii] + dict_mc[mc] for ii, mc in enumerate(metric_collections)]
     # title = ""
