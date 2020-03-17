@@ -42,9 +42,7 @@ reduced_set = True  # False  #
 
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_grouped")
-# path_out = OSpath__join(path_main, "Plots_v5")
-path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v03"
-# path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/Review/r01"
 
 expe = "hist" if experiment == "historical" else "pi"
 
@@ -201,11 +199,11 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
         if ll < 8:
             cc = "yellowgreen"
         elif 8 <= ll < 15:
-            cc = "orchid"
+            cc = "plum"
         elif 15 <= ll < 19:
             cc = "gold"
         else:
-            cc = "darkcyan"
+            cc = "turquoise"
         boxdict = dict(lw=0, facecolor=cc, pad=3, alpha=1)
         ax.text(ll + 0.5, -0.3, txt, fontsize=15, ha='right', va='top', rotation=45, color="k", bbox=boxdict)
         ax.text(-0.4, ll + 0.5, txt, fontsize=15, ha='right', va='center', color="k", bbox=boxdict)
@@ -217,7 +215,7 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
             jj += 1
     if cfram is True:
         nbr = len(tab_rval)
-        lic = ["k"] * 6 + ["yellowgreen"] * 4 + ["orchid"] * 4 + ["gold"] * 4 + ["darkcyan"] * 4
+        lic = ["k"] * 6 + ["yellowgreen"] * 4 + ["plum"] * 4 + ["gold"] * 4 + ["turquoise"] * 4
         lis = ["-"] * len(lic)
         liw = [4] * 6 + [10] * (len(lic) - 6)
         lix = [[8, 8], [15, 15], [19, 19], [0, nbr], [0, nbr], [0, nbr]] + \
@@ -299,15 +297,18 @@ def remove_metrics(list_met, metric_collection):
             #              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
             #              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
             #              'NinoSstTsRmse_2']
-            to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse', 'NinaSstDur_1',
+            to_remove = ['BiasSshLatRmse', 'BiasSshLonRmse', 'BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse',
+                         'EnsoTauxTsRmse', 'NinaSstDur_1',
                          'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
                          'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
                          'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
-                         'NinoSstTsRmse_2', "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
+                         'NinoSstTsRmse_2', "SeasonalSshLatRmse", "SeasonalSshLonRmse", "SeasonalSstLatRmse",
+                         "SeasonalTauxLatRmse"]
         elif metric_collection == "ENSO_proc":
             # to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
             #              'EnsoFbTauxSsh']
-            to_remove = ['BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse',
+            to_remove = ['BiasSshLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
+                         'EnsoSstLonRmse',
                          'EnsoSstSkew', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
                          'EnsoFbSstSwr']
         else:
@@ -570,8 +571,9 @@ if ' ':
         tab = NUMPYmasked_where(tab == 1e20, tab)
         # compute inter model correlations
         rval, pval = compute_correlation(tab)
-        name_plot = OSpath__join(path_out, "correlations_inter_metrics_" + str(len(list_metrics)).zfill(2) +
-                                 "metrics_" + str(len(lev1)).zfill(2) + "models_v3")
+        # name_plot = OSpath__join(path_out, "correlations_inter_metrics_" + str(len(list_metrics)).zfill(2) +
+        #                          "metrics_" + str(len(lev1)).zfill(2) + "models_v3")
+        name_plot = OSpath__join(path_out, "Figure_06_correlations_inter_metrics")
         title = ""  # "inter metric correlations"
         list_metrics2 = [met.replace("_2", "") for met in list_metrics]
         list_metrics2 = ["" if met in ["BiasPrLatRmse", "SeasonalPrLatRmse", "EnsoSstLonRmse", "EnsoFbSshSst"] else met

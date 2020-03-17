@@ -29,7 +29,8 @@ sst_only = ["CFSR", "ERSSTv5", "GODAS", "HadISST", "OISST", "ORAS4", "SODA3.4.2"
 # Computation of the metric collection
 #
 def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding={}, debug=False, dive_down=False,
-                      netcdf=False, netcdf_name=''):
+                      netcdf=False, netcdf_name='', observed_fyear=None, observed_lyear=None, modeled_fyear=None,
+                      modeled_lyear=None):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -204,7 +205,8 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
         arg_var2 = {'modelFileArea1': modelFileArea1, 'modelAreaName1': modelAreaName1,
                     'modelFileLandmask1': modelFileLandmask1, 'modelLandmaskName1': modelLandmaskName1,
                     'obsFileArea1': obsFileArea1, 'obsAreaName1': obsAreaName1, 'obsFileLandmask1': obsFileLandmask1,
-                    'obsLandmaskName1': obsLandmaskName1}
+                    'obsLandmaskName1': obsLandmaskName1, 'observed_fyear': observed_fyear,
+                    'observed_lyear': observed_lyear, 'modeled_fyear': modeled_fyear, 'modeled_lyear': modeled_lyear}
         if len(list_variables) > 1:
             try:
                 arg_var2['modelFile2'] = dictDatasets['model'][modelName][list_variables[1]]['path + filename']
@@ -337,7 +339,8 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
 
 
 def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False,
-                              netcdf=False, netcdf_name=''):
+                              netcdf=False, netcdf_name='', observed_fyear=None, observed_lyear=None,
+                              modeled_fyear=None, modeled_lyear=None):
     dict_mc = defCollection(metricCollection)
     dict_col_meta = {
         'name': dict_mc['long_name'], 'description_of_the_collection': dict_mc['description'], 'metrics': {},
@@ -420,8 +423,9 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
             arg_var2 = {'modelFileArea1': modelFileArea1, 'modelAreaName1': modelAreaName1,
                         'modelFileLandmask1': modelFileLandmask1, 'modelLandmaskName1': modelLandmaskName1,
                         'obsFileArea1': obsFileArea1, 'obsAreaName1': obsAreaName1,
-                        'obsFileLandmask1': obsFileLandmask1,
-                        'obsLandmaskName1': obsLandmaskName1}
+                        'obsFileLandmask1': obsFileLandmask1, 'obsLandmaskName1': obsLandmaskName1,
+                        'observed_fyear': observed_fyear, 'observed_lyear': observed_lyear,
+                        'modeled_fyear': modeled_fyear, 'modeled_lyear': modeled_lyear}
             if len(list_variables) == 1:
                 nbr = 1
             else:
@@ -560,7 +564,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                   modelFile2='', modelVarName2='', modelFileArea2='', modelAreaName2='', modelFileLandmask2='',
                   modelLandmaskName2='', obsNameVar2='', obsFile2='', obsVarName2='', obsFileArea2='', obsAreaName2='',
                   obsFileLandmask2='', obsLandmaskName2='', regionVar2='', user_regridding={}, debug=False,
-                  netcdf=False, netcdf_name=''):
+                  netcdf=False, netcdf_name='', observed_fyear=None, observed_lyear=None, modeled_fyear=None,
+                  modeled_lyear=None):
     """
     :param metricCollection: string
         name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
@@ -685,12 +690,18 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         keyarg['time_bounds_mod'] = keyarg['modeled_period']
     except:
         keyarg['time_bounds_mod'] = default_arg_values('time_bounds_mod')
+    # YYP !!! experimental period defined bt user !!!
+    if isinstance(modeled_fyear, int) is True and isinstance(modeled_lyear, int) is True:
+        keyarg['time_bounds_mod'] = (str(modeled_fyear) + "-01-01 00:00:00", str(modeled_lyear) + "-12-31 23:59:60.0")
     # if 'modeled_period' is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
     try:
         keyarg['time_bounds_obs'] = keyarg['observed_period']
     except:
         keyarg['time_bounds_obs'] = default_arg_values('time_bounds_obs')
+    # YYP !!! experimental period defined bt user !!!
+    if isinstance(observed_fyear, int) is True and isinstance(observed_lyear, int) is True:
+        keyarg['time_bounds_obs'] = (str(observed_fyear) + "-01-01 00:00:00", str(observed_lyear) + "-12-31 23:59:60.0")
     # if the user gave a specific regridding Tool / method, use it
     if tmp_metric in user_regridding.keys():
         keyarg['regridding'] = user_regridding[tmp_metric]
