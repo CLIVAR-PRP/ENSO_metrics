@@ -165,11 +165,11 @@ def minmax_plot(tab, metric=False):
     tick_labels = list(NUMPYaround(tick_labels * mult, decimals=4))
     if all([True if int(ii) == float(ii) else False for ii in tick_labels]):
         tick_labels = list(NUMPYaround(tick_labels, decimals=0).astype(int))
-    if len(tick_labels) > 6:
+    if len(tick_labels) > 7:
         list_strings = [
             "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many ticks for axis",
             str().ljust(5) + str(len(tick_labels)) + " ticks: " + str(tick_labels),
-            str().ljust(5) + "there should not be more than 6"
+            str().ljust(5) + "there should not be more than 7"
         ]
         EnsoErrorsWarnings.my_warning(list_strings)
     if min(tick_labels) > mini or max(tick_labels) < maxi:
