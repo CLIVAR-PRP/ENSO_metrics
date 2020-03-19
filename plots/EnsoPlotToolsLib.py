@@ -22,9 +22,6 @@ from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
 from EnsoMetrics import EnsoErrorsWarnings
 
 
-
-
-
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 observations = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
 
@@ -92,7 +89,10 @@ def format_metric(metric_type, metric_value, metric_units):
             mytext = r"$\frac{model-ref}{ref}$"
         else:
             mytext = r"$abs\left(\frac{model-ref}{ref}\right)$"
-    return mytext + ": " + "{0:.2f}".format(metric_value) + " " + metric_units
+    if metric_value is not None:
+        return mytext + ": " + "{0:.2f}".format(metric_value) + " " + metric_units
+    else:
+        return None
 
 
 def minimaxi(tab):
@@ -234,15 +234,19 @@ def my_mask_map(tab_ref, tab_mod):
     return XARRAYwhere(NUMPYisnan(tab_ref), NUMPYnan, tab_mod)
 
 
-def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shading=False):
+def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shading=False, member=None):
+    if member is not None:
+        modelKeyName = model + "_" + member
+    else:
+        modelKeyName = model
     if isinstance(model, str):
-        diag_mod = dict_diag[model]
+        diag_mod = dict_diag[modelKeyName]
     else:
         if shading is True:
             diag_mod =\
-                [[dict_diag[mod][mm] for mm in sorted(dict_diag[mod].keys(), key=lambda v: v.upper())] for mod in model]
+                [[dict_diag[mod][mm] for mm in sorted(dict_diag[mod].keys(), key=lambda v: v.upper())] for mod in modelKeyName]
         else:
-            diag_mod = [dict_diag[mod] for mod in model]
+            diag_mod = [dict_diag[mod] for mod in modelKeyName]
     if shading is True:
         my_ref = dict_diag["obs"].keys()
     else:

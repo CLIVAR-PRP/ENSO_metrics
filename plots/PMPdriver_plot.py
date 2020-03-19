@@ -128,6 +128,6 @@ for met in metrics:
                      name_png=figure_name)
     """
     except Exception as e:
-        print(e)
+        print("## ERROR:", e)
         pass
     """
