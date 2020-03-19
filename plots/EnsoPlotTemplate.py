@@ -301,7 +301,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
                regions=None, shading=False):
     # get data
     diag_mod, diag_obs, metval, obsname =\
-        read_diag(diagnostic_values, metric_values, model, reference, metric_variables)
+        read_diag(diagnostic_values, metric_values, model, reference, metric_variables, member=member)
     if metric_type is not None:
         plot_metric = True
     else:
@@ -392,7 +392,7 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
                   diagnostic_units=None, regions=None, shading=False):
     # get data
     diag_mod, diag_obs, metval, obsname = \
-        read_diag(diagnostic_values, metric_values, model, reference, metric_variables, shading=shading)
+        read_diag(diagnostic_values, metric_values, model, reference, metric_variables, shading=shading, member=member)
     if metric_type is not None:
         plot_metric = True
     else:
