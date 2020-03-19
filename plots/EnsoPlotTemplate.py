@@ -29,6 +29,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         nbr_val = len(variables)
     tab_mod, tab_obs, metval, obsname = \
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
+                 member=member,
                  shading=shading)
     if metric_type is not None:
         plot_metric = True
@@ -196,6 +197,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
         nbr_val = len(variables)
     tab_mod, tab_obs, metval, obsname =\
         read_var(deepcopy(variables), filename_nc, model, reference, metric_variables, metric_values, models2=models2,
+                 member=member,
                  shading=shading)
     if metric_type is not None and (isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True):
         plot_metric = True
@@ -476,6 +478,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         nbr_val = len(variables)
     tab_mod, tab_obs, metval, obsname = \
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
+                 member=member,
                  shading=shading)
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
         tim = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[0]]))
@@ -672,6 +675,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         my_reg = ""
     tab_mod, tab_obs, metval, obsname = \
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
+                 member=member,
                  shading=shading, met_in_file=met_in_file, met_type=metric_type, met_pattern=my_reg)
     if metric_type is not None:
         plot_metric = True
@@ -966,6 +970,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         nbr_val = len(variables)
     tab_mod, tab_obs, metval, obsname = \
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
+                 member=member,
                  shading=shading)
     if metric_type is not None and (isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True):
         plot_metric = True
