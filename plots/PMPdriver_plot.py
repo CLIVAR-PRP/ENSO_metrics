@@ -12,11 +12,12 @@ from __future__ import print_function
 from glob import iglob as GLOBiglob
 import json
 from os.path import join as OSpath__join
+from os.path import exists as OSpath__exists
+from os import makedirs as OS__makedirs
 # ENSO_metrics functions
 #from EnsoCollectionsLib import defCollection
 from EnsoMetrics.EnsoCollectionsLib import defCollection
 from EnsoMetricPlot import main_plotter
-import os
 
 
 # ---------------------------------------------------#
@@ -27,8 +28,7 @@ metric_collection = "ENSO_perf"
 #metric_collection = "ENSO_proc"
 
 mip = "cmip5"
-model = "CNRM-CM5"
-#model = "IPSL-CM5A-LR"
+model = "IPSL-CM5A-LR"
 exp = "historical"
 member = "r1i1p1"
 modname = model + "_" + member
@@ -46,8 +46,8 @@ if debug:
     path_main = "/work/lee1043/imsi/result_test"
 path_out = OSpath__join(path_main, "graphics", "enso_metric", mip, exp, case_id, metric_collection)
 
-if not os.path.exists(path_out):
-    os.makedirs(path_out)
+if not OSpath__exists(path_out):
+    OS__makedirs(path_out)
     print("path_out:", path_out)
 
 pattern = "_".join([mip, exp, metric_collection, case_id])
