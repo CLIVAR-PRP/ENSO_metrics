@@ -16,8 +16,10 @@ from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 from xarray import open_dataset
 from xarray import where as XARRAYwhere
 # ENSO_metrics functions
-from EnsoCollectionsLib import ReferenceObservations
-import EnsoErrorsWarnings
+#from EnsoCollectionsLib import ReferenceObservations
+from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
+#import EnsoErrorsWarnings
+from EnsoMetrics import EnsoErrorsWarnings
 
 
 
@@ -309,7 +311,7 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
     return tab_out, metric_value, obs
 
 
-def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric, met_in_file=False, met_type=None,
+def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric, member=None, met_in_file=False, met_type=None,
            met_pattern=""):
     ff = open_dataset(filename_nc, decode_times=False)
     variables_in_file = sorted([var for var in ff.keys()], key=lambda v: v.upper())
@@ -326,7 +328,11 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
         #     tab_mod.append(ff[var + model].sel(longitude=slice(140, 264)))
         # else:
         #     tab_mod.append(ff[var + model])
-        tab_mod.append(ff[var + model])
+        varName_in_nc = var + model
+        if member is not None:
+            varName_in_nc += "_" + member 
+        #tab_mod.append(ff[var + model])
+        tab_mod.append(ff[varName_in_nc])
     # reab obs
     tab_obs = list()
     for var in var_to_read:
@@ -371,13 +377,13 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
     return tab_mod, tab_obs, metval, obs
 
 
-def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric, models2=None, shading=False,
+def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_metric, models2=None, member=None, shading=False,
              met_in_file=False, met_type=None, met_pattern=""):
     if isinstance(var_to_read, str):
         var_to_read = [var_to_read]
     if isinstance(filename_nc, str):
         tab_mod, tab_obs, metval, obs = reader(filename_nc, model, reference, var_to_read, metric_variables,
-                                               dict_metric, met_in_file=met_in_file, met_type=met_type,
+                                               dict_metric, member=member, met_in_file=met_in_file, met_type=met_type,
                                                met_pattern=met_pattern)
     else:
         tab_mod, metval, obs = list(), list(), list()
@@ -387,7 +393,7 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
                 for ii in range(len(filename_nc[model[jj]])):
                     ttt1, tab_obs, ttt2, tmp3 = reader(
                         filename_nc[model[jj]][ii], models2[model[jj]][ii], reference, var_to_read, metric_variables,
-                        dict_metric[model[jj]], met_in_file=met_in_file, met_type=met_type, met_pattern=met_pattern)
+                        dict_metric[model[jj]], member=member, met_in_file=met_in_file, met_type=met_type, met_pattern=met_pattern)
                     tmp1.append(ttt1)
                     tmp2.append(ttt2)
                     obs.append(tmp3)
@@ -396,7 +402,7 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
         else:
             for ii in range(len(filename_nc)):
                 tmp1, tab_obs, tmp2, tmp3 = reader(filename_nc[ii], model[ii], reference, var_to_read, metric_variables,
-                                                   dict_metric)
+                                                   dict_metric, member=member)
                 tab_mod.append(tmp1)
                 metval.append(tmp2)
                 obs.append(tmp3)
