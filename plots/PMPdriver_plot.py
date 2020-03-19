@@ -11,9 +11,9 @@
 from __future__ import print_function
 from glob import iglob as GLOBiglob
 import json
-from os.path import join as OSpath__join
-from os.path import exists as OSpath__exists
 from os import makedirs as OS__makedirs
+from os.path import exists as OSpath__exists
+from os.path import join as OSpath__join
 # ENSO_metrics functions
 #from EnsoCollectionsLib import defCollection
 from EnsoMetrics.EnsoCollectionsLib import defCollection
@@ -28,10 +28,9 @@ metric_collection = "ENSO_perf"
 #metric_collection = "ENSO_proc"
 
 mip = "cmip5"
-model = "IPSL-CM5A-LR"
 exp = "historical"
-member = "r1i1p1"
-modname = model + "_" + member
+model = "IPSL-CM5A-LR"
+run = "r1i1p1"
 
 case_id = "v20200305"
 debug = True
@@ -59,7 +58,7 @@ pattern = "_".join([mip, exp, metric_collection, case_id])
 filename_js = OSpath__join(path_in_json, pattern + "_allModels_allRuns.json")
 print('filename_js:', filename_js)
 with open(filename_js) as ff:
-    data_json = json.load(ff)['RESULTS']['model'][model][member]
+    data_json = json.load(ff)['RESULTS']['model'][model][run]
 ff.close()
 del ff, filename_js
 # loop on metrics
@@ -68,7 +67,7 @@ for met in metrics:
     try:
         print('met:', met)
         # get NetCDF file name
-        filename_nc = OSpath__join(path_in_nc, pattern + "_" + model + "_" + member + "_" + met + ".nc")
+        filename_nc = OSpath__join(path_in_nc, pattern + "_" + model + "_" + run + "_" + met + ".nc")
         print("filename_nc:", filename_nc)
         # get diagnostic values for the given model and observations
         if metric_collection == "ENSO_tel" and "Map" in met:
@@ -91,7 +90,7 @@ for met in metrics:
             metric_values = dict((key1, {model: dict_met[key1]["value"]}) for key1 in dict_met.keys())
             metric_units = data_json["metadata"]["metrics"][met]["metric"]["units"]
         # figure name
-        figure_name = "_".join([mip, exp, metric_collection, model, member, met])
+        figure_name = "_".join([mip, exp, metric_collection, model, run, met])
         # this function needs:
         #      - the name of the metric collection: metric_collection
         #      - the name of the metric: metric
@@ -108,7 +107,7 @@ for met in metrics:
         #      - (optional) the path where to save the plots: path_out
         #      - (optional) the name of the plots: name_png
         main_plotter(metric_collection, met, model, exp, filename_nc, diagnostic_values,
-                     diagnostic_units, metric_values, metric_units, member=member, path_png=path_out, 
+                     diagnostic_units, metric_values, metric_units, member=run, path_png=path_out, 
                      name_png=figure_name)
     except Exception as e:
         print("## ERROR:", e)
