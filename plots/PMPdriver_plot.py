@@ -23,7 +23,7 @@ import os
 # Arguments
 # ---------------------------------------------------#
 metric_collection = "ENSO_perf"
-metric_collection = "ENSO_tel"
+#metric_collection = "ENSO_tel"
 #metric_collection = "ENSO_proc"
 
 mip = "cmip5"
@@ -38,11 +38,7 @@ debug = True
 
 # ---------------------------------------------------#
 
-#path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
-#path_main = "/work/lee1043/cdat/pmp/ENSO_metrics/plot_test_json_20191218"
 path_main = "/p/user_pub/pmp/pmp_results/pmp_v1.1.2"
-#path_in = OSpath__join(path_main, "Data_lee")
-#path_out = OSpath__join(path_main, "Plots_wiki")
 path_in_json = OSpath__join(path_main, "metrics_results", "enso_metric", mip, exp, case_id, metric_collection)
 path_in_nc = OSpath__join(path_main, "diagnostic_results", "enso_metric", mip, exp, case_id, metric_collection)
 
@@ -54,18 +50,12 @@ if not os.path.exists(path_out):
     os.makedirs(path_out)
     print("path_out:", path_out)
 
-#expe = "hist" if exp == "historical" else "pi"
-#pattern = mip + "_" + exp + "_" + metric_collection + "_v2019????"
 pattern = "_".join([mip, exp, metric_collection, case_id])
-
 
 # ---------------------------------------------------#
 # Main
 # ---------------------------------------------------#
 # read json file
-#print('tmp:', OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json"))
-#filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
-#filename_js = OSpath__join(path_in, pattern + "_allModels_allRuns.json")
 filename_js = OSpath__join(path_in_json, pattern + "_allModels_allRuns.json")
 print('filename_js:', filename_js)
 with open(filename_js) as ff:
@@ -75,16 +65,10 @@ del ff, filename_js
 # loop on metrics
 metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=lambda v: v.upper())
 for met in metrics:
-    #try:
-    if 1:
+    try:
         print('met:', met)
         # get NetCDF file name
-        #path_nc = OSpath__join(path_in, mip + "/" + exp + "/" + metric_collection)
-        #path_nc = OSpath__join(path_in_nc, mip + "/" + exp + "/" + metric_collection)
-        path_nc = path_in_nc
-        print("path_nc:", path_nc)
-        #filename_nc = list(GLOBiglob(OSpath__join(path_nc, pattern + "_" + model + "_" + member + "_" + met + ".nc")))[0]
-        filename_nc =OSpath__join(path_nc, pattern + "_" + model + "_" + member + "_" + met + ".nc")
+        filename_nc = OSpath__join(path_in_nc, pattern + "_" + model + "_" + member + "_" + met + ".nc")
         print("filename_nc:", filename_nc)
         # get diagnostic values for the given model and observations
         if metric_collection == "ENSO_tel" and "Map" in met:
@@ -126,8 +110,6 @@ for met in metrics:
         main_plotter(metric_collection, met, model, exp, filename_nc, diagnostic_values,
                      diagnostic_units, metric_values, metric_units, member=member, path_png=path_out, 
                      name_png=figure_name)
-    """
     except Exception as e:
         print("## ERROR:", e)
         pass
-    """
