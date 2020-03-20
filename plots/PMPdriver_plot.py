@@ -9,6 +9,16 @@
 # Import the right packages
 # ---------------------------------------------------#
 from __future__ import print_function
+
+# Run matplotlib background to prevent 
+# display localhost error after console disconnected
+# and to speed up
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+plt.ioff()
+
+# Import other libs
 from glob import iglob as GLOBiglob
 import json
 from os import makedirs as OS__makedirs
