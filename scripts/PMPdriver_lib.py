@@ -52,7 +52,8 @@ def AddParserArgument():
     P.add_argument("--metricsCollection",
                    type=str,
                    dest='metricsCollection',
-                   help="Metrics Collection e.g. MC1, ENSO_perf, or ENSO_tel")
+                   default="ENSO_perf",
+                   help="Metrics Collection e.g. ENSO_perf, ENSO_tel, or ENSO_proc")
     P.add_argument("--json_name",
                    type=str,
                    dest='json_name',
