@@ -18,11 +18,38 @@ from os.path import join as OSpath__join
 #from EnsoCollectionsLib import defCollection
 from EnsoMetrics.EnsoCollectionsLib import defCollection
 from EnsoMetricPlot import main_plotter
+import sys
 
+from PMPdriver_lib import AddParserArgument
 
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
+param = AddParserArgument()
+
+# Metrics Collection
+metric_collection = param.metricsCollection
+
+# Pre-defined options
+mip = param.mip
+exp = param.exp
+
+# model
+if param.modnames is None:
+    model = "IPSL-CM5A-LR"
+else:
+    model = param.modnames[0]
+
+# Realizations
+run = param.realization
+
+# case id
+case_id = param.case_id
+
+# Switches
+debug = param.debug
+
+"""
 metric_collection = "ENSO_perf"
 #metric_collection = "ENSO_tel"
 #metric_collection = "ENSO_proc"
@@ -34,7 +61,18 @@ run = "r1i1p1"
 
 case_id = "v20200305"
 debug = True
+"""
 
+# ---------------------------------------------------#
+# Check Arguments
+# ---------------------------------------------------#
+print("metric_collection:", metric_collection)
+print("mip:", mip)
+print("exp:", exp)
+print("model:", model)
+print("run:", run)
+print("case_id:", case_id)
+print("debug:", debug)
 # ---------------------------------------------------#
 
 path_main = "/p/user_pub/pmp/pmp_results/pmp_v1.1.2"
@@ -46,8 +84,11 @@ if debug:
 path_out = OSpath__join(path_main, "graphics", "enso_metric", mip, exp, case_id, metric_collection)
 
 if not OSpath__exists(path_out):
-    OS__makedirs(path_out)
-    print("path_out:", path_out)
+    try:
+        OS__makedirs(path_out)
+        print("path_out:", path_out)
+    except:
+        pass
 
 pattern = "_".join([mip, exp, metric_collection, case_id])
 
