@@ -1,7 +1,10 @@
 # -*- coding:UTF-8 -*-
 from __future__ import print_function
 from copy import deepcopy
+from glob import iglob as GLOBiglob
 from inspect import stack as INSPECTstack
+import json
+from os import remove as OSremove
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection, ReferenceObservations
@@ -9,13 +12,13 @@ import EnsoErrorsWarnings
 from EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshRmse,\
     BiasSstLatRmse, BiasSstLonRmse, BiasSstSkLonRmse, BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse,\
     EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf,\
-    EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrJjaTel, EnsoPrNdjTel, EnsoPrTsRmse,\
-    EnsoSeasonality, EnsoSlpMap, EnsoSstDiversity, EnsoSstLonRmse, EnsoSstMap, EnsoSstSkew, EnsoSstTsRmse,\
-    EnsoTauxTsRmse, NinaPrJjaTel, NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur,\
-    NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap, NinoSlpMap, NinoSstDiv,\
-    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
-    SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse,\
-    SeasonalTauxLatRmse, SeasonalTauxLonRmse
+    EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, EnsoPrJjaTel,\
+    EnsoPrNdjTel, EnsoPrTsRmse, EnsoSeasonality, EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity,\
+    EnsoSstLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew, EnsoSstTsRmse, EnsoTauxTsRmse, NinaPrJjaTel,\
+    NinaPrNdjTel, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap,\
+    NinaSstTsRmse, NinoPrJjaTel, NinoPrNdjTel, NinoPrMap, NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse,\
+    NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSshLatRmse,\
+    SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse
 from EnsoToolsLib import math_metric_computation
 from KeyArgLib import default_arg_values
 
@@ -338,6 +341,35 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
         return {'value': dict_col_valu, 'metadata': dict_col_meta}, {}
 
 
+def group_json_obs(pattern, json_name_out, metric_name):
+    list_files = sorted(list(GLOBiglob(pattern)), key=lambda v: v.upper())
+    for file1 in list_files:
+        with open(file1) as ff:
+            data = json.load(ff)
+        ff.close()
+        data = data["RESULTS"]["model"]
+        dataset = data.keys()[0]
+        try:    dict_out
+        except: dict_out = deepcopy(data)
+        else:
+            if dataset in dict_out.keys():
+                dict_out[dataset]["r1i1p1"]["value"][metric_name] = data[dataset]["r1i1p1"]["value"][metric_name]
+            else:
+                dict_out[dataset] = data[dataset]
+        OSremove(file1)
+        del data, dataset, ff
+    save_json_obs(dict_out, json_name_out)
+    return
+
+
+def save_json_obs(dict_in, json_name):
+    dict_out = {"RESULTS": {"model": dict_in}}
+    # save as json file
+    with open(json_name + '.json', 'w') as outfile:
+        json.dump(dict_out, outfile, sort_keys=True)
+    return
+
+
 def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False,
                               netcdf=False, netcdf_name='', observed_fyear=None, observed_lyear=None,
                               modeled_fyear=None, modeled_lyear=None):
@@ -453,7 +485,8 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     netcdf_name_out = netcdf_name.replace("OBSNAME", modelName2)
                 else:
                     netcdf_name_out = ""
-                if metric == "EnsoSstMap" and modelName2 in sst_only:
+                json_name_out = netcdf_name.replace("OBSNAME", "tmp1_" + modelName2 + "_" + metric)
+                if "EnsoSstMap" in metric and modelName2 in sst_only or len(list(GLOBiglob(json_name_out))) == 1:
                     pass
                 else:
                     valu, vame, dive, dime = ComputeMetric(
@@ -503,17 +536,26 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                             dict_col_meta[modelName2]['metrics'][metric] = vame
                             dict_col_dd_valu[modelName2][metric] = dive
                             dict_col_dd_meta[modelName2]['metrics'][metric] = dime
-                    del dime, dive, keys1, keys2, valu
-                del modelName2, netcdf_name_out
-            del modelName, modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,\
+                    # save json
+                    dict_out = {modelName2: {
+                        'r1i1p1': {'value': dict_col_valu[modelName2], 'metadata': dict_col_meta[modelName2]}}}
+                    save_json_obs(dict_out, json_name_out)
+                    del dict_out, dime, dive, keys1, keys2, valu
+                del json_name_out, modelName2, netcdf_name_out
+            del arg_var2, modelName, modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,\
                 modelLandmaskName1, nbr
-    # reformat dictionary
-    dict1, dict2 = dict(), dict()
-    for key in dict_col_valu.keys():
-        dict1[key] = {'value': dict_col_valu[key], 'metadata': dict_col_meta[key]}
-        if dive_down is True:
-            dict2[key] = {'value': dict_col_dd_valu[key], 'metadata': dict_col_dd_meta[key]}
-    return dict1, dict2
+        # read all jsons and group them
+        pattern = netcdf_name.replace("OBSNAME", "tmp1_*_" + metric + ".json")
+        json_name_out = netcdf_name.replace("OBSNAME", "tmp2_" + metric)
+        group_json_obs(pattern, json_name_out, metric)
+        del dict_regions, json_name_out, list_variables, obsAreaName1, obsAreaName1, obsFile1, obsFile2, obsFileArea1,\
+            obsFileArea2, obsFileLandmask1, obsFileLandmask2, obsLandmaskName1, obsLandmaskName2, obsNameVar1,\
+            obsNameVar2, obsVarName1, obsVarName2, pattern
+    # read all jsons and group them
+    pattern = netcdf_name.replace("OBSNAME", "tmp2_*.json")
+    json_name_out = netcdf_name.replace("OBSNAME", "observation")
+    group_json_obs(pattern, json_name_out, metric)
+    return
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -528,7 +570,8 @@ dict_oneVar_modelAndObs = {
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
     'BiasSstSkLonRmse': BiasSstSkLonRmse,
     'EnsoSstLonRmse': EnsoSstLonRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
-    'EnsoSstMap': EnsoSstMap, 'NinaSstMap': NinaSstMap, 'NinoSstMap': NinoSstMap,
+    'EnsoSstMap': EnsoSstMap, 'EnsoSstMapDjf': EnsoSstMapDjf, 'EnsoSstMapJja': EnsoSstMapJja,
+    'NinaSstMap': NinaSstMap, 'NinoSstMap': NinoSstMap,
     'EnsoSstTsRmse': EnsoSstTsRmse, 'NinaSstTsRmse': NinaSstTsRmse, 'NinoSstLonRmse': NinoSstLonRmse,
     'NinaSstDivRmse': NinaSstDivRmse, 'NinoSstDivRmse': NinoSstDivRmse,
     'SeasonalPrLatRmse': SeasonalPrLatRmse, 'SeasonalPrLonRmse': SeasonalPrLonRmse,
@@ -538,10 +581,11 @@ dict_oneVar_modelAndObs = {
 }
 
 dict_twoVar_modelAndObs = {
-    'EnsoPrMap': EnsoPrMap, 'EnsoPrJjaTel': EnsoPrJjaTel, 'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoSlpMap': EnsoSlpMap,
-    'NinaPrMap': NinaPrMap, 'NinaPrJjaTel': NinaPrJjaTel, 'NinaPrNdjTel': NinaPrNdjTel, 'NinaSlpMap': NinaSlpMap,
-    'NinoPrMap': NinoPrMap, 'NinoPrJjaTel': NinoPrJjaTel, 'NinoPrNdjTel': NinoPrNdjTel, 'NinoSlpMap': NinoSlpMap,
-    'EnsoPrTsRmse': EnsoPrTsRmse, 'EnsoTauxTsRmse': EnsoTauxTsRmse,
+    'EnsoPrMap': EnsoPrMap, 'EnsoPrMapDjf': EnsoPrMapDjf, 'EnsoPrMapJja': EnsoPrMapJja, 'EnsoPrJjaTel': EnsoPrJjaTel,
+    'EnsoPrNdjTel': EnsoPrNdjTel, 'EnsoSlpMap': EnsoSlpMap, 'EnsoSlpMapDjf': EnsoSlpMapDjf,
+    'EnsoSlpMapJja': EnsoSlpMapJja, 'NinaPrMap': NinaPrMap, 'NinaPrJjaTel': NinaPrJjaTel, 'NinaPrNdjTel': NinaPrNdjTel,
+    'NinaSlpMap': NinaSlpMap, 'NinoPrMap': NinoPrMap, 'NinoPrJjaTel': NinoPrJjaTel, 'NinoPrNdjTel': NinoPrNdjTel,
+    'NinoSlpMap': NinoSlpMap, 'EnsoPrTsRmse': EnsoPrTsRmse, 'EnsoTauxTsRmse': EnsoTauxTsRmse,
 }
 
 dict_oneVar = {
@@ -793,7 +837,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 if metric in dict_oneVar_modelAndObs.keys():
                     output_name = obsNameVar1[ii]
                     if output_name != modelName:
-                        if metric == "EnsoSstMap" and output_name in sst_only:
+                        if "EnsoSstMap" in metric and output_name in sst_only:
                             pass
                         else:
                             print('\033[94m' + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " \
