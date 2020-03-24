@@ -1,17 +1,29 @@
 # -*- coding:UTF-8 -*-
 from __future__ import print_function
+from getpass import getuser as GETPASSgetuser
 from cdms2 import open as CDMS2open
 import json
-from os.path import join as join_path
-from os import environ
-from sys import exit
+from os import environ as OSenviron
+from os.path import join as OSpath__join
+from sys import exit as SYSexit
+from sys import path as SYSpath
+
+# user (get your user name for the paths and to save the files)
+user_name = GETPASSgetuser()
+# xmldir
+xmldir = OSenviron['XMLDIR']
+if user_name == "yplanton":
+    SYSpath.insert(0, "/home/" + user_name + "/Obs2Obs/ENSO_metrics/lib")
+    path_obs = "/data/" + user_name + "/Obs"
+    path_netcdf = "/data/" + user_name + "/ENSO_metrics/v20200311"
+else:
+    path_obs = "/Users/" + user_name + "/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Netcdf/Obs/Global"
+    path_netcdf = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test"
 
 #from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 #from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
 from EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoComputeMetricsLib import ComputeCollection, ComputeCollection_ObsOnly
-
-xmldir = environ['XMLDIR']
 
 
 def find_xml(name, frequency, variable, project='', experiment='', ensemble='', realm=''):
@@ -24,8 +36,8 @@ def find_xml(name, frequency, variable, project='', experiment='', ensemble='', 
 
 
 def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variable):
-    file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
-                          '_glob_' + str(frequency) + '_' + str(realm) + '.xml')
+    file_name = OSpath__join(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
+                             '_glob_' + str(frequency) + '_' + str(realm) + '.xml')
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
@@ -34,8 +46,8 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
         elif realm == 'A':
             new_realm = 'O'
         # if var is not in realm 'O' (for ocean), look for it in realm 'A' (for atmosphere)
-        file_name = join_path(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
-                              '_glob_' + str(frequency) + '_' + str(new_realm) + '.xml')
+        file_name = OSpath__join(xmldir, str(model) + '_' + str(project) + '_' + str(experiment) + '_' + str(ensemble) +
+                                 '_glob_' + str(frequency) + '_' + str(new_realm) + '.xml')
         xml = CDMS2open(file_name)
         listvar2 = sorted(xml.listvariables())
         if variable not in listvar2:
@@ -45,7 +57,7 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
             print('\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m')
             print('\033[95m' + str().ljust(10) + "AND" + '\033[0m')
             print('\033[95m' + str().ljust(10) + "variables = " + str(listvar2) + '\033[0m')
-            exit(1)
+            SYSexit("")
         file_area, file_land = find_xml_fx(model, project=project, experiment=experiment, realm=new_realm)
     else:
         file_area, file_land = find_xml_fx(model, project=project, experiment=experiment, realm=realm)
@@ -55,13 +67,29 @@ def find_xml_cmip(model, project, experiment, ensemble, frequency, realm, variab
 def find_xml_fx(name, project='', experiment='', realm=''):
     list_obs = ReferenceObservations().keys()
     if name in list_obs:
-        file_area = join_path(xmldir, 'obs_' + str(name) + '_glob_fx_O_areacell.xml')
-        file_land = join_path(xmldir, 'obs_' + str(name) + '_glob_fx_O_landmask.xml')
+        if user_name == "yplanton":
+            file_area = None
+            if name in ["20CRv2", "NCEP2"]:
+                file_land = OSpath__join(path_obs, name + "/land.sfc.gauss.nc")
+            elif name == "CMAP":
+                file_land = OSpath__join(path_obs, name + "/lsmask_fx_cmap.nc")
+            elif name == "GPCPv2.3":
+                file_land = OSpath__join(path_obs, name + "/lsmask_fx_gpcpv2.3.nc")
+            elif name == "OISSTv2":
+                file_land = OSpath__join(path_obs, name + "/lsmask_fx_oisstv2.nc")
+            else:
+                file_land = None
+        else:
+            file_area = None
+            if name in ["20CRv2", "CMAP", "ERA-Interim", "ERSSTv5", "GPCPv2.3", "NCEP2"]:
+                file_land = OSpath__join(path_obs, "lsmask_" + name + ".nc")
+            else:
+                file_land = None
     else:
-        file_area = join_path(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_'
-                                   + str(realm) + '_areacell.xml')
-        file_land = join_path(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_'
-                                   + str(realm) + '_landmask.xml')
+        file_area = OSpath__join(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_' +
+                                 str(realm) + '_areacell.xml')
+        file_land = OSpath__join(xmldir, str(name) + '_' + str(project) + '_' + str(experiment) + '_r0i0p0_glob_fx_' +
+                                 str(realm) + '_landmask.xml')
     try: xml = CDMS2open(file_area)
     except: file_area = None
     try: xml = CDMS2open(file_land)
@@ -70,15 +98,15 @@ def find_xml_fx(name, project='', experiment='', realm=''):
 
 
 def find_xml_obs(obs, frequency, variable):
-    # file_name = join_path(xmldir, 'obs_' + str(obs) + '_glob_' + str(frequency) + '_O.xml')
-    file_name = join_path(xmldir, "obs_ENSO_metrics_" + str(obs) + ".xml")
+    # file_name = OSpath__join(xmldir, 'obs_' + str(obs) + '_glob_' + str(frequency) + '_O.xml')
+    file_name = OSpath__join(xmldir, "obs_ENSO_metrics_" + str(obs) + ".xml")
     xml = CDMS2open(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
         print('\033[95m' + str().ljust(5) + "obs var " + str(variable) + " cannot be found" + '\033[0m')
         print('\033[95m' + str().ljust(10) + "file_name = " + str(file_name) + '\033[0m')
         print('\033[95m' + str().ljust(10) + "variables = " + str(listvar1) + '\033[0m')
-        exit(1)
+        SYSexit("")
     file_area, file_land = find_xml_fx(obs)
     return file_name, file_area, file_land
 
@@ -131,8 +159,9 @@ elif mc_name == 'ENSO_tel':
     list_obs = ['20CRv2', 'CMAP', 'ERA-Interim', 'ERSSTv5', 'GPCPv2.3', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
 elif mc_name == 'ENSO_proc':
     list_obs = ['20CRv2', 'AVISO', 'ERA-Interim', 'ERSSTv5', 'GODAS', 'HadISST', 'NCEP2', 'SODA3.4.2', 'Tropflux']
-elif mc_name == 'EVAL_IPSL':
-    list_obs = ['ERA-Interim']
+else:
+    list_obs = ['20CRv2', 'AVISO', 'CMAP', 'ERA-Interim', 'ERSSTv5', 'GODAS', 'GPCPv2.3', 'HadISST', 'NCEP2',
+                'SODA3.4.2', 'Tropflux']
 print('\033[95m' + str(list_obs) + '\033[0m')
 
 
@@ -190,13 +219,12 @@ for obs in list_obs:
 
 # computing metrics on observations only
 dictDatasets = {'observations': dict_obs}
-netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
-netcdf_name = 'YANN_PLANTON_' + mc_name + "_OBSNAME"
-netcdf = join_path(netcdf_path, netcdf_name)
-dict_metric, dict_dive = ComputeCollection_ObsOnly(mc_name, dictDatasets, debug=False, netcdf=True, netcdf_name=netcdf)
-netcdf = netcdf.replace("OBSNAME", "observation")
-save_json_obs(dict_metric, netcdf)
-stop
+netcdf_name = user_name + "_" + mc_name + "_OBSNAME"
+netcdf = OSpath__join(path_netcdf, netcdf_name)
+#dict_metric, dict_dive = ComputeCollection_ObsOnly(mc_name, dictDatasets, debug=False, netcdf=True, netcdf_name=netcdf)
+#netcdf = netcdf.replace("OBSNAME", "observation")
+#save_json_obs(dict_metric, netcdf)
+
 
 # models
 list_models = ['IPSL-CM5B-LR']#['CNRM-CM5']#['IPSL-CM5B-LR']#['CNRM-CM5','IPSL-CM5B-LR']#
@@ -266,9 +294,8 @@ for mod in list_models:
     #         'newgrid_name': 'generic 1x1deg'},
     # }
     # Computes the metric collection
-    netcdf_path = '/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/Test'
-    netcdf_name = 'YANN_PLANTON_' + mc_name + '_' + mod
-    netcdf = join_path(netcdf_path, netcdf_name)
+    netcdf_name = user_name + "_" + mc_name + "_" + mod
+    netcdf = OSpath__join(path_netcdf, netcdf_name)
     dict_metric[mod], dict_dive[mod] = ComputeCollection(mc_name, dictDatasets, mod, netcdf=True, netcdf_name=netcdf,
                                                          debug=True)
     tmp = sorted(dict_metric[mod]['value'].keys(), key=lambda v: v.upper())

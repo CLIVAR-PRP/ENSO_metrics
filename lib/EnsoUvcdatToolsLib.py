@@ -1366,8 +1366,8 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
             axes = axes + tab.getAxisList()[1:]
         composite.setAxisList(axes)
     else:
-        time_ax = tab.getTime().asComponentTime() # gets component time of tab
-        list_years = [yy.year for yy in time_ax[:]] # listing years in tab (from component time)
+        time_ax = tab.getTime().asComponentTime()  # gets component time of tab
+        list_years = [yy.year for yy in time_ax[:]]  # listing years in tab (from component time)
         indices = MV2arange(tab.size)
         # creates a tab of 'condition' where True is set when the event is found, False otherwise
         try:
@@ -1375,8 +1375,8 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         except:
             list_event_years = [str(yy) for yy in list_event_years]
             condition = [True if str(yy) in list_event_years else False for yy in list_years]
-        ids = MV2compress(condition, indices) # gets indices of events
-        composite = MV2take(tab, ids, axis=0) # gets events
+        ids = MV2compress(condition, indices)  # gets indices of events
+        composite = MV2take(tab, ids, axis=0)  # gets events
         axis0 = CDMS2createAxis(MV2array(list_event_years, dtype='int32'), id='years')
         composite.setAxis(0, axis0)
     return composite
@@ -2200,7 +2200,7 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
                var8_attributes={}, var8_name='', var8_time_name=None, var9=None, var9_attributes={}, var9_name='',
                var9_time_name=None, var10=None, var10_attributes={}, var10_name='', var10_time_name=None, var11=None,
                var11_attributes={}, var11_name='', var11_time_name=None, var12=None, var12_attributes={}, var12_name='',
-               var12_time_name=None, frequency='monthly', global_attributes={}):
+               var12_time_name=None, frequency="monthly", global_attributes={}, **kwargs):
     if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": given path does not exist",
@@ -2208,81 +2208,92 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
         ]
         EnsoErrorsWarnings.my_error(list_strings)
     if OSpath__isfile(netcdf_name) is True:
-        o = CDMS2open(netcdf_name, 'a')
+        o = CDMS2open(netcdf_name, "a")
     else:
-        o = CDMS2open(netcdf_name, 'w+')
+        o = CDMS2open(netcdf_name, "w+")
     if var1 is not None:
         if var1_name == '':
             var1_name = var1.id
         if var1_time_name is not None:
             var1 = TimeButNotTime(var1, var1_time_name, frequency)
-        o.write(var1, attributes=var1_attributes, dtype='float32', id=var1_name)
+        o.write(var1, attributes=var1_attributes, dtype="float32", id=var1_name)
     if var2 is not None:
         if var2_name == '':
             var2_name = var2.id
         if var2_time_name is not None:
             var2 = TimeButNotTime(var2, var2_time_name, frequency)
-        o.write(var2, attributes=var2_attributes, dtype='float32', id=var2_name)
+        o.write(var2, attributes=var2_attributes, dtype="float32", id=var2_name)
     if var3 is not None:
         if var3_name == '':
             var3_name = var3.id
         if var3_time_name is not None:
             var3 = TimeButNotTime(var3, var3_time_name, frequency)
-        o.write(var3, attributes=var3_attributes, dtype='float32', id=var3_name)
+        o.write(var3, attributes=var3_attributes, dtype="float32", id=var3_name)
     if var4 is not None:
         if var4_name == '':
             var4_name = var4.id
         if var4_time_name is not None:
             var4 = TimeButNotTime(var4, var4_time_name, frequency)
-        o.write(var4, attributes=var4_attributes, dtype='float32', id=var4_name)
+        o.write(var4, attributes=var4_attributes, dtype="float32", id=var4_name)
     if var5 is not None:
         if var5_name == '':
             var5_name = var5.id
         if var5_time_name is not None:
             var5 = TimeButNotTime(var5, var5_time_name, frequency)
-        o.write(var5, attributes=var5_attributes, dtype='float32', id=var5_name)
+        o.write(var5, attributes=var5_attributes, dtype="float32", id=var5_name)
     if var6 is not None:
         if var6_name == '':
             var6_name = var6.id
         if var6_time_name is not None:
             var6 = TimeButNotTime(var6, var6_time_name, frequency)
-        o.write(var6, attributes=var6_attributes, dtype='float32', id=var6_name)
+        o.write(var6, attributes=var6_attributes, dtype="float32", id=var6_name)
     if var7 is not None:
         if var7_name == '':
             var7_name = var7.id
         if var7_time_name is not None:
             var7 = TimeButNotTime(var7, var7_time_name, frequency)
-        o.write(var7, attributes=var7_attributes, dtype='float32', id=var7_name)
+        o.write(var7, attributes=var7_attributes, dtype="float32", id=var7_name)
     if var8 is not None:
         if var8_name == '':
             var8_name = var8.id
         if var8_time_name is not None:
             var8 = TimeButNotTime(var8, var8_time_name, frequency)
-        o.write(var8, attributes=var8_attributes, dtype='float32', id=var8_name)
+        o.write(var8, attributes=var8_attributes, dtype="float32", id=var8_name)
     if var9 is not None:
         if var9_name == '':
             var9_name = var9.id
         if var9_time_name is not None:
             var9 = TimeButNotTime(var9, var9_time_name, frequency)
-        o.write(var9, attributes=var9_attributes, dtype='float32', id=var9_name)
+        o.write(var9, attributes=var9_attributes, dtype="float32", id=var9_name)
     if var10 is not None:
         if var10_name == '':
             var10_name = var10.id
         if var10_time_name is not None:
             var10 = TimeButNotTime(var10, var10_time_name, frequency)
-        o.write(var10, attributes=var10_attributes, dtype='float32', id=var10_name)
+        o.write(var10, attributes=var10_attributes, dtype="float32", id=var10_name)
     if var11 is not None:
         if var11_name == '':
             var11_name = var11.id
         if var11_time_name is not None:
             var11 = TimeButNotTime(var11, var11_time_name, frequency)
-        o.write(var11, attributes=var11_attributes, dtype='float32', id=var11_name)
+        o.write(var11, attributes=var11_attributes, dtype="float32", id=var11_name)
     if var12 is not None:
         if var12_name == '':
             var12_name = var12.id
         if var12_time_name is not None:
             var12 = TimeButNotTime(var12, var12_time_name, frequency)
-        o.write(var12, attributes=var12_attributes, dtype='float32', id=var12_name)
+        o.write(var12, attributes=var12_attributes, dtype="float32", id=var12_name)
+    my_keys = sorted([key for key in kwargs.keys() if "var" in key and str(key.replace("var", "")).isdigit() is True],
+                     key=lambda v: v.upper())
+    for key in my_keys:
+        if kwargs[key] is not None:
+            if key + "_name" not in kwargs.keys() or (key + "_name" in kwargs.keys() and kwargs[key + "_name"] == ''):
+                kwargs[key + "_name"] = kwargs[key].id
+            if key + "_time_name" in kwargs.keys() and kwargs[key + "_time_name"] is not None:
+                kwargs[key] = TimeButNotTime(kwargs[key], kwargs[key + "_time_name"], frequency)
+            if key + "_attributes" not in kwargs.keys():
+                kwargs[key + "_attributes"] = {}
+            o.write(kwargs[key], attributes=kwargs[key + "_attributes"], dtype="float32", id=kwargs[key + "_name"])
     for att in global_attributes.keys():
         o.__setattr__(att, global_attributes[att])
     o.close()
@@ -2914,6 +2925,42 @@ def CustomLinearRegression1d(y, x, sign_x=1):
         results = GENUTILlinearregression(y[idx], x=x[idx], error=1, nointercept=None)
         slope, intercept, stderr = float(results[0][0]), float(results[0][1]), float(results[1][0])
     return slope, intercept, stderr
+
+
+def fill_dict_teleconnection(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nyear1, nyear2, nbr, var_name,
+                             add_name, units, centered_rmse=0, biased_rmse=1, dict_metric={}, dict_nc={}, ev_name=None,
+                             events1=None, events2=None):
+    # Metric 1
+    rmse_dive = float(RmsAxis(tab1, tab2, axis="xy", centered=centered_rmse, biased=biased_rmse))
+    rmse_error_dive = None
+    # Metric 2
+    corr_dive = float(Correlation(tab1, tab2, axis="xy", centered=1, biased=1))
+    corr_error_dive = None
+    # Metric 3
+    std_mod_dive = Std(tab1, weights=None, axis="xy", centered=1, biased=1)
+    std_obs_dive = Std(tab2, weights=None, axis="xy", centered=1, biased=1)
+    std_dive = float(std_mod_dive) / float(std_obs_dive)
+    std_error_dive = None
+    list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
+                     "STD_" + dataset2, "STD_error_" + dataset2]
+    list_metric_value = [rmse_dive, rmse_error_dive, corr_dive, corr_error_dive, std_dive, std_error_dive]
+    for tmp1, tmp2 in zip(list_met_name, list_metric_value):
+        dict_metric[tmp1 + "_" + add_name] = tmp2
+    dict_nc["var" + str(nbr)] = tab1
+    dict_dive = {"units": units, "number_of_years_used": nyear1, "time_period": str(timebounds1),
+                 "spatialSTD_" + dataset1: std_mod_dive}
+    if isinstance(events1, list) is True:
+        dict_dive[ev_name + "_years"] = str(events1)
+    dict_nc["var" + str(nbr) + "_attributes"] = dict_dive
+    dict_nc["var" + str(nbr) + "_name"] = var_name + dataset1
+    dict_dive = {"units": units, "number_of_years_used": nyear2, "time_period": str(timebounds2),
+                 "spatialSTD_" + dataset2: std_obs_dive}
+    if isinstance(events2, list) is True:
+        dict_dive[ev_name + "_years"] = str(events2)
+    dict_nc["var" + str(nbr + 1)] = tab2
+    dict_nc["var" + str(nbr + 1) + "_attributes"] = dict_dive
+    dict_nc["var" + str(nbr + 1) + "_name"] = var_name + dataset2
+    return dict_metric, dict_nc
 
 
 def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, method='triangle'):
