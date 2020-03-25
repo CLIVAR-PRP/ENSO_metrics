@@ -13,7 +13,7 @@ import os
 def main():
     mips = ["cmip5", "cmip6"]
     #mips = ["cmip6"]
-    mips = ["obs2obs"]
+    #mips = ["obs2obs"]
     exps = ["historical"]
     MCs = ["ENSO_perf", "ENSO_tel", "ENSO_proc"]
     MCs = ["test_tel"]
