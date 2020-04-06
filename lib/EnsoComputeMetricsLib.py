@@ -153,7 +153,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
     dict_m = dict_mc['metrics_list']
     list_metrics = sorted(dict_m.keys(), key=lambda v: v.upper())
     for metric in list_metrics:
-        try:
+        try:  # try per metric
             print('\033[94m' + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + '\033[0m')
             # sets arguments for this metric
             list_variables = dict_m[metric]['variables']
@@ -335,8 +335,10 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 else:
                     dict_col_valu[metric], dict_col_meta['metrics'][metric] = valu, vame
                     dict_col_dd_valu[metric], dict_col_dd_meta['metrics'][metric] = dive, dime
-        except ValueError as err:
-            print(err.args)
+        except Exception as e:
+            print(e)
+            pass
+
     if dive_down is True:
         return {'value': dict_col_valu, 'metadata': dict_col_meta},\
                {'value': dict_col_dd_valu, 'metadata': dict_col_dd_meta}
