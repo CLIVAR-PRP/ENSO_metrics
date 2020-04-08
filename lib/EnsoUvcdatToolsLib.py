@@ -1834,8 +1834,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         att2 = tab.attributes['long_name'].lower().replace(" ", "_")
     except:
         att2 = ''
-    if "latent_heat" in att1 or "latent_heat" in att2 or "sensible_heat" in att1 or "sensible_heat" in att2:
-        if "upward" in att1 or "upward" in att2:
+    if "latent_heat" in att1 or "latent_heat" in att2 or "sensible_heat" in att1 or "sensible_heat" in att2 or\
+            (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"]):
+        if "upward" in att1 or "upward" in att2 or\
+                (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"] and
+                 ("in_air" in att1 or "in_air" in att2)):
             # I need to be in the ocean point of view so the heat fluxes must be downwards
             tab = -1 * tab
     if time_bounds is not None:

@@ -353,14 +353,14 @@ def group_json_obs(pattern, json_name_out, metric_name):
             data = json.load(ff)
         ff.close()
         data = data["RESULTS"]["model"]
-        dataset = data.keys()[0]
-        try:    dict_out
-        except: dict_out = deepcopy(data)
-        else:
-            if dataset in dict_out.keys():
-                dict_out[dataset]["r1i1p1"]["value"][metric_name] = data[dataset]["r1i1p1"]["value"][metric_name]
+        for dataset in data.keys():
+            try:    dict_out
+            except: dict_out = deepcopy(data)
             else:
-                dict_out[dataset] = data[dataset]
+                if dataset in dict_out.keys():
+                    dict_out[dataset]["r1i1p1"]["value"][metric_name] = data[dataset]["r1i1p1"]["value"][metric_name]
+                else:
+                    dict_out[dataset] = data[dataset]
         OSremove(file1)
         del data, dataset, ff
     save_json_obs(dict_out, json_name_out)
