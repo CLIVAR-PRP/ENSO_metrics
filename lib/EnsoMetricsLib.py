@@ -164,8 +164,8 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
                             **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = pr_mod.shape[0] // 12
+    yearN_obs = pr_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -382,8 +382,8 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                             **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = pr_mod.shape[0] // 12
+    yearN_obs = pr_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -637,8 +637,8 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                             **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = pr_mod.shape[0] // 12
+    yearN_obs = pr_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -891,8 +891,8 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = ssh_mod.shape[0] // 12
+    yearN_obs = ssh_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -1113,8 +1113,8 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = ssh_mod.shape[0] // 12
+    yearN_obs = ssh_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -1370,8 +1370,8 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = ssh_mod.shape[0] // 12
+    yearN_obs = ssh_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -1627,8 +1627,8 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -1845,8 +1845,8 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -2099,8 +2099,8 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -2356,8 +2356,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -2640,8 +2640,8 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = taux_mod.shape[0] // 12
+    yearN_obs = taux_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -2862,8 +2862,8 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = taux_mod.shape[0] // 12
+    yearN_obs = taux_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -3119,8 +3119,8 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = taux_mod.shape[0] // 12
+    yearN_obs = taux_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -3361,7 +3361,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, lhf, keyerror3 = CheckTime(sst, lhf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -3657,7 +3657,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, lwr, keyerror3 = CheckTime(sst, lwr, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -3949,7 +3949,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, shf, keyerror3 = CheckTime(sst, shf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -4245,7 +4245,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, swr, keyerror3 = CheckTime(sst, swr, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -4547,7 +4547,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, thf, keyerror3 = CheckTime(sst, thf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -4815,7 +4815,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                             maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -5037,7 +5037,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -5288,7 +5288,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -5597,7 +5597,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     sst, enso, unneeded = CheckTime(sst, enso, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -5880,7 +5880,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     sst, taux, keyerror3 = CheckTime(sst, taux, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -6162,7 +6162,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, ssh, keyerror3 = CheckTime(sst, ssh, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -6456,7 +6456,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
     ssh, taux, keyerror3 = CheckTime(ssh, taux, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = ssh.shape[0] / 12
+    yearN = ssh.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(ssh)
@@ -6800,8 +6800,8 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -7238,8 +7238,8 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs_box, pr_obs, keyerror_obs3 = CheckTime(sst_obs_box, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = sst_mod_box.shape[0] // 12
+    yearN_obs = sst_obs_box.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -7724,8 +7724,8 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs_box, pr_obs, keyerror_obs3 = CheckTime(sst_obs_box, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = sst_mod_box.shape[0] // 12
+    yearN_obs = sst_obs_box.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -8212,8 +8212,8 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -8996,8 +8996,8 @@ def EnsoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -9276,7 +9276,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                             maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -9561,7 +9561,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -9880,7 +9880,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                             maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -10162,8 +10162,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -10603,8 +10603,8 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, slp_obs, keyerror_obs3 = CheckTime(sst_obs_box, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = sst_mod_box.shape[0] // 12
+    yearN_obs = sst_obs_box.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -11086,8 +11086,8 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, slp_obs, keyerror_obs3 = CheckTime(sst_obs_box, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = sst_mod_box.shape[0] // 12
+    yearN_obs = sst_obs_box.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -11538,8 +11538,8 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_obs, sstmap_obs, keyerror_obs3 = CheckTime(sst_obs, sstmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -11978,8 +11978,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -12394,8 +12394,8 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, ts_obs, keyerror_obs3 = CheckTime(sst_obs_box, ts_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = sst_mod_box.shape[0] // 12
+    yearN_obs = sst_obs_box.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -12849,8 +12849,8 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, ts_obs, keyerror_obs3 = CheckTime(sst_obs_box, ts_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = sst_mod_box.shape[0] // 12
+    yearN_obs = sst_obs_box.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -13331,8 +13331,8 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -13739,8 +13739,8 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -14189,8 +14189,8 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_obs, taux_obs, keyerror_obs3 = CheckTime(sst_obs, taux_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -14648,8 +14648,8 @@ def NinaPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -15010,8 +15010,8 @@ def NinaPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -15379,8 +15379,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -15655,7 +15655,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -15922,8 +15922,8 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -16196,7 +16196,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                             maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -16420,8 +16420,8 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -16803,8 +16803,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -17121,8 +17121,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -17420,8 +17420,8 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -17772,8 +17772,8 @@ def NinoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -18134,8 +18134,8 @@ def NinoPrNdjTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -18503,8 +18503,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -18777,7 +18777,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -19028,7 +19028,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
                             maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -19346,8 +19346,8 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -19618,7 +19618,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
                             maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = sst.shape[0] // 12
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -19842,8 +19842,8 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -20221,8 +20221,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -20538,8 +20538,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -20836,8 +20836,8 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -21143,8 +21143,8 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                             **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = pr_mod.shape[0] // 12
+    yearN_obs = pr_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -21445,8 +21445,8 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                             **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = pr_mod.shape[0] // 12
+    yearN_obs = pr_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -21745,8 +21745,8 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = ssh_mod.shape[0] // 12
+    yearN_obs = ssh_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -22054,8 +22054,8 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = ssh_mod.shape[0] // 12
+    yearN_obs = ssh_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -22361,8 +22361,8 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -22665,8 +22665,8 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = sst_mod.shape[0] // 12
+    yearN_obs = sst_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -22966,8 +22966,8 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = taux_mod.shape[0] // 12
+    yearN_obs = taux_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -23273,8 +23273,8 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = taux_mod.shape[0] // 12
+    yearN_obs = taux_obs.shape[0] // 12
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)

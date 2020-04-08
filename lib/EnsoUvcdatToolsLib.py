@@ -1328,7 +1328,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         composite = list()
         for yy in list_event_years:
             # first and last years of the window
-            yy1, yy2 = yy - ((nbr_years_window / 2) - 1), yy + (nbr_years_window / 2)
+            yy1, yy2 = yy - ((nbr_years_window // 2) - 1), yy + (nbr_years_window // 2)
             # create time bounds from 'first and last years of the window'
             timebnds = (str(yy1) + '-01-01 00:00:00.0', str(yy2) + '-12-31  23:59:60.0')
             # select the right time period in the given tab
@@ -1762,11 +1762,11 @@ def Normalize(tab, frequency):
     new_tab = MV2array(new_tab)
     std = MV2zeros(new_tab[0].shape)
     for dd in range(time_steps_per_year):
-        std[dd] = float(GENUTILstd(new_tab[:,dd], weights=None, axis=0, centered=1, biased=1))
+        std[dd] = float(GENUTILstd(new_tab[:, dd], weights=None, axis=0, centered=1, biased=1))
     tab_out = deepcopy(tab)
-    for yy in range(len(tab) / time_steps_per_year):
+    for yy in range(len(tab) // time_steps_per_year):
         tab_out[yy * time_steps_per_year:(yy + 1) * time_steps_per_year] = \
-            tab_out[yy * time_steps_per_year:(yy + 1) * time_steps_per_year] / std
+            tab_out[yy * time_steps_per_year:(yy + 1) * time_steps_per_year] // std
     if len(tab.shape) == 1:
         tab_out = CDMS2createVariable(tab_out, axes=axes, attributes=tab.attributes, id=tab.id)
     else:
@@ -2390,14 +2390,14 @@ def SmoothGaussian(tab, axis=0, window=5):
     new_tab = tab.reorder(newOrder)
 
     # degree
-    degree = window / 2
+    degree = window // 2
 
     # Create the gaussian weight array
     weightGauss = list()
     for ii in range(window):
         ii = ii - degree + 1
         frac = ii / float(window)
-        gauss = float(1 / (NPexp((4 * (frac)) ** 2)))
+        gauss = float(1 / (NPexp((4 * frac) ** 2)))
         ww = MV2zeros(new_tab.shape[1:])
         ww.fill(gauss)
         weightGauss.append(ww)
@@ -2411,7 +2411,7 @@ def SmoothGaussian(tab, axis=0, window=5):
         smoothed_tab[ii] = MV2sum(MV2array(new_tab[ii:ii + window]) * weightGauss * weightGauss, axis=0) / sum_weight
 
     # Axes list
-    axes0 = new_tab[(window / 2):len(new_tab) - (window / 2)].getAxisList()[0]
+    axes0 = new_tab[(window // 2):len(new_tab) - (window // 2)].getAxisList()[0]
     if len(tab.shape) > 1:
         axes = [axes0] + new_tab.getAxisList()[1:]
     else:
@@ -2521,7 +2521,7 @@ def SmoothTriangle(tab, axis=0, window=5):
     new_tab = tab.reorder(newOrder)
 
     # degree
-    degree = window / 2
+    degree = window // 2
 
     # Create the weight array (triangle)
     weight = list()
@@ -2539,7 +2539,7 @@ def SmoothTriangle(tab, axis=0, window=5):
         smoothed_tab[ii] = MV2sum(MV2array(new_tab[ii:ii + window]) * weight, axis=0) / sum_weight
 
     # Axes list
-    axes0 = new_tab[(window / 2):len(new_tab) - (window / 2)].getAxisList()[0]
+    axes0 = new_tab[(window // 2):len(new_tab) - (window // 2)].getAxisList()[0]
     if len(tab.shape) > 1:
         axes = [axes0] + new_tab.getAxisList()[1:]
     else:
