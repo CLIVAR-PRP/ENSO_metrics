@@ -23,6 +23,7 @@ MCs='ENSO_perf ENSO_tel ENSO_proc'
 #MCs='ENSO_proc'
 #MCs='test_perf test_proc test_tel'
 #MCs='test_proc'
+MCs='test_tel'
 
 modnames='all'
 #modnames='IPSL-CM5A-LR'

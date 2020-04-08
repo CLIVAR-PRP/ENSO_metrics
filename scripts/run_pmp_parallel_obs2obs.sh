@@ -5,7 +5,7 @@ set -a
 # OpenBLAS blas_thread_init: pthread_create failed for thread XX of 96: Resource temporarily unavailable
 export OMP_NUM_THREADS=1
 
-# Working conda env in gates: cdat82_20191107_py27
+# Working conda env in gates: cdat82_20191107_py27, cdat82_20200128_py27
 
 case_id="v"`date +"%Y%m%d"`
 

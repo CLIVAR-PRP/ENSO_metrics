@@ -95,8 +95,10 @@ for output_type in ['graphics', 'diagnostic_results', 'metrics_results']:
 # =================================================
 # Generates list of command
 # -------------------------------------------------
-param_file = './my_Param_ENSO.py'
-#param_file = './my_Param_ENSO_obs2obs.py'
+if mip == "obs2obs":
+    param_file = './my_Param_ENSO_obs2obs.py'
+else:
+    param_file = './my_Param_ENSO.py'
 
 cmds_list = []
 for model in models:
