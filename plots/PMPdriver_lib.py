@@ -1,1 +1,1 @@
-../scripts/PMPdriver_lib.py
+../pmp_driver/PMPdriver_lib.py
