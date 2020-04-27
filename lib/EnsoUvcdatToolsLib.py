@@ -1826,7 +1826,6 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         else:
             # read file
             tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
-    fi.close()
     # sign correction
     try:
         att1 = tab.attributes['standard_name'].lower().replace(" ", "_")
@@ -1886,6 +1885,25 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         mask_nd[:] = mask
         # apply mask to original data
         tab = MV2masked_where(mask_nd, tab)
+    # check taux sign
+    if varname in ["taux", "tauu", "tauuo", "uflx"]:
+        # define box
+        region_ref = ReferenceRegions("nino4")
+        if time_bounds is None:  # no time period given
+            #  read file
+            taux = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        else:
+            # read file
+            taux = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        # horizontal average
+        taux, keyerror = AverageHorizontal(taux, region="nino4")
+        if keyerror is None:
+            taux, keyerror = AverageTemporal(taux)
+            if keyerror is None and float(taux) > 0:
+                print('\033[93m' + str().ljust(25) + "NOTE: taux sign reversed by the code (mean nino4 = " +
+                      str(float(taux)) + ")" + '\033[0m')
+                tab = -1 * tab
+    fi.close()
     return tab
 
 
