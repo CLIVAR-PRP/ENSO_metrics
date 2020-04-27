@@ -3,7 +3,7 @@ from __future__ import print_function
 from sys import exit as sys_exit
 
 
-#---------------------------------------------------#
+# ---------------------------------------------------#
 # colors for printing
 class bcolors:
     HEADER = '\033[95m'
@@ -156,7 +156,7 @@ def mismatch_shapes_error(tab1, tab2, inspect_stack):
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": array shape",
                     str().ljust(5) + "arrays shapes mismatch: " + str(name1) + " = " + str(tab1.shape) + "', and "
                     + str(name2) + " = " + str(tab2.shape)]
-    my_error(list_strings)
+    my_warning(list_strings)
     return
 
 
@@ -181,7 +181,7 @@ def object_type_error(parameter_name, type_parameter, type_parameter_should_be, 
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": object type",
                     str().ljust(5) + str(parameter_name) + ": should be '" + str(type_parameter_should_be) + "', not '"
                     + str(type_parameter) + "'"]
-    my_error(list_strings)
+    my_warning(list_strings)
     return
 
 
@@ -296,7 +296,7 @@ def unknown_key_arg(arg, inspect_stack):
     """
     list_strings = ["ERROR" + message_formating(inspect_stack) + ": argument",
                     str().ljust(5) + "unknown argument(s): " + str(arg)]
-    my_error(list_strings)
+    my_warning(list_strings)
     return
 
 

@@ -32,6 +32,8 @@ def add_up_errors(list_keyerror):
             keyerror += " ; "
         if key is not None:
             keyerror += str(key)
+    if keyerror == '':
+        keyerror = None
     return keyerror
 
 
