@@ -1218,7 +1218,6 @@ def CmipVariables():
             # areacell
             'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
-            #'landmask': {'var_name': 'LANDFRAC', 'cf_name': 'Fraction of sfc area covered by land', 'cf_units': '1'},
             'landmask': {'var_name': 'sftlf', 'cf_name': 'cell_area', 'cf_units': '1'},
             # latent heat flux (on ocean grid or ocean points only)
             'lhf': {'var_name': 'hfls', 'cf_name': 'surface_upward_latent_heat_flux', 'cf_units': 'W m-2'},

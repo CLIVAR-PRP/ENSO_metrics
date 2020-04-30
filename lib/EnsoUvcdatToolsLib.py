@@ -116,7 +116,8 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
         except:
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
             print("\033[93m" + str().ljust(20) + "axes = " + str(snum) + "\033[0m")
-            try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
+            try: 
+                averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
             except:
                 if 'regridding' not in kwargs.keys() or isinstance(kwargs['regridding'], dict) is False:
                     kwargs2 = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
