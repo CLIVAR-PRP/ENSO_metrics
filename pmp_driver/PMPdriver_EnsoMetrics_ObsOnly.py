@@ -182,16 +182,25 @@ for obs in list_obs:
 
 print('PMPdriver: dict_obs readin end')
 
-# Computes the metric collection (OBS to OBS) 
+# Prepare computing the metric collection (OBS to OBS) 
 dictDatasets = {'observations': dict_obs}
 netcdf_path = "/work/lee1043/imsi/result_test/enso_metric/test_obs2obs_yann"
 netcdf_name = 'YANN_PLANTON_' + mc_name + "_OBSNAME"
 netcdf = os.path.join(netcdf_path, netcdf_name)
-dict_metric, dict_dive = ComputeCollection_ObsOnly(mc_name, dictDatasets, debug=True, netcdf=True, netcdf_name=netcdf)
 if debug:
     print('file_name:', file_name)
     print('list_files:', list_files)
     print('netcdf_name:', netcdf_name)
+    print('dict_obs:')
+    print(json.dumps(dict_obs, indent=4, sort_keys=True))
+    with open("dict_obs_" + mc_name + ".json", "w") as f_dict_obs:
+        json.dump(dict_obs, f_dict_obs, indent=4, sort_keys=True)
+
+sys.exit("TEST")
+
+# Compute the metric collection (OBS to OBS) 
+dict_metric, dict_dive = ComputeCollection_ObsOnly(mc_name, dictDatasets, debug=True, netcdf=True, netcdf_name=netcdf)
+if debug:
     print('dict_metric:')
     print(json.dumps(dict_metric, indent=4, sort_keys=True))
 
