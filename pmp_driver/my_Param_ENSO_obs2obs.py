@@ -11,22 +11,20 @@ def find_latest(path):
 # =================================================
 # Background Information
 # -------------------------------------------------
-#mip = 'cmip6'  # cmip5, cmip6
 mip = 'obs2obs'  # cmip5, cmip6
 exp = 'historical'  # historical, piControl
 
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-#debug = False
-debug = True
+debug = False
 nc_out = True
 
 #=================================================
 # Observation
 #-------------------------------------------------
 reference_data_path = {
-    'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2.0-beta/atmos/mon/VAR/ERA-INT/gn/latest/VAR_mon_ERA-INT_BE_gn_197901-201903.nc',
+    'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2/atmos/mon/VAR/ERA-INT/gn/v20200402/VAR_mon_ERA-INT_BE_gn_v20200402_197901-201903.nc',
     'HadISST': '/work/lee1043/DATA/HadISSTv1.1/HadISSTv1.1.xml',
     'OISST': '/work/lee1043/DATA/OISST/xmls/OISST_tos_mo.xml',
     'Tropflux': '/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_VAR_mo.xml',
@@ -45,9 +43,10 @@ reference_data_lf_path = {
 # Models
 #-------------------------------------------------
 modpath = os.path.join(
-    '/p/user_pub/PCMDIobs/PCMDIobs2.0-beta/%(realm)/mon/%(variable)',
-    '%(model)/gn/latest',
-    '%(variable)_mon_%(model)_BE_gn_??????-??????.nc')
+    '/p/user_pub/PCMDIobs/PCMDIobs2/%(realm)/mon/%(variable)',
+    '%(model)/gn/',
+    'v????????',
+    '%(variable)_mon_%(model)_BE_gn_v????????_??????-??????.nc')
 
 modpath_lf = os.path.join(
     find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
