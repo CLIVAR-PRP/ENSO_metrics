@@ -12,16 +12,19 @@ import os
 
 def main():
     mips = ["cmip5", "cmip6"]
+    #mips = ["cmip5"]
     #mips = ["cmip6"]
-    mips = ["obs2obs"]
+    #mips = ["obs2obs"]
 
     exps = ["historical"]
 
+    #MCs = ["ENSO_perf", "ENSO_tel", "ENSO_proc", "test_tel"]
     MCs = ["ENSO_perf", "ENSO_tel", "ENSO_proc"]
+    #MCs = ["ENSO_tel"]
     #MCs = ["test_tel"]
 
     pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
-    pmprdir = "/work/lee1043/imsi/result_test"
+    #pmprdir = "/work/lee1043/imsi/result_test"
 
     for mip in mips:
         for exp in exps:

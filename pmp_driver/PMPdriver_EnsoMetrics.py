@@ -143,7 +143,7 @@ for obs in list_obs:
 
             try:
                 # finding file for 'obs', 'var'
-                file_name = param.reference_data_path[obs].replace('VAR',var0)
+                file_name = param.reference_data_path[obs].replace('VAR', var0)
                 file_areacell = None ## temporary for now
                 try:
                     file_landmask = param.reference_data_lf_path[obs]
@@ -160,7 +160,7 @@ for obs in list_obs:
                 # if var_in_file is a list (like for thf) all variables should be read from the same realm
                 if isinstance(var_in_file, list):
                     list_files = list()
-                    list_files = [param.reference_data_path[obs].replace('VAR',var1) for var1 in var_in_file]
+                    list_files = [param.reference_data_path[obs].replace('VAR', var1) for var1 in var_in_file]
                     list_areacell = [file_areacell for var1 in var_in_file]
                     list_name_area = [areacell_in_file for var1 in var_in_file]
                     try:
@@ -264,6 +264,15 @@ for mod in models:
                         file_landmask = '/work/lee1043/ESGF/CMIP6/CMIP/'+mod+'/sftlf_fx_'+mod+'_historical_r1i1p1f1_gr.nc'
                     elif mod in ['GFDL-ESM4']:
                         file_landmask = modpath_lf(mip=mip, realm="atmos", model='GFDL-CM4', variable=dict_var['landmask']['var_name'])
+                if mip == 'cmip5':
+                    if mod == "BNU-ESM":
+                        # Incorrect latitude in original sftlf fixed
+                        file_landmask = "/work/lee1043/ESGF/CMIP5/BNU-ESM/sftlf_fx_BNU-ESM_historical_r0i0p0.nc"
+                    elif mod == "HadCM3":
+                        # Inconsistent lat/lon between sftlf and other variables
+                        file_landmask = None 
+                        # Inconsistent grid between areacella and tauu (probably staggering grid system)
+                        file_areacell = None
                 # -- TEMPORARY END --
                 """
                 try:
@@ -300,9 +309,9 @@ for mod in models:
                 else:
                     if not os.path.isfile(file_name):
                         file_name = None
-                    print("jwlee-test, file_landmask:", file_landmask)
-                    if not os.path.isfile(file_landmask):
-                        file_landmask = None
+                    if file_landmask is not None:
+                        if not os.path.isfile(file_landmask):
+                            file_landmask = None
                     list_files = file_name
                     list_areacell = file_areacell
                     list_name_area = areacell_in_file
@@ -312,6 +321,13 @@ for mod in models:
                 # Variable from ocean grid
                 if var in ['ssh']:
                     list_landmask = None
+                    # Temporay control of areacello for models with zos on gr instead on gn
+                    if mod in ['BCC-ESM1', 'CESM2', 'CESM2-FV2', 'CESM2-WACCM', 'CESM2-WACCM-FV2',
+                               'GFDL-CM4', 'GFDL-ESM4', 'MRI-ESM2-0',  # cmip6
+                               #'BCC-CSM1-1', 'BCC-CSM1-1-M', 'EC-EARTH', 'GFDL-CM3', 'GISS-E2-R',
+                               'BCC-CSM1-1', 'BCC-CSM1-1-M', 'GFDL-CM3', 'GISS-E2-R',
+                               'MRI-CGCM3']:  # cmip5
+                        list_areacell = None
 
                 dict_mod[mod_run][var] = {
                     'path + filename': list_files, 'varname': var_in_file,
