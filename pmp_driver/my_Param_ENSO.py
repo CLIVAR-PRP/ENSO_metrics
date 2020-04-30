@@ -25,7 +25,6 @@ nc_out = True
 # Observation
 #-------------------------------------------------
 reference_data_path = {
-    #'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2.0-beta/atmos/mon/VAR/ERA-INT/gn/latest/VAR_mon_ERA-INT_BE_gn_197901-201903.nc',
     'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2/atmos/mon/VAR/ERA-INT/gn/v20200402/VAR_mon_ERA-INT_BE_gn_v20200402_197901-201903.nc',
     'HadISST': '/work/lee1043/DATA/HadISSTv1.1/HadISSTv1.1.xml',
     'OISST': '/work/lee1043/DATA/OISST/xmls/OISST_tos_mo.xml',
