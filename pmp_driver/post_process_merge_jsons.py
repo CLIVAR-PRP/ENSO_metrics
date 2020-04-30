@@ -11,20 +11,11 @@ import os
 
 
 def main():
-    mips = ["cmip5", "cmip6"]
-    #mips = ["cmip5"]
-    #mips = ["cmip6"]
-    #mips = ["obs2obs"]
-
+    mips = ["CLIVAR_LE"]
     exps = ["historical"]
-
-    #MCs = ["ENSO_perf", "ENSO_tel", "ENSO_proc", "test_tel"]
-    MCs = ["ENSO_perf", "ENSO_tel", "ENSO_proc"]
-    #MCs = ["ENSO_tel"]
-    #MCs = ["test_tel"]
-
-    pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
-    #pmprdir = "/work/lee1043/imsi/result_test"
+    MCs = ["ENSO_perf", "ENSO_proc", "ENSO_tel"]
+    #pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
+    pmprdir = '/work/lee1043/imsi/result_test'
 
     for mip in mips:
         for exp in exps:
@@ -33,7 +24,7 @@ def main():
                 print("mip, exp, MC, case_id:", mip, exp, MC, case_id)
                 merge_jsons(mip, exp, case_id, MC, pmprdir)
 
-
+                
 def merge_jsons(mip, exp, case_id, metricsCollection, pmprdir):
     json_file_dir_template = os.path.join(
         pmprdir,

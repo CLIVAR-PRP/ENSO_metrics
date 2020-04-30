@@ -25,8 +25,7 @@ nc_out = True
 # Observation
 #-------------------------------------------------
 reference_data_path = {
-    #'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2.0-beta/atmos/mon/VAR/ERA-INT/gn/latest/VAR_mon_ERA-INT_BE_gn_197901-201903.nc',
-    'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2/atmos/mon/VAR/ERA-INT/gn/v20200402/VAR_mon_ERA-INT_BE_gn_v20200402_197901-201903.nc',
+    'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2.0-beta/atmos/mon/VAR/ERA-INT/gn/latest/VAR_mon_ERA-INT_BE_gn_197901-201903.nc',
     'HadISST': '/work/lee1043/DATA/HadISSTv1.1/HadISSTv1.1.xml',
     'OISST': '/work/lee1043/DATA/OISST/xmls/OISST_tos_mo.xml',
     'Tropflux': '/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_VAR_mo.xml',
@@ -44,7 +43,10 @@ reference_data_lf_path = {
 #=================================================
 # Models
 #-------------------------------------------------
+#modpath = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.%(realization).cam.h0.%(variable).????01-200512.nc'
 modpath = '/work/lee1043/ESGF/ESG_NCAR/%(mip)/%(model)/mon/%(variable)/rewrite/%(variable)_%(realm)_%(model)_%(exp)_%(realization)_????01-200512_rewrite.nc'
+#modpath_lf = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.%(realization).cam.h0.%(variable).????01-200512.nc'
+#modpath_lf = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.001.cam.h0.%(variable).????01-200512.nc'
 modpath_lf = '/work/lee1043/ESGF/ESG_NCAR/CESM_LE/mon/%(realm)/%(variable)/b.e11.B20TRC5CNBDRD.f09_g16.002.cam.h0.%(variable).????01-200512.nc'
 modpath_lf = os.path.join(
     find_latest('/p/user_pub/pmp/pmp_results/pmp_v1.1.2/additional_xmls/latest'),
@@ -57,10 +59,13 @@ realization = '*'
 
 if debug:
     realization = 'r1i1p1'
+
+
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
 metricsCollection = 'ENSO_perf'  # ENSO_perf, ENSO_tel, ENSO_proc
+#metricsCollection = 'test_perf'  # ENSO_perf, ENSO_tel, ENSO_proc
 
 #=================================================
 # Output

@@ -198,7 +198,7 @@ for mod in models:
     dict_metric[mod], dict_dive[mod] = dict(), dict()
 
     model_path_list = glob.glob(
-        modpath(mip=mip, exp=exp, realm='atmos', model=mod, realization=realization, variable='ts'))
+        modpath(mip=mip, exp=exp, realm='Amon', model=mod, realization=realization, variable='ts'))
 
     model_path_list = sort_human(model_path_list)
     if debug:
@@ -208,10 +208,10 @@ for mod in models:
     print('realization:', realization)
     try:
         run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
-            variable='ts').split('/')[-1].split('.').index(realization)
+            variable='ts').split('/')[-1].split('.')[0].split('_').index(realization)
         print('run_in_modpath:', run_in_modpath)
         # Collect available runs
-        runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+        runs_list = [model_path.split('/')[-1].split('.')[0].split('_')[run_in_modpath] for model_path in model_path_list]
     except:
         if realization not in ["all", "*"]:
             runs_list = [realization]

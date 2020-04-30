@@ -10,6 +10,30 @@
 def defCollection(mc=True):
     # Name, list of metrics
     metrics_collection = {
+        'test_perf': {
+            'long_name': 'Metrics Collection for ENSO performance',
+            'metrics_list': {
+                'EnsoAmpl': {
+                    'variables': ['sst'],
+                    'regions': {'sst': 'nino3.4'},
+                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
+                    'metric_computation': 'abs_relative_difference',
+                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
+                                   'newgrid_name': 'generic_1x1deg'},
+                },
+            },
+            'common_collection_parameters': {
+                'detrending': {'method': 'linear'},
+                'frequency': 'monthly',
+                'min_time_steps': 204,
+                'normalization': False,
+                'project_interpreter': 'CMIP',
+                'observed_period': ('1850-01-01 00:00:00', '2018-12-31 23:59:60.0'),
+                'modeled_period': ('1850-01-01 00:00:00', '2015-12-31 23:59:60.0'),
+            },
+            'plot_order': ['EnsoAmpl'],
+            'description': 'Describe which science question this collection is about',
+        },
         'ENSO_perf': {
             'long_name': 'Metrics Collection for ENSO performance',
             'metrics_list': {
@@ -877,28 +901,21 @@ def CmipVariables():
             # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
             # lwr = rlds - rlus
             # sometimes lwr is included in the datasets in a variable called 'rls'
-            'lwr': {
-                'var_name': ['rlds', 'rlus'],
-                'cf_name': ['surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air'],
-                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']},
+            'lwr': {'var_name': 'flns', 'cf_name': 'net_longwave_flux_at_surface', 'cf_units': 'W m-2'},
             # Rainfall Flux
-            'pr': {'var_name': 'pr', 'cf_name': 'rainfall_flux', 'cf_units': 'kg m-2 s-1'},
+            'pr': {'var_name': 'pr', 'cf_name': 'precipitation_flux', 'cf_units': 'kg m-2 s-1'},
             # Sea Level Pressure
-            'slp': {'var_name': 'psl', 'cf_name': 'air_pressure_at_mean_sea_level', 'cf_units': 'Pa'},
+            'slp': {'var_name': 'psl', 'cf_name': 'air_pressure_at_sea_level', 'cf_units': 'Pa'},
             # sensible heat flux (on ocean grid or ocean points only)
             'shf': {'var_name': 'hfss', 'cf_name': 'surface_upward_sensible_heat_flux', 'cf_units': 'W m-2'},
             # sea surface height
-            'ssh': {'var_name': 'zos', 'cf_name': 'sea_surface_height_above_geoid', 'cf_units': 'm'},
+            'ssh': {'var_name': 'ssh', 'cf_name': 'Sea Surface Height', 'cf_units': 'm'},
             # sea surface temperature
-            'sst': {'var_name': 'ts', 'cf_name': 'sea_surface_temperature', 'cf_units': 'K'},
+            'sst': {'var_name': 'ts', 'cf_name': 'surface_temperature', 'cf_units': 'K'},
             # shortwave radiation computed from these variables IN THAT ORDER
             # swr = rsds - rsus
             # sometimes swr is included in the datasets in a variable called 'rss'
-            'swr': {
-                'var_name': ['rsds', 'rsus'],
-                'cf_name': ['surface_downwelling_shortwave_flux_in_air', 'surface_upwelling_shortwave_flux_in_air'],
-                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'minus']
-            },
+            'swr': {'var_name': 'fsns', 'cf_name': 'net_shortwave_flux_at_surface', 'cf_units': 'W m-2'},
             # zonal surface wind stress
             'taux': {'var_name': 'tauu', 'cf_name': 'surface_downward_eastward_stress', 'cf_units': 'Pa'},
             # total heat flux computed from these variables IN THAT ORDER
@@ -906,11 +923,11 @@ def CmipVariables():
             # sometimes rls = rlds - rlus and rss = rsds - rsus
             # sometimes thf is included in the datasets in a variable called 'hfds', 'netflux', 'thflx',...
             'thf': {
-                'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
+                'var_name': ['hfls', 'hfss', 'flns', 'fsns'],
                 'cf_name': ['surface_upward_latent_heat_flux', 'surface_upward_sensible_heat_flux',
-                            'surface_downwelling_longwave_flux_in_air', 'surface_upwelling_longwave_flux_in_air',
-                            'surface_downwelling_shortwave_flux_in_air', 'surface_upwelling_shortwave_flux_in_air'],
-                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus']
+                            'net_longwave_flux_at_surface',
+                            'net_shortwave_flux_at_surface'],
+                'cf_units': 'W m-2', 'algebric_calculation': ['plus', 'plus', 'plus', 'plus']
             },
         },
     }
