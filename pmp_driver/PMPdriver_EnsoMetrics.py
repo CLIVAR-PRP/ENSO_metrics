@@ -143,7 +143,7 @@ for obs in list_obs:
 
             try:
                 # finding file for 'obs', 'var'
-                file_name = param.reference_data_path[obs].replace('VAR',var0)
+                file_name = param.reference_data_path[obs].replace('VAR', var0)
                 file_areacell = None ## temporary for now
                 try:
                     file_landmask = param.reference_data_lf_path[obs]
@@ -160,7 +160,7 @@ for obs in list_obs:
                 # if var_in_file is a list (like for thf) all variables should be read from the same realm
                 if isinstance(var_in_file, list):
                     list_files = list()
-                    list_files = [param.reference_data_path[obs].replace('VAR',var1) for var1 in var_in_file]
+                    list_files = [param.reference_data_path[obs].replace('VAR', var1) for var1 in var_in_file]
                     list_areacell = [file_areacell for var1 in var_in_file]
                     list_name_area = [areacell_in_file for var1 in var_in_file]
                     try:
@@ -206,11 +206,16 @@ for mod in models:
 
     # Find where run can be gripped from given filename template for modpath
     print('realization:', realization)
-    run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
-        variable='ts').split('/')[-1].split('.')[0].split('_').index(realization)
-    print('run_in_modpath:', run_in_modpath)
-    # Collect available runs
-    runs_list = [model_path.split('/')[-1].split('.')[0].split('_')[run_in_modpath] for model_path in model_path_list]
+    try:
+        run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
+            variable='ts').split('/')[-1].split('.')[0].split('_').index(realization)
+        print('run_in_modpath:', run_in_modpath)
+        # Collect available runs
+        runs_list = [model_path.split('/')[-1].split('.')[0].split('_')[run_in_modpath] for model_path in model_path_list]
+    except:
+        if realization not in ["all", "*"]:
+            runs_list = [realization]
+
     if debug:
         print('runs_list:', runs_list)
 
@@ -221,17 +226,12 @@ for mod in models:
 
         print(' --- run: ', run, ' ---')
         mod_run = '_'.join([mod, run])
-        #dict_mod = {mod: {}}
         dict_mod = {mod_run: {}}
-        #dict_mod[mod][run] = {}
 
-        """
         if debug:
             print('list_variables:', list_variables)
     
         try:
-        """
-        if 1:
             for var in list_variables:
                 print(' --- var: ', var, ' ---')
                 # finding variable name in file
@@ -349,8 +349,6 @@ for mod in models:
                 print('netcdf_name:', netcdf_name)
                 print('json_name:', json_name)
 
-            #sys.exit('TEST')
-
             # Computes the metric collection
             print("\n### Compute the metric collection ###\n")
             cdms2.setAutoBounds('on')
@@ -366,13 +364,11 @@ for mod in models:
             # OUTPUT METRICS TO JSON FILE (per simulation)
             metrics_to_json(mc_name, dict_obs, dict_metric, dict_dive, egg_pth, outdir, json_name, mod=mod, run=run)
 
-        """
         except Exception as e: 
             print('failed for ', mod, run)
             print(e)
             if not debug:
                 pass
-        """
 
 print('PMPdriver: model loop end')
 
