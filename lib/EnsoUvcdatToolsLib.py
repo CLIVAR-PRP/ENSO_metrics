@@ -1338,7 +1338,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
                 units = 'months since ' + timebnds[0]
                 units_out = 'months since 0001-01-15 12:00:00'
             elif frequency == 'daily':
-                date1 = date(yy1, 01, 01)
+                date1 = date(yy1, 1, 1)
                 date2 = date(yy2, 12, 31)
                 length = (date2 - date1).days
                 units = 'days since ' + timebnds[0]
