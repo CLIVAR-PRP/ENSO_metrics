@@ -13,9 +13,8 @@ dict_plot = {"boxplot": my_boxplot, "curve": my_curve, "dot": my_dotplot, "dot_t
              "hovmoeller": my_hovmoeller, "map": my_map, "scatterplot": my_scatterplot}
 
 
-def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values,
-                 diagnostic_units, metric_values, metric_units, member=None, path_png=None, name_png=None, models2=None,
-                 shading=False):
+def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
+                 metric_values, metric_units, member=None, path_png=None, name_png=None, models2=None, shading=False):
     dict_param = plot_param(metric_collection, metric)
     list_var = dict_param['metric_variables']
     met_type = dict_param['metric_computation']
@@ -67,7 +66,7 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
         plt_typ = dict_diag['plot_type']
         t1 = datetime.now()
         print(str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2))
-        if metric_collection == "ENSO_tel" and "Map" in metric:
+        if metric_collection in ["ENSO_tel", "test_tel"] and "Map" in metric:
             metype = deepcopy(met_type)
         else:
             metype = None

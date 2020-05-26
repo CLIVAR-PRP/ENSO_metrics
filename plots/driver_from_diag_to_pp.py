@@ -36,8 +36,10 @@ my_project = ["select8", "CMIP"]
 big_ensemble = True  # False  #
 reduced_set = True  # False  #
 
-path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
-path_in = OSpath__join(path_main, "Data_grouped")
+# path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
+# path_in = OSpath__join(path_main, "Data_grouped")
+path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2020_05_report"
+path_in = OSpath__join(path_main, "Data")
 # path_out = OSpath__join(path_main, "Plots_v5")
 # path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_12_09_AGU/Poster"
 # path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/v02"
