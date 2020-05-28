@@ -670,6 +670,16 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         my_reg = "africaSE" if "africaSE" in variables else (
             "americaN" if "americaN" in variables else (
                 "americaS" if "americaS" in variables else ("asiaS" if "asiaS" in variables else "oceania")))
+    elif isinstance(variables, list) is True and (
+            "africaSE" in variables[0] or "america" in variables[0] or "asiaS" in variables[0] or
+            "oceania" in variables[0]):
+        met_in_file = True
+        my_reg = "africaSE" if "africaSE" in variables[0] else (
+            "americaN" if "americaN" in variables[0] else (
+                "americaS" if "americaS" in variables[0] else ("asiaS" if "asiaS" in variables[0] else "oceania")))
+    elif isinstance(variables, list) is True and "_nina_" in variables[0] and "_nino_" in variables[1]:
+        met_in_file = True
+        my_reg = ""
     else:
         met_in_file = False
         my_reg = ""
@@ -681,6 +691,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         plot_metric = True
     else:
         plot_metric = False
+    print metval
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
         lon = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[1]]))
         lat = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[0]]))
@@ -757,10 +768,31 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         if "EnsoPrMap" not in figure_name:
             nbrc = 1
             nbrl = 3
-    fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
+    if (isinstance(variables, str) is True and (
+            "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or
+            "reg_ts_over_sst_map" in variables or "djf_map__" in variables or "jja_map__" in variables)) or\
+        (isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0])):
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(6 * nbrc, 6 * nbrl), sharex="col", sharey="row")
+    else:
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     hspa1 = 0.1
     hspa2 = 0.01
-    if nbr_panel / float(nbrc) <= 2:
+    if nbrc == 2 and nbrl == 2 and isinstance(variables, list) is True and\
+            my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
+        if my_reg == "africaSE":
+            hspace = 0.3
+        elif my_reg == "americaN":
+            hspace = 0.1
+        elif my_reg == "americaS":
+            hspace = 0.4
+        elif my_reg == "asiaS":
+            hspace = 0.1
+        else:
+            hspace = 0.0
+        plt.subplots_adjust(hspace=hspace, wspace=0.2)
+    elif nbrc == 2 and nbrl == 2 and isinstance(variables, list) is True and my_reg == "":
+        plt.subplots_adjust(hspace=-0.58, wspace=0.2)
+    elif nbr_panel / float(nbrc) <= 2:
         if nbrc == 3 and nbr_val > 1:
             plt.subplots_adjust(hspace=-0.70, wspace=0.2)
         else:
@@ -874,7 +906,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         levels = create_levels(labelbar)
         cs = locmap.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar)
         # my text
-        if ii > 0 and plot_metric is True:
+        if (ii > 0 and plot_metric is True and isinstance(variables, list) is False) or\
+                (isinstance(variables, list) is True and "nina" in variables[0] and "nino" in variables[1] and
+                 (ii+1) % 2 == 0):
             if isinstance(metric_type, str) is True or isinstance(metric_type, unicode) is True:
                 txt = format_metric(metric_type, my_average(metval[ii - 1], remove_masked=True), metric_units)
                 ax.text(0.5, 0.5, txt, fontsize=12, color="k", horizontalalignment="center",
@@ -885,7 +919,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                         tmp = [metval[ii - 1][kk][jj] for kk in range(len(metval[ii - 1]))]
                         tmp = my_average(tmp, remove_masked=True)
                     else:
-                        tmp = metval[jj]
+                        if isinstance(metval[0], list) is True:
+                            tmp = metval[ii / 2][jj]
+                        else:
+                            tmp = metval[jj]
                     txt = format_metric(metric_type[jj], tmp, metric_units[jj])
                     if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
                         if my_reg in ["africaSE"]:
@@ -899,7 +936,11 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                         else:
                             xxx, yyy = 0.00, -0.15 - jj * 0.10
                     elif "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or\
-                            "reg_ts_over_sst_map" in variables:
+                            "reg_ts_over_sst_map" in variables or "reg_pr_over_sst_djf_map" in variables or\
+                            "reg_slp_over_sst_djf_map" in variables or "reg_ts_over_sst_djf_map" in variables or\
+                            "reg_pr_over_sst_jja_map" in variables or "reg_slp_over_sst_jja_map" in variables or\
+                            "reg_ts_over_sst_jja_map" in variables or (isinstance(variables, list) is True and (
+                            "djf_map__" in variables[0] or "jja_map__" in variables[0])):
                         xxx, yyy = 0.00, -0.30 - jj * 0.18
                     else:
                         xxx, yyy = -0.12, 1.26 - jj * 0.16
@@ -924,19 +965,39 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     # add colorbar
     if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
         if my_reg in ["africaSE"]:
-            cax = plt.axes([x1, y1 - 0.15, x2 - x1, 0.04])
+            if isinstance(variables, list) is True:
+                cax = plt.axes([x1, y1 - 0.08, x2 - x1, 0.02])
+            else:
+                cax = plt.axes([x1, y1 - 0.15, x2 - x1, 0.04])
         elif my_reg in ["americaN"]:
-            cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.03])
+            if isinstance(variables, list) is True:
+                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.02])
+            else:
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.03])
         elif my_reg in ["americaS"]:
-            cax = plt.axes([x1 + 0.04, y1 - 0.23, x2 - x1 - 0.08, 0.035])
+            if isinstance(variables, list) is True:
+                cax = plt.axes([x1 + 0.04, y1 - 0.12, x2 - x1 - 0.08, 0.025])
+            else:
+                cax = plt.axes([x1 + 0.04, y1 - 0.23, x2 - x1 - 0.08, 0.035])
         elif my_reg in ["asiaS"]:
-            cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.03])
+            if isinstance(variables, list) is True:
+                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.02])
+            else:
+                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.03])
         else:
-            cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.03])
+            if isinstance(variables, list) is True:
+                cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.02])
+            else:
+                cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.03])
     elif nbrl == 2:
-        cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])  # cax = plt.axes([x1, y1 + 0.21, x2 - x1, 0.015])
+        if isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0]):
+            cax = plt.axes([x1, y1 + 0.11, x2 - x1, 0.018])
+        else:
+            cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])  # cax = plt.axes([x1, y1 + 0.21, x2 - x1, 0.015])
     elif nbrl == 3:
-        if article_fig is True and nbrl == 3 and "reg_pr_over_sst_map" in variables:
+        if article_fig is True and nbrl == 3 and (
+                "reg_pr_over_sst_map" in variables or "reg_pr_over_sst_djf_map" in variables or
+                "reg_pr_over_sst_jja_map" in variables):
             cax = plt.axes([x1, y1 + 0.15, x2 - x1, 0.015])
         else:
             cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])
@@ -946,7 +1007,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         cax = plt.axes([x1, y1 + 0.22, x2 - x1, 0.005])
     else:
         if "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or\
-                "reg_ts_over_sst_map" in variables:
+                "reg_ts_over_sst_map" in variables or "reg_pr_over_sst_djf_map" in variables or\
+                "reg_slp_over_sst_djf_map" in variables or "reg_ts_over_sst_djf_map" in variables or\
+                "reg_pr_over_sst_jja_map" in variables or "reg_slp_over_sst_jja_map" in variables or\
+                "reg_ts_over_sst_jja_map" in variables:
             cax = plt.axes([x1, y1 + 0.07, x2 - x1, 0.035])
         else:
             cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.03])

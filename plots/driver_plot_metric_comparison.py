@@ -40,7 +40,7 @@ experiment = "historical"  # "piControl" #
 member = "r1i1p1"
 list_project = ["cmip6", "cmip5"]
 my_project = ["12 models", "CMIP"]
-big_ensemble = False  # True  #
+big_ensemble = True  # False  #
 reduced_set = True  # False  #
 dict_selection = {
     #
@@ -356,11 +356,12 @@ def remove_metrics(list_met, metric_collection):
                          'EnsoSstLonRmse', 'EnsoSstSkew', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
                          'EnsoFbSstShf', 'EnsoFbSstSwr']
         else:
-            to_remove = ['EnsoAmpl', 'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd', 'EnsoPrMapDjfStd',
+            to_remove = ['EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse', 'EnsoPrMapCorr', 'EnsoPrMapRmse',
+                         'EnsoPrMapStd', 'EnsoPrMapDjfStd',
                          'EnsoPrMapJjaStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd', 'EnsoSlpMapDjfCorr',
                          'EnsoSlpMapDjfRmse', 'EnsoSlpMapDjfStd', 'EnsoSlpMapJjaCorr', 'EnsoSlpMapJjaRmse',
                          'EnsoSlpMapJjaStd', 'EnsoSstMapCorr', 'EnsoSstMapRmse', 'EnsoSstMapStd', 'EnsoSstMapDjfStd',
-                         'EnsoSstMapJjaStd', 'EnsoSstLonRmse',
+                         'EnsoSstMapJjaStd',
                          'NinaPrMap_1Corr', 'NinaPrMap_1Rmse', 'NinaPrMap_1Std',
                          'NinaPrMap_2Corr', 'NinaPrMap_2Rmse', 'NinaPrMap_2Std',
                          'NinaSlpMap_1Corr', 'NinaSlpMap_1Rmse', 'NinaSlpMap_1Std',
@@ -382,8 +383,8 @@ def remove_metrics(list_met, metric_collection):
             to_remove = ['BiasSshLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
                          'EnsoSstLonRmse', 'EnsoSstSkew']
         else:
-            to_remove = ['EnsoAmpl', 'EnsoSstLonRmse', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinoSstLonRmse_1',
-                         'NinoSstLonRmse_2']
+            to_remove = ['EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2',
+                         'NinoSstLonRmse_1', 'NinoSstLonRmse_2']
     for met in to_remove:
         while met in list_met1:
             list_met1.remove(met)
@@ -466,30 +467,27 @@ if ' ':
         list_metrics = [met for met in met_order if met in list_metrics]
         tab_bst, tab_val = list(), list()
         for met in list_metrics:
-            tab1, tab2 = list(), list()
+            tab_tmp = list()
             for grp in my_project:
                 if grp in dict_selection.keys():
-                    tab = list()
-                    for mod in dict_selection[grp]:
-                        if dict_out[mod][met] != 1e20:
-                            # if "Corr" in met:
-                            #     tab.append(1 - dict_out[mod][met])
-                            # else:
-                            #     tab.append(dict_out[mod][met])
-                            tab.append(dict_out[mod][met])
-                    nbr = len(tab)
-                    tab = NUMPYarray(tab)
-                    tab = NUMPYmean(tab)
-                    tab1.append(tab)
-                    tab2.append([1e20, 1e20])
+                    tab = NUMPYarray([dict_out[mod][met] for mod in dict_out.keys()
+                                      if mod in dict_selection[grp] and dict_out[mod][met] != 1e20])
+                    tab_tmp.append(NUMPYma__masked_invalid(tab).compressed())
                     del tab
                 else:
-                    tab = NUMPYarray([dict_out[mod][met] for mod in lev1 if dict_out[mod][met] != 1e20])
-                    bst = bootstrap(tab, nech=nbr)
-                    tab = NUMPYmean(tab)
-                    tab1.append(tab)
-                    tab2.append(bst)
-                    del bst, nbr, tab
+                    tab = NUMPYarray([dict_out[mod][met] for mod in dict_out.keys() if dict_out[mod][met] != 1e20])
+                    tab_tmp.append(NUMPYma__masked_invalid(tab).compressed())
+                    del tab
+            tab1, tab2 = list(), list()
+            for ii in range(len(tab_tmp)):
+                tab1.append(float(NUMPYmean(tab_tmp[ii])))
+                if ii == 0:
+                    nbr = len(tab_tmp[1])
+                else:
+                    nbr = len(tab_tmp[0])
+                bst = bootstrap(tab_tmp[ii], nech=nbr)
+                tab2.append(bst)
+                del bst, nbr
             tab_bst.append(tab2)
             tab_val.append(tab1)
         tab_bst = NUMPYmoveaxis(NUMPYarray(tab_bst), 0, 1)

@@ -338,11 +338,13 @@ def remove_metrics(list_met, metric_collection):
                          'EnsoSstLonRmse', 'EnsoSstSkew', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
                          'EnsoFbSstShf', 'EnsoFbSstSwr']
         else:
-            to_remove = ['EnsoAmpl', 'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd', 'EnsoPrMapDjfStd',
-                         'EnsoPrMapJjaStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd', 'EnsoSlpMapDjfCorr',
-                         'EnsoSlpMapDjfRmse', 'EnsoSlpMapDjfStd', 'EnsoSlpMapJjaCorr', 'EnsoSlpMapJjaRmse',
-                         'EnsoSlpMapJjaStd', 'EnsoSstMapCorr', 'EnsoSstMapRmse', 'EnsoSstMapStd', 'EnsoSstMapDjfStd',
-                         'EnsoSstMapJjaStd', 'EnsoSstLonRmse',
+            to_remove = ['EnsoAmpl', 'EnsoSeasonality',
+                         'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd', 'EnsoPrMapDjfCorr', 'EnsoPrMapDjfStd',
+                         'EnsoPrMapJjaCorr', 'EnsoPrMapJjaStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd',
+                         'EnsoSlpMapDjfCorr', 'EnsoSlpMapDjfRmse', 'EnsoSlpMapDjfStd', 'EnsoSlpMapJjaCorr',
+                         'EnsoSlpMapJjaRmse', 'EnsoSlpMapJjaStd', 'EnsoSstMapCorr', 'EnsoSstMapRmse', 'EnsoSstMapStd',
+                         'EnsoSstMapDjfCorr', 'EnsoSstMapDjfStd', 'EnsoSstMapJjaCorr', 'EnsoSstMapJjaStd',
+                         'EnsoSstLonRmse',
                          'NinaPrMap_1Corr', 'NinaPrMap_1Rmse', 'NinaPrMap_1Std',
                          'NinaPrMap_2Corr', 'NinaPrMap_2Rmse', 'NinaPrMap_2Std',
                          'NinaSlpMap_1Corr', 'NinaSlpMap_1Rmse', 'NinaSlpMap_1Std',

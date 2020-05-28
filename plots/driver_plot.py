@@ -9,6 +9,7 @@
 # Import the right packages
 # ---------------------------------------------------#
 from __future__ import print_function
+from copy import deepcopy
 from glob import iglob as GLOBiglob
 import json
 from os.path import join as OSpath__join
@@ -20,42 +21,52 @@ from EnsoMetricPlot import main_plotter
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collection = "ENSO_proc"
-project = "cmip5"
-model = "CNRM-CM5"
+metric_collection = "test_tel"#"ENSO_proc"
+project = "obs2obs"#"cmip5"
+model = "NCEP2_NCEP2"#"CNRM-CM5"
 experiment = "historical"
 member = "r1i1p1"
-modname = model + "_" + member
+modname = deepcopy(model)#model + "_" + member
 
-path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
-path_in = OSpath__join(path_main, "Data_lee")
+# path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
+# path_in = OSpath__join(path_main, "Data_lee")
+# path_out = OSpath__join(path_main, "Plots_wiki")
+path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2020_05_report"
+path_in = OSpath__join(path_main, "Data/" + project + "/" + experiment)
 path_out = OSpath__join(path_main, "Plots_wiki")
 
 expe = "hist" if experiment == "historical" else "pi"
-pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
+# pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
+pattern = "yplanton_" + metric_collection
 
 
 # ---------------------------------------------------#
 # Main
 # ---------------------------------------------------#
 # read json file
-filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
+#filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
+filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_observation.json")))[0]
 with open(filename_js) as ff:
     data_json = json.load(ff)['RESULTS']['model'][model][member]
 ff.close()
 del ff, filename_js
 # loop on metrics
 metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=lambda v: v.upper())
-for met in metrics[6:]:
+metrics = [met for met in metrics if met in data_json["value"].keys() or
+           ("Map" in met and (met + "Corr" in data_json["value"].keys() or met + "Rmse" in data_json["value"].keys()
+            or met + "Std" in data_json["value"].keys()))]
+for met in metrics:
     print(met)
     # get NetCDF file name
-    path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
-    filename_nc = pattern + "_" + model + "_" + member + "_" + met + ".nc"
-    if metric_collection == "ENSO_proc" and "Ssh" in met:
-        filename_nc = filename_nc.replace("ENSO_proc", "test_proc")
+    # path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
+    path_nc = OSpath__join(path_in, metric_collection)
+    if project == "obs2obs":
+        filename_nc = pattern + "_" + model + "_" + met + ".nc"
+    else:
+        filename_nc = pattern + "_" + model + "_" + member + "_" + met + ".nc"
     filename_nc = list(GLOBiglob(OSpath__join(path_nc, filename_nc)))[0]
     # get diagnostic values for the given model and observations
-    if metric_collection == "ENSO_tel" and "Map" in met:
+    if metric_collection in ["ENSO_tel", "test_tel"] and "Map" in met:
         dict_dia = data_json["value"][met+"Corr"]["diagnostic"]
         diagnostic_values = dict((key1, None) for key1 in dict_dia.keys())
         diagnostic_units = ""
@@ -64,10 +75,11 @@ for met in metrics[6:]:
         diagnostic_values = dict((key1, dict_dia[key1]["value"]) for key1 in dict_dia.keys())
         diagnostic_units = data_json["metadata"]["metrics"][met]["diagnostic"]["units"]
     # get metric values computed with the given model and observations
-    if metric_collection == "ENSO_tel" and "Map" in met:
-        list1, list2 = [met+"Corr", met+"Rmse"], ["diagnostic", "metric"]
+    if metric_collection in ["ENSO_tel", "test_tel"] and "Map" in met:
+        list1, list2 = [met+"Corr", met+"Rmse"], ["metric", "metric"]
         dict_met = data_json["value"]
-        metric_values = dict((key1, {model: [dict_met[su][ty][key1]["value"] for su, ty in zip(list1, list2)]})
+        metric_values = dict((key1, {model: [1-dict_met[su][ty][key1]["value"] if "Corr" in su else
+                                             dict_met[su][ty][key1]["value"]for su, ty in zip(list1, list2)]})
                              for key1 in dict_met[list1[0]]["metric"].keys())
         metric_units = [data_json["metadata"]["metrics"][su]["metric"]["units"] for su in list1]
     else:
@@ -75,7 +87,10 @@ for met in metrics[6:]:
         metric_values = dict((key1, {model: dict_met[key1]["value"]}) for key1 in dict_met.keys())
         metric_units = data_json["metadata"]["metrics"][met]["metric"]["units"]
     # figure name
-    figure_name = project + "_" + experiment + "_" + metric_collection + "_" + model + "_" + member + "_" + met
+    if project == "obs2obs":
+        figure_name = project + "_" + experiment + "_" + metric_collection + "_" + model + "_" + met
+    else:
+        figure_name = project + "_" + experiment + "_" + metric_collection + "_" + model + "_" + member + "_" + met
     # this function needs:
     #      - the name of the metric collection: metric_collection
     #      - the name of the metric: metric
@@ -91,8 +106,9 @@ for met in metrics[6:]:
     #      - the metric units: metric_units
     #      - (optional) the path where to save the plots: path_out
     #      - (optional) the name of the plots: name_png
-    main_plotter(metric_collection, met, model, experiment, filename_nc, diagnostic_values,
-                 diagnostic_units, metric_values, metric_units, member=member, path_png=path_out, name_png=figure_name)
-
-
-
+    if project == "obs2obs":
+        main_plotter(metric_collection, met, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
+                     metric_values, metric_units, member=None, path_png=path_out, name_png=figure_name)
+    else:
+        main_plotter(metric_collection, met, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
+                     metric_values, metric_units, member=member, path_png=path_out, name_png=figure_name)
