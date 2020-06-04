@@ -104,6 +104,11 @@ def minimaxi(tab):
 def minmax_plot(tab, metric=False):
     # define minimum and maximum
     mini, maxi = minimaxi(tab)
+    if mini == maxi:
+        tmp = int(str("%.e" % (mini/10.))[3:])
+        tmp = 10**-tmp if mini < 1 else 10**tmp
+        mini -= tmp
+        maxi += tmp
     if mini < 0 and maxi > 0:
         locmaxi = max([abs(mini), abs(maxi)])
         locmini = -deepcopy(locmaxi)

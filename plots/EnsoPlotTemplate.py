@@ -302,6 +302,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     # get data
     diag_mod, diag_obs, metval, obsname =\
         read_diag(diagnostic_values, metric_values, model, reference, metric_variables, member=member)
+    print diag_mod, diag_obs
     if metric_type is not None:
         plot_metric = True
     else:
@@ -682,7 +683,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         my_reg = ""
     else:
         met_in_file = False
-        my_reg = ""
+        my_reg = None
     tab_mod, tab_obs, metval, obsname = \
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
                  member=member,
@@ -691,7 +692,6 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         plot_metric = True
     else:
         plot_metric = False
-    print metval
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
         lon = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[1]]))
         lat = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[0]]))
@@ -790,7 +790,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         else:
             hspace = 0.0
         plt.subplots_adjust(hspace=hspace, wspace=0.2)
-    elif nbrc == 2 and nbrl == 2 and isinstance(variables, list) is True and my_reg == "":
+    elif nbrc == 2 and nbrl == 2 and isinstance(variables, list) is True and my_reg == "" and plot_metric is True:
         plt.subplots_adjust(hspace=-0.58, wspace=0.2)
     elif nbr_panel / float(nbrc) <= 2:
         if nbrc == 3 and nbr_val > 1:
