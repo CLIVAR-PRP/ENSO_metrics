@@ -799,6 +799,7 @@ def ReferenceObservations(dataset=True):
                 'ssh': {'var_name': 'ssh'},
                 'taux': {'var_name': 'taux'},
                 'thetao': {'var_name': 'temp'},
+                'thf': {'var_name': 'net_heating'},
                 'uo': {'var_name': 'u'},
                 'vo': {'var_name': 'v'},
             },
