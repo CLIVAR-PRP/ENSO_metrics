@@ -104,11 +104,17 @@ def minimaxi(tab):
 def minmax_plot(tab, metric=False):
     # define minimum and maximum
     mini, maxi = minimaxi(tab)
-    if mini == maxi:
-        tmp = int(str("%.e" % (mini/10.))[3:])
-        tmp = 10**-tmp if mini < 1 else 10**tmp
-        mini -= tmp
-        maxi += tmp
+    if mini == maxi or abs(maxi-mini)/float(abs(maxi+mini))<1e-2:
+        tt = max(abs(mini), abs(maxi))/10.
+        tmp = int(str("%.e" % tt)[3:])
+        if mini == maxi or (mini < 0 and maxi > 0):
+            tmp = 10**-tmp if tt < 1 else 10**tmp
+        elif mini >= 0:
+            tmp = 10**-tmp if tt < 1 else 10**tmp
+        else:
+            tmp = 10**-tmp if tt < 1 else 10**tmp
+        mini = 0 if mini > 0 and (mini-tmp)<0 else mini - tmp
+        maxi = 0 if maxi < 0 and (maxi+tmp)>0 else maxi + tmp
     if mini < 0 and maxi > 0:
         locmaxi = max([abs(mini), abs(maxi)])
         locmini = -deepcopy(locmaxi)
@@ -383,7 +389,8 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
                     except: val = None
                     metval.append(val)
                     del val
-    elif isinstance(var_to_read, list) is True and len(var_to_read) == 2:
+    elif isinstance(var_to_read, list) is True and len(var_to_read) == 2 and\
+            ("nina" in var_to_read[0] or "nino" in var_to_read[0]):
         metval = list()
         for var in var_to_read:
             add = "nina" if "nina" in var else "nino"

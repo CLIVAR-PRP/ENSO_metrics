@@ -302,7 +302,6 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     # get data
     diag_mod, diag_obs, metval, obsname =\
         read_diag(diagnostic_values, metric_values, model, reference, metric_variables, member=member)
-    print diag_mod, diag_obs
     if metric_type is not None:
         plot_metric = True
     else:

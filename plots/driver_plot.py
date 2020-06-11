@@ -21,9 +21,9 @@ from EnsoMetricPlot import main_plotter
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collection = "test_tel"#"ENSO_proc"
+metric_collection = "ENSO_proc"
 project = "obs2obs"#"cmip5"
-model = "NCEP2_NCEP2"#"CNRM-CM5"
+model = "NCEP2_NCEP2" #"ERA-Interim_ERA-Interim" #"CNRM-M5"
 experiment = "historical"
 member = "r1i1p1"
 modname = deepcopy(model)#model + "_" + member
@@ -36,7 +36,7 @@ path_in = OSpath__join(path_main, "Data/" + project + "/" + experiment)
 path_out = OSpath__join(path_main, "Plots_wiki")
 
 expe = "hist" if experiment == "historical" else "pi"
-# pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
+# pattern = project + "_" + experiment + "_" + metric_collection + "_v20200427"
 pattern = "yplanton_" + metric_collection
 
 
@@ -44,7 +44,7 @@ pattern = "yplanton_" + metric_collection
 # Main
 # ---------------------------------------------------#
 # read json file
-#filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
+# filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns.json")))[0]
 filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_observation.json")))[0]
 with open(filename_js) as ff:
     data_json = json.load(ff)['RESULTS']['model'][model][member]
