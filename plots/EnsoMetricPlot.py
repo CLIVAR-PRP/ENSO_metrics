@@ -6,11 +6,61 @@ from os.path import join as OSpath__join
 # ENSO_metrics functions
 #from EnsoPlotLib import plot_param
 from EnsoMetrics.EnsoPlotLib import plot_param
-from EnsoPlotTemplate import my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map, my_scatterplot
+from EnsoPlotTemplate import cmip_boxplot, my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map,\
+    my_scatterplot
 
 
 dict_plot = {"boxplot": my_boxplot, "curve": my_curve, "dot": my_dotplot, "dot_to_box": my_dot_to_box,
              "hovmoeller": my_hovmoeller, "map": my_map, "scatterplot": my_scatterplot}
+
+
+def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagnostic_units, metric_values,
+                 metric_units, multi_member_ave, figure_name):
+    """
+    Organizes plots for CMIP ensembles
+
+    Inputs:
+    ------
+    :param metric_collection: string
+        name of the metric collection (e.g., "ENSO_perf")
+    :param metric: string
+        name of the metric (e.g., "EnsoAmpl")
+    :param diagnostic_values: dictionary
+        dictionary containing the diagnostic values
+        e.g., {"ref": {"ERA-Interim": 1, "Tropflux": 1.1}, "cmip5": [0.9, ...], "cmip6": [0.9, ...]}
+    :param diagnostic_units: string
+        diagnostic units (e.g., "C")
+    :param metric_values: dictionary
+        dictionary containing the metric values
+        e.g., {"cmip5": {"ERA-Interim": [10, ...], "Tropflux": [20, ...]},
+               "cmip6": {"ERA-Interim": [10, ...], "Tropflux": [20, ...]}}
+    :param metric_units: string
+        metric units (e.g., "%")
+    :param multi_member_ave: boolean
+        True if multi-member mean is used, False otherwise
+    :param figure_name: string
+        path and name of the plots (e.g., "path/to/directory/file_name")
+
+    Output:
+    ------
+    :return:
+    """
+    lmet = metric.replace("Corr", "").replace("Rmse", "").replace("Std", "") if "Map" in metric else deepcopy(metric)
+    dict_param = plot_param(metric_collection, lmet)
+    my_param = dict_param["diagnostic"]
+    reference = dict_param["metric_reference"]
+    diagnostic_units = diagnostic_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+    metric_units = metric_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+    if multi_member_ave is True:
+        info = "ensemble-mean\n" + experiment + " simulations"
+    else:
+        info = "only first\n" + experiment + " simulation"
+    # metric
+    cmip_boxplot(my_param, metric_values, metric_units, reference, "metric", info, figure_name + "_divedown01")
+    # diagnostic
+    cmip_boxplot(my_param, diagnostic_values, diagnostic_units, reference, "diagnostic", info,
+                 figure_name + "_divedown02")
+    return
 
 
 def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
