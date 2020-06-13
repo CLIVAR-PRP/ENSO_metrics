@@ -9,8 +9,10 @@ from numpy import array as NUMPYarray
 from numpy import isnan as NUMPYisnan
 from numpy import mean as NUMPYmean
 from numpy import nan as NUMPYnan
+from numpy import sort as NUMPYsort
 from numpy import where as NUMPYwhere
 from numpy.ma import masked_invalid as NUMPYma__masked_invalid
+from numpy.random import randint as NUMPYrandom__randint
 from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # xarray based functions
 from xarray import open_dataset
@@ -24,6 +26,17 @@ from EnsoMetrics import EnsoErrorsWarnings
 
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 observations = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
+
+
+def bootstrap(tab, num_samples=1000000, alpha=0.05, nech=None, statistic=NUMPYmean):
+    """Returns bootstrap estimate of 100.0*(1-alpha) CI for statistic."""
+    n = len(tab)
+    if nech is None:
+        nech = deepcopy(n)
+    idx = NUMPYrandom__randint(0, n, (num_samples, nech))
+    samples = tab[idx]
+    stat = NUMPYsort(statistic(samples, 1))
+    return [stat[int((alpha/2.0)*num_samples)], stat[int((1-alpha/2.0)*num_samples)]]
 
 
 def create_labels(label_name, label_ticks):
@@ -199,6 +212,14 @@ def minmax_plot(tab, metric=False):
 def my_average(tab, axis=None, remove_masked=False):
     tmp = my_mask(tab, remove_masked=remove_masked)
     return NUMPYmean(tmp, axis=axis)
+
+
+def my_bootstrap(tab1, tab2):
+    mea1 = float(NUMPYarray(tab1).mean())
+    mea2 = float(NUMPYarray(tab2).mean())
+    bst1 = bootstrap(NUMPYarray(tab1), nech=len(tab2))
+    bst2 = bootstrap(NUMPYarray(tab2), nech=len(tab1))
+    return bst1, bst2, mea1, mea2
 
 
 def my_legend(modname, obsname, filename_nc, models2=None, member=None, plot_metric=True, shading=False):

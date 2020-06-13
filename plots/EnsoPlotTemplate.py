@@ -9,14 +9,137 @@ from mpl_toolkits.basemap import Basemap
 from numpy import array as NUMPYarray
 from numpy import meshgrid as NUMPYmeshgrid
 # ENSO
-from EnsoPlotToolsLib import create_labels, create_levels, format_metric, minimaxi, minmax_plot, my_average, my_legend,\
-    my_mask, my_mask_map, read_diag, read_var, shading_levels
+from EnsoPlotToolsLib import create_labels, create_levels, format_metric, minimaxi, minmax_plot, my_average,\
+    my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, shading_levels
 
 colors_sup = ["r", "lime", "peru", "gold", "forestgreen", "sienna", "gold"]
+dict_col = {"REF": "k", "CMIP": "forestgreen", "CMIP3": "orange", "CMIP5": "dodgerblue", "CMIP6": "r"}
 
 mod_nicknames = ["CMIP5", "CMIP6"]
 
 article_fig = False  # True
+
+
+def cmip_boxplot(dict_param, dict_values, units, reference, val_type, my_text, figure_name):
+    # concatenate every mips
+    keys = sorted([kk for kk in dict_values.keys() if kk != "ref"], key=lambda v: v.upper())
+    vall = list()
+    for kk in keys:
+        vall += dict_values[kk][reference] if val_type == "metric" else dict_values[kk]
+    if len(vall) > 0:
+        # add every mips in the list
+        legend = ["CMIP"] + [kk.upper() for kk in keys]
+        colors = [dict_col[kk] for kk in legend]
+        vall = [vall] + [dict_values[kk][reference] if val_type == "metric" else dict_values[kk] for kk in keys]
+        # number of 'columns' (boxplot, markers, etc)
+        nbrc = len(vall)
+        if val_type == "metric":
+            nbrc += int(round(len(keys)*(len(keys) - 1) / 2.))
+        # plot param
+        title = "Metric values" if val_type == "metric" else "Scalar diagnostic values"
+        yname = dict_param["title"][0] if isinstance(dict_param["title"], list) is True else dict_param["title"]
+        if units != "":
+            uni = units.replace("1e2", "10$^2$").replace("1e3", "10$^3$")
+            uni = uni.replace("1e-2", "10$^{-2}$").replace("1e-3", "10$^{-3}$")
+            uni = uni.replace("m2", "m$^2$")
+            yname += " (" + uni + ")"
+            del uni
+        tmp = vall[0]
+        if val_type != "metric":
+            tmp += [dict_values["ref"][reference]]
+        tick_labels = minmax_plot(tmp)
+        mini, maxi = min(tick_labels), max(tick_labels)
+        fig, ax = plt.subplots(1, 1, figsize=(max(4, nbrc), 4), sharex="col", sharey="row")
+        # title
+        ax.set_title(title, fontsize=15, y=1.01, loc="left")
+        # # y axis
+        ax.set_yticks(tick_labels)
+        ax.set_ylim(ymin=mini, ymax=maxi)
+        ax.set_ylabel(yname, fontsize=15)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(12)
+        # boxplots
+        for ii, (cc, tab) in enumerate(zip(colors, vall)):
+            boxproperties = {
+                "boxprops": dict(linestyle="-", linewidth=2, color=cc),
+                "capprops": dict(linestyle="-", linewidth=2, color=cc),
+                "flierprops": dict(marker="o", markersize=5.0, markeredgecolor=cc, markerfacecolor=cc,
+                                   markeredgewidth=0),
+                "meanprops": dict(marker="D", markersize=10.0, markeredgecolor=cc, markerfacecolor=cc,
+                                  markeredgewidth=0),
+                "medianprops": dict(linestyle="-", linewidth=2, color=cc),
+                "whiskerprops": dict(linestyle="-", linewidth=2, color=cc)}
+            tmp = [[1e20, 1e20]] * ii + [tab] + [[1e20, 1e20]] * (nbrc-1-ii)
+            ax.boxplot(tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=True, **boxproperties)
+            del boxproperties, tmp
+        # bootstrap
+        x1, x2 = ax.get_xlim()
+        dx = (x2 - x1) / 100.
+        y1, y2 = ax.get_ylim()
+        dy = (y2 - y1) / 100.
+        if val_type == "metric":
+            for ii, tab1 in enumerate(vall[1:]):
+                for jj, tab2 in enumerate(vall[2+ii:]):
+                    cc1, cc2 = colors[ii + 1], colors[ii + jj + 2]
+                    bst1, bst2, mea1, mea2 = my_bootstrap(tab1, tab2)
+                    fillstyle = "none" if (min(bst2) <= mea1 <= max(bst2)) or (min(bst1) <= mea2 <= max(bst1)) else\
+                        "full"
+                    xxx = len(vall) + ii + 1
+                    ax.plot([xxx], [mea1], markersize=10, color=cc1, marker="D", fillstyle=fillstyle,
+                            markeredgecolor=cc1, markeredgewidth=3, zorder=2)
+                    ax.plot([xxx], [mea2], markersize=10, color=cc2, marker="D", fillstyle=fillstyle,
+                            markeredgecolor=cc2, markeredgewidth=3, zorder=2)
+                    ax.add_line(Line2D([xxx - 0.3, xxx + 0.3], [min(bst1), min(bst1)], c=cc1, lw=2, zorder=3))
+                    ax.add_line(Line2D([xxx - 0.3, xxx + 0.3], [max(bst1), max(bst1)], c=cc1, lw=2, zorder=3))
+                    ax.add_line(Line2D([xxx - 0.05, xxx - 0.05], [min(bst1), max(bst1)], c=cc1, lw=2, zorder=3))
+                    ax.add_line(Line2D([xxx - 0.3, xxx + 0.3], [min(bst2), min(bst2)], c=cc2, lw=2, zorder=3))
+                    ax.add_line(Line2D([xxx - 0.3, xxx + 0.3], [max(bst2), max(bst2)], c=cc2, lw=2, zorder=3))
+                    ax.add_line(Line2D([xxx + 0.05, xxx + 0.05], [min(bst2), max(bst2)], c=cc2, lw=2, zorder=3))
+                    del bst1, bst2, cc1, cc2, fillstyle, mea1, mea2, xxx
+            ax.plot([x2 + 5 * dx], [y1 + 50 * dy], markersize=8, color="k", marker="D", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=2, clip_on=False, zorder=2)
+            ax.text(x2 + 10 * dx, y1 + 50 * dy, r'significantly $\neq$', fontsize=12, color="k", ha="left", va="center")
+            ax.plot([x2 + 5 * dx], [y1 + 43 * dy], markersize=8, color="k", marker="D", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=2, clip_on=False, zorder=2)
+            ax.text(x2 + 10 * dx, y1 + 43 * dy, r'not $\neq$', fontsize=12, color="k", ha="left", va="center")
+            ax.text(x2 + 2 * dx, y1 + 34 * dy, "at the 95% confidence level\n(Monte Carlo sampling method)",
+                    fontsize=10, color="k", ha="left", va="center")
+        # reference
+        if val_type != "metric":
+            ax.axhline(dict_values["ref"][reference], c="k", ls="-", lw=4, zorder=1)
+        # legend
+        if val_type == "metric":
+            legend = ["ref: " + reference + " = 0"] + legend
+        else:
+            legend = ["ref: " + reference] + legend
+        lines = [Line2D([0], [0], marker="D", color="w", mfc=cc, markersize=10) for cc in colors]
+        lines = [Line2D([0], [0], color=dict_col["REF"], ls="-", lw=4)] + lines
+        ax.legend(lines, legend, bbox_to_anchor=(1, 1), loc="upper left", ncol=1)
+        ax.text(x2 + 2 * dx, y1, my_text, fontsize=12, color="k", ha="left", va="bottom")
+        # grid
+        ax.grid(ls="--", lw=1, which="major", axis="y")
+        # save
+        plt.savefig(figure_name, bbox_inches="tight")
+        plt.close()
+        del ax, colors, fig, legend, lines, maxi, mini, nbrc, tick_labels, title, yname
+    else:
+        # plot param
+        title = "Metric values" if val_type == "metric" else "Scalar diagnostic values"
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4), sharex="col", sharey="row")
+        ax.axes.xaxis.set_visible(False)
+        ax.axes.yaxis.set_visible(False)
+        # title
+        ax.set_title(title, fontsize=15, y=1.01, loc="left")
+        ax.set_xlim(xmin=0, xmax=1)
+        ax.set_ylim(ymin=0, ymax=1)
+        txt = "No metric\nvalues?" if val_type == "metric" else "No scalar diagnostic\nfor this metric"
+        ax.text(0.5, 0.5, txt, fontsize=20, color="k", ha="center", va="center")
+        # save
+        plt.savefig(figure_name, bbox_inches="tight")
+        plt.close()
+        del ax, fig, title, txt
+    return
+
 
 def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figure_name, models2=None, member=None,
                metric_type=None, metric_values=None, metric_units=None, diagnostic_values=None, diagnostic_units=None,
@@ -29,8 +152,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         nbr_val = len(variables)
     tab_mod, tab_obs, metval, obsname = \
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
-                 member=member,
-                 shading=shading)
+                 member=member, shading=shading)
     if metric_type is not None:
         plot_metric = True
     else:
@@ -291,7 +413,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             plot_curve(tab_tmp, [tab_obs[kk]], ax, title_tmp, axis, xname, yname, ytick_labels, lcol, lsty, metric_type,
                        metval, metric_units, model=model, member=member, obsname=obsname, legend=legend,
                        multimodel=True, plot_metric=plot_metric, plot_legend=plot_legend, shading=shading)
-    plt.savefig(figure_name, bbox_inches='tight')
+    plt.savefig(figure_name, bbox_inches="tight")
     plt.close()
     return
 
