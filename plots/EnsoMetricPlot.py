@@ -64,7 +64,8 @@ def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagn
 
 
 def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
-                 metric_values, metric_units, member=None, path_png=None, name_png=None, models2=None, shading=False):
+                 metric_values, metric_units, member=None, path_png=None, name_png=None, models2=None, shading=False,
+                 plot_ref=False):
     dict_param = plot_param(metric_collection, metric)
     list_var = dict_param['metric_variables']
     met_type = dict_param['metric_computation']
@@ -106,6 +107,14 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
         model, filename_nc, dict_diag, reference, list_var, fig_name + "_divedown01", models2=models2,
         member=member, metric_type=met_type, metric_values=metric_values, metric_units=metric_units,
         diagnostic_values=diagnostic_values, diagnostic_units=diagnostic_units, regions=dict_reg, shading=shading)
+    if plot_ref is True:
+        model_new = model.replace("GPCPv2.3", "GPCPv23").replace("SODA3.4.2", "SODA342")
+        fig_name_ref = fig_name.replace(model_new, "reference")
+        dict_plot[plt_typ](
+            model, filename_nc, dict_diag, reference, list_var, fig_name_ref + "_divedown01", models2=None,
+            member=None, metric_type=None, metric_values=metric_values, metric_units=metric_units,
+            diagnostic_values=diagnostic_values, diagnostic_units=diagnostic_units, regions=dict_reg, shading=False,
+            plot_ref=plot_ref)
     dt = datetime.now() - t1
     dt = str(int(round(dt.seconds / 60.)))
     print(str().ljust(30) + "took " + dt + " minute(s)")
@@ -124,6 +133,12 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
             model, filename_nc, dict_diag, reference, list_var, fig_name + "_divedown" + str(ii+2).zfill(2),
             models2=models2, member=member, metric_type=metype, metric_values=metric_values, metric_units=metric_units,
             diagnostic_values=diagnostic_values, diagnostic_units=diagnostic_units, regions=dict_reg, shading=shading)
+        if plot_ref is True:
+            dict_plot[plt_typ](
+                model, filename_nc, dict_diag, reference, list_var, fig_name_ref + "_divedown" + str(ii + 2).zfill(2),
+                models2=None, member=None, metric_type=None, metric_values=metric_values, metric_units=metric_units,
+                diagnostic_values=diagnostic_values, diagnostic_units=diagnostic_units, regions=dict_reg, shading=False,
+                plot_ref=plot_ref)
         dt = datetime.now() - t1
         dt = str(int(round(dt.seconds / 60.)))
         print(str().ljust(30) + "took " + dt + " minute(s)")
