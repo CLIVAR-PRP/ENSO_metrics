@@ -21,12 +21,12 @@ from EnsoMetricPlot import main_plotter
 # ---------------------------------------------------#
 # Arguments
 # ---------------------------------------------------#
-metric_collection = "ENSO_proc"
-project = "obs2obs"#"cmip5"
-model = "NCEP2_NCEP2" #"ERA-Interim_ERA-Interim" #"CNRM-M5"
+metric_collection = "ENSO_perf"
+project = "cmip5"  # "obs2obs"  #
+model = "CNRM-CM5"  # "ERA-Interim_SODA3.4.2"  # "ERA-Interim_ERA-Interim"  # "ERA-Interim"  #
 experiment = "historical"
 member = "r1i1p1"
-modname = deepcopy(model)#model + "_" + member
+modname = model + "_" + member  # deepcopy(model)  #
 
 # path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 # path_in = OSpath__join(path_main, "Data_lee")
@@ -36,16 +36,18 @@ path_in = OSpath__join(path_main, "Data/" + project + "/" + experiment)
 path_out = OSpath__join(path_main, "Plots_wiki")
 
 expe = "hist" if experiment == "historical" else "pi"
-# pattern = project + "_" + experiment + "_" + metric_collection + "_v20200427"
-pattern = "yplanton_" + metric_collection
+# pattern = project + "_" + experiment + "_" + metric_collection + "_v2019????"
+pattern = project + "_" + experiment + "_" + metric_collection + "_v20200427"
+# pattern = "yplanton_" + metric_collection
 
 
 # ---------------------------------------------------#
 # Main
 # ---------------------------------------------------#
 # read json file
-# filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns.json")))[0]
-filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_observation.json")))[0]
+# filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns_modified.json")))[0]
+filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_allModels_allRuns.json")))[0]
+# filename_js = list(GLOBiglob(OSpath__join(path_in, pattern + "_observation.json")))[0]
 with open(filename_js) as ff:
     data_json = json.load(ff)['RESULTS']['model'][model][member]
 ff.close()
@@ -55,7 +57,7 @@ metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=la
 metrics = [met for met in metrics if met in data_json["value"].keys() or
            ("Map" in met and (met + "Corr" in data_json["value"].keys() or met + "Rmse" in data_json["value"].keys()
             or met + "Std" in data_json["value"].keys()))]
-for met in metrics:
+for met in ["EnsoSstDiversity_2"]:#metrics:
     print(met)
     # get NetCDF file name
     # path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
@@ -87,10 +89,11 @@ for met in metrics:
         metric_values = dict((key1, {model: dict_met[key1]["value"]}) for key1 in dict_met.keys())
         metric_units = data_json["metadata"]["metrics"][met]["metric"]["units"]
     # figure name
+    model2 = model.replace("GPCPv2.3", "GPCPv23").replace("SODA3.4.2", "SODA342")
     if project == "obs2obs":
-        figure_name = project + "_" + experiment + "_" + metric_collection + "_" + model + "_" + met
+        figure_name = project + "_" + experiment + "_" + metric_collection + "_" + model2 + "_" + met
     else:
-        figure_name = project + "_" + experiment + "_" + metric_collection + "_" + model + "_" + member + "_" + met
+        figure_name = project + "_" + experiment + "_" + metric_collection + "_" + model2 + "_" + member + "_" + met
     # this function needs:
     #      - the name of the metric collection: metric_collection
     #      - the name of the metric: metric
@@ -108,7 +111,7 @@ for met in metrics:
     #      - (optional) the name of the plots: name_png
     if project == "obs2obs":
         main_plotter(metric_collection, met, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
-                     metric_values, metric_units, member=None, path_png=path_out, name_png=figure_name)
+                     metric_values, metric_units, member=None, path_png=path_out, name_png=figure_name, plot_ref=True)
     else:
         main_plotter(metric_collection, met, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
                      metric_values, metric_units, member=member, path_png=path_out, name_png=figure_name)
