@@ -57,7 +57,7 @@ metrics = sorted(defCollection(metric_collection)['metrics_list'].keys(), key=la
 metrics = [met for met in metrics if met in data_json["value"].keys() or
            ("Map" in met and (met + "Corr" in data_json["value"].keys() or met + "Rmse" in data_json["value"].keys()
             or met + "Std" in data_json["value"].keys()))]
-for met in ["EnsoSstDiversity_2"]:#metrics:
+for met in metrics:
     print(met)
     # get NetCDF file name
     # path_nc = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)

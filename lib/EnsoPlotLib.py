@@ -364,9 +364,9 @@ plot_parameters = {
             "varpattern": "diagnostic",
             "yname": "normalized dSSToce",
             "method": "1) Detect El Nino and La Nina\n    (5-m. tri. ave. Dec. N3.4 SSTA > 0.75 STD)\n" +
-                      "2) dSST = REGION1 SSTA Dec. - Jul.\n3) REGION1 THFA summed from Jul. to Dec.\n" +
-                      "4) dSST = dSST/dSST and dSSTthf = dSSTthf/dSST\n" +
-                      "5) dSSToce = dSST - dSSTthf\n6) Mean dSSToce both El Nino and La Nina\n\n" +
+                      "2) dSST = REGION1 SSTA Dec. - Jul.\n3) REGION1 NHFA summed from Jul. to Dec.\n" +
+                      "4) dSST = dSST/dSST and dSSTnhf = dSSTnhf/dSST\n" +
+                      "5) dSSToce = dSST - dSSTnhf\n6) Mean dSSToce both El Nino and La Nina\n\n" +
                       "Metric: abs((dSSToce$_{mod}$-dSSToce$_{ref}$)/dSSToce$_{ref}$)*100",
         },
         "dive_down01": {
@@ -376,15 +376,15 @@ plot_parameters = {
             "varpattern": ["dSST_ts__", "dSSTthf_ts__", "dSSToce_ts__"],
             "colors": {"model": ["black", "red", "blue"], "reference": ["black", "red", "blue"]},
             "linestyles": {"model": ["-", "-", "-"], "reference": ["-.", "-.", "-."]},
-            "legend": ["dSST", "dSSTthf", "dSSToce"],
+            "legend": ["dSST", "dSSTnhf", "dSSToce"],
             "xname": "months",
             "yname": "normalized dSST",
             "method": "1) Detect El Nino and La Nina\n    (5-m. tri. ave. Dec. N3.4 SSTA > 0.75 STD)\n" +
                       "2) dSST$_i$ = REGION1 SSTA M$_i$ - M$_{i-1}$\n" +
-                      "3) dSSTthf$_i$ = REGION1 THFA summed from M$_0$ to M$_i$\n" +
+                      "3) dSSTnhf$_i$ = REGION1 NHFA summed from M$_0$ to M$_i$\n" +
                       "4) dt = dSST$_{dec}$-dSST$_{jul}$,\n    dSST$_i$ = dSST$_i$/dt,\n    " +
-                      "dSSTthf$_i$ = dSSTthf$_i$/dt\n" +
-                      "5) dSSToce$_i$ = dSST$_i$ - dSSTthf$_i$\n6) Mean dSSToce both El Nino and La Nina",
+                      "dSSTnhf$_i$ = dSSTnhf$_i$/dt\n" +
+                      "5) dSSToce$_i$ = dSST$_i$ - dSSTnhf$_i$\n6) Mean dSSToce both El Nino and La Nina",
         },
         "dive_down02": {
             "plot_type": "curve",
@@ -393,13 +393,13 @@ plot_parameters = {
             "varpattern": ["dSSTthf_lon__", "dSSToce_lon__"],
             "colors": {"model": ["red", "blue"], "reference": ["red", "blue"]},
             "linestyles": {"model": ["-", "-"], "reference": ["-.", "-."]},
-            "legend": ["dSSTthf", "dSSToce"],
+            "legend": ["dSSTnhf", "dSSToce"],
             "xname": "longitude",
             "yname": "normalized dSST",
             "method": "1) Detect El Nino and La Nina\n    (5-m. tri. ave. Dec. N3.4 SSTA > 0.75 STD)\n" +
-                      "2) dSST = REGION1 SSTA Dec. - Jul.\n3) REGION1 THFA summed from Jul. to Dec.\n" +
-                      "4) dSST = dSST/dSST and dSSTthf = dSSTthf/dSST\n" +
-                      "5) dSSToce = dSST - dSSTthf\n6) Mean dSSToce both El Nino and La Nina",
+                      "2) dSST = REGION1 SSTA Dec. - Jul.\n3) REGION1 NHFA summed from Jul. to Dec.\n" +
+                      "4) dSST = dSST/dSST and dSSTnhf = dSSTnhf/dSST\n" +
+                      "5) dSSToce = dSST - dSSTnhf\n6) Mean dSSToce both El Nino and La Nina",
         },
         "dive_down03": {
             "plot_type": "hovmoeller",
@@ -413,10 +413,10 @@ plot_parameters = {
             "zname": "normalized dSST",
             "method": "1) Detect El Nino and La Nina\n    (5-m. tri. ave. Dec. N3.4 SSTA > 0.75 STD)\n" +
                       "2) dSST$_i$ = REGION1 SSTA M$_i$ - M$_{i-1}$\n" +
-                      "3) dSSTthf$_i$ = REGION1 THFA summed from M$_0$ to M$_i$\n" +
+                      "3) dSSTnhf$_i$ = REGION1 NHFA summed from M$_0$ to M$_i$\n" +
                       "4) dt = dSST$_{dec}$-dSST$_{jul}$,\n    dSST$_i$ = dSST$_i$/dt,\n    " +
-                      "dSSTthf$_i$ = dSSTthf$_i$/dt\n" +
-                      "5) dSSToce$_i$ = dSST$_i$ - dSSTthf$_i$\n6) Mean dSSToce both El Nino and La Nina",
+                      "dSSTnhf$_i$ = dSSTnhf$_i$/dt\n" +
+                      "5) dSSToce$_i$ = dSST$_i$ - dSSTnhf$_i$\n6) Mean dSSToce both El Nino and La Nina",
         },
 
     },
@@ -788,9 +788,9 @@ plot_parameters = {
             "title": "Net heat flux feedback",
             "varpattern": ["sst__", "thf__"],
             "xname": "SSTA",
-            "yname": "THFA",
+            "yname": "NHFA",
             "method": "1) Seasonal cycle removed\n2) Linearly detrended\n3) REGION1 averaged\n" +
-                      "4) REGION1 SSTA regressed onto REGION1 THFA\n\n" +
+                      "4) REGION1 SSTA regressed onto REGION1 NHFA\n\n" +
                       "Metric: abs((Slope$_{mod}$-Slope$_{ref}$)/Slope$_{ref}$)*100",
         },
         "dive_down01": {
@@ -799,9 +799,9 @@ plot_parameters = {
             "title": "nonlinarity",
             "varpattern": ["sst__", "thf__"],
             "xname": "SSTA",
-            "yname": "THFA",
+            "yname": "NHFA",
             "method": "1) Seasonal cycle removed\n2) Linearly detrended\n3) REGION1 averaged\n" +
-                      "4) REGION1 SSTA>0 (SSTA<0) regressed onto REGION1 THFA",
+                      "4) REGION1 SSTA>0 (SSTA<0) regressed onto REGION1 NHFA",
         },
         "dive_down02": {
             "plot_type": "curve",
@@ -813,16 +813,16 @@ plot_parameters = {
             "linestyles": {"model": ["-", "-", "-"], "reference": ["-.", "-.", "-."]},
             "legend": ["All", "SSTA>0", "SSTA<0"],
             "xname": "longitude",
-            "yname": "reg(SSTA, THFA)",
+            "yname": "reg(SSTA, NHFA)",
             "method": "1) Seasonal cycle removed\n2) Linearly detrended\n3) 5S-5N meridional averaged\n" +
-                      "4) 30° zonal running ave.\n5) SSTA or SSTA>0 or SSTA<0 regressed onto THFA",
+                      "4) 30° zonal running ave.\n5) SSTA or SSTA>0 or SSTA<0 regressed onto NHFA",
         },
         "dive_down03": {
             "plot_type": "hovmoeller",
             "nbr_panel": 6,
             "colorbar": dict_colorbar["anomalies"],
             "label": dict_label["REG50"],
-            "title": ["reg(SSTA, THFA)", "reg(SSTA>0, THFA)", "reg(SSTA<0, THFA)"],
+            "title": ["reg(SSTA, NHFA)", "reg(SSTA>0, NHFA)", "reg(SSTA<0, NHFA)"],
             #"varpattern": ["sst_over_thf_hov__", "sstPOS_over_thf_hov__", "sstNEG_over_thf_hov__"],
             "varpattern": ["reg_thf_over_sst_hov__", "reg_thf_over_POSsst_hov__", "reg_thf_over_NEGsst_hov__"],
             "xname": "longitude",
@@ -830,7 +830,7 @@ plot_parameters = {
             "zname": "regression",
             "method": "1) Seasonal cycle removed\n2) Linearly detrended\n3) 5S-5N meridional averaged\n" +
                       "4) 30° zonal running ave.\n" +
-                      "5) For each calendar month:\n    SSTA or SSTA>0 or SSTA<0 regressed onto THFA",
+                      "5) For each calendar month:\n    SSTA or SSTA>0 or SSTA<0 regressed onto NHFA",
         },
     },
     "EnsoFbTauxSsh": {
