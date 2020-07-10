@@ -13,4 +13,4 @@
   - `parallel_driver_plot.py`
     - `PMPdriver_plot.py`
 
-NOTE: More clean up needed for obs2obs task
+**NOTE**: *More clean up needed for obs2obs task*
