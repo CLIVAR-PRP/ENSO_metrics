@@ -10,18 +10,14 @@ Usage example:
 """
 
 from __future__ import print_function
-#from argparse import RawTextHelpFormatter
-#from genutil import StringConstructor
 from subprocess import Popen
 
 from PMPdriver_lib import AddParserArgument
 from PMPdriver_lib import sort_human
 
 import datetime
-#import glob
 import json
 import os
-#import pcmdi_metrics
 import sys
 import time
 
