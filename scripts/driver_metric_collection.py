@@ -4,11 +4,9 @@ from getpass import getuser as GETPASSgetuser
 import json
 from os.path import join as OSpath__join
 
-
 # ENSO_metrics package
 from EnsoMetrics.EnsoCollectionsLib import CmipVariables, defCollection, ReferenceObservations
 from EnsoMetrics.EnsoComputeMetricsLib import ComputeCollection
-
 
 # set of functions to find cmip/obs files and save a json file
 # to be adapted/changed by users depending on their environments

@@ -14,18 +14,52 @@ from numpy import where as NUMPYwhere
 from numpy.ma import masked_invalid as NUMPYma__masked_invalid
 from numpy.random import randint as NUMPYrandom__randint
 from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
+
 # xarray based functions
 from xarray import open_dataset
 from xarray import where as XARRAYwhere
+
 # ENSO_metrics functions
-#from EnsoCollectionsLib import ReferenceObservations
 from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
-#import EnsoErrorsWarnings
+from EnsoMetrics.EnsoPlotLib import plot_param
 from EnsoMetrics import EnsoErrorsWarnings
 
 
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 observations = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
+
+# metrics order
+metrics_background = [
+    "BiasPrLatRmse", "BiasPrLonRmse", "BiasSshLatRmse", "BiasSshLonRmse", "BiasSstLatRmse", "BiasSstLonRmse",
+    "BiasTauxLatRmse", "BiasTauxLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSshLatRmse",
+    "SeasonalSshLonRmse", "SeasonalSstLatRmse", "SeasonalSstLonRmse", "SeasonalTauxLatRmse", "SeasonalTauxLonRmse"]
+metrics_basic = [
+    "EnsoSstLonRmse", "EnsoPrTsRmse", "EnsoSstTsRmse", "EnsoTauxTsRmse", "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew",
+    "EnsoDuration", "EnsoSstDiversity", "EnsoSstDiversity_1", "EnsoSstDiversity_2", "NinoSstDiversity",
+    "NinoSstDiversity_1", "NinoSstDiversity_2"]
+metrics_teleconnection = [
+    "EnsoPrMapCorr", "EnsoPrMapRmse", "EnsoPrMapStd", "EnsoPrMapDjfCorr", "EnsoPrMapDjfRmse", "EnsoPrMapDjfStd",
+    "EnsoPrMapJjaCorr", "EnsoPrMapJjaRmse", "EnsoPrMapJjaStd", "EnsoSlpMapCorr", "EnsoSlpMapRmse", "EnsoSlpMapStd",
+    "EnsoSlpMapDjfCorr", "EnsoSlpMapDjfRmse", "EnsoSlpMapDjfStd", "EnsoSlpMapJjaCorr", "EnsoSlpMapJjaRmse",
+    "EnsoSlpMapJjaStd", "EnsoSstMapCorr", "EnsoSstMapRmse", "EnsoSstMapStd", "EnsoSstMapDjfCorr", "EnsoSstMapDjfRmse",
+    "EnsoSstMapDjfStd", "EnsoSstMapJjaCorr", "EnsoSstMapJjaRmse", "EnsoSstMapJjaStd"]
+metrics_process = [
+    "EnsoFbSstTaux", "EnsoFbTauxSsh", "EnsoFbSshSst", "EnsoFbSstThf", "EnsoFbSstSwr", "EnsoFbSstLhf", "EnsoFbSstLwr",
+    "EnsoFbSstShf", "EnsodSstOce", "EnsodSstOce_1", "EnsodSstOce_2"]
+# models order
+models_order = [
+    "ACCESS1-0", "ACCESS1-3", "ACCESS-CM2", "ACCESS-ESM1-5", "BCC-CSM1-1", "BCC-CSM1-1-M", "BCC-CSM2-MR", "BCC-ESM1",
+    "BNU-ESM", "CAMS-CSM1-0", "CanCM4", "CanESM2", "CanESM5", "CanESM5-CanOE", "CCSM4", "CESM1-BGC", "CESM1-CAM5",
+    "CESM2", "CESM2-FV2", "CESM1-FASTCHEM", "CESM1-WACCM", "CESM2-WACCM", "CESM2-WACCM-FV2", "CMCC-CESM", "CMCC-CM",
+    "CMCC-CMS", "CNRM-CM5", "CNRM-CM5-2", "CNRM-CM6-1", "CNRM-CM6-1-HR", "CNRM-ESM2-1", "CSIRO-Mk3-6-0",
+    "CSIRO-Mk3L-1-2", "E3SM-1-0", "E3SM-1-1", "EC-EARTH", "EC-Earth3", "EC-Earth3-Veg", "FGOALS-f3-L", "FGOALS-g2",
+    "FGOALS-s2", "FIO-ESM", "GFDL-CM2p1", "GFDL-CM3", "GFDL-CM4", "GFDL-ESM2G", "GFDL-ESM2M", "GFDL-ESM4",
+    "GISS-E2-1-G", "GISS-E2-1-G-CC", "GISS-E2-H", "GISS-E2-H-CC", "GISS-E2-1-H", "GISS-E2-R", "GISS-E2-R-CC", "HadCM3",
+    "HadGEM2-AO", "HadGEM2-CC", "HadGEM2-ES", "HadGEM3-GC31-LL", "INMCM4", "INM-CM4-8", "INM-CM5-0", "IPSL-CM5A-LR",
+    "IPSL-CM5A-MR", "IPSL-CM5B-LR", "IPSL-CM6A-LR", "KACE-1-0-G", "MIROC4h", "MIROC5", "MIROC6", "MIROC-ESM",
+    "MIROC-ESM-CHEM", "MIROC-ES2L", "MPI-ESM-LR", "MPI-ESM-MR", "MPI-ESM-P", "MPI-ESM-1-2-HAM", "MPI-ESM1-2-HR",
+    "MPI-ESM1-2-LR", "MRI-CGCM3", "MRI-ESM1", "MRI-ESM2-0", "NESM3", "NorESM1-M", "NorESM1-ME", "NorCPM1", "NorESM2-LM",
+    "NorESM2-MM", "SAM0-UNICON", "TaiESM1", "UKESM1-0-LL"]
 
 
 def bootstrap(tab, num_samples=1000000, alpha=0.05, nech=None, statistic=NUMPYmean):
@@ -106,6 +140,14 @@ def format_metric(metric_type, metric_value, metric_units):
         return mytext + ": " + "{0:.2f}".format(metric_value) + " " + metric_units
     else:
         return None
+
+
+def get_reference(metric_collection, metric):
+    if metric_collection in ["ENSO_tel"] and "Map" in metric:
+        my_met = metric.replace("Corr", "").replace("Rmse", "").replace("Std", "")
+    else:
+        my_met = deepcopy(metric)
+    return plot_param(metric_collection, my_met)['metric_reference']
 
 
 def minimaxi(tab):
@@ -488,3 +530,227 @@ def shading_levels(tab, lev=[5, 25, 75, 95], axis=None):
     return [SCIPYstats__scoreatpercentile(tab, ll, axis=axis) for ll in lev] + [my_average(tab, axis=axis)]
 
 
+def remove_metrics(metrics_in, metric_collection, reduced_set=False, portraitplot=False):
+    """
+    Removes some metrics from given list
+
+    Inputs:
+    ------
+    :param metrics_in: list of string
+        List of metrics.
+    :param metric_collection: string
+        Name of a metric collection.
+    **Optional arguments:**
+    :param reduced_set: boolean, optional
+        True to remove extra metrics that are not in the final set chosen by CLIVAR PRP.
+        If set to False it removes metrics that are in more than one metric collection.
+        Default value is False
+    :param portraitplot: boolean, optional
+        True to remove extra metrics that are not in the final set chosen by CLIVAR PRP but keep metrics that are in
+        more than one metric collection.
+        If set to False it removes metrics that are in more than one metric collection.
+        Default value is False
+
+    Output:
+    ------
+    :return metrics_out: list of string
+        Input list of metrics minus some metrics depending on given metric collection.
+    """
+    metrics_out = deepcopy(metrics_in)
+    if reduced_set is True:
+        if portraitplot is True:
+            if metric_collection == "ENSO_perf":
+                to_remove = [
+                    'BiasSshLatRmse', 'BiasSshLonRmse', 'BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse',
+                    'EnsoSstDiversity_1', 'EnsoTauxTsRmse', 'NinaSstDur', 'NinaSstDur_1',
+                    'NinaSstDur_2', 'NinaSstLonRmse', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse',
+                    'NinaSstTsRmse_1', 'NinaSstTsRmse_2', 'NinoSstDiversity', 'NinoSstDiversity_1',
+                    'NinoSstDiversity_2', 'NinoSstDur', 'NinoSstDur_1', 'NinoSstDur_2', 'NinoSstLonRmse',
+                    'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse', 'NinoSstTsRmse_1', 'NinoSstTsRmse_2',
+                    "SeasonalSshLatRmse", "SeasonalSshLonRmse", "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
+            elif metric_collection == "ENSO_proc":
+                to_remove = [
+                    'BiasSshLonRmse', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf', 'EnsoFbSstSwr']
+            else:
+                to_remove = [
+                    'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd',
+                    'EnsoPrMapDjfCorr', 'EnsoPrMapDjfStd', 'EnsoPrMapJjaCorr', 'EnsoPrMapJjaStd', 'EnsoSlpMapCorr',
+                    'EnsoSlpMapRmse', 'EnsoSlpMapStd', 'EnsoSlpMapDjfCorr', 'EnsoSlpMapDjfRmse', 'EnsoSlpMapDjfStd',
+                    'EnsoSlpMapJjaCorr', 'EnsoSlpMapJjaRmse', 'EnsoSlpMapJjaStd', 'EnsoSstMapCorr', 'EnsoSstMapRmse',
+                    'EnsoSstMapStd', 'EnsoSstMapDjfCorr', 'EnsoSstMapDjfStd', 'EnsoSstMapJjaCorr', 'EnsoSstMapJjaStd',
+                    'NinaPrMapCorr', 'NinaPrMap_1Corr', 'NinaPrMap_2Corr', 'NinaPrMapRmse', 'NinaPrMap_1Rmse',
+                    'NinaPrMap_2Rmse', 'NinaPrMapStd', 'NinaPrMap_1Std', 'NinaPrMap_2Std', 'NinaSlpMapCorr',
+                    'NinaSlpMap_1Corr', 'NinaSlpMap_2Corr', 'NinaSlpMapRmse', 'NinaSlpMap_1Rmse', 'NinaSlpMap_2Rmse',
+                    'NinaSlpMapStd', 'NinaSlpMap_1Std', 'NinaSlpMap_2Std', 'NinaSstLonRmse', 'NinaSstLonRmse_1',
+                    'NinaSstLonRmse_2', 'NinaSstMapCorr', 'NinaSstMap_1Corr', 'NinaSstMap_2Corr', 'NinaSstMapRmse',
+                    'NinaSstMap_1Rmse', 'NinaSstMap_2Rmse', 'NinaSstMapStd', 'NinaSstMap_1Std', 'NinaSstMap_2Std',
+                    'NinoPrMapCorr', 'NinoPrMap_1Corr', 'NinoPrMap_2Corr', 'NinoPrMapRmse', 'NinoPrMap_1Rmse',
+                    'NinoPrMap_2Rmse', 'NinoPrMapStd', 'NinoPrMap_1Std', 'NinoPrMap_2Std', 'NinoSlpMapCorr',
+                    'NinoSlpMap_1Corr', 'NinoSlpMap_2Corr', 'NinoSlpMap_1Rmse', 'NinoSlpMap_2Rmse', 'NinoSlpMapStd',
+                    'NinoSlpMap_1Std', 'NinoSlpMap_2Std', 'NinoSstLonRmse', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2',
+                    'NinoSstMapCorr', 'NinoSstMap_1Corr', 'NinoSstMap_2Corr', 'NinoSstMapRmse', 'NinoSstMap_1Rmse',
+                    'NinoSstMap_2Rmse', 'NinoSstMapStd', 'NinoSstMap_1Std', 'NinoSstMap_2Std']
+        else:
+            if metric_collection == "ENSO_perf":
+                to_remove = [
+                    'BiasSshLatRmse', 'BiasSshLonRmse', 'BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse',
+                    'EnsoSstDiversity_1', 'EnsoTauxTsRmse', 'NinaSstDur', 'NinaSstDur_1',
+                    'NinaSstDur_2', 'NinaSstLonRmse', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse',
+                    'NinaSstTsRmse_1', 'NinaSstTsRmse_2', 'NinoSstDiversity', 'NinoSstDiversity_1',
+                    'NinoSstDiversity_2', 'NinoSstDur', 'NinoSstDur_1', 'NinoSstDur_2', 'NinoSstLonRmse',
+                    'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse', 'NinoSstTsRmse_1', 'NinoSstTsRmse_2',
+                    "SeasonalSshLatRmse", "SeasonalSshLonRmse", "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
+            elif metric_collection == "ENSO_proc":
+                to_remove = [
+                    'BiasSshLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
+                    'EnsoSstLonRmse', 'EnsoSstSkew', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
+                    'EnsoFbSstSwr']
+            else:
+                to_remove = [
+                    'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse', 'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd',
+                    'EnsoPrMapDjfCorr', 'EnsoPrMapDjfStd', 'EnsoPrMapJjaCorr', 'EnsoPrMapJjaStd', 'EnsoSlpMapCorr',
+                    'EnsoSlpMapRmse', 'EnsoSlpMapStd', 'EnsoSlpMapDjfCorr', 'EnsoSlpMapDjfRmse', 'EnsoSlpMapDjfStd',
+                    'EnsoSlpMapJjaCorr', 'EnsoSlpMapJjaRmse', 'EnsoSlpMapJjaStd', 'EnsoSstMapCorr', 'EnsoSstMapRmse',
+                    'EnsoSstMapStd', 'EnsoSstMapDjfCorr', 'EnsoSstMapDjfStd', 'EnsoSstMapJjaCorr', 'EnsoSstMapJjaStd',
+                    'NinaPrMapCorr', 'NinaPrMap_1Corr', 'NinaPrMap_2Corr', 'NinaPrMapRmse', 'NinaPrMap_1Rmse',
+                    'NinaPrMap_2Rmse', 'NinaPrMapStd', 'NinaPrMap_1Std', 'NinaPrMap_2Std', 'NinaSlpMapCorr',
+                    'NinaSlpMap_1Corr', 'NinaSlpMap_2Corr', 'NinaSlpMapRmse', 'NinaSlpMap_1Rmse', 'NinaSlpMap_2Rmse',
+                    'NinaSlpMapStd', 'NinaSlpMap_1Std', 'NinaSlpMap_2Std', 'NinaSstLonRmse', 'NinaSstLonRmse_1',
+                    'NinaSstLonRmse_2', 'NinaSstMapCorr', 'NinaSstMap_1Corr', 'NinaSstMap_2Corr', 'NinaSstMapRmse',
+                    'NinaSstMap_1Rmse', 'NinaSstMap_2Rmse', 'NinaSstMapStd', 'NinaSstMap_1Std', 'NinaSstMap_2Std',
+                    'NinoPrMapCorr', 'NinoPrMap_1Corr', 'NinoPrMap_2Corr', 'NinoPrMapRmse', 'NinoPrMap_1Rmse',
+                    'NinoPrMap_2Rmse', 'NinoPrMapStd', 'NinoPrMap_1Std', 'NinoPrMap_2Std', 'NinoSlpMapCorr',
+                    'NinoSlpMap_1Corr', 'NinoSlpMap_2Corr', 'NinoSlpMap_1Rmse', 'NinoSlpMap_2Rmse', 'NinoSlpMapStd',
+                    'NinoSlpMap_1Std', 'NinoSlpMap_2Std', 'NinoSstLonRmse', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2',
+                    'NinoSstMapCorr', 'NinoSstMap_1Corr', 'NinoSstMap_2Corr', 'NinoSstMapRmse', 'NinoSstMap_1Rmse',
+                    'NinoSstMap_2Rmse', 'NinoSstMapStd', 'NinoSstMap_1Std', 'NinoSstMap_2Std']
+    else:
+        if portraitplot is True:
+            to_remove = []
+        else:
+            if metric_collection == "ENSO_perf":
+                to_remove = ['BiasSshLatRmse', 'BiasSshLonRmse', "SeasonalSshLatRmse", "SeasonalSshLonRmse"]
+            elif metric_collection == "ENSO_proc":
+                to_remove = ['BiasSshLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
+                             'EnsoSstLonRmse', 'EnsoSstSkew']
+            else:
+                to_remove = ['EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse', 'NinaSstLonRmse', 'NinaSstLonRmse_1',
+                             'NinaSstLonRmse_2', 'NinoSstLonRmse', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2']
+    for met in to_remove:
+        while met in metrics_out:
+            metrics_out.remove(met)
+    return metrics_out
+
+
+def find_first_member(members_in):
+    """
+    Finds first member name
+
+    Inputs:
+    ------
+    :param members_in: list of string
+        list of member names (e.g., "r1i1p1", "r1i1p2")
+
+    Output:
+    ------
+    :return member_out: string
+        first member of the given list
+    """
+    if "r1i1p1" in members_in:
+        member_out = "r1i1p1"
+    elif "r1i1p1f1" in members_in:
+        member_out = "r1i1p1f1"
+    elif "r1i1p1f2" in members_in:
+        member_out = "r1i1p1f2"
+    else:
+        member_out = sort_members(members_in)[0]
+    return member_out
+
+
+def return_metrics_type():
+    return metrics_background, metrics_basic, metrics_teleconnection, metrics_process
+
+
+def sort_members(members_in):
+    """
+    Finds first member name
+
+    Inputs:
+    ------
+    :param members_in: list of string
+        list of member names (e.g., "r1i1p1", "r1i1p2")
+
+    Output:
+    ------
+    :return members_out: list of string
+        given list of member names sorted
+    """
+    members_tmp = list()
+    for mem in members_in:
+        mem2 = mem.replace("r1i", "r01i").replace("r2i", "r02i").replace("r3i", "r03i").replace("r4i", "r04i")
+        mem2 = mem2.replace("r5i", "r05i").replace("r6i", "r06i").replace("r7i", "r07i").replace("r8i", "r08i")
+        mem2 = mem2.replace("r9i", "r09i")
+        mem2 = mem2.replace("i1p", "i01p").replace("i2p", "i02p").replace("i3p", "i03p").replace("i4p", "i04p")
+        mem2 = mem2.replace("i5p", "i05p").replace("i6p", "i06p").replace("i7p", "i07p").replace("i8p", "i08p")
+        mem2 = mem2.replace("i9p", "i09p")
+        if "f" in mem2:
+            mem2 = mem2.replace("p1f", "p01f").replace("p2f", "p02f").replace("p3f", "p03f").replace("p4f", "p04f")
+            mem2 = mem2.replace("p5f", "p05f").replace("p6f", "p06f").replace("p7f", "p07f").replace("p8f", "p08f")
+            mem2 = mem2.replace("p9f", "p09f")
+            mem2 = mem2.replace("f1", "f01").replace("f2", "f02").replace("f3", "f03").replace("f4", "f04")
+            mem2 = mem2.replace("f5", "f05").replace("f6", "f06").replace("f7", "f07").replace("f8", "f08")
+            mem2 = mem2.replace("f9", "f09")
+        else:
+            mem2 = mem2.replace("p1", "p01").replace("p2", "p02").replace("p3", "p03").replace("p4", "p04")
+            mem2 = mem2.replace("p5", "p05").replace("p6", "p06").replace("p7", "p07").replace("p8", "p08")
+            mem2 = mem2.replace("p9", "p09")
+        members_tmp.append(mem2)
+    members_tmp = sorted(list(set(members_tmp)), key=lambda v: v.upper())
+    members_out = list()
+    for mem in members_tmp:
+        mem2 = mem.replace("r0", "r").replace("i0", "i").replace("p0", "p").replace("f0", "f")
+        members_out.append(mem2)
+    return members_out
+
+
+def sort_metrics(metrics_in):
+    """
+    Puts given list of models in a certain order (putting together model generations)
+
+    Input:
+    -----
+    :param metrics_in: list of string
+        List of metrics.
+
+    Output:
+    ------
+    :return metrics_out: list of string
+        Input list of metrics reordered
+    """
+    # metric type and order
+    met_order = metrics_background + metrics_basic + metrics_teleconnection + metrics_process
+    metrics_out = sorted(list(set(metrics_in)), key=lambda v: v.upper())
+    metrics_out = [met for met in met_order if met in metrics_out]
+    metrics_out += sorted(list(set(metrics_in) - set(metrics_out)), key=lambda v: v.upper())
+    return metrics_out
+
+
+def sort_models(models_in):
+    """
+    Puts given list of models in a certain order (putting together model generations)
+
+    Input:
+    -----
+    :param models_in: list of string
+        List of models.
+
+    Output:
+    ------
+    :return models_out: list of string
+        Input list of models reordered
+    """
+    # model order
+    models_out = sorted(list(set(models_in)), key=lambda v: v.upper())
+    models_out = [mod for mod in models_order if mod in models_out]
+    models_out += sorted(list(set(models_in) - set(models_out)), key=lambda v: v.upper())
+    return models_out
