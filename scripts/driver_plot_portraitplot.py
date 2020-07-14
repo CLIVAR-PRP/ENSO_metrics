@@ -132,11 +132,11 @@ for mc in list_metric_collections:
         mea = float(NUMPYmean(tmp))
         std = float(NUMPYstd(tmp))
         del tmp
-        for ii, dd in enumerate(list_observations+["reference"] + list(reversed(list_projects))):
+        for ii, dd in enumerate(list_observations + ["reference"] + list_projects):
             if dd in list_observations:
                 val = dict_ref_met[dd][met]
             elif dd in list_projects:
-                tmp = [tab[ii + plus, jj] for ii, mod in enumerate(my_models) if mod in list(model_by_proj[dd].keys())]
+                tmp = [tab[kk + plus, jj] for kk, mod in enumerate(my_models) if mod in list(model_by_proj[dd].keys())]
                 tmp = NUMPYma__masked_invalid(NUMPYma__array(tmp))
                 tmp = NUMPYmasked_where(tmp == 1e20, tmp).compressed()
                 val = float(NUMPYmean(tmp))
