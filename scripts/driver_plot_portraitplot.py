@@ -111,7 +111,7 @@ for mc in list_metric_collections:
         except: pass
         else: my_metrics += list(dict_met[mod].keys())
     my_metrics = sort_metrics(sorted(list(set(my_metrics)), key=lambda v: v.upper()))
-    my_models = sort_models(tmp_models)
+    my_models = list(reversed(sort_models(tmp_models)))
     # read other observational datasets compared to the reference
     dict_ref_met = get_metric_values_observations(dict_json["obs2obs"][mc], list_observations, my_metrics, mc)
     # number of line to add to the array (CMIP mean, reference, other observational datasets,...)

@@ -1851,16 +1851,18 @@ def plot_metrics_correlations(tab_rval, figure_name, xy_names, tab_pval=None, wr
     for ll, txt in enumerate(xlabel):
         cc = "yellowgreen" if txt in met_o1 else ("plum" if txt in met_o2 else
                                                   ("gold" if txt in met_o3 else "turquoise"))
-        boxdict = dict(lw=0, facecolor=cc, pad=3, alpha=1) if chigh is True else dict()
         weight = "bold" if txt in bold_names else "normal"
-        ax.text(ll + 0.5, -0.3, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
-                weight=weight, bbox=boxdict)
-        ax.text(-0.4, ll + 0.5, met_names[txt], fontsize=18, ha="right", va="center", color="k", weight=weight,
-                bbox=boxdict)
+        if chigh is True:
+            boxdict = dict(lw=0, facecolor=cc, pad=1, alpha=1)
+            ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                    weight=weight, bbox=boxdict)
+            ax.text(-0.4, ll + 0.5, met_names[txt], fontsize=18, ha="right", va="center", color="k", weight=weight,
+                    bbox=boxdict)
+        else:
+            ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                    weight=weight)
+            ax.text(-0.4, ll + 0.5, met_names[txt], fontsize=18, ha="right", va="center", color="k", weight=weight)
     if cfram is True:
-        lic = ["k"] * 6 + ["yellowgreen"] * 4 + ["plum"] * 4 + ["gold"] * 4 + ["turquoise"] * 4
-        lis = ["-"] * len(lic)
-        liw = [4] * 6 + [10] * (len(lic) - 6)
         tmp1 = [txt for ll, txt in enumerate(xlabel) if txt in met_o1]
         n1 = len(tmp1)
         tmp2 = [txt for ll, txt in enumerate(xlabel) if txt in met_o2]
@@ -1883,6 +1885,8 @@ def plot_metrics_correlations(tab_rval, figure_name, xy_names, tab_pval=None, wr
             lic += ["turquoise"] * 4
             nc += 2
         lic = ["k"] * nc + lic
+        lis = ["-"] * len(lic)
+        liw = [4] * nc + [10] * (len(lic) - nc)
         # horizontal and vertical black lines
         lix, liy = list(), list()
         if len(tmp1) > 0:
@@ -1894,7 +1898,7 @@ def plot_metrics_correlations(tab_rval, figure_name, xy_names, tab_pval=None, wr
         if len(tmp3) > 0:
             lix += [[n3, n3], [0, n4]]
             liy += [[0, n4], [n3, n3]]
-        if len(tmp1) > 0:
+        if len(tmp4) > 0:
             lix += [[n1, n1], [0, n4]]
             liy += [[0, n4], [n1, n1]]
         # horizontal and vertical colored frame
@@ -2066,9 +2070,12 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
             for ll, txt in enumerate(xticklabel[kk]):
                 cc = "yellowgreen" if txt in met_o1 else ("plum" if txt in met_o2 else
                                                           ("gold" if txt in met_o3 else "turquoise"))
-                boxdict = dict(lw=0, facecolor=cc, pad=3, alpha=1) if chigh is True else dict()
-                ax.text(ll + 0.5, -0.3, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
-                        bbox=boxdict)
+                if chigh is True:
+                    boxdict = dict(lw=0, facecolor=cc, pad=1, alpha=1)
+                    ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                            bbox=boxdict)
+                else:
+                    ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k")
         if cfram is True:
             tmp1 = [met_o1, met_o2, met_o3, met_o4]
             # draw vertical black lines to separate metric types
@@ -2226,10 +2233,12 @@ def plot_projects_comparison(tab_val, figure_name, title="", x_name="", y_name="
         for ll, txt in enumerate(xticklabel):
             cc = "yellowgreen" if txt in met_o1 else ("plum" if txt in met_o2 else
                                                       ("gold" if txt in met_o3 else "turquoise"))
-            boxdict = dict(lw=0, facecolor=cc, pad=3, alpha=1) if chigh is True else dict()
-            weight = "bold" if txt in bold_names else "normal"
-            ax.text(ll + 0.5, -0.05, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
-                    weight=weight, bbox=boxdict)
+            if chigh is True:
+                boxdict = dict(lw=0, facecolor=cc, pad=1, alpha=1)
+                ax.text(ll + 0.5, -0.03, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                        bbox=boxdict)
+            else:
+                ax.text(ll + 0.5, -0.03, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k")
     else:
         ax.set_xticklabels(axis)
     if cfram is True:
