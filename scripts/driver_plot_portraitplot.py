@@ -160,7 +160,8 @@ for mc in list_metric_collections:
 
 # ---------------------------------------------------#
 # Plot
-# ---------------------------------------------------#if ' ':
+# ---------------------------------------------------#
+if ' ':
     numbering = [ii+") " for ii in list(string.ascii_lowercase)]
     # plot
     title = [numbering[ii] + metric_collection_names_for_plot[mc]
