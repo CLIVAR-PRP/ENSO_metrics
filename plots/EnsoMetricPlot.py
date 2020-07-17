@@ -4,7 +4,6 @@ from copy import deepcopy
 from datetime import datetime
 from os.path import join as OSpath__join
 # ENSO_metrics functions
-#from EnsoPlotLib import plot_param
 from EnsoMetrics.EnsoPlotLib import plot_param
 from EnsoPlotTemplate import cmip_boxplot, my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map,\
     my_scatterplot

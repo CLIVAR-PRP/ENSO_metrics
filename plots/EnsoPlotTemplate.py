@@ -3,19 +3,57 @@ import cmocean
 from copy import deepcopy
 from math import ceil as MATHceil
 from math import floor as MATHfloor
+from matplotlib.colors import BoundaryNorm, ListedColormap
+from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
+from matplotlib.ticker import MaxNLocator
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
+from numpy import arange as NUMPYarange
 from numpy import array as NUMPYarray
+from numpy import linspace as NUMPYlinspace
 from numpy import meshgrid as NUMPYmeshgrid
-# ENSO
+from numpy.ma import masked_where as NUMPYmasked_where
+
+# ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
 from EnsoPlotToolsLib import create_labels, create_levels, format_metric, minimaxi, minmax_plot, my_average,\
-    my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, shading_levels
+    my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, return_metrics_type, shading_levels
 
 colors_sup = ["r", "lime", "peru", "gold", "forestgreen", "sienna", "gold"]
 dict_col = {"REF": "k", "CMIP": "forestgreen", "CMIP3": "orange", "CMIP5": "dodgerblue", "CMIP6": "r"}
+
+met_names = {
+    "BiasPrLatRmse": "double_ITCZ_bias", "BiasPrLonRmse": "eq_PR_bias",
+    "BiasSshLatRmse": "lat_SSH_bias", "BiasSshLonRmse": "eq_SSH_bias",
+    "BiasSstLatRmse": "lat_SST_bias", "BiasSstLonRmse": "eq_SST_bias",
+    "BiasTauxLatRmse": "lat_Taux_bias", "BiasTauxLonRmse": "eq_Taux_bias",
+    "SeasonalPrLatRmse": "double_ITCZ_sea_cycle", "SeasonalPrLonRmse": "eq_PR_sea_cycle",
+    "SeasonalSshLatRmse": "lat_SSH_sea_cycle", "SeasonalSshLonRmse": "eq_SSH_sea_cycle",
+    "SeasonalSstLatRmse": "lat_SST_sea_cycle", "SeasonalSstLonRmse": "eq_SST_sea_cycle",
+    "SeasonalTauxLatRmse": "lat_Taux_sea_cycle", "SeasonalTauxLonRmse": "eq_Taux_sea_cycle",
+    "EnsoPrLonRmse": "ENSO_pattern_PR", "EnsoSshLonRmse": "ENSO_pattern_SSH", "EnsoSstLonRmse": "ENSO_pattern",
+    "EnsoTauxLonRmse": "ENSO_pattern_Taux", "EnsoPrTsRmse": "ENSO_lifecycle_PR", "EnsoSshTsRmse": "ENSO_lifecycle_SSH",
+    "EnsoSstTsRmse": "ENSO_lifecycle", "EnsoTauxTsRmse": "ENSO_lifecycle_Taux",
+    "EnsoAmpl": "ENSO_amplitude", "EnsoSeasonality": "ENSO_seasonality", "EnsoSstSkew": "ENSO_asymmetry",
+    "EnsoDuration": "ENSO_duration", "EnsoSstDiversity": "ENSO_diversity", "EnsoSstDiversity_1": "ENSO_diversity",
+    "EnsoSstDiversity_2": "ENSO_diversity", "EnsoPrMapCorr": "Dec_PR_teleconnection_CORR",
+    "EnsoPrMapRmse": "Dec_PR_teleconnection", "EnsoPrMapStd": "Dec_PR_teleconnection_STD",
+    "EnsoPrMapDjfCorr": "DJF_PR_teleconnection_CORR", "EnsoPrMapDjfRmse": "DJF_PR_teleconnection",
+    "EnsoPrMapDjfStd": "DJF_PR_teleconnection_STD", "EnsoPrMapJjaCorr": "JJA_PR_teleconnection_CORR",
+    "EnsoPrMapJjaRmse": "JJA_PR_teleconnection", "EnsoPrMapJjaStd": "JJA_PR_teleconnection_STD",
+    "EnsoSlpMapRmse": "Dec_SLP_teleconnection", "EnsoSlpMapStd": "Dec_SLP_teleconnection_STD",
+    "EnsoSlpMapDjfCorr": "DJF_SLP_teleconnection_CORR", "EnsoSlpMapDjfRmse": "DJF_SLP_teleconnection",
+    "EnsoSlpMapDjfStd": "DJF_SLP_teleconnection_STD", "EnsoSlpMapJjaCorr": "JJA_SLP_teleconnection_CORR",
+    "EnsoSlpMapJjaRmse": "JJA_SLP_teleconnection", "EnsoSlpMapJjaStd": "JJA_SLP_teleconnection_STD",
+    "EnsoSstMapRmse": "Dec_TS_teleconnection", "EnsoSstMapStd": "Dec_TS_teleconnection_STD",
+    "EnsoSstMapDjfCorr": "DJF_TS_teleconnection_CORR", "EnsoSstMapDjfRmse": "DJF_TS_teleconnection",
+    "EnsoSstMapDjfStd": "DJF_TS_teleconnection_STD", "EnsoSstMapJjaCorr": "JJA_TS_teleconnection_CORR",
+    "EnsoSstMapJjaRmse": "JJA_TS_teleconnection", "EnsoSstMapJjaStd": "JJA_TS_teleconnection_STD",
+    "EnsoFbSstTaux": "SST-Taux_feedback", "EnsoFbTauxSsh": "Taux-SSH_feedback", "EnsoFbSshSst": "SSH-SST_feedback",
+    "EnsoFbSstThf": "SST-NHF_feedback", "EnsodSstOce": "ocean_driven_SST", "EnsodSstOce_1": "ocean_driven_SST",
+    "EnsodSstOce_2": "ocean_driven_SST"}
 
 mod_nicknames = ["CMIP5", "CMIP6"]
 
@@ -1747,3 +1785,554 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
     ax.grid(linestyle='--', linewidth=1, which='major')
     return
 
+
+def plot_metrics_correlations(tab_rval, figure_name, xy_names, tab_pval=None, write_corr=False, title="", cfram=False,
+                              chigh=False, bold_names=[], save_eps=False):
+    """
+    Plots the correlations matrix
+
+    Inputs:
+    ------
+    :param tab_rval: `cdms2` variable
+        A `cdms2` variable containing the correlation coefficients.
+    :param figure_name: string
+        Path to and name of the output plot.
+    :param xy_names: list of string
+        List of the names to put as x and y ticks.
+    **Optional arguments:**
+    :param tab_pval: `cdms2` variable, optional
+        A `cdms2` variable containing the p-value of the correlation coefficients. It is used to mask the correlations
+        that are not significant.
+        Default is None (all correlation coefficients are plotted).
+    :param write_corr: boolean, optional
+        True to write the correlation value in each box.
+        Default is False (correlation not written).
+    :param title: string, optional
+        Title of the plot.
+        Default is "" (no title).
+    :param chigh: boolean, optional
+        True to highlight labels in colors for each group of metrics.
+        Default is False (names written in black).
+    :param cfram: boolean, optional
+        True to color the frame for each group of metrics.
+        Default is False (frame is black).
+    :param bold_names: list, optional
+        List of names to write in bold (must be in xy_names).
+        Default is False (names written in normal font).
+    :param save_eps: boolean, optional
+        True to save the plot in eps format instead of png.
+        Default is False (plot saved in png format).
+
+    Output:
+    ------
+    """
+    met_o1, met_o2, met_o3, met_o4 = return_metrics_type()
+    if tab_pval is not None:
+        mask1 = NUMPYmasked_where(tab_rval < tab_pval, tab_rval).mask.astype("f")
+        mask2 = NUMPYmasked_where(tab_rval > -tab_pval, tab_rval).mask.astype("f")
+        mask = mask1 + mask2
+        tab_plot = NUMPYmasked_where(mask == 2, tab_rval)
+    else:
+        tab_plot = deepcopy(tab_rval)
+    fig, ax = plt.subplots(figsize=(0.5 * len(tab_rval), 0.5 * len(tab_rval)))
+    # shading & colorbar
+    levels = MaxNLocator(nbins=20).tick_values(-1, 1)
+    cmap = plt.get_cmap("cmo.balance")
+    norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+    cs = plt.pcolormesh(tab_plot, cmap=cmap, norm=norm)
+    # title
+    plt.title(title, fontsize=30, y=1.01, loc="center")
+    # x axis
+    xticks = [ii + 0.5 for ii in range(len(tab_plot))]
+    xlabel = [met for met in xy_names]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([""] * len(xticks))
+    ax.tick_params(axis="x", labelsize=15, labelrotation=90)
+    for ll, txt in enumerate(xlabel):
+        cc = "yellowgreen" if txt in met_o1 else ("plum" if txt in met_o2 else
+                                                  ("gold" if txt in met_o3 else "turquoise"))
+        weight = "bold" if txt in bold_names else "normal"
+        if chigh is True:
+            boxdict = dict(lw=0, facecolor=cc, pad=1, alpha=1)
+            ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                    weight=weight, bbox=boxdict)
+            ax.text(-0.4, ll + 0.5, met_names[txt], fontsize=18, ha="right", va="center", color="k", weight=weight,
+                    bbox=boxdict)
+        else:
+            ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                    weight=weight)
+            ax.text(-0.4, ll + 0.5, met_names[txt], fontsize=18, ha="right", va="center", color="k", weight=weight)
+    if cfram is True:
+        tmp1 = [txt for ll, txt in enumerate(xlabel) if txt in met_o1]
+        n1 = len(tmp1)
+        tmp2 = [txt for ll, txt in enumerate(xlabel) if txt in met_o2]
+        n2 = n1 + len(tmp2)
+        tmp3 = [txt for ll, txt in enumerate(xlabel) if txt in met_o3]
+        n3 = n2 + len(tmp3)
+        tmp4 = [txt for ll, txt in enumerate(xlabel) if txt in met_o4]
+        n4 = n3 + len(tmp4)
+        lic, nc = list(), 0
+        if len(tmp1) > 0:
+            lic += ["yellowgreen"] * 4
+            nc += 2
+        if len(tmp2) > 0:
+            lic += ["plum"] * 4
+            nc += 2
+        if len(tmp3) > 0:
+            lic += ["gold"] * 4
+            nc += 2
+        if len(tmp4) > 0:
+            lic += ["turquoise"] * 4
+            nc += 2
+        lic = ["k"] * nc + lic
+        lis = ["-"] * len(lic)
+        liw = [4] * nc + [10] * (len(lic) - nc)
+        # horizontal and vertical black lines
+        lix, liy = list(), list()
+        if len(tmp1) > 0:
+            lix += [[n1, n1], [0, n4]]
+            liy += [[0, n4], [n1, n1]]
+        if len(tmp2) > 0:
+            lix += [[n2, n2], [0, n4]]
+            liy += [[0, n4], [n2, n2]]
+        if len(tmp3) > 0:
+            lix += [[n3, n3], [0, n4]]
+            liy += [[0, n4], [n3, n3]]
+        if len(tmp4) > 0:
+            lix += [[n1, n1], [0, n4]]
+            liy += [[0, n4], [n1, n1]]
+        # horizontal and vertical colored frame
+        if len(tmp1) > 0:
+            lix += [[0, 0], [n4, n4], [0, n1], [0, n1]]
+            liy += [[0, n1], [0, n1], [0, 0], [n4, n4]]
+        if len(tmp2) > 0:
+            add = 0.18 if len(lix) > 0 else 0
+            lix += [[0, 0], [n4, n4], [n1 + add, n2], [n1 + add, n2]]
+            liy += [[n1 + add, n2], [n1 + add, n2], [0, 0], [n4, n4]]
+        if len(tmp3) > 0:
+            add = 0.18 if len(lix) > 0 else 0
+            lix += [[0, 0], [n4, n4], [n2 + add, n3], [n2 + add, n3]]
+            liy += [[n2 + add, n3], [n2 + add, n3], [0, 0], [n4, n4]]
+        if len(tmp4) > 0:
+            add = 0.18 if len(lix) > 0 else 0
+            lix += [[0, 0], [n4, n4], [n3 + add, n4], [n3 + add, n4]]
+            liy += [[n3 + add, n4], [n3 + add, n4], [0, 0], [n4, n4]]
+        for lc, ls, lw, lx, ly in zip(lic, lis, liw, lix, liy):
+            line = Line2D(lx, ly, c=lc, lw=lw, ls=ls, zorder=10)
+            line.set_clip_on(False)
+            ax.add_line(line)
+    # y axis
+    ax.set_yticks(xticks)
+    ax.set_yticklabels([""] * len(xticks))
+    ax.tick_params(axis="y", labelsize=15)
+    # text
+    if write_corr is True:
+        for ii in range(len(tab_plot)):
+            for jj in range(len(tab_plot)):
+                plt.text(ii + 0.5, jj + 0.5, str(round(tab_rval[ii, jj], 1)), fontsize=10, ha="center", va="center")
+    if tab_pval is not None:
+        ax.text(len(tab_plot) + 1, 0, "nbr corr < 0", fontsize=15, ha="right", va="top", rotation=45)
+        ax.text(len(tab_plot) + 2, 0, "nbr corr > 0", fontsize=15, ha="right", va="top", rotation=45)
+        for ii in range(len(tab_plot)):
+            nbr1 = str(sum([1 for jj in range(len(tab_plot[ii])) if tab_plot[ii][jj] < 0]))
+            nbr2 = str(sum([1 for jj in range(len(tab_plot[ii])) if tab_plot[ii][jj] > 0])).zfill(2)
+            ax.text(len(tab_plot) + 0.5, ii + 0.5, nbr1, fontsize=15, ha="center", va="center")
+            ax.text(len(tab_plot) + 1 + 0.5, ii + 0.5, nbr2, fontsize=15, ha="center", va="center")
+    # color bar
+    levels = [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)]
+    x2 = ax.get_position().x1
+    y1 = ax.get_position().y0
+    y2 = ax.get_position().y1
+    if tab_pval is not None:
+        cax = plt.axes([x2 + 0.09, y1, 0.02, y2 - y1])
+    else:
+        cax = plt.axes([x2 + 0.02, y1, 0.02, y2 - y1])
+    cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend="both", aspect=40)
+    cbar.ax.tick_params(labelsize=18)
+    # save fig
+    if save_eps is True:
+        plt.savefig(figure_name + ".eps", bbox_inches="tight", format="eps")
+    else:
+        plt.savefig(figure_name, bbox_inches="tight")
+    plt.close()
+    return
+
+
+def my_colorbar(cmap, mini=-1., maxi=1., nbins=20):
+    """
+    Modifies given colobar instance (removes the extremes on each side of the colorbar)
+
+    Inputs:
+    ------
+    :param cmap: colormap instance
+        Colormap instance as defined in matplotlib (see matplotlib.cm.get_cmap)
+    **Optional arguments:**
+    :param mini: float
+        Minimum value of the colorbar.
+    :param maxi: float
+        Maximum value of the colorbar.
+    :param nbins: integer
+        Number of interval in the colorbar.
+
+    Outputs:
+    -------
+    :return newcmp1: object
+        Colormap, baseclass for all scalar to RGBA mappings
+    :return norm: object
+        Normalize, a class which can normalize data into the [0.0, 1.0] interval.
+    """
+    levels = MaxNLocator(nbins=nbins).tick_values(mini, maxi)
+    newcmp1 = cmap(NUMPYlinspace(0.15, 0.85, 256))
+    newcmp2 = cmap(NUMPYlinspace(0.0, 1.0, 256))
+    newcmp1 = ListedColormap(newcmp1)
+    newcmp1.set_over(newcmp2[-30])
+    newcmp1.set_under(newcmp2[29])
+    newcmp1.set_bad(color="k")  # missing values in black
+    norm = BoundaryNorm(levels, ncolors=newcmp1.N)
+    return newcmp1, norm
+
+
+def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], write_metrics=False, my_text="",
+                      levels=None, cfram=False, chigh=False, save_eps=False, nbr_space=2):
+    """
+    Plot the portraitplot (as in BAMS paper)
+
+    Inputs:
+    ------
+    :param tab: list of masked_array
+        List of masked_array containing metric collections values.
+    :param figure_name: string
+        Name of the output figure.
+    **Optional arguments:**
+    :param xticklabel: list of string, optional
+        List of the names to put as x ticks (metric names).
+        Default is [] nothing will be written).
+    :param yticklabel: list of string, optional
+        List of the names to put as y ticks (model names).
+        Default is [] nothing will be written).
+    :param title: list of string, optional
+        List of metric collection's title.
+        Default is [], no title will be written).
+    :param write_metrics: boolean, optional
+        True to write the metric value in each box.
+        Default is False (value not written).
+    :param my_text: string, optional
+        Text to add at the bottom right of the plot (I use it to indicate how CMIP6 models are marked in the plot).
+        Default is "" (no text will be written).
+    :param levels: list of floats, optional
+        Levels of the colorbar, if None is given, colobar ranges from -1 to 1.
+        Default is None ([-1.0, -0.5, 0.0, 0.5, 1.0] will be used).
+    :param chigh: boolean, optional
+        True to highlight labels in colors for each group of metrics.
+        Default is False (names written in black).
+    :param cfram: boolean, optional
+        True to color the frame for each group of metrics.
+        Default is False (frame is black).
+    :param save_eps: boolean, optional
+        True to save the plot in eps format instead of png.
+        Default is False (plot saved in png format).
+    :param nbr_space: integer, optional
+        Number of blank space between two metric collections.
+        Default is 2.
+
+    Output:
+    ------
+    """
+    met_o1, met_o2, met_o3, met_o4 = return_metrics_type()
+    if levels is None:
+        levels = [-1.0, -0.5, 0.0, 0.5, 1.0]
+    fontdict = {"fontsize": 40, "fontweight": "bold"}
+    # nbr of columns of the portraitplot
+    nbrc = sum([len(tab[ii][0]) for ii in range(len(tab))]) + (len(tab) - 1) * nbr_space
+    # figure definition
+    fig = plt.figure(0, figsize=(0.5 * nbrc, 0.5 * len(tab[0])))
+    gs = GridSpec(1, nbrc)
+    # adapt the colorbar
+    cmap, norm = my_colorbar(plt.get_cmap("cmo.balance"), mini=min(levels), maxi=max(levels))
+    # loop on metric collections
+    count = 0
+    for kk, tmp in enumerate(tab):
+        ax = plt.subplot(gs[0, count: count + len(tmp[0])])
+        # shading
+        cs = ax.pcolormesh(tmp, cmap=cmap, norm=norm)
+        # title
+        xx1, xx2 = ax.get_xlim()
+        dx = 0.5 / (xx2 - xx1)
+        yy1, yy2 = ax.get_ylim()
+        dy = 0.5 / (yy2 - yy1)
+        try: ax.set_title(title[kk], fontdict=fontdict, y=1+dy, loc="center")
+        except: pass
+        # x axis
+        ticks = [ii + 0.5 for ii in range(len(tmp[0]))]
+        ax.set_xticks(ticks)
+        ax.set_xticklabels([] * len(ticks))
+        if len(xticklabel[kk]) == len(tmp[0]):
+            for ll, txt in enumerate(xticklabel[kk]):
+                cc = "yellowgreen" if txt in met_o1 else ("plum" if txt in met_o2 else
+                                                          ("gold" if txt in met_o3 else "turquoise"))
+                if chigh is True:
+                    boxdict = dict(lw=0, facecolor=cc, pad=1, alpha=1)
+                    ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                            bbox=boxdict)
+                else:
+                    ax.text(ll + 0.5, -0.2, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k")
+        if cfram is True:
+            tmp1 = [met_o1, met_o2, met_o3, met_o4]
+            # draw vertical black lines to separate metric types
+            nn = 0
+            lix = [[0, 0]]
+            for tt in tmp1:
+                tmp2 = [txt for ll, txt in enumerate(xticklabel[kk]) if txt in tt]
+                nn += len(tmp2)
+                if len(tmp2) > 0:
+                    lix += [[nn, nn]]
+                del tmp2
+            liy = [[0, len(tab[0])]] * len(lix)
+            lic, lis = ["k"] * len(lix), ["-"] * len(lix)
+            for lc, ls, lx, ly in zip(lic, lis, lix, liy):
+                line = Line2D(lx, ly, c=lc, lw=7, ls=ls, zorder=10)
+                line.set_clip_on(False)
+                ax.add_line(line)
+            # draw horizontal colored lines to indicate metric types
+            nn = 0
+            lic, lix = list(), list()
+            for uu, tt in enumerate(tmp1):
+                tmp2 = [txt for ll, txt in enumerate(xticklabel[kk]) if
+                        txt in tt or txt + "_1" in tt or txt + "_2" in tt]
+                if len(tmp2) > 0:
+                    cc = "yellowgreen" if uu == 0 else ("plum" if uu == 1 else ("gold" if uu == 2 else "turquoise"))
+                    lic += [cc, cc]
+                    if nn > 0:
+                        lix += [[nn + 0.2, nn + len(tmp2)], [nn + 0.2, nn + len(tmp2)]]
+                    else:
+                        lix += [[nn, nn + len(tmp2)], [nn, nn + len(tmp2)]]
+                    nn += len(tmp2)
+                    del cc
+                del tmp2
+            liy = [[len(tab[0]), len(tab[0])], [0, 0]] * int(float(len(lix)) / 2)
+            lis = ["-"] * len(lix)
+            for mm, (lc, ls, lx, ly) in enumerate(zip(lic, lis, lix, liy)):
+                if mm < 2:
+                    line = Line2D([lx[0] + 0.05, lx[1]], ly, c=lc, lw=10, ls=ls, zorder=10)
+                elif mm > len(lis) - 3:
+                    line = Line2D([lx[0], lx[1] - 0.05], ly, c=lc, lw=10, ls=ls, zorder=10)
+                else:
+                    line = Line2D(lx, ly, c=lc, lw=10, ls=ls, zorder=10)
+                line.set_clip_on(False)
+                ax.add_line(line)
+        # y axis
+        ticks = [ii + 0.5 for ii in range(len(tmp))]
+        ax.set_yticks(ticks)
+        if kk != 0 or len(yticklabel) != len(tmp):
+            ax.set_yticklabels([""] * len(ticks))
+        else:
+            ax.text(-5 * dx, -1 * dy, my_text, fontsize=25, ha="right", va="top", transform=ax.transAxes)
+            ax.tick_params(axis="y", labelsize=20)
+            ax.set_yticklabels(yticklabel)
+            ax.yaxis.set_label_coords(-20 * dx, 0.5)
+        # grid (create squares around metric values)
+        for ii in range(1, len(tmp)):
+            ax.axhline(ii, color="k", linestyle="-", linewidth=1)
+        for ii in range(1, len(tmp[0])):
+            ax.axvline(ii, color="k", linestyle="-", linewidth=1)
+        # write metric value in each square (standardized value!)
+        if write_metrics is True:
+            for jj in range(len(tmp[0])):
+                for ii in range(len(tmp)):
+                    if tmp.mask[ii, jj] == False:
+                        plt.text(jj + 0.5, ii + 0.5, str(round(tmp[ii, jj], 1)), fontsize=10, ha="center", va="center")
+        if kk == len(tab) - 1:
+            x2 = ax.get_position().x1
+            y1 = ax.get_position().y0
+            y2 = ax.get_position().y1
+        count += len(tmp[0]) + nbr_space
+    # color bar
+    cax = plt.axes([x2 + 0.03, y1, 0.02, y2 - y1])
+    cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend="both", aspect=40)
+    cbar.ax.set_yticklabels(["-2 $\sigma$", "-1", "MMV", "1", "2 $\sigma$"], fontdict=fontdict)
+    dict_arrow = dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0)
+    dict_txt = dict(fontsize=40, rotation="vertical", ha="center", weight="bold")
+    cax.annotate("", xy=(3.7, 0.06), xycoords="axes fraction", xytext=(3.7, 0.45), arrowprops=dict_arrow)
+    cax.text(5.2, 0.45, "closer to reference", va="top", **dict_txt)
+    cax.annotate("", xy=(3.7, 0.94), xycoords="axes fraction", xytext=(3.7, 0.55), arrowprops=dict_arrow)
+    cax.text(5.2, 0.55, "further from reference", va="bottom", **dict_txt)
+    # save fig
+    if save_eps is True:
+        plt.savefig(figure_name + ".eps", bbox_inches="tight", format="eps")
+    else:
+        plt.savefig(figure_name, bbox_inches="tight")
+    plt.close()
+    return
+
+
+def plot_projects_comparison(tab_val, figure_name, title="", x_name="", y_name="", xticklabel=[], yticklabel="",
+                             colors=None, tab_bst=None, legend=None, chigh=False, cfram=False,
+                             bold_names=[], save_eps=False):
+    """
+    Plots the projects comparison, markers for each metric, solid markers mean that the difference if significant at the
+    95% confidence level
+
+    Inputs:
+    ------
+    :param tab_val: list
+        2D array with metric values averaged by projects, projects in the first axis, metrics in the second.
+    :param figure_name: string
+        Path to and name of the output plot.
+    **Optional arguments:**
+    :param title: string, optional
+        Title of the plot.
+        Default is "" (no title).
+    :param x_name: string, optional
+        Names of x axis.
+        Default is "" (no name written).
+    :param y_name: string, optional
+        Names of y axis.
+        Default is "" (no name written).
+    :param xticklabel: list of string, optional
+        List of the names to put as x ticks.
+        Default is [] (numbers from 0 to len(tab_val[0]) will be written).
+    :param yticklabel: string, optional
+        Name of the group used to normalized plot.
+        Default is "" (no name written).
+    :param colors: list of string, optional
+        List of colors (e.g., "k", "r") must be the size of the first dimension of tab_val.
+        Default is None (every group will be plotted in black).
+    :param tab_bst: list, optional
+        3D array with confidence interval on the metric values averaged by projects, projects in the first axis, metrics
+        in the second, confidence interval in the third.
+        Default is None (no confidence interval plotted).
+    :param legend: list of string, optional
+        Name of the groups to plot the legend.
+        Default is None (no legend plotted).
+    :param chigh: boolean, optional
+        True to highlight labels in colors for each group of metrics.
+        Default is False (names written in black).
+    :param cfram: boolean, optional
+        True to color the frame for each group of metrics.
+        Default is False (frame is black).
+    :param bold_names: list, optional
+        List of names to write in bold (must be in xy_names).
+        Default is False (names written in normal font).
+    :param save_eps: boolean, optional
+        True to save the plot in eps format instead of png.
+        Default is False (plot saved in png format).
+
+    Output:
+    ------
+    :return:
+    """
+    met_o1, met_o2, met_o3, met_o4 = return_metrics_type()
+    fig, ax = plt.subplots(figsize=(0.5 * len(tab_val[0]), 4))
+    # title
+    plt.title(title, fontsize=20, y=1.01, loc='left')
+    # x axis
+    axis = list(range(len(tab_val[0])))
+    ax.set_xticks(axis)
+    if isinstance(xticklabel, list):
+        ax.set_xticklabels([""] * len(xticklabel))
+        for ll, txt in enumerate(xticklabel):
+            cc = "yellowgreen" if txt in met_o1 else ("plum" if txt in met_o2 else
+                                                      ("gold" if txt in met_o3 else "turquoise"))
+            if chigh is True:
+                boxdict = dict(lw=0, facecolor=cc, pad=1, alpha=1)
+                ax.text(ll + 0.5, -0.03, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k",
+                        bbox=boxdict)
+            else:
+                ax.text(ll + 0.5, -0.03, met_names[txt], fontsize=18, ha="right", va="top", rotation=45, color="k")
+    else:
+        ax.set_xticklabels(axis)
+    if cfram is True:
+        nn = 0
+        lic, lix = list(), list()
+        for cc, tmp1 in zip(["yellowgreen", "plum", "gold", "turquoise"], [met_o1, met_o2, met_o3, met_o4]):
+            tmp2 = [txt for ll, txt in enumerate(xticklabel) if txt in tmp1]
+            if len(tmp2) > 0:
+                lic += [cc, cc]
+                if nn == 0:
+                    lix += [[-0.4, len(tmp2) + 0.5], [-0.4, len(tmp2) - 0.5]]
+                    nn += len(tmp2) - 0.5
+                elif nn + len(tmp2) > len(xticklabel) - 1:
+                    lix += [[nn, nn + len(tmp2) - 0.1], [nn, nn + len(tmp2) - 0.1]]
+                else:
+                    lix += [[nn, nn + len(tmp2)], [nn, nn + len(tmp2)]]
+                    nn += len(tmp2)
+        lis = ["-"] * len(lic)
+        liw = [5] * len(lic)
+        liy = [[2, 2], [0, 0]] * int(round(float(len(lic)) / 2))
+        for lc, ls, lw, lx, ly in zip(lic, lis, liw, lix, liy):
+            line = Line2D(lx, ly, c=lc, lw=lw, ls=ls, zorder=10)
+            line.set_clip_on(False)
+            ax.add_line(line)
+    ax.set_xlim([min(axis) - 0.5, max(axis) + 0.5])
+    ax.tick_params(axis="x", labelsize=12, labelrotation=90)
+    ax.set_xlabel(x_name, fontsize=15)
+    # y axis
+    ax.set_yticks([0.5, 1.5], minor=True)
+    ax.set_yticks([0, 1, 2], minor=False)
+    ax.set_yticklabels(["reference", yticklabel, "2 * " + yticklabel],
+                       fontdict={"fontsize": 12, "fontweight": "normal"})
+    ax.set_ylim([0, 2])
+    ax.set_ylabel(y_name, fontsize=15)
+    # plot marker
+    for ii in range(len(tab_val)):
+        col = colors[len(colors) - 1 - ii] if isinstance(colors, list) else "k"
+        ind = len(tab_val) - 1 - ii
+        if tab_bst is not None:
+            for jj in range(len(tab_bst[ind])):
+                tmp1, tmp2 = tab_val[ind][jj], tab_bst[ind][jj]
+                if ind == 0:
+                    tmp3, tmp4 = tab_val[1][jj], tab_bst[1][jj]
+                else:
+                    tmp3, tmp4 = tab_val[0][jj], tab_bst[0][jj]
+                if (min(tmp4) <= tmp1 <= max(tmp4)) or (min(tmp2) <= tmp3 <= max(tmp2)):
+                    ax.plot([jj], [tmp1], markersize=13, color="none", marker="D", fillstyle="none",
+                            markeredgecolor=col, markeredgewidth=3, zorder=2)
+                else:
+                    ax.scatter(jj, tmp1, s=200, c=col, marker="D", zorder=2)
+                if tmp2[0] > 0 and tmp2[1] > 0:
+                    ax.add_line(Line2D([jj - 0.3, jj + 0.3], [tmp2[0], tmp2[0]], c=col, lw=2, zorder=3))
+                    ax.add_line(Line2D([jj - 0.3, jj + 0.3], [tmp2[1], tmp2[1]], c=col, lw=2, zorder=3))
+                    tmpl = [jj - 0.05, jj - 0.05] if ii == 0 else [jj + 0.05, jj + 0.05]
+                    ax.add_line(Line2D(tmpl, [tmp2[0], tmp2[1]], c=col, lw=2, zorder=3))
+                    del tmpl
+                del tmp1, tmp2, tmp3, tmp4
+        else:
+            ax.scatter(axis, list(tab_val[ind]), s=200, c=col, marker="D", zorder=2)
+        del col
+    # grid
+    ax.grid(linestyle="--", linewidth=1, axis="y", which="both", zorder=1)
+    # text
+    if legend is not None:
+        x1, x2 = ax.get_xlim()
+        dx = (x2 - x1) / 100.
+        y1, y2 = ax.get_ylim()
+        dy = (y2 - y1) / 100.
+        for ii in range(len(legend)):
+            col = colors[len(colors) - 1 - ii] if isinstance(colors, list) else "k"
+            font = {"color": col, "weight": "bold", "size": 15}
+            ax.text(x2 - 2 * dx, y2 - (ii + 1) * 8 * dy, legend[len(legend) - 1 - ii], ha="right", va="center",
+                    fontdict=font)
+            del col, font
+        xxx, ddx, yyy, ddy = x1 + (2 * dx), deepcopy(dx), 1.75, 0.2
+        ax.add_line(Line2D([xxx - ddx, xxx + ddx], [yyy + ddy, yyy + ddy], c=colors[1], lw=2))
+        ax.add_line(Line2D([xxx - ddx, xxx + ddx], [yyy - ddy, yyy - ddy], c=colors[1], lw=2))
+        ax.add_line(Line2D([xxx, xxx], [yyy - ddy, yyy + ddy], c=colors[1], lw=2))
+        dicttext = {"horizontalalignment": "left", "verticalalignment": "center",
+                    "fontdict": {'weight': 'normal', 'size': 12}, "transform": ax.transData}
+        ax.text(xxx + dx, yyy, "95% confidence interval of MMM\n(Monte Carlo sampling method)", **dicttext)
+        arrowdict = dict(facecolor="k", width=2, headwidth=10, headlength=10, shrink=0.0)
+        ax.annotate("", xy=(-0.05, 0.05), xycoords='axes fraction', xytext=(-0.05, 0.42), fontsize=13,
+                    rotation="vertical", ha="center", va='bottom', arrowprops=arrowdict)
+        ax.text(-0.07, 0.42, "improved", fontsize=13, rotation="vertical", ha="center", va='top',
+                transform=ax.transAxes)
+        ax.annotate("", xy=(-0.05, 0.95), xycoords='axes fraction', xytext=(-0.05, 0.58), fontsize=13,
+                    rotation="vertical", ha="center", va='top', arrowprops=arrowdict)
+        ax.text(-0.07, 0.58, "worsened", fontsize=13, rotation="vertical", ha="center", va='bottom',
+                transform=ax.transAxes)
+    # save fig
+    if save_eps is True:
+        plt.savefig(figure_name + ".eps", bbox_inches="tight", format="eps")
+    else:
+        plt.savefig(figure_name, bbox_inches="tight")
+    plt.close()
+    return
