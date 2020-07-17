@@ -950,9 +950,9 @@ def CmipVariables():
             'areacell': {'var_name': 'areacella', 'cf_name': 'cell_area', 'cf_units': 'm2'},
             # landmask
             'landmask': {'var_name': 'sftlf', 'cf_name': 'cell_area', 'cf_units': '1'},
-            # latent heat flux (on ocean grid or ocean points only)
-            'lhf': {'var_name': 'hfls', 'cf_name': 'surface_upward_latent_heat_flux', 'cf_units': 'W m-2'},
-            # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+            # latent heat flux
+            'lhf': {'var_name': 'hfls', 'cf_name': 'land_area_fraction', 'cf_units': 'W m-2'},
+            # longwave radiation computed from these variables IN THAT ORDER
             # lwr = rlds - rlus
             # sometimes lwr is included in the datasets in a variable called 'rls'
             'lwr': {
