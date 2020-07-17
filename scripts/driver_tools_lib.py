@@ -5,15 +5,23 @@ from getpass import getuser as GETPASSgetuser
 from cdms2 import open as CDMS2open
 from inspect import stack as INSPECTstack
 import json
+<<<<<<< HEAD
 from numpy import array as NUMPYarray
+=======
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 from os import environ as OSenviron
 from os.path import join as OSpath__join
 from sys import exit as SYSexit
 from sys import path as SYSpath
+<<<<<<< HEAD
 
 # ENSO_metrics package
 from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
 from EnsoPlots.EnsoPlotToolsLib import find_first_member, get_reference, remove_metrics, sort_members
+=======
+# ENSO_metrics package
+from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 
 # user (get your user name for the paths and to save the files)
 user_name = GETPASSgetuser()
@@ -24,9 +32,15 @@ path_netcdf = "/data/" + user_name + "/ENSO_metrics/v20200311"
 
 # My (YYP) package
 # set new path where to find programs
+<<<<<<< HEAD
 # SYSpath.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
 # from getfiles_sh_to_py import find_path_and_files
 # from getfiles_sh_to_py import get_ensembles
+=======
+SYSpath.insert(0, "/home/yplanton/New_programs/lib_cmip_bash")
+from getfiles_sh_to_py import find_path_and_files
+from getfiles_sh_to_py import get_ensembles
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 
 
 # ---------------------------------------------------#
@@ -70,6 +84,7 @@ def find_members(experiment, frequency, model, project, realm, first_only=False)
     """
     members = get_ensembles(exp=experiment, fre=frequency, mod=model, pro=project, rea=realm)
     if first_only is True:
+<<<<<<< HEAD
         members = [find_first_member(members)]
     return members
 
@@ -124,6 +139,25 @@ def find_fx(model, experiment='', project='', realm='', ensemble=''):
     try: CDMS2open(file_land)
     except: file_land = None
     return file_area, file_land
+=======
+        if "r1i1p1" in members:
+            members = "r1i1p1"
+        elif "r1i1p1f1" in members:
+            members = "r1i1p1f1"
+        elif "r1i1p1f2" in members:
+            members = "r1i1p1f2"
+        else:
+            tmp = deepcopy(members)
+            members = list()
+            for mem in tmp:
+                for ii in range(1, 10):
+                    if "r"+str(ii)+"i" in mem:
+                        members.append(mem.replace("r"+str(ii)+"i", "r"+str(ii).zfill(2)+"i"))
+                    else:
+                        members.append(mem)
+            members = sorted(list(set(members)), key=lambda v: v.upper())[0].replace("r0", "r")
+    return members
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 
 
 def find_xml_cmip(experiment, frequency, model, project, realm, ensemble, variable):
@@ -222,6 +256,61 @@ def find_xml_obs(dataset, variable):
     return file_name, file_area, file_land
 
 
+<<<<<<< HEAD
+=======
+def find_fx(model, experiment='', project='', realm='', ensemble=''):
+    """
+    Finds fixed variables, here areacell and sftlf (landmask)
+
+    Inputs:
+    ------
+    :param model: string
+        model name (e.g., "CNRM-CM5", "IPSL-CM5A-LR")
+    **Optional arguments:**
+    :param experiment: string, optional
+        experiment name (e.g., "historical", "piControl")
+    :param project: string, optional
+        project name (e.g., "CMIP5", "CMIP6")
+    :param realm: string, optional
+        data realm: "A" for atmosphere, "O" for ocean
+    :param ensemble: string, optional
+        ensemble name (e.g., "r1i1p1", "r1i1p1f1")
+
+    Outputs:
+    -------
+    :return file_area: string
+        Path and areacell file name corresponding to the given information (e.g., /path/to/file/areacell.xml)
+        Set to None if the file cannot be found
+    :return file_land: string
+        Path and landmask file name corresponding to the given information (e.g., /path/to/file/landmask.xml)
+        Set to None if the file cannot be found
+    """
+    if project in ["CMIP5", "CMIP6"]:
+        if project in ['CMIP5']:
+            my_ens = "r0i0p0"
+        else:
+            my_ens = deepcopy(ensemble)
+        if realm == "A":
+            farea1, farea2 = find_path_and_files(ens=my_ens, exp=experiment, fre="fx", mod=model, pro=project,
+                                                 rea=realm, var="areacella")
+            fland1, fland2 = find_path_and_files(ens=my_ens, exp=experiment, fre="fx", mod=model, pro=project,
+                                                 rea=realm, var="sftlf")
+            file_land = OSpath__join(fland1, fland2[0])
+        else:
+            farea1, farea2 = find_path_and_files(ens=my_ens, exp=experiment, fre="fx", mod=model, pro=project,
+                                                 rea=realm, var="areacello")
+            file_land = None
+        file_area = OSpath__join(farea1, farea2[0])
+    else:
+        file_area, file_land = find_xml_fx(model, project=project, experiment=experiment, realm=realm)
+    try: CDMS2open(file_area)
+    except: file_area = None
+    try: CDMS2open(file_land)
+    except: file_land = None
+    return file_area, file_land
+
+
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 def find_xml_fx(model, experiment='', project='', realm=''):
     """
     Finds fixed variables, here areacell and sftlf (landmask), mostly used for observational dataset
@@ -277,6 +366,7 @@ def find_xml_fx(model, experiment='', project='', realm=''):
     return file_area, file_land
 
 
+<<<<<<< HEAD
 def get_metric_values(project, metric_collection, dict_json, dict_mod_mem, reduced_set=True, portraitplot=False):
     """
     Finds fixed variables, here areacell and sftlf (landmask), mostly used for observational dataset
@@ -530,6 +620,8 @@ def read_json(filename_json):
     return data
 
 
+=======
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 def save_json(dict_in, json_name, metric_only=True):
     """
     Saves given dictionary under given name in a json file
