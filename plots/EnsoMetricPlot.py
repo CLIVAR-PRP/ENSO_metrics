@@ -4,14 +4,9 @@ from copy import deepcopy
 from datetime import datetime
 from os.path import join as OSpath__join
 # ENSO_metrics functions
-<<<<<<< HEAD
 from EnsoMetrics.EnsoPlotLib import plot_param
 from EnsoPlotTemplate import cmip_boxplot, my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map,\
     my_scatterplot
-=======
-from EnsoPlotLib import plot_param
-from EnsoPlotTemplate import my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map, my_scatterplot
->>>>>>> prints corrected
 
 
 dict_plot = {"boxplot": my_boxplot, "curve": my_curve, "dot": my_dotplot, "dot_to_box": my_dot_to_box,
@@ -129,11 +124,7 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
         plt_typ = dict_diag['plot_type']
         t1 = datetime.now()
         print(str().ljust(20) + plt_typ + " " + str(t1.hour).zfill(2) + ":" + str(t1.minute).zfill(2))
-<<<<<<< HEAD
         if metric_collection in ["ENSO_tel", "test_tel"] and "Map" in metric:
-=======
-        if metric_collection == "ENSO_tel" and "Map" in metric:
->>>>>>> prints corrected
             metype = deepcopy(met_type)
         else:
             metype = None
