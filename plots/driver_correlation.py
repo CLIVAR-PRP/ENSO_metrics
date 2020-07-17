@@ -19,6 +19,10 @@ from matplotlib.colors import BoundaryNorm
 from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
 from numpy import arange as NUMPYarange
+<<<<<<< HEAD
+=======
+from numpy.ma import masked_invalid as NUMPYma__masked_invalid
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 from numpy.ma import masked_where as NUMPYmasked_where
 from numpy.ma import zeros as NUMPYma__zeros
 from os.path import join as OSpath__join
@@ -40,6 +44,7 @@ my_project = ["CMIP"]
 big_ensemble = True
 reduced_set = True  # False  #
 
+<<<<<<< HEAD
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
 path_in = OSpath__join(path_main, "Data_grouped")
 # path_out = OSpath__join(path_main, "Plots_v5")
@@ -48,6 +53,33 @@ path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_
 
 expe = "hist" if experiment == "historical" else "pi"
 
+=======
+# path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2019_12_report"
+path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2020_05_report"
+# path_in = OSpath__join(path_main, "Data_grouped")
+path_in = OSpath__join(path_main, "Data")
+path_out = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2019_10_ENSO_evaluation/Review/r01"
+
+expe = "hist" if experiment == "historical" else "pi"
+
+met_o1 = ["BiasPrLatRmse", "BiasPrLonRmse", "BiasSshLatRmse", "BiasSshLonRmse", "BiasSstLatRmse", "BiasSstLonRmse",
+          "BiasTauxLatRmse", "BiasTauxLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSshLatRmse",
+          "SeasonalSshLonRmse", "SeasonalSstLatRmse", "SeasonalSstLonRmse", "SeasonalTauxLatRmse",
+          "SeasonalTauxLonRmse"]
+met_o2 = ["EnsoSstLonRmse", "EnsoPrTsRmse", "EnsoSstTsRmse", "EnsoTauxTsRmse", "EnsoAmpl", "EnsoSeasonality",
+          "EnsoSstSkew", "EnsoDuration", "EnsoSstDiversity_1", "EnsoSstDiversity_2", "NinoSstDiversity_1",
+          "NinoSstDiversity_2"]
+met_o3 = ["EnsoPrMapCorr", "EnsoPrMapRmse", "EnsoPrMapStd", "EnsoPrMapDjfCorr", "EnsoPrMapDjfRmse", "EnsoPrMapDjfStd",
+          "EnsoPrMapJjaCorr", "EnsoPrMapJjaRmse", "EnsoPrMapJjaStd", "EnsoSlpMapCorr", "EnsoSlpMapRmse",
+          "EnsoSlpMapStd", "EnsoSlpMapDjfCorr", "EnsoSlpMapDjfRmse", "EnsoSlpMapDjfStd", "EnsoSlpMapJjaCorr",
+          "EnsoSlpMapJjaRmse", "EnsoSlpMapJjaStd", "EnsoSstMapCorr", "EnsoSstMapRmse", "EnsoSstMapStd",
+          "EnsoSstMapDjfCorr", "EnsoSstMapDjfRmse", "EnsoSstMapDjfStd", "EnsoSstMapJjaCorr", "EnsoSstMapJjaRmse",
+          "EnsoSstMapJjaStd"]
+met_o4 = ["EnsodSstOce_1", "EnsodSstOce_2", "EnsoFbSstThf", "EnsoFbSstSwr", "EnsoFbSstLhf", "EnsoFbSstLwr",
+          "EnsoFbSstShf", "EnsoFbSstTaux", "EnsoFbTauxSsh", "EnsoFbSshSst"]
+met_order = met_o1 + met_o2 + met_o3 + met_o4
+
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 
 # ---------------------------------------------------#
 # Functions
@@ -126,13 +158,18 @@ def compute_correlation(tab):
 
 
 def get_reference(metric_collection, metric):
+<<<<<<< HEAD
     if metric_collection == "ENSO_tel" and "Map" in metric:
+=======
+    if metric_collection in ["ENSO_tel", "test_tel"] and "Map" in metric:
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
         my_met = metric.replace("Corr", "").replace("Rmse", "").replace("Std", "")
     else:
         my_met = deepcopy(metric)
     return plot_param(metric_collection, my_met)['metric_reference']
 
 
+<<<<<<< HEAD
 
 def get_ref(metric):
     for mc in metric_collection:
@@ -144,6 +181,18 @@ def get_ref(metric):
         if my_met in list_met:
             break
     return plot_param(mc, my_met)['metric_reference']
+=======
+# def get_ref(metric):
+#     for mc in metric_collection:
+#         list_met = sorted(defCollection(mc)['metrics_list'].keys(), key=lambda v: v.upper())
+#         if mc == "ENSO_tel" and "Map" in metric:
+#             my_met = metric.replace("Corr", "").replace("Rmse", "")
+#         else:
+#             my_met = deepcopy(metric)
+#         if my_met in list_met:
+#             break
+#     return plot_param(mc, my_met)['metric_reference']
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 
 
 def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=False, title='correlations', cfram=False):
@@ -196,6 +245,7 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
     ax.set_xticklabels([""] * len(xticks))
     ax.tick_params(axis="x", labelsize=15, labelrotation=90)
     mylab = ["BiasPrLatRmse", "SeasonalPrLatRmse", "EnsoSstLonRmse", "EnsoFbSshSst"]
+<<<<<<< HEAD
     jj = 0
     for ll, txt in enumerate(xlabel):
         if ll < 8:
@@ -226,6 +276,45 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
         liy = [[0, nbr], [0, nbr], [0, nbr], [8, 8], [15, 15], [19, 19]] +\
               [[0, 8], [0, 8], [0, 0], [nbr, nbr]] + [[8.18, 15], [8.18, 15], [0, 0], [nbr, nbr]] +\
               [[15.18, 19], [15.18, 19], [0, 0], [nbr, nbr]] + [[19.18, nbr], [19.18, nbr], [0, 0], [nbr, nbr]]
+=======
+    for ll, txt in enumerate(xlabel):
+        if txt in met_o1 or txt + "_1" in met_o1 or txt + "_2" in met_o1:
+            cc = "yellowgreen"
+        elif txt in met_o2 or txt + "_1" in met_o2 or txt + "_2" in met_o2:
+            cc = "plum"
+        elif txt in met_o3 or txt + "_1" in met_o3 or txt + "_2" in met_o3:
+            cc = "gold"
+        else:
+            cc = "turquoise"
+        boxdict = dict(lw=0, facecolor=cc, pad=3, alpha=1)
+        if txt in mylab:
+            ax.text(ll + 0.5, -0.3, txt, fontsize=18, ha="right", va="top", rotation=45, color="k", weight="bold",
+                    bbox=boxdict)
+            ax.text(-0.4, ll + 0.5, txt, fontsize=18, ha="right", va="center", color="k", weight="bold",
+                    bbox=boxdict)
+        else:
+            ax.text(ll + 0.5, -0.3, txt, fontsize=15, ha='right', va='top', rotation=45, color="k", bbox=boxdict)
+            ax.text(-0.4, ll + 0.5, txt, fontsize=15, ha='right', va='center', color="k", bbox=boxdict)
+    if cfram is True:
+        nbr = len(tab_rval)
+        lic = ["k"] * 6 + ["yellowgreen"] * 4 + ["plum"] * 4 + ["gold"] * 4 + ["turquoise"] * 4
+        lis = ["-"] * len(lic)
+        liw = [4] * 6 + [10] * (len(lic) - 6)
+        tmp1 = [txt for ll, txt in enumerate(xlabel) if txt in met_o1 or txt + "_1" in met_o1 or txt + "_2" in met_o1]
+        n1 = len(tmp1)
+        tmp2 = [txt for ll, txt in enumerate(xlabel) if txt in met_o2 or txt + "_1" in met_o2 or txt + "_2" in met_o2]
+        n2 = n1 + len(tmp2)
+        tmp3 = [txt for ll, txt in enumerate(xlabel) if txt in met_o3 or txt + "_1" in met_o3 or txt + "_2" in met_o3]
+        n3 = n2 + len(tmp3)
+        lix = [[n1, n1], [n2, n2], [n3, n3], [0, nbr], [0, nbr], [0, nbr]] + [[0, 0], [nbr, nbr], [0, n1], [0, n1]] +\
+              [[0, 0], [nbr, nbr], [n1 + 0.18, n2], [n1 + 0.18, n2]] +\
+              [[0, 0], [nbr, nbr], [n2 + 0.18, n3], [n2 + 0.18, n3]] +\
+              [[0, 0], [nbr, nbr], [n3 + 0.18, nbr], [n3 + 0.18, nbr]]
+        liy = [[0, nbr], [0, nbr], [0, nbr], [n1, n1], [n2, n2], [n3, n3]] + [[0, n1], [0, n1], [0, 0], [nbr, nbr]] +\
+              [[n1 + 0.18, n2], [n1 + 0.18, n2], [0, 0], [nbr, nbr]] +\
+              [[n2 + 0.18, n3], [n2 + 0.18, n3], [0, 0], [nbr, nbr]] +\
+              [[n3 + 0.18, nbr], [n3 + 0.18, nbr], [0, 0], [nbr, nbr]]
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
         for lc, ls, lw, lx, ly in zip(lic, lis, liw, lix, liy):
             line = Line2D(lx, ly, c=lc, lw=lw, ls=ls, zorder=10)
             line.set_clip_on(False)
@@ -281,9 +370,17 @@ def plot_correlation(tab_rval, name_plot, xy_names, tab_pval=None, write_corr=Fa
 
 
 def read_data(project, metric_collection):
+<<<<<<< HEAD
     #lpath = OSpath__join(path_in, project + "/" + experiment + "/" + metric_collection)
     lname = project + "_" + experiment + "_" + metric_collection + "_v2019????_modified.json"
     filename_js = list(GLOBiglob(OSpath__join(path_in, lname)))[0]
+=======
+    # lname = project + "_" + experiment + "_" + metric_collection + "_v2019????_modified.json"
+    # filename_js = list(GLOBiglob(OSpath__join(path_in, lname)))[0]
+    lpath = OSpath__join(path_in, project + "/" + experiment)
+    lname = project + "_" + experiment + "_" + metric_collection + "_v20200430.json"
+    filename_js = list(GLOBiglob(OSpath__join(lpath, lname)))[0]
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
     with open(filename_js) as ff:
         data = json.load(ff)
     ff.close()
@@ -299,6 +396,7 @@ def remove_metrics(list_met, metric_collection):
             #              'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
             #              'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2', 'NinoSstTsRmse_1',
             #              'NinoSstTsRmse_2']
+<<<<<<< HEAD
             to_remove = ['BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse', 'EnsoTauxTsRmse', 'NinaSstDur_1',
                          'NinaSstDur_2', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinaSstTsRmse_1',
                          'NinaSstTsRmse_2', 'NinoSstDiversity_1', 'NinoSstDur_1',
@@ -313,6 +411,28 @@ def remove_metrics(list_met, metric_collection):
         else:
             to_remove = ['EnsoAmpl', 'EnsoPrMapStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd',
                          'EnsoSstMapStd', 'EnsoSstLonRmse',
+=======
+            to_remove = ['BiasSshLatRmse', 'BiasSshLonRmse', 'BiasSstLatRmse', 'BiasTauxLatRmse', 'EnsoPrTsRmse',
+                         'EnsoSstDiversity_1', 'EnsoTauxTsRmse', 'NinaSstDur_1', 'NinaSstDur_2', 'NinaSstLonRmse_1',
+                         'NinaSstLonRmse_2', 'NinaSstTsRmse_1', 'NinaSstTsRmse_2', 'NinoSstDiversity_1',
+                         'NinoSstDiversity_2', 'NinoSstDur_1', 'NinoSstDur_2', 'NinoSstLonRmse_1', 'NinoSstLonRmse_2',
+                         'NinoSstTsRmse_1', 'NinoSstTsRmse_2', "SeasonalSshLatRmse", "SeasonalSshLonRmse",
+                         "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
+        elif metric_collection == "ENSO_proc":
+            # to_remove = ['EnsoAmpl', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
+            #              'EnsoFbTauxSsh']
+            to_remove = ['BiasSshLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
+                         'EnsoSstLonRmse', 'EnsoSstSkew', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr',
+                         'EnsoFbSstShf', 'EnsoFbSstSwr']
+        else:
+            to_remove = ['EnsoAmpl', 'EnsoSeasonality',
+                         'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd', 'EnsoPrMapDjfCorr', 'EnsoPrMapDjfStd',
+                         'EnsoPrMapJjaCorr', 'EnsoPrMapJjaStd', 'EnsoSlpMapCorr', 'EnsoSlpMapRmse', 'EnsoSlpMapStd',
+                         'EnsoSlpMapDjfCorr', 'EnsoSlpMapDjfRmse', 'EnsoSlpMapDjfStd', 'EnsoSlpMapJjaCorr',
+                         'EnsoSlpMapJjaRmse', 'EnsoSlpMapJjaStd', 'EnsoSstMapCorr', 'EnsoSstMapRmse', 'EnsoSstMapStd',
+                         'EnsoSstMapDjfCorr', 'EnsoSstMapDjfStd', 'EnsoSstMapJjaCorr', 'EnsoSstMapJjaStd',
+                         'EnsoSstLonRmse',
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
                          'NinaPrMap_1Corr', 'NinaPrMap_1Rmse', 'NinaPrMap_1Std',
                          'NinaPrMap_2Corr', 'NinaPrMap_2Rmse', 'NinaPrMap_2Std',
                          'NinaSlpMap_1Corr', 'NinaSlpMap_1Rmse', 'NinaSlpMap_1Std',
@@ -331,8 +451,13 @@ def remove_metrics(list_met, metric_collection):
         if metric_collection == "ENSO_perf":
             to_remove = []
         elif metric_collection == "ENSO_proc":
+<<<<<<< HEAD
             to_remove = ['BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstLonRmse',
                          'EnsoSstSkew']
+=======
+            to_remove = ['BiasSshLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
+                         'EnsoSstLonRmse', 'EnsoSstSkew']
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
         else:
             to_remove = ['EnsoAmpl', 'EnsoSstLonRmse', 'NinaSstLonRmse_1', 'NinaSstLonRmse_2', 'NinoSstLonRmse_1',
                          'NinoSstLonRmse_2']
@@ -371,10 +496,16 @@ for proj in list_project:
         data_json = read_data(proj, mc)
         list_models = sorted(data_json.keys(), key=lambda v: v.upper())
         # read metrics
+<<<<<<< HEAD
         list_models = sorted(data_json.keys(), key=lambda v: v.upper())
         dict1 = dict()
         for mod in list_models:
             data_mod = data_json[mod]["value"]
+=======
+        dict1 = dict()
+        for mod in list_models:
+            data_mod = data_json[mod][data_json[mod].keys()[0]]["value"]
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
             list_metrics = sorted(data_mod.keys(), key=lambda v: v.upper())
             list_metrics = remove_metrics(list_metrics, mc)
             dict2 = dict()
@@ -382,7 +513,16 @@ for proj in list_project:
                 try:
                     ref = get_reference(mc, met)
                 except:
+<<<<<<< HEAD
                     ref = "Tropflux"
+=======
+                    if mc == "ENSO_tel":
+                        try:
+                            ref = get_reference(mc.replace("ENSO", "test"), met)
+                        except:
+                            pass
+                    # ref = "AVISO" if "Ssh" in met else "Tropflux"
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
                 data_met = data_mod[met]["metric"]
                 list_ref = sorted(data_met.keys(), key=lambda v: v.upper())
                 my_ref = deepcopy(ref)
@@ -547,12 +687,15 @@ if big_ensemble is True:
 # ---------------------------------------------------#
 dict_out = deepcopy(dict_met)
 lev1 = sorted(dict_out.keys(), key=lambda v: v.upper())
+<<<<<<< HEAD
 met_order = [
     "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "BiasTauxLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse",
     "SeasonalSstLonRmse", "SeasonalTauxLonRmse", "EnsoSstLonRmse", "EnsoSstTsRmse", "EnsoAmpl", "EnsoSeasonality",
     "EnsoSstSkew", "EnsoDuration", "NinoSstDiversity_1", "NinoSstDiversity_2", "EnsoPrMapCorr", "EnsoPrMapRmse",
     "EnsoSstMapCorr", "EnsoSstMapRmse", "EnsodSstOce_1", "EnsodSstOce_2", "EnsoFbSstThf", "EnsoFbSstTaux",
     "EnsoFbTauxSsh", "EnsoFbSshSst"]
+=======
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
 # correlation
 if ' ':
     if big_ensemble is True:
@@ -567,6 +710,7 @@ if ' ':
                 except: tab[ii, jj] = 1e20
                 else: tab[ii, jj] = dict_out[mod][met]
                 # tab[ii, jj] = 1 - dict_out[mod][met] if "Corr" in met else dict_out[mod][met]
+<<<<<<< HEAD
         tab = NUMPYmasked_where(tab == 1e20, tab)
         # compute inter model correlations
         rval, pval = compute_correlation(tab)
@@ -576,6 +720,23 @@ if ' ':
         list_metrics2 = [met.replace("_2", "") for met in list_metrics]
         list_metrics2 = ["" if met in ["BiasPrLatRmse", "SeasonalPrLatRmse", "EnsoSstLonRmse", "EnsoFbSshSst"] else met
                          for met in list_metrics2]
+=======
+        tab = NUMPYma__masked_invalid(tab)
+        tab = NUMPYmasked_where(tab == 1e20, tab)
+        # compute inter model correlations
+        rval, pval = compute_correlation(tab)
+        # name_plot = OSpath__join(path_out, "correlations_inter_metrics_" + str(len(list_metrics)).zfill(2) +
+        #                          "metrics_" + str(len(lev1)).zfill(2) + "models_v3")
+        name_plot = OSpath__join(path_out, "Figure_06_correlations_inter_metrics_20200430")
+        if reduced_set is False:
+            name_plot += "_all_metrics"
+            list_metrics2 = deepcopy(list_metrics)
+        else:
+            list_metrics2 = [met.replace("_2", "") for met in list_metrics]
+        title = ""  # "inter metric correlations"
+        # list_metrics2 = ["" if met in ["BiasPrLatRmse", "SeasonalPrLatRmse", "EnsoSstLonRmse", "EnsoFbSshSst"] else met
+        #                  for met in list_metrics2]
+>>>>>>> 7492f16b3aee130baff54a1c4dc6adf27c1b5946
         plot_correlation(rval, name_plot, list_metrics2, tab_pval=pval, write_corr=False, title=title, cfram=True)
         # # compute inter model correlations
         # tab = tab.reorder('10')
