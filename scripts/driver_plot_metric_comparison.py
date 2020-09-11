@@ -12,7 +12,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
-from __future__ import print_function
+
 from copy import deepcopy
 from numpy import array as NUMPYarray
 from numpy import mean as NUMPYmean
@@ -108,11 +108,11 @@ figure_name = OSpath__join(path_out, figure_name)
 # Functions
 # ---------------------------------------------------#
 def common_save(dict_in, dict_out={}):
-    for mod in dict_in.keys():
+    for mod in list(dict_in.keys()):
         try:    dict_out[mod]
         except: dict_out[mod] = dict_in[mod]
         else:
-            for met in dict_in[mod].keys():
+            for met in list(dict_in[mod].keys()):
                 dict_out[mod][met] = dict_in[mod][met]
     return dict_out
 # ---------------------------------------------------#
@@ -158,9 +158,9 @@ else:
 # ---------------------------------------------------#
 if ' ':
     list_metrics = list()
-    for k1 in dict_met.keys():
-        for k2 in dict_met[k1].keys():
-            list_metrics += dict_met[k1][k2].keys()
+    for k1 in list(dict_met.keys()):
+        for k2 in list(dict_met[k1].keys()):
+            list_metrics += list(dict_met[k1][k2].keys())
     list_metrics = sort_metrics(list(set(list_metrics)))
     opposed_groups = deepcopy(list_projects) if big_ensemble is False else deepcopy(my_project)
     # mean metric evaluation
@@ -169,8 +169,8 @@ if ' ':
         tab_tmp = list()
         for grp in opposed_groups:
             tab = list()
-            for mod in dict_met[grp].keys():
-                if met in dict_met[grp][mod].keys():
+            for mod in list(dict_met[grp].keys()):
+                if met in list(dict_met[grp][mod].keys()):
                     if dict_met[grp][mod][met] is not None and dict_met[grp][mod][met] != 1e20:
                         tab.append(dict_met[grp][mod][met])
             tab = NUMPYarray(tab)

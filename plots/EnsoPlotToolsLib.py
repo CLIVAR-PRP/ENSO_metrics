@@ -26,7 +26,7 @@ from EnsoMetrics import EnsoErrorsWarnings
 
 
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
-observations = sorted(ReferenceObservations().keys(), key=lambda v: v.upper())
+observations = sorted(list(ReferenceObservations().keys()), key=lambda v: v.upper())
 
 # metrics order
 metrics_background = [
@@ -70,7 +70,7 @@ def bootstrap(tab, num_samples=1000000, alpha=0.05, nech=None, statistic=NUMPYme
     idx = NUMPYrandom__randint(0, n, (num_samples, nech))
     samples = tab[idx]
     stat = NUMPYsort(statistic(samples, 1))
-    return [stat[int((alpha/2.0)*num_samples)], stat[int((1-alpha/2.0)*num_samples)]]
+    return [stat[int(round((alpha / 2.)*num_samples))], stat[int(round((1 - alpha / 2.)*num_samples))]]
 
 
 def create_labels(label_name, label_ticks):
@@ -160,7 +160,7 @@ def minmax_plot(tab, metric=False):
     # define minimum and maximum
     mini, maxi = minimaxi(tab)
     if mini == maxi or abs(maxi-mini)/float(abs(maxi+mini))<1e-2:
-        tt = max(abs(mini), abs(maxi))/10.
+        tt = max(abs(mini), abs(maxi)) / 10.
         tmp = int(str("%.e" % tt)[3:])
         if mini == maxi or (mini < 0 and maxi > 0):
             tmp = 10**-tmp if tt < 1 else 10**tmp
@@ -185,7 +185,7 @@ def minmax_plot(tab, metric=False):
     interval = locmaxi - locmini
     listbase = list(NUMPYaround([ii*10**exp for exp in range(-1, 1) for ii in range(1, 6)], decimals=1))
     listbase = listbase + listbase
-    listmult = [3] * int(len(listbase)/2) + [4] * int(len(listbase)/2)
+    listmult = [3] * int(round(len(listbase) / 2.)) + [4] * int(round(len(listbase) / 2.))
     list1 = list(NUMPYaround([listbase[ii] * listmult[ii] for ii in range(len(listbase))], decimals=1))
     list2 = list(NUMPYaround([abs(ii - interval) for ii in list1], decimals=1))
     interval = list1[list2.index(min(list2))]
@@ -266,9 +266,9 @@ def my_bootstrap(tab1, tab2):
 
 def my_legend(modname, obsname, filename_nc, models2=None, member=None, plot_metric=True, shading=False):
     legend = ["ref: " + obsname]
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
-        if isinstance(modname, str) is True or isinstance(modname, unicode) is True:
-            if isinstance(member, str) is True or isinstance(member, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
+        if isinstance(modname, str) is True or isinstance(modname, str) is True:
+            if isinstance(member, str) is True or isinstance(member, str) is True:
                 legend += [modname + " " + member]
             else:
                 legend += [modname]
@@ -318,13 +318,13 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shadin
     else:
         if shading is True:
             diag_mod =\
-                [[dict_diag[mod][mm] for mm in sorted(dict_diag[mod].keys(), key=lambda v: v.upper())] for mod in modelKeyName]
+                [[dict_diag[mod][mm] for mm in sorted(list(dict_diag[mod].keys()), key=lambda v: v.upper())] for mod in modelKeyName]
         else:
             diag_mod = [dict_diag[mod] for mod in modelKeyName]
     if shading is True:
-        my_ref = dict_diag["obs"].keys()
+        my_ref = list(dict_diag["obs"].keys())
     else:
-        my_ref = dict_diag.keys()
+        my_ref = list(dict_diag.keys())
     if reference in my_ref:
         obs = deepcopy(reference)
     else:
@@ -348,7 +348,7 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shadin
         if shading is True:
             metric_value = [
                 my_average([dict_metric[mod][obs][mm]
-                            for mm in sorted(dict_metric[mod][obs].keys(), key=lambda v: v.upper())],
+                            for mm in sorted(list(dict_metric[mod][obs].keys()), key=lambda v: v.upper())],
                            remove_masked=True)
                 for mod in model]
         else:
@@ -392,7 +392,7 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
 def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric, member=None, met_in_file=False, met_type=None,
            met_pattern=""):
     ff = open_dataset(filename_nc, decode_times=False)
-    variables_in_file = sorted([var for var in ff.keys()], key=lambda v: v.upper())
+    variables_in_file = sorted([var for var in list(ff.keys())], key=lambda v: v.upper())
     # read model
     tab_mod = list()
     for var in var_to_read:
@@ -435,7 +435,7 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
     if isinstance(var_to_read, list) is True and len(var_to_read) == 1:
         if met_in_file is True:
             if isinstance(met_type, str):
-                for key in ff.attrs.keys():
+                for key in list(ff.attrs.keys()):
                     if met_type + "_" + obs + "_" + met_pattern == key:
                         val = ff.attrs[key]
                 try: val
@@ -445,7 +445,7 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
             elif isinstance(met_type, list):
                 metval = list()
                 for mety in met_type:
-                    for key in ff.attrs.keys():
+                    for key in list(ff.attrs.keys()):
                         if mety + "_" + obs + "_" + met_pattern == key or (met_pattern == "" and mety + "_" + obs == key):
                             val = ff.attrs[key]
                     try: val
@@ -459,7 +459,7 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
             add = "nina" if "nina" in var else "nino"
             if met_in_file is True:
                 if isinstance(met_type, str):
-                    for key in ff.attrs.keys():
+                    for key in list(ff.attrs.keys()):
                         if met_type + "_" + obs + "_" + add + "_" + met_pattern == key:
                             val = ff.attrs[key]
                     try:    val
@@ -469,7 +469,7 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
                 elif isinstance(met_type, list):
                     tmpval = list()
                     for mety in met_type:
-                        for key in ff.attrs.keys():
+                        for key in list(ff.attrs.keys()):
                             if mety + "_" + obs + "_" + add + "_" + met_pattern == key or (
                                     met_pattern == "" and mety + "_" + obs + "_" + add == key):
                                 val = ff.attrs[key]

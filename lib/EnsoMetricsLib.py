@@ -6,17 +6,17 @@ from numpy import sqrt as NUMPYsqrt
 from numpy import square as NUMPYsquare
 
 # ENSO_metrics package functions:
-from EnsoCollectionsLib import ReferenceRegions
-import EnsoErrorsWarnings
-from EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
-from EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
+from .EnsoCollectionsLib import ReferenceRegions
+from . import EnsoErrorsWarnings
+from .EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
+from .EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, AverageZonal, BasinMask, CheckTime,\
     Composite, ComputeInterannualAnomalies, ComputePDF, Concatenate, Correlation, DetectEvents, DurationAllEvent,\
     DurationEvent, Event_selection, fill_dict_teleconnection, FindXYMinMaxInTs, get_year_by_year,\
     LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, LinearRegressionTsAgainstTs, MinMax, MyEmpty,\
     OperationMultiply, PreProcessTS, Read_data_mask_area, Read_data_mask_area_multifile, Regrid, RmsAxis,\
     RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, SlabOcean, Smoothing, Std,\
     StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
-from KeyArgLib import default_arg_values
+from .KeyArgLib import default_arg_values
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -162,8 +162,8 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = int(round(pr_mod.shape[0] / 12))
+    yearN_obs = int(round(pr_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -382,8 +382,8 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = int(round(pr_mod.shape[0] / 12))
+    yearN_obs = int(round(pr_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -662,8 +662,8 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                             **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = int(round(pr_mod.shape[0] / 12))
+    yearN_obs = int(round(pr_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -940,8 +940,8 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = int(round(ssh_mod.shape[0] / 12))
+    yearN_obs = int(round(ssh_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -1166,8 +1166,8 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = int(round(ssh_mod.shape[0] / 12))
+    yearN_obs = int(round(ssh_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -1450,8 +1450,8 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
                             **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = int(round(ssh_mod.shape[0] / 12))
+    yearN_obs = int(round(ssh_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -1731,8 +1731,8 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -1953,8 +1953,8 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -2229,8 +2229,8 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -2506,8 +2506,8 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
                             **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -2813,8 +2813,8 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = int(round(taux_mod.shape[0] / 12))
+    yearN_obs = int(round(taux_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -3038,8 +3038,8 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = int(round(taux_mod.shape[0] / 12))
+    yearN_obs = int(round(taux_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -3317,8 +3317,8 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
                             **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = int(round(taux_mod.shape[0] / 12))
+    yearN_obs = int(round(taux_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -3579,7 +3579,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, lhf, keyerror3 = CheckTime(sst, lhf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -3642,7 +3642,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -3913,7 +3913,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, lwr, keyerror3 = CheckTime(sst, lwr, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -3976,7 +3976,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -4246,7 +4246,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, shf, keyerror3 = CheckTime(sst, shf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -4309,7 +4309,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -4576,7 +4576,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, swr, keyerror3 = CheckTime(sst, swr, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -4639,7 +4639,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -4915,7 +4915,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, thf, keyerror3 = CheckTime(sst, thf, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -4978,7 +4978,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -5221,7 +5221,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -5284,7 +5284,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                         sst1 = Std(sst1)
                         sst2 = Std(sst2)
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -5456,7 +5456,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -5722,7 +5722,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -6040,7 +6040,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     sst, enso, _ = CheckTime(sst, enso, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -6117,7 +6117,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -6357,7 +6357,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     sst, taux, keyerror3 = CheckTime(sst, taux, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -6410,7 +6410,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                     del taux_map_areacell
                     if keyerror is None:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -6665,7 +6665,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     sst, ssh, keyerror3 = CheckTime(sst, ssh, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -6728,7 +6728,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -6997,7 +6997,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
     ssh, taux, keyerror3 = CheckTime(ssh, taux, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN = ssh.shape[0] / 12
+    yearN = int(round(ssh.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(ssh)
@@ -7051,7 +7051,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                     del ssh_map_areacell
                     if keyerror is None:
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -7368,8 +7368,8 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -7818,8 +7818,8 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs_box, pr_obs, keyerror_obs3 = CheckTime(sst_obs_box, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = int(round(sst_mod_box.shape[0] / 12))
+    yearN_obs = int(round(sst_obs_box.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -7833,7 +7833,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         keyerror = add_up_errors(tmp)
     else:
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         else:
@@ -8046,7 +8046,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                         '\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15, **dict_debug)
                                 # ENSO events: SSTA > (<) 'threshold' during 'season' are considered as El Nino
                                 # (La Nina) events
-                                if 'smoothing' in kwargs.keys():
+                                if 'smoothing' in list(kwargs.keys()):
                                     kwargs['smoothing'] = smooth
                                     del smooth
                                 sst_mod, _, keyerror_mod = PreProcessTS(
@@ -8375,8 +8375,8 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs_box, pr_obs, keyerror_obs3 = CheckTime(sst_obs_box, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = int(round(sst_mod_box.shape[0] / 12))
+    yearN_obs = int(round(sst_obs_box.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -8390,7 +8390,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         keyerror = add_up_errors(tmp)
     else:
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         else:
@@ -8603,7 +8603,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                         '\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15, **dict_debug)
                                 # ENSO events: SSTA > (<) 'threshold' during 'season' are considered as El Nino
                                 # (La Nina) events
-                                if 'smoothing' in kwargs.keys():
+                                if 'smoothing' in list(kwargs.keys()):
                                     kwargs['smoothing'] = smooth
                                     del smooth
                                 sst_mod, _, keyerror_mod = PreProcessTS(
@@ -8934,8 +8934,8 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -8988,7 +8988,7 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
             # 2. compute composite
             # ------------------------------------------------
             # smoothing is not applied
-            if 'smoothing' in kwargs.keys():
+            if 'smoothing' in list(kwargs.keys()):
                 smooth = deepcopy(kwargs['smoothing'])
                 kwargs['smoothing'] = False
             else:
@@ -9001,8 +9001,8 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                     EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
                 # Read if the given region is defined as a land region, an oceanic region, or both
                 dict_reg = ReferenceRegions(reg)
-                maskland = dict_reg['maskland'] if 'maskland' in dict_reg.keys() else False
-                maskoce = dict_reg['maskocean'] if 'maskocean' in dict_reg.keys() else False
+                maskland = dict_reg['maskland'] if 'maskland' in list(dict_reg.keys()) else False
+                maskoce = dict_reg['maskocean'] if 'maskocean' in list(dict_reg.keys()) else False
                 pr_mod, mod_areacell, keyerror_mod = Read_data_mask_area(
                     prfilemod, prnamemod, 'precipitations', metric, reg, file_area=prareafilemod,
                     name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
@@ -9069,7 +9069,7 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
             list_composite_obs = ArrayListAx(
                 list_composite_obs, loop_box, ax_name_ax='box', ax_long_name=ar5, ax_ref=ref)
 
-            if 'smoothing' in kwargs.keys():
+            if 'smoothing' in list(kwargs.keys()):
                 kwargs['smoothing'] = smooth
                 del smooth
 
@@ -9307,8 +9307,8 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, prmap_obs, keyerror_obs3 = CheckTime(sst_obs, prmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -9361,7 +9361,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
             # 2. compute composite
             # ------------------------------------------------
             # smoothing is not applied
-            if 'smoothing' in kwargs.keys():
+            if 'smoothing' in list(kwargs.keys()):
                 smooth = deepcopy(kwargs['smoothing'])
                 kwargs['smoothing'] = False
             else:
@@ -9374,8 +9374,8 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                     EnsoErrorsWarnings.debug_mode('\033[92m', 'region = ' + str(reg), 15)
                 # Read if the given region is defined as a land region, an oceanic region, or both
                 dict_reg = ReferenceRegions(reg)
-                maskland = dict_reg['maskland'] if 'maskland' in dict_reg.keys() else False
-                maskoce = dict_reg['maskocean'] if 'maskocean' in dict_reg.keys() else False
+                maskland = dict_reg['maskland'] if 'maskland' in list(dict_reg.keys()) else False
+                maskoce = dict_reg['maskocean'] if 'maskocean' in list(dict_reg.keys()) else False
                 pr_mod, mod_areacell, keyerror_mod = Read_data_mask_area(
                     prfilemod, prnamemod, 'precipitations', metric, reg, file_area=prareafilemod,
                     name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod,
@@ -9442,7 +9442,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
             list_composite_obs = ArrayListAx(
                 list_composite_obs, loop_box, ax_name_ax='box', ax_long_name=ar5, ax_ref=ref)
 
-            if 'smoothing' in kwargs.keys():
+            if 'smoothing' in list(kwargs.keys()):
                 kwargs['smoothing'] = smooth
                 del smooth
 
@@ -9589,7 +9589,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -9694,7 +9694,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                         sst3_NDJ = Std(sst3_NDJ)
                         sst3_MAM = Std(sst3_MAM)
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -9890,7 +9890,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -10220,7 +10220,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -10283,7 +10283,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                         sst1 = SkewnessTemporal(sst1)
                         sst2 = SkewnessTemporal(sst2)
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -10505,8 +10505,8 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -10951,8 +10951,8 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, slp_obs, keyerror_obs3 = CheckTime(sst_obs_box, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = int(round(sst_mod_box.shape[0] / 12))
+    yearN_obs = int(round(sst_obs_box.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -10966,7 +10966,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         keyerror = add_up_errors(tmp)
     else:
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         else:
@@ -11180,7 +11180,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                         '\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15, **dict_debug)
                                 # ENSO events: SSTA > (<) 'threshold' during 'season' are considered as El Nino
                                 # (La Nina) events
-                                if 'smoothing' in kwargs.keys():
+                                if 'smoothing' in list(kwargs.keys()):
                                     kwargs['smoothing'] = smooth
                                     del smooth
                                 sst_mod, _, keyerror_mod = PreProcessTS(
@@ -11507,8 +11507,8 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, slp_obs, keyerror_obs3 = CheckTime(sst_obs_box, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = int(round(sst_mod_box.shape[0] / 12))
+    yearN_obs = int(round(sst_obs_box.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -11522,7 +11522,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         keyerror = add_up_errors(tmp)
     else:
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         else:
@@ -11734,7 +11734,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                         '\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15, **dict_debug)
                                 # ENSO events: SSTA > (<) 'threshold' during 'season' are considered as El Nino
                                 # (La Nina) events
-                                if 'smoothing' in kwargs.keys():
+                                if 'smoothing' in list(kwargs.keys()):
                                     kwargs['smoothing'] = smooth
                                     del smooth
                                 sst_mod, _, keyerror_mod = PreProcessTS(
@@ -12027,8 +12027,8 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_obs, sstmap_obs, keyerror_obs3 = CheckTime(sst_obs, sstmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -12493,8 +12493,8 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -12901,8 +12901,8 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, ts_obs, keyerror_obs3 = CheckTime(sst_obs_box, ts_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = int(round(sst_mod_box.shape[0] / 12))
+    yearN_obs = int(round(sst_obs_box.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -12916,7 +12916,7 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         keyerror = add_up_errors(tmp)
     else:
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         else:
@@ -13109,7 +13109,7 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                     '\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15, **dict_debug)
                             # ENSO events: SSTA > (<) 'threshold' during 'season' are considered as El Nino
                             # (La Nina) events
-                            if 'smoothing' in kwargs.keys():
+                            if 'smoothing' in list(kwargs.keys()):
                                 kwargs['smoothing'] = smooth
                                 del smooth
                             sst_mod, _, keyerror_mod = PreProcessTS(
@@ -13410,8 +13410,8 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     sst_obs_box, ts_obs, keyerror_obs3 = CheckTime(sst_obs_box, ts_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod_box.shape[0] / 12
-    yearN_obs = sst_obs_box.shape[0] / 12
+    yearN_mod = int(round(sst_mod_box.shape[0] / 12))
+    yearN_obs = int(round(sst_obs_box.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod_box)
@@ -13425,7 +13425,7 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         keyerror = add_up_errors(tmp)
     else:
         # smoothing is not applied
-        if 'smoothing' in kwargs.keys():
+        if 'smoothing' in list(kwargs.keys()):
             smooth = deepcopy(kwargs['smoothing'])
             kwargs['smoothing'] = False
         else:
@@ -13618,7 +13618,7 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                     '\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15, **dict_debug)
                             # ENSO events: SSTA > (<) 'threshold' during 'season' are considered as El Nino
                             # (La Nina) events
-                            if 'smoothing' in kwargs.keys():
+                            if 'smoothing' in list(kwargs.keys()):
                                 kwargs['smoothing'] = smooth
                                 del smooth
                             sst_mod, _, keyerror_mod = PreProcessTS(
@@ -13946,8 +13946,8 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -14369,8 +14369,8 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -14837,8 +14837,8 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     sst_obs, taux_obs, keyerror_obs3 = CheckTime(sst_obs, taux_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -15315,8 +15315,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -15596,7 +15596,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -15873,8 +15873,8 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -16009,12 +16009,12 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                         if debug is True:
                             dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' +
                                                    str((lon[1] - lon[0]) / 10) + '  ;  nbr_bins new = ' +
-                                                   str(int((lon[1] - lon[0]) / 10))}
+                                                   str(int(round((lon[1] - lon[0]) / 10)))}
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'before ComputePDF', 15, **dict_debug)
-                        pdf_mod = ComputePDF(
-                            lon_min_mod, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
-                        pdf_obs = ComputePDF(
-                            lon_min_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
+                        pdf_mod = ComputePDF(lon_min_mod, nbr_bins=int(round((lon[1] - lon[0]) / 10)), interval=lon,
+                                             axis_name='longitude')
+                        pdf_obs = ComputePDF(lon_min_obs, nbr_bins=int(round((lon[1] - lon[0]) / 10)), interval=lon,
+                                             axis_name='longitude')
 
                         # Computes the root mean square difference
                         pdfRmse, keyerror = RmsZonal(pdf_mod, pdf_obs, centered=centered_rmse, biased=biased_rmse)
@@ -16169,7 +16169,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -16390,8 +16390,8 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -16805,8 +16805,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -17119,8 +17119,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -17416,8 +17416,8 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -17515,7 +17515,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                           'time2': '(obs) ' + str(TimeBounds(sst_hov_obs))}
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -17780,8 +17780,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     sst_obs, pr_obs, keyerror_obs3 = CheckTime(sst_obs, pr_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -18061,7 +18061,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -18338,8 +18338,8 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -18474,12 +18474,12 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                         if debug is True:
                             dict_debug = {'line1': 'lon ' + str(lon) + '  ;  nbr_bins old = ' +
                                                    str((lon[1] - lon[0]) / 10) + '  ;  nbr_bins new = ' +
-                                                   str(int((lon[1] - lon[0]) / 10))}
+                                                   str(int(round((lon[1] - lon[0]) / 10)))}
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'before ComputePDF', 15, **dict_debug)
-                        pdf_mod = ComputePDF(
-                            lon_min_mod, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
-                        pdf_obs = ComputePDF(
-                            lon_min_obs, nbr_bins=int((lon[1] - lon[0]) / 10), interval=lon, axis_name='longitude')
+                        pdf_mod = ComputePDF(lon_min_mod, nbr_bins=int(round((lon[1] - lon[0]) / 10)), interval=lon,
+                                             axis_name='longitude')
+                        pdf_obs = ComputePDF(lon_min_obs, nbr_bins=int(round((lon[1] - lon[0]) / 10)), interval=lon,
+                                             axis_name='longitude')
 
                         # Computes the root mean square difference
                         pdfRmse, keyerror = RmsZonal(pdf_mod, pdf_obs, centered=centered_rmse, biased=biased_rmse)
@@ -18634,7 +18634,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -18855,8 +18855,8 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -19270,8 +19270,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, slp_obs, keyerror_obs3 = CheckTime(sst_obs, slp_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -19554,7 +19554,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
 
     # Number of years
-    yearN = sst.shape[0] / 12
+    yearN = int(round(sst.shape[0] / 12))
 
     # Time period
     actualtimebounds = TimeBounds(sst)
@@ -19883,8 +19883,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     sst_obs, tsmap_obs, keyerror_obs3 = CheckTime(sst_obs, tsmap_obs, metric_name=metric, debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -20180,8 +20180,8 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -20279,7 +20279,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                           'time2': '(obs) ' + str(TimeBounds(sst_hov_obs))}
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
                         # Regridding
-                        if 'regridding' not in kwargs.keys():
+                        if 'regridding' not in list(kwargs.keys()):
                             kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                                     'newgrid_name': 'generic_1x1deg'}
                         else:
@@ -20495,8 +20495,8 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = int(round(pr_mod.shape[0] / 12))
+    yearN_obs = int(round(pr_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -20604,7 +20604,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                             prMap_mod = Std(prMap_mod)
                             prMap_obs = Std(prMap_obs)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:
@@ -20824,8 +20824,8 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = pr_mod.shape[0] / 12
-    yearN_obs = pr_obs.shape[0] / 12
+    yearN_mod = int(round(pr_mod.shape[0] / 12))
+    yearN_obs = int(round(pr_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(pr_mod)
@@ -20932,7 +20932,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                             prMap_mod = Std(prMap_mod)
                             prMap_obs = Std(prMap_obs)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:
@@ -21153,8 +21153,8 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = int(round(ssh_mod.shape[0] / 12))
+    yearN_obs = int(round(ssh_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -21266,7 +21266,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                             sshMap_obs = Std(sshMap_obs)
                             sshMap_obs = OperationMultiply(sshMap_obs, 1e2)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:
@@ -21488,8 +21488,8 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = ssh_mod.shape[0] / 12
-    yearN_obs = ssh_obs.shape[0] / 12
+    yearN_mod = int(round(ssh_mod.shape[0] / 12))
+    yearN_obs = int(round(ssh_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(ssh_mod)
@@ -21600,7 +21600,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                             sshMap_obs = Std(sshMap_obs)
                             sshMap_obs = OperationMultiply(sshMap_obs, 1e2)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:
@@ -21823,8 +21823,8 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -21932,7 +21932,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                             sstMap_mod = Std(sstMap_mod)
                             sstMap_obs = Std(sstMap_obs)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:
@@ -22152,8 +22152,8 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = sst_mod.shape[0] / 12
-    yearN_obs = sst_obs.shape[0] / 12
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(sst_mod)
@@ -22260,7 +22260,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                             sstMap_mod = Std(sstMap_mod)
                             sstMap_obs = Std(sstMap_obs)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:
@@ -22481,8 +22481,8 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = int(round(taux_mod.shape[0] / 12))
+    yearN_obs = int(round(taux_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -22594,7 +22594,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                             tauxMap_obs = Std(tauxMap_obs)
                             tauxMap_obs = OperationMultiply(tauxMap_obs, 1e3)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:
@@ -22818,8 +22818,8 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
         time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
-    yearN_mod = taux_mod.shape[0] / 12
-    yearN_obs = taux_obs.shape[0] / 12
+    yearN_mod = int(round(taux_mod.shape[0] / 12))
+    yearN_obs = int(round(taux_obs.shape[0] / 12))
 
     # Time period
     actualtimebounds_mod = TimeBounds(taux_mod)
@@ -22931,7 +22931,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                             tauxMap_obs = Std(tauxMap_obs)
                             tauxMap_obs = OperationMultiply(tauxMap_obs, 1e3)
                             # Regridding
-                            if 'regridding' not in kwargs.keys():
+                            if 'regridding' not in list(kwargs.keys()):
                                 kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
                                                         'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
                             else:

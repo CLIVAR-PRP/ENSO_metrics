@@ -1,5 +1,5 @@
 # -*- coding:UTF-8 -*-
-from __future__ import print_function
+
 from getpass import getuser as GETPASSgetuser
 import json
 from os.path import join as OSpath__join
