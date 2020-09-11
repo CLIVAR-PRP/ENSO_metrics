@@ -1243,7 +1243,8 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "m/s"
     elif var_name in ['heat flux']:
-        if units in ['W/m2', 'W m-2', 'W/m^2', 'W/m**2', 'W m**-2']:
+        if units in ['W/m2', 'W m-2', 'W/m^2', 'W/m**2', 'W m**-2', "Watt/m2", "Watt m-2", "Watt/m^2", "Watt/m**2",
+                     "Watt m**-2", "Watts/m2", "Watts m-2", "Watts/m^2", "Watts/m**2", "Watts m**-2"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
