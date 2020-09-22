@@ -2,6 +2,7 @@
 #
 # Define ENSO metrics plots
 #
+from copy import deepcopy
 from numpy import arange as NUMPYarange
 # ENSO_metrics functions
 from .EnsoCollectionsLib import defCollection

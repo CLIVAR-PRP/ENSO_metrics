@@ -1,4 +1,5 @@
 # -*- coding:UTF-8 -*-
+from copy import deepcopy
 from inspect import stack as INSPECTstack
 from numpy import array as NUMPYarray
 from numpy import square as NUMPYsquare

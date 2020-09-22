@@ -361,9 +361,6 @@ def group_json_obs(pattern, json_name_out, metric_name):
                         for met in sorted(list(data[dataset]["r1i1p1"]["value"].keys()), key=lambda v: v.upper()):
                             if met not in list(dict_out[dataset]["r1i1p1"]["value"].keys()):
                                 dict_out[dataset]["r1i1p1"]["value"][met] = data[dataset]["r1i1p1"]["value"][met]
-                            if met not in list(dict_out[dataset]["r1i1p1"]["metadata"]["metrics"].keys()):
-                                dict_out[dataset]["r1i1p1"]["metadata"]["metrics"][met] = \
-                                    data[dataset]["r1i1p1"]["metadata"]["metrics"][met]
                     else:
                         dict_out[dataset]["r1i1p1"]["value"][metric_name] = data[dataset]["r1i1p1"]["value"][
                             metric_name]
