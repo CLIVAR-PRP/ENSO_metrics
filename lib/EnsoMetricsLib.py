@@ -9613,8 +9613,8 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
             sst_MAM = SeasonalMean(sst_ts, 'MAM', compute_anom=True)
             if debug is True:
                 dict_debug = {'axes1': '(sst_NDJ) ' + str([ax.id for ax in sst_NDJ.getAxisList()]),
-                              'axes2': '(sst_NDJ) ' + str([ax.id for ax in sst_MAM.getAxisList()]),
-                              'shape1': '(sst_NDJ) ' + str(sst_NDJ.shape), 'shape2': '(sst_NDJ) ' + str(sst_MAM.shape)}
+                              'axes2': '(sst_MAM) ' + str([ax.id for ax in sst_MAM.getAxisList()]),
+                              'shape1': '(sst_NDJ) ' + str(sst_NDJ.shape), 'shape2': '(sst_MAM) ' + str(sst_MAM.shape)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
             # Compute std dev and ratio
