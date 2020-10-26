@@ -1842,7 +1842,13 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
                 (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"] and
                  ("in_air" in att1 or "in_air" in att2)):
             # I need to be in the ocean point of view so the heat fluxes must be downwards
+            print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib ReadAndSelectRegion" + "\033[0m")
+            print("\033[93m" + str().ljust(25) + varname + " sign reversed" + "\033[0m")
+            print(str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
+                  "{0:+.2f}".format(round(MV2maximum(tab), 2)))
             tab = -1 * tab
+            print(str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
+                  "{0:+.2f}".format(round(MV2maximum(tab), 2)))
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
         # this section checks if one time step has not been included by error at the beginning or the end of the time
@@ -3509,7 +3515,7 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
             dict_debug = {'line1': 'areacell is None '}
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
-    if name_data in ["msla", "sla", "sshg", "ssh", "sst", "taux", "tauuo", "tos", "zos"]:
+    if name_data.lower() in ["msla", "sla", "ssh", "sshg", "sst", "taux", "tauuo", "tos", "zos"]:
         landmask = None
     elif file_mask:
         landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)
