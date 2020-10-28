@@ -10,10 +10,10 @@ export OMP_NUM_THREADS=1
 case_id="v"`date +"%Y%m%d"`
 #case_id="v20200224"
 
-#mips='cmip5 cmip6'
+mips='cmip5 cmip6'
 #mips='cmip5'
 #mips='cmip6'
-mips='obs2obs'
+#mips='obs2obs'
 
 MCs='ENSO_perf ENSO_tel ENSO_proc'
 #MCs='ENSO_perf'
@@ -23,7 +23,8 @@ MCs='ENSO_perf ENSO_tel ENSO_proc'
 modnames='all'
 #modnames='IPSL-CM5A-LR'
 
-realization='all'
+#realization='all'
+realization='first'
 
 mkdir -p log/$case_id
 

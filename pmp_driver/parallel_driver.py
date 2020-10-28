@@ -108,28 +108,29 @@ for model in models:
         modpath(mip=mip, exp=exp, model=model, realization="*", variable='ts'))
     # sort in nice way
     model_path_list = sort_human(model_path_list)
-    #if debug:
-    #    print('model_path_list:', model_path_list)
-    try:
-        # Find where run can be gripped from given filename template for modpath
-        run_in_modpath = modpath(mip=mip, exp=exp, model=model, realization=realization,
-            variable='ts').split('/')[-1].split('.').index(realization)
-        # Collect available runs
-        runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
-    except:
-        if realization not in ["*", "all"]:
-            runs_list = [realization]
+    if debug:
+        print('model_path_list:', model_path_list)
+
+    # Find where run can be gripped from given filename template for modpath
+    print('realization:', realization)
+    run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=model, realization=realization,
+        variable='ts').split('/')[-1].split('.').index(realization)
+    print('run_in_modpath:', run_in_modpath)
+    # Collect all available runs
+    runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+
+    # Adjust realization to be included
+    if realization in ["all" ,"*"]:
+        pass
+    elif realization in ["first"]:
+        runs_list = runs_list[:1]
+    else:
+        runs_list = [realization]
+
     if debug:
         print('runs_list (all):', runs_list)
-    # Check if given run member is included. If not for all runs and given run member is not included,
-    # take alternative run
-    if realization is not "*":
-        if realization in runs_list:
-            runs_list = [realization]
-        else:
-            runs_list = runs_list[0:1]
-        if debug:
-            print('runs_list (revised):', runs_list)
+
+    # Generate commends
     for run in runs_list:
         cmd = ['python', 'PMPdriver_EnsoMetrics.py',
                '-p', param_file,

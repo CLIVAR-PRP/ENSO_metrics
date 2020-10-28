@@ -17,8 +17,8 @@ exp = 'historical'  # historical, piControl
 #=================================================
 # Miscellaneous
 #-------------------------------------------------
-#debug = False
-debug = True
+debug = False
+#debug = True
 nc_out = True
 
 #=================================================
@@ -54,9 +54,15 @@ modpath_lf = os.path.join(
     '%(mip).historical.%(model).r0i0p0.fx.%(variable).xml')
 
 modnames = ['all']
-realization = '*'  # specific [i.e., "r1i1p1" (cmip5) or "r1i1p1f1" (cmip6)]
-                   # "*" or "all" for all
-                   # "first" for only first realization
+
+"""
+realization:
+- specific [i.e., "r1i1p1" (cmip5) or "r1i1p1f1" (cmip6)]
+- "*" or "all" for all
+- "first" for only first realization
+"""
+realization = 'first'
+#realization = '*'
 
 if debug:
     modnames = ['IPSL-CM6A-LR']
