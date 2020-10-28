@@ -198,7 +198,7 @@ for mod in models:
     dict_metric[mod], dict_dive[mod] = dict(), dict()
 
     model_path_list = glob.glob(
-        modpath(mip=mip, exp=exp, realm='atmos', model=mod, realization=realization, variable='ts'))
+        modpath(mip=mip, exp=exp, realm='atmos', model=mod, realization='*', variable='ts'))
 
     model_path_list = sort_human(model_path_list)
     if debug:
@@ -206,15 +206,19 @@ for mod in models:
 
     # Find where run can be gripped from given filename template for modpath
     print('realization:', realization)
-    try:
-        run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
-            variable='ts').split('/')[-1].split('.').index(realization)
-        print('run_in_modpath:', run_in_modpath)
-        # Collect available runs
-        runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
-    except:
-        if realization not in ["all", "*"]:
-            runs_list = [realization]
+    run_in_modpath = modpath(mip=mip, exp=exp, realm='atmos',  model=mod, realization=realization,
+        variable='ts').split('/')[-1].split('.').index(realization)
+    print('run_in_modpath:', run_in_modpath)
+    # Collect all available runs
+    runs_list = [model_path.split('/')[-1].split('.')[run_in_modpath] for model_path in model_path_list]
+
+    # Adjust realization to be included
+    if realization in ["all" ,"*"]:
+        pass
+    elif realization in ["first"]:
+        runs_list = runs_list[:1]
+    else:
+        runs_list = [realization]
 
     if debug:
         print('runs_list:', runs_list)
@@ -367,7 +371,7 @@ for mod in models:
             print("\n### Compute the metric collection ###\n")
             cdms2.setAutoBounds('on')
             dict_metric[mod][run], dict_dive[mod][run] = ComputeCollection(mc_name, dictDatasets, mod_run, netcdf=param.nc_out,
-                                                     netcdf_name=netcdf, debug=debug)
+                                                                           netcdf_name=netcdf, debug=debug)
             if debug:
                 print('file_name:', file_name)
                 print('list_files:', list_files)
