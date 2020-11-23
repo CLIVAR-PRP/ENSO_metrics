@@ -64,11 +64,12 @@ def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagn
 
 def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
                  metric_values, metric_units, member=None, path_png=None, name_png=None, models2=None, shading=False,
-                 plot_ref=False):
+                 plot_ref=False, reference=None):
     dict_param = plot_param(metric_collection, metric)
     list_var = dict_param['metric_variables']
     met_type = dict_param['metric_computation']
-    reference = dict_param['metric_reference']
+    if reference is None:
+        reference = dict_param['metric_reference']
     dict_reg = dict_param['metric_regions']
     if isinstance(diagnostic_units, str) is True:
         diagnostic_units = diagnostic_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")

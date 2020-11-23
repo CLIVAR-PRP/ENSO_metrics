@@ -329,15 +329,19 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shadin
         obs = deepcopy(reference)
     else:
         if len(metric_variables) == 1:
-            for obs in observations:
-                if obs in my_ref:
+            for obs1 in observations:
+                if obs1 in my_ref:
+                    obs = deepcopy(obs1)
                     break
         else:
             for obs1 in observations:
                 for obs2 in observations:
-                    obs = obs1 + "_" + obs2
-                    if obs in my_ref:
+                    obs3 = obs1 + "_" + obs2
+                    if obs3 in my_ref:
+                        obs = deepcopy(obs3)
                         break
+        try: obs
+        except: obs = sorted(my_ref)[0]
     if shading is True:
         diag_obs = dict_diag["obs"][obs]
     else:
@@ -389,8 +393,8 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
     return tab_out, metric_value, obs
 
 
-def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric, member=None, met_in_file=False, met_type=None,
-           met_pattern=""):
+def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_metric, member=None, met_in_file=False,
+           met_type=None, met_pattern=""):
     ff = open_dataset(filename_nc, decode_times=False)
     variables_in_file = sorted([var for var in list(ff.keys())], key=lambda v: v.upper())
     # read model
