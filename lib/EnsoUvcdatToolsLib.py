@@ -1836,6 +1836,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         att2 = tab.attributes['long_name'].lower().replace(" ", "_")
     except:
         att2 = ''
+    reversed_sign = False
     if "latent_heat" in att1 or "latent_heat" in att2 or "sensible_heat" in att1 or "sensible_heat" in att2 or\
             (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"]):
         if "upward" in att1 or "upward" in att2 or\
@@ -1843,6 +1844,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
                  ("in_air" in att1 or "in_air" in att2)):
             # I need to be in the ocean point of view so the heat fluxes must be downwards
             tab = -1 * tab
+            reversed_sign = True
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
         # this section checks if one time step has not been included by error at the beginning or the end of the time
@@ -1887,7 +1889,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         # apply mask to original data
         tab = MV2masked_where(mask_nd, tab)
     # check taux sign
-    if varname in ["taux", "tauu", "tauuo", "uflx"]:
+    if varname in ["taux", "tauu", "tauuo", "uflx"] and reversed_sign is False:
         # define box
         region_ref = ReferenceRegions("nino4")
         if time_bounds is None:  # no time period given
