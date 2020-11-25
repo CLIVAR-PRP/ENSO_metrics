@@ -235,7 +235,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         custom_label = dict_param["custom_label"]
     else:
         custom_label = None
-    nbrl = int(round(nbr_panel / 2.))
+    nbrl = nbr_panel // 2
     nbrc = 1 if nbr_panel == 1 else 2
     fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     legco = ["k", "dodgerblue"]
@@ -278,7 +278,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         elif nbrl == 1 and nbrc != 1:
             ax = axes[ii % 2]
         else:
-            ax = axes[int(round(ii / 2)), ii % 2]
+            ax = axes[ii // 2, ii % 2]
         # title
         ax.set_title(title[ii], fontsize=15, y=1.01, loc="left")
         # x axis
@@ -464,7 +464,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             nbrc = 1
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(8, 4 * nbrl), sharex="col", sharey="row")
         else:
-            nbrl = int(round(nbr_val / 2.))
+            nbrl = nbr_val // 2
             nbrc = 1 if nbr_val == 1 else 2
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
         old_leg = deepcopy(legend)
@@ -478,7 +478,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             elif (nbrl == 1 and nbrc != 1) or (nbrl != 1 and nbrc == 1):
                 ax = axes[kk % 2]
             else:
-                ax = axes[int(round(kk / 2)), kk % 2]
+                ax = axes[kk // 2, kk % 2]
             if "legend" in list(dict_param.keys()):
                 title_tmp = title + ": " + old_leg[kk]
             else:
@@ -722,7 +722,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     if isinstance(filename_nc, list) or (isinstance(filename_nc, dict) is True and shading is True):
         nbr_panel = nbr_panel + ((len(tab_mod) - 1) * nbr_val)
     if plot_ref is True:
-        nbr_panel = int(round(nbr_panel / 2.))
+        nbr_panel = nbr_panel // 2
     title = dict_param["title"]
     if isinstance(filename_nc, list):
         if plot_ref is True:
@@ -756,10 +756,10 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     colorbar = "cmo." + dict_param["colorbar"]
     labelbar = dict_param["label"]
     if shading is True and len(model) + 1 == 3:
-        nbrl = int(round(nbr_panel / 3.))
+        nbrl = nbr_panel // 3
         nbrc = 1 if nbr_panel == 1 else 3
     else:
-        nbrl = int(round(nbr_panel / 2.))
+        nbrl = nbr_panel // 2
         nbrc = 1 if nbr_panel == 1 else 2
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
@@ -804,10 +804,10 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
             else:
                 ax = axes[ii % nbrl]
         else:
-            ax = axes[ii / nbrc, ii % nbrc]
+            ax = axes[ii // nbrc, ii % nbrc]
         # title
         if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-            tt = title[ii] if plot_ref is True else title[int(round(ii / 2))]
+            tt = title[ii] if plot_ref is True else title[ii // 2]
             ax.set_title(tt, fontsize=15, y=1. + hspa2, loc="left")
             if ii in [0, 1] and len(legend) - 1 >= ii % 2:
                 ax.text(0.5, 1. + hspa1, legend[ii % 2], fontsize=15, weight="bold", horizontalalignment="center",
@@ -867,15 +867,18 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
             x1 = ax.get_position().x0
         if ii == nbr_panel - 1:
             x2 = ax.get_position().x1
+            y1 = ax.get_position().y0
     # add colorbar
     if nbr_years == 1 and nbrl == 1:
         cax = plt.axes([x1, -0.1, x2 - x1, 0.04])
     else:
         if nbr_panel in [5, 6]:
             if nbr_years == 6:
-                cax = plt.axes([x1, 0.09, x2 - x1, 0.005])
+                cax = plt.axes([x1, y1, x2 - x1, 0.005])
+            elif nbr_years == 1:
+                cax = plt.axes([x1, y1 - 0.08, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, 0.03, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.12, x2 - x1, 0.02])
         elif nbrl == 2 and nbrc <= 2 and nbr_years == 6:
             cax = plt.axes([x1, 0.09, x2 - x1, 0.006])
         elif nbr_panel in [7, 8] and nbr_years == 6:
@@ -949,7 +952,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     if isinstance(filename_nc, list) is True or isinstance(filename_nc, dict) is True:
         nbr_panel = nbr_panel + ((len(tab_mod) - 1) * nbr_val)
     if plot_ref is True:
-        nbr_panel = int(round(nbr_panel / 2.))
+        nbr_panel = nbr_panel // 2
     title = dict_param["title"]
     xname = dict_param["xname"]
     yname = dict_param["yname"]
@@ -1000,10 +1003,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     else:
         maskocean = False
     if shading is True and len(model) + 1 == 3:
-        nbrl = int(round(nbr_panel / 3.))
+        nbrl = nbr_panel // 3
         nbrc = 1 if nbr_panel == 1 else 3
     else:
-        nbrl = int(round(nbr_panel / 2.))
+        nbrl = nbr_panel // 2
         nbrc = 1 if nbr_panel == 1 else 2
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
@@ -1099,9 +1102,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             else:
                 ax = axes[ii % nbrl]
         else:
-            ax = axes[ii / nbrc, ii % nbrc]
+            ax = axes[ii // nbrc, ii % nbrc]
         if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-            tt = title[ii] if plot_ref is True else title[int(round(ii / 2))]
+            tt = title[ii] if plot_ref is True else title[ii // 2]
             ax.set_title(tt, fontsize=15, y=1., loc="left")
             if ii in [0, 1] and len(legend) -1 >= ii % 2:
                 ax.text(0.5, 1. + (0.15 * (len(lon) + 10)) / len(lat), legend[ii % 2], fontsize=15, weight="bold",
@@ -1122,7 +1125,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             if nbr_val > 1:
                 if nbrc == 2:
                     if ii % nbrc == 0:
-                        ax.text(1.1, 1. + 20 * hspa2, dict_param["title"][ii / nbrc],
+                        ax.text(1.1, 1. + 20 * hspa2, dict_param["title"][ii // nbrc],
                                 fontsize=15, weight="bold", horizontalalignment="center", verticalalignment="center",
                                 transform=ax.transAxes)
                     # if ii % (len(filename_nc) + 1) == 0:
@@ -1175,7 +1178,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                         tmp = my_average(tmp, remove_masked=True)
                     else:
                         if isinstance(metval[0], list) is True:
-                            tmp = metval[int(round(ii / 2))][jj]
+                            tmp = metval[ii // 2][jj]
                         else:
                             tmp = metval[jj]
                     txt = format_metric(metric_type[jj], tmp, metric_units[jj])
@@ -1243,29 +1246,29 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                 cax = plt.axes([x1, y1 - 0.15, x2 - x1, 0.04])
         elif my_reg in ["americaN"]:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.03])
+                cax = plt.axes([x1, y1 - 0.22, x2 - x1, 0.05])
         elif my_reg in ["americaS"]:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1 + 0.04, y1 - 0.12, x2 - x1 - 0.08, 0.025])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.025])
             else:
-                cax = plt.axes([x1 + 0.04, y1 - 0.23, x2 - x1 - 0.08, 0.035])
+                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.035])
         elif my_reg in ["asiaS"]:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.03])
+                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
         else:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.03])
+                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
     elif nbrl == 2:
         if isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0]):
-            cax = plt.axes([x1, y1 + 0.11, x2 - x1, 0.018])
+            cax = plt.axes([x1, y1 - 0.09, x2 - x1, 0.018])
         else:
-            cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])  # cax = plt.axes([x1, y1 + 0.21, x2 - x1, 0.015])
+            cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.015])
     elif nbrl == 3:
         if article_fig is True and nbrl == 3 and (
                 "reg_pr_over_sst_map" in variables or "reg_pr_over_sst_djf_map" in variables or
@@ -1283,10 +1286,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                 "reg_slp_over_sst_djf_map" in variables or "reg_ts_over_sst_djf_map" in variables or\
                 "reg_pr_over_sst_jja_map" in variables or "reg_slp_over_sst_jja_map" in variables or\
                 "reg_ts_over_sst_jja_map" in variables:
-            cax = plt.axes([x1, y1 + 0.07, x2 - x1, 0.035])
+            cax = plt.axes([x1, y1 - 0.18, x2 - x1, 0.035])
         else:
-            cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.03])
-        # cax = plt.axes([x1, y1 + 0.15, x2 - x1, 0.03])
+            cax = plt.axes([x1, y1 - 0.1, x2 - x1, 0.03])
     cbar = plt.colorbar(cs, cax=cax, orientation="horizontal", ticks=labelbar, pad=0.35, extend="both")
     cbar.set_label(zname, fontsize=15)
     cbar.ax.tick_params(labelsize=12)
@@ -1321,7 +1323,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     if (isinstance(filename_nc, list) is True or isinstance(filename_nc, dict) is True) and nbr_panel > 1:
         nbr_panel = nbr_panel + len(filename_nc) - 1
     if plot_ref is True:
-        nbr_panel = int(round(nbr_panel / 2.))
+        nbr_panel = nbr_panel // 2
     title = dict_param["title"]
     if (isinstance(filename_nc, list) is True or isinstance(filename_nc, dict) is True) and nbr_panel > 1:
         if isinstance(filename_nc, dict):
@@ -1401,10 +1403,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     lines = [Line2D([0], [0], marker=markers[kk], c="w", markerfacecolor=mcolors[kk], markersize=12)
              for kk in range(len(mcolors))]
     if shading is True and nbr_panel == 3:
-        nbrl = int(round(nbr_panel / 3.))
+        nbrl = nbr_panel // 3
         nbrc = 1 if nbr_panel == 1 else 3
     else:
-        nbrl = int(round(nbr_panel / 2.))
+        nbrl = 1 if nbr_panel == 1 else nbr_panel // 2
         nbrc = 1 if nbr_panel == 1 else 2
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
@@ -1451,10 +1453,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             else:
                 ax = axes[ii % nbrl]
         else:
-            ax = axes[ii / nbrc, ii % nbrc]
+            ax = axes[ii // nbrc, ii % nbrc]
         # title
         if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-            ax.set_title(title[int(round(ii / 2))], fontsize=15, y=1.01, loc="left")
+            ax.set_title(title[ii // 2], fontsize=15, y=1.01, loc="left")
             if nbr_panel == len(tab_mod) and ii in [0, 1]:
                 ax.text(0.5, 1.15, legend[ii % 2], fontsize=15, weight="bold", horizontalalignment="center",
                         verticalalignment="center", transform=ax.transAxes)
@@ -2109,7 +2111,7 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
                     nn += len(tmp2)
                     del cc
                 del tmp2
-            liy = [[len(tab[0]), len(tab[0])], [0, 0]] * int(round(len(lix) / 2.))
+            liy = [[len(tab[0]), len(tab[0])], [0, 0]] * (len(lix) // 2)
             lis = ["-"] * len(lix)
             for mm, (lc, ls, lx, ly) in enumerate(zip(lic, lis, lix, liy)):
                 if mm < 2:
@@ -2258,7 +2260,7 @@ def plot_projects_comparison(tab_val, figure_name, title="", x_name="", y_name="
                     nn += len(tmp2)
         lis = ["-"] * len(lic)
         liw = [5] * len(lic)
-        liy = [[2, 2], [0, 0]] * int(round(len(lic) / 2.))
+        liy = [[2, 2], [0, 0]] * (len(lic) // 2)
         for lc, ls, lw, lx, ly in zip(lic, lis, liw, lix, liy):
             line = Line2D(lx, ly, c=lc, lw=lw, ls=ls, zorder=10)
             line.set_clip_on(False)
