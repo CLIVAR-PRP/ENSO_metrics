@@ -12,7 +12,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
-from __future__ import print_function
+
 from numpy import mean as NUMPYmean
 from numpy import std as NUMPYstd
 from numpy.ma import array as NUMPYma__array
@@ -100,7 +100,7 @@ for mc in list_metric_collections:
     for proj in list_projects:
         dict1 = get_metric_values(proj, mc, dict_json, model_by_proj, reduced_set=reduced_set, portraitplot=True)
         # save in common dictionary
-        for mod in dict1.keys():
+        for mod in list(dict1.keys()):
             dict_met[mod] = dict1[mod]
         del dict1
     # models and metrics
@@ -120,7 +120,7 @@ for mc in list_metric_collections:
     tab = NUMPYma__zeros((len(my_models) + plus, len(my_metrics)))
     for ii, mod in enumerate(my_models):
         for jj, met in enumerate(my_metrics):
-            if met not in dict_met[mod].keys() or dict_met[mod][met] is None:
+            if met not in list(dict_met[mod].keys()) or dict_met[mod][met] is None:
                 tab[ii + plus, jj] = 1e20
             else:
                 tab[ii + plus, jj] = dict_met[mod][met]

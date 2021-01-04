@@ -1,12 +1,11 @@
 # -*- coding:UTF-8 -*-
-from copy import deepcopy
 from inspect import stack as INSPECTstack
 from numpy import array as NUMPYarray
 from numpy import square as NUMPYsquare
 from numpy import unravel_index as NUMPYunravel_index
 from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # ENSO_metrics package functions:
-import EnsoErrorsWarnings
+from . import EnsoErrorsWarnings
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -247,9 +246,9 @@ def string_in_dict(string_or_list, dictionary, inspect_stack):
     # test input parameters
     if not isinstance(dictionary, dict):
         EnsoErrorsWarnings.object_type_error('dictionary', 'dictionary', type(dictionary), INSPECTstack())
-    if isinstance(string_or_list, basestring):
+    if isinstance(string_or_list, str):
         # 'string_or_list' is a string
-        if string_or_list not in dictionary.keys():
+        if string_or_list not in list(dictionary.keys()):
             # key 'string_or_list' is not in 'dictionary' -> raise error
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(inspect_stack) + ": item not included",
@@ -261,7 +260,7 @@ def string_in_dict(string_or_list, dictionary, inspect_stack):
         # 'string_or_list' is a list
         key_not_included = list()
         for key in string_or_list:
-            if key not in dictionary.keys():
+            if key not in list(dictionary.keys()):
                 # lists keys that are not in 'dictionary'
                 key_not_included.append(key)
         if key_not_included:

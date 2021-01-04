@@ -18,7 +18,7 @@ from numpy.ma import masked_where as NUMPYmasked_where
 
 # ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
-from EnsoPlotToolsLib import create_labels, create_levels, format_metric, minimaxi, minmax_plot, my_average,\
+from .EnsoPlotToolsLib import create_labels, create_levels, format_metric, minimaxi, minmax_plot, my_average,\
     my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, return_metrics_type, shading_levels
 
 colors_sup = ["r", "lime", "peru", "gold", "forestgreen", "sienna", "gold"]
@@ -63,7 +63,7 @@ plot_for_wiki = False  # True
 
 def cmip_boxplot(dict_param, dict_values, units, reference, val_type, my_text, figure_name):
     # concatenate every mips
-    keys = sorted([kk for kk in dict_values.keys() if kk != "ref"], key=lambda v: v.upper())
+    keys = sorted([kk for kk in list(dict_values.keys()) if kk != "ref"], key=lambda v: v.upper())
     vall = list()
     for kk in keys:
         vall += dict_values[kk][reference] if val_type == "metric" else dict_values[kk]
@@ -191,7 +191,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
     if isinstance(metric_variables, list) is True and regions is not None:
         for ii, vv in enumerate(metric_variables):
             method = method.replace("REGION" + str(ii + 1), regions[vv].replace("nino", "N"))
-    if isinstance(variables, str) is True or isinstance(variables, unicode) is True:
+    if isinstance(variables, str) is True or isinstance(variables, str) is True:
         nbr_val = 1
     else:
         nbr_val = len(variables)
@@ -205,21 +205,21 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
     # figure initialization
     nbr_panel = dict_param["nbr_panel"]
     title = dict_param["title"]
-    if isinstance(title, str) is True or isinstance(title, unicode) is True:
+    if isinstance(title, str) is True or isinstance(title, str) is True:
         title = [title] * nbr_panel
     yname = dict_param["yname"]
-    if isinstance(yname, str) is True or isinstance(yname, unicode) is True:
+    if isinstance(yname, str) is True or isinstance(yname, str) is True:
         yname = [yname] * nbr_panel
         one_yaxis = True
     else:
         one_yaxis = False
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
         units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
     else:
         units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
@@ -231,11 +231,11 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                 legend[1] = "model"
         if plot_ref is True:
             legend = [legend[0]]
-    if "custom_label" in dict_param.keys():
+    if "custom_label" in list(dict_param.keys()):
         custom_label = dict_param["custom_label"]
     else:
         custom_label = None
-    nbrl = int(round(nbr_panel / 2.))
+    nbrl = nbr_panel // 2
     nbrc = 1 if nbr_panel == 1 else 2
     fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     legco = ["k", "dodgerblue"]
@@ -255,7 +255,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                 tmp2.append(tmp3)
             tmp1.append(tmp2)
         tab_mod = deepcopy(tmp1)
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         if plot_ref is True:
             tmp = tab_obs
         else:
@@ -278,7 +278,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         elif nbrl == 1 and nbrc != 1:
             ax = axes[ii % 2]
         else:
-            ax = axes[ii / 2, ii % 2]
+            ax = axes[ii // 2, ii % 2]
         # title
         ax.set_title(title[ii], fontsize=15, y=1.01, loc="left")
         # x axis
@@ -306,7 +306,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                               markeredgewidth=0),
             "medianprops": dict(linestyle="-", linewidth=2, color=legco[0]),
             "whiskerprops": dict(linestyle="-", linewidth=2, color=legco[0])}
-        if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+        if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
             ax.boxplot([tab_obs[ii], [1e20, 1e20]], whis=[5, 95], labels=["", ""], showmeans=True, showfliers=False,
                        **boxproperties)
             boxproperties = {
@@ -365,7 +365,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             dx = (x2 - x1) / 100.
             y1, y2 = ax.get_ylim()
             dy = (y2 - y1) / 100.
-            ax.text(x2 + 2 * dx, y2 - 20 * dy, unicode(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
+            ax.text(x2 + 2 * dx, y2 - 20 * dy, str(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
     if ii + 1 < (nbrc*nbrl):
         if nbrl == 1 and nbrc != 1:
             ax = axes[-1]
@@ -376,7 +376,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             x1, x2 = ax.get_xlim()
             dx = (x2 - x1) / 100.
             y1, y2 = ax.get_ylim()
-            ax.text(x1 - 18 * dx, y2, unicode(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
+            ax.text(x1 - 18 * dx, y2, str(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
     plt.savefig(figure_name, bbox_inches="tight")
     plt.close()
     return
@@ -391,28 +391,28 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     if isinstance(metric_variables, list) is True and regions is not None:
         for ii, vv in enumerate(metric_variables):
             method = method.replace("REGION" + str(ii+1), regions[vv].replace("nino", "N"))
-    if isinstance(variables, str) is True or isinstance(variables, unicode) is True:
+    if isinstance(variables, str) is True or isinstance(variables, str) is True:
         nbr_val = 1
     else:
         nbr_val = len(variables)
     tab_mod, tab_obs, metval, obsname =\
         read_var(deepcopy(variables), filename_nc, model, reference, metric_variables, metric_values, models2=models2,
                  member=member, shading=shading)
-    if metric_type is not None and (isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True):
+    if metric_type is not None and (isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True):
         plot_metric = True
     else:
         plot_metric = False
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
-        axis = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].coords.keys()[0]]))
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
+        axis = list(NUMPYarray(tab_mod[0].coords[list(tab_mod[0].coords.keys())[0]]))
     elif isinstance(filename_nc, dict) is True and shading is True:
-        axis = list(NUMPYarray(tab_mod[0][0][0].coords[tab_mod[0][0][0].coords.keys()[0]]))
+        axis = list(NUMPYarray(tab_mod[0][0][0].coords[list(tab_mod[0][0][0].coords.keys())[0]]))
     else:
-        axis = list(NUMPYarray(tab_mod[0][0].coords[tab_mod[0][0].coords.keys()[0]]))
+        axis = list(NUMPYarray(tab_mod[0][0].coords[list(tab_mod[0][0].coords.keys())[0]]))
     # figure initialization
     title = dict_param["title"]
     xname = dict_param["xname"]
     yname = dict_param["yname"]
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
         units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
@@ -420,15 +420,15 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
         units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
     if units != "":
         yname = yname + " (" + units + ")"
-    if "colors" in dict_param.keys():
+    if "colors" in list(dict_param.keys()):
         linecolors = dict_param["colors"]
     else:
         linecolors = {"model": ["dodgerblue"], "reference": ["k"]}
-    if "linestyles" in dict_param.keys():
+    if "linestyles" in list(dict_param.keys()):
         linestyles = dict_param["linestyles"]
     else:
         linestyles = {"model": ["-"], "reference": ["-"]}
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
@@ -438,9 +438,9 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
                 legend[0] = "model"
             elif "CNRM-CM5" in legend[1]:
                 legend[1] = "model"
-    nbr = len(tab_mod[0]) if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True else\
+    nbr = len(tab_mod[0]) if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True else\
         (len(tab_mod[0][0][0]) if isinstance(filename_nc, dict) is True and shading is True else len(tab_mod[0][0]))
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         tmp = tab_mod + tab_obs
     else:
         tmp = deepcopy(tab_obs)
@@ -448,7 +448,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             tmp += tab_mod[ii]
     ytick_labels = minmax_plot(tmp, metric=plot_metric)
     # plot
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         if xname == "months" and nbr == 72:
             fig, ax = plt.subplots(figsize=(8, 4))
         else:
@@ -464,7 +464,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             nbrc = 1
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(8, 4 * nbrl), sharex="col", sharey="row")
         else:
-            nbrl = int(round(nbr_val / 2.))
+            nbrl = nbr_val // 2
             nbrc = 1 if nbr_val == 1 else 2
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
         old_leg = deepcopy(legend)
@@ -478,8 +478,8 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             elif (nbrl == 1 and nbrc != 1) or (nbrl != 1 and nbrc == 1):
                 ax = axes[kk % 2]
             else:
-                ax = axes[kk / 2, kk % 2]
-            if "legend" in dict_param.keys():
+                ax = axes[kk // 2, kk % 2]
+            if "legend" in list(dict_param.keys()):
                 title_tmp = title + ": " + old_leg[kk]
             else:
                 title_tmp = title
@@ -521,24 +521,24 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     if diagnostic_units != "":
         yname = yname + " (" + diagnostic_units + ")"
     if len(yname) < 20:
-        for kk in regions.keys():
+        for kk in list(regions.keys()):
             if kk in yname.lower():
                 yname = regions[kk] + " " + yname
-    if "colors" in dict_param.keys():
+    if "colors" in list(dict_param.keys()):
         mcolors = dict_param["colors"]
     else:
         mcolors = ["k", "dodgerblue"]
         if isinstance(filename_nc, list):
             for ii in range(len(filename_nc) - 1):
                 mcolors.append(colors_sup[ii])
-    if "markers" in dict_param.keys():
+    if "markers" in list(dict_param.keys()):
         markers = dict_param["markers"]
     else:
         markers = ["D", "o"]
         if isinstance(filename_nc, list):
             for ii in range(len(filename_nc) - 1):
                 markers.append("o")
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
@@ -554,7 +554,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     if plot_ref is True:
         tab = [diag_obs]
     else:
-        if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+        if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
             tab = [diag_obs, diag_mod]
         else:
             tab = [diag_obs] + diag_mod
@@ -583,7 +583,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     dx = (x2 - x1) / 100.
     y1, y2 = ax.get_ylim()
     dy = (y2 - y1) / 100.
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         # my text
         if plot_metric is True:
             txt = format_metric(metric_type, metval, metric_units)
@@ -601,7 +601,7 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
             legend[jj] = legend[jj] + " (" + "{0:.2f}".format(metval[jj - 1]) + " " + metric_units + ")"
         ax.legend(lines, legend, bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
     if plot_ref is True:
-        ax.text(x2 + 2 * dx, y2 - 20 * dy, unicode(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
+        ax.text(x2 + 2 * dx, y2 - 20 * dy, str(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
     plt.grid(linestyle='--', linewidth=1, which='major')
     plt.savefig(figure_name, bbox_inches='tight')
     plt.close()
@@ -621,23 +621,23 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
     # figure initialization
     nbr_panel = dict_param["nbr_panel"]
     title = dict_param["title"]
-    if isinstance(title, str) is True or isinstance(title, unicode) is True:
+    if isinstance(title, str) is True or isinstance(title, str) is True:
         title = [title] * nbr_panel
     yname = dict_param["yname"]
     if diagnostic_units != "":
         yname = yname + " (" + diagnostic_units + ")"
     if len(yname) < 20:
-        for kk in regions.keys():
+        for kk in list(regions.keys()):
             if kk in yname.lower():
                 yname = regions[kk] + " " + yname
-    if "colors" in dict_param.keys():
+    if "colors" in list(dict_param.keys()):
         mcolors = dict_param["colors"]
     else:
         mcolors = ["k", "dodgerblue"]
         if isinstance(filename_nc, list) is True or isinstance(filename_nc, dict) is True:
             for ii in range(len(filename_nc) - 1):
                 mcolors.append(colors_sup[ii])
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
@@ -645,7 +645,7 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
         if plot_for_wiki is True:
             legend[0] = "model"
     fig, ax = plt.subplots(figsize=(4, 4))
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         tab = [diag_mod]
     else:
         tab = diag_mod
@@ -699,7 +699,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     if isinstance(metric_variables, list) is True and regions is not None:
         for ii, vv in enumerate(metric_variables):
             method = method.replace("REGION" + str(ii + 1), regions[vv].replace("nino", "N"))
-    if isinstance(variables, str) is True or isinstance(variables, unicode) is True:
+    if isinstance(variables, str) is True or isinstance(variables, str) is True:
         nbr_val = 1
     else:
         nbr_val = len(variables)
@@ -707,7 +707,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
                  member=member,
                  shading=shading)
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         tim = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[0]]))
         lon = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[1]]))
     elif isinstance(filename_nc, dict) is True and shading is True:
@@ -722,7 +722,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     if isinstance(filename_nc, list) or (isinstance(filename_nc, dict) is True and shading is True):
         nbr_panel = nbr_panel + ((len(tab_mod) - 1) * nbr_val)
     if plot_ref is True:
-        nbr_panel = int(round(nbr_panel / 2.))
+        nbr_panel = nbr_panel // 2
     title = dict_param["title"]
     if isinstance(filename_nc, list):
         if plot_ref is True:
@@ -745,7 +745,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     xname = dict_param["xname"]
     yname = dict_param["yname"]
     zname = dict_param["zname"]
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
         units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
@@ -756,10 +756,10 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     colorbar = "cmo." + dict_param["colorbar"]
     labelbar = dict_param["label"]
     if shading is True and len(model) + 1 == 3:
-        nbrl = int(round(nbr_panel / 3.))
+        nbrl = nbr_panel // 3
         nbrc = 1 if nbr_panel == 1 else 3
     else:
-        nbrl = int(round(nbr_panel / 2.))
+        nbrl = nbr_panel // 2
         nbrc = 1 if nbr_panel == 1 else 2
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
@@ -778,7 +778,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         legend[1] = "model"
     if plot_ref is True:
         legend = [legend[0]]
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         for ii in range(len(tab_obs)):
             tab.append(tab_obs[ii])
             if plot_ref is False:
@@ -804,10 +804,10 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
             else:
                 ax = axes[ii % nbrl]
         else:
-            ax = axes[ii / nbrc, ii % nbrc]
+            ax = axes[ii // nbrc, ii % nbrc]
         # title
-        if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
-            tt = title[ii] if plot_ref is True else title[ii / 2]
+        if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
+            tt = title[ii] if plot_ref is True else title[ii // 2]
             ax.set_title(tt, fontsize=15, y=1. + hspa2, loc="left")
             if ii in [0, 1] and len(legend) - 1 >= ii % 2:
                 ax.text(0.5, 1. + hspa1, legend[ii % 2], fontsize=15, weight="bold", horizontalalignment="center",
@@ -827,7 +827,7 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
                     elif (ii - 1) % (len(filename_nc) + 1) == 0:
                         ttx1 = ax.get_position().x0
                         tty2 = ax.get_position().y1
-                        ax.text(ttx2 + (ttx1 - ttx2) / 2., tty2 + hspa2 / 2,
+                        ax.text(ttx2 + (ttx1 - ttx2) / 2., tty2 + hspa2 / 2.,
                                 dict_param["title"][(ii - 1) / (len(filename_nc) + 1)], fontsize=15, weight="bold",
                                 horizontalalignment="center", verticalalignment="center", transform=fig.transFigure)
                 else:
@@ -862,20 +862,23 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
             tx1, tx2 = ax.get_xlim()
             dx = (tx2 - tx1) / 100.
             ty1, ty2 = ax.get_ylim()
-            ax.text(tx2 + 2 * dx, ty2, unicode(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
+            ax.text(tx2 + 2 * dx, ty2, str(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
         if ii == nbr_panel - nbrc:
             x1 = ax.get_position().x0
         if ii == nbr_panel - 1:
             x2 = ax.get_position().x1
+            y1 = ax.get_position().y0
     # add colorbar
     if nbr_years == 1 and nbrl == 1:
         cax = plt.axes([x1, -0.1, x2 - x1, 0.04])
     else:
         if nbr_panel in [5, 6]:
             if nbr_years == 6:
-                cax = plt.axes([x1, 0.09, x2 - x1, 0.005])
+                cax = plt.axes([x1, y1, x2 - x1, 0.005])
+            elif nbr_years == 1:
+                cax = plt.axes([x1, y1 - 0.08, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, 0.03, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.12, x2 - x1, 0.02])
         elif nbrl == 2 and nbrc <= 2 and nbr_years == 6:
             cax = plt.axes([x1, 0.09, x2 - x1, 0.006])
         elif nbr_panel in [7, 8] and nbr_years == 6:
@@ -906,7 +909,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     if isinstance(metric_variables, list) is True and regions is not None:
         for ii, vv in enumerate(metric_variables):
             method = method.replace("REGION" + str(ii + 1), regions[vv].replace("nino", "N"))
-    if isinstance(variables, str) is True or isinstance(variables, unicode) is True:
+    if isinstance(variables, str) is True or isinstance(variables, str) is True:
         nbr_val = 1
     else:
         nbr_val = len(variables)
@@ -935,7 +938,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         plot_metric = True
     else:
         plot_metric = False
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         lon = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[1]]))
         lat = list(NUMPYarray(tab_mod[0].coords[tab_mod[0].dims[0]]))
     elif isinstance(filename_nc, dict) is True and shading is True:
@@ -949,12 +952,12 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     if isinstance(filename_nc, list) is True or isinstance(filename_nc, dict) is True:
         nbr_panel = nbr_panel + ((len(tab_mod) - 1) * nbr_val)
     if plot_ref is True:
-        nbr_panel = int(round(nbr_panel / 2.))
+        nbr_panel = nbr_panel // 2
     title = dict_param["title"]
     xname = dict_param["xname"]
     yname = dict_param["yname"]
     zname = dict_param["zname"]
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         nbr_mod = 2
     else:
         nbr_mod = len(model) + 1
@@ -981,7 +984,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             title += [tmp_let[ii] + mod.upper() + "(" + str(len(models2[mod])) + ")" for ii, mod in enumerate(model)]
         if nbr_val > 1:
             title = title * nbr_val
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
         units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
@@ -991,19 +994,19 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
     labelbar = dict_param["label"]
-    if "maskland" in dict_param.keys():
+    if "maskland" in list(dict_param.keys()):
         maskland = dict_param["maskland"]
     else:
         maskland = False
-    if "maskocean" in dict_param.keys():
+    if "maskocean" in list(dict_param.keys()):
         maskocean = dict_param["maskocean"]
     else:
         maskocean = False
     if shading is True and len(model) + 1 == 3:
-        nbrl = int(round(nbr_panel / 3.))
+        nbrl = nbr_panel // 3
         nbrc = 1 if nbr_panel == 1 else 3
     else:
-        nbrl = int(round(nbr_panel / 2.))
+        nbrl = nbr_panel // 2
         nbrc = 1 if nbr_panel == 1 else 2
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
@@ -1068,7 +1071,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             legend[1] = "model"
     if plot_ref is True:
         legend = [legend[0]]
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         for ii in range(len(tab_mod)):
             tab.append(tab_obs[ii])
             if plot_ref is False:
@@ -1099,9 +1102,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             else:
                 ax = axes[ii % nbrl]
         else:
-            ax = axes[ii / nbrc, ii % nbrc]
-        if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
-            tt = title[ii] if plot_ref is True else title[ii / 2]
+            ax = axes[ii // nbrc, ii % nbrc]
+        if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
+            tt = title[ii] if plot_ref is True else title[ii // 2]
             ax.set_title(tt, fontsize=15, y=1., loc="left")
             if ii in [0, 1] and len(legend) -1 >= ii % 2:
                 ax.text(0.5, 1. + (0.15 * (len(lon) + 10)) / len(lat), legend[ii % 2], fontsize=15, weight="bold",
@@ -1122,7 +1125,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             if nbr_val > 1:
                 if nbrc == 2:
                     if ii % nbrc == 0:
-                        ax.text(1.1, 1. + 20 * hspa2, dict_param["title"][ii / nbrc],
+                        ax.text(1.1, 1. + 20 * hspa2, dict_param["title"][ii // nbrc],
                                 fontsize=15, weight="bold", horizontalalignment="center", verticalalignment="center",
                                 transform=ax.transAxes)
                     # if ii % (len(filename_nc) + 1) == 0:
@@ -1130,7 +1133,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                     # elif (ii - 1) % (len(filename_nc) + 1) == 0:
                     #     ttx1 = ax.get_position().x0
                     #     tty2 = ax.get_position().y1
-                    #     ax.text(ttx2 + (ttx1 - ttx2) / 2., tty2 + hspa2 / 2,
+                    #     ax.text(ttx2 + (ttx1 - ttx2) / 2., tty2 + hspa2 / 2.,
                     #             dict_param["title"][(ii - 1) / (len(filename_nc) + 1)], fontsize=15, weight="bold",
                     #             horizontalalignment="center", verticalalignment="center", transform=fig.transFigure)
                 else:
@@ -1164,7 +1167,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         if (ii > 0 and plot_metric is True and isinstance(variables, list) is False) or\
                 (isinstance(variables, list) is True and "nina" in variables[0] and "nino" in variables[1] and
                  (ii+1) % 2 == 0):
-            if isinstance(metric_type, str) is True or isinstance(metric_type, unicode) is True:
+            if isinstance(metric_type, str) is True or isinstance(metric_type, str) is True:
                 txt = format_metric(metric_type, my_average(metval[ii - 1], remove_masked=True), metric_units)
                 ax.text(0.5, 0.5, txt, fontsize=12, color="k", horizontalalignment="center",
                         verticalalignment="center")
@@ -1175,7 +1178,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                         tmp = my_average(tmp, remove_masked=True)
                     else:
                         if isinstance(metval[0], list) is True:
-                            tmp = metval[ii / 2][jj]
+                            tmp = metval[ii // 2][jj]
                         else:
                             tmp = metval[jj]
                     txt = format_metric(metric_type[jj], tmp, metric_units[jj])
@@ -1205,7 +1208,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             tx1, tx2 = ax.get_xlim()
             dx = (tx2 - tx1) / 100.
             ty1, ty2 = ax.get_ylim()
-            ax.text(tx2 + 2 * dx, ty2, unicode(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
+            ax.text(tx2 + 2 * dx, ty2, str(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
         if plot_ref is True:
             if regions is not None:
                 if (isinstance(variables, list) is True  and
@@ -1217,14 +1220,14 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                 lons = [lreg["longitude"][0]] * 2 + [lreg["longitude"][1]] * 2
                 lats = list(lreg["latitude"]) + list(reversed(list(lreg["latitude"])))
                 x, y = locmap(lons, lats)
-                ax.add_patch(Polygon(zip(x, y), edgecolor="k", linewidth=3, linestyle="-", facecolor="none"))
+                ax.add_patch(Polygon(list(zip(x, y)), edgecolor="k", linewidth=3, linestyle="-", facecolor="none"))
         # if ii == 0 and plot_metric is True:
         #     x1 = ax.get_position().x1
         #     y2 = ax.get_position().y1
         #     if nbrl == 1:
         #         ax2 = axes[(ii + 1) % 2]
         #     else:
-        #         ax2 = axes[(ii + 1) / 2, (ii + 1) % 2]
+        #         ax2 = axes[int(round((ii + 1) / 2)), (ii + 1) % 2]
         #     x2 = ax2.get_position().x0
         #     txt = format_metric(metric_type, metval, metric_units)
         #     ax.text(x1 + ((x2 - x1) / 2.), y2 + 0.1, txt, fontsize=12, color="k", horizontalalignment="center",
@@ -1243,29 +1246,29 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                 cax = plt.axes([x1, y1 - 0.15, x2 - x1, 0.04])
         elif my_reg in ["americaN"]:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.03])
+                cax = plt.axes([x1, y1 - 0.22, x2 - x1, 0.05])
         elif my_reg in ["americaS"]:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1 + 0.04, y1 - 0.12, x2 - x1 - 0.08, 0.025])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.025])
             else:
-                cax = plt.axes([x1 + 0.04, y1 - 0.23, x2 - x1 - 0.08, 0.035])
+                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.035])
         elif my_reg in ["asiaS"]:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, y1 - 0.07, x2 - x1, 0.03])
+                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
         else:
             if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.02])
+                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
             else:
-                cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.03])
+                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
     elif nbrl == 2:
         if isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0]):
-            cax = plt.axes([x1, y1 + 0.11, x2 - x1, 0.018])
+            cax = plt.axes([x1, y1 - 0.09, x2 - x1, 0.018])
         else:
-            cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.015])  # cax = plt.axes([x1, y1 + 0.21, x2 - x1, 0.015])
+            cax = plt.axes([x1, y1 - 0.05, x2 - x1, 0.015])
     elif nbrl == 3:
         if article_fig is True and nbrl == 3 and (
                 "reg_pr_over_sst_map" in variables or "reg_pr_over_sst_djf_map" in variables or
@@ -1283,10 +1286,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                 "reg_slp_over_sst_djf_map" in variables or "reg_ts_over_sst_djf_map" in variables or\
                 "reg_pr_over_sst_jja_map" in variables or "reg_slp_over_sst_jja_map" in variables or\
                 "reg_ts_over_sst_jja_map" in variables:
-            cax = plt.axes([x1, y1 + 0.07, x2 - x1, 0.035])
+            cax = plt.axes([x1, y1 - 0.18, x2 - x1, 0.035])
         else:
-            cax = plt.axes([x1, y1 + 0.2, x2 - x1, 0.03])
-        # cax = plt.axes([x1, y1 + 0.15, x2 - x1, 0.03])
+            cax = plt.axes([x1, y1 - 0.1, x2 - x1, 0.03])
     cbar = plt.colorbar(cs, cax=cax, orientation="horizontal", ticks=labelbar, pad=0.35, extend="both")
     cbar.set_label(zname, fontsize=15)
     cbar.ax.tick_params(labelsize=12)
@@ -1304,7 +1306,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     if isinstance(metric_variables, list) is True and regions is not None:
         for ii, vv in enumerate(metric_variables):
             method = method.replace("REGION" + str(ii + 1), regions[vv].replace("nino", "N"))
-    if isinstance(variables, str) is True or isinstance(variables, unicode) is True:
+    if isinstance(variables, str) is True or isinstance(variables, str) is True:
         nbr_val = 1
     else:
         nbr_val = len(variables)
@@ -1312,7 +1314,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         read_var(variables, filename_nc, model, reference, metric_variables, metric_values, models2=models2,
                  member=member,
                  shading=shading)
-    if metric_type is not None and (isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True):
+    if metric_type is not None and (isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True):
         plot_metric = True
     else:
         plot_metric = False
@@ -1321,7 +1323,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     if (isinstance(filename_nc, list) is True or isinstance(filename_nc, dict) is True) and nbr_panel > 1:
         nbr_panel = nbr_panel + len(filename_nc) - 1
     if plot_ref is True:
-        nbr_panel = int(round(nbr_panel / 2.))
+        nbr_panel = nbr_panel // 2
     title = dict_param["title"]
     if (isinstance(filename_nc, list) is True or isinstance(filename_nc, dict) is True) and nbr_panel > 1:
         if isinstance(filename_nc, dict):
@@ -1349,21 +1351,21 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                     title += [mod + mem for mod, mem in zip(model, member)]
                 else:
                     title += model
-    if isinstance(title, str) is True or isinstance(title, unicode) is True:
+    if isinstance(title, str) is True or isinstance(title, str) is True:
         title = [title] * nbr_panel
     xname = dict_param["xname"]
-    if isinstance(xname, str) is True or isinstance(xname, unicode) is True:
+    if isinstance(xname, str) is True or isinstance(xname, str) is True:
         xname = [xname] * nbr_panel
         one_xaxis = True
     else:
         one_xaxis = False
     yname = dict_param["yname"]
-    if isinstance(yname, str) is True or isinstance(yname, unicode) is True:
+    if isinstance(yname, str) is True or isinstance(yname, str) is True:
         yname = [yname] * nbr_panel
         one_yaxis = True
     else:
         one_yaxis = False
-    if "colors" in dict_param.keys():
+    if "colors" in list(dict_param.keys()):
         mcolors = dict_param["colors"]
     else:
         mcolors = ["k", "dodgerblue"]
@@ -1374,7 +1376,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                 mcolors.append(colors_sup[ii])
         if plot_ref is True:
             mcolors = ["k"]
-    if "markers" in dict_param.keys():
+    if "markers" in list(dict_param.keys()):
         markers = dict_param["markers"]
     else:
         markers = ["D", "."]
@@ -1385,7 +1387,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                 markers.append(".")
         if plot_ref is True:
             markers = ["D"]
-    if "legend" in dict_param.keys():
+    if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
         legend = my_legend(model, obsname, filename_nc, models2=models2, member=member, plot_metric=plot_metric,
@@ -1401,17 +1403,17 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     lines = [Line2D([0], [0], marker=markers[kk], c="w", markerfacecolor=mcolors[kk], markersize=12)
              for kk in range(len(mcolors))]
     if shading is True and nbr_panel == 3:
-        nbrl = int(round(nbr_panel / 3.))
+        nbrl = nbr_panel // 3
         nbrc = 1 if nbr_panel == 1 else 3
     else:
-        nbrl = int(round(nbr_panel / 2.))
+        nbrl = 1 if nbr_panel == 1 else nbr_panel // 2
         nbrc = 1 if nbr_panel == 1 else 2
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
         nbrc = 1
     fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     plt.subplots_adjust(hspace=0.3, wspace=0.1)
-    if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
+    if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
         tab1 = tab_obs[::2]
         tab2 = tab_obs[1::2]
         if plot_ref is False:
@@ -1451,10 +1453,10 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             else:
                 ax = axes[ii % nbrl]
         else:
-            ax = axes[ii / nbrc, ii % nbrc]
+            ax = axes[ii // nbrc, ii % nbrc]
         # title
-        if isinstance(filename_nc, str) is True or isinstance(filename_nc, unicode) is True:
-            ax.set_title(title[ii / 2], fontsize=15, y=1.01, loc="left")
+        if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
+            ax.set_title(title[ii // 2], fontsize=15, y=1.01, loc="left")
             if nbr_panel == len(tab_mod) and ii in [0, 1]:
                 ax.text(0.5, 1.15, legend[ii % 2], fontsize=15, weight="bold", horizontalalignment="center",
                         verticalalignment="center", transform=ax.transAxes)
@@ -1481,7 +1483,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             ax.set_xlim(xmin=min(xtick_labels), xmax=max(xtick_labels))
         if (one_xaxis is True and (ii >= (nbrc * nbrl) - nbrc)) or one_xaxis is False:
             xlabel = xname[ii]
-            for kk in regions.keys():
+            for kk in list(regions.keys()):
                 if kk in xlabel.lower():
                     xlabel = regions[kk] + " " + xlabel
             units = tab_obs[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
@@ -1519,7 +1521,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         # ax.set_ylim([-100, 100])
         if (one_yaxis is True and ii % nbrc == 0) or one_yaxis is False:
             ylabel = yname[ii]
-            for kk in regions.keys():
+            for kk in list(regions.keys()):
                 if kk in ylabel.lower():
                     ylabel = regions[kk] + " " + ylabel
             units = tab_obs[1].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
@@ -1540,14 +1542,14 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                 if isinstance(filename_nc, dict):
                     intercept, slope = list(), list()
                     if ii == 0:
-                        if "slope" + keys1[jj] in tab_obs[0].attrs.keys() and\
-                                "intercept" + keys1[jj] in tab_obs[0].attrs.keys():
+                        if "slope" + keys1[jj] in list(tab_obs[0].attrs.keys()) and\
+                                "intercept" + keys1[jj] in list(tab_obs[0].attrs.keys()):
                             intercept.append(tab_obs[0].attrs["intercept" + keys1[jj]])
                             slope.append(tab_obs[0].attrs["slope" + keys1[jj]])
                     else:
                         for kk in range(len(tab_mod[ii-1])):
-                            if "slope" + keys1[jj] in tab_mod[ii-1][kk][0].attrs.keys() and\
-                                    "intercept" + keys1[jj] in tab_mod[ii-1][kk][0].attrs.keys():
+                            if "slope" + keys1[jj] in list(tab_mod[ii-1][kk][0].attrs.keys()) and\
+                                    "intercept" + keys1[jj] in list(tab_mod[ii-1][kk][0].attrs.keys()):
                                 intercept.append(tab_mod[ii-1][kk][0].attrs["intercept" + keys1[jj]])
                                 slope.append(tab_mod[ii-1][kk][0].attrs["slope" + keys1[jj]])
                     if len(intercept) == 1:
@@ -1570,8 +1572,8 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                     ax.text(2 * dx + x1, ((93 - 6 * jj) * dy) + y1, txt, fontsize=12, color=col,
                             horizontalalignment="left", verticalalignment="center")
                 else:
-                    if "slope" + keys1[jj] in tab1[ii].attrs.keys() and\
-                            "intercept" + keys1[jj] in tab1[ii].attrs.keys():
+                    if "slope" + keys1[jj] in list(tab1[ii].attrs.keys()) and\
+                            "intercept" + keys1[jj] in list(tab1[ii].attrs.keys()):
                         col = keys4[jj]
                         slope = tab1[ii].attrs["slope" + keys1[jj]]
                         intercept = tab1[ii].attrs["intercept" + keys1[jj]]
@@ -1595,14 +1597,14 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                 if isinstance(filename_nc, dict):
                     intercept, slope = list(), list()
                     if jj == len(tab1) - 1:
-                        if "slope" + keys1[0] in tab_obs[0].attrs.keys() and\
-                                "intercept" + keys1[0] in tab_obs[0].attrs.keys():
+                        if "slope" + keys1[0] in list(tab_obs[0].attrs.keys()) and\
+                                "intercept" + keys1[0] in list(tab_obs[0].attrs.keys()):
                             intercept.append(tab_obs[0].attrs["intercept" + keys1[0]])
                             slope.append(tab_obs[0].attrs["slope" + keys1[0]])
                     else:
                         for kk in range(len(tab_mod[len(tab_mod) - 1 - jj])):
-                            if "slope" + keys1[0] in tab_mod[len(tab_mod) - 1 - jj][kk][0].attrs.keys() and\
-                                    "intercept" + keys1[0] in tab_mod[len(tab_mod) - 1 - jj][kk][0].attrs.keys():
+                            if "slope" + keys1[0] in list(tab_mod[len(tab_mod) - 1 - jj][kk][0].attrs.keys()) and\
+                                    "intercept" + keys1[0] in list(tab_mod[len(tab_mod) - 1 - jj][kk][0].attrs.keys()):
                                 intercept.append(tab_mod[len(tab_mod) - 1 - jj][kk][0].attrs["intercept" + keys1[0]])
                                 slope.append(tab_mod[len(tab_mod) - 1 - jj][kk][0].attrs["slope" + keys1[0]])
                     if len(intercept) == 1:
@@ -1619,7 +1621,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
                         ax.plot(xx, yy, lw=2, c=col)
                     tmp.append("slope = " + "{0:+.2f}".format(round(slope, 2)))
                 else:
-                    if "slope" in tab1[jj].attrs.keys() and "intercept" in tab1[jj].attrs.keys():
+                    if "slope" in list(tab1[jj].attrs.keys()) and "intercept" in list(tab1[jj].attrs.keys()):
                         slope = tab1[jj].attrs["slope"]
                         intercept = tab1[jj].attrs["intercept"]
                         xx = [x1, x2]
@@ -1635,7 +1637,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             if nbr_panel == 1 or ii == nbrc - 1:
                 if metric_type is not None:
                     for jj in range(1, len(legend)):
-                        if isinstance(model, str) is True or isinstance(model, unicode) is True:
+                        if isinstance(model, str) is True or isinstance(model, str) is True:
                             tmp = deepcopy(metval)
                         elif shading is True:
                             tmp = my_average(metval[jj - 1], remove_masked=True)
@@ -1659,7 +1661,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             ax.text(x2 - (2 * dx), y1 + (6 * dy), txt, fontsize=12, color="k", horizontalalignment="right",
                     verticalalignment="center")
         if ii == 0 and plot_ref is True:
-            ax.text(x2 + 2 * dx, y2 - 20 * dy, unicode(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
+            ax.text(x2 + 2 * dx, y2 - 20 * dy, str(method, "utf-8"), fontsize=12, color="k", ha="left", va="top")
         # grid
         ax.grid(linestyle="--", linewidth=1, which="major")
     plt.savefig(figure_name, bbox_inches="tight")
@@ -1746,7 +1748,7 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
         else:
             legtxt = deepcopy(legend)
             if plot_ref is False:
-                if isinstance(member, str) is True or isinstance(member, unicode) is True:
+                if isinstance(member, str) is True or isinstance(member, str) is True:
                     legtxt += [model + " " + member, obsname]
                 else:
                     legtxt += [model, obsname]
@@ -1761,7 +1763,7 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
             lines = lines + [Line2D([0], [0], c='k', lw=2, ls=ls) for ls in legls]
             ax.legend(lines, legtxt, bbox_to_anchor=(1, 1), loc='upper left', ncol=1)
         if plot_ref is True:
-            ax.text(x2 + 2 * dx, y2 - 50 * dy, unicode(method, "utf-8"), fontsize=12, color="k", ha="left",
+            ax.text(x2 + 2 * dx, y2 - 50 * dy, str(method, "utf-8"), fontsize=12, color="k", ha="left",
                      va="top")
         # my text
         if plot_metric is True:
@@ -2109,7 +2111,7 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
                     nn += len(tmp2)
                     del cc
                 del tmp2
-            liy = [[len(tab[0]), len(tab[0])], [0, 0]] * int(float(len(lix)) / 2)
+            liy = [[len(tab[0]), len(tab[0])], [0, 0]] * (len(lix) // 2)
             lis = ["-"] * len(lix)
             for mm, (lc, ls, lx, ly) in enumerate(zip(lic, lis, lix, liy)):
                 if mm < 2:
@@ -2258,7 +2260,7 @@ def plot_projects_comparison(tab_val, figure_name, title="", x_name="", y_name="
                     nn += len(tmp2)
         lis = ["-"] * len(lic)
         liw = [5] * len(lic)
-        liy = [[2, 2], [0, 0]] * int(round(float(len(lic)) / 2))
+        liy = [[2, 2], [0, 0]] * (len(lic) // 2)
         for lc, ls, lw, lx, ly in zip(lic, lis, liw, lix, liy):
             line = Line2D(lx, ly, c=lc, lw=lw, ls=ls, zorder=10)
             line.set_clip_on(False)

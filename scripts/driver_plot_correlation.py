@@ -12,7 +12,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
-from __future__ import print_function
+
 from numpy.ma import masked_invalid as NUMPYma__masked_invalid
 from numpy.ma import masked_where as NUMPYmasked_where
 from numpy.ma import zeros as NUMPYma__zeros
@@ -131,11 +131,11 @@ for proj in list_projects:
     for mc in list_metric_collections:
         dict1 = get_metric_values(proj, mc, dict_json, model_by_proj, reduced_set=reduced_set)
         # save in common dictionary
-        for mod in dict1.keys():
+        for mod in list(dict1.keys()):
             try:    dict_met[mod]
             except: dict_met[mod] = dict1[mod]
             else:
-                for met in dict1[mod].keys():
+                for met in list(dict1[mod].keys()):
                     dict_met[mod][met] = dict1[mod][met]
         del dict1
 
@@ -145,15 +145,15 @@ for proj in list_projects:
 # ---------------------------------------------------#
 if ' ':
     list_metrics = list()
-    for k1 in dict_met.keys():
-        list_metrics += dict_met[k1].keys()
+    for k1 in list(dict_met.keys()):
+        list_metrics += list(dict_met[k1].keys())
     list_metrics = sort_metrics(list(set(list_metrics)))
-    list_models = dict_met.keys()
+    list_models = list(dict_met.keys())
     # fill 2D-array with metric values
     tab = NUMPYma__zeros((len(list_metrics), len(list_models)))
     for ii, met in enumerate(list_metrics):
         for jj, mod in enumerate(list_models):
-            if met not in dict_met[mod].keys() or dict_met[mod][met] is None:
+            if met not in list(dict_met[mod].keys()) or dict_met[mod][met] is None:
                 tab[ii, jj] = 1e20
             else:
                 tab[ii, jj] = dict_met[mod][met]

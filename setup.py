@@ -1,4 +1,3 @@
-from __future__ import print_function
 from distutils.core import setup
 import subprocess
 import glob
@@ -29,13 +28,13 @@ p = subprocess.Popen(
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE)
 try:
-    commit = p.stdout.readlines()[0].split()[1]
+    commit = str(p.stdout.readlines()[0].split()[1])
 except:
     commit = ""
 f = open("lib/version.py", "w")
 print("__version__ = '%s'" % Version, file=f)
 print("__git_tag_describe__ = '%s'" % descr, file=f)
-print("__git_sha1__ = '%s'" % commit, file=f)
+print("__git_sha1__ = %s" % commit, file=f)
 f.close()
 
 # data_files = (

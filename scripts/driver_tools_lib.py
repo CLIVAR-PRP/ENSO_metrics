@@ -1,5 +1,5 @@
 # -*- coding:UTF-8 -*-
-from __future__ import print_function
+
 from copy import deepcopy
 from getpass import getuser as GETPASSgetuser
 from cdms2 import open as CDMS2open
@@ -247,7 +247,7 @@ def find_xml_fx(model, experiment='', project='', realm=''):
         Path and landmask file name corresponding to the given information (e.g., /path/to/file/landmask.xml)
         Set to None if the file cannot be found
     """
-    list_obs = ReferenceObservations().keys()
+    list_obs = list(ReferenceObservations().keys())
     if model in list_obs:
         if user_name == "yplanton":
             file_area = None
@@ -311,7 +311,7 @@ def get_metric_values(project, metric_collection, dict_json, dict_mod_mem, reduc
 
     # open and read json file
     data_json = read_json(dict_json[project][metric_collection])
-    list_models = dict_mod_mem[project].keys()
+    list_models = list(dict_mod_mem[project].keys())
     dict_out = dict()
     for mod in list_models:
         list_members = sort_members(dict_mod_mem[project][mod])
@@ -320,9 +320,9 @@ def get_metric_values(project, metric_collection, dict_json, dict_mod_mem, reduc
             try:    data_mod = data_json[mod][mem]["value"]
             except: data_mod = None
             list_metrics = list()
-            try:    data_mod.keys()
+            try:    list(data_mod.keys())
             except: pass
-            else:   list_metrics += data_mod.keys()
+            else:   list_metrics += list(data_mod.keys())
             list_metrics = remove_metrics(list_metrics, metric_collection, reduced_set=reduced_set,
                                           portraitplot=portraitplot)
             dict3 = dict()
@@ -334,9 +334,9 @@ def get_metric_values(project, metric_collection, dict_json, dict_mod_mem, reduc
         # models and metrics
         list_metrics = list()
         for mem in list_members:
-            try:    dict2[mem].keys()
+            try:    list(dict2[mem].keys())
             except: pass
-            else:   list_metrics += dict2[mem].keys()
+            else:   list_metrics += list(dict2[mem].keys())
         # average member values if there is more than one available
         dict_met = dict()
         for met in list_metrics:
@@ -557,7 +557,7 @@ def save_json(dict_in, json_name, metric_only=True):
         for ens in liste:
             # metadata (nyears)
             dict_meta = dict()
-            for key1 in dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys():
+            for key1 in list(dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys()):
                 if key1 not in ['time_frequency', 'ref', 'method', 'method_nonlinearity', 'name']:
                     if key1 == "units":
                         dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]
@@ -567,7 +567,7 @@ def save_json(dict_in, json_name, metric_only=True):
             if metric_only is True:
                 # metrics
                 dict2 = dict()
-                for key1 in dict_in[ens]['value'][met]['metric'].keys():
+                for key1 in list(dict_in[ens]['value'][met]['metric'].keys()):
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
                     tmp_key = key1.replace("ref_", "")
                     dict2[tmp_key] = {'metric': tmp, 'nyears_obs': dict_meta[tmp_key], 'units': units}
@@ -575,13 +575,13 @@ def save_json(dict_in, json_name, metric_only=True):
             else:
                 # metrics
                 dict2 = {'metric': {}, 'diagnostic': {}}
-                for key1 in dict_in[ens]['value'][met]['metric'].keys():
+                for key1 in list(dict_in[ens]['value'][met]['metric'].keys()):
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
                     tmp_key = key1.replace("ref_", "")
                     dict2['metric'][tmp_key] = {'value': tmp, 'nyears_obs': dict_meta[tmp_key], 'units': units}
                     del tmp, tmp_key
                 # dive down diagnostics
-                for key1 in dict_in[ens]['value'][met]['diagnostic'].keys():
+                for key1 in list(dict_in[ens]['value'][met]['diagnostic'].keys()):
                     tmp = dict_in[ens]['value'][met]['diagnostic'][key1]['value']
                     if key1 == 'model':
                         dict2['diagnostic'][ens] = \

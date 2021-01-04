@@ -25,7 +25,7 @@ nc_out = True
 # Observation
 #-------------------------------------------------
 reference_data_path = {
-    'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2/atmos/mon/VAR/ERA-INT/gn/v20200402/VAR_mon_ERA-INT_BE_gn_v20200402_197901-201903.nc',
+    'ERA-Interim': '/p/user_pub/PCMDIobs/PCMDIobs2/atmos/mon/VAR/ERA-INT/gn/v20200707/VAR_mon_ERA-INT_BE_gn_v20200707_197901-201903.nc',
     'HadISST': '/work/lee1043/DATA/HadISSTv1.1/HadISSTv1.1.xml',
     'OISST': '/work/lee1043/DATA/OISST/xmls/OISST_tos_mo.xml',
     'Tropflux': '/work/lee1043/DATA/TropFlux/monthly/xmls/Tropflux_VAR_mo.xml',
@@ -55,16 +55,26 @@ modpath_lf = os.path.join(
 
 modnames = ['all']
 
+"""
+realization:
+- specific [i.e., "r1i1p1" (cmip5) or "r1i1p1f1" (cmip6)]
+- "*" or "all" for all
+- "first" for only first realization
+"""
+realization = 'first'
+#realization = '*'
+
 if debug:
     modnames = ['IPSL-CM6A-LR']
+    #realization = 'r1i1p1f1'
+    realization = 'first'
 
-realization = 'r1i1p1f1'  # r1i1p1 (cmip5), r1i1p1f1 (cmip6), * (all)
-#realization = '*'
 
 #=================================================
 # Metrics Collection
 #-------------------------------------------------
 metricsCollection = 'ENSO_perf'  # ENSO_perf, ENSO_tel, ENSO_proc
+#metricsCollection = 'ENSO_tel'  # ENSO_perf, ENSO_tel, ENSO_proc
 
 #=================================================
 # Output
@@ -73,7 +83,8 @@ case_id = "{:v%Y%m%d}".format(datetime.datetime.now())
 pmprdir = '/p/user_pub/pmp/pmp_results/pmp_v1.1.2'
 
 if debug:
-    pmprdir = '/work/lee1043/imsi/result_test'
+    case_id = "{:v%Y%m%d-%H%M}".format(datetime.datetime.now())
+    pmprdir = '/work/lee1043/temporary/result_test'
 
 results_dir = os.path.join(
     pmprdir,

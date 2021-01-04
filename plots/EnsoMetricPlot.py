@@ -1,11 +1,11 @@
 # -*- coding:UTF-8 -*-
-from __future__ import print_function
+
 from copy import deepcopy
 from datetime import datetime
 from os.path import join as OSpath__join
 # ENSO_metrics functions
 from EnsoMetrics.EnsoPlotLib import plot_param
-from EnsoPlotTemplate import cmip_boxplot, my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map,\
+from .EnsoPlotTemplate import cmip_boxplot, my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map,\
     my_scatterplot
 
 
@@ -64,36 +64,37 @@ def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagn
 
 def main_plotter(metric_collection, metric, model, experiment, filename_nc, diagnostic_values, diagnostic_units,
                  metric_values, metric_units, member=None, path_png=None, name_png=None, models2=None, shading=False,
-                 plot_ref=False):
+                 plot_ref=False, reference=None):
     dict_param = plot_param(metric_collection, metric)
     list_var = dict_param['metric_variables']
     met_type = dict_param['metric_computation']
-    reference = dict_param['metric_reference']
+    if reference is None:
+        reference = dict_param['metric_reference']
     dict_reg = dict_param['metric_regions']
-    if isinstance(diagnostic_units, basestring) is True:
+    if isinstance(diagnostic_units, str) is True:
         diagnostic_units = diagnostic_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     elif isinstance(diagnostic_units, list) is True:
         for ii, uni in enumerate(diagnostic_units):
             diagnostic_units[ii] = uni.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
-    if isinstance(metric_units, basestring) is True:
+    if isinstance(metric_units, str) is True:
         metric_units = metric_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
     elif isinstance(metric_units, list) is True:
         for ii, uni in enumerate(metric_units):
             metric_units[ii] = uni.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
-    if isinstance(name_png, basestring) is False:
+    if isinstance(name_png, str) is False:
         name_png = metric_collection + "_" + metric + "_" + experiment + "_"
-        if isinstance(model, basestring):
+        if isinstance(model, str):
             name_png = name_png + model
         elif isinstance(model, list) is True and shading is True:
             name_png = name_png + str(len(model)) + "projects"
         else:
             name_png = name_png + str(len(model)) + "models"
         if member is not None:
-            if (isinstance(model, basestring) is True and member not in model) or isinstance(model, list) is True:
+            if (isinstance(model, str) is True and member not in model) or isinstance(model, list) is True:
                 name_png = name_png + "_" + member
     # diagnostic
     dict_diag = dict_param['diagnostic']
-    if isinstance(path_png, basestring):
+    if isinstance(path_png, str):
         fig_name = OSpath__join(path_png, name_png + "_diagnostic")
     else:
         fig_name = deepcopy(name_png)
@@ -118,7 +119,7 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
     dt = str(int(round(dt.seconds / 60.)))
     print(str().ljust(30) + "took " + dt + " minute(s)")
     # dive downs
-    list_dd = sorted([key for key in dict_param.keys() if "dive_down" in key], key=lambda v: v.upper())
+    list_dd = sorted([key for key in list(dict_param.keys()) if "dive_down" in key], key=lambda v: v.upper())
     for ii, dd in enumerate(list_dd):
         dict_diag = dict_param[dd]
         plt_typ = dict_diag['plot_type']
