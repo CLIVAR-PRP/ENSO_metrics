@@ -24,6 +24,778 @@ from .KeyArgLib import default_arg_values
 # Library to compute ENSO metrics
 # These functions have file names and variable names as inputs and metric as output
 #
+def BiasMldRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandmaskfilemod, mldlandmasknamemod,
+                mldfileobs, mldnameobs, mldareafileobs, mldareanameobs, mldlandmaskfileobs, mldlandmasknameobs, box,
+                centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
+                metname='', **kwargs):
+    """
+    The BiasMldRmse() function computes the MLD spatial root mean square error (RMSE) in a 'box' (usually the tropical
+    Pacific)
+
+    Inputs:
+    ------
+    :param mldfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled MLD
+    :param mldnamemod: string
+        name of MLD variable (tos, ts) in 'mldfilemod'
+    :param mldareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for MLD
+    :param mldareanamemod: string
+        name of areacell variable (areacella, areacello) in 'mldareafilemod'
+    :param mldlandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for MLD
+    :param mldlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'mldlandmaskfilemod'
+    :param mldfileobs: string
+        path_to/filename of the file (NetCDF) of the observed MLD
+    :param mldnameobs: string
+        name of MLD variable (tos, ts) in 'mldfileobs'
+    :param mldareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for MLD
+    :param mldareanameobs: string
+        name of areacell variable (areacella, areacello) in 'mldareafileobs'
+    :param mldlandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for MLD
+    :param mldlandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'mldlandmaskfileobs'
+    :param box: string
+        name of box ('tropical_pacific') for MLD
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If you want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadIMLD',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled MLD file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed MLD file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return rmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_mod', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = 'mld RMSE'
+    Units = 'm'
+    Method = 'Spatial root mean square error of ' + box + ' mld'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = "BiasMldRmse"
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    mld_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(mldfilemod, mldnamemod, 'depth', metric, box, file_area=mldareafilemod,
+                            name_area=mldareanamemod, file_mask=mldlandmaskfilemod, name_mask=mldlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    mld_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(mldfileobs, mldnameobs, 'depth', metric, box, file_area=mldareafileobs,
+                            name_area=mldareanameobs, file_mask=mldlandmaskfileobs, name_mask=mldlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(mld_mod.shape[0] / 12))
+    yearN_obs = int(round(mld_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(mld_mod)
+    actualtimebounds_obs = TimeBounds(mld_obs)
+
+    if keyerror_mod is not None or keyerror_obs is not None:
+        mldRmse, mldRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        mld_mod, Method, keyerror_mod = PreProcessTS(
+            mld_mod, Method, areacell=mod_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        mld_obs, _, keyerror_obs = PreProcessTS(
+            mld_obs, '', areacell=obs_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        del mod_areacell, obs_areacell
+        if keyerror_mod is not None or keyerror_obs is not None:
+            mldRmse, mldRmseErr = None, None
+            dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
+        else:
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                mld_mod, mld_obs, Method = TwoVarRegrid(mld_mod, mld_obs, Method, region=box, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # Computes the root mean square difference
+            mldRmse, keyerror = RmsHorizontal(mld_mod, mld_obs, centered=centered_rmse, biased=biased_rmse)
+
+            # Error on the metric
+            mldRmseErr = None
+
+            # Dive down diagnostic
+            dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+
+            if netcdf is True:
+                if ".nc" in netcdf_name:
+                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                else:
+                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+                dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+                dict3 = {'metric_name': Name, 'metric_value_' + dataset2: mldRmse,
+                         'metric_value_error_' + dataset2: mldRmseErr, 'metric_method': Method, 'metric_reference': Ref,
+                         'frequency': kwargs['frequency']}
+                SaveNetcdf(
+                    file_name, var1=mld_mod, var1_attributes=dict1, var1_name='mld_map__' + dataset1, var2=mld_obs,
+                    var2_attributes=dict2, var2_name='mld_map__' + dataset2, global_attributes=dict3)
+                del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(mldRmse), 'line2': 'metric value_error: ' + str(mldRmseErr)}
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+    # Create output
+    rmseMetric = {
+        'name': Name, 'value': mldRmse, 'value_error': mldRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return rmseMetric
+
+
+def BiasMldLatRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandmaskfilemod, mldlandmasknamemod,
+                   mldfileobs, mldnameobs, mldareafileobs, mldareanameobs, mldlandmaskfileobs, mldlandmasknameobs, box,
+                   centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
+                   metname='', **kwargs):
+    """
+    The BiasMldLatRmse() function computes the MLD meridional (latitude) root mean square error (RMSE) in a 'box'
+    (usually 'nino3_LatExt')
+
+    Inputs:
+    ------
+    :param mldfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled MLD
+    :param mldnamemod: string
+        name of MLD variable (tos, ts) in 'mldfilemod'
+    :param mldareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for MLD
+    :param mldareanamemod: string
+        name of areacell variable (areacella, areacello) in 'mldareafilemod'
+    :param mldlandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for MLD
+    :param mldlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'mldlandmaskfilemod'
+    :param mldfileobs: string
+        path_to/filename of the file (NetCDF) of the observed MLD
+    :param mldnameobs: string
+        name of MLD variable (tos, ts) in 'mldfileobs'
+    :param mldareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for MLD
+    :param mldareanameobs: string
+        name of areacell variable (areacella, areacello) in 'mldareafileobs'
+    :param mldlandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for MLD
+    :param mldlandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'mldlandmaskfileobs'
+    :param box: string
+        name of box ('nino3_LatExt') for MLD
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadIMLD',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled MLD file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed MLD file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return LatRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_mod', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = 'mld Meridional RMSE'
+    Units = 'm'
+    Method = 'Meridional root mean square error of ' + box + ' mld'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = "BiasMldLatRmse"
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    mld_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(mldfilemod, mldnamemod, 'depth', metric, box, file_area=mldareafilemod,
+                            name_area=mldareanamemod, file_mask=mldlandmaskfilemod, name_mask=mldlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    mld_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(mldfileobs, mldnameobs, 'depth', metric, box, file_area=mldareafileobs,
+                            name_area=mldareanameobs, file_mask=mldlandmaskfileobs, name_mask=mldlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(mld_mod.shape[0] / 12))
+    yearN_obs = int(round(mld_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(mld_mod)
+    actualtimebounds_obs = TimeBounds(mld_obs)
+
+    if keyerror_mod is not None or keyerror_obs is not None:
+        mldRmse, mldRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod, keyerror_obs]
+        keyerror = add_up_errors(tmp)
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        mld_mod, Method, keyerror_mod = PreProcessTS(
+            mld_mod, Method, areacell=mod_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        mld_obs, _, keyerror_obs = PreProcessTS(
+            mld_obs, '', areacell=obs_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        del mod_areacell, obs_areacell
+        if keyerror_mod is not None or keyerror_obs is not None:
+            mldRmse, mldRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+            tmp = [keyerror_mod, keyerror_obs]
+            keyerror = add_up_errors(tmp)
+        else:
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                mld_mod, mld_obs, Method = TwoVarRegrid(mld_mod, mld_obs, Method, region=box, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # Zonal average
+            mld_mod, keyerror_mod = AverageZonal(mld_mod)
+            mld_obs, keyerror_obs = AverageZonal(mld_obs)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                mldRmse, mldRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+                tmp = [keyerror_mod, keyerror_obs]
+                keyerror = add_up_errors(tmp)
+            else:
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+
+                # Computes the root mean square difference
+                mldRmse, keyerror = RmsMeridional(mld_mod, mld_obs, centered=centered_rmse, biased=biased_rmse)
+
+                # Error on the metric
+                mldRmseErr = None
+
+                # Dive down diagnostic
+                dive_down_diag = {'model': ArrayToList(mld_mod), 'observations': ArrayToList(mld_obs),
+                                  'axis': list(mld_mod.getAxis(0)[:])}
+                if netcdf is True:
+                    map_mod, mod_areacell, keyerror_mod = Read_data_mask_area(
+                        mldfilemod, mldnamemod, 'depth', metric, 'equatorial_pacific_LatExt2',
+                        file_area=mldareafilemod, name_area=mldareanamemod, file_mask=mldlandmaskfilemod,
+                        name_mask=mldlandmasknamemod, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                    map_obs, obs_areacell, keyerror_obs = Read_data_mask_area(
+                        mldfileobs, mldnameobs, 'depth', metric, 'equatorial_pacific_LatExt2',
+                        file_area=mldareafileobs, name_area=mldareanameobs, file_mask=mldlandmaskfileobs,
+                        name_mask=mldlandmasknameobs, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        map_mod, _, keyerror_mod = PreProcessTS(
+                            map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        map_obs, _, keyerror_obs = PreProcessTS(
+                            map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del mod_areacell, obs_areacell
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            # Regridding
+                            if isinstance(kwargs['regridding'], dict):
+                                map_mod, map_obs, _ = TwoVarRegrid(
+                                    map_mod, map_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+                                if debug is True:
+                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in map_mod.getAxisList()]),
+                                                  'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
+                                                  'shape1': '(mod) ' + str(map_mod.shape),
+                                                  'shape2': '(obs) ' + str(map_obs.shape)}
+                                    EnsoErrorsWarnings.debug_mode(
+                                        '\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: mldRmse,
+                                     'metric_value_error_' + dataset2: mldRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=mld_mod, var1_attributes=dict1, var1_name='mld_lat__' + dataset1,
+                                var2=mld_obs, var2_attributes=dict2, var2_name='mld_lat__' + dataset2, var3=map_mod,
+                                var3_attributes=dict3, var3_name='mld_map__' + dataset1, var4=map_obs,
+                                var4_attributes=dict4, var4_name='mld_map__' + dataset2, global_attributes=dict5)
+                            del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(mldRmse), 'line2': 'metric value_error: ' + str(mldRmseErr)}
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+    # Create output
+    LatRmseMetric = {
+        'name': Name, 'value': mldRmse, 'value_error': mldRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return LatRmseMetric
+
+
+def BiasMldLonRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandmaskfilemod,
+                   mldlandmasknamemod, mldfileobs, mldnameobs, mldareafileobs, mldareanameobs, mldlandmaskfileobs,
+                   mldlandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The BiasMldLonRmse() function computes the MLD zonal (longitude) root mean square error (RMSE) in a 'box'
+    (usually the Equatorial Pacific)
+
+    Inputs:
+    ------
+    :param mldfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled MLD
+    :param mldnamemod: string
+        name of MLD variable (tos, ts) in 'mldfilemod'
+    :param mldareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for MLD
+    :param mldareanamemod: string
+        name of areacell variable (areacella, areacello) in 'mldareafilemod'
+    :param mldlandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for MLD
+    :param mldlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'mldlandmaskfilemod'
+    :param mldfileobs: string
+        path_to/filename of the file (NetCDF) of the observed MLD
+    :param mldnameobs: string
+        name of MLD variable (tos, ts) in 'mldfileobs'
+    :param mldareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for MLD
+    :param mldareanameobs: string
+        name of areacell variable (areacella, areacello) in 'mldareafileobs'
+    :param mldlandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for MLD
+    :param mldlandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'mldlandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for MLD
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadIMLD',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled MLD file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed MLD file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return LonRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_mod', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = 'mld Zonal RMSE'
+    Units = 'm'
+    Method = 'Zonal root mean square error of ' + box + ' mld'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = "BiasMldLonRmse"
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    mld_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(mldfilemod, mldnamemod, 'depth', metric, box, file_area=mldareafilemod,
+                            name_area=mldareanamemod, file_mask=mldlandmaskfilemod, name_mask=mldlandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    mld_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(mldfileobs, mldnameobs, 'depth', metric, box, file_area=mldareafileobs,
+                            name_area=mldareanameobs, file_mask=mldlandmaskfileobs, name_mask=mldlandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(mld_mod.shape[0] / 12))
+    yearN_obs = int(round(mld_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(mld_mod)
+    actualtimebounds_obs = TimeBounds(mld_obs)
+
+    if keyerror_mod is not None or keyerror_obs is not None:
+        mldRmse, mldRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        mld_mod, Method, keyerror_mod = PreProcessTS(
+            mld_mod, Method, areacell=mod_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        mld_obs, _, keyerror_obs = PreProcessTS(
+            mld_obs, '', areacell=obs_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        del mod_areacell, obs_areacell
+        if keyerror_mod is not None or keyerror_obs is not None:
+            mldRmse, mldRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        else:
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                mld_mod, mld_obs, Method = TwoVarRegrid(mld_mod, mld_obs, Method, region=box, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # Meridional average
+            mld_mod, keyerror_mod = AverageMeridional(mld_mod)
+            mld_obs, keyerror_obs = AverageMeridional(mld_obs)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                mldRmse, mldRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+                tmp = [keyerror_mod, keyerror_obs]
+                keyerror = add_up_errors(tmp)
+            else:
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+                # Computes the root mean square difference
+                mldRmse, keyerror = RmsZonal(mld_mod, mld_obs, centered=centered_rmse, biased=biased_rmse)
+
+                # Error on the metric
+                mldRmseErr = None
+
+                # Dive down diagnostic
+                dive_down_diag = {'model': ArrayToList(mld_mod), 'observations': ArrayToList(mld_obs),
+                                  'axis': list(mld_mod.getAxis(0)[:])}
+                if netcdf is True:
+                    map_mod, mod_areacell, keyerror_mod = Read_data_mask_area(
+                        mldfilemod, mldnamemod, 'depth', metric, 'equatorial_pacific_LatExt2',
+                        file_area=mldareafilemod, name_area=mldareanamemod, file_mask=mldlandmaskfilemod,
+                        name_mask=mldlandmasknamemod, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                    map_obs, obs_areacell, keyerror_obs = Read_data_mask_area(
+                        mldfileobs, mldnameobs, 'depth', metric, 'equatorial_pacific_LatExt2',
+                        file_area=mldareafileobs, name_area=mldareanameobs, file_mask=mldlandmaskfileobs,
+                        name_mask=mldlandmasknameobs, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        map_mod, _, keyerror_mod = PreProcessTS(
+                            map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        map_obs, _, keyerror_obs = PreProcessTS(
+                            map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del mod_areacell, obs_areacell
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            # Regridding
+                            if isinstance(kwargs['regridding'], dict):
+                                map_mod, map_obs, _ = TwoVarRegrid(
+                                    map_mod, map_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+                                if debug is True:
+                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in map_mod.getAxisList()]),
+                                                  'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
+                                                  'shape1': '(mod) ' + str(map_mod.shape),
+                                                  'shape2': '(obs) ' + str(map_obs.shape)}
+                                    EnsoErrorsWarnings.debug_mode(
+                                        '\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: mldRmse,
+                                     'metric_value_error_' + dataset2: mldRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=mld_mod, var1_attributes=dict1, var1_name='mld_lon__' + dataset1,
+                                var2=mld_obs, var2_attributes=dict2, var2_name='mld_lon__' + dataset2, var3=map_mod,
+                                var3_attributes=dict3, var3_name='mld_map__' + dataset1, var4=map_obs,
+                                var4_attributes=dict4, var4_name='mld_map__' + dataset2, global_attributes=dict5)
+                            del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(mldRmse), 'line2': 'metric value_error: ' + str(mldRmseErr)}
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+    # Create output
+    LonRmseMetric = {
+        'name': Name, 'value': mldRmse, 'value_error': mldRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return LonRmseMetric
+
+
 def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, box,
                centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
@@ -3450,6 +4222,789 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     # Create output
     LonRmseMetric = {
         'name': Name, 'value': tauxRmse, 'value_error': tauxRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return LonRmseMetric
+
+
+def BiasTauyRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tauylandmaskfilemod, tauylandmasknamemod,
+                 tauyfileobs, tauynameobs, tauyareafileobs, tauyareanameobs, tauylandmaskfileobs, tauylandmasknameobs,
+                 box, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+                 netcdf_name='', metname='', **kwargs):
+    """
+    The BiasTauyRmse() function computes the TAUY spatial root mean square error (RMSE) in a 'box' (usually the tropical
+    Pacific)
+
+    Inputs:
+    ------
+    :param tauyfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled TAUY
+    :param tauynamemod: string
+        name of TAUY variable (tauy, tauu) in 'tauyfilemod'
+    :param tauyareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for TAUY
+    :param tauyareanamemod: string
+        name of areacell variable (areacella, areacello) in 'tauyareafilemod'
+    :param tauylandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for TAUY
+    :param tauylandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'tauylandmaskfilemod'
+    :param tauyfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUY
+    :param tauynameobs: string
+        name of TAUY variable (tauy, tauu) in 'tauyfileobs'
+    :param tauyareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for TAUY
+    :param tauyareanameobs: string
+        name of areacell variable (areacella, areacello) in 'tauyareafileobs'
+    :param tauylandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for TAUY
+    :param tauylandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'tauylandmaskfileobs'
+    :param box: string
+        name of box ('tropical_pacific') for TAUY
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If you want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled TAUY file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed TAUY file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return rmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_mod', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = 'tauy RMSE'
+    Units = '1e-3 N/m2'
+    Method = 'Spatial root mean square error of ' + box + ' tauy'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = "BiasTauyRmse"
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    tauy_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(tauyfilemod, tauynamemod, 'wind stress', metric, box, file_area=tauyareafilemod,
+                            name_area=tauyareanamemod, file_mask=tauylandmaskfilemod, name_mask=tauylandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    tauy_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(tauyfileobs, tauynameobs, 'wind stress', metric, box, file_area=tauyareafileobs,
+                            name_area=tauyareanameobs, file_mask=tauylandmaskfileobs, name_mask=tauylandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(tauy_mod.shape[0] / 12))
+    yearN_obs = int(round(tauy_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(tauy_mod)
+    actualtimebounds_obs = TimeBounds(tauy_obs)
+
+    if keyerror_mod is not None or keyerror_obs is not None:
+        tauyRmse, tauyRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        tauy_mod, Method, keyerror_mod = PreProcessTS(
+            tauy_mod, Method, areacell=mod_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        tauy_obs, _, keyerror_obs = PreProcessTS(
+            tauy_obs, '', areacell=obs_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        del mod_areacell, obs_areacell
+        if keyerror_mod is not None or keyerror_obs is not None:
+            tauyRmse, tauyRmseErr = None, None
+            dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        else:
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                tauy_mod, tauy_obs, Method = TwoVarRegrid(
+                    tauy_mod, tauy_obs, Method, region=box, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # change units
+            tauy_mod = tauy_mod * 1e3
+            tauy_obs = tauy_obs * 1e3
+
+            # Computes the root mean square difference
+            tauyRmse, keyerror = RmsHorizontal(tauy_mod, tauy_obs, centered=centered_rmse, biased=biased_rmse)
+
+            # Error on the metric
+            tauyRmseErr = None
+
+            # Dive down diagnostic
+            dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+
+            if netcdf is True:
+                if ".nc" in netcdf_name:
+                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                else:
+                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                dict1 = {'units': Units, 'number_of_years_used': yearN_mod, 'time_period': str(actualtimebounds_mod)}
+                dict2 = {'units': Units, 'number_of_years_used': yearN_obs, 'time_period': str(actualtimebounds_obs)}
+                dict3 = {'metric_name': Name, 'metric_value_' + dataset2: tauyRmse,
+                         'metric_value_error_' + dataset2: tauyRmseErr, 'metric_method': Method,
+                         'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                SaveNetcdf(
+                    file_name, var1=tauy_mod, var1_attributes=dict1, var1_name='tauy_map__' + dataset1, var2=tauy_obs,
+                    var2_attributes=dict2, var2_name='tauy_map__' + dataset2, global_attributes=dict3)
+                del dict1, dict2, dict3
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(tauyRmse), 'line2': 'metric value_error: ' + str(tauyRmseErr)}
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+    # Create output
+    rmseMetric = {
+        'name': Name, 'value': tauyRmse, 'value_error': tauyRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return rmseMetric
+
+
+def BiasTauyLatRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tauylandmaskfilemod,
+                    tauylandmasknamemod, tauyfileobs, tauynameobs, tauyareafileobs, tauyareanameobs,
+                    tauylandmaskfileobs, tauylandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='',
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The BiasTauyLatRmse() function computes the TAUY meridional (latitude) root mean square error (RMSE) in a 'box'
+    (usually 'equatorial_pacific_LatExt')
+
+    Inputs:
+    ------
+    :param tauyfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled TAUY
+    :param tauynamemod: string
+        name of TAUY variable (tauy, tauu) in 'tauyfilemod'
+    :param tauyareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for TAUY
+    :param tauyareanamemod: string
+        name of areacell variable (areacella, areacello) in 'tauyareafilemod'
+    :param tauylandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for TAUY
+    :param tauylandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'tauylandmaskfilemod'
+    :param tauyfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUY
+    :param tauynameobs: string
+        name of TAUY variable (tauy, tauu) in 'tauyfileobs'
+    :param tauyareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for TAUY
+    :param tauyareanameobs: string
+        name of areacell variable (areacella, areacello) in 'tauyareafileobs'
+    :param tauylandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for TAUY
+    :param tauylandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'tauylandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific_LatExt') for TAUY
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled TAUY file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed TAUY file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return LatRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_mod', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = 'tauy Meridional RMSE'
+    Units = '1e-3 N/m2'
+    Method = 'Meridional root mean square error of ' + box + ' tauy'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = "BiasTauyLatRmse"
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    tauy_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(tauyfilemod, tauynamemod, 'wind stress', metric, box, file_area=tauyareafilemod,
+                            name_area=tauyareanamemod, file_mask=tauylandmaskfilemod, name_mask=tauylandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    tauy_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(tauyfileobs, tauynameobs, 'wind stress', metric, box, file_area=tauyareafileobs,
+                            name_area=tauyareanameobs, file_mask=tauylandmaskfileobs, name_mask=tauylandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(tauy_mod.shape[0] / 12))
+    yearN_obs = int(round(tauy_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(tauy_mod)
+    actualtimebounds_obs = TimeBounds(tauy_obs)
+
+    if keyerror_mod is not None or keyerror_obs is not None:
+        tauyRmse, tauyRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        tauy_mod, Method, keyerror_mod = PreProcessTS(
+            tauy_mod, Method, areacell=mod_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        tauy_obs, _, keyerror_obs = PreProcessTS(
+            tauy_obs, '', areacell=obs_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        del mod_areacell, obs_areacell
+        if keyerror_mod is not None or keyerror_obs is not None:
+            tauyRmse, tauyRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        else:
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                tauy_mod, tauy_obs, Method = TwoVarRegrid(
+                    tauy_mod, tauy_obs, Method, region=box, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # Zonal average
+            tauy_mod, keyerror_mod = AverageZonal(tauy_mod)
+            tauy_obs, keyerror_obs = AverageZonal(tauy_obs)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                tauyRmse, tauyRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            else:
+                tauy_mod = tauy_mod * 1e3
+                tauy_obs = tauy_obs * 1e3
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageZonal', 15, **dict_debug)
+
+                # Computes the root mean square difference
+                tauyRmse, keyerror = RmsMeridional(tauy_mod, tauy_obs, centered=centered_rmse, biased=biased_rmse)
+
+                # Error on the metric
+                tauyRmseErr = None
+
+                # Dive down diagnostic
+                dive_down_diag = {'model': ArrayToList(tauy_mod), 'observations': ArrayToList(tauy_obs),
+                                  'axis': list(tauy_mod.getAxis(0)[:])}
+                if netcdf is True:
+                    map_mod, mod_areacell, keyerror_mod = Read_data_mask_area(
+                        tauyfilemod, tauynamemod, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauyareafilemod, name_area=tauyareanamemod, file_mask=tauylandmaskfilemod,
+                        name_mask=tauylandmasknamemod, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                    map_obs, obs_areacell, keyerror_obs = Read_data_mask_area(
+                        tauyfileobs, tauynameobs, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauyareafileobs, name_area=tauyareanameobs, file_mask=tauylandmaskfileobs,
+                        name_mask=tauylandmasknameobs, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        map_mod, _, keyerror_mod = PreProcessTS(
+                            map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        map_obs, _, keyerror_obs = PreProcessTS(
+                            map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del mod_areacell, obs_areacell
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            # Regridding
+                            if isinstance(kwargs['regridding'], dict):
+                                map_mod, map_obs, _ = TwoVarRegrid(
+                                    map_mod, map_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in map_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(map_mod.shape),
+                                              'shape2': '(obs) ' + str(map_obs.shape)}
+                                EnsoErrorsWarnings.debug_mode(
+                                    '\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                            # change units
+                            map_mod = map_mod * 1e3
+                            map_obs = map_obs * 1e3
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: tauyRmse,
+                                     'metric_value_error_' + dataset2: tauyRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=tauy_mod, var1_attributes=dict1, var1_name='tauy_lat__' + dataset1,
+                                var2=tauy_obs, var2_attributes=dict2, var2_name='tauy_lat__' + dataset2, var3=map_mod,
+                                var3_attributes=dict3, var3_name='tauy_map__' + dataset1, var4=map_obs,
+                                var4_attributes=dict4, var4_name='tauy_map__' + dataset2, global_attributes=dict5)
+                            del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(tauyRmse), 'line2': 'metric value_error: ' + str(tauyRmseErr)}
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+    # Create output
+    LatRmseMetric = {
+        'name': Name, 'value': tauyRmse, 'value_error': tauyRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return LatRmseMetric
+
+
+def BiasTauyLonRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tauylandmaskfilemod,
+                    tauylandmasknamemod, tauyfileobs, tauynameobs, tauyareafileobs, tauyareanameobs,
+                    tauylandmaskfileobs, tauylandmasknameobs, box, centered_rmse=0, biased_rmse=1, dataset1='',
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The BiasTauyLonRmse() function computes the TAUY zonal (longitude) root mean square error (RMSE) in a 'box'
+    (usually the Equatorial Pacific)
+
+    Inputs:
+    ------
+    :param tauyfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled TAUY
+    :param tauynamemod: string
+        name of TAUY variable (tauy, tauu) in 'tauyfilemod'
+    :param tauyareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for TAUY
+    :param tauyareanamemod: string
+        name of areacell variable (areacella, areacello) in 'tauyareafilemod'
+    :param tauylandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for TAUY
+    :param tauylandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'tauylandmaskfilemod'
+    :param tauyfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUY
+    :param tauynameobs: string
+        name of TAUY variable (tauy, tauu) in 'tauyfileobs'
+    :param tauyareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for TAUY
+    :param tauyareanameobs: string
+        name of areacell variable (areacella, areacello) in 'tauyareafileobs'
+    :param tauylandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for TAUY
+    :param tauylandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'tauylandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for TAUY
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled TAUY file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed TAUY file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return LonRmseMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
+                    'time_bounds_mod', 'time_bounds_obs']
+    for arg in needed_kwarg:
+        try: kwargs[arg]
+        except: kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = 'tauy Zonal RMSE'
+    Units = '1e-3 N/m2'
+    Method = 'Zonal root mean square error of ' + box + ' tauy'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = "BiasTauyLonRmse"
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    tauy_mod, mod_areacell, keyerror_mod = \
+        Read_data_mask_area(tauyfilemod, tauynamemod, 'wind stress', metric, box, file_area=tauyareafilemod,
+                            name_area=tauyareanamemod, file_mask=tauylandmaskfilemod, name_mask=tauylandmasknamemod,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
+                            **kwargs)
+    tauy_obs, obs_areacell, keyerror_obs = \
+        Read_data_mask_area(tauyfileobs, tauynameobs, 'wind stress', metric, box, file_area=tauyareafileobs,
+                            name_area=tauyareanameobs, file_mask=tauylandmaskfileobs, name_mask=tauylandmasknameobs,
+                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
+                            **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(tauy_mod.shape[0] / 12))
+    yearN_obs = int(round(tauy_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(tauy_mod)
+    actualtimebounds_obs = TimeBounds(tauy_obs)
+
+    if keyerror_mod is not None or keyerror_obs is not None:
+        tauyRmse, tauyRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+    else:
+        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        # here only the detrending (if applicable) and time averaging are performed
+        tauy_mod, Method, keyerror_mod = PreProcessTS(
+            tauy_mod, Method, areacell=mod_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        tauy_obs, _, keyerror_obs = PreProcessTS(
+            tauy_obs, '', areacell=obs_areacell, average='time', compute_anom=False, region=box, **kwargs)
+        del mod_areacell, obs_areacell
+        if keyerror_mod is not None or keyerror_obs is not None:
+            tauyRmse, tauyRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        else:
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                tauy_mod, tauy_obs, Method = TwoVarRegrid(
+                    tauy_mod, tauy_obs, Method, region=box, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # Meridional average
+            tauy_mod, keyerror_mod = AverageMeridional(tauy_mod)
+            tauy_obs, keyerror_obs = AverageMeridional(tauy_obs)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                tauyRmse, tauyRmseErr, dive_down_diag = None, None, {'model': None, 'observations': None, 'axis': None}
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            else:
+                tauy_mod = tauy_mod * 1e3
+                tauy_obs = tauy_obs * 1e3
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+                # Computes the root mean square difference
+                tauyRmse, keyerror = RmsZonal(tauy_mod, tauy_obs, centered=centered_rmse, biased=biased_rmse)
+
+                # Error on the metric
+                tauyRmseErr = None
+
+                # Dive down diagnostic
+                dive_down_diag = {'model': ArrayToList(tauy_mod), 'observations': ArrayToList(tauy_obs),
+                                  'axis': list(tauy_mod.getAxis(0)[:])}
+                if netcdf is True:
+                    map_mod, mod_areacell, keyerror_mod = Read_data_mask_area(
+                        tauyfilemod, tauynamemod, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauyareafilemod, name_area=tauyareanamemod, file_mask=tauylandmaskfilemod,
+                        name_mask=tauylandmasknamemod, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                    map_obs, obs_areacell, keyerror_obs = Read_data_mask_area(
+                        tauyfileobs, tauynameobs, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauyareafileobs, name_area=tauyareanameobs, file_mask=tauylandmaskfileobs,
+                        name_mask=tauylandmasknameobs, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        map_mod, _, keyerror_mod = PreProcessTS(
+                            map_mod, '', areacell=mod_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        map_obs, _, keyerror_obs = PreProcessTS(
+                            map_obs, '', areacell=obs_areacell, average='time', compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del mod_areacell, obs_areacell
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            # Regridding
+                            if isinstance(kwargs['regridding'], dict):
+                                map_mod, map_obs, _ = TwoVarRegrid(
+                                    map_mod, map_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
+                                if debug is True:
+                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in map_mod.getAxisList()]),
+                                                  'axes2': '(obs) ' + str([ax.id for ax in map_obs.getAxisList()]),
+                                                  'shape1': '(mod) ' + str(map_mod.shape),
+                                                  'shape2': '(obs) ' + str(map_obs.shape)}
+                                    EnsoErrorsWarnings.debug_mode(
+                                        '\033[92m', 'after TwoVarRegrid: netcdf', 15, **dict_debug)
+                            # change units
+                            map_mod = map_mod * 1e3
+                            map_obs = map_obs * 1e3
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod)}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs)}
+                            dict5 = {'metric_name': Name, 'metric_value_' + dataset2: tauyRmse,
+                                     'metric_value_error_' + dataset2: tauyRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=tauy_mod, var1_attributes=dict1, var1_name='tauy_lon__' + dataset1,
+                                var2=tauy_obs, var2_attributes=dict2, var2_name='tauy_lon__' + dataset2, var3=map_mod,
+                                var3_attributes=dict3, var3_name='tauy_map__' + dataset1, var4=map_obs,
+                                var4_attributes=dict4, var4_name='tauy_map__' + dataset2, global_attributes=dict5)
+                            del dict1, dict2, dict3, dict4, dict5
+    # metric value
+    if debug is True:
+        dict_debug = {'line1': 'metric value: ' + str(tauyRmse), 'line2': 'metric value_error: ' + str(tauyRmseErr)}
+        EnsoErrorsWarnings.debug_mode('\033[92m', 'end of ' + metric, 10, **dict_debug)
+    # Create output
+    LonRmseMetric = {
+        'name': Name, 'value': tauyRmse, 'value_error': tauyRmseErr, 'units': Units, 'method': Method,
         'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
         'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
@@ -11876,6 +13431,971 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     return EnsoSlpMapMetric
 
 
+def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                    mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandmaskfilemod, mldlandmasknamemod,
+                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                    mldfileobs, mldnameobs, mldareafileobs, mldareanameobs, mldlandmaskfileobs, mldlandmasknameobs,
+                    sstbox, mldbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='',
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoMldLonRmse() function computes mixed layer depth anomalies pattern associated with ENSO in a 'box'
+    (usually the equatorial_pacific)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param mldfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled MLD
+    :param mldnamemod: string
+        name of MLD variable (tauu, tauuo) in 'mldfilemod'
+    :param mldareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled MLD areacell
+    :param mldareanamemod: string, optional
+        name of areacell for the MLD variable (areacella, areacello,...) in 'mldareafilemod'
+    :param mldlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled MLD landmask
+    :param mldlandmasknamemod: string, optional
+        name of landmask for the MLD variable (sftlf,...) in 'mldlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param mldfileobs: string
+        path_to/filename of the file (NetCDF) of the observed MLD
+    :param mldnameobs: string
+        name of MLD variable (mld) in 'mldfileobs'
+    :param mldareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed MLD areacell
+    :param mldareanameobs: string, optional
+        name of areacell for the MLD variable (areacella, areacello,...) in 'mldareafileobs'
+    :param mldlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed MLD landmask
+    :param mldlandmasknameobs: string, optional
+        name of landmask for the MLD variable (sftlf,...) in 'mldlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param mldbox: string
+        name of box (e.g. 'equatorial_pacific') for MLD
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoMldMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = "ENSO Zonal MLDA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + mldbox + " MLDA"
+    Units = '' if kwargs['normalization'] else 'm/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoMldLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+        sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod, name_area=sstareanamemod,
+        file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+        sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs, name_area=sstareanameobs,
+        file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+    mld_mod, mld_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+        mldfilemod, mldnamemod, 'depth', metric, mldbox, file_area=mldareafilemod, name_area=mldareanamemod,
+        file_mask=mldlandmaskfilemod, name_mask=mldlandmasknamemod, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    mld_obs, mld_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+        mldfileobs, mldnameobs, 'depth', metric, mldbox, file_area=mldareafileobs, name_area=mldareanameobs,
+        file_mask=mldlandmaskfileobs, name_mask=mldlandmasknameobs, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, mld_mod, keyerror_mod3 = CheckTime(sst_mod, mld_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, mld_obs, keyerror_obs3 = CheckTime(sst_obs, mld_obs, metric_name=metric, debug=debug, **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        mldRmse, mldRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, _, keyerror_mod1 = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        enso_obs, _, keyerror_obs1 = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        mld_mod, Method, keyerror_mod2 = PreProcessTS(
+            mld_mod, Method, areacell=mld_mod_areacell, compute_anom=False, region=mldbox,
+            **kwargs)
+        mld_obs, _, keyerror_obs2 = PreProcessTS(
+            mld_obs, '', areacell=mld_obs_areacell, compute_anom=False, region=mldbox, **kwargs)
+        del mld_mod_areacell, mld_obs_areacell, sst_mod_areacell, sst_obs_areacell
+        if (keyerror_mod1 is not None or keyerror_obs1 is not None) or \
+                (keyerror_mod2 is not None or keyerror_obs2 is not None):
+            mldRmse, mldRmseErr = None, None
+            dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        else:
+            if debug is True:
+                dict_debug = {
+                    'axes1': '(mod sst) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                    'axes2': '(obs sst) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                    'axes3': '(mod mld) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                    'axes4': '(obs mld) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                    'shape1': '(mod sst) ' + str(enso_mod.shape), 'shape2': '(obs sst) ' + str(enso_obs.shape),
+                    'shape3': '(mod mld) ' + str(mld_mod.shape), 'shape4': '(obs mld) ' + str(mld_obs.shape),
+                    'time1': '(mod sst) ' + str(TimeBounds(enso_mod)),
+                    'time2': '(obs sst) ' + str(TimeBounds(enso_obs)),
+                    'time3': '(mod mld) ' + str(TimeBounds(mld_mod)),
+                    'time4': '(obs mld) ' + str(TimeBounds(mld_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # 1.2 Seasonal mean and anomalies
+            enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+            enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(enso_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            
+            # ------------------------------------------------
+            # 2. spatial MldA
+            # ------------------------------------------------
+            # 2.2 Seasonal mean and anomalies
+            mld_mod = SeasonalMean(mld_mod, season_ev, compute_anom=True)
+            mld_obs = SeasonalMean(mld_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(mld_mod.shape), 'shape2': '(obs) ' + str(mld_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(mld_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(mld_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+            # ------------------------------------------------
+            # 3. Regression map
+            # ------------------------------------------------
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                mld_mod, mld_obs, Method = TwoVarRegrid(
+                    mld_mod, mld_obs, Method, region=mldbox, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mld_mod.shape),
+                                  'shape2': '(obs) ' + str(mld_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # Meridional average
+            mldlon_mod, keyerror_mod = AverageMeridional(mld_mod)
+            mldlon_obs, keyerror_obs = AverageMeridional(mld_obs)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                mldRmse, mldRmseErr = None, None
+                dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            else:
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mldlon_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mldlon_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mldlon_mod.shape),
+                                  'shape2': '(obs) ' + str(mldlon_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+                # regression
+                mld_mod_slope = LinearRegressionTsAgainstMap(mldlon_mod, enso_mod, return_stderr=False)
+                mld_obs_slope = LinearRegressionTsAgainstMap(mldlon_obs, enso_obs, return_stderr=False)
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod_slope.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs_slope.getAxisList()]),
+                                  'shape1': '(mod) ' + str(mld_mod_slope.shape),
+                                  'shape2': '(obs) ' + str(mld_obs_slope.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+
+                # Computes the root mean square difference
+                mldRmse, keyerror = RmsZonal(mld_mod_slope, mld_obs_slope, centered=centered_rmse, biased=biased_rmse)
+
+                # Error on the metric
+                mldRmseErr = None
+
+                # Dive down diagnostic
+                dive_down_diag = {'model': ArrayToList(mld_mod_slope), 'observations': ArrayToList(mld_obs_slope),
+                                  'axis': list(mld_mod_slope.getAxis(0)[:])}
+
+                if netcdf is True:
+                    # Read file and select the right region
+                    mld_mod, mld_mod_areacell, keyerror_mod = Read_data_mask_area(
+                        mldfilemod, mldnamemod, 'depth', metric, 'equatorial_pacific_LatExt2',
+                        file_area=mldareafilemod, name_area=mldareanamemod, file_mask=mldlandmaskfilemod,
+                        name_mask=mldlandmasknamemod, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                    mld_obs, mld_obs_areacell, keyerror_obs = Read_data_mask_area(
+                        mldfileobs, mldnameobs, 'depth', metric, 'equatorial_pacific_LatExt2',
+                        file_area=mldareafileobs, name_area=mldareanameobs, file_mask=mldlandmaskfileobs,
+                        name_mask=mldlandmasknameobs, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+                        mld_mod, _, keyerror_mod = PreProcessTS(
+                            mld_mod, '', areacell=mld_mod_areacell, compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        mld_obs, _, keyerror_obs = PreProcessTS(
+                            mld_obs, '', areacell=mld_obs_areacell, compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del mld_mod_areacell, mld_obs_areacell
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(mld_mod.shape),
+                                              'shape2': '(obs) ' + str(mld_obs.shape),
+                                              'time1': '(mod) ' + str(TimeBounds(mld_mod)),
+                                              'time2': '(obs) ' + str(TimeBounds(mld_obs))}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                            # Seasonal mean and anomalies
+                            mld_mod = SeasonalMean(mld_mod, season_ev, compute_anom=True)
+                            mld_obs = SeasonalMean(mld_obs, season_ev, compute_anom=True)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(mld_mod.shape),
+                                              'shape2': '(obs) ' + str(mld_obs.shape),
+                                              'time1': '(mod) ' + str(TimeBounds(mld_mod)),
+                                              'time2': '(obs) ' + str(TimeBounds(mld_obs))}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+                            # Regridding
+                            if isinstance(kwargs['regridding'], dict):
+                                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name',
+                                              'regridder', 'regridTool', 'regridMethod'}
+                                extra_args = set(kwargs['regridding']) - known_args
+                                if extra_args:
+                                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                                mld_mod, mld_obs, _ = TwoVarRegrid(
+                                    mld_mod, mld_obs, '', region='equatorial_pacific_LatExt2',
+                                    **kwargs['regridding'])
+                                if debug is True:
+                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                                                  'axes2': '(obs) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                                                  'shape1': '(mod) ' + str(mld_mod.shape),
+                                                  'shape2': '(obs) ' + str(mld_obs.shape)}
+                                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                            # Linear regression
+                            mldmap_mod_slope = LinearRegressionTsAgainstMap(mld_mod, enso_mod, return_stderr=False)
+                            mldmap_obs_slope = LinearRegressionTsAgainstMap(mld_obs, enso_obs, return_stderr=False)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mldmap_mod_slope.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in mldmap_obs_slope.getAxisList()]),
+                                              'shape1': '(mod) ' + str(mldmap_mod_slope.shape),
+                                              'shape2': '(obs) ' + str(mldmap_obs_slope.shape)}
+                                EnsoErrorsWarnings.debug_mode(
+                                    '\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+                            # Lists event years
+                            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            if debug is True:
+                                dict_debug = {'nina1': '(mod) nbr(' + str(len(nina_years_mod)) + '): ' +
+                                                       str(nina_years_mod),
+                                              'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' +
+                                                       str(nina_years_obs),
+                                              'nino1': '(mod) nbr(' + str(len(nino_years_mod)) + '): ' +
+                                                       str(nino_years_mod),
+                                              'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' +
+                                                       str(nino_years_obs)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                            # composites
+                            if len(nina_years_mod) > 0:
+                                nina_mldlon_mod = Composite(mldlon_mod, nina_years_mod, kwargs['frequency'])
+                                nina_mldmap_mod = Composite(mld_mod, nina_years_mod, kwargs['frequency'])
+                            else:
+                                nina_mldlon_mod = MyEmpty(mldlon_mod[0], time=False)
+                                nina_mldmap_mod = MyEmpty(mld_mod[0], time=False)
+                            if len(nino_years_mod) > 0:
+                                nino_mldlon_mod = Composite(mldlon_mod, nino_years_mod, kwargs['frequency'])
+                                nino_mldmap_mod = Composite(mld_mod, nino_years_mod, kwargs['frequency'])
+                            else:
+                                nino_mldlon_mod = MyEmpty(mldlon_mod[0], time=False)
+                                nino_mldmap_mod = MyEmpty(mld_mod[0], time=False)
+                            if len(nina_years_obs) > 0:
+                                nina_mldlon_obs = Composite(mldlon_obs, nina_years_obs, kwargs['frequency'])
+                                nina_mldmap_obs = Composite(mld_obs, nina_years_obs, kwargs['frequency'])
+                            else:
+                                nina_mldlon_obs = MyEmpty(mldlon_obs[0], time=False)
+                                nina_mldmap_obs = MyEmpty(mld_obs[0], time=False)
+                            if len(nino_years_obs) > 0:
+                                nino_mldlon_obs = Composite(mldlon_obs, nino_years_obs, kwargs['frequency'])
+                                nino_mldmap_obs = Composite(mld_obs, nino_years_obs, kwargs['frequency'])
+                            else:
+                                nino_mldlon_obs = MyEmpty(mldlon_obs[0], time=False)
+                                nino_mldmap_obs = MyEmpty(mld_obs[0], time=False)
+                            # save
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            my_thresh = 'std' if normalize is True else 'C'
+                            my_units = '' if kwargs['normalization'] is True else 'm'
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': region_ev + " SSTA during " + season_ev + " regressed against " +
+                                                    mldbox + " MldA"}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': region_ev + " SSTA during " + season_ev + " regressed against " +
+                                                    mldbox + " MldA"}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': region_ev + " SSTA during " + season_ev +
+                                                    " regressed against tropical Pacific MldA"}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': region_ev + " SSTA during " + season_ev +
+                                                    " regressed against tropical Pacific MldA"}
+                            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nina_years': str(nina_years_mod),
+                                     'description':
+                                         "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of MldA during La Nina events"}
+                            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nino_years': str(nino_years_mod),
+                                     'description':
+                                         "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of MldA during El Nino events"}
+                            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nina_years': str(nina_years_obs),
+                                     'description':
+                                         "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of MldA during La Nina events"}
+                            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nino_years': str(nino_years_obs),
+                                     'description':
+                                         "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of MldA during El Nino events"}
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=mld_mod_slope, var1_attributes=dict1,
+                                var1_name='sst_against_mld_lon__' + dataset1, var2=mld_obs_slope, var2_attributes=dict2,
+                                var2_name='sst_against_mld_lon__' + dataset2, var3=mldmap_mod_slope,
+                                var3_attributes=dict3, var3_name='sst_against_mld_map__' + dataset1,
+                                var4=mldmap_obs_slope, var4_attributes=dict4,
+                                var4_name='sst_against_mld_map__' + dataset2, var5=nina_mldlon_mod,
+                                var5_attributes=dict5, var5_name='Nina_mld_lon__' + dataset1, var6=nina_mldmap_mod,
+                                var6_attributes=dict5, var6_name='Nina_mld_map__' + dataset1, var7=nino_mldlon_mod,
+                                var7_attributes=dict6, var7_name='Nino_mld_lon__' + dataset1, var8=nino_mldmap_mod,
+                                var8_attributes=dict6, var8_name='Nino_mld_map__' + dataset1, var9=nina_mldlon_obs,
+                                var9_attributes=dict7, var9_name='Nina_mld_lon__' + dataset2, var10=nina_mldmap_obs,
+                                var10_attributes=dict7, var10_name='Nina_mld_map__' + dataset2, var11=nino_mldlon_obs,
+                                var11_attributes=dict8, var11_name='Nino_mld_lon__' + dataset2, var12=nino_mldmap_obs,
+                                var12_attributes=dict8, var12_name='Nino_mld_map__' + dataset2, global_attributes=dict9)
+                            del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
+
+    # Create output
+    EnsoMldMetric = {
+        'name': Name, 'value': mldRmse, 'value_error': mldRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return EnsoMldMetric
+
+
+def EnsoMldTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                  mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandmaskfilemod, mldlandmasknamemod,
+                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                  mldfileobs, mldnameobs, mldareafileobs, mldareanameobs, mldlandmaskfileobs, mldlandmasknameobs,
+                  sstbox, mldbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='',
+                  dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoMldTsRmse() function computes mezed layer depth anomalies life cycle associated with ENSO in a 'mldbox'
+    (usually the nino3) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and lagging
+    ENSO)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param mldfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled MLD
+    :param mldnamemod: string
+        name of MLD variable (tauu, tauuo) in 'mldfilemod'
+    :param mldareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled MLD areacell
+    :param mldareanamemod: string, optional
+        name of areacell for the MLD variable (areacella, areacello,...) in 'mldareafilemod'
+    :param mldlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled MLD landmask
+    :param mldlandmasknamemod: string, optional
+        name of landmask for the MLD variable (sftlf,...) in 'mldlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param mldfileobs: string
+        path_to/filename of the file (NetCDF) of the observed MLD
+    :param mldnameobs: string
+        name of MLD variable (mld) in 'mldfileobs'
+    :param mldareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed MLD areacell
+    :param mldareanameobs: string, optional
+        name of areacell for the MLD variable (areacella, areacello,...) in 'mldareafileobs'
+    :param mldlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed MLD landmask
+    :param mldlandmasknameobs: string, optional
+        name of landmask for the MLD variable (sftlf,...) in 'mldlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param mldbox: string
+        name of box (e.g. 'nino3') for MLD
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoMldMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = "ENSO life cyle MLDA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + mldbox + " MLDA during " + \
+             str(nbr_years_window) + " years (centered on ENSO)"
+    Units = '' if kwargs['normalization'] else 'm/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoMldTsRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+        sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod, name_area=sstareanamemod,
+        file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+        sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs, name_area=sstareanameobs,
+        file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+    mld_mod, mld_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+        mldfilemod, mldnamemod, 'depth', metric, mldbox, file_area=mldareafilemod, name_area=mldareanamemod,
+        file_mask=mldlandmaskfilemod, name_mask=mldlandmasknamemod, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    mld_obs, mld_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+        mldfileobs, mldnameobs, 'depth', metric, mldbox, file_area=mldareafileobs, name_area=mldareanameobs,
+        file_mask=mldlandmaskfileobs, name_mask=mldlandmasknameobs, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, mld_mod, keyerror_mod3 = CheckTime(sst_mod, mld_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, mld_obs, keyerror_obs3 = CheckTime(sst_obs, mld_obs, metric_name=metric, debug=debug, **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        mldRmse, mldRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, _, keyerror_mod1 = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        enso_obs, _, keyerror_obs1 = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        mld_mod, Method, keyerror_mod2 = PreProcessTS(
+            mld_mod, Method, areacell=mld_mod_areacell, average='horizontal', compute_anom=True, region=mldbox,
+            **kwargs)
+        mld_obs, _, keyerror_obs2 = PreProcessTS(
+            mld_obs, '', areacell=mld_obs_areacell, average='horizontal', compute_anom=True, region=mldbox, **kwargs)
+        del mld_mod_areacell, mld_obs_areacell, sst_mod_areacell, sst_obs_areacell
+        if (keyerror_mod1 is not None or keyerror_obs1 is not None) or \
+                (keyerror_mod2 is not None or keyerror_obs2 is not None):
+            mldRmse, mldRmseErr = None, None
+            dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        else:
+            if debug is True:
+                dict_debug = {
+                    'axes1': '(mod sst) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                    'axes2': '(obs sst) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                    'axes3': '(mod mld) ' + str([ax.id for ax in mld_mod.getAxisList()]),
+                    'axes4': '(obs mld) ' + str([ax.id for ax in mld_obs.getAxisList()]),
+                    'shape1': '(mod sst) ' + str(enso_mod.shape), 'shape2': '(obs sst) ' + str(enso_obs.shape),
+                    'shape3': '(mod mld) ' + str(mld_mod.shape), 'shape4': '(obs mld) ' + str(mld_obs.shape),
+                    'time1': '(mod sst) ' + str(TimeBounds(enso_mod)),
+                    'time2': '(obs sst) ' + str(TimeBounds(enso_obs)),
+                    'time3': '(mod mld) ' + str(TimeBounds(mld_mod)),
+                    'time4': '(obs mld) ' + str(TimeBounds(mld_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # 1.2 Seasonal mean and anomalies
+            enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+            enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(enso_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+            # ------------------------------------------------
+            # 2. Regression map
+            # ------------------------------------------------
+            mldts_mod = LinearRegressionTsAgainstTs(
+                mld_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs['frequency'], debug=debug)
+            mldts_obs = LinearRegressionTsAgainstTs(
+                mld_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs['frequency'], debug=debug)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mldts_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in mldts_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(mldts_mod.shape), 'shape2': '(obs) ' + str(mldts_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+
+            # Computes the root mean square difference
+            mldRmse, keyerror = RmsAxis(mldts_mod, mldts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+
+            # Error on the metric
+            mldRmseErr = None
+
+            # Dive down diagnostic
+            dive_down_diag = {'model': ArrayToList(mldts_mod), 'observations': ArrayToList(mldts_obs),
+                              'axis': list(mldts_mod.getAxis(0)[:])}
+
+            if netcdf is True:
+                # Read file and select the right region
+                mldmap_mod, mldmap_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+                    mldfilemod, mldnamemod, 'depth', metric, 'equatorial_pacific', file_area=mldareafilemod,
+                    name_area=mldareanamemod, file_mask=mldlandmaskfilemod, name_mask=mldlandmasknamemod,
+                    maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                mldmap_obs, mldmap_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+                    mldfileobs, mldnameobs, 'depth', metric, 'equatorial_pacific', file_area=mldareafileobs,
+                    name_area=mldareanameobs, file_mask=mldlandmaskfileobs, name_mask=mldlandmasknameobs,
+                    maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                # Checks if the same time period is used for both variables
+                sst_mod, mldmap_mod, keyerror_mod2 = CheckTime(
+                    sst_mod, mldmap_mod, metric_name=metric, debug=debug, **kwargs)
+                sst_obs, mldmap_obs, keyerror_obs2 = CheckTime(
+                    sst_obs, mldmap_obs, metric_name=metric, debug=debug, **kwargs)
+                if (keyerror_mod1 is not None or keyerror_obs1 is not None) or \
+                        (keyerror_mod2 is not None or keyerror_obs2 is not None):
+                    keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+                else:
+                    # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+                    mldmap_mod, _, keyerror_mod = PreProcessTS(
+                        mldmap_mod, '', areacell=mldmap_mod_areacell, compute_anom=True, region="equatorial_pacific",
+                        **kwargs)
+                    mldmap_obs, _, keyerror_obs = PreProcessTS(
+                        mldmap_obs, '', areacell=mldmap_obs_areacell, compute_anom=True, region="equatorial_pacific",
+                        **kwargs)
+                    del mldmap_mod_areacell, mldmap_obs_areacell
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        if debug is True:
+                            dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mldmap_mod.getAxisList()]),
+                                          'axes2': '(obs) ' + str([ax.id for ax in mldmap_obs.getAxisList()]),
+                                          'shape1': '(mod) ' + str(mldmap_mod.shape),
+                                          'shape2': '(obs) ' + str(mldmap_obs.shape),
+                                          'time1': '(mod) ' + str(TimeBounds(mldmap_mod)),
+                                          'time2': '(obs) ' + str(TimeBounds(mldmap_obs))}
+                            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                        # Regridding
+                        if isinstance(kwargs['regridding'], dict):
+                            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name',
+                                          'regridder', 'regridTool', 'regridMethod'}
+                            extra_args = set(kwargs['regridding']) - known_args
+                            if extra_args:
+                                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                            mldmap_mod, mldmap_obs, _ = TwoVarRegrid(
+                                mldmap_mod, mldmap_obs, '', region='equatorial_pacific', **kwargs['regridding'])
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mldmap_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in mldmap_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(mldmap_mod.shape),
+                                              'shape2': '(obs) ' + str(mldmap_obs.shape)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                        # Meridional average
+                        mldhov_mod, keyerror_mod = AverageMeridional(mldmap_mod)
+                        mldhov_obs, keyerror_obs = AverageMeridional(mldmap_obs)
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in mldhov_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in mldhov_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(mldhov_mod.shape),
+                                              'shape2': '(obs) ' + str(mldhov_obs.shape)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                            # Linear regression
+                            regmldhov_mod = LinearRegressionTsAgainstTs(
+                                mldhov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                frequency=kwargs['frequency'], debug=debug)
+                            regmldhov_obs = LinearRegressionTsAgainstTs(
+                                mldhov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                frequency=kwargs['frequency'], debug=debug)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in regmldhov_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in regmldhov_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(regmldhov_mod.shape),
+                                              'shape2': '(obs) ' + str(regmldhov_obs.shape)}
+                                EnsoErrorsWarnings.debug_mode(
+                                    '\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+                            # Lists event years
+                            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            if debug is True:
+                                dict_debug = {
+                                    'nina1': '(mod) nbr(' + str(len(nina_years_mod)) + '): ' + str(nina_years_mod),
+                                    'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
+                                    'nino1': '(mod) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
+                                    'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                            # composites
+                            if len(nina_years_mod) > 0:
+                                nina_mld_mod = Composite(
+                                    mld_mod, nina_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nina_mldhov_mod = Composite(
+                                    mldhov_mod, nina_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nina_mld_mod = MyEmpty(mld_mod[:12 * nbr_years_window], time=True, time_id='months')
+                                nina_mldhov_mod = MyEmpty(
+                                    mldhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+                            if len(nino_years_mod) > 0:
+                                nino_mld_mod = Composite(
+                                    mld_mod, nino_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nino_mldhov_mod = Composite(
+                                    mldhov_mod, nino_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nino_mld_mod = MyEmpty(mld_mod[:12 * nbr_years_window], time=True, time_id='months')
+                                nino_mldhov_mod = MyEmpty(
+                                    mldhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+                            if len(nina_years_obs) > 0:
+                                nina_mld_obs = Composite(
+                                    mld_obs, nina_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nina_mldhov_obs = Composite(
+                                    mldhov_obs, nina_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nina_mld_obs = MyEmpty(mld_obs[:12 * nbr_years_window], time=True, time_id='months')
+                                nina_mldhov_obs = MyEmpty(
+                                    mldhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+                            if len(nino_years_obs) > 0:
+                                nino_mld_obs = Composite(
+                                    mld_obs, nino_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nino_mldhov_obs = Composite(
+                                    mldhov_obs, nino_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nino_mld_obs = MyEmpty(mld_obs[:12 * nbr_years_window], time=True, time_id='months')
+                                nino_mldhov_obs = MyEmpty(
+                                    mldhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+                            # save
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            my_thresh = 'std' if normalize is True else 'C'
+                            my_units = '' if kwargs['normalization'] is True else 'm'
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': "time series of " + region_ev + " SSTA " + season_ev +
+                                     " regressed against " + mldbox + " MLDA during " + str(nbr_years_window) +
+                                                    " years (centered on ENSO)"}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': "time series of " + region_ev + " SSTA " + season_ev +
+                                                    " regressed against " + mldbox + " MLDA during " +
+                                                    str(nbr_years_window) + " years (centered on ENSO)"}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " +
+                                                    season_ev + " regressed against equatorial Pacific MLDA during " +
+                                                    str(nbr_years_window) + " years (centered on ENSO)"}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " +
+                                                    season_ev + " regressed against equatorial Pacific MLDA during " +
+                                                    str(nbr_years_window) + " years (centered on ENSO)"}
+                            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nina_years': str(nina_years_mod),
+                                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", MLDA composited during La Nina events"}
+                            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nino_years': str(nino_years_mod),
+                                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", MLDA composited during El Nino events"}
+                            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nina_years': str(nina_years_obs),
+                                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", MLDA composited during La Nina events"}
+                            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nino_years': str(nino_years_obs),
+                                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", MLDA composited during El Nino events"}
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: mldRmse,
+                                     'metric_value_error_' + dataset2: mldRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=mldts_mod, var1_attributes=dict1,
+                                var1_name='sst_against_mld_ts__' + dataset1, var2=mldts_obs, var2_attributes=dict2,
+                                var2_name='sst_against_mld_ts__' + dataset2, var3=regmldhov_mod,
+                                var3_attributes=dict3, var3_name='sst_against_mld_hov__' + dataset1,
+                                var4=regmldhov_obs, var4_attributes=dict4,
+                                var4_name='sst_against_mld_hov__' + dataset2, var5=nina_mld_mod,
+                                var5_attributes=dict5, var5_name='Nina_mld_ts__' + dataset1, var6=nina_mldhov_mod,
+                                var6_attributes=dict5, var6_name='Nina_mld_hov__' + dataset1, var7=nino_mld_mod,
+                                var7_attributes=dict6, var7_name='Nino_mld_ts__' + dataset1, var8=nino_mldhov_mod,
+                                var8_attributes=dict6, var8_name='Nino_mld_hov__' + dataset1, var9=nina_mld_obs,
+                                var9_attributes=dict7, var9_name='Nina_mld_ts__' + dataset2, var10=nina_mldhov_obs,
+                                var10_attributes=dict7, var10_name='Nina_mld_hov__' + dataset2, var11=nino_mld_obs,
+                                var11_attributes=dict8, var11_name='Nino_mld_ts__' + dataset2, var12=nino_mldhov_obs,
+                                var12_attributes=dict8, var12_name='Nino_mld_hov__' + dataset2,
+                                global_attributes=dict9)
+                            del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
+    # Create output
+    EnsoMldMetric = {
+        'name': Name, 'value': mldRmse, 'value_error': mldRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return EnsoMldMetric
+
 
 def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
@@ -14655,6 +17175,506 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     return EnsoSstMetric
 
 
+def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                    tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod, tauxlandmasknamemod,
+                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                    tauxfileobs, tauxnameobs, tauxareafileobs, tauxareanameobs, tauxlandmaskfileobs, tauxlandmasknameobs,
+                    sstbox, tauxbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='',
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoTauxLonRmse() function computes zonal wind stress anomalies pattern associated with ENSO in a 'box'
+    (usually the equatorial_pacific)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param tauxfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled TAUX
+    :param tauxnamemod: string
+        name of TAUX variable (tauu, tauuo) in 'tauxfilemod'
+    :param tauxareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUX areacell
+    :param tauxareanamemod: string, optional
+        name of areacell for the TAUX variable (areacella, areacello,...) in 'tauxareafilemod'
+    :param tauxlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUX landmask
+    :param tauxlandmasknamemod: string, optional
+        name of landmask for the TAUX variable (sftlf,...) in 'tauxlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param tauxfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUX
+    :param tauxnameobs: string
+        name of TAUX variable (taux) in 'tauxfileobs'
+    :param tauxareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUX areacell
+    :param tauxareanameobs: string, optional
+        name of areacell for the TAUX variable (areacella, areacello,...) in 'tauxareafileobs'
+    :param tauxlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUX landmask
+    :param tauxlandmasknameobs: string, optional
+        name of landmask for the TAUX variable (sftlf,...) in 'tauxlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param tauxbox: string
+        name of box (e.g. 'equatorial_pacific') for TAUX
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoTauxMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = "ENSO Zonal TAUXA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauxbox + " TAUXA"
+    Units = '' if kwargs['normalization'] else '1e-3 N/m2/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoTauxLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+        sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod, name_area=sstareanamemod,
+        file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+        sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs, name_area=sstareanameobs,
+        file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+    taux_mod, taux_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+        tauxfilemod, tauxnamemod, 'wind stress', metric, tauxbox, file_area=tauxareafilemod, name_area=tauxareanamemod,
+        file_mask=tauxlandmaskfilemod, name_mask=tauxlandmasknamemod, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    taux_obs, taux_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+        tauxfileobs, tauxnameobs, 'wind stress', metric, tauxbox, file_area=tauxareafileobs, name_area=tauxareanameobs,
+        file_mask=tauxlandmaskfileobs, name_mask=tauxlandmasknameobs, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, taux_mod, keyerror_mod3 = CheckTime(sst_mod, taux_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, taux_obs, keyerror_obs3 = CheckTime(sst_obs, taux_obs, metric_name=metric, debug=debug, **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        tauxRmse, tauxRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, _, keyerror_mod1 = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        enso_obs, _, keyerror_obs1 = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        taux_mod, Method, keyerror_mod2 = PreProcessTS(
+            taux_mod, Method, areacell=taux_mod_areacell, compute_anom=False, region=tauxbox,
+            **kwargs)
+        taux_obs, _, keyerror_obs2 = PreProcessTS(
+            taux_obs, '', areacell=taux_obs_areacell, compute_anom=False, region=tauxbox, **kwargs)
+        del taux_mod_areacell, taux_obs_areacell, sst_mod_areacell, sst_obs_areacell
+        if (keyerror_mod1 is not None or keyerror_obs1 is not None) or \
+                (keyerror_mod2 is not None or keyerror_obs2 is not None):
+            tauxRmse, tauxRmseErr = None, None
+            dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        else:
+            if debug is True:
+                dict_debug = {
+                    'axes1': '(mod sst) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                    'axes2': '(obs sst) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                    'axes3': '(mod taux) ' + str([ax.id for ax in taux_mod.getAxisList()]),
+                    'axes4': '(obs taux) ' + str([ax.id for ax in taux_obs.getAxisList()]),
+                    'shape1': '(mod sst) ' + str(enso_mod.shape), 'shape2': '(obs sst) ' + str(enso_obs.shape),
+                    'shape3': '(mod taux) ' + str(taux_mod.shape), 'shape4': '(obs taux) ' + str(taux_obs.shape),
+                    'time1': '(mod sst) ' + str(TimeBounds(enso_mod)),
+                    'time2': '(obs sst) ' + str(TimeBounds(enso_obs)),
+                    'time3': '(mod taux) ' + str(TimeBounds(taux_mod)),
+                    'time4': '(obs taux) ' + str(TimeBounds(taux_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # 1.2 Seasonal mean and anomalies
+            enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+            enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(enso_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            
+            # ------------------------------------------------
+            # 2. spatial TauxA
+            # ------------------------------------------------
+            # 2.2 Seasonal mean and anomalies
+            taux_mod = SeasonalMean(taux_mod, season_ev, compute_anom=True)
+            taux_obs = SeasonalMean(taux_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in taux_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(taux_mod.shape), 'shape2': '(obs) ' + str(taux_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(taux_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(taux_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+            # ------------------------------------------------
+            # 3. Regression map
+            # ------------------------------------------------
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                taux_mod, taux_obs, Method = TwoVarRegrid(
+                    taux_mod, taux_obs, Method, region=tauxbox, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in taux_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(taux_mod.shape),
+                                  'shape2': '(obs) ' + str(taux_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # change units
+            taux_mod = taux_mod * 1e3
+            taux_obs = taux_obs * 1e3
+
+            # Meridional average
+            tauxlon_mod, keyerror_mod = AverageMeridional(taux_mod)
+            tauxlon_obs, keyerror_obs = AverageMeridional(taux_obs)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                tauxRmse, tauxRmseErr = None, None
+                dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            else:
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauxlon_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauxlon_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauxlon_mod.shape),
+                                  'shape2': '(obs) ' + str(tauxlon_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+                # regression
+                taux_mod_slope = LinearRegressionTsAgainstMap(tauxlon_mod, enso_mod, return_stderr=False)
+                taux_obs_slope = LinearRegressionTsAgainstMap(tauxlon_obs, enso_obs, return_stderr=False)
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in taux_mod_slope.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in taux_obs_slope.getAxisList()]),
+                                  'shape1': '(mod) ' + str(taux_mod_slope.shape),
+                                  'shape2': '(obs) ' + str(taux_obs_slope.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+
+                # Computes the root mean square difference
+                tauxRmse, keyerror = RmsZonal(taux_mod_slope, taux_obs_slope, centered=centered_rmse, biased=biased_rmse)
+
+                # Error on the metric
+                tauxRmseErr = None
+
+                # Dive down diagnostic
+                dive_down_diag = {'model': ArrayToList(taux_mod_slope), 'observations': ArrayToList(taux_obs_slope),
+                                  'axis': list(taux_mod_slope.getAxis(0)[:])}
+
+                if netcdf is True:
+                    # Read file and select the right region
+                    taux_mod, taux_mod_areacell, keyerror_mod = Read_data_mask_area(
+                        tauxfilemod, tauxnamemod, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauxareafilemod, name_area=tauxareanamemod, file_mask=tauxlandmaskfilemod,
+                        name_mask=tauxlandmasknamemod, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                    taux_obs, taux_obs_areacell, keyerror_obs = Read_data_mask_area(
+                        tauxfileobs, tauxnameobs, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauxareafileobs, name_area=tauxareanameobs, file_mask=tauxlandmaskfileobs,
+                        name_mask=tauxlandmasknameobs, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+                        taux_mod, _, keyerror_mod = PreProcessTS(
+                            taux_mod, '', areacell=taux_mod_areacell, compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        taux_obs, _, keyerror_obs = PreProcessTS(
+                            taux_obs, '', areacell=taux_obs_areacell, compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del taux_mod_areacell, taux_obs_areacell
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in taux_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(taux_mod.shape),
+                                              'shape2': '(obs) ' + str(taux_obs.shape),
+                                              'time1': '(mod) ' + str(TimeBounds(taux_mod)),
+                                              'time2': '(obs) ' + str(TimeBounds(taux_obs))}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                            # Seasonal mean and anomalies
+                            taux_mod = SeasonalMean(taux_mod, season_ev, compute_anom=True)
+                            taux_obs = SeasonalMean(taux_obs, season_ev, compute_anom=True)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in taux_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(taux_mod.shape),
+                                              'shape2': '(obs) ' + str(taux_obs.shape),
+                                              'time1': '(mod) ' + str(TimeBounds(taux_mod)),
+                                              'time2': '(obs) ' + str(TimeBounds(taux_obs))}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+                            # Regridding
+                            if isinstance(kwargs['regridding'], dict):
+                                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name',
+                                              'regridder', 'regridTool', 'regridMethod'}
+                                extra_args = set(kwargs['regridding']) - known_args
+                                if extra_args:
+                                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                                taux_mod, taux_obs, _ = TwoVarRegrid(
+                                    taux_mod, taux_obs, '', region='equatorial_pacific_LatExt2',
+                                    **kwargs['regridding'])
+                                if debug is True:
+                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in taux_mod.getAxisList()]),
+                                                  'axes2': '(obs) ' + str([ax.id for ax in taux_obs.getAxisList()]),
+                                                  'shape1': '(mod) ' + str(taux_mod.shape),
+                                                  'shape2': '(obs) ' + str(taux_obs.shape)}
+                                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                            # change units
+                            taux_mod = taux_mod * 1e3
+                            taux_obs = taux_obs * 1e3
+                            # Linear regression
+                            tauxmap_mod_slope = LinearRegressionTsAgainstMap(taux_mod, enso_mod, return_stderr=False)
+                            tauxmap_obs_slope = LinearRegressionTsAgainstMap(taux_obs, enso_obs, return_stderr=False)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauxmap_mod_slope.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in tauxmap_obs_slope.getAxisList()]),
+                                              'shape1': '(mod) ' + str(tauxmap_mod_slope.shape),
+                                              'shape2': '(obs) ' + str(tauxmap_obs_slope.shape)}
+                                EnsoErrorsWarnings.debug_mode(
+                                    '\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+                            # Lists event years
+                            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            if debug is True:
+                                dict_debug = {'nina1': '(mod) nbr(' + str(len(nina_years_mod)) + '): ' +
+                                                       str(nina_years_mod),
+                                              'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' +
+                                                       str(nina_years_obs),
+                                              'nino1': '(mod) nbr(' + str(len(nino_years_mod)) + '): ' +
+                                                       str(nino_years_mod),
+                                              'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' +
+                                                       str(nino_years_obs)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                            # composites
+                            if len(nina_years_mod) > 0:
+                                nina_tauxlon_mod = Composite(tauxlon_mod, nina_years_mod, kwargs['frequency'])
+                                nina_tauxmap_mod = Composite(taux_mod, nina_years_mod, kwargs['frequency'])
+                            else:
+                                nina_tauxlon_mod = MyEmpty(tauxlon_mod[0], time=False)
+                                nina_tauxmap_mod = MyEmpty(taux_mod[0], time=False)
+                            if len(nino_years_mod) > 0:
+                                nino_tauxlon_mod = Composite(tauxlon_mod, nino_years_mod, kwargs['frequency'])
+                                nino_tauxmap_mod = Composite(taux_mod, nino_years_mod, kwargs['frequency'])
+                            else:
+                                nino_tauxlon_mod = MyEmpty(tauxlon_mod[0], time=False)
+                                nino_tauxmap_mod = MyEmpty(taux_mod[0], time=False)
+                            if len(nina_years_obs) > 0:
+                                nina_tauxlon_obs = Composite(tauxlon_obs, nina_years_obs, kwargs['frequency'])
+                                nina_tauxmap_obs = Composite(taux_obs, nina_years_obs, kwargs['frequency'])
+                            else:
+                                nina_tauxlon_obs = MyEmpty(tauxlon_obs[0], time=False)
+                                nina_tauxmap_obs = MyEmpty(taux_obs[0], time=False)
+                            if len(nino_years_obs) > 0:
+                                nino_tauxlon_obs = Composite(tauxlon_obs, nino_years_obs, kwargs['frequency'])
+                                nino_tauxmap_obs = Composite(taux_obs, nino_years_obs, kwargs['frequency'])
+                            else:
+                                nino_tauxlon_obs = MyEmpty(tauxlon_obs[0], time=False)
+                                nino_tauxmap_obs = MyEmpty(taux_obs[0], time=False)
+                            # save
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            my_thresh = 'std' if normalize is True else 'C'
+                            my_units = '' if kwargs['normalization'] is True else '1e-3 N/m2'
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': region_ev + " SSTA during " + season_ev + " regressed against " +
+                                                    tauxbox + " TauxA"}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': region_ev + " SSTA during " + season_ev + " regressed against " +
+                                                    tauxbox + " TauxA"}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': region_ev + " SSTA during " + season_ev +
+                                                    " regressed against tropical Pacific TauxA"}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': region_ev + " SSTA during " + season_ev +
+                                                    " regressed against tropical Pacific TauxA"}
+                            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nina_years': str(nina_years_mod),
+                                     'description':
+                                         "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauxA during La Nina events"}
+                            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nino_years': str(nino_years_mod),
+                                     'description':
+                                         "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauxA during El Nino events"}
+                            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nina_years': str(nina_years_obs),
+                                     'description':
+                                         "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauxA during La Nina events"}
+                            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nino_years': str(nino_years_obs),
+                                     'description':
+                                         "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauxA during El Nino events"}
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=taux_mod_slope, var1_attributes=dict1,
+                                var1_name='sst_against_taux_lon__' + dataset1, var2=taux_obs_slope, var2_attributes=dict2,
+                                var2_name='sst_against_taux_lon__' + dataset2, var3=tauxmap_mod_slope,
+                                var3_attributes=dict3, var3_name='sst_against_taux_map__' + dataset1,
+                                var4=tauxmap_obs_slope, var4_attributes=dict4,
+                                var4_name='sst_against_taux_map__' + dataset2, var5=nina_tauxlon_mod,
+                                var5_attributes=dict5, var5_name='Nina_taux_lon__' + dataset1, var6=nina_tauxmap_mod,
+                                var6_attributes=dict5, var6_name='Nina_taux_map__' + dataset1, var7=nino_tauxlon_mod,
+                                var7_attributes=dict6, var7_name='Nino_taux_lon__' + dataset1, var8=nino_tauxmap_mod,
+                                var8_attributes=dict6, var8_name='Nino_taux_map__' + dataset1, var9=nina_tauxlon_obs,
+                                var9_attributes=dict7, var9_name='Nina_taux_lon__' + dataset2, var10=nina_tauxmap_obs,
+                                var10_attributes=dict7, var10_name='Nina_taux_map__' + dataset2, var11=nino_tauxlon_obs,
+                                var11_attributes=dict8, var11_name='Nino_taux_lon__' + dataset2, var12=nino_tauxmap_obs,
+                                var12_attributes=dict8, var12_name='Nino_taux_map__' + dataset2, global_attributes=dict9)
+                            del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
+
+    # Create output
+    EnsoTauxMetric = {
+        'name': Name, 'value': tauxRmse, 'value_error': tauxRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return EnsoTauxMetric
+
+
 def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tauxlandmaskfilemod, tauxlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
@@ -14910,6 +17930,10 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'shape1': '(mod) ' + str(tauxts_mod.shape), 'shape2': '(obs) ' + str(tauxts_obs.shape)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
 
+            # change units
+            tauxts_mod = tauxts_mod * 1e3
+            tauxts_obs = tauxts_obs * 1e3
+
             # Computes the root mean square difference
             tauxRmse, keyerror = RmsAxis(tauxts_mod, tauxts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
 
@@ -14973,6 +17997,9 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                               'shape1': '(mod) ' + str(tauxmap_mod.shape),
                                               'shape2': '(obs) ' + str(tauxmap_obs.shape)}
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                        # change units
+                        tauxmap_mod = tauxmap_mod * 1e3
+                        tauxmap_obs = tauxmap_obs * 1e3
                         # Meridional average
                         tauxhov_mod, keyerror_mod = AverageMeridional(tauxmap_mod)
                         tauxhov_obs, keyerror_obs = AverageMeridional(tauxmap_obs)
@@ -15126,6 +18153,986 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
         'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
     return EnsoTauxMetric
+
+
+def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                    tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tauylandmaskfilemod, tauylandmasknamemod,
+                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                    tauyfileobs, tauynameobs, tauyareafileobs, tauyareanameobs, tauylandmaskfileobs, tauylandmasknameobs,
+                    sstbox, tauybox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='',
+                    dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoTauyLonRmse() function computes meridional wind stress anomalies pattern associated with ENSO in a 'box'
+    (usually the equatorial_pacific)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param tauyfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled TAUY
+    :param tauynamemod: string
+        name of TAUY variable (tauu, tauuo) in 'tauyfilemod'
+    :param tauyareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUY areacell
+    :param tauyareanamemod: string, optional
+        name of areacell for the TAUY variable (areacella, areacello,...) in 'tauyareafilemod'
+    :param tauylandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUY landmask
+    :param tauylandmasknamemod: string, optional
+        name of landmask for the TAUY variable (sftlf,...) in 'tauylandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param tauyfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUY
+    :param tauynameobs: string
+        name of TAUY variable (tauy) in 'tauyfileobs'
+    :param tauyareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUY areacell
+    :param tauyareanameobs: string, optional
+        name of areacell for the TAUY variable (areacella, areacello,...) in 'tauyareafileobs'
+    :param tauylandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUY landmask
+    :param tauylandmasknameobs: string, optional
+        name of landmask for the TAUY variable (sftlf,...) in 'tauylandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param tauybox: string
+        name of box (e.g. 'equatorial_pacific') for TAUY
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoTauyMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = "ENSO Zonal TAUYA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauybox + " TAUYA"
+    Units = '' if kwargs['normalization'] else '1e-3 N/m2/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoTauyLonRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+        sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod, name_area=sstareanamemod,
+        file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+        sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs, name_area=sstareanameobs,
+        file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+    tauy_mod, tauy_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+        tauyfilemod, tauynamemod, 'wind stress', metric, tauybox, file_area=tauyareafilemod, name_area=tauyareanamemod,
+        file_mask=tauylandmaskfilemod, name_mask=tauylandmasknamemod, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    tauy_obs, tauy_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+        tauyfileobs, tauynameobs, 'wind stress', metric, tauybox, file_area=tauyareafileobs, name_area=tauyareanameobs,
+        file_mask=tauylandmaskfileobs, name_mask=tauylandmasknameobs, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, tauy_mod, keyerror_mod3 = CheckTime(sst_mod, tauy_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, tauy_obs, keyerror_obs3 = CheckTime(sst_obs, tauy_obs, metric_name=metric, debug=debug, **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        tauyRmse, tauyRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, _, keyerror_mod1 = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        enso_obs, _, keyerror_obs1 = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        tauy_mod, Method, keyerror_mod2 = PreProcessTS(
+            tauy_mod, Method, areacell=tauy_mod_areacell, compute_anom=False, region=tauybox,
+            **kwargs)
+        tauy_obs, _, keyerror_obs2 = PreProcessTS(
+            tauy_obs, '', areacell=tauy_obs_areacell, compute_anom=False, region=tauybox, **kwargs)
+        del tauy_mod_areacell, tauy_obs_areacell, sst_mod_areacell, sst_obs_areacell
+        if (keyerror_mod1 is not None or keyerror_obs1 is not None) or \
+                (keyerror_mod2 is not None or keyerror_obs2 is not None):
+            tauyRmse, tauyRmseErr = None, None
+            dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        else:
+            if debug is True:
+                dict_debug = {
+                    'axes1': '(mod sst) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                    'axes2': '(obs sst) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                    'axes3': '(mod tauy) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                    'axes4': '(obs tauy) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                    'shape1': '(mod sst) ' + str(enso_mod.shape), 'shape2': '(obs sst) ' + str(enso_obs.shape),
+                    'shape3': '(mod tauy) ' + str(tauy_mod.shape), 'shape4': '(obs tauy) ' + str(tauy_obs.shape),
+                    'time1': '(mod sst) ' + str(TimeBounds(enso_mod)),
+                    'time2': '(obs sst) ' + str(TimeBounds(enso_obs)),
+                    'time3': '(mod tauy) ' + str(TimeBounds(tauy_mod)),
+                    'time4': '(obs tauy) ' + str(TimeBounds(tauy_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # 1.2 Seasonal mean and anomalies
+            enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+            enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(enso_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+            
+            # ------------------------------------------------
+            # 2. spatial TauyA
+            # ------------------------------------------------
+            # 2.2 Seasonal mean and anomalies
+            tauy_mod = SeasonalMean(tauy_mod, season_ev, compute_anom=True)
+            tauy_obs = SeasonalMean(tauy_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(tauy_mod.shape), 'shape2': '(obs) ' + str(tauy_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(tauy_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(tauy_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+            # ------------------------------------------------
+            # 3. Regression map
+            # ------------------------------------------------
+            # Regridding
+            if isinstance(kwargs['regridding'], dict):
+                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                              'regridTool', 'regridMethod'}
+                extra_args = set(kwargs['regridding']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                tauy_mod, tauy_obs, Method = TwoVarRegrid(
+                    tauy_mod, tauy_obs, Method, region=tauybox, **kwargs['regridding'])
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauy_mod.shape),
+                                  'shape2': '(obs) ' + str(tauy_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+
+            # change units
+            tauy_mod = tauy_mod * 1e3
+            tauy_obs = tauy_obs * 1e3
+
+            # Meridional average
+            tauylon_mod, keyerror_mod = AverageMeridional(tauy_mod)
+            tauylon_obs, keyerror_obs = AverageMeridional(tauy_obs)
+            if keyerror_mod is not None or keyerror_obs is not None:
+                tauyRmse, tauyRmseErr = None, None
+                dive_down_diag = {'model': None, 'observations': None, 'axisLat': None, 'axisLon': None}
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            else:
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauylon_mod.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauylon_obs.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauylon_mod.shape),
+                                  'shape2': '(obs) ' + str(tauylon_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+
+                # regression
+                tauy_mod_slope = LinearRegressionTsAgainstMap(tauylon_mod, enso_mod, return_stderr=False)
+                tauy_obs_slope = LinearRegressionTsAgainstMap(tauylon_obs, enso_obs, return_stderr=False)
+                if debug is True:
+                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod_slope.getAxisList()]),
+                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs_slope.getAxisList()]),
+                                  'shape1': '(mod) ' + str(tauy_mod_slope.shape),
+                                  'shape2': '(obs) ' + str(tauy_obs_slope.shape)}
+                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+
+                # Computes the root mean square difference
+                tauyRmse, keyerror = RmsZonal(tauy_mod_slope, tauy_obs_slope, centered=centered_rmse, biased=biased_rmse)
+
+                # Error on the metric
+                tauyRmseErr = None
+
+                # Dive down diagnostic
+                dive_down_diag = {'model': ArrayToList(tauy_mod_slope), 'observations': ArrayToList(tauy_obs_slope),
+                                  'axis': list(tauy_mod_slope.getAxis(0)[:])}
+
+                if netcdf is True:
+                    # Read file and select the right region
+                    tauy_mod, tauy_mod_areacell, keyerror_mod = Read_data_mask_area(
+                        tauyfilemod, tauynamemod, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauyareafilemod, name_area=tauyareanamemod, file_mask=tauylandmaskfilemod,
+                        name_mask=tauylandmasknamemod, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                    tauy_obs, tauy_obs_areacell, keyerror_obs = Read_data_mask_area(
+                        tauyfileobs, tauynameobs, 'wind stress', metric, 'equatorial_pacific_LatExt2',
+                        file_area=tauyareafileobs, name_area=tauyareanameobs, file_mask=tauylandmaskfileobs,
+                        name_mask=tauylandmasknameobs, maskland=True, maskocean=False,
+                        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+                        tauy_mod, _, keyerror_mod = PreProcessTS(
+                            tauy_mod, '', areacell=tauy_mod_areacell, compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        tauy_obs, _, keyerror_obs = PreProcessTS(
+                            tauy_obs, '', areacell=tauy_obs_areacell, compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del tauy_mod_areacell, tauy_obs_areacell
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(tauy_mod.shape),
+                                              'shape2': '(obs) ' + str(tauy_obs.shape),
+                                              'time1': '(mod) ' + str(TimeBounds(tauy_mod)),
+                                              'time2': '(obs) ' + str(TimeBounds(tauy_obs))}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                            # Seasonal mean and anomalies
+                            tauy_mod = SeasonalMean(tauy_mod, season_ev, compute_anom=True)
+                            tauy_obs = SeasonalMean(tauy_obs, season_ev, compute_anom=True)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(tauy_mod.shape),
+                                              'shape2': '(obs) ' + str(tauy_obs.shape),
+                                              'time1': '(mod) ' + str(TimeBounds(tauy_mod)),
+                                              'time2': '(obs) ' + str(TimeBounds(tauy_obs))}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+                            # Regridding
+                            if isinstance(kwargs['regridding'], dict):
+                                known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name',
+                                              'regridder', 'regridTool', 'regridMethod'}
+                                extra_args = set(kwargs['regridding']) - known_args
+                                if extra_args:
+                                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                                tauy_mod, tauy_obs, _ = TwoVarRegrid(
+                                    tauy_mod, tauy_obs, '', region='equatorial_pacific_LatExt2',
+                                    **kwargs['regridding'])
+                                if debug is True:
+                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                                                  'axes2': '(obs) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                                                  'shape1': '(mod) ' + str(tauy_mod.shape),
+                                                  'shape2': '(obs) ' + str(tauy_obs.shape)}
+                                    EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                            # change units
+                            tauy_mod = tauy_mod * 1e3
+                            tauy_obs = tauy_obs * 1e3
+                            # Linear regression
+                            tauymap_mod_slope = LinearRegressionTsAgainstMap(tauy_mod, enso_mod, return_stderr=False)
+                            tauymap_obs_slope = LinearRegressionTsAgainstMap(tauy_obs, enso_obs, return_stderr=False)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauymap_mod_slope.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in tauymap_obs_slope.getAxisList()]),
+                                              'shape1': '(mod) ' + str(tauymap_mod_slope.shape),
+                                              'shape2': '(obs) ' + str(tauymap_obs_slope.shape)}
+                                EnsoErrorsWarnings.debug_mode(
+                                    '\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
+                            # Lists event years
+                            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            if debug is True:
+                                dict_debug = {'nina1': '(mod) nbr(' + str(len(nina_years_mod)) + '): ' +
+                                                       str(nina_years_mod),
+                                              'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' +
+                                                       str(nina_years_obs),
+                                              'nino1': '(mod) nbr(' + str(len(nino_years_mod)) + '): ' +
+                                                       str(nino_years_mod),
+                                              'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' +
+                                                       str(nino_years_obs)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                            # composites
+                            if len(nina_years_mod) > 0:
+                                nina_tauylon_mod = Composite(tauylon_mod, nina_years_mod, kwargs['frequency'])
+                                nina_tauymap_mod = Composite(tauy_mod, nina_years_mod, kwargs['frequency'])
+                            else:
+                                nina_tauylon_mod = MyEmpty(tauylon_mod[0], time=False)
+                                nina_tauymap_mod = MyEmpty(tauy_mod[0], time=False)
+                            if len(nino_years_mod) > 0:
+                                nino_tauylon_mod = Composite(tauylon_mod, nino_years_mod, kwargs['frequency'])
+                                nino_tauymap_mod = Composite(tauy_mod, nino_years_mod, kwargs['frequency'])
+                            else:
+                                nino_tauylon_mod = MyEmpty(tauylon_mod[0], time=False)
+                                nino_tauymap_mod = MyEmpty(tauy_mod[0], time=False)
+                            if len(nina_years_obs) > 0:
+                                nina_tauylon_obs = Composite(tauylon_obs, nina_years_obs, kwargs['frequency'])
+                                nina_tauymap_obs = Composite(tauy_obs, nina_years_obs, kwargs['frequency'])
+                            else:
+                                nina_tauylon_obs = MyEmpty(tauylon_obs[0], time=False)
+                                nina_tauymap_obs = MyEmpty(tauy_obs[0], time=False)
+                            if len(nino_years_obs) > 0:
+                                nino_tauylon_obs = Composite(tauylon_obs, nino_years_obs, kwargs['frequency'])
+                                nino_tauymap_obs = Composite(tauy_obs, nino_years_obs, kwargs['frequency'])
+                            else:
+                                nino_tauylon_obs = MyEmpty(tauylon_obs[0], time=False)
+                                nino_tauymap_obs = MyEmpty(tauy_obs[0], time=False)
+                            # save
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            my_thresh = 'std' if normalize is True else 'C'
+                            my_units = '' if kwargs['normalization'] is True else '1e-3 N/m2'
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': region_ev + " SSTA during " + season_ev + " regressed against " +
+                                                    tauybox + " TauyA"}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': region_ev + " SSTA during " + season_ev + " regressed against " +
+                                                    tauybox + " TauyA"}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': region_ev + " SSTA during " + season_ev +
+                                                    " regressed against tropical Pacific TauyA"}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': region_ev + " SSTA during " + season_ev +
+                                                    " regressed against tropical Pacific TauyA"}
+                            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nina_years': str(nina_years_mod),
+                                     'description':
+                                         "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauyA during La Nina events"}
+                            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nino_years': str(nino_years_mod),
+                                     'description':
+                                         "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauyA during El Nino events"}
+                            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nina_years': str(nina_years_obs),
+                                     'description':
+                                         "Nina events = " + region_ev + " SSTA < -" + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauyA during La Nina events"}
+                            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nino_years': str(nino_years_obs),
+                                     'description':
+                                         "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
+                                         " during " + season_ev + ", this is the composite of TauyA during El Nino events"}
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
+                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=tauy_mod_slope, var1_attributes=dict1,
+                                var1_name='sst_against_tauy_lon__' + dataset1, var2=tauy_obs_slope, var2_attributes=dict2,
+                                var2_name='sst_against_tauy_lon__' + dataset2, var3=tauymap_mod_slope,
+                                var3_attributes=dict3, var3_name='sst_against_tauy_map__' + dataset1,
+                                var4=tauymap_obs_slope, var4_attributes=dict4,
+                                var4_name='sst_against_tauy_map__' + dataset2, var5=nina_tauylon_mod,
+                                var5_attributes=dict5, var5_name='Nina_tauy_lon__' + dataset1, var6=nina_tauymap_mod,
+                                var6_attributes=dict5, var6_name='Nina_tauy_map__' + dataset1, var7=nino_tauylon_mod,
+                                var7_attributes=dict6, var7_name='Nino_tauy_lon__' + dataset1, var8=nino_tauymap_mod,
+                                var8_attributes=dict6, var8_name='Nino_tauy_map__' + dataset1, var9=nina_tauylon_obs,
+                                var9_attributes=dict7, var9_name='Nina_tauy_lon__' + dataset2, var10=nina_tauymap_obs,
+                                var10_attributes=dict7, var10_name='Nina_tauy_map__' + dataset2, var11=nino_tauylon_obs,
+                                var11_attributes=dict8, var11_name='Nino_tauy_lon__' + dataset2, var12=nino_tauymap_obs,
+                                var12_attributes=dict8, var12_name='Nino_tauy_map__' + dataset2, global_attributes=dict9)
+                            del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
+
+    # Create output
+    EnsoTauyMetric = {
+        'name': Name, 'value': tauyRmse, 'value_error': tauyRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return EnsoTauyMetric
+
+
+def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tauylandmaskfilemod, tauylandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   tauyfileobs, tauynameobs, tauyareafileobs, tauyareanameobs, tauylandmaskfileobs, tauylandmasknameobs,
+                   sstbox, tauybox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='',
+                   dataset2='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+    """
+    The EnsoTauyTsRmse() function computes meridional wind stress anomalies life cycle associated with ENSO in a 'tauybox'
+    (usually the nino3) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and lagging
+    ENSO)
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param tauyfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled TAUY
+    :param tauynamemod: string
+        name of TAUY variable (tauu, tauuo) in 'tauyfilemod'
+    :param tauyareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUY areacell
+    :param tauyareanamemod: string, optional
+        name of areacell for the TAUY variable (areacella, areacello,...) in 'tauyareafilemod'
+    :param tauylandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled TAUY landmask
+    :param tauylandmasknamemod: string, optional
+        name of landmask for the TAUY variable (sftlf,...) in 'tauylandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param tauyfileobs: string
+        path_to/filename of the file (NetCDF) of the observed TAUY
+    :param tauynameobs: string
+        name of TAUY variable (tauy) in 'tauyfileobs'
+    :param tauyareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUY areacell
+    :param tauyareanameobs: string, optional
+        name of areacell for the TAUY variable (areacella, areacello,...) in 'tauyareafileobs'
+    :param tauylandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed TAUY landmask
+    :param tauylandmasknameobs: string, optional
+        name of landmask for the TAUY variable (sftlf,...) in 'tauylandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param tauybox: string
+        name of box (e.g. 'nino3') for TAUY
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'HadISST',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return EnsoTauyMetric: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # setting variables
+    region_ev = event_definition['region_ev']
+    season_ev = event_definition['season_ev']
+    threshold = event_definition['threshold']
+    normalize = event_definition['normalization']
+    # test given kwargs
+    needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
+                    'time_bounds_obs']
+    for arg in needed_kwarg:
+        try:
+            kwargs[arg]
+        except:
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    Name = "ENSO life cyle TAUYA pattern"
+    Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauybox + " TAUYA during " + \
+             str(nbr_years_window) + " years (centered on ENSO)"
+    Units = '' if kwargs['normalization'] else '1e-3 N/m2/C'
+    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    metric = 'EnsoTauyTsRmse'
+    if metname == '':
+        metname = deepcopy(metric)
+
+    # Read file and select the right region
+    if debug is True:
+        EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
+    sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+        sstfilemod, sstnamemod, 'temperature', metric, region_ev, file_area=sstareafilemod, name_area=sstareanamemod,
+        file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+        sstfileobs, sstnameobs, 'temperature', metric, region_ev, file_area=sstareafileobs, name_area=sstareanameobs,
+        file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+    tauy_mod, tauy_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+        tauyfilemod, tauynamemod, 'wind stress', metric, tauybox, file_area=tauyareafilemod, name_area=tauyareanamemod,
+        file_mask=tauylandmaskfilemod, name_mask=tauylandmasknamemod, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    tauy_obs, tauy_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+        tauyfileobs, tauynameobs, 'wind stress', metric, tauybox, file_area=tauyareafileobs, name_area=tauyareanameobs,
+        file_mask=tauylandmaskfileobs, name_mask=tauylandmasknameobs, maskland=False, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+
+    # Checks if the same time period is used for both variables and if the minimum number of time steps is respected
+    sst_mod, tauy_mod, keyerror_mod3 = CheckTime(sst_mod, tauy_mod, metric_name=metric, debug=debug, **kwargs)
+    sst_obs, tauy_obs, keyerror_obs3 = CheckTime(sst_obs, tauy_obs, metric_name=metric, debug=debug, **kwargs)
+
+    # Number of years
+    yearN_mod = int(round(sst_mod.shape[0] / 12))
+    yearN_obs = int(round(sst_obs.shape[0] / 12))
+
+    # Time period
+    actualtimebounds_mod = TimeBounds(sst_mod)
+    actualtimebounds_obs = TimeBounds(sst_obs)
+
+    if (keyerror_mod1 is not None or keyerror_obs1 is not None or keyerror_mod2 is not None) or \
+            (keyerror_obs2 is not None or keyerror_mod3 is not None or keyerror_obs3 is not None):
+        tauyRmse, tauyRmseErr = None, None
+        dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+        tmp = [keyerror_mod1, keyerror_mod2, keyerror_mod3, keyerror_obs1, keyerror_obs2, keyerror_obs3]
+        keyerror = add_up_errors(tmp)
+    else:
+        # ------------------------------------------------
+        # 1. box SSTA
+        # ------------------------------------------------
+        # 1.1 SSTA averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        # Preprocess sst (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+        enso_mod, _, keyerror_mod1 = PreProcessTS(sst_mod, '', areacell=sst_mod_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        enso_obs, _, keyerror_obs1 = PreProcessTS(sst_obs, '', areacell=sst_obs_areacell, average='horizontal',
+                                                  compute_anom=False, region=region_ev, **kwargs)
+        tauy_mod, Method, keyerror_mod2 = PreProcessTS(
+            tauy_mod, Method, areacell=tauy_mod_areacell, average='horizontal', compute_anom=True, region=tauybox,
+            **kwargs)
+        tauy_obs, _, keyerror_obs2 = PreProcessTS(
+            tauy_obs, '', areacell=tauy_obs_areacell, average='horizontal', compute_anom=True, region=tauybox, **kwargs)
+        del tauy_mod_areacell, tauy_obs_areacell, sst_mod_areacell, sst_obs_areacell
+        if (keyerror_mod1 is not None or keyerror_obs1 is not None) or \
+                (keyerror_mod2 is not None or keyerror_obs2 is not None):
+            tauyRmse, tauyRmseErr = None, None
+            dive_down_diag = {'model': None, 'observations': None, 'axis': None}
+            keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        else:
+            if debug is True:
+                dict_debug = {
+                    'axes1': '(mod sst) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                    'axes2': '(obs sst) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                    'axes3': '(mod tauy) ' + str([ax.id for ax in tauy_mod.getAxisList()]),
+                    'axes4': '(obs tauy) ' + str([ax.id for ax in tauy_obs.getAxisList()]),
+                    'shape1': '(mod sst) ' + str(enso_mod.shape), 'shape2': '(obs sst) ' + str(enso_obs.shape),
+                    'shape3': '(mod tauy) ' + str(tauy_mod.shape), 'shape4': '(obs tauy) ' + str(tauy_obs.shape),
+                    'time1': '(mod sst) ' + str(TimeBounds(enso_mod)),
+                    'time2': '(obs sst) ' + str(TimeBounds(enso_obs)),
+                    'time3': '(mod tauy) ' + str(TimeBounds(tauy_mod)),
+                    'time4': '(obs tauy) ' + str(TimeBounds(tauy_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+
+            # 1.2 Seasonal mean and anomalies
+            enso_mod = SeasonalMean(enso_mod, season_ev, compute_anom=True)
+            enso_obs = SeasonalMean(enso_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
+                              'time1': '(mod) ' + str(TimeBounds(enso_mod)),
+                              'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
+
+            # ------------------------------------------------
+            # 2. Regression map
+            # ------------------------------------------------
+            tauyts_mod = LinearRegressionTsAgainstTs(
+                tauy_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs['frequency'], debug=debug)
+            tauyts_obs = LinearRegressionTsAgainstTs(
+                tauy_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs['frequency'], debug=debug)
+            if debug is True:
+                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauyts_mod.getAxisList()]),
+                              'axes2': '(obs) ' + str([ax.id for ax in tauyts_obs.getAxisList()]),
+                              'shape1': '(mod) ' + str(tauyts_mod.shape), 'shape2': '(obs) ' + str(tauyts_obs.shape)}
+                EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+
+            # change units
+            tauyts_mod = tauyts_mod * 1e3
+            tauyts_obs = tauyts_obs * 1e3
+
+            # Computes the root mean square difference
+            tauyRmse, keyerror = RmsAxis(tauyts_mod, tauyts_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+
+            # Error on the metric
+            tauyRmseErr = None
+
+            # Dive down diagnostic
+            dive_down_diag = {'model': ArrayToList(tauyts_mod), 'observations': ArrayToList(tauyts_obs),
+                              'axis': list(tauyts_mod.getAxis(0)[:])}
+
+            if netcdf is True:
+                # Read file and select the right region
+                tauymap_mod, tauymap_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+                    tauyfilemod, tauynamemod, 'wind stress', metric, 'equatorial_pacific', file_area=tauyareafilemod,
+                    name_area=tauyareanamemod, file_mask=tauylandmaskfilemod, name_mask=tauylandmasknamemod,
+                    maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+                tauymap_obs, tauymap_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+                    tauyfileobs, tauynameobs, 'wind stress', metric, 'equatorial_pacific', file_area=tauyareafileobs,
+                    name_area=tauyareanameobs, file_mask=tauylandmaskfileobs, name_mask=tauylandmasknameobs,
+                    maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
+                # Checks if the same time period is used for both variables
+                sst_mod, tauymap_mod, keyerror_mod2 = CheckTime(
+                    sst_mod, tauymap_mod, metric_name=metric, debug=debug, **kwargs)
+                sst_obs, tauymap_obs, keyerror_obs2 = CheckTime(
+                    sst_obs, tauymap_obs, metric_name=metric, debug=debug, **kwargs)
+                if (keyerror_mod1 is not None or keyerror_obs1 is not None) or \
+                        (keyerror_mod2 is not None or keyerror_obs2 is not None):
+                    keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+                else:
+                    # Preprocess ts (computes anomalies, normalizes, detrends TS, smoothes TS, averages horizontally)
+                    tauymap_mod, _, keyerror_mod = PreProcessTS(
+                        tauymap_mod, '', areacell=tauymap_mod_areacell, compute_anom=True, region="equatorial_pacific",
+                        **kwargs)
+                    tauymap_obs, _, keyerror_obs = PreProcessTS(
+                        tauymap_obs, '', areacell=tauymap_obs_areacell, compute_anom=True, region="equatorial_pacific",
+                        **kwargs)
+                    del tauymap_mod_areacell, tauymap_obs_areacell
+                    if keyerror_mod is not None or keyerror_obs is not None:
+                        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                    else:
+                        if debug is True:
+                            dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauymap_mod.getAxisList()]),
+                                          'axes2': '(obs) ' + str([ax.id for ax in tauymap_obs.getAxisList()]),
+                                          'shape1': '(mod) ' + str(tauymap_mod.shape),
+                                          'shape2': '(obs) ' + str(tauymap_obs.shape),
+                                          'time1': '(mod) ' + str(TimeBounds(tauymap_mod)),
+                                          'time2': '(obs) ' + str(TimeBounds(tauymap_obs))}
+                            EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
+                        # Regridding
+                        if isinstance(kwargs['regridding'], dict):
+                            known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name',
+                                          'regridder', 'regridTool', 'regridMethod'}
+                            extra_args = set(kwargs['regridding']) - known_args
+                            if extra_args:
+                                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                            tauymap_mod, tauymap_obs, _ = TwoVarRegrid(
+                                tauymap_mod, tauymap_obs, '', region='equatorial_pacific', **kwargs['regridding'])
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauymap_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in tauymap_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(tauymap_mod.shape),
+                                              'shape2': '(obs) ' + str(tauymap_obs.shape)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
+                        # change units
+                        tauymap_mod = tauymap_mod * 1e3
+                        tauymap_obs = tauymap_obs * 1e3
+                        # Meridional average
+                        tauyhov_mod, keyerror_mod = AverageMeridional(tauymap_mod)
+                        tauyhov_obs, keyerror_obs = AverageMeridional(tauymap_obs)
+                        if keyerror_mod is not None or keyerror_obs is not None:
+                            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+                        else:
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in tauyhov_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in tauyhov_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(tauyhov_mod.shape),
+                                              'shape2': '(obs) ' + str(tauyhov_obs.shape)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
+                            # Linear regression
+                            regtauyhov_mod = LinearRegressionTsAgainstTs(
+                                tauyhov_mod, enso_mod, nbr_years_window, return_stderr=False,
+                                frequency=kwargs['frequency'], debug=debug)
+                            regtauyhov_obs = LinearRegressionTsAgainstTs(
+                                tauyhov_obs, enso_obs, nbr_years_window, return_stderr=False,
+                                frequency=kwargs['frequency'], debug=debug)
+                            if debug is True:
+                                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in regtauyhov_mod.getAxisList()]),
+                                              'axes2': '(obs) ' + str([ax.id for ax in regtauyhov_obs.getAxisList()]),
+                                              'shape1': '(mod) ' + str(regtauyhov_mod.shape),
+                                              'shape2': '(obs) ' + str(regtauyhov_obs.shape)}
+                                EnsoErrorsWarnings.debug_mode(
+                                    '\033[92m', 'after LinearRegressionTsAgainstTs', 15, **dict_debug)
+                            # Lists event years
+                            nina_years_mod = DetectEvents(enso_mod, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_mod = DetectEvents(enso_mod, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            nina_years_obs = DetectEvents(enso_obs, season_ev, -threshold, normalization=normalize,
+                                                          nino=False, compute_season=False)
+                            nino_years_obs = DetectEvents(enso_obs, season_ev, threshold, normalization=normalize,
+                                                          nino=True, compute_season=False)
+                            if debug is True:
+                                dict_debug = {
+                                    'nina1': '(mod) nbr(' + str(len(nina_years_mod)) + '): ' + str(nina_years_mod),
+                                    'nina2': '(obs) nbr(' + str(len(nina_years_obs)) + '): ' + str(nina_years_obs),
+                                    'nino1': '(mod) nbr(' + str(len(nino_years_mod)) + '): ' + str(nino_years_mod),
+                                    'nino2': '(obs) nbr(' + str(len(nino_years_obs)) + '): ' + str(nino_years_obs)}
+                                EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
+                            # composites
+                            if len(nina_years_mod) > 0:
+                                nina_tauy_mod = Composite(
+                                    tauy_mod, nina_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nina_tauyhov_mod = Composite(
+                                    tauyhov_mod, nina_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nina_tauy_mod = MyEmpty(tauy_mod[:12 * nbr_years_window], time=True, time_id='months')
+                                nina_tauyhov_mod = MyEmpty(
+                                    tauyhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+                            if len(nino_years_mod) > 0:
+                                nino_tauy_mod = Composite(
+                                    tauy_mod, nino_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nino_tauyhov_mod = Composite(
+                                    tauyhov_mod, nino_years_mod, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nino_tauy_mod = MyEmpty(tauy_mod[:12 * nbr_years_window], time=True, time_id='months')
+                                nino_tauyhov_mod = MyEmpty(
+                                    tauyhov_mod[:12 * nbr_years_window], time=True, time_id='months')
+                            if len(nina_years_obs) > 0:
+                                nina_tauy_obs = Composite(
+                                    tauy_obs, nina_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nina_tauyhov_obs = Composite(
+                                    tauyhov_obs, nina_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nina_tauy_obs = MyEmpty(tauy_obs[:12 * nbr_years_window], time=True, time_id='months')
+                                nina_tauyhov_obs = MyEmpty(
+                                    tauyhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+                            if len(nino_years_obs) > 0:
+                                nino_tauy_obs = Composite(
+                                    tauy_obs, nino_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                                nino_tauyhov_obs = Composite(
+                                    tauyhov_obs, nino_years_obs, kwargs['frequency'], nbr_years_window=nbr_years_window)
+                            else:
+                                nino_tauy_obs = MyEmpty(tauy_obs[:12 * nbr_years_window], time=True, time_id='months')
+                                nino_tauyhov_obs = MyEmpty(
+                                    tauyhov_obs[:12 * nbr_years_window], time=True, time_id='months')
+                            # save
+                            if ".nc" in netcdf_name:
+                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                            else:
+                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                            my_thresh = 'std' if normalize is True else 'C'
+                            my_units = '' if kwargs['normalization'] is True else '1e-3 N/m2'
+                            dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': "time series of " + region_ev + " SSTA " + season_ev +
+                                     " regressed against " + tauybox + " TAUYA during " + str(nbr_years_window) +
+                                                    " years (centered on ENSO)"}
+                            dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': "time series of " + region_ev + " SSTA " + season_ev +
+                                                    " regressed against " + tauybox + " TAUYA during " +
+                                                    str(nbr_years_window) + " years (centered on ENSO)"}
+                            dict3 = {'units': Units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod),
+                                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " +
+                                                    season_ev + " regressed against equatorial Pacific TAUYA during " +
+                                                    str(nbr_years_window) + " years (centered on ENSO)"}
+                            dict4 = {'units': Units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs),
+                                     'description': "hovmoeller (time - longitude) of " + region_ev + " SSTA " +
+                                                    season_ev + " regressed against equatorial Pacific TAUYA during " +
+                                                    str(nbr_years_window) + " years (centered on ENSO)"}
+                            dict5 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nina_years': str(nina_years_mod),
+                                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", TAUYA composited during La Nina events"}
+                            dict6 = {'units': my_units, 'number_of_years_used': yearN_mod,
+                                     'time_period': str(actualtimebounds_mod), 'nino_years': str(nino_years_mod),
+                                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", TAUYA composited during El Nino events"}
+                            dict7 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nina_years': str(nina_years_obs),
+                                     'description': "Nina events = " + region_ev + " SSTA < -" + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", TAUYA composited during La Nina events"}
+                            dict8 = {'units': my_units, 'number_of_years_used': yearN_obs,
+                                     'time_period': str(actualtimebounds_obs), 'nino_years': str(nino_years_obs),
+                                     'description': "Nino events = " + region_ev + " SSTA > " + str(threshold) +
+                                                    my_thresh + " during " + season_ev +
+                                                    ", TAUYA composited during El Nino events"}
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: tauyRmse,
+                                     'metric_value_error_' + dataset2: tauyRmseErr, 'metric_method': Method,
+                                     'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                            SaveNetcdf(
+                                file_name, var1=tauyts_mod, var1_attributes=dict1,
+                                var1_name='sst_against_tauy_ts__' + dataset1, var2=tauyts_obs, var2_attributes=dict2,
+                                var2_name='sst_against_tauy_ts__' + dataset2, var3=regtauyhov_mod,
+                                var3_attributes=dict3, var3_name='sst_against_tauy_hov__' + dataset1,
+                                var4=regtauyhov_obs, var4_attributes=dict4,
+                                var4_name='sst_against_tauy_hov__' + dataset2, var5=nina_tauy_mod,
+                                var5_attributes=dict5, var5_name='Nina_tauy_ts__' + dataset1, var6=nina_tauyhov_mod,
+                                var6_attributes=dict5, var6_name='Nina_tauy_hov__' + dataset1, var7=nino_tauy_mod,
+                                var7_attributes=dict6, var7_name='Nino_tauy_ts__' + dataset1, var8=nino_tauyhov_mod,
+                                var8_attributes=dict6, var8_name='Nino_tauy_hov__' + dataset1, var9=nina_tauy_obs,
+                                var9_attributes=dict7, var9_name='Nina_tauy_ts__' + dataset2, var10=nina_tauyhov_obs,
+                                var10_attributes=dict7, var10_name='Nina_tauy_hov__' + dataset2, var11=nino_tauy_obs,
+                                var11_attributes=dict8, var11_name='Nino_tauy_ts__' + dataset2, var12=nino_tauyhov_obs,
+                                var12_attributes=dict8, var12_name='Nino_tauy_hov__' + dataset2,
+                                global_attributes=dict9)
+                            del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
+    # Create output
+    EnsoTauyMetric = {
+        'name': Name, 'value': tauyRmse, 'value_error': tauyRmseErr, 'units': Units, 'method': Method,
+        'nyears_model': yearN_mod, 'nyears_observations': yearN_obs, 'time_frequency': kwargs['frequency'],
+        'time_period_model': actualtimebounds_mod, 'time_period_observations': actualtimebounds_obs, 'ref': Ref,
+        'keyerror': keyerror, 'dive_down_diag': dive_down_diag}
+    return EnsoTauyMetric
 
 
 def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod, prfilemod,

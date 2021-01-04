@@ -9,11 +9,15 @@ from os import remove as OSremove
 from .EnsoCollectionsLib import defCollection, ReferenceObservations
 from . import EnsoErrorsWarnings
 from .EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshRmse,\
+    BiasMldLatRmse, BiasMldLonRmse, BiasMldRmse,\
     BiasSstLatRmse, BiasSstLonRmse, BiasSstSkLonRmse, BiasSstRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxRmse,\
+    BiasTauyLatRmse, BiasTauyLonRmse, BiasTauyRmse,\
     EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf,\
     EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, EnsoPrDjfTel,\
     EnsoPrJjaTel, EnsoPrTsRmse, EnsoSeasonality, EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity,\
-    EnsoSstLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew, EnsoSstTsRmse, EnsoTauxTsRmse, NinaPrMap,\
+    EnsoMldLonRmse, EnsoSstLonRmse, EnsoTauxLonRmse, EnsoTauyLonRmse,\
+    EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew,\
+    EnsoMldTsRmse, EnsoSstTsRmse, EnsoTauxTsRmse, EnsoTauyTsRmse, NinaPrMap,\
     NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrMap,\
     NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse,\
     SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse,\
@@ -586,10 +590,12 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
 # Computation of the metric
 #
 dict_oneVar_modelAndObs = {
+    'BiasMldLatRmse': BiasMldLatRmse, 'BiasMldLonRmse': BiasMldLonRmse, 'BiasMldRmse': BiasMldRmse,
     'BiasPrLatRmse': BiasPrLatRmse, 'BiasPrLonRmse': BiasPrLonRmse, 'BiasPrRmse': BiasPrRmse,
     'BiasSshLatRmse': BiasSshLatRmse, 'BiasSshLonRmse': BiasSshLonRmse, 'BiasSshRmse': BiasSshRmse,
     'BiasSstLatRmse': BiasSstLatRmse, 'BiasSstLonRmse': BiasSstLonRmse, 'BiasSstRmse': BiasSstRmse,
     'BiasTauxLatRmse': BiasTauxLatRmse, 'BiasTauxLonRmse': BiasTauxLonRmse, 'BiasTauxRmse': BiasTauxRmse,
+    'BiasTauyLatRmse': BiasTauyLatRmse, 'BiasTauyLonRmse': BiasTauyLonRmse, 'BiasTauyRmse': BiasTauyRmse,
     'BiasSstSkLonRmse': BiasSstSkLonRmse,
     'EnsoSstLonRmse': EnsoSstLonRmse, 'NinaSstLonRmse': NinaSstLonRmse, 'NinoSstTsRmse': NinoSstTsRmse,
     'EnsoSstMap': EnsoSstMap, 'EnsoSstMapDjf': EnsoSstMapDjf, 'EnsoSstMapJja': EnsoSstMapJja, 'NinaSstMap': NinaSstMap,
@@ -607,7 +613,10 @@ dict_twoVar_modelAndObs = {
     'EnsoPrDjfTel': EnsoPrDjfTel, 'EnsoPrJjaTel': EnsoPrJjaTel,
     'EnsoSlpMap': EnsoSlpMap, 'EnsoSlpMapDjf': EnsoSlpMapDjf, 'EnsoSlpMapJja': EnsoSlpMapJja,
     'NinaPrMap': NinaPrMap, 'NinaSlpMap': NinaSlpMap, 'NinoPrMap': NinoPrMap, 'NinoSlpMap': NinoSlpMap,
-    'EnsoPrTsRmse': EnsoPrTsRmse, 'EnsoTauxTsRmse': EnsoTauxTsRmse,
+    'EnsoPrTsRmse': EnsoPrTsRmse,
+    'EnsoMldLonRmse': EnsoMldLonRmse, 'EnsoMldTsRmse': EnsoMldTsRmse,
+    'EnsoTauxLonRmse': EnsoTauxLonRmse, 'EnsoTauxTsRmse': EnsoTauxTsRmse,
+    'EnsoTauyLonRmse': EnsoTauyLonRmse, 'EnsoTauyTsRmse': EnsoTauyTsRmse,
 }
 
 dict_oneVar = {

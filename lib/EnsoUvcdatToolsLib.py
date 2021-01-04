@@ -1165,7 +1165,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     #################################################################################
     Description:
     Checks the units of the variable and changes it if necessary
-    Works for current/wind velocities, heat flux, precipitation, pressure, temperature, wind stress
+    Works for current/wind velocities, depth, heat flux, precipitation, pressure, temperature, wind stress
 
     Uses MV2 (uvcdat) to find the minimum value, to multiply and to subtract
     #################################################################################
@@ -1206,7 +1206,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                        'deg_celsius', 'deg_Celsius', 'degC', 'degcelsius', 'degCelsius', 'deg. C', 'deg. celsius',
                        'deg. Celsius']:
             # check if the temperature units is really degC
-            if float(MV2minimum(tab)) > 50:
+            if float(MV2minimum(tab)) > 100:
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, minmax, units, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
@@ -1257,11 +1257,11 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "Pa"
-    elif var_name in ['sea surface height']:
-        if units in ['cm', 'centimeter']:
+    elif var_name in ["depth", 'sea surface height']:
+        if units in ['cm', 'centimeter', "centimeters"]:
             # unit change of the sea surface height: from cm to m
             tab = dict_operations['multiply'](tab, 1e-2)
-        elif units in ['m', 'meter']:
+        elif units in ['m', 'meter', "meters"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
@@ -3516,7 +3516,8 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
             dict_debug = {'line1': 'areacell is None '}
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
-    if name_data in ["msla", "sla", "sshg", "ssh", "sst", "taux", "tauuo", "tos", "zos"]:
+    if name_data in ["msla", "sla", "sshg", "ssh", "sst", "tauuo", "tauvo", "taux", "tauy", "tos", "zos"]\
+        or "GODAS" in file_data or "SODA3.4.2" in file_data or "Tropflux" in file_data:
         landmask = None
     elif file_mask:
         landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)
