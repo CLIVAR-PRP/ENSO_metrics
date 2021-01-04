@@ -35,23 +35,23 @@ plot_ref = True if project == "obs2obs" else False
 # True to use the set of metric in the BAMS paper
 # More metric have been computed and tested but not kept
 reduced_set = True  # False  #
-# computation version, 'v20200427' is provided with the package
-version = "v20200427"
+# computation version, 'v20200427' for models and 'v20201231' for obs are provided with the package
+version_mod = "v20200427"
+version_obs = "v20201231"
 # json files
 dict_json = {
     "CMIP5": {
-        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "CMIP6": {
-        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "obs2obs": {
-        "ENSO_perf": "share/EnsoMetrics/obs2obs_ENSO_perf_" + version + ".json",
-        "ENSO_proc": "share/EnsoMetrics/obs2obs_ENSO_proc_" + version + ".json",
-        "ENSO_tel":  "share/EnsoMetrics/obs2obs_ENSO_tel_" + version + ".json"}}
-
+        "ENSO_perf": "share/EnsoMetrics/obs2obs_historical_ENSO_perf_" + version_obs + "_allObservations.json",
+        "ENSO_proc": "share/EnsoMetrics/obs2obs_historical_ENSO_proc_" + version_obs + "_allObservations.json",
+        "ENSO_tel":  "share/EnsoMetrics/obs2obs_historical_ENSO_tel_" + version_obs + "_allObservations.json"}}
 path_main = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/2018_06_ENSO_metrics/2020_05_report"
 path_nc = OSpath__join(path_main, "Data/" + project.lower() + "/" + experiment + "/" + metric_collection)
 # figure name
@@ -74,7 +74,7 @@ list_metrics = sorted(list(data_json["value"].keys()), key=lambda v: v.upper())
 if reduced_set is True:
     metrics = remove_metrics(list_metrics, metric_collection, reduced_set=reduced_set)
 # pattern of netCDF files
-pattern = project.lower() + "_" + experiment + "_" + metric_collection + "_" + version + "_" + dataname
+pattern = project.lower() + "_" + experiment + "_" + metric_collection + "_" + version_mod + "_" + dataname
 #
 # Loop on metrics
 #

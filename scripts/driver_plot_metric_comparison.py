@@ -67,25 +67,26 @@ my_selection = {
 # List of additional observations
 # the reading part is very 'ad hoc', do not change the obs!
 list_obs = ["20CRv2", "NCEP2", "ERA-Interim"]
-# computation version, 'v20200427' is provided with the package
-version = "v20200427"
+# computation version, 'v20200427' for models and 'v20201231' for obs are provided with the package
+version_mod = "v20200427"
+version_obs = "v20201231"
 # json files
 dict_json = {
     "CMIP5": {
-        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "CMIP6": {
-        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "obs2obs": {
-        "ENSO_perf": "share/EnsoMetrics/obs2obs_ENSO_perf_" + version + ".json",
-        "ENSO_proc": "share/EnsoMetrics/obs2obs_ENSO_proc_" + version + ".json",
-        "ENSO_tel":  "share/EnsoMetrics/obs2obs_ENSO_tel_" + version + ".json"}}
+        "ENSO_perf": "share/EnsoMetrics/obs2obs_historical_ENSO_perf_" + version_obs + "_allObservations.json",
+        "ENSO_proc": "share/EnsoMetrics/obs2obs_historical_ENSO_proc_" + version_obs + "_allObservations.json",
+        "ENSO_tel":  "share/EnsoMetrics/obs2obs_historical_ENSO_tel_" + version_obs + "_allObservations.json"}}
 # figure name
 path_out = ""
-figure_name = "metrics_intercomparison_" + str(len(list_metric_collections)) + "metric_collections_" + version
+figure_name = "metrics_intercomparison_" + str(len(list_metric_collections)) + "metric_collections_" + version_mod
 if len(list_projects) == 1:
     figure_name += "_" + str(list_projects[0])
 else:
