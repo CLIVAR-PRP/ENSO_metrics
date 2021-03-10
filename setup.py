@@ -52,9 +52,9 @@ data_files = (
             'share/EnsoMetrics/cmip6_historical_ENSO_perf_v20200427_allModels_allRuns.json',
             'share/EnsoMetrics/cmip6_historical_ENSO_proc_v20200427_allModels_allRuns.json',
             'share/EnsoMetrics/cmip6_historical_ENSO_tel_v20200427_allModels_allRuns.json',
-            'share/EnsoMetrics/obs2obs_ENSO_perf_v20200427.json',
-            'share/EnsoMetrics/obs2obs_ENSO_proc_v20200427.json',
-            'share/EnsoMetrics/obs2obs_ENSO_tel_v20200427.json'],
+            'share/EnsoMetrics/obs2obs_historical_ENSO_perf_v20201231_allObservations.json',
+            'share/EnsoMetrics/obs2obs_historical_ENSO_proc_v20201231_allObservations.json',
+            'share/EnsoMetrics/obs2obs_historical_ENSO_tel_v20201231_allObservations.json'],
     ),
 )
 

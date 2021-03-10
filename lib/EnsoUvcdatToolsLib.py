@@ -21,6 +21,7 @@ from os.path import join as OSpath__join
 from os.path import split as OSpath__split
 from scipy.signal import detrend as SCIPYsignal_detrend
 from scipy.stats import skew as SCIPYstats__skew
+from scipy.stats.mstats import kurtosis as SCIPYstats__mstats__kurtosis
 from sys import prefix as SYS_prefix
 
 # ENSO_metrics package functions:
@@ -787,7 +788,7 @@ def TimeBounds(tab):
     Returns a tuple of strings: e.g., ('1979-1-1 11:59:60.0', '2016-12-31 11:59:60.0')
     """
     time = tab.getTime().asComponentTime()
-    return (str(time[0]), str(time[-1]))
+    return str(time[0]), str(time[-1])
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -880,9 +881,9 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                 if MV2minimum(landmask_nd) == 0 and MV2maximum(landmask_nd) == 100:
                     landmask_nd = landmask_nd / 100.
                 if maskland is True:
-                    tab = MV2masked_where(landmask_nd == 1, tab)
+                    tab = MV2masked_where(landmask_nd != 0, tab)
                 if maskocean is True:
-                    tab = MV2masked_where(landmask_nd == 0, tab)
+                    tab = MV2masked_where(landmask_nd != 1, tab)
     return tab, keyerror
 
 
@@ -922,11 +923,11 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
             if MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100:
                 landmask = landmask / 100.
             area = MV2masked_where(landmask.mask, area)
-            if maskland:
-                area = MV2masked_where(landmask == 1, area)
+            if maskland is True:
+                area = MV2masked_where(landmask != 0, area)
                 area = MV2multiply(area, 1-landmask)
-            if maskocean:
-                area = MV2masked_where(landmask == 0, area)
+            if maskocean is True:
+                area = MV2masked_where(landmask != 1, area)
                 area = MV2multiply(area, landmask)
     return area, keyerror
 
@@ -1301,9 +1302,9 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         axis.units = units
         tab_out.setAxis(0, axis)
         for ii in range(len(tab)):
-            y2 = tab.getTime().asComponentTime()[ii].year
-            m2 = tab.getTime().asComponentTime()[ii].month
-            d2 = tab.getTime().asComponentTime()[ii].day
+            y2 = tab_out.getTime().asComponentTime()[ii].year
+            m2 = tab_out.getTime().asComponentTime()[ii].month
+            d2 = tab_out.getTime().asComponentTime()[ii].day
             if freq == 'yearly':
                 if y2 == y1:
                     tab_out[ii:ii + len(tab)] = copy.copy(tab)
@@ -1322,7 +1323,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         composite = list()
         for yy in list_event_years:
             # first and last years of the window
-            yy1, yy2 = yy - (int(round(nbr_years_window / 2)) - 1), yy + int(round(nbr_years_window / 2))
+            yy1, yy2 = yy - 1 - nbr_years_window // 2 - 1, yy + nbr_years_window // 2
             # create time bounds from 'first and last years of the window'
             timebnds = (str(yy1) + '-01-01 00:00:00.0', str(yy2) + '-12-31  23:59:60.0')
             # select the right time period in the given tab
@@ -1381,7 +1382,7 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
         Event_selection(tab, frequency, nbr_years_window=nbr_years_window, list_event_years=list_event_years), axis=0)
 
 
-def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute_season=True):
+def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute_season=True, duration=False):
     """
     #################################################################################
     Description:
@@ -1407,26 +1408,96 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute
     :return list_of_years: list
         list of years including a detected event
     """
-    # Seasonal mean and anomalies
-    if compute_season is True:
-        tab = SeasonalMean(tab, season, compute_anom=True)
-    # Normalization ?
-    if normalization is True:
-        threshold = threshold * float(GENUTILstd(tab, weights=None, axis=0, centered=1, biased=1))
-    # Initialization
-    tab_threshold = MV2zeros(tab.shape)
-    tab_threshold.fill(threshold)
-    list_years = [tab.getTime().asComponentTime()[yy].year for yy in range(len(tab))]
-    indices = MV2arange(len(tab))
-    # Conditions
-    if nino is True:
-        condition = MV2where(tab > tab_threshold, True, False)
+    if duration is False or duration == 1:
+        # Seasonal mean and anomalies
+        if compute_season is True:
+            tab = SeasonalMean(tab, season, compute_anom=True)
+        # Normalization ?
+        if normalization is True:
+            threshold = threshold * float(GENUTILstd(tab, axis=0, centered=1, biased=1))
+        # Initialization
+        tab_threshold = MV2zeros(tab.shape)
+        tab_threshold.fill(threshold)
+        list_years = sorted(list(set([tab.getTime().asComponentTime()[yy].year for yy in range(len(tab))])))
+        indices = MV2arange(len(list_years))
+        # Conditions
+        if nino is True:
+            condition = MV2where(tab > tab_threshold, True, False)
+        else:
+            condition = MV2where(tab < tab_threshold, True, False)
+        # Indices of the events
+        ids = MV2compress(condition, indices)
+        # Events years
+        events = list(MV2take(list_years, ids, axis=0))
     else:
-        condition = MV2where(tab < tab_threshold, True, False)
-    # Indices of the events
-    ids = MV2compress(condition, indices)
-    # Events years
-    return list(MV2take(list_years, ids, axis=0))
+        if season == "DEC":
+            lseasons = ["NOV", season, "JAN"]
+            if duration >= 3:
+                lseasons = ["OCT"] + lseasons + ["FEB"]
+            if duration >= 4:
+                lseasons = ["SEP"] + lseasons + ["MAR"]
+            if duration >= 5:
+                lseasons = ["AUG"] + lseasons + ["APR"]
+            if duration >= 6:
+                lseasons = ["JUL"] + lseasons + ["MAY"]
+        elif season == "NDJ":
+            lseasons = ["OND", season, "DJF"]
+            if duration >= 3:
+                lseasons = ["SON"] + lseasons + ["JFM"]
+            if duration >= 4:
+                lseasons = ["ASO"] + lseasons + ["FMA"]
+            if duration >= 5:
+                lseasons = ["JAS"] + lseasons + ["MAM"]
+            if duration >= 6:
+                lseasons = ["JJA"] + lseasons + ["AMJ"]
+        # Main seasonal mean and anomalies
+        enso = SeasonalMean(tab, season, compute_anom=True)
+        list_years = [enso.getTime().asComponentTime()[yy].year for yy in range(len(enso))]
+        indices = MV2arange(len(list_years))
+        y0 = list_years[0]
+        enso_by_sea = list()
+        for sea in lseasons:
+            # Seasonal mean and anomalies
+            tmp = SeasonalMean(tab, sea, compute_anom=True)
+            y1 = tmp.getTime().asComponentTime()[0].year
+            if y1 == y0:
+                tmp = tmp[:len(enso)]
+            elif y1+1 == y0:
+                tmp = tmp[1:len(enso)+1]
+            if sea == "DEC" or (season == "NDJ" and sea == "DJF"):
+                y0 += 1
+            enso_by_sea.append(tmp)
+            del tmp, y1
+        enso_by_sea = MV2array(enso_by_sea)
+        # Normalization ?
+        if normalization is True:
+            thr = threshold * float(GENUTILstd(enso, axis=0, centered=1, biased=1))
+        else:
+            thr = copy.deepcopy(threshold)
+        # Initialization
+        tab_threshold = MV2zeros(enso_by_sea.shape)
+        tab_threshold.fill(thr)
+        # Conditions
+        if nino is True:
+            condition = MV2where(enso_by_sea > tab_threshold, 1, 0)
+        else:
+            condition = MV2where(enso_by_sea < tab_threshold, 1, 0)
+        # sum by duration window
+        d_window = MV2zeros(enso_by_sea.shape)
+        d_window = d_window[:len(lseasons) - duration + 1]
+        for ii in range(len(d_window)):
+            d_window[ii] = MV2sum(condition[ii: ii + duration], axis=0)
+        # test if threshold met during at least duration
+        tab_threshold = MV2zeros(d_window.shape)
+        tab_threshold.fill(duration)
+        condition = MV2where(d_window >= tab_threshold, 1, 0)
+        condition = MV2sum(condition, axis=0)
+        condition = MV2where(condition >= 1, True, False)
+        # Indices of the events
+        ids = MV2compress(condition, indices)
+        # Events years
+        events = list(MV2take(list_years, ids, axis=0))
+    return events
 
 
 def Detrend(tab, info, axis=0, method='linear', bp=0):
@@ -1551,8 +1622,8 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
     #     dict_debug = {'line1': 'after unmasking',
     #                   'line2': 'tab = ' + str(tab)}
     #     EnsoErrorsWarnings.DebugMode('\033[93m', 'in DurationEvent', 20, **dict_debug)
-    tmp1 = list(reversed(tab[:int(round(len(tab) / 2))]))
-    tmp2 = list(tab[int(round(len(tab) / 2)):])
+    tmp1 = list(reversed(tab[: len(tab) // 2]))
+    tmp2 = list(tab[len(tab) // 2:])
     if nino is True:
         try:
             nbr_before = next(x[0] for x in enumerate(tmp1) if x[1] <= threshold)
@@ -1701,6 +1772,56 @@ def get_year_by_year(tab, frequency='monthly'):
     return tab_out
 
 
+def kurtosis_temporal(tab):
+    """
+    #################################################################################
+    Description:
+    Computes the kurtosis along the time axis
+    #################################################################################
+
+    :param tab: masked_array
+    :return: tab: array
+        array of the temporal kurtosis
+    """
+    tab = tab.reorder('t...')
+    if len(tab.shape) > 4:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many dimensions",
+            str().ljust(5) + "tab.shape = " + str(tab.shape)]
+        EnsoErrorsWarnings.my_error(list_strings)
+    if len(tab.shape) == 1:
+        skew = float(SCIPYstats__mstats__kurtosis(tab))
+    else:
+        if len(tab.shape) == 2:
+            skew = SCIPYstats__mstats__kurtosis(tab, axis=0)
+        else:
+            # swith to numpy
+            dataset = NPma__core__MaskedArray(tab)
+            # masked values -> nan
+            dataset = dataset.filled(fill_value=NPnan)
+            # Store information about the shape/size of the input data
+            time_ax = dataset.shape[0]
+            spac_ax = dataset.shape[1:]
+            channels = NPproduct(spac_ax)
+            # Reshape to two dimensions (time, space) creating the design matrix
+            dataset = dataset.reshape([time_ax, channels])
+            # Find the indices of values that are not missing in one row. All the rows will have missing values in the
+            # same places provided the array was centered. If it wasn't then it is possible that some missing values
+            # will be missed and the singular value decomposition will produce not a number for everything.
+            nonMissingIndex = NPwhere(NPisnan(dataset[0]) == False)[0]
+            # Remove missing values from the design matrix.
+            dataNoMissing = dataset[:, nonMissingIndex]
+            new_dataset = SCIPYstats__mstats__kurtosis(dataNoMissing, axis=0)
+            flatE = NPones([channels], dtype=dataset.dtype) * NPnan
+            flatE = flatE.astype(dataset.dtype)
+            flatE[nonMissingIndex] = new_dataset
+            skew = flatE.reshape(spac_ax)
+            skew = MV2masked_where(NPisnan(skew), skew)
+        skew = CDMS2createVariable(MV2array(skew), axes=tab.getAxisList()[1:], grid=tab.getGrid(), mask=tab[0].mask,
+                                   attributes=tab.attributes, id="kurtosis")
+    return skew
+
+
 def MinMax(tab):
     return [float(MV2minimum(tab)), float(MV2maximum(tab))]
 
@@ -1845,11 +1966,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             # I need to be in the ocean point of view so the heat fluxes must be downwards
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib ReadAndSelectRegion" + "\033[0m")
             print("\033[93m" + str().ljust(25) + varname + " sign reversed" + "\033[0m")
-            print(str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2maximum(tab), 2)))
+            print("\033[93m" + str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
+                  "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
             tab = -1 * tab
-            print(str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2maximum(tab), 2)))
+            print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
+                  "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
             reversed_sign = True
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
@@ -2428,25 +2549,30 @@ def SmoothGaussian(tab, axis=0, window=5):
     new_tab = tab.reorder(newOrder)
 
     # degree
-    degree = int(round((window - 1) / 2.))
+    degree = window // 2
 
     # Create the gaussian weight array
-    weightGauss = list()
+    weight = list()
     for ii in range(window):
         ii = ii - degree + 1
         frac = ii / float(window)
-        gauss = float(1 / (NPexp((4 * (frac)) ** 2)))
+        gauss = float(1. / NPexp((4 * frac) ** 2))
         ww = MV2zeros(new_tab.shape[1:])
         ww.fill(gauss)
-        weightGauss.append(ww)
-    weightGauss = MV2array(weightGauss)
+        weight.append(ww)
+        del frac, gauss, ww
+    weight = MV2array(weight)
 
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
     smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
-    sum_weight = MV2sum(weightGauss, axis=0)
     for ii in range(len(smoothed_tab)):
-        smoothed_tab[ii] = MV2sum(MV2array(new_tab[ii:ii + window]) * weightGauss * weightGauss, axis=0) / sum_weight
+        tmp1 = MV2array(new_tab[ii: ii + window])
+        tmp2 = MV2masked_where(tmp1.mask, weight)
+        tmp1 = MV2sum(tmp1 * tmp2, axis=0) / MV2sum(tmp2, axis=0)
+        tmp1 = MV2masked_where(MV2sum(tmp2.mask.astype("f"), axis=0) / window > 0.5, tmp1)
+        smoothed_tab[ii] = tmp1
+        del tmp1, tmp2
 
     # Axes list
     axes0 = new_tab[degree: len(new_tab) - degree].getAxisList()[0]
@@ -2455,6 +2581,11 @@ def SmoothGaussian(tab, axis=0, window=5):
     else:
         axes = [axes0]
     smoothed_tab.setAxisList(axes)
+    if tab.getGrid():
+        try:
+            smoothed_tab.setGrid(tab.getGrid())
+        except:
+            pass
 
     # Reorder to the input order
     for ii in range(axis):
@@ -2499,13 +2630,21 @@ def SmoothSquare(tab, axis=0, window=5):
     new_tab = tab.reorder(newOrder)
 
     # degree
-    degree = int(round((window - 1) / 2.))
+    degree = window // 2
+
+    # Create the weight array (uniform)
+    weight = MV2ones((window,) + new_tab.shape[1:])
 
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
     smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
     for ii in range(len(smoothed_tab)):
-        smoothed_tab[ii] = sum(new_tab[ii:ii + window]) / float(window)
+        tmp1 = MV2array(new_tab[ii: ii + window])
+        tmp2 = MV2masked_where(tmp1.mask, weight)
+        tmp1 = MV2sum(tmp1, axis=0) / MV2sum(tmp2, axis=0)
+        tmp1 = MV2masked_where(MV2sum(tmp2.mask.astype("f"), axis=0)/window>0.5, tmp1)
+        smoothed_tab[ii] = tmp1
+        del tmp1, tmp2
 
     # Axes list
     axes0 = new_tab[degree: len(new_tab) - degree].getAxisList()[0]
@@ -2514,6 +2653,11 @@ def SmoothSquare(tab, axis=0, window=5):
     else:
         axes = [axes0]
     smoothed_tab.setAxisList(axes)
+    if tab.getGrid():
+        try:
+            smoothed_tab.setGrid(tab.getGrid())
+        except:
+            pass
 
     # Reorder to the input order
     for ii in range(axis):
@@ -2558,7 +2702,7 @@ def SmoothTriangle(tab, axis=0, window=5):
     new_tab = tab.reorder(newOrder)
 
     # degree
-    degree = int(round((window - 1) / 2.))
+    degree = window // 2
 
     # Create the weight array (triangle)
     weight = list()
@@ -2566,6 +2710,7 @@ def SmoothTriangle(tab, axis=0, window=5):
         ww = MV2zeros(new_tab.shape[1:])
         ww.fill(float(1 + degree - abs(degree - ii)))
         weight.append(ww)
+        del ww
     weight = MV2array(weight)
 
     # Smoothing
@@ -2573,7 +2718,12 @@ def SmoothTriangle(tab, axis=0, window=5):
     smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
     sum_weight = MV2sum(weight, axis=0)
     for ii in range(len(smoothed_tab)):
-        smoothed_tab[ii] = MV2sum(MV2array(new_tab[ii:ii + window]) * weight, axis=0) / sum_weight
+        tmp1 = MV2array(new_tab[ii: ii + window])
+        tmp2 = MV2masked_where(tmp1.mask, weight)
+        tmp1 = MV2sum(tmp1 * tmp2, axis=0) / MV2sum(tmp2, axis=0)
+        tmp1 = MV2masked_where(MV2sum(tmp2.mask.astype("f"), axis=0) / window > 0.5, tmp1)
+        smoothed_tab[ii] = tmp1
+        del tmp1, tmp2
 
     # Axes list
     axes0 = new_tab[degree: len(new_tab) - degree].getAxisList()[0]
@@ -2961,38 +3111,53 @@ def CustomLinearRegression1d(y, x, sign_x=1):
     return slope, intercept, stderr
 
 
-def fill_dict_teleconnection(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nyear1, nyear2, nbr, var_name,
-                             add_name, units, centered_rmse=0, biased_rmse=1, dict_metric={}, dict_nc={}, ev_name=None,
-                             events1=None, events2=None):
+def fill_dict_axis(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nyear1, nyear2, nbr, var_name, add_name,
+                   units, axis, centered_rmse=0, biased_rmse=1, dict_metric={}, dict_nc={}, ev_name=None, events1=None,
+                   events2=None, description=None):
     # Metric 1
-    rmse_dive, keyerror = RmsAxis(tab1, tab2, axis="xy", centered=centered_rmse, biased=biased_rmse)
+    rmse_dive, keyerror = RmsAxis(tab1, tab2, axis=axis, centered=centered_rmse, biased=biased_rmse)
     rmse_error_dive = None
     # Metric 2
-    corr_dive = float(Correlation(tab1, tab2, axis="xy", centered=1, biased=1))
+    corr_dive = float(Correlation(tab1, tab2, axis=axis, centered=1, biased=1))
     corr_error_dive = None
     # Metric 3
-    std_mod_dive = Std(tab1, weights=None, axis="xy", centered=1, biased=1)
-    std_obs_dive = Std(tab2, weights=None, axis="xy", centered=1, biased=1)
+    std_mod_dive = Std(tab1, weights=None, axis=axis, centered=1, biased=1)
+    std_obs_dive = Std(tab2, weights=None, axis=axis, centered=1, biased=1)
     std_dive = float(std_mod_dive) / float(std_obs_dive)
     std_error_dive = None
     list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
                      "STD_" + dataset2, "STD_error_" + dataset2]
     list_metric_value = [rmse_dive, rmse_error_dive, corr_dive, corr_error_dive, std_dive, std_error_dive]
     for tmp1, tmp2 in zip(list_met_name, list_metric_value):
-        dict_metric[tmp1 + "_" + add_name] = tmp2
+        if isinstance(add_name, str) is True:
+            dict_metric[tmp1 + "_" + add_name] = tmp2
+        else:
+            dict_metric[tmp1] = tmp2
+    # if axis in ["t", "x", "xy", "y"]:
+    #     key = "temporal" if axis == "t" else ("zonal" if axis == "x" else ("meridional" if axis == "y" else "spatial"))
+    # else:
+    #     key = "array"
     dict_nc["var" + str(nbr)] = tab1
+    # dict_dive = {"units": units, "number_of_years_used": nyear1, "time_period": str(timebounds1),
+    #              key+"STD_" + dataset1: std_mod_dive}
     dict_dive = {"units": units, "number_of_years_used": nyear1, "time_period": str(timebounds1),
-                 "spatialSTD_" + dataset1: std_mod_dive}
+                 "arraySTD": std_mod_dive}
+    if isinstance(description, str) is True:
+        dict_dive["description"] = description
     if isinstance(events1, list) is True:
         dict_dive[ev_name + "_years"] = str(events1)
-    dict_nc["var" + str(nbr) + "_attributes"] = dict_dive
+    dict_nc["var" + str(nbr) + "_attributes"] = copy.deepcopy(dict_dive)
     dict_nc["var" + str(nbr) + "_name"] = var_name + dataset1
+    # dict_dive = {"units": units, "number_of_years_used": nyear2, "time_period": str(timebounds2),
+    #              key+"STD_" + dataset2: std_obs_dive}
     dict_dive = {"units": units, "number_of_years_used": nyear2, "time_period": str(timebounds2),
-                 "spatialSTD_" + dataset2: std_obs_dive}
+                 "arraySTD": std_obs_dive}
+    if isinstance(description, str) is True:
+        dict_dive["description"] = description
     if isinstance(events2, list) is True:
         dict_dive[ev_name + "_years"] = str(events2)
     dict_nc["var" + str(nbr + 1)] = tab2
-    dict_nc["var" + str(nbr + 1) + "_attributes"] = dict_dive
+    dict_nc["var" + str(nbr + 1) + "_attributes"] = copy.deepcopy(dict_dive)
     dict_nc["var" + str(nbr + 1) + "_name"] = var_name + dataset2
     return dict_metric, dict_nc
 
@@ -3300,65 +3465,64 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
                  region=None, **kwargs):
     keyerror = None
-    # removes annual cycle (anomalies with respect to the annual cycle)
-    if compute_anom is True:
-        tab = ComputeInterannualAnomalies(tab)
-    # Normalization of the anomalies
-    if kwargs['normalization']:
-        if kwargs['frequency'] is not None:
-            tab, keyerror = Normalize(tab, kwargs['frequency'])
-            info = info + ', normalized'
-    # Removing linear trend
-    if keyerror is None:
+    # average
+    if average is not False:
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode('\033[93m', "EnsoUvcdatToolsLib PreProcessTS", 20)
+            dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
+            EnsoErrorsWarnings.debug_mode('\033[93m', "averaging to perform: " + str(average), 25, **dict_debug)
+        if isinstance(average, str) is True:
+            average = [average]
+        if isinstance(average, list) is True:
+            for av in average:
+                try:
+                    dict_average[av]
+                except:
+                    EnsoErrorsWarnings.unknown_averaging(av, list(dict_average.keys()), INSPECTstack())
+                else:
+                    tab, keyerror = dict_average[av](tab, areacell, region=region, **kwargs)
+                    if keyerror is None:
+                        if debug is True:
+                            dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]),
+                                          'shape1': str(tab.shape)}
+                            EnsoErrorsWarnings.debug_mode('\033[93m', "performed " + str(av), 25, **dict_debug)
+                    else:
+                        break
+        else:
+            EnsoErrorsWarnings.unknown_averaging(average, list(dict_average.keys()), INSPECTstack())
+    # continue preprocessing if not error happened yet
+    if isinstance(average, list) is True and "time" in average:
+        pass
+    elif keyerror is None:
+        # removing linear trend
         if isinstance(kwargs['detrending'], dict):
             known_args = {'axis', 'method', 'bp'}
             extra_args = set(kwargs['detrending']) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tab, info, keyerror = Detrend(tab, info, **kwargs['detrending'])
-    if keyerror is None:
-        # Smoothing time series
-        if isinstance(kwargs['smoothing'], dict):
-            known_args = {'axis', 'method', 'window'}
-            extra_args = set(kwargs['smoothing']) - known_args
-            if extra_args:
-                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tab, info = Smoothing(tab, info, **kwargs['smoothing'])
         # computes mean annual cycle
         if compute_sea_cycle is True:
             tab = annualcycle(tab)
-        # average
-        if average is not False:
-            if debug is True:
-                EnsoErrorsWarnings.debug_mode('\033[93m', "EnsoUvcdatToolsLib PreProcessTS", 20)
-                dict_debug = {'axes1':  str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
-                EnsoErrorsWarnings.debug_mode('\033[93m', "averaging to perform: " + str(average), 25, **dict_debug)
-            if isinstance(average, str):
-                try: dict_average[average]
-                except:
-                    EnsoErrorsWarnings.unknown_averaging(average, list(dict_average.keys()), INSPECTstack())
-                else:
-                    tab, keyerror = dict_average[average](tab, areacell, region=region, **kwargs)
-                    if keyerror is None:
-                        if debug is True:
-                            dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
-                            EnsoErrorsWarnings.debug_mode('\033[93m', "performed " + str(average), 25, **dict_debug)
-            elif isinstance(average, list):
-                for av in average:
-                    try: dict_average[av]
-                    except:
-                        EnsoErrorsWarnings.unknown_averaging(average, list(dict_average.keys()), INSPECTstack())
-                    else:
-                        tab, keyerror = dict_average[av](tab, areacell, region=region, **kwargs)
-                        if keyerror is None:
-                            if debug is True:
-                                dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]),
-                                              'shape1': str(tab.shape)}
-                                EnsoErrorsWarnings.debug_mode('\033[93m', "performed " + str(av), 25, **dict_debug)
-                        else:
-                            break
-            else:
-                EnsoErrorsWarnings.unknown_averaging(average, list(dict_average.keys()), INSPECTstack())
+        # removes annual cycle (anomalies with respect to the annual cycle)
+        if compute_anom is True:
+            tab = ComputeInterannualAnomalies(tab)
+        # normalization of the anomalies
+        if kwargs['normalization']:
+            if kwargs['frequency'] is not None:
+                tab, keyerror = Normalize(tab, kwargs['frequency'])
+                info = info + ', normalized'
+        # continue preprocessing if not error happened yet
+        if keyerror is None:
+            # smoothing time series
+            if isinstance(kwargs['smoothing'], dict):
+                known_args = {'axis', 'method', 'window'}
+                extra_args = set(kwargs['smoothing']) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                tab, info = Smoothing(tab, info, **kwargs['smoothing'])
+        else:
+            tab = None
     else:
         tab = None
     return tab, info, keyerror
@@ -3522,8 +3686,15 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
             dict_debug = {'line1': 'areacell is None '}
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
-    if name_data.lower() in ["msla", "sla", "ssh", "sshg", "sst", "tauuo", "tauvo", "taux", "tauy", "tos", "zos"]\
-            or "GODAS" in file_data or "SODA3.4.2" in file_data or "Tropflux" in file_data:
+    if name_data.lower() in ["latent_heatflux", "lhf", "lwr", "meridional_wind_stress", "msla", "net_heating",
+                             "net_longwave_heatflux_downwards", "net_shortwave_heatflux_downwards",
+                             "net_surface_heatflux_downwards", "netflux", "sea_surface_height",
+                             "sea_surface_temperature", "sensible_heatflux", "shf", "sla", "sohefldo", "sometauy",
+                             "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swr", "tauuo", "tauvo", "taux",
+                             "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"]\
+            and "_Amon_" not in file_data:
+        landmask = None
+    elif name_data.lower() in ["pr", "slp"] and "_Omon_" in file_data:
         landmask = None
     elif file_mask:
         landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)
@@ -3551,7 +3722,7 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
     return tab_out, areacell, keyerror
 
 
-def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
+def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debug=False):
     """
     #################################################################################
     Description:
@@ -3578,6 +3749,10 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
         time frequency of the datasets
         e.g., frequency='monthly'
         default value is None
+    :param tmin: float, optional
+        minimum temperature for events (when hovmoellers are given, the minimum ENSO temperature is not reached
+        everywhere)
+        default value is 0.1
     :param debug: bolean, optional
         default value = False debug mode not activated
         If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
@@ -3590,6 +3765,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
         EnsoErrorsWarnings.debug_mode('\033[93m', "EnsoUvcdatToolsLib SlabOcean", 20)
     # months and associated position
     list_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    mm1, mm2 = 0, 0
     if month1 in list_months and month2 in list_months:
         mm1 = list_months.index(month1)
         mm2 = list_months.index(month2)
@@ -3628,7 +3804,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, debug=False):
     dt = dt.reorder('10')
     dt[:] = dSST[:, -1]
     dt = dt.reorder('10')
-    dt = MV2masked_where(abs(dt) < 0.1, dt)
+    dt = MV2masked_where(abs(dt) < tmin, dt)
     dSSTthf[:] = fraction * dSSTthf[:] / dt
     # normalized SST change
     dSST[:] = dSST[:] / dt
