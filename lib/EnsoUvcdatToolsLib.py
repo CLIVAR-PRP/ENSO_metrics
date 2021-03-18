@@ -1185,7 +1185,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
         array with new units (if applicable)
     """
     keyerror = None
-    if var_name in ['temperature']:
+    if var_name in ["temperature"]:
         if units in ['K', 'Kelvin', 'Kelvins', 'degree K', 'degree Kelvin', 'degree Kelvins', 'degree_K',
                      'degree_Kelvin', 'degree_Kelvins', 'degreeK', 'degreeKelvin', 'degreeKelvins', 'degrees K',
                      'degrees Kelvin', 'degrees Kelvins', 'degrees_K', 'degrees_Kelvin', 'degrees_Kelvins', 'degreesK',
@@ -1194,7 +1194,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             # check if the temperature units is really K
             if float(MV2minimum(tab)) > 150:
                 # unit change of the temperature: from K to degC
-                tab = dict_operations['minus'](tab, 273.15)
+                tab = dict_operations["minus"](tab, 273.15)
             else:
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, units, minmax, INSPECTstack())
@@ -1214,54 +1214,57 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "degC"
-    elif var_name in ['precipitations']:
-        if units in ["kg/m2/s", "kg m-2 s-1", "kg/m^2/s", "kg/m**2/s", "kg m**-2 s**-1", "Kg/m2/s", "Kg m-2 s-1",
-                     "Kg/m^2/s", "Kg/m**2/s", "Kg m**-2 s**-1"]:
+    elif var_name in ["precipitations"]:
+        if units in ["kg/m2/s", "kg/m^2/s", "kg/m**2/s", "kg m-2 s-1", "kg m^-2 s^-1", "kg m**-2 s**-1", "Kg/m2/s",
+                     "Kg/m^2/s", "Kg/m**2/s", "Kg m-2 s-1", "Kg m^-2 s^-1", "Kg m**-2 s**-1"]:
             # changes units of the precipitation flux: from kg/(m2.s) to mm/day
             # it must be divided by the density of water = 1000 kg/m3
             #     and multiplied by 1000 (m to mm) and by 60*60*24 (s to day)
-            tab = dict_operations['multiply'](tab, 86400)
-        elif units in ["mm/day", "mm day-1", 'mm day**-1', "mm/d", "mm d-1", 'mm d**-1']:
+            tab = dict_operations["multiply"](tab, 86400)
+        elif units in ["mm/day", "mm day-1", "mm day^-1", "mm day**-1", "mm/d", "mm d-1", "mm d^-1", "mm d**-1"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "mm/day"
-    elif var_name in ['wind stress']:
-        if units not in ['N/m2', 'N m-2', 'N/m^2', 'N/m**2', 'N m**-2', 'Pa', 'pascal', 'pascals', 'Pascal', 'Pascals']:
+    elif var_name in ["wind stress"]:
+        if units not in ["N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2", "Pa", "pascal", "pascals", "Pascal",
+                         "Pascals"]:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "N/m2"
-    elif var_name in ['velocity']:
-        if units in ['cm/s', 'cm s-1', 'cm s**-1', 'cm/sec', 'cm sec-1', 'cm sec**-1']:
+    elif var_name in ["velocity"]:
+        if units in ["cm/s", "cm s-1", "cm s^-1", "cm s**-1", "cm/sec", "cm sec-1", "cm sec^-1", "cm sec**-1"]:
             # unit change of the velocity: from cm/s to m/s
             tab = dict_operations['multiply'](tab, 1e-2)
-        elif units in ['m/s', 'm s-1', 'm s**-1', 'm/sec', 'm sec-1', 'm sec**-1']:
+        elif units in ["m/s", "m s-1", "m s^-1", "m s**-1", "m/sec", "m sec-1", "m sec^-1", "m sec**-1"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "m/s"
-    elif var_name in ['heat flux']:
-        if units in ['W/m2', 'W m-2', 'W/m^2', 'W/m**2', 'W m**-2', "Watt/m2", "Watt m-2", "Watt/m^2", "Watt/m**2",
-                     "Watt m**-2", "Watts/m2", "Watts m-2", "Watts/m^2", "Watts/m**2", "Watts m**-2"]:
+    elif var_name in ["heat flux"]:
+        if units in ["W/m2", "W/m^2", "W/m**2", "W m-2", "W m^-2", "W m**-2", "Watt/m2", "Watt/m^2", "Watt/m**2",
+                     "Watt m-2", "Watt m^-2", "Watt m**-2", "Watts/m2", "Watts/m^2", "Watts/m**2", "Watts m-2",
+                     "Watts m^-2", "Watts m**-2"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "W/m2"
-    elif var_name in ['pressure']:
-        if units in ['N/m2', 'N m-2', 'N/m^2', 'N/m**2', 'N m**-2', 'Pa', 'pascal', 'pascals', 'Pascal', 'Pascals']:
+    elif var_name in ["pressure"]:
+        if units in ["N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2", "Pa", "pascal", "pascals", "Pascal",
+                         "Pascals"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "Pa"
-    elif var_name in ['sea surface height']:
-        if units in ['cm', 'centimeter']:
+    elif var_name in ["depth", "sea surface height"]:
+        if units in ["cm", "centimeter", "centimeters"]:
             # unit change of the sea surface height: from cm to m
-            tab = dict_operations['multiply'](tab, 1e-2)
-        elif units in ['m', 'meter']:
+            tab = dict_operations["multiply"](tab, 1e-2)
+        elif units in ["m", "meter", "meters"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
@@ -3515,7 +3518,13 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
             dict_debug = {'line1': 'areacell is None '}
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
-    if name_data.lower() in ["msla", "sla", "ssh", "sshg", "sst", "taux", "tauuo", "tos", "zos"]:
+    lvari = ["latent_heatflux", "lhf", "lwr", "meridional_wind_stress", "msla", "net_heating",
+             "net_longwave_heatflux_downwards", "net_shortwave_heatflux_downwards", "net_surface_heatflux_downwards",
+             "netflux", "sea_surface_height", "sea_surface_temperature", "sensible_heatflux", "shf", "sla", "sohefldo",
+             "sometauy", "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swr", "tauuo", "tauvo", "taux",
+             "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"]
+    if (name_data.lower() in lvari and "_Amon_" not in file_data) or \
+        (name_data.lower() in ["pr", "slp"] and "_Omon_" in file_data):
         landmask = None
     elif file_mask:
         landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)

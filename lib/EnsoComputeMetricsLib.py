@@ -4,7 +4,7 @@ from copy import deepcopy
 from glob import iglob as GLOBiglob
 from inspect import stack as INSPECTstack
 import json
-from os import remove as OSremove
+# from os import remove as OSremove
 
 # ENSO_metrics package functions:
 from EnsoCollectionsLib import defCollection, ReferenceObservations
@@ -24,7 +24,9 @@ from KeyArgLib import default_arg_values
 
 
 # sst only datasets (not good for surface temperature teleconnection)
-sst_only = ["CFSR", "ERSSTv5", "GODAS", "HadISST", "OISST", "ORAS4", "SODA3.4.2", "Tropflux"]
+sst_only = ["CFSR", "COBE", "COBE2", "ERSSTv3b", "ERSSTv4", "ERSSTv5", "GODAS", "HadISST", "HadISST1", "HadISST-1",
+            "HadISST-1-1", "HadISSTv1", "HadISSTv1.1", "OAFlux", "OISST", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2",
+            "SODA3.11.2", "SODA3.12.2", "Tropflux", "TropFlux-1-0"]
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -502,8 +504,8 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                 else:
                     netcdf_name_out = ""
                 json_name_out = netcdf_name.replace("OBSNAME", "tmp1_" + modelName2 + "_" + metric)
-                if ("EnsoSstMap" in metric and modelName2 in sst_only) or len(
-                        list(GLOBiglob(json_name_out + ".json"))) == 1:
+                if ("EnsoSstMap" in metric and modelName2 in sst_only) or \
+                        len(list(GLOBiglob(json_name_out + ".json"))) == 1:
                     pass
                 else:
                     print(modelName2 + "_as_model")
@@ -1064,12 +1066,18 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         dict_metrics = {'metric': dict_metric_val, 'diagnostic': dict_diagnostic}
         datasets = modelName + "; "
         for ii in range(len(obsNameVar1)):
-            datasets = datasets + obsNameVar1[ii] + "'s " + obsVarName1[ii]
-            if ii != len(obsNameVar1) - 1:
-                datasets = datasets + " & "
+            if isinstance(obsVarName1[ii], list):
+                datasets = datasets + obsNameVar1[ii] + "'s "
+                for jj in range(len(obsVarName1[ii])):
+                    datasets += obsVarName1[ii][jj]
+                    if jj != len(obsVarName1[ii]) - 1:
+                        datasets += " & "
             else:
+                datasets = datasets + obsNameVar1[ii] + "'s " + obsVarName1[ii]
+            if ii != len(obsNameVar1) - 1:
                 datasets = datasets + "; "
         if len(obsNameVar2) > 0:
+            datasets = datasets + "; "
             for ii in range(len(obsNameVar2)):
                 if isinstance(obsVarName2[ii], list):
                     datasets = datasets + obsNameVar2[ii] + "'s "
@@ -1080,7 +1088,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 else:
                     datasets = datasets + obsNameVar2[ii] + "'s " + obsVarName2[ii]
                 if ii != len(obsNameVar2) - 1:
-                    datasets = datasets + " & "
+                    datasets = datasets + "; "
         if multimetric is True:
             tmp = {'name': metric, 'method': description_metric, 'datasets': datasets}
             for key in lkeys:
