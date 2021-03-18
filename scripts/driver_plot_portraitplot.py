@@ -12,7 +12,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
-from __future__ import print_function
+
 from numpy import mean as NUMPYmean
 from numpy import std as NUMPYstd
 from numpy.ma import array as NUMPYma__array
@@ -50,25 +50,26 @@ reduced_set = True  # False  #
 # If set to False, all members will be used and the metric values computed for all members of each model will be
 # averaged
 first_member = True  # False  #
-# computation version, 'v20200427' is provided with the package
-version = "v20200427"
+# computation version, 'v20200427' for models and 'v20201231' for obs are provided with the package
+version_mod = "v20200427"
+version_obs = "v20201231"
 # json files
 dict_json = {
     "CMIP5": {
-        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "CMIP6": {
-        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "obs2obs": {
-        "ENSO_perf": "share/EnsoMetrics/obs2obs_ENSO_perf_" + version + ".json",
-        "ENSO_proc": "share/EnsoMetrics/obs2obs_ENSO_proc_" + version + ".json",
-        "ENSO_tel":  "share/EnsoMetrics/obs2obs_ENSO_tel_" + version + ".json"}}
+        "ENSO_perf": "share/EnsoMetrics/obs2obs_historical_ENSO_perf_" + version_obs + "_allObservations.json",
+        "ENSO_proc": "share/EnsoMetrics/obs2obs_historical_ENSO_proc_" + version_obs + "_allObservations.json",
+        "ENSO_tel":  "share/EnsoMetrics/obs2obs_historical_ENSO_tel_" + version_obs + "_allObservations.json"}}
 # figure name
 path_out = ""
-figure_name = "portraitplot_" + str(len(list_metric_collections)) + "metric_collections_" + version
+figure_name = "portraitplot_" + str(len(list_metric_collections)) + "metric_collections_" + version_mod
 if len(list_projects) == 1:
     figure_name += "_" + str(list_projects[0])
 else:
@@ -100,7 +101,7 @@ for mc in list_metric_collections:
     for proj in list_projects:
         dict1 = get_metric_values(proj, mc, dict_json, model_by_proj, reduced_set=reduced_set, portraitplot=True)
         # save in common dictionary
-        for mod in dict1.keys():
+        for mod in list(dict1.keys()):
             dict_met[mod] = dict1[mod]
         del dict1
     # models and metrics
@@ -120,7 +121,7 @@ for mc in list_metric_collections:
     tab = NUMPYma__zeros((len(my_models) + plus, len(my_metrics)))
     for ii, mod in enumerate(my_models):
         for jj, met in enumerate(my_metrics):
-            if met not in dict_met[mod].keys() or dict_met[mod][met] is None:
+            if met not in list(dict_met[mod].keys()) or dict_met[mod][met] is None:
                 tab[ii + plus, jj] = 1e20
             else:
                 tab[ii + plus, jj] = dict_met[mod][met]

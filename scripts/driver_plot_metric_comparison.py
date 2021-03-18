@@ -12,7 +12,7 @@
 # ---------------------------------------------------#
 # Import the right packages
 # ---------------------------------------------------#
-from __future__ import print_function
+
 from copy import deepcopy
 from numpy import array as NUMPYarray
 from numpy import mean as NUMPYmean
@@ -67,25 +67,26 @@ my_selection = {
 # List of additional observations
 # the reading part is very 'ad hoc', do not change the obs!
 list_obs = ["20CRv2", "NCEP2", "ERA-Interim"]
-# computation version, 'v20200427' is provided with the package
-version = "v20200427"
+# computation version, 'v20200427' for models and 'v20201231' for obs are provided with the package
+version_mod = "v20200427"
+version_obs = "v20201231"
 # json files
 dict_json = {
     "CMIP5": {
-        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip5_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip5_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip5_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "CMIP6": {
-        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version + "_allModels_allRuns.json",
-        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version + "_allModels_allRuns.json",
-        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version + "_allModels_allRuns.json"},
+        "ENSO_perf": "share/EnsoMetrics/cmip6_historical_ENSO_perf_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_proc": "share/EnsoMetrics/cmip6_historical_ENSO_proc_" + version_mod + "_allModels_allRuns.json",
+        "ENSO_tel": "share/EnsoMetrics/cmip6_historical_ENSO_tel_" + version_mod + "_allModels_allRuns.json"},
     "obs2obs": {
-        "ENSO_perf": "share/EnsoMetrics/obs2obs_ENSO_perf_" + version + ".json",
-        "ENSO_proc": "share/EnsoMetrics/obs2obs_ENSO_proc_" + version + ".json",
-        "ENSO_tel":  "share/EnsoMetrics/obs2obs_ENSO_tel_" + version + ".json"}}
+        "ENSO_perf": "share/EnsoMetrics/obs2obs_historical_ENSO_perf_" + version_obs + "_allObservations.json",
+        "ENSO_proc": "share/EnsoMetrics/obs2obs_historical_ENSO_proc_" + version_obs + "_allObservations.json",
+        "ENSO_tel":  "share/EnsoMetrics/obs2obs_historical_ENSO_tel_" + version_obs + "_allObservations.json"}}
 # figure name
 path_out = ""
-figure_name = "metrics_intercomparison_" + str(len(list_metric_collections)) + "metric_collections_" + version
+figure_name = "metrics_intercomparison_" + str(len(list_metric_collections)) + "metric_collections_" + version_mod
 if len(list_projects) == 1:
     figure_name += "_" + str(list_projects[0])
 else:
@@ -108,11 +109,11 @@ figure_name = OSpath__join(path_out, figure_name)
 # Functions
 # ---------------------------------------------------#
 def common_save(dict_in, dict_out={}):
-    for mod in dict_in.keys():
+    for mod in list(dict_in.keys()):
         try:    dict_out[mod]
         except: dict_out[mod] = dict_in[mod]
         else:
-            for met in dict_in[mod].keys():
+            for met in list(dict_in[mod].keys()):
                 dict_out[mod][met] = dict_in[mod][met]
     return dict_out
 # ---------------------------------------------------#
@@ -158,9 +159,9 @@ else:
 # ---------------------------------------------------#
 if ' ':
     list_metrics = list()
-    for k1 in dict_met.keys():
-        for k2 in dict_met[k1].keys():
-            list_metrics += dict_met[k1][k2].keys()
+    for k1 in list(dict_met.keys()):
+        for k2 in list(dict_met[k1].keys()):
+            list_metrics += list(dict_met[k1][k2].keys())
     list_metrics = sort_metrics(list(set(list_metrics)))
     opposed_groups = deepcopy(list_projects) if big_ensemble is False else deepcopy(my_project)
     # mean metric evaluation
@@ -169,8 +170,8 @@ if ' ':
         tab_tmp = list()
         for grp in opposed_groups:
             tab = list()
-            for mod in dict_met[grp].keys():
-                if met in dict_met[grp][mod].keys():
+            for mod in list(dict_met[grp].keys()):
+                if met in list(dict_met[grp][mod].keys()):
                     if dict_met[grp][mod][met] is not None and dict_met[grp][mod][met] != 1e20:
                         tab.append(dict_met[grp][mod][met])
             tab = NUMPYarray(tab)
