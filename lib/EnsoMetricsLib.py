@@ -4489,8 +4489,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             mv = float(Std(sst))
 
             # Standard Error of the Standard Deviation (function of npts)
-            npts = float(len(sst))
-            mv_error = 0.5 * mv * NUMPYsqrt((kurtosis_temporal(sst) - ((npts - 3) / (npts - 1))) / npts)
+            mv_error = NDJ_err = mv / NUMPYsqrt(2 * (float(len(sst)) - 1))
 
             # Dive down diagnostic
             dive_down_diag = {"value": None, "axis": None}
@@ -4899,15 +4898,13 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean", 15, **dict_debug)
 
             # Compute std dev and ratio
-            sst_NDJ_std = Std(sst_NDJ)
-            sst_MAM_std = Std(sst_MAM)
+            sst_NDJ_std = float(Std(sst_NDJ))
+            sst_MAM_std = float(Std(sst_MAM))
             mv = float(sst_NDJ_std / sst_MAM_std)
 
             # Standard Error of the Standard Deviation (function of npts)
-            npts = float(len(sst_NDJ))
-            NDJ_err = 0.5 * sst_NDJ_std * NUMPYsqrt((kurtosis_temporal(sst_NDJ) - ((npts - 3) / (npts - 1))) / npts)
-            npts = float(len(sst_MAM))
-            MAM_err = 0.5 * sst_MAM_std * NUMPYsqrt((kurtosis_temporal(sst_MAM) - ((npts - 3) / (npts - 1))) / npts)
+            NDJ_err = sst_NDJ_std / NUMPYsqrt(2 * (float(len(sst_NDJ)) - 1))
+            MAM_err = sst_MAM_std / NUMPYsqrt(2 * (float(len(sst_MAM)) - 1))
             # The error (dy) on ratio ('y = x/z'): dy = (z*dx + x*dz) / z2
             mv_error = float((sst_MAM_std * NDJ_err + sst_NDJ_std * MAM_err) / NUMPYsquare(sst_MAM_std))
 
@@ -7443,7 +7440,8 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
 
     # test given kwargs
-    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds"]
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
     for arg in needed_kwarg:
         if arg not in list(kwargs.keys()):
             kwargs[arg] = default_arg_values(arg)
@@ -7762,10 +7760,10 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
                             dict1 = {"units": Units, "number_of_years_used": yearN_mod,
                                      "time_period": str(actualtimebounds_mod), "arraySTD_" + dataset1: sm_std_mod,
-                                     "description": Method.split(", ")}
+                                     "description": Method.split(", ")[0]}
                             dict2 = {"units": Units, "number_of_years_used": yearN_obs,
                                      "time_period": str(actualtimebounds_obs), "arraySTD_" + dataset2: sm_std_obs,
-                                     "description": Method.split(", ")}
+                                     "description": Method.split(", ")[0]}
                             dict3 = {
                                 "metric_name": Name, "metric_method": Method, "metric_reference": Ref,
                                 "frequency": kwargs["frequency"],
@@ -12901,7 +12899,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     val, v_pos, v_neg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
     dive_down_diag = {"value": None, "axis": None}
     keyerror = add_up_errors([keyerror1, keyerror2, keyerror3])
-    if keyerror is not None:
+    if keyerror is None:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         sst, Method, keyerror1 = PreProcessTS(
             sst, Method, areacell=sst_areacell, average="horizontal", compute_anom=True, region=sstbox, **kwargs)
@@ -13488,7 +13486,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
     val, v_pos, v_neg, nl1, nl2 = [None, None], [None, None], [None, None], None, None
     dive_down_diag = {"value": None, "axis": None}
     keyerror = add_up_errors([keyerror1, keyerror2, keyerror3])
-    if keyerror is not None:
+    if keyerror is None:
         # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, averages horizontally)
         ssh, Method, keyerror1 = PreProcessTS(
             ssh, Method, areacell=ssh_areacell, average="horizontal", compute_anom=True, region=sshbox, **kwargs)
@@ -14330,7 +14328,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Define metric attributes
     Name = "ENSO DJF PRA teleconnection pattern"
-    Units = "" if kwargs["normalization"] else Units = "mm/day/C"
+    Units = "" if kwargs["normalization"] else "mm/day/C"
     Method = "map of " + prbox + " precipitation anomalies regressed onto " + region_ev + " averaged SSTA during DJF"
     Ref = "Using CDAT regridding, correlation (centered and biased), std (centered and biased) and " + \
           "rms (uncentered and biased) calculation"
@@ -14864,7 +14862,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     # Define metric attributes
     Name = "ENSO JJA PRA teleconnection pattern"
-    Units = "" if kwargs["normalization"] else Units = "mm/day/C"
+    Units = "" if kwargs["normalization"] else "mm/day/C"
     Method = "map of " + prbox + " precipitation anomalies regressed onto " + region_ev + " averaged SSTA during JJA"
     Ref = "Using CDAT regridding, correlation (centered and biased), std (centered and biased) and " + \
           "rms (uncentered and biased) calculation"
@@ -16673,7 +16671,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     # Define metric attributes
     Name = "ENSO DJF SLPA teleconnection pattern"
-    Units = "" if kwargs["normalization"] else Units = "hPa/C"
+    Units = "" if kwargs["normalization"] else "hPa/C"
     Method = "map of " + slpbox + " sea level pressure anomalies regressed onto " + region_ev + \
              " averaged SSTA during DJF"
     Ref = "Using CDAT regridding, correlation (centered and biased), std (centered and biased) and " + \
@@ -17211,7 +17209,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     # Define metric attributes
     Name = "ENSO JJA SLPA pattern"
-    Units = "" if kwargs["normalization"] else Units = "hPa/C"
+    Units = "" if kwargs["normalization"] else "hPa/C"
     Method = "map of " + slpbox + " sea level pressure anomalies regressed onto " + region_ev + \
              " averaged SSTA during JJA"
     Ref = "Using CDAT regridding, correlation (centered and biased), std (centered and biased) and " + \
@@ -19257,61 +19255,66 @@ def grad_lat_pr(prfile, prname, prareafile, prareaname, prlandmaskfile, prlandma
             grad = off - equ
 
             # Computes the standard deviation
-            mv = float(AverageTemporal(grad))
+            mv, keyerror = AverageTemporal(grad)
+            if keyerror is None:
+                mv = float(mv)
 
-            # Standard Error of the Standard Deviation (function of nyears)
-            mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
+                # Standard Error of the Standard Deviation (function of nyears)
+                mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
 
-            # Dive down diagnostic
-            dive_down_diag = {"value": None, "axis": None}
+                # Dive down diagnostic
+                dive_down_diag = {"value": None, "axis": None}
 
-            if netcdf is True:
-                # additional diagnostic
-                # Read file and select the right region
-                pr_map, areacell, keyerror = Read_data_mask_area(
-                    prfile, prname, "precipitations", metric, "equatorial_pacific_LatExt2", file_area=prareafile,
-                    name_area=prareaname, file_mask=prlandmaskfile, name_mask=prlandmaskname, maskland=True,
-                    maskocean=False, debug=debug, **kwargs)
-                if keyerror is None:
-                    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
-                    pr_map, _, keyerror = PreProcessTS(
-                        pr_map, "", areacell=areacell, average="time", compute_anom=False,
-                        region="equatorial_pacific_LatExt2", **kwargs)
-                    del areacell
+                if netcdf is True:
+                    # additional diagnostic
+                    # Read file and select the right region
+                    pr_map, areacell, keyerror = Read_data_mask_area(
+                        prfile, prname, "precipitations", metric, "equatorial_pacific_LatExt2", file_area=prareafile,
+                        name_area=prareaname, file_mask=prlandmaskfile, name_mask=prlandmaskname, maskland=True,
+                        maskocean=False, debug=debug, **kwargs)
                     if keyerror is None:
-                        # Regridding
-                        if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                            kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                                    "newgrid_name": "generic_1x1deg"}
-                        pr_map = Regrid(pr_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
-                        # Zonal average
-                        pr_lat = pr_map(longitude=ReferenceRegions(prbox[0])["longitude"])
-                        pr_lat, keyerror = AverageZonal(pr_lat)
+                        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+                        pr_map, _, keyerror = PreProcessTS(
+                            pr_map, "", areacell=areacell, average="time", compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del areacell
                         if keyerror is None:
-                            # Supplementary metrics
-                            std_lat = float(Std(pr_lat, weights=None, axis=0, centered=1, biased=1))
-                            std_map = float(Std(pr_map, weights=None, axis="xy", centered=1, biased=1))
-                            # Dive down diagnostic
-                            dive_down_diag = {"value": ArrayToList(pr_lat), "axis": list(pr_lat.getAxis(0)[:])}
-                            if ".nc" in netcdf_name:
-                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
-                            else:
-                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                            dict1 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lat,
-                                "description": "mean PR across latitudes (zonal averaged [" + str(lon0[0]) + "-" +
-                                               str(lon1[1]) + "])"}
-                            dict2 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
-                                "description": "mean PR map"}
-                            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
-                                     "frequency": kwargs["frequency"]}
-                            SaveNetcdf(file_name, global_attributes=dict3,
-                                       var1=pr_lat, var1_attributes=dict1, var1_name=ovar[0] + dataset,
-                                       var2=pr_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
-                            del dict1, dict2, dict3, file_name
+                            # Regridding
+                            if "regridding" not in list(kwargs.keys()) or \
+                                    isinstance(kwargs["regridding"], dict) is False:
+                                kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf",
+                                                        "regridMethod": "linear", "newgrid_name": "generic_1x1deg"}
+                            pr_map = Regrid(pr_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                            # Zonal average
+                            pr_lat = pr_map(longitude=ReferenceRegions(prbox[0])["longitude"])
+                            pr_lat, keyerror = AverageZonal(pr_lat)
+                            if keyerror is None:
+                                # Supplementary metrics
+                                std_lat = float(Std(pr_lat, weights=None, axis=0, centered=1, biased=1))
+                                std_map = float(Std(pr_map, weights=None, axis="xy", centered=1, biased=1))
+                                # Dive down diagnostic
+                                dive_down_diag = {"value": ArrayToList(pr_lat), "axis": list(pr_lat.getAxis(0)[:])}
+                                if ".nc" in netcdf_name:
+                                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                                else:
+                                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                                dict1 = {
+                                    "units": units, "number_of_years_used": n_year, "time_period":
+                                        str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lat,
+                                    "description": "mean PR across latitudes (zonal averaged [" + str(lon0[0]) + "-" +
+                                                   str(lon1[1]) + "])"}
+                                dict2 = {
+                                    "units": units, "number_of_years_used": n_year,
+                                    "time_period": str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
+                                    "description": "mean PR map"}
+                                dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
+                                         "frequency": kwargs["frequency"]}
+                                SaveNetcdf(file_name, global_attributes=dict3,
+                                           var1=pr_lat, var1_attributes=dict1, var1_name=ovar[0] + dataset,
+                                           var2=pr_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
+                                del dict1, dict2, dict3, file_name
     # metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -19477,61 +19480,66 @@ def grad_lat_sst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             grad = off - equ
 
             # Computes the standard deviation
-            mv = float(AverageTemporal(grad))
+            mv, keyerror = AverageTemporal(grad)
+            if keyerror is None:
+                mv = float(mv)
 
-            # Standard Error of the Standard Deviation (function of nyears)
-            mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
+                # Standard Error of the Standard Deviation (function of nyears)
+                mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
 
-            # Dive down diagnostic
-            dive_down_diag = {"value": None, "axis": None}
+                # Dive down diagnostic
+                dive_down_diag = {"value": None, "axis": None}
 
-            if netcdf is True:
-                # additional diagnostic
-                # Read file and select the right region
-                sst_map, areacell, keyerror = Read_data_mask_area(
-                    sstfile, sstname, "temperature", metric, "equatorial_pacific_LatExt2", file_area=sstareafile,
-                    name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
-                    maskocean=False, debug=debug, **kwargs)
-                if keyerror is None:
-                    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
-                    sst_map, _, keyerror = PreProcessTS(
-                        sst_map, "", areacell=areacell, average="time", compute_anom=False,
-                        region="equatorial_pacific_LatExt2", **kwargs)
-                    del areacell
+                if netcdf is True:
+                    # additional diagnostic
+                    # Read file and select the right region
+                    sst_map, areacell, keyerror = Read_data_mask_area(
+                        sstfile, sstname, "temperature", metric, "equatorial_pacific_LatExt2", file_area=sstareafile,
+                        name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                        maskocean=False, debug=debug, **kwargs)
                     if keyerror is None:
-                        # Regridding
-                        if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                            kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                                    "newgrid_name": "generic_1x1deg"}
-                        sst_map = Regrid(sst_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
-                        # Zonal average
-                        sst_lat = sst_map(longitude=ReferenceRegions(sstbox[0])["longitude"])
-                        sst_lat, keyerror = AverageZonal(sst_lat)
+                        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+                        sst_map, _, keyerror = PreProcessTS(
+                            sst_map, "", areacell=areacell, average="time", compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del areacell
                         if keyerror is None:
-                            # Supplementary metrics
-                            std_lat = float(Std(sst_lat, weights=None, axis=0, centered=1, biased=1))
-                            std_map = float(Std(sst_map, weights=None, axis="xy", centered=1, biased=1))
-                            # Dive down diagnostic
-                            dive_down_diag = {"value": ArrayToList(sst_lat), "axis": list(sst_lat.getAxis(0)[:])}
-                            if ".nc" in netcdf_name:
-                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
-                            else:
-                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                            dict1 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lat,
-                                "description": "mean SST across latitudes (zonal averaged [" + str(lon0[0]) + "-" +
-                                               str(lon1[1]) + "])"}
-                            dict2 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
-                                "description": "mean SST map"}
-                            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
-                                     "frequency": kwargs["frequency"]}
-                            SaveNetcdf(file_name, global_attributes=dict3,
-                                       var1=sst_lat, var1_attributes=dict1, var1_name=ovar[0] + dataset,
-                                       var2=sst_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
-                            del dict1, dict2, dict3, file_name
+                            # Regridding
+                            if "regridding" not in list(kwargs.keys()) or \
+                                    isinstance(kwargs["regridding"], dict) is False:
+                                kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf",
+                                                        "regridMethod": "linear", "newgrid_name": "generic_1x1deg"}
+                            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                            # Zonal average
+                            sst_lat = sst_map(longitude=ReferenceRegions(sstbox[0])["longitude"])
+                            sst_lat, keyerror = AverageZonal(sst_lat)
+                            if keyerror is None:
+                                # Supplementary metrics
+                                std_lat = float(Std(sst_lat, weights=None, axis=0, centered=1, biased=1))
+                                std_map = float(Std(sst_map, weights=None, axis="xy", centered=1, biased=1))
+                                # Dive down diagnostic
+                                dive_down_diag = {"value": ArrayToList(sst_lat), "axis": list(sst_lat.getAxis(0)[:])}
+                                if ".nc" in netcdf_name:
+                                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                                else:
+                                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                                dict1 = {
+                                    "units": units, "number_of_years_used": n_year,
+                                    "time_period": str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lat,
+                                    "description": "mean SST across latitudes (zonal averaged [" + str(lon0[0]) + "-" +
+                                                   str(lon1[1]) + "])"}
+                                dict2 = {
+                                    "units": units, "number_of_years_used": n_year,
+                                    "time_period": str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
+                                    "description": "mean SST map"}
+                                dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
+                                         "frequency": kwargs["frequency"]}
+                                SaveNetcdf(file_name, global_attributes=dict3,
+                                           var1=sst_lat, var1_attributes=dict1, var1_name=ovar[0] + dataset,
+                                           var2=sst_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
+                                del dict1, dict2, dict3, file_name
     # metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -19697,61 +19705,66 @@ def grad_lon_pr(prfile, prname, prareafile, prareaname, prlandmaskfile, prlandma
             grad = west - east
 
             # Computes the standard deviation
-            mv = float(AverageTemporal(grad))
+            mv, keyerror = AverageTemporal(grad)
+            if keyerror is None:
+                mv = float(mv)
 
-            # Standard Error of the Standard Deviation (function of nyears)
-            mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
+                # Standard Error of the Standard Deviation (function of nyears)
+                mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
 
-            # Dive down diagnostic
-            dive_down_diag = {"value": None, "axis": None}
+                # Dive down diagnostic
+                dive_down_diag = {"value": None, "axis": None}
 
-            if netcdf is True:
-                # additional diagnostic
-                # Read file and select the right region
-                pr_map, areacell, keyerror = Read_data_mask_area(
-                    prfile, prname, "precipitations", metric, "equatorial_pacific_LatExt2", file_area=prareafile,
-                    name_area=prareaname, file_mask=prlandmaskfile, name_mask=prlandmaskname, maskland=True,
-                    maskocean=False, debug=debug, **kwargs)
-                if keyerror is None:
-                    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
-                    pr_map, _, keyerror = PreProcessTS(
-                        pr_map, "", areacell=areacell, average="time", compute_anom=False,
-                        region="equatorial_pacific_LatExt2", **kwargs)
-                    del areacell
+                if netcdf is True:
+                    # additional diagnostic
+                    # Read file and select the right region
+                    pr_map, areacell, keyerror = Read_data_mask_area(
+                        prfile, prname, "precipitations", metric, "equatorial_pacific_LatExt2", file_area=prareafile,
+                        name_area=prareaname, file_mask=prlandmaskfile, name_mask=prlandmaskname, maskland=True,
+                        maskocean=False, debug=debug, **kwargs)
                     if keyerror is None:
-                        # Regridding
-                        if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                            kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                                    "newgrid_name": "generic_1x1deg"}
-                        pr_map = Regrid(pr_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
-                        # Meridional average
-                        pr_lon = pr_map(latitude=ReferenceRegions(prbox[0])["latitude"])
-                        pr_lon, keyerror = AverageMeridional(pr_lon)
+                        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+                        pr_map, _, keyerror = PreProcessTS(
+                            pr_map, "", areacell=areacell, average="time", compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del areacell
                         if keyerror is None:
-                            # Supplementary metrics
-                            std_lon = float(Std(pr_lon, weights=None, axis=0, centered=1, biased=1))
-                            std_map = float(Std(pr_map, weights=None, axis="xy", centered=1, biased=1))
-                            # Dive down diagnostic
-                            dive_down_diag = {"value": ArrayToList(pr_lon), "axis": list(pr_lon.getAxis(0)[:])}
-                            if ".nc" in netcdf_name:
-                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
-                            else:
-                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                            dict1 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lon,
-                                "description": "mean PR across longitudes (meridional averaged [" + str(lat0[0]) + "-" +
-                                               str(lat1[1]) + "])"}
-                            dict2 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
-                                "description": "mean PR map"}
-                            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
-                                     "frequency": kwargs["frequency"]}
-                            SaveNetcdf(file_name, global_attributes=dict3,
-                                       var1=pr_lon, var1_attributes=dict1, var1_name=ovar[0] + dataset,
-                                       var2=pr_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
-                            del dict1, dict2, dict3, file_name
+                            # Regridding
+                            if "regridding" not in list(kwargs.keys()) or \
+                                    isinstance(kwargs["regridding"], dict) is False:
+                                kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf",
+                                                        "regridMethod": "linear", "newgrid_name": "generic_1x1deg"}
+                            pr_map = Regrid(pr_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                            # Meridional average
+                            pr_lon = pr_map(latitude=ReferenceRegions(prbox[0])["latitude"])
+                            pr_lon, keyerror = AverageMeridional(pr_lon)
+                            if keyerror is None:
+                                # Supplementary metrics
+                                std_lon = float(Std(pr_lon, weights=None, axis=0, centered=1, biased=1))
+                                std_map = float(Std(pr_map, weights=None, axis="xy", centered=1, biased=1))
+                                # Dive down diagnostic
+                                dive_down_diag = {"value": ArrayToList(pr_lon), "axis": list(pr_lon.getAxis(0)[:])}
+                                if ".nc" in netcdf_name:
+                                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                                else:
+                                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                                dict1 = {
+                                    "units": units, "number_of_years_used": n_year,
+                                    "time_period": str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lon,
+                                    "description": "mean PR across longitudes (meridional averaged [" + str(lat0[0]) +
+                                                   "-" + str(lat1[1]) + "])"}
+                                dict2 = {
+                                    "units": units, "number_of_years_used": n_year,
+                                    "time_period": str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
+                                    "description": "mean PR map"}
+                                dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
+                                         "frequency": kwargs["frequency"]}
+                                SaveNetcdf(file_name, global_attributes=dict3,
+                                           var1=pr_lon, var1_attributes=dict1, var1_name=ovar[0] + dataset,
+                                           var2=pr_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
+                                del dict1, dict2, dict3, file_name
     # metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -19917,61 +19930,66 @@ def grad_lon_sst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             grad = west - east
 
             # Computes the standard deviation
-            mv = float(AverageTemporal(grad))
+            mv, keyerror = AverageTemporal(grad)
+            if keyerror is None:
+                mv = float(mv)
 
-            # Standard Error of the Standard Deviation (function of nyears)
-            mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
+                # Standard Error of the Standard Deviation (function of nyears)
+                mv_error = float(Std(grad)) / NUMPYsqrt(len(grad))
 
-            # Dive down diagnostic
-            dive_down_diag = {"value": None, "axis": None}
+                # Dive down diagnostic
+                dive_down_diag = {"value": None, "axis": None}
 
-            if netcdf is True:
-                # additional diagnostic
-                # Read file and select the right region
-                sst_map, areacell, keyerror = Read_data_mask_area(
-                    sstfile, sstname, "temperature", metric, "equatorial_pacific_LatExt2", file_area=sstareafile,
-                    name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
-                    maskocean=False, debug=debug, **kwargs)
-                if keyerror is None:
-                    # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
-                    sst_map, _, keyerror = PreProcessTS(
-                        sst_map, "", areacell=areacell, average="time", compute_anom=False,
-                        region="equatorial_pacific_LatExt2", **kwargs)
-                    del areacell
+                if netcdf is True:
+                    # additional diagnostic
+                    # Read file and select the right region
+                    sst_map, areacell, keyerror = Read_data_mask_area(
+                        sstfile, sstname, "temperature", metric, "equatorial_pacific_LatExt2", file_area=sstareafile,
+                        name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
+                        maskocean=False, debug=debug, **kwargs)
                     if keyerror is None:
-                        # Regridding
-                        if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                            kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                                    "newgrid_name": "generic_1x1deg"}
-                        sst_map = Regrid(sst_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
-                        # Meridional average
-                        sst_lon = sst_map(latitude=ReferenceRegions(sstbox[0])["latitude"])
-                        sst_lon, keyerror = AverageMeridional(sst_lon)
+                        # Preprocess variables (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+                        sst_map, _, keyerror = PreProcessTS(
+                            sst_map, "", areacell=areacell, average="time", compute_anom=False,
+                            region="equatorial_pacific_LatExt2", **kwargs)
+                        del areacell
                         if keyerror is None:
-                            # Supplementary metrics
-                            std_lon = float(Std(sst_lon, weights=None, axis=0, centered=1, biased=1))
-                            std_map = float(Std(sst_map, weights=None, axis="xy", centered=1, biased=1))
-                            # Dive down diagnostic
-                            dive_down_diag = {"value": ArrayToList(sst_lon), "axis": list(sst_lon.getAxis(0)[:])}
-                            if ".nc" in netcdf_name:
-                                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
-                            else:
-                                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                            dict1 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lon,
-                                "description": "mean SST across longitudes (meridional averaged [" + str(lat0[0]) + "-"
-                                               + str(lat1[1]) + "])"}
-                            dict2 = {
-                                "units": units, "number_of_years_used": n_year, "time_period": str(actualtimebounds),
-                                "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
-                                "description": "mean SST map"}
-                            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
-                                     "frequency": kwargs["frequency"]}
-                            SaveNetcdf(file_name, global_attributes=dict3,
-                                       var1=sst_lon, var1_attributes=dict1, var1_name=ovar[0] + dataset,
-                                       var2=sst_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
-                            del dict1, dict2, dict3, file_name
+                            # Regridding
+                            if "regridding" not in list(kwargs.keys()) or \
+                                    isinstance(kwargs["regridding"], dict) is False:
+                                kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf",
+                                                        "regridMethod": "linear", "newgrid_name": "generic_1x1deg"}
+                            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                            # Meridional average
+                            sst_lon = sst_map(latitude=ReferenceRegions(sstbox[0])["latitude"])
+                            sst_lon, keyerror = AverageMeridional(sst_lon)
+                            if keyerror is None:
+                                # Supplementary metrics
+                                std_lon = float(Std(sst_lon, weights=None, axis=0, centered=1, biased=1))
+                                std_map = float(Std(sst_map, weights=None, axis="xy", centered=1, biased=1))
+                                # Dive down diagnostic
+                                dive_down_diag = {"value": ArrayToList(sst_lon), "axis": list(sst_lon.getAxis(0)[:])}
+                                if ".nc" in netcdf_name:
+                                    file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+                                else:
+                                    file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+                                dict1 = {
+                                    "units": units, "number_of_years_used": n_year,
+                                    "time_period": str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_lon,
+                                    "description": "mean SST across longitudes (meridional averaged [" + str(lat0[0]) +
+                                                   "-" + str(lat1[1]) + "])"}
+                                dict2 = {
+                                    "units": units, "number_of_years_used": n_year,
+                                    "time_period": str(actualtimebounds),
+                                    "diagnostic_value": mv, "diagnostic_value_error": mv_error, "arraySTD": std_map,
+                                    "description": "mean SST map"}
+                                dict3 = {"metric_name": name, "metric_method": method, "metric_reference": reference,
+                                         "frequency": kwargs["frequency"]}
+                                SaveNetcdf(file_name, global_attributes=dict3,
+                                           var1=sst_lon, var1_attributes=dict1, var1_name=ovar[0] + dataset,
+                                           var2=sst_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
+                                del dict1, dict2, dict3, file_name
     # metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -25468,7 +25486,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                                     description="map of the standard deviation of the mean annual cycle of PR")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     pr_mod, pr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lat", Units, "y", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of PR across latitudes")
                                 if ".nc" in netcdf_name:
@@ -25802,7 +25820,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                                     description="map of the standard deviation of the mean annual cycle of PR")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     pr_mod, pr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lon", Units, "x", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of PR across longitudes")
                                 if ".nc" in netcdf_name:
@@ -26096,10 +26114,14 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                                               "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                               "shape1": "(mod) " + str(map_mod.shape),
                                               "shape2": "(obs) " + str(map_obs.shape)}
-                                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+                                EnsoErrorsWarnings.debug_mode(
+                                    "\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+                            # change units
+                            map_mod = map_mod * 1e2
+                            map_obs = map_obs * 1e2
                             # standard deviation computation
-                            map_mod = Std(map_mod) * 1e2
-                            map_obs = Std(map_obs) * 1e2
+                            map_mod = Std(map_mod)
+                            map_obs = Std(map_obs)
                             # Regridding
                             if isinstance(kwargs["regridding"], dict):
                                 map_mod, map_obs, _ = TwoVarRegrid(
@@ -26140,7 +26162,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                                     description="map of the standard deviation of the mean annual cycle of SSH")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     ssh_mod, ssh_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lat", Units, "y", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of SSH across latitudes")
                                 if ".nc" in netcdf_name:
@@ -26435,9 +26457,12 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                                               "shape1": "(mod) " + str(map_mod.shape),
                                               "shape2": "(obs) " + str(map_obs.shape)}
                                 EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+                            # change units
+                            map_mod = map_mod * 1e2
+                            map_obs = map_obs * 1e2
                             # standard deviation computation
-                            map_mod = Std(map_mod) * 1e2
-                            map_obs = Std(map_obs) * 1e2
+                            map_mod = Std(map_mod)
+                            map_obs = Std(map_obs)
                             # Regridding
                             if isinstance(kwargs["regridding"], dict):
                                 map_mod, map_obs, _ = TwoVarRegrid(
@@ -26479,7 +26504,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                                     description="map of the standard deviation of the mean annual cycle of SSH")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     ssh_mod, ssh_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lon", Units, "x", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of SSH across longitudes")
                                 if ".nc" in netcdf_name:
@@ -26814,7 +26839,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                                     description="map of the standard deviation of the mean annual cycle of SST")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     sst_mod, sst_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lat", Units, "y", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of SST across latitudes")
                                 if ".nc" in netcdf_name:
@@ -27149,7 +27174,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                                     description="map of the standard deviation of the mean annual cycle of SST")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     sst_mod, sst_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lon", Units, "x", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of SST across longitudes")
                                 if ".nc" in netcdf_name:
@@ -27488,7 +27513,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                                     description="map of the standard deviation of the mean annual cycle of TAUX")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     taux_mod, taux_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lat", Units, "y", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of TAUX across latitudes")
                                 if ".nc" in netcdf_name:
@@ -27828,7 +27853,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                                     description="map of the standard deviation of the mean annual cycle of TAUX")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     taux_mod, taux_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lon", Units, "x", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of TAUX across longitudes")
                                 if ".nc" in netcdf_name:
@@ -28167,7 +28192,7 @@ def SeasonalTauyLatRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamem
                                     description="map of the standard deviation of the mean annual cycle of TAUY")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     tauy_mod, tauy_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lat", Units, "y", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of TAUY across latitudes")
                                 if ".nc" in netcdf_name:
@@ -28507,7 +28532,7 @@ def SeasonalTauyLonRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamem
                                     description="map of the standard deviation of the mean annual cycle of TAUY")
                                 dict_metric, dict_nc = fill_dict_axis(
                                     tauy_mod, tauy_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                    yearN_mod, yearN_obs, 5, ovar[2], "lon", Units, "x", centered_rmse=centered_rmse,
+                                    yearN_mod, yearN_obs, 5, ovar[2], "hov", Units, "01", centered_rmse=centered_rmse,
                                     biased_rmse=biased_rmse, dict_metric=dict_metric,
                                     description="mean annual cycle of TAUY across longitudes")
                                 if ".nc" in netcdf_name:
