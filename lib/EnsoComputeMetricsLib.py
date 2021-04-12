@@ -26,10 +26,11 @@ from .KeyArgLib import default_arg_values
 # sst only datasets (not good for surface temperature teleconnection)
 sst_only = [
     "C-GLORSv5", "CFSR", "COBE", "COBE1", "COBE-1", "COBEv1", "COBE2", "COBE-2", "COBEv2", "ERSSTv3b", "ERSSTv4",
-    "ERSSTv5", "GODAS", "HadISST", "HadISST1", "HadISST-1", "HadISSTv1", "HadISST-1-1", "HadISSTv1.1", "OAFlux",
-    "OISST", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2", "SODA3.11.2", "SODA3.12.2", "Tropflux", "TropFlux", "Tropflux1",
-    "TropFlux1", "Tropflux-1", "TropFlux-1", "Tropfluxv1", "TropFluxv1", "Tropflux-1-0", "TropFlux-1-0", "Tropfluxv1.0",
-    "TropFluxv1.0"]
+    "ERSSTv5", "GODAS", "HadISST", "HadISST1", "HadISST-1", "HadISSTv1", "HadISST1.1", "HadISST1-1", "HadISST-1.1",
+    "HadISST-1-1", "HadISSTv1.1", "OAFlux", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2", "SODA3.11.2", "SODA3.12.2",
+    "Tropflux", "TropFlux", "Tropflux1", "TropFlux1", "Tropflux-1", "TropFlux-1", "Tropfluxv1", "TropFluxv1",
+    "Tropflux1.0", "TropFlux1.0", "Tropflux1-0", "TropFlux1-0", "Tropflux-1.0", "TropFlux-1.0", "Tropflux-1-0",
+    "TropFlux-1-0", "Tropfluxv1.0", "TropFluxv1.0"]
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -38,7 +39,7 @@ sst_only = [
 #
 def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding={}, debug=False, dive_down=False,
                       netcdf=False, netcdf_name="", observed_fyear=None, observed_lyear=None, modeled_fyear=None,
-                      modeled_lyear=None):
+                      modeled_lyear=None, obs_interpreter=None):
     """
     The ComputeCollection() function computes all the diagnostics / metrics associated with the given Metric Collection
 
@@ -103,6 +104,23 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
         default value = '' root name of the saved NetCDFs
         the name of a metric will be append at the end of the root name
         e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+    :param observed_fyear: integer, optional
+        first year to use for observational datasets, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'observed_period' defined in EnsoCollectionsLib.defCollection is used
+    :param observed_lyear: integer, optional
+        last year to use for observational datasets, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'observed_period' defined in EnsoCollectionsLib.defCollection is used
+    :param modeled_fyear: integer, optional
+        first year to use for CMIP simulations, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'observed_period' defined in EnsoCollectionsLib.defCollection is used
+    :param modeled_lyear: integer, optional
+        last year to use for CMIP simulations, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'modeled_period' defined in EnsoCollectionsLib.defCollection is used
+    :param obs_interpreter: string, optional
+        special variable interpreter for all observational datasets
+        the only possibility is 'CMIP' to interpret all observational's variables as CMIP (datasets have been CMORized)
+        default value = None, observational datasets are considered not CMORized and will be interpreted as defined in
+        EnsoCollectionsLib.ReferenceObservations
 
     :return: MCvalues: dict
         name of the Metric Collection, Metrics, value, value_error, units, ...
@@ -186,7 +204,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 modelLandmaskName1 = dictDatasets["model"][modelName][list_variables[0]]["landmaskname"]
             # observations name(s), file(s), variable(s) name in file(s)
             obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1 = list(), list(), list(), list(), list()
-            obsFileLandmask1, obsLandmaskName1 = list(), list()
+            obsFileLandmask1, obsLandmaskName1, obsInterpreter1 = list(), list(), list()
             for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
                 try:
                     dictDatasets["observations"][obs][list_variables[0]]
@@ -212,6 +230,11 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                         obsLandmaskName1.append(None)
                     else:
                         obsLandmaskName1.append(dictDatasets["observations"][obs][list_variables[0]]["landmaskname"])
+                    try:
+                        obsInterpreter1.append(
+                            dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                    except:
+                        obsInterpreter1.append(obs)
             # same if a second variable is needed
             # this time in the form of a keyarg dictionary
             arg_var2 = {
@@ -219,7 +242,8 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 "modelFileLandmask1": modelFileLandmask1, "modelLandmaskName1": modelLandmaskName1,
                 "obsFileArea1": obsFileArea1, "obsAreaName1": obsAreaName1, "obsFileLandmask1": obsFileLandmask1,
                 "obsLandmaskName1": obsLandmaskName1, "observed_fyear": observed_fyear,
-                "observed_lyear": observed_lyear, "modeled_fyear": modeled_fyear, "modeled_lyear": modeled_lyear}
+                "observed_lyear": observed_lyear, "modeled_fyear": modeled_fyear, "modeled_lyear": modeled_lyear,
+                "obsInterpreter1": obsInterpreter1}
             if len(list_variables) > 1:
                 try:
                     arg_var2["modelFile2"] = dictDatasets["model"][modelName][list_variables[1]]["path + filename"]
@@ -245,7 +269,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 else:
                     arg_var2["modelLandmaskName2"] = dictDatasets["model"][modelName][list_variables[1]]["landmaskname"]
                 obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2 = list(), list(), list(), list(), list()
-                obsFileLandmask2, obsLandmaskName2 = list(), list()
+                obsFileLandmask2, obsLandmaskName2, obsInterpreter2 = list(), list(), list()
                 for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
                     try:
                         dictDatasets["observations"][obs][list_variables[1]]
@@ -272,6 +296,11 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                         else:
                             obsLandmaskName2.append(
                                 dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
+                        try:
+                            obsInterpreter2.append(
+                                dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                        except:
+                            obsInterpreter2.append(obs)
                 arg_var2["obsNameVar2"] = obsNameVar2
                 arg_var2["obsFile2"] = obsFile2
                 arg_var2["obsVarName2"] = obsVarName2
@@ -279,6 +308,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 arg_var2["obsAreaName2"] = obsAreaName2
                 arg_var2["obsFileLandmask2"] = obsFileLandmask2
                 arg_var2["obsLandmaskName2"] = obsLandmaskName2
+                arg_var2['obsInterpreter2'] = obsInterpreter2
             # computes the metric
             if modelFile1 is None or len(modelFile1) == 0 or (isinstance(modelFile1, list) and None in modelFile1) or \
                     (len(list_variables) > 1 and
@@ -324,7 +354,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 valu, vame, dive, dime = ComputeMetric(
                     metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                     dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
-                    netcdf_name=netcdf_name, **arg_var2)
+                    netcdf_name=netcdf_name, obs_interpreter=obs_interpreter, **arg_var2)
                 keys1 = list(valu.keys())
                 keys2 = list(set([kk.replace("value", "").replace("__", "").replace("_error", "")
                                   for ll in list(valu[keys1[0]].keys()) for kk in list(valu[keys1[0]][ll].keys())]))
@@ -398,7 +428,7 @@ def save_json_obs(dict_in, json_name):
 
 def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False,
                               netcdf=False, netcdf_name="", observed_fyear=None, observed_lyear=None,
-                              modeled_fyear=None, modeled_lyear=None):
+                              modeled_fyear=None, modeled_lyear=None, obs_interpreter=None):
     dict_mc = defCollection(metricCollection)
     dict_col_meta = {
         "name": dict_mc["long_name"], "description_of_the_collection": dict_mc["description"], "metrics": {},
@@ -417,7 +447,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
         dict_regions = dict_m[metric]["regions"]
         # observations name(s), file(s), variable(s) name in file(s)
         obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1 = list(), list(), list(), list(), list()
-        obsFileLandmask1, obsLandmaskName1 = list(), list()
+        obsFileLandmask1, obsLandmaskName1, obsInterpreter1 = list(), list(), list()
         for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
             try:
                 dictDatasets["observations"][obs][list_variables[0]]
@@ -442,9 +472,13 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     obsLandmaskName1.append(None)
                 else:
                     obsLandmaskName1.append(dictDatasets["observations"][obs][list_variables[0]]["landmaskname"])
+                try:
+                    obsInterpreter1.append(dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                except:
+                    obsInterpreter1.append(obs)
         # same if a second variable is needed
         obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2 = list(), list(), list(), list(), list()
-        obsFileLandmask2, obsLandmaskName2 = list(), list()
+        obsFileLandmask2, obsLandmaskName2, obsInterpreter2 = list(), list(), list()
         if len(list_variables) > 1:
             for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
                 try:
@@ -472,6 +506,11 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     else:
                         obsLandmaskName2.append(
                             dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
+                    try:
+                        obsInterpreter2.append(
+                            dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                    except:
+                        obsInterpreter2.append(obs)
         # observations as model
         print(obsNameVar1)
         print(obsNameVar2)
@@ -483,12 +522,14 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
             modelAreaName1 = obsAreaName1[ii]
             modelFileLandmask1 = obsFileLandmask1[ii]
             modelLandmaskName1 = obsLandmaskName1[ii]
-            arg_var2 = {"modelFileArea1": modelFileArea1, "modelAreaName1": modelAreaName1,
-                        "modelFileLandmask1": modelFileLandmask1, "modelLandmaskName1": modelLandmaskName1,
-                        "obsFileArea1": obsFileArea1, "obsAreaName1": obsAreaName1,
-                        "obsFileLandmask1": obsFileLandmask1, "obsLandmaskName1": obsLandmaskName1,
-                        "observed_fyear": observed_fyear, "observed_lyear": observed_lyear,
-                        "modeled_fyear": modeled_fyear, "modeled_lyear": modeled_lyear}
+            modelInterpreter1 = obsInterpreter1[ii]
+            arg_var2 = {
+                "modelFileArea1": modelFileArea1, "modelAreaName1": modelAreaName1,
+                "modelFileLandmask1": modelFileLandmask1, "modelLandmaskName1": modelLandmaskName1,
+                "modelInterpreter1": modelInterpreter1, "obsFileArea1": obsFileArea1, "obsAreaName1": obsAreaName1,
+                "obsFileLandmask1": obsFileLandmask1, "obsLandmaskName1": obsLandmaskName1,
+                "obsInterpreter1": obsInterpreter1, "observed_fyear": observed_fyear, "observed_lyear": observed_lyear,
+                "modeled_fyear": modeled_fyear, "modeled_lyear": modeled_lyear}
             if len(list_variables) == 1:
                 nbr = 1
             else:
@@ -506,6 +547,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     arg_var2["modelAreaName2"] = obsAreaName2[jj]
                     arg_var2["modelFileLandmask2"] = obsFileLandmask2[jj]
                     arg_var2["modelLandmaskName2"] = obsLandmaskName2[jj]
+                    arg_var2['modelInterpreter2'] = obsInterpreter2[jj]
                     arg_var2["regionVar2"] = dict_regions[list_variables[1]]
                     arg_var2["obsNameVar2"] = obsNameVar2
                     arg_var2["obsFile2"] = obsFile2
@@ -514,6 +556,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     arg_var2["obsAreaName2"] = obsAreaName2
                     arg_var2["obsFileLandmask2"] = obsFileLandmask2
                     arg_var2["obsLandmaskName2"] = obsLandmaskName2
+                    arg_var2['obsInterpreter2'] = obsInterpreter2
                 if netcdf is True:
                     netcdf_name_out = netcdf_name.replace("OBSNAME", modelName2)
                 else:
@@ -527,7 +570,8 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     valu, vame, dive, dime = ComputeMetric(
                         metricCollection, metric, modelName2, modelFile1, modelVarName1, obsNameVar1,
                         obsFile1, obsVarName1, dict_regions[list_variables[0]], user_regridding=user_regridding,
-                        debug=debug, netcdf=netcdf, netcdf_name=netcdf_name_out, **arg_var2)
+                        debug=debug, netcdf=netcdf, netcdf_name=netcdf_name_out, obs_interpreter=obs_interpreter,
+                        **arg_var2)
                     keys1 = list(valu.keys())
                     keys2 = list(set([kk.replace("value", "").replace("__", "").replace("_error", "")
                                       for ll in list(valu[keys1[0]].keys()) for kk in list(valu[keys1[0]][ll].keys())]))
@@ -580,14 +624,14 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     del dict_out, dime, dive, keys1, keys2, valu
                 del json_name_out, modelName2, netcdf_name_out
             del arg_var2, modelName, modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, \
-                modelLandmaskName1, nbr
+                modelLandmaskName1, modelInterpreter1, nbr
         # read all jsons and group them
         pattern = netcdf_name.replace("OBSNAME", "tmp1_*_" + metric + ".json")
         json_name_out = netcdf_name.replace("OBSNAME", "tmp2_" + metric)
         group_json_obs(pattern, json_name_out, metric)
         del dict_regions, json_name_out, list_variables, obsAreaName1, obsAreaName2, obsFile1, obsFile2, obsFileArea1, \
-            obsFileArea2, obsFileLandmask1, obsFileLandmask2, obsLandmaskName1, obsLandmaskName2, obsNameVar1, \
-            obsNameVar2, obsVarName1, obsVarName2, pattern
+            obsFileArea2, obsFileLandmask1, obsFileLandmask2, obsInterpreter1, obsInterpreter2, obsLandmaskName1,\
+            obsLandmaskName2, obsNameVar1, obsNameVar2, obsVarName1, obsVarName2, pattern
     # read all jsons and group them
     pattern = netcdf_name.replace("OBSNAME", "tmp2_*.json")
     json_name_out = netcdf_name.replace("OBSNAME", "observation")
@@ -647,12 +691,13 @@ dict_twoVar = {
 
 def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                   regionVar1, modelFileArea1="", modelAreaName1="", modelFileLandmask1="", modelLandmaskName1="",
-                  obsFileArea1="", obsAreaName1="", obsFileLandmask1="", obsLandmaskName1="",
-                  modelFile2="", modelVarName2="", modelFileArea2="", modelAreaName2="", modelFileLandmask2="",
-                  modelLandmaskName2="", obsNameVar2="", obsFile2="", obsVarName2="", obsFileArea2="", obsAreaName2="",
-                  obsFileLandmask2="", obsLandmaskName2="", regionVar2="", user_regridding={}, debug=False,
-                  netcdf=False, netcdf_name="", observed_fyear=None, observed_lyear=None, modeled_fyear=None,
-                  modeled_lyear=None):
+                  modelInterpreter1=None, obsFileArea1="", obsAreaName1="", obsFileLandmask1="", obsLandmaskName1="",
+                  obsInterpreter1=None, modelFile2="", modelVarName2="", modelFileArea2="", modelAreaName2="",
+                  modelFileLandmask2="", modelLandmaskName2="", modelInterpreter2=None, obsNameVar2="", obsFile2="",
+                  obsVarName2="", obsFileArea2="", obsAreaName2="", obsFileLandmask2="", obsLandmaskName2="",
+                  regionVar2="", obsInterpreter2=None, user_regridding={}, debug=False, netcdf=False, netcdf_name="",
+                  observed_fyear=None, observed_lyear=None, modeled_fyear=None, modeled_lyear=None,
+                  obs_interpreter=None):
     """
     :param metricCollection: string
         name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
@@ -668,8 +713,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         model variable number 1, must be defined in EnsoCollectionsLib.CmipVariables()
         e.g.: 'lwr' or ['rlds', 'rlus']
     :param obsNameVar1: string
-        path_to/filename of the observations for variable number 1, must be defined in
-        EnsoCollectionsLib.ReferenceObservations()
+        name of the observations for variable number 1, must be defined in EnsoCollectionsLib.ReferenceObservations()
     :param obsFile1: string or list of strings
         observations file number 1
         e.g.: 'observations_file.nc' or ['observations_file1.nc','observations_file2.nc']
@@ -687,6 +731,12 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         path_to/filename of the model landmask for variable number 1
     :param modelLandmaskName1: string, optional
         name the model landmask (e.g. 'landmask' or 'sftlf') for variable number 1
+    :param modelInterpreter1: string, optional
+        special variable interpreter for model variable number 1
+        this is useful if the given model is not a CMIP model but an observational dataset
+        the only possibility is 'CMIP' to interpret the variable number 1 as CMIP (dataset has been CMORized)
+        default value = None, dataset will be interpreted as defined in EnsoCollectionsLib.ReferenceObservations if
+        recognized as observations, else EnsoCollectionsLib.defCollection
     :param obsFileArea1: string, optional
         path_to/filename of the observations areacell for variable number 1
     :param obsAreaName1: string, optional
@@ -695,6 +745,12 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         path_to/filename of the observations landmask for variable number 1
     :param obsLandmaskName1: string, optional
         name the observations landmask (e.g. 'landmask' or 'sftlf') for variable number 1
+    :param obsInterpreter1: string, optional
+        special variable interpreter for observational variable number 1
+        the only possibility is 'CMIP' to interpret all observational's variable number 1 as CMIP (dataset has been
+        CMORized)
+        default value = None, observational dataset is considered not CMORized and will be interpreted as defined in
+        EnsoCollectionsLib.ReferenceObservations
     :param modelFile2: string or list of strings, optional
         model file number 2
         e.g.: 'model_file.nc' or ['model_file1.nc','model_file2.nc']
@@ -710,9 +766,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         path_to/filename of the model landmask for variable number 2
     :param modelLandmaskName2: string, optional
         name the model landmask (e.g. 'landmask' or 'sftlf') for variable number 2
+    :param modelInterpreter2: string, optional
+        special variable interpreter for model variable number 2
+        this is useful if the given model is not a CMIP model but an observational dataset
+        the only possibility is 'CMIP' to interpret the variable number 2 as CMIP (dataset has been CMORized)
+        default value = None, dataset will be interpreted as defined in EnsoCollectionsLib.ReferenceObservations if
+        recognized as observations, else EnsoCollectionsLib.defCollection
     :param obsNameVar2: string, optional
-        path_to/filename of the observations for variable number 2, must be defined in
-        EnsoCollectionsLib.ReferenceObservations()
+        name of the observations for variable number 2, must be defined in EnsoCollectionsLib.ReferenceObservations()
     :param obsFile2: string or list of strings, optional
         observations file number 2
         e.g.: 'observations_file.nc' or ['observations_file1.nc','observations_file2.nc']
@@ -730,6 +791,12 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         name the observations landmask (e.g. 'landmask' or 'sftlf') for variable number 2
     :param regionVar2: string
         name of box ('tropical_pacific') for variable number 2, must be defined in EnsoCollectionsLib.ReferenceRegions()
+    :param obsInterpreter2: string, optional
+        special variable interpreter for observational variable number 2
+        the only possibility is 'CMIP' to interpret all observational's variable number 2 as CMIP (dataset has been
+        CMORized)
+        default value = None, observational dataset is considered not CMORized and will be interpreted as defined in
+        EnsoCollectionsLib.ReferenceObservations
     :param user_regridding: dict, optional
         regridding parameters selected by the user and not the "climate experts" (i.e. the program)
         to see parameters:
@@ -750,6 +817,23 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         default value = '' root name of the saved NetCDFs
         the name of a metric will be append at the end of the root name
         e.g., netcdf_name='USER_DATE_METRICCOLLECTION_MODEL'
+    :param observed_fyear: integer, optional
+        first year to use for observational datasets, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'observed_period' defined in EnsoCollectionsLib.defCollection is used
+    :param observed_lyear: integer, optional
+        last year to use for observational datasets, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'observed_period' defined in EnsoCollectionsLib.defCollection is used
+    :param modeled_fyear: integer, optional
+        first year to use for CMIP simulations, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'observed_period' defined in EnsoCollectionsLib.defCollection is used
+    :param modeled_lyear: integer, optional
+        last year to use for CMIP simulations, given to overrule value defined in EnsoCollectionsLib.py
+        default value = None, 'modeled_period' defined in EnsoCollectionsLib.defCollection is used
+    :param obs_interpreter: string, optional
+        special variable interpreter for all observational datasets
+        the only possibility is 'CMIP' to interpret all observational's variables as CMIP (datasets have been CMORized)
+        default value = None, observational datasets are considered not CMORized and will be interpreted as defined in
+        EnsoCollectionsLib.ReferenceObservations
 
     :return:
     """
@@ -796,15 +880,17 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         keyarg["regridding"] = user_regridding["regridding"]
 
     # if model is an observation
-    if modelName.split("_")[0] in list_obs:
-        keyarg["time_bounds_mod"] = deepcopy(keyarg["time_bounds_obs"])
-        keyarg["project_interpreter_mod_var1"] = modelName.split("_")[0]
-        if modelFile2 != "":
-            keyarg["project_interpreter_mod_var2"] = modelName.split("_")[1]
+    if modelName.split("_")[0] in list_obs and obs_interpreter != "CMIP":
+        keyarg['project_interpreter_mod_var1'] = \
+            modelName.split("_")[0] if modelInterpreter1 is None else deepcopy(modelInterpreter1)
+        if modelFile2 != '':
+            keyarg['project_interpreter_mod_var2'] = \
+                modelName.split("_")[1] if modelInterpreter2 is None else deepcopy(modelInterpreter2)
     else:
-        keyarg["project_interpreter_mod_var1"] = keyarg["project_interpreter"]
-        if modelFile2 != "":
-            keyarg["project_interpreter_mod_var2"] = keyarg["project_interpreter"]
+        keyarg['project_interpreter_mod_var1'] = keyarg['project_interpreter']
+        if modelFile2 != '':
+            keyarg['project_interpreter_mod_var2'] = keyarg['project_interpreter']
+        keyarg['time_bounds_mod'] = deepcopy(keyarg['time_bounds_obs'])
 
     # obsName could be a list if the user wants to compare the model with a set of observations
     # if obsName is just a name (string) it is put in a list
@@ -1009,7 +1095,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             for ii in range(len(obsNameVar1)):
                 # sets observations
                 obs1 = obsNameVar1[ii]
-                keyarg["project_interpreter_var1"] = obs1
+                keyarg["project_interpreter_var1"] = deepcopy(obsInterpreter1[ii])
                 if metric in list(dict_oneVar.keys()):
                     output_name = obs1
                     if output_name != modelName:
@@ -1023,7 +1109,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     for jj in range(len(obsNameVar2)):
                         obs2 = obsNameVar2[jj]
                         output_name = obs1 + "_" + obs2
-                        keyarg["project_interpreter_var2"] = obs2
+                        keyarg["project_interpreter_var2"] = deepcopy(obsInterpreter2[jj])
                         if output_name != modelName:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
                                   "\033[0m")
