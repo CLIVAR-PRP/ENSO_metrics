@@ -27,9 +27,11 @@ from .KeyArgLib import default_arg_values
 
 
 # sst only datasets (not good for surface temperature teleconnection)
-sst_only = ["CFSR", "COBE", "COBE2", "ERSSTv3b", "ERSSTv4", "ERSSTv5", "GODAS", "HadISST", "HadISST1", "HadISST-1",
-            "HadISST-1-1", "HadISSTv1", "HadISSTv1.1", "OAFlux", "OISST", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2",
-            "SODA3.11.2", "SODA3.12.2", "Tropflux", "TropFlux-1-0"]
+sst_only = [
+    "C-GLORSv5", "CFSR", "COBE", "COBE1", "COBE-1", "COBEv1", "COBE2", "COBE-2", "COBEv2", "ERSSTv3b", "ERSSTv4",
+    "ERSSTv5", "GODAS", "HadISST", "HadISST1", "HadISST-1", "HadISSTv1", "HadISST1.1", "HadISST-1.1", "HadISST-1-1",
+    "HadISSTv1.1", "OAFlux", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2", "SODA3.11.2", "SODA3.12.2", "Tropflux",
+    "Tropflux1", "Tropflux-1", "Tropfluxv1", "TropFlux1.0", "TropFlux-1.0", "TropFlux-1-0", "TropFluxv1.0"]
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
