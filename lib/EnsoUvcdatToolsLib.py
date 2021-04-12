@@ -107,29 +107,32 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     help(cdutil.averager)
     """
     keyerror = None
-    lat_num = get_num_axis(tab, 'latitude')
-    lon_num = get_num_axis(tab, 'longitude')
+    lat_num = get_num_axis(tab, "latitude")
+    lon_num = get_num_axis(tab, "longitude")
     snum = str(lat_num) + str(lon_num)
     if areacell is None or tab.getGrid().shape != areacell.getGrid().shape:
         print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
         if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(tab.getGrid().shape) +
                   " is not the same as areacell.grid " + str(areacell.getGrid().shape) + " \033[0m")
-        try: averaged_tab = cdutil.averager(tab, axis='xy', weights='weighted', action='average')
+        try:
+            averaged_tab = cdutil.averager(tab, axis="xy", weights="weighted", action="average")
         except:
-            try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
+            try:
+                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except:
-                if 'regridding' not in list(kwargs.keys()) or isinstance(kwargs['regridding'], dict) is False:
-                    kwargs2 = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                               'newgrid_name': 'generic_1x1deg'}
+                if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
+                    kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                               "newgrid_name": "generic_1x1deg"}
                 else:
-                    kwargs2 = kwargs['regridding']
-                kwargs2["newgrid_name"] =\
+                    kwargs2 = kwargs["regridding"]
+                kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
                       " to perform average \033[0m")
                 tmp = Regrid(tab, None, region=region, **kwargs2)
-                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights='weighted', action='average')
+                try:
+                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
                 except:
                     keyerror = "cannot perform horizontal average"
                     averaged_tab = None
@@ -157,29 +160,32 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     help(cdutil.averager)
     """
     keyerror = None
-    lat_num = get_num_axis(tab, 'latitude')
-    lon_num = get_num_axis(tab, 'longitude')
+    lat_num = get_num_axis(tab, "latitude")
+    lon_num = get_num_axis(tab, "longitude")
     snum = str(lat_num)
     if areacell is None or tab.getGrid().shape != areacell.getGrid().shape:
         print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageMeridional" + "\033[0m")
         if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(tab.getGrid().shape) +
                   " is not the same as areacell.grid " + str(areacell.getGrid().shape) + " \033[0m")
-        try: averaged_tab = cdutil.averager(tab, axis='y', weights='weighted', action='average')
+        try:
+            averaged_tab = cdutil.averager(tab, axis="y", weights="weighted", action="average")
         except:
-            try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
+            try:
+                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except:
-                if 'regridding' not in list(kwargs.keys()) or isinstance(kwargs['regridding'], dict) is False:
-                    kwargs2 = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                               'newgrid_name': 'generic_1x1deg'}
+                if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
+                    kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                               "newgrid_name": "generic_1x1deg"}
                 else:
-                    kwargs2 = kwargs['regridding']
+                    kwargs2 = kwargs["regridding"]
                 kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
                       " to perform average \033[0m")
                 tmp = Regrid(tab, None, region=region, **kwargs2)
-                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights='weighted', action='average')
+                try:
+                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
                 except:
                     keyerror = "cannot perform meridional average"
                     averaged_tab = None
@@ -188,15 +194,15 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
                         str().ljust(5) + "cdutil.averager cannot perform meridional average"]
                     EnsoErrorsWarnings.my_warning(list_strings)
     else:
-        lat_num_area = get_num_axis(areacell, 'latitude')
+        lat_num_area = get_num_axis(areacell, "latitude")
         averaged_tab = MV2multiply(tab, areacell)
         averaged_tab = MV2sum(averaged_tab, axis=lat_num) / MV2sum(areacell, axis=lat_num_area)
     if averaged_tab is not None:
         lon = tab.getLongitude()
         if len(lon.shape) > 1:
-            lonn = CDMS2createAxis(MV2array(lon[0, :]), id='longitude')
+            lonn = CDMS2createAxis(MV2array(lon[0, :]), id="longitude")
             lonn.units = lon.units
-            lon_num = get_num_axis(tab, 'longitude')
+            lon_num = get_num_axis(tab, "longitude")
             try:
                 averaged_tab.setAxis(lon_num, lonn)
             except:
@@ -216,9 +222,9 @@ def AverageTemporal(tab, areacell=None, **kwargs):
     help(cdutil.averager)
     """
     keyerror = None
-    try: averaged_tab = cdutil.averager(tab, axis='t')
+    try: averaged_tab = cdutil.averager(tab, axis="t")
     except:
-        time_num = get_num_axis(tab, 'time')
+        time_num = get_num_axis(tab, "time")
         try: averaged_tab = cdutil.averager(tab, axis=str(time_num))
         except:
             keyerror = "cannot perform temporal average"
@@ -241,29 +247,32 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
     help(cdutil.averager)
     """
     keyerror = None
-    lat_num = get_num_axis(tab, 'latitude')
-    lon_num = get_num_axis(tab, 'longitude')
+    lat_num = get_num_axis(tab, "latitude")
+    lon_num = get_num_axis(tab, "longitude")
     snum = str(lon_num)
     if areacell is None or tab.getGrid().shape != areacell.getGrid().shape:
         print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageZonal" + "\033[0m")
         if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(tab.getGrid().shape) +
                   " is not the same as areacell.grid " + str(areacell.getGrid().shape) + " \033[0m")
-        try: averaged_tab = cdutil.averager(tab, axis='x', weights='weighted', action='average')
+        try:
+            averaged_tab = cdutil.averager(tab, axis="x", weights="weighted", action="average")
         except:
-            try: averaged_tab = cdutil.averager(tab, axis=snum, weights='weighted', action='average')
+            try:
+                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except:
-                if 'regridding' not in list(kwargs.keys()) or isinstance(kwargs['regridding'], dict) is False:
-                    kwargs2 = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                               'newgrid_name': 'generic_1x1deg'}
+                if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
+                    kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                               "newgrid_name": "generic_1x1deg"}
                 else:
-                    kwargs2 = kwargs['regridding']
+                    kwargs2 = kwargs["regridding"]
                 kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
                       " to perform average \033[0m")
                 tmp = Regrid(tab, None, region=region, **kwargs2)
-                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights='weighted', action='average')
+                try:
+                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
                 except:
                     keyerror = "cannot perform zonal average"
                     averaged_tab = None
@@ -271,15 +280,15 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
                                     str().ljust(5) + "cdutil.averager cannot perform zonal average"]
                     EnsoErrorsWarnings.my_warning(list_strings)
     else:
-        lon_num_area = get_num_axis(areacell, 'longitude')
+        lon_num_area = get_num_axis(areacell, "longitude")
         averaged_tab = MV2multiply(tab, areacell)
         averaged_tab = MV2sum(averaged_tab, axis=lon_num) / MV2sum(areacell, axis=lon_num_area)
     if averaged_tab is not None:
         lat = tab.getLatitude()
         if len(lat.shape) > 1:
-            latn = CDMS2createAxis(MV2array(lat[:, 0]), id='latitude')
+            latn = CDMS2createAxis(MV2array(lat[:, 0]), id="latitude")
             latn.units = lat.units
-            lat_num = get_num_axis(tab, 'latitude')
+            lat_num = get_num_axis(tab, "latitude")
             try:
                 averaged_tab.setAxis(lat_num, latn)
             except:
@@ -309,7 +318,7 @@ def Concatenate(tab1, tab2, events1=[], events2=[]):
                     tab_out = MV2concatenate((tab_out, MV2array([tab1[events1.index(yy)]])))
                 else:
                     tab_out = MV2concatenate((tab_out, MV2array([tab2[events2.index(yy)]])))
-        axes = CDMS2createAxis(MV2array(my_events_sort, dtype='int32'), id='years')
+        axes = CDMS2createAxis(MV2array(my_events_sort, dtype="int32"), id="years")
         if len(events1):
             tmp = copy.copy(tab1)
         else:
@@ -324,18 +333,18 @@ def Concatenate(tab1, tab2, events1=[], events2=[]):
             dictvar = {"axes": [axes], "attributes": att}
         tab_out = CDMS2createVariable(tab_out, **dictvar)
     else:
-        tab_out = MyEmpty(tab1[:5, 0], time=True, time_id='years')
+        tab_out = MyEmpty(tab1[:5, 0], time=True, time_id="years")
     return tab_out
 
 
 def closest_grid(region, nlat, nlon):
     res = [0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25, 2.50, 2.75]
     region_ref = ReferenceRegions(region)
-    lats = region_ref['latitude']
+    lats = region_ref["latitude"]
     dy = float(abs(max(lats) - min(lats))) / nlat
     lyy = [abs(dy - ii) for ii in res]
     lyy = res[lyy.index(min(lyy))]
-    lons = region_ref['longitude']
+    lons = region_ref["longitude"]
     dx = float(abs(max(lons) - min(lons))) / nlon
     lxx = [abs(dx - ii) for ii in res]
     lxx = res[lxx.index(min(lxx))]
@@ -456,8 +465,8 @@ def OperationSubtract(tab, number_or_tab):
 
 
 # Dictionary of operations
-dict_operations = {'divide': OperationDivide, 'minus': OperationSubtract, 'multiply': OperationMultiply,
-                   'plus': OperationAdd}
+dict_operations = {"divide": OperationDivide, "minus": OperationSubtract, "multiply": OperationMultiply,
+                   "plus": OperationAdd}
 
 
 def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
@@ -539,12 +548,12 @@ def RmsHorizontal(tab, ref, centered=0, biased=1):
     keyerror = None
     # Computes the root mean square difference
     try:
-        rmse = GENUTILrms(tab, ref, weights='weighted', axis='xy', centered=centered, biased=biased)
+        rmse = GENUTILrms(tab, ref, weights="weighted", axis="xy", centered=centered, biased=biased)
     except:
-        lat_num = get_num_axis(tab, 'latitude')
-        lon_num = get_num_axis(tab, 'longitude')
+        lat_num = get_num_axis(tab, "latitude")
+        lon_num = get_num_axis(tab, "longitude")
         try:
-            rmse = GENUTILrms(tab, ref, weights='weighted', axis=str(lat_num)+str(lon_num), centered=centered,
+            rmse = GENUTILrms(tab, ref, weights="weighted", axis=str(lat_num)+str(lon_num), centered=centered,
                               biased=biased)
         except:
             keyerror = "cannot perform horizontal RMS (x=" + str(lon_num) + ", y=" + str(lat_num) + "): tab (" +\
@@ -590,9 +599,9 @@ def RmsMeridional(tab, ref, centered=0, biased=1):
     keyerror = None
     # Computes the root mean square difference
     try:
-        rmse = GENUTILrms(tab, ref, axis='y', centered=centered, biased=biased)
+        rmse = GENUTILrms(tab, ref, axis="y", centered=centered, biased=biased)
     except:
-        lat_num = get_num_axis(tab, 'latitude')
+        lat_num = get_num_axis(tab, "latitude")
         try:
             rmse = GENUTILrms(tab, ref, axis=str(lat_num), centered=centered, biased=biased)
         except:
@@ -639,9 +648,9 @@ def RmsTemporal(tab, ref, centered=0, biased=1):
     keyerror = None
     # Computes the root mean square difference
     try:
-        rmse = GENUTILrms(tab, ref, axis='t', centered=centered, biased=biased)
+        rmse = GENUTILrms(tab, ref, axis="t", centered=centered, biased=biased)
     except:
-        time_num = get_num_axis(tab, 'time')
+        time_num = get_num_axis(tab, "time")
         try:
             rmse = GENUTILrms(tab, ref, axis=str(time_num), centered=centered, biased=biased)
         except:
@@ -688,9 +697,9 @@ def RmsZonal(tab, ref, centered=0, biased=1):
     keyerror = None
     # Computes the root mean square difference
     try:
-        rmse = GENUTILrms(tab, ref, axis='x', centered=centered, biased=biased)
+        rmse = GENUTILrms(tab, ref, axis="x", centered=centered, biased=biased)
     except:
-        lon_num = get_num_axis(tab, 'longitude')
+        lon_num = get_num_axis(tab, "longitude")
         try:
             rmse = GENUTILrms(tab, ref, axis=str(lon_num), centered=centered, biased=biased)
         except:
@@ -712,8 +721,8 @@ def RmsZonal(tab, ref, centered=0, biased=1):
 
 
 # Dictionary of RMS methods
-dict_rms = {'axis': RmsAxis, 'horizontal': RmsHorizontal, 'meridional': RmsMeridional, 'time': RmsTemporal,
-            'zonal': RmsZonal}
+dict_rms = {"axis": RmsAxis, "horizontal": RmsHorizontal, "meridional": RmsMeridional, "time": RmsTemporal,
+            "zonal": RmsZonal}
 
 
 def Std(tab, weights=None, axis=0, centered=1, biased=1):
@@ -806,7 +815,7 @@ def annualcycle(tab):
         array of the monthly annual cycle
     """
     initorder = tab.getOrder()
-    tab = tab.reorder('t...')
+    tab = tab.reorder("t...")
     axes = tab.getAxisList()
     time_ax = tab.getTime().asComponentTime()
     months = MV2array(list(tt.month for tt in time_ax))
@@ -818,11 +827,11 @@ def annualcycle(tab):
         tmp = MV2average(tmp, axis=0)
         cyc.append(tmp)
         del tmp
-    time = CDMS2createAxis(list(range(12)), id='time')
+    time = CDMS2createAxis(list(range(12)), id="time")
     moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
     moy = moy.reorder(initorder)
-    time = CDMS2createAxis(list(range(12)), id='months')
-    moy.setAxis(get_num_axis(moy, 'time'), time)
+    time = CDMS2createAxis(list(range(12)), id="months")
+    moy.setAxis(get_num_axis(moy, "time"), time)
     return moy
 
 
@@ -930,7 +939,7 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     return area, keyerror
 
 
-def ArrayListAx(tab, list1, ax_name_ax='', ax_long_name='', ax_ref=''):
+def ArrayListAx(tab, list1, ax_name_ax="", ax_long_name="", ax_ref=""):
     tab_out = MV2array(tab)
     ax = CDMS2createAxis(list(range(len(list1))), id=ax_name_ax)
     ax.regions = str(list1)
@@ -971,32 +980,32 @@ def ArrayToList(tab):
 def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lon1=None, lon2=None, lonkey='',
               debug=False):
     keyerror = None
-    keys = ['between', 'outside']
+    keys = ["between", "outside"]
     # temp corrections for cdms2 to find the right axis
-    CDMS2setAutoBounds('on')
+    CDMS2setAutoBounds("on")
     # open file
     this_dir, this_filename = OSpath__split(__file__)
     # check basin file
-    basin_generic_ncfile = OSpath__join(this_dir, '../share/EnsoMetrics/basin_generic_1x1deg.nc') 
+    basin_generic_ncfile = OSpath__join(this_dir, "../share/EnsoMetrics/basin_generic_1x1deg.nc")
     if not OSpath__isfile(basin_generic_ncfile):
-        basin_generic_ncfile = OSpath__join(SYS_prefix, 'share', 'EnsoMetrics', 'basin_generic_1x1deg.nc')
+        basin_generic_ncfile = OSpath__join(SYS_prefix, "share", "EnsoMetrics", "basin_generic_1x1deg.nc")
     if debug is True:
-        dict_debug = {'line1': '(path) ' + str(this_dir), 'line2': '(file) ' + str(this_filename),
-                      'line3': '(basin) ' + str(basin_generic_ncfile)}
-        EnsoErrorsWarnings.debug_mode('\033[93m', 'OSpath__split', 20, **dict_debug)
+        dict_debug = {"line1": "(path) " + str(this_dir), "line2": "(file) " + str(this_filename),
+                      "line3": "(basin) " + str(basin_generic_ncfile)}
+        EnsoErrorsWarnings.debug_mode("\033[93m", "OSpath__split", 20, **dict_debug)
     ff = CDMS2open(basin_generic_ncfile)
     # read basins
     if box is not None:
         region_ref = ReferenceRegions(box)
-        basin = ff('basin', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+        basin = ff("basin", latitude=region_ref["latitude"], longitude=region_ref["longitude"])
     else:
-        basin = ff('basin')
+        basin = ff("basin")
     if debug is True:
-        dict_debug = {'axes1': str([ax.id for ax in basin.getAxisList()]), 'shape1': str(basin.shape),
-                      'line1': 'order = ' + str(basin.getOrder())}
-        EnsoErrorsWarnings.debug_mode('\033[93m', 'in BasinMask', 20, **dict_debug)
+        dict_debug = {"axes1": str([ax.id for ax in basin.getAxisList()]), "shape1": str(basin.shape),
+                      "line1": "order = " + str(basin.getOrder())}
+        EnsoErrorsWarnings.debug_mode("\033[93m", "in BasinMask", 20, **dict_debug)
     # choose basin
-    keybasin = {'atlantic': 1, 'pacific': 2, 'indian': 3, 'antarctic': 10, 'arctic': 11}
+    keybasin = {"atlantic": 1, "pacific": 2, "indian": 3, "antarctic": 10, "arctic": 11}
     mask = MV2zeros(basin.shape)
     if region_mask.lower() not in list(keybasin.keys()):
         keyerror = "unknown region: " + region_mask + " (basin_generic_1x1deg.nc, regrided file from NOAA NODC" + \
@@ -1012,11 +1021,11 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     # basin mask is selected only between or outside lat1 and lat2
     if latkey in keys and lat1 is not None and lat2 is not None:
         lat2d = MV2zeros(basin.shape)
-        lat2d = lat2d.reorder('10')
+        lat2d = lat2d.reorder("10")
         lat2d[:] = basin.getLatitude()
-        lat2d = lat2d.reorder('10')
+        lat2d = lat2d.reorder("10")
         tmp = MV2where(lat2d > lat1, 1, 0) + MV2where(lat2d < lat2, 1, 0)
-        if latkey == 'between':
+        if latkey == "between":
             mask = MV2where(tmp != 2, 0, mask)
         else:
             mask = MV2where(tmp == 2, 0, mask)
@@ -1025,7 +1034,7 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
         lon2d = MV2zeros(basin.shape)
         lon2d[:] = basin.getLongitude()
         tmp = MV2where(lon2d > lon1, 1, 0) + MV2where(lon2d < lon2, 1, 0)
-        if latkey == 'between':
+        if latkey == "between":
             mask = MV2where(tmp != 2, 0, mask)
         else:
             mask = MV2where(tmp == 2, 0, mask)
@@ -1036,7 +1045,7 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     return tab_out, keyerror
 
 
-def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name='', debug=False, **kwargs):
+def CheckTime(tab1, tab2, frequency="monthly", min_time_steps=None, metric_name="", debug=False, **kwargs):
     """
     #################################################################################
     Description:
@@ -1057,11 +1066,11 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     :return:
     """
     if debug is True:
-        # dict_debug = {'shape1': 'tab1.shape = ' + str(tab1.shape), 'shape2': 'tab2.shape = ' + str(tab2.shape),
-        #               'time1': 'tab1.time = ' + str(TimeBounds(tab1)),
-        #               'time2': 'tab2.time = ' + str(TimeBounds(tab2))}
-        dict_debug = {'shape1': 'tab1.shape = ' + str(tab1.shape), 'shape2': 'tab2.shape = ' + str(tab2.shape)}
-        EnsoErrorsWarnings.debug_mode('\033[93m', 'in CheckTime (input)', 20, **dict_debug)
+        # dict_debug = {"shape1": "tab1.shape = " + str(tab1.shape), "shape2": "tab2.shape = " + str(tab2.shape),
+        #               "time1": "tab1.time = " + str(TimeBounds(tab1)),
+        #               "time2": "tab2.time = " + str(TimeBounds(tab2))}
+        dict_debug = {"shape1": "tab1.shape = " + str(tab1.shape), "shape2": "tab2.shape = " + str(tab2.shape)}
+        EnsoErrorsWarnings.debug_mode("\033[93m", "in CheckTime (input)", 20, **dict_debug)
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
@@ -1107,14 +1116,14 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     # etime = min(etime1, etime2)
 
     # defines the period between the two dates
-    if frequency == 'daily':
+    if frequency == "daily":
         stime_adjust = CDTIMEcomptime(stime.year, stime.month, stime.day, 0, 0, 0.0)
         etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime.day, 23, 59, 0)
-    elif frequency == 'monthly':
+    elif frequency == "monthly":
         etime_day = monthrange(etime.year, etime.month)[-1]
         stime_adjust = CDTIMEcomptime(stime.year, stime.month, 1, 0, 0, 0.0)
         etime_adjust = CDTIMEcomptime(etime.year, etime.month, etime_day, 23, 59, 0)
-    elif frequency == 'yearly':
+    elif frequency == "yearly":
         stime_adjust = CDTIMEcomptime(stime.year, 1, 1, 0, 0, 0.0)
         etime_adjust = CDTIMEcomptime(etime.year, 12, 31, 23, 59, 0)
     else:
@@ -1124,15 +1133,15 @@ def CheckTime(tab1, tab2, frequency='monthly', min_time_steps=None, metric_name=
     tab1_sliced = tab1(time=(stime_adjust, etime_adjust))
     tab2_sliced = tab2(time=(stime_adjust, etime_adjust))
     if debug is True:
-        # dict_debug = {'shape1': 'tab1.shape = ' + str(tab1_sliced.shape),
-        #               'shape2': 'tab2.shape = ' + str(tab2_sliced.shape),
-        #               'time1': 'tab1.time = ' + str(TimeBounds(tab1_sliced)),
-        #               'time2': 'tab1.time = ' + str(tab1_sliced.getTime().asComponentTime()[:]),
-        #               'time3': 'tab2.time = ' + str(TimeBounds(tab2_sliced)),
-        #               'time4': 'tab2.time = ' + str(tab2_sliced.getTime().asComponentTime()[:])}
-        dict_debug = {'shape1': 'tab1.shape = ' + str(tab1_sliced.shape),
-                      'shape2': 'tab2.shape = ' + str(tab2_sliced.shape)}
-        EnsoErrorsWarnings.debug_mode('\033[93m', 'in CheckTime (output)', 20, **dict_debug)
+        # dict_debug = {"shape1": "tab1.shape = " + str(tab1_sliced.shape),
+        #               "shape2": "tab2.shape = " + str(tab2_sliced.shape),
+        #               "time1": "tab1.time = " + str(TimeBounds(tab1_sliced)),
+        #               "time2": "tab1.time = " + str(tab1_sliced.getTime().asComponentTime()[:]),
+        #               "time3": "tab2.time = " + str(TimeBounds(tab2_sliced)),
+        #               "time4": "tab2.time = " + str(tab2_sliced.getTime().asComponentTime()[:])}
+        dict_debug = {"shape1": "tab1.shape = " + str(tab1_sliced.shape),
+                      "shape2": "tab2.shape = " + str(tab2_sliced.shape)}
+        EnsoErrorsWarnings.debug_mode("\033[93m", "in CheckTime (output)", 20, **dict_debug)
     if len(tab1_sliced.getTime()[:]) != len(tab2_sliced.getTime()[:]):
         keyerror1 = "missing time step within the given period"
     else:
@@ -1185,11 +1194,11 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     """
     keyerror = None
     if var_name in ["temperature"]:
-        if units in ['K', 'Kelvin', 'Kelvins', 'degree K', 'degree Kelvin', 'degree Kelvins', 'degree_K',
-                     'degree_Kelvin', 'degree_Kelvins', 'degreeK', 'degreeKelvin', 'degreeKelvins', 'degrees K',
-                     'degrees Kelvin', 'degrees Kelvins', 'degrees_K', 'degrees_Kelvin', 'degrees_Kelvins', 'degreesK',
-                     'degreesKelvin', 'degreesKelvins', 'deg K', 'deg Kelvin', 'deg Kelvins', 'deg_K', 'deg_Kelvin',
-                     'deg_Kelvins', 'degK', 'degKelvin', 'degKelvins', 'deg. K', 'deg. Kelvin', 'deg. Kelvins']:
+        if units in ["K", "Kelvin", "Kelvins", "degree K", "degree Kelvin", "degree Kelvins", "degree_K",
+                     "degree_Kelvin", "degree_Kelvins", "degreeK", "degreeKelvin", "degreeKelvins", "degrees K",
+                     "degrees Kelvin", "degrees Kelvins", "degrees_K", "degrees_Kelvin", "degrees_Kelvins", "degreesK",
+                     "degreesKelvin", "degreesKelvins", "deg K", "deg Kelvin", "deg Kelvins", "deg_K", "deg_Kelvin",
+                     "deg_Kelvins", "degK", "degKelvin", "degKelvins", "deg. K", "deg. Kelvin", "deg. Kelvins"]:
             # check if the temperature units is really K
             if float(MV2minimum(tab)) > 150:
                 # unit change of the temperature: from K to degC
@@ -1198,12 +1207,12 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, units, minmax, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
-        elif units in ['C', 'celsius', 'Celsius', 'degree C', 'degree celsius', 'degree Celsius', 'degree_C',
-                       'degree_celsius', 'degree_Celsius', 'degreeC', 'degreecelsius', 'degreeCelsius', 'degrees C',
-                       'degrees celsius', 'degrees Celsius', 'degrees_C', 'degrees_celsius', 'degrees_Celsius',
-                       'degreesC', 'degreescelsius', 'degreesCelsius', 'deg C', 'deg celsius', 'deg Celsius', 'deg_C',
-                       'deg_celsius', 'deg_Celsius', 'degC', 'degcelsius', 'degCelsius', 'deg. C', 'deg. celsius',
-                       'deg. Celsius']:
+        elif units in ["C", "celsius", "Celsius", "degree C", "degree celsius", "degree Celsius", "degree_C",
+                       "degree_celsius", "degree_Celsius", "degreeC", "degreecelsius", "degreeCelsius", "degrees C",
+                       "degrees celsius", "degrees Celsius", "degrees_C", "degrees_celsius", "degrees_Celsius",
+                       "degreesC", "degreescelsius", "degreesCelsius", "deg C", "deg celsius", "deg Celsius", "deg_C",
+                       "deg_celsius", "deg_Celsius", "degC", "degcelsius", "degCelsius", "deg. C", "deg. celsius",
+                       "deg. Celsius"]:
             # check if the temperature units is really degC
             if float(MV2minimum(tab)) > 50:
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
@@ -1235,7 +1244,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     elif var_name in ["velocity"]:
         if units in ["cm/s", "cm s-1", "cm s^-1", "cm s**-1", "cm/sec", "cm sec-1", "cm sec^-1", "cm sec**-1"]:
             # unit change of the velocity: from cm/s to m/s
-            tab = dict_operations['multiply'](tab, 1e-2)
+            tab = dict_operations["multiply"](tab, 1e-2)
         elif units in ["m/s", "m s-1", "m s^-1", "m s**-1", "m/sec", "m sec-1", "m sec^-1", "m sec**-1"]:
             pass
         else:
@@ -1253,7 +1262,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
         units = "W/m2"
     elif var_name in ["pressure"]:
         if units in ["N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2", "Pa", "pascal", "pascals", "Pascal",
-                         "Pascals"]:
+                     "Pascals"]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
@@ -1280,7 +1289,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
 
 
 def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
-    if frequency not in ['daily', 'monthly', 'yearly']:
+    if frequency not in ["daily", "monthly", "yearly"]:
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
     if len(list_event_years) == 0:
         tax = tab.getTime().asComponentTime()
@@ -1299,22 +1308,22 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         else:
             tab_out = MV2zeros((nbr_years_window * 12, tab.shape[1], tab.shape[2]))
         tab_out = MV2masked_where(tab_out == 0, tab_out)
-        axis = CDMS2createAxis(list(range(len(tab_out))), id='time')
+        axis = CDMS2createAxis(list(range(len(tab_out))), id="time")
         axis.units = units
         tab_out.setAxis(0, axis)
         for ii in list(range(len(tab))):
             y2 = tab_out.getTime().asComponentTime()[ii].year
             m2 = tab_out.getTime().asComponentTime()[ii].month
             d2 = tab_out.getTime().asComponentTime()[ii].day
-            if freq == 'yearly':
+            if freq == "yearly":
                 if y2 == y1:
                     tab_out[ii:ii + len(tab)] = copy.copy(tab)
                     break
-            elif freq == 'monthly':
+            elif freq == "monthly":
                 if y2 == y1 and m2 == m1:
                     tab_out[ii:ii + len(tab)] = copy.copy(tab)
                     break
-            elif freq == 'daily':
+            elif freq == "daily":
                 if y2 == y1 and m2 == m1 and d2 == d1:
                     tab_out[ii:ii + len(tab)] = copy.copy(tab)
                     break
@@ -1325,27 +1334,27 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         for yy in list_event_years:
             # first and last years of the window
             yy1, yy2 = yy + 1 - nbr_years_window // 2, yy + nbr_years_window // 2
-            # create time bounds from 'first and last years of the window'
-            timebnds = (str(yy1) + '-01-01 00:00:00.0', str(yy2) + '-12-31  23:59:60.0')
+            # create time bounds from "first and last years of the window"
+            timebnds = (str(yy1) + "-01-01 00:00:00.0", str(yy2) + "-12-31  23:59:60.0")
             # select the right time period in the given tab
             tmp1 = tab(time=timebnds)
-            # sometimes there is some errors with 'time=timebnds'
+            # sometimes there is some errors with "time=timebnds"
             # if the time slice selected has the right length: do nothing
-            # else: fill the beginning / end of the time series by masked values (done by the function 'fill_array')
-            if frequency == 'yearly':
+            # else: fill the beginning / end of the time series by masked values (done by the function "fill_array")
+            if frequency == "yearly":
                 length = nbr_years_window
-                units = 'years since ' + timebnds[0]
-                units_out = 'years since 0001-07-02 12:00:00'
-            elif frequency == 'monthly':
+                units = "years since " + timebnds[0]
+                units_out = "years since 0001-07-02 12:00:00"
+            elif frequency == "monthly":
                 length = nbr_years_window * 12
-                units = 'months since ' + timebnds[0]
-                units_out = 'months since 0001-01-15 12:00:00'
-            elif frequency == 'daily':
+                units = "months since " + timebnds[0]
+                units_out = "months since 0001-01-15 12:00:00"
+            elif frequency == "daily":
                 date1 = date(yy1, 1, 1)
                 date2 = date(yy2, 12, 31)
                 length = (date2 - date1).days
-                units = 'days since ' + timebnds[0]
-                units_out = 'days since 0001-01-01 12:00:00'
+                units = "days since " + timebnds[0]
+                units_out = "days since 0001-01-01 12:00:00"
             if len(tmp1) == length:
                 tmp2 = copy.copy(tmp1)
             else:
@@ -1354,8 +1363,8 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
             composite.append(tmp2)
         composite = MV2array(composite)
         # axis list
-        axis0 = CDMS2createAxis(MV2array(list_event_years, dtype='int32'), id='years')
-        axis1 = CDMS2createAxis(list(range(len(composite[0]))), id='months')
+        axis0 = CDMS2createAxis(MV2array(list_event_years, dtype="int32"), id="years")
+        axis1 = CDMS2createAxis(list(range(len(composite[0]))), id="months")
         axis1.units = units_out
         axes = [axis0, axis1]
         if len(tab.shape) > 1:
@@ -1365,7 +1374,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         time_ax = tab.getTime().asComponentTime()  # gets component time of tab
         list_years = [yy.year for yy in time_ax[:]]  # listing years in tab (from component time)
         indices = MV2arange(tab.size)
-        # creates a tab of 'condition' where True is set when the event is found, False otherwise
+        # creates a tab of "condition" where True is set when the event is found, False otherwise
         try:
             condition = [True if yy in list_event_years else False for yy in list_years]
         except:
@@ -1373,7 +1382,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
             condition = [True if str(yy) in list_event_years else False for yy in list_years]
         ids = MV2compress(condition, indices)  # gets indices of events
         composite = MV2take(tab, ids, axis=0)  # gets events
-        axis0 = CDMS2createAxis(MV2array(list_event_years, dtype='int32'), id='years')
+        axis0 = CDMS2createAxis(MV2array(list_event_years, dtype="int32"), id="years")
         composite.setAxis(0, axis0)
     return composite
 
@@ -1683,18 +1692,18 @@ def get_num_axis(tab, name_axis):
         position of the axis named "name_axis"
     """
     num = None
-    if name_axis == 'depth':
-        axis_nick = 'lev'
-        axis_nicks = ['z', 'Z', 'st_ocean', 'sw_ocean']
-    if name_axis == 'latitude':
-        axis_nick = 'lat'
-        axis_nicks = ['j', 'y', 'Y', 'yt_ocean', 'yu_ocean']
-    elif name_axis == 'longitude':
-        axis_nick = 'lon'
-        axis_nicks = ['i', 'x', 'X', 'xt_ocean', 'xu_ocean']
-    elif name_axis == 'time':
-        axis_nick = 'time'
-        axis_nicks = ['t', 'T']
+    if name_axis == "depth":
+        axis_nick = "lev"
+        axis_nicks = ["z", "Z", "st_ocean", "sw_ocean"]
+    if name_axis == "latitude":
+        axis_nick = "lat"
+        axis_nicks = ["j", "y", "Y", "yt_ocean", "yu_ocean"]
+    elif name_axis == "longitude":
+        axis_nick = "lon"
+        axis_nicks = ["i", "x", "X", "xt_ocean", "xu_ocean"]
+    elif name_axis == "time":
+        axis_nick = "time"
+        axis_nicks = ["t", "T"]
     for nn in list(range(len(tab.shape))):
         if axis_nick in tab.getAxisList()[nn].id:
             num = nn
@@ -1713,7 +1722,7 @@ def get_num_axis(tab, name_axis):
     return num
 
 
-def get_year_by_year(tab, frequency='monthly'):
+def get_year_by_year(tab, frequency="monthly"):
     """
     #################################################################################
     Description:
@@ -1727,33 +1736,33 @@ def get_year_by_year(tab, frequency='monthly'):
     :return: tab: array
         array of the year by year values
     """
-    tab = tab.reorder('t...')
+    tab = tab.reorder("t...")
     time_ax = tab.getTime().asComponentTime()
     myshape = [1] + [ss for ss in tab.shape[1:]]
     zeros = MV2zeros(myshape)
     zeros = MV2masked_where(zeros == 0, zeros)
-    if frequency == 'daily':
+    if frequency == "daily":
         days = MV2array(list(tt.day for tt in time_ax))
         months = MV2array(list(tt.month for tt in time_ax))
         months = MV2array([(mm*100)+dd for dd, mm in zip(days, months)])
-        tmm = CDMS2createAxis(list(range(365)), id='days')
+        tmm = CDMS2createAxis(list(range(365)), id="days")
         m1 = time_ax[0].day
         m2 = time_ax[-1].day
         t2 = 365
-    elif frequency == 'monthly':
+    elif frequency == "monthly":
         months = MV2array(list(tt.month for tt in time_ax))
-        tmm = CDMS2createAxis(list(range(12)), id='months')
+        tmm = CDMS2createAxis(list(range(12)), id="months")
         m1 = time_ax[0].month
         m2 = time_ax[-1].month
         t2 = 12
     else:
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
     years = sorted(set(MV2array(list(tt.year for tt in time_ax))))
-    tyy = CDMS2createAxis(MV2array(years, dtype='int32'), id='years')
+    tyy = CDMS2createAxis(MV2array(years, dtype="int32"), id="years")
     axes = [tyy] + [tmm]
     val = sorted(set(months))
     tab_out = list()
-    if frequency == 'daily':
+    if frequency == "daily":
         val.remove(129)
     for ii in val:
         tmp = tab.compress(months == ii, axis=0)
@@ -1764,7 +1773,7 @@ def get_year_by_year(tab, frequency='monthly'):
         tab_out.append(tmp)
     tab_out = MV2array(tab_out)
     tab_out = MV2masked_where(tab_out == 0, tab_out)
-    tab_out = tab_out.reorder('10')
+    tab_out = tab_out.reorder("10")
     if len(tab.shape) == 1:
         tab_out = CDMS2createVariable(tab_out, axes=axes, attributes=tab.attributes, id=tab.id)
     else:
@@ -1785,7 +1794,7 @@ def MinMax(tab):
 def MyEmpty(tab, time=True, time_id=''):
     tab_out = ArrayZeros(tab)
     if time is True:
-        axis = CDMS2createAxis(MV2array(len(tab_out), dtype='int32'), id=time_id)
+        axis = CDMS2createAxis(MV2array(len(tab_out), dtype="int32"), id=time_id)
         axes = [axis] + tab.getAxisList()[1:]
     else:
         axes = tab.getAxisList()
@@ -1810,11 +1819,11 @@ def Normalize(tab, frequency):
     """
     keyerror = None
     axes = tab.getAxisList()
-    if frequency == 'daily':
+    if frequency == "daily":
         time_steps_per_year = 365
-    elif frequency == 'monthly':
+    elif frequency == "monthly":
         time_steps_per_year = 12
-    elif frequency == 'yearly':
+    elif frequency == "yearly":
         time_steps_per_year = 1
     else:
         keyerror = "unknown frequency"
@@ -1885,7 +1894,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         masked_array containing 'varname' in 'box'
     """
     # Temp corrections for cdms2 to find the right axis
-    CDMS2setAutoBounds('on')
+    CDMS2setAutoBounds("on")
     # Open file and get time dimension
     fi = CDMS2open(filename)
     if box is None:  # no box given
@@ -1900,17 +1909,17 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         region_ref = ReferenceRegions(box)
         if time_bounds is None:  # no time period given
             #  read file
-            tab = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            tab = fi(varname, latitude=region_ref["latitude"], longitude=region_ref["longitude"])
         else:
             # read file
-            tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            tab = fi(varname, time=time_bounds, latitude=region_ref["latitude"], longitude=region_ref["longitude"])
     # sign correction
     try:
-        att1 = tab.attributes['standard_name'].lower().replace(" ", "_")
+        att1 = tab.attributes["standard_name"].lower().replace(" ", "_")
     except:
         att1 = ''
     try:
-        att2 = tab.attributes['long_name'].lower().replace(" ", "_")
+        att2 = tab.attributes["long_name"].lower().replace(" ", "_")
     except:
         att2 = ''
     reversed_sign = False
@@ -1944,11 +1953,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     tab.setAxis(0, time_ax)
     if frequency is None:  # no frequency given
         pass
-    elif frequency == 'daily':
+    elif frequency == "daily":
         cdutil.setTimeBoundsDaily(tab)
-    elif frequency == 'monthly':
+    elif frequency == "monthly":
         cdutil.setTimeBoundsMonthly(tab)
-    elif frequency == 'yearly':
+    elif frequency == "yearly":
         cdutil.setTimeBoundsYearly(tab)
     else:
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
@@ -1957,13 +1966,13 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         if len(tab.getLevel()) == 1:
             tab = tab(squeeze=1)
     # HadISST has -1000 values... mask them
-    if 'HadISST' in filename or 'hadisst' in filename:
+    if "HadISST" in filename or "hadisst" in filename:
         tab = MV2masked_where(tab == -1000, tab)
     # check if the mask is constant through time
     if len(NPwhere(tab[0].mask != tab[1:].mask)[0]) > 0:
         # the mask is not constant -> make it constant
         # sum mask through time
-        mask = MV2sum(tab.mask.astype('f'), axis=0)
+        mask = MV2sum(tab.mask.astype("f"), axis=0)
         # mask where at least one time step is masked
         mask = MV2where(mask > 0, True, False)
         # create a mask the same size as the original data
@@ -1977,17 +1986,17 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         region_ref = ReferenceRegions("nino4")
         if time_bounds is None:  # no time period given
             #  read file
-            taux = fi(varname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            taux = fi(varname, latitude=region_ref["latitude"], longitude=region_ref["longitude"])
         else:
             # read file
-            taux = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+            taux = fi(varname, time=time_bounds, latitude=region_ref["latitude"], longitude=region_ref["longitude"])
         # horizontal average
         taux, keyerror = AverageHorizontal(taux, region="nino4")
         if keyerror is None:
             taux, keyerror = AverageTemporal(taux)
             if keyerror is None and float(taux) > 0:
-                print('\033[93m' + str().ljust(25) + "NOTE: taux sign reversed by the code (mean nino4 = " +
-                      str(float(taux)) + ")" + '\033[0m')
+                print("\033[93m" + str().ljust(25) + "NOTE: taux sign reversed by the code (mean nino4 = " +
+                      str(float(taux)) + ")" + "\033[0m")
                 tab = -1 * tab
     fi.close()
     return tab
@@ -2524,7 +2533,6 @@ def SmoothGaussian(tab, axis=0, window=5):
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
     smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
-    sum_weight = MV2sum(weightGauss, axis=0)
     for ii in range(len(smoothed_tab)):
         tmp1 = MV2array(new_tab[ii: ii + window])
         tmp2 = MV2masked_where(tmp1.mask, weight)
@@ -2673,7 +2681,6 @@ def SmoothTriangle(tab, axis=0, window=5):
     # Smoothing
     smoothed_tab = MV2zeros(new_tab.shape)
     smoothed_tab = smoothed_tab[:len(new_tab) - window + 1]
-    sum_weight = MV2sum(weight, axis=0)
     for ii in range(len(smoothed_tab)):
         tmp1 = MV2array(new_tab[ii: ii + window])
         tmp2 = MV2masked_where(tmp1.mask, weight)
@@ -2704,18 +2711,18 @@ def SmoothTriangle(tab, axis=0, window=5):
 # Dictionary of seasons
 sea_dict = dict(JAN=cdutil.JAN, FEB=cdutil.FEB, MAR=cdutil.MAR, APR=cdutil.APR, MAY=cdutil.MAY, JUN=cdutil.JUN,
                 JUL=cdutil.JUL, AUG=cdutil.AUG, SEP=cdutil.SEP, OCT=cdutil.OCT, NOV=cdutil.NOV, DEC=cdutil.DEC,
-                JF=cdutil.times.Seasons('JF'), FM=cdutil.times.Seasons('FM'), MA=cdutil.times.Seasons('MA'),
-                AM=cdutil.times.Seasons('AM'), MJ=cdutil.times.Seasons('MJ'), JJ=cdutil.times.Seasons('JJ'),
-                JA=cdutil.times.Seasons('JA'), AS=cdutil.times.Seasons('AS'), SO=cdutil.times.Seasons('SO'),
-                ON=cdutil.times.Seasons('ON'), ND=cdutil.times.Seasons('ND'), DJ=cdutil.times.Seasons('DJ'),
-                JFM=cdutil.times.Seasons('JFM'), FMA=cdutil.times.Seasons('FMA'), MAM=cdutil.MAM,
-                AMJ=cdutil.times.Seasons('AMJ'), MJJ=cdutil.times.Seasons('MJJ'), JJA=cdutil.JJA,
-                JAS=cdutil.times.Seasons('JAS'), ASO=cdutil.times.Seasons('ASO'), SON=cdutil.SON,
-                OND=cdutil.times.Seasons('OND'), NDJ=cdutil.times.Seasons('NDJ'), DJF=cdutil.DJF,
-                JFMA=cdutil.times.Seasons('JFMA'),FMAM=cdutil.times.Seasons('FMAM'),MAMJ=cdutil.times.Seasons('MAMJ'),
-                AMJJ=cdutil.times.Seasons('AMJJ'),MJJA=cdutil.times.Seasons('MJJA'),JJAS=cdutil.times.Seasons('JJAS'),
-                JASO=cdutil.times.Seasons('JASO'),ASON=cdutil.times.Seasons('ASON'),SOND=cdutil.times.Seasons('SOND'),
-                ONDJ=cdutil.times.Seasons('ONDJ'),NDJF=cdutil.times.Seasons('NDJF'),DJFM=cdutil.times.Seasons('DJFM'))
+                JF=cdutil.times.Seasons("JF"), FM=cdutil.times.Seasons("FM"), MA=cdutil.times.Seasons("MA"),
+                AM=cdutil.times.Seasons("AM"), MJ=cdutil.times.Seasons("MJ"), JJ=cdutil.times.Seasons("JJ"),
+                JA=cdutil.times.Seasons("JA"), AS=cdutil.times.Seasons("AS"), SO=cdutil.times.Seasons("SO"),
+                ON=cdutil.times.Seasons("ON"), ND=cdutil.times.Seasons("ND"), DJ=cdutil.times.Seasons("DJ"),
+                JFM=cdutil.times.Seasons("JFM"), FMA=cdutil.times.Seasons("FMA"), MAM=cdutil.MAM,
+                AMJ=cdutil.times.Seasons("AMJ"), MJJ=cdutil.times.Seasons("MJJ"), JJA=cdutil.JJA,
+                JAS=cdutil.times.Seasons("JAS"), ASO=cdutil.times.Seasons("ASO"), SON=cdutil.SON,
+                OND=cdutil.times.Seasons("OND"), NDJ=cdutil.times.Seasons("NDJ"), DJF=cdutil.DJF,
+                JFMA=cdutil.times.Seasons("JFMA"),FMAM=cdutil.times.Seasons("FMAM"),MAMJ=cdutil.times.Seasons("MAMJ"),
+                AMJJ=cdutil.times.Seasons("AMJJ"),MJJA=cdutil.times.Seasons("MJJA"),JJAS=cdutil.times.Seasons("JJAS"),
+                JASO=cdutil.times.Seasons("JASO"),ASON=cdutil.times.Seasons("ASON"),SOND=cdutil.times.Seasons("SOND"),
+                ONDJ=cdutil.times.Seasons("ONDJ"),NDJF=cdutil.times.Seasons("NDJF"),DJFM=cdutil.times.Seasons("DJFM"))
 
 
 def SeasonalMean(tab, season, compute_anom=False):
