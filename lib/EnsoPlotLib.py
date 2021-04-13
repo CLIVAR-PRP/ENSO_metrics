@@ -49,18 +49,33 @@ output_variables = {
     "BiasPrLatRmse": ["pr_lat__", "pr_map__"],
     "BiasPrLonRmse": ["pr_lon__", "pr_map__"],
     "BiasPrMapRmse": ["pr_map__"],
+    "BiasLhfLatRmse": ["lhf_lat__", "lhf_map__"],
+    "BiasLhfLonRmse": ["lhf_lon__", "lhf_map__"],
+    "BiasLhfMapRmse": ["lhf_map__"],
+    "BiasLwrLatRmse": ["lwr_lat__", "lwr_map__"],
+    "BiasLwrLonRmse": ["lwr_lon__", "lwr_map__"],
+    "BiasLwrMapRmse": ["lwr_map__"],
+    "BiasShfLatRmse": ["shf_lat__", "shf_map__"],
+    "BiasShfLonRmse": ["shf_lon__", "shf_map__"],
+    "BiasShfMapRmse": ["shf_map__"],
     "BiasSshLatRmse": ["ssh_lat__", "ssh_map__"],
     "BiasSshLonRmse": ["ssh_lon__", "ssh_map__"],
     "BiasSshMapRmse": ["ssh_map__"],
     "BiasSstLatRmse": ["sst_lat__", "sst_map__"],
     "BiasSstLonRmse": ["sst_lon__", "sst_map__"],
     "BiasSstMapRmse": ["sst_map__"],
+    "BiasSwrLatRmse": ["swr_lat__", "swr_map__"],
+    "BiasSwrLonRmse": ["swr_lon__", "swr_map__"],
+    "BiasSwrMapRmse": ["swr_map__"],
     "BiasTauxLatRmse": ["taux_lat__", "taux_map__"],
     "BiasTauxLonRmse": ["taux_lon__", "taux_map__"],
     "BiasTauxMapRmse": ["taux_map__"],
     "BiasTauyLatRmse": ["tauy_lat__", "tauy_map__"],
     "BiasTauyLonRmse": ["tauy_lon__", "tauy_map__"],
     "BiasTauyMapRmse": ["tauy_map__"],
+    "BiasThfLatRmse": ["thf_lat__", "thf_map__"],
+    "BiasThfLonRmse": ["thf_lon__", "thf_map__"],
+    "BiasThfMapRmse": ["thf_map__"],
     "EnsoAmpl": ["sstStd_lon__", "sstStd_map__"],
     "EnsoSstSkew": ["sstSke_lon__", "sstSke_map__"],
     "EnsoSeasonality": [
@@ -262,6 +277,201 @@ plot_parameters = {
             "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
         },
     },
+    "BiasLhfLatRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LHF",
+            "varpattern": output_variables["BiasLhfLatRmse"][0],
+            "xname": "latitude",
+            "yname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean LHF", "Mean LHF"],
+            "varpattern": output_variables["BiasLhfLatRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLhfLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LHF",
+            "varpattern": output_variables["BiasLhfLonRmse"][0],
+            "xname": "longitude",
+            "yname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean LHF", "Mean LHF"],
+            "varpattern": output_variables["BiasLhfLonRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLhfMapRmse": {
+        "diagnostic": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean LHF", "Mean LHF"],
+            "varpattern": output_variables["BiasLhfMapRmse"][0],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
+        },
+    },
+    "BiasLwrLatRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LWR",
+            "varpattern": output_variables["BiasLwrLatRmse"][0],
+            "xname": "latitude",
+            "yname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean LWR", "Mean LWR"],
+            "varpattern": output_variables["BiasLwrLatRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLwrLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LWR",
+            "varpattern": output_variables["BiasLwrLonRmse"][0],
+            "xname": "longitude",
+            "yname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean LWR", "Mean LWR"],
+            "varpattern": output_variables["BiasLwrLonRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLwrMapRmse": {
+        "diagnostic": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean LWR", "Mean LWR"],
+            "varpattern": output_variables["BiasLwrMapRmse"][0],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
+        },
+    },
+    "BiasShfLatRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean SHF",
+            "varpattern": output_variables["BiasShfLatRmse"][0],
+            "xname": "latitude",
+            "yname": "SHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["REG30"],
+            "maskland": True,
+            "title": ["Mean SHF", "Mean SHF"],
+            "varpattern": output_variables["BiasShfLatRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasShfLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean SHF",
+            "varpattern": output_variables["BiasShfLonRmse"][0],
+            "xname": "longitude",
+            "yname": "SHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["REG30"],
+            "maskland": True,
+            "title": ["Mean SHF", "Mean SHF"],
+            "varpattern": output_variables["BiasShfLonRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasShfMapRmse": {
+        "diagnostic": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["REG30"],
+            "maskland": True,
+            "title": ["Mean SHF", "Mean SHF"],
+            "varpattern": output_variables["BiasShfMapRmse"][0],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
+        },
+    },
     "BiasSshLatRmse": {
         "diagnostic": {
             "plot_type": "curve",
@@ -392,6 +602,71 @@ plot_parameters = {
             "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
         },
     },
+    "BiasSwrLatRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean SWR",
+            "varpattern": output_variables["BiasSwrLatRmse"][0],
+            "xname": "latitude",
+            "yname": "SWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean SWR", "Mean SWR"],
+            "varpattern": output_variables["BiasSwrLatRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasSwrLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean SWR",
+            "varpattern": output_variables["BiasSwrLonRmse"][0],
+            "xname": "longitude",
+            "yname": "SWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean SWR", "Mean SWR"],
+            "varpattern": output_variables["BiasSwrLonRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasSwrMapRmse": {
+        "diagnostic": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean SWR", "Mean SWR"],
+            "varpattern": output_variables["BiasSwrMapRmse"][0],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
+        },
+    },
     "BiasTauxLatRmse": {
         "diagnostic": {
             "plot_type": "curve",
@@ -519,6 +794,71 @@ plot_parameters = {
             "xname": "longitude",
             "yname": "latitude",
             "zname": "TAUY",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
+        },
+    },
+    "BiasThfLatRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean THF",
+            "varpattern": output_variables["BiasThfLatRmse"][0],
+            "xname": "latitude",
+            "yname": "THF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean THF", "Mean THF"],
+            "varpattern": output_variables["BiasThfLatRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "THF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasThfLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean THF",
+            "varpattern": output_variables["BiasThfLonRmse"][0],
+            "xname": "longitude",
+            "yname": "THF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean THF", "Mean THF"],
+            "varpattern": output_variables["BiasThfLonRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "THF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasThfMapRmse": {
+        "diagnostic": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],
+            "label": dict_label["TAUX"],
+            "maskland": True,
+            "title": ["Mean THF", "Mean THF"],
+            "varpattern": output_variables["BiasThfMapRmse"][0],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "THF",
             "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
         },
     },
@@ -897,8 +1237,8 @@ plot_parameters = {
             "xname": "longitude",
             "yname": "reg(SSTA, SWRA)",
             "method":  "1) Linearly detrended\n2) Seasonal cycle removed\n" +
-                      "3) Regridded to 1°x1°\n4) 5S-5N meridional averaged\n5) 30° zonal running ave.\n" +
-                      "6) SWRA regressed onto SSTA or SSTA>0 or SSTA<0",
+                       "3) Regridded to 1°x1°\n4) 5S-5N meridional averaged\n5) 30° zonal running ave.\n" +
+                       "6) SWRA regressed onto SSTA or SSTA>0 or SSTA<0",
         },
         "dive_down03": {
             "plot_type": "hovmoeller",
@@ -3327,7 +3667,6 @@ plot_parameters = {
             "label": dict_label["REG2"],
             "maskland": False,
             "title": ["La Nina composite", "La Nina composite"],
-            #"varpattern": "sst_over_sst_map__",
             "varpattern": "prComp_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3345,7 +3684,6 @@ plot_parameters = {
             "label": dict_label["REG3"],
             "maskland": False,
             "title": ["La Nina composite", "La Nina composite"],
-            #"varpattern": "sst_over_sst_map__",
             "varpattern": "slp_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3363,7 +3701,6 @@ plot_parameters = {
             "label": dict_label["SKEW"],
             "maskland": False,
             "title": ["La Nina composite", "La Nina composite"],
-            #"varpattern": "sst_over_sst_map__",
             "varpattern": "ts_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3460,7 +3797,6 @@ plot_parameters = {
             "label": dict_label["SKEW"],
             "maskland": False,
             "title": ["El Nino composite", "El Nino composite"],
-            #"varpattern": "sst_over_sst_map__",
             "varpattern": "pr_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3478,7 +3814,6 @@ plot_parameters = {
             "label": dict_label["REG3"],
             "maskland": False,
             "title": ["El Nino composite", "El Nino composite"],
-            #"varpattern": "sst_over_sst_map__",
             "varpattern": "slp_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3496,7 +3831,6 @@ plot_parameters = {
             "label": dict_label["SKEW"],
             "maskland": False,
             "title": ["El Nino composite", "El Nino composite"],
-            #"varpattern": "sst_over_sst_map__",
             "varpattern": "ts_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -4010,6 +4344,7 @@ reference_observations = {
     "slp": "ERA-Interim", "swr": "Tropflux", "taux": "Tropflux", "thf": "Tropflux"
 }
 
+
 def metric_variable_names(mc=True):
     if isinstance(mc, str) is True and mc in list(output_variables.keys()):
         dict_out = output_variables[mc]
@@ -4017,9 +4352,10 @@ def metric_variable_names(mc=True):
         dict_out = deepcopy(output_variables)
     return dict_out
 
+
 def plot_param(metric_collection, metric):
-    dict_MC = defCollection(metric_collection)
-    dict_MCm = dict_MC["metrics_list"][metric]
+    dict_mc = defCollection(metric_collection)
+    dict_metric = dict_mc["metrics_list"][metric]
     # get plot parameters
     dict_out = plot_parameters[metric.replace("_1", "").replace("_2", "").replace("_3", "")]
     # get metric computation
@@ -4030,16 +4366,17 @@ def plot_param(metric_collection, metric):
     elif "corr" in metric.lower():
         computation = "CORR"
     else:
-        try:
-            computation = dict_MCm["metric_computation"]
-        except:
-            try:
-                computation = dict_MC["common_collection_parameters"]["metric_computation"]
-            except:
+        if "metric_computation" in list(dict_metric.keys()):
+            computation = dict_metric["metric_computation"]
+        else:
+            if "common_collection_parameters" in list(dict_metric.keys()) and \
+               "metric_computation" in list(dict_metric["common_collection_parameters"].keys()):
+                computation = dict_mc["common_collection_parameters"]["metric_computation"]
+            else:
                 computation = default_arg_values("metric_computation")
     dict_out["metric_computation"] = computation
     # get metric variables
-    variables = dict_MCm["variables"]
+    variables = dict_metric["variables"]
     dict_out["metric_variables"] = variables
     # get metric reference
     references = dict((var, reference_observations[var]) for var in variables)
@@ -4054,5 +4391,5 @@ def plot_param(metric_collection, metric):
         refname = "ERA-Interim"
     dict_out["metric_reference"] = refname
     # get variable regions
-    dict_out["metric_regions"] = dict_MCm["regions"]
+    dict_out["metric_regions"] = dict_metric["regions"]
     return dict_out

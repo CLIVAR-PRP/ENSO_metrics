@@ -6,14 +6,14 @@ from sys import exit as sys_exit
 # ---------------------------------------------------#
 # colors for printing
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -52,7 +52,7 @@ def plus_comma_space(string):
     elif not string:
         return string
     else:
-        return string+', '
+        return string + ", "
 
 
 def message_formating(inspect_stack):
@@ -74,15 +74,15 @@ def message_formating(inspect_stack):
     print string
     '   File filename, line n, in module'
     """
-    string = '   '
+    string = "   "
     # adds file's name
-    if inspect_stack[0][1] != '<stdin>':
-        string = plus_comma_space(string) + 'File ' + str(inspect_stack[0][1])
+    if inspect_stack[0][1] != "<stdin>":
+        string = plus_comma_space(string) + "File " + str(inspect_stack[0][1])
     # adds line number
-    string = plus_comma_space(string) + 'line ' + str(inspect_stack[0][2])
+    string = plus_comma_space(string) + "line " + str(inspect_stack[0][2])
     # adds module's name
-    if inspect_stack[0][3] != '<module>':
-        string = plus_comma_space(string) + 'in ' + str(inspect_stack[0][3])
+    if inspect_stack[0][3] != "<module>":
+        string = plus_comma_space(string) + "in " + str(inspect_stack[0][3])
     return string
 
 
@@ -150,11 +150,11 @@ def mismatch_shapes_error(tab1, tab2, inspect_stack):
     :return:
     """
     try: name1 = tab1.name
-    except: name1 = 'no_name'
+    except: name1 = "no_name"
     try: name2 = tab2.name
-    except: name2 = 'no_name'
+    except: name2 = "no_name"
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": array shape",
-                    str().ljust(5) + "arrays shapes mismatch: " + str(name1) + " = " + str(tab1.shape) + "', and "
+                    str().ljust(5) + "arrays shapes mismatch: " + str(name1) + " = " + str(tab1.shape) + ", and "
                     + str(name2) + " = " + str(tab2.shape)]
     my_warning(list_strings)
     return
@@ -328,10 +328,10 @@ def unknown_units(var_name, name_in_file, units, inspect_stack):
 
 # ---------------------------------------------------------------------------------------------------------------------#
 # Just prints
-def debug_mode(color, title, nbr_spaces, axes1='', axes2='', axes3='', axes4='', file1='', file2='', file3='', file4='',
-               line1='', line2='', line3='', line4='', nina1='', nina2='', nina3='', nina4='', nino1='', nino2='',
-               nino3='', nino4='', shape1='', shape2='', shape3='', shape4='', time1='', time2='', time3='', time4='',
-               var1='', var2='', var3='', var4=''):
+def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="", file1="", file2="", file3="", file4="",
+               line1="", line2="", line3="", line4="", nina1="", nina2="", nina3="", nina4="", nino1="", nino2="",
+               nino3="", nino4="", shape1="", shape2="", shape3="", shape4="", time1="", time2="", time3="", time4="",
+               var1="", var2="", var3="", var4=""):
     """
     #################################################################################
     Description:
@@ -413,70 +413,70 @@ def debug_mode(color, title, nbr_spaces, axes1='', axes2='', axes3='', axes4='',
     # first variable
     print(color + str().ljust(nbr_spaces) + title + bcolors.ENDC)
     if file1:
-        print(color + str().ljust(nbr_spaces+5) + 'file name 1: ' + file1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "file name 1: " + file1 + bcolors.ENDC)
     if var1:
-        print(color + str().ljust(nbr_spaces+5) + 'variable name 1: ' + var1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "variable name 1: " + var1 + bcolors.ENDC)
     if axes1:
-        print(color + str().ljust(nbr_spaces+5) + 'axes list 1: ' + axes1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "axes list 1: " + axes1 + bcolors.ENDC)
     if time1:
-        print(color + str().ljust(nbr_spaces+5) + 'time bounds 1: ' + time1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "time bounds 1: " + time1 + bcolors.ENDC)
     if shape1:
-        print(color + str().ljust(nbr_spaces+5) + 'shape 1: ' + shape1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "shape 1: " + shape1 + bcolors.ENDC)
     if nina1:
-        print(color + str().ljust(nbr_spaces+5) + 'nina year 1: ' + nina1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "nina year 1: " + nina1 + bcolors.ENDC)
     if nino1:
-        print(color + str().ljust(nbr_spaces+5) + 'nino year 1: ' + nino1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "nino year 1: " + nino1 + bcolors.ENDC)
     if line1:
         print(color + str().ljust(nbr_spaces+5) + line1 + bcolors.ENDC)
     # second variable
     if file2:
-        print(color + str().ljust(nbr_spaces+5) + 'file name 2: ' + file2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "file name 2: " + file2 + bcolors.ENDC)
     if var2:
-        print(color + str().ljust(nbr_spaces+5) + 'variable name 2: ' + var2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "variable name 2: " + var2 + bcolors.ENDC)
     if axes2:
-        print(color + str().ljust(nbr_spaces+5) + 'axes list 2: ' + axes2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "axes list 2: " + axes2 + bcolors.ENDC)
     if time2:
-        print(color + str().ljust(nbr_spaces+5) + 'time bounds 2: ' + time2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "time bounds 2: " + time2 + bcolors.ENDC)
     if shape2:
-        print(color + str().ljust(nbr_spaces+5) + 'shape 2: ' + shape2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "shape 2: " + shape2 + bcolors.ENDC)
     if nina2:
-        print(color + str().ljust(nbr_spaces+5) + 'nina year 2: ' + nina2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "nina year 2: " + nina2 + bcolors.ENDC)
     if nino2:
-        print(color + str().ljust(nbr_spaces+5) + 'nino year 2: ' + nino2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces+5) + "nino year 2: " + nino2 + bcolors.ENDC)
     if line2:
         print(color + str().ljust(nbr_spaces+5) + line2 + bcolors.ENDC)
     # third variable
     if file3:
-        print(color + str().ljust(nbr_spaces + 5) + 'file name 3: ' + file3 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "file name 3: " + file3 + bcolors.ENDC)
     if var3:
-        print(color + str().ljust(nbr_spaces + 5) + 'variable name 3: ' + var3 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "variable name 3: " + var3 + bcolors.ENDC)
     if axes3:
-        print(color + str().ljust(nbr_spaces + 5) + 'axes list 3: ' + axes3 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "axes list 3: " + axes3 + bcolors.ENDC)
     if time3:
-        print(color + str().ljust(nbr_spaces + 5) + 'time bounds 3: ' + time3 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "time bounds 3: " + time3 + bcolors.ENDC)
     if shape3:
-        print(color + str().ljust(nbr_spaces + 5) + 'shape 3: ' + shape3 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "shape 3: " + shape3 + bcolors.ENDC)
     if nina3:
-        print(color + str().ljust(nbr_spaces + 5) + 'nina year 3: ' + nina3 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nina year 3: " + nina3 + bcolors.ENDC)
     if nino3:
-        print(color + str().ljust(nbr_spaces + 5) + 'nino year 3: ' + nino3 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nino year 3: " + nino3 + bcolors.ENDC)
     if line3:
         print(color + str().ljust(nbr_spaces + 5) + line3 + bcolors.ENDC)
     # fourth variable
     if file4:
-        print(color + str().ljust(nbr_spaces + 5) + 'file name 4: ' + file4 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "file name 4: " + file4 + bcolors.ENDC)
     if var4:
-        print(color + str().ljust(nbr_spaces + 5) + 'variable name 4: ' + var4 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "variable name 4: " + var4 + bcolors.ENDC)
     if axes4:
-        print(color + str().ljust(nbr_spaces + 5) + 'axes list 4: ' + axes4 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "axes list 4: " + axes4 + bcolors.ENDC)
     if time4:
-        print(color + str().ljust(nbr_spaces + 5) + 'time bounds 4: ' + time4 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "time bounds 4: " + time4 + bcolors.ENDC)
     if shape4:
-        print(color + str().ljust(nbr_spaces + 5) + 'shape 4: ' + shape4 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "shape 4: " + shape4 + bcolors.ENDC)
     if nina4:
-        print(color + str().ljust(nbr_spaces + 5) + 'nina year 4: ' + nina4 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nina year 4: " + nina4 + bcolors.ENDC)
     if nino4:
-        print(color + str().ljust(nbr_spaces + 5) + 'nino year 4: ' + nino4 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nino year 4: " + nino4 + bcolors.ENDC)
     if line4:
         print(color + str().ljust(nbr_spaces + 5) + line4 + bcolors.ENDC)
     return
