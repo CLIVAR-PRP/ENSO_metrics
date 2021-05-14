@@ -19,9 +19,14 @@ dict_colorbar = {
 dict_label = {
     "amplitude": [round(ii, 1) for ii in NUMPYarange(0, 2.1, 0.5)],
     "amplitude5": list(range(0, 6, 1)),
+    "amplitude8": list(range(0, 9, 2)),
     "amplitude10": [round(ii, 1) for ii in NUMPYarange(0, 10.1, 2.5)],
     "amplitude15": list(range(0, 16, 5)),
     "amplitude60": list(range(0, 61, 20)),
+    "amplitude75": list(range(0, 76, 25)),
+    "amplitude150": list(range(0, 151, 50)),
+    "LHF": list(range(-140, -19, 40)),
+    "LWR": list(range(-60, -29, 10)),
     "PR": list(range(0, 13, 4)),
     "PRA": [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)],
     "REG03": [round(ii, 1) for ii in NUMPYarange(-0.3, 0.35, 0.1)],
@@ -30,31 +35,39 @@ dict_label = {
     "REG2": list(range(-2, 3, 1)),
     "REG25": [round(ii, 1) for ii in NUMPYarange(-2.5, 2.6, 1.0)],
     "REG3": list(range(-3, 4, 1)),
-    "REG4": list(range(-4, 5, 1)),
+    "REG4": list(range(-4, 5, 2)),
     "REG5": [round(ii, 1) for ii in NUMPYarange(-5, 6, 2.5)],
+    "REG8": list(range(-8, 9, 4)),
+    "REG10": list(range(-10, 11, 5)),
+    "REG16": list(range(-16, 17, 8)),
     "REG20": list(range(-20, 25, 10)),
+    "REG24": list(range(-24, 25, 12)),
     "REG30": list(range(-30, 35, 15)),
     "REG50": list(range(-50, 55, 25)),
     "REG60": list(range(-60, 65, 30)),
     "REG80": list(range(-80, 85, 40)),
+    "REG150": list(range(-150, 151, 75)),
+    "REG200": list(range(-200, 201, 100)),
     "SKEW": [round(ii, 1) for ii in NUMPYarange(-1.5, 1.6, 0.5)],
+    "SHF": list(range(-15, 1, 5)),
     "dSST": list(range(-2, 3, 1)),
     "SST": list(range(21, 31, 3)),
     "SSTA": [round(ii, 1) for ii in NUMPYarange(-1, 1.1, 0.5)],
+    "SWR": list(range(170, 261, 30)),
     "TAUX": list(range(-100, 110, 50)),
     "TAUY": list(range(-40, 41, 20)),
 }
 
 output_variables = {
-    "BiasPrLatRmse": ["pr_lat__", "pr_map__"],
-    "BiasPrLonRmse": ["pr_lon__", "pr_map__"],
-    "BiasPrMapRmse": ["pr_map__"],
     "BiasLhfLatRmse": ["lhf_lat__", "lhf_map__"],
     "BiasLhfLonRmse": ["lhf_lon__", "lhf_map__"],
     "BiasLhfMapRmse": ["lhf_map__"],
     "BiasLwrLatRmse": ["lwr_lat__", "lwr_map__"],
     "BiasLwrLonRmse": ["lwr_lon__", "lwr_map__"],
     "BiasLwrMapRmse": ["lwr_map__"],
+    "BiasPrLatRmse": ["pr_lat__", "pr_map__"],
+    "BiasPrLonRmse": ["pr_lon__", "pr_map__"],
+    "BiasPrMapRmse": ["pr_map__"],
     "BiasShfLatRmse": ["shf_lat__", "shf_map__"],
     "BiasShfLonRmse": ["shf_lon__", "shf_map__"],
     "BiasShfMapRmse": ["shf_map__"],
@@ -88,7 +101,7 @@ output_variables = {
         "dSST_ts__", "dSSTthf_ts__", "dSSToce_ts__", "dSSTthf_lon__", "dSSToce_lon__", "dSST_hov__", "dSSTthf_hov__",
         "dSSToce_hov__"],
     "EnsoPrLonRmse": [
-        "reg_pr_lon_onto_sst__", "reg_pr_map_onto_sst__", "nina_pr_lon__", "nino_pr_lon__", "nina_pr_map__",
+        "reg_pr_lon_onto_sst__", "nina_pr_lon__", "nino_pr_lon__", "reg_pr_map_onto_sst__", "nina_pr_map__",
         "nino_pr_map__"],
     "EnsoSshLonRmse": [
         "reg_ssh_lon_onto_sst__", "nina_ssh_lon__", "nino_ssh_lon__", "reg_ssh_map_onto_sst__", "nina_ssh_map__",
@@ -102,6 +115,9 @@ output_variables = {
     "EnsoTauyLonRmse": [
         "reg_tauy_lon_onto_sst__", "nina_tauy_lon__", "nino_tauy_lon__", "reg_tauy_map_onto_sst__", "nina_tauy_map__",
         "nino_tauy_map__"],
+    "EnsoThfLonRmse": [
+        "reg_thf_lon_onto_sst__", "nina_thf_lon__", "nino_thf_lon__", "reg_thf_map_onto_sst__", "nina_thf_map__",
+        "nino_thf_map__"],
     "EnsoPrTsRmse": [
         "reg_pr_ts_onto_sst__", "nina_pr_ts__", "nino_pr_ts__", "reg_pr_hov_onto_sst__", "nina_pr_hov__",
         "nino_pr_hov__"],
@@ -117,6 +133,9 @@ output_variables = {
     "EnsoTauyTsRmse": [
         "reg_tauy_ts_onto_sst__", "nina_tauy_ts__", "nino_tauy_ts__", "reg_tauy_hov_onto_sst__", "nina_tauy_hov__",
         "nino_tauy_hov__"],
+    "EnsoThfTsRmse": [
+        "reg_thf_ts_onto_sst__", "nina_thf_ts__", "nino_thf_ts__", "reg_thf_hov_onto_sst__", "nina_thf_hov__",
+        "nino_thf_hov__"],
     "EnsoFbSshSst": [
         "ssh__", "sst__", "reg_sst_lon_onto_ssh__", "reg_sst_lon_onto_sshPOS__", "reg_sst_lon_onto_sshNEG__",
         "reg_sst_hov_onto_ssh__", "reg_sst_hov_onto_sshPOS__", "reg_sst_hov_onto_sshNEG__"],
@@ -196,8 +215,10 @@ output_variables = {
         "nina_tas_map_jja_americaS__", "nino_tas_map_jja_americaS__", "nina_tas_map_jja_asiaS__",
         "nino_tas_map_jja_asiaS__", "nina_tas_map_jja_oceania__", "nino_tas_map_jja_oceania__"],
     "grad_lat_pr": ["pr_lat__", "pr_map__"],
+    "grad_lat_ssh": ["ssh_lat__", "ssh_map__"],
     "grad_lat_sst": ["sst_lat__", "sst_map__"],
     "grad_lon_pr": ["pr_lon__", "pr_map__"],
+    "grad_lon_ssh": ["ssh_lon__", "ssh_map__"],
     "grad_lon_sst": ["sst_lon__", "sst_map__"],
     "SeasonalPrLatRmse": ["prMacStd_lat__", "prMacStd_map__", "prMac_hov__"],
     "SeasonalPrLonRmse": ["prMacStd_lon__", "prMacStd_map__", "prMac_hov__"],
@@ -212,6 +233,136 @@ output_variables = {
 }
 
 plot_parameters = {
+    "BiasLhfLatRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LHF",  # "a) Mean meridional LHF",  #
+            "varpattern": output_variables["BiasLhfLatRmse"][0],
+            "xname": "latitude",
+            "yname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["LHF"],
+            "maskland": True,
+            "title": ["Mean LHF", "Mean LHF"],
+            "varpattern": output_variables["BiasLhfLatRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLhfLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LHF",
+            "varpattern": output_variables["BiasLhfLonRmse"][0],
+            "xname": "longitude",
+            "yname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["LHF"],
+            "maskland": True,
+            "title": ["Mean LHF", "Mean LHF"],
+            "varpattern": output_variables["BiasLhfLonRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLhfMapRmse": {
+        "diagnostic": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["LHF"],
+            "maskland": True,
+            "title": ["Mean LHF", "Mean LHF"],
+            "varpattern": output_variables["BiasLhfMapRmse"][0],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LHF",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
+        },
+    },
+    "BiasLwrLatRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LWR",  # "a) Mean meridional LWR",  #
+            "varpattern": output_variables["BiasLwrLatRmse"][0],
+            "xname": "latitude",
+            "yname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["LWR"],
+            "maskland": True,
+            "title": ["Mean LWR", "Mean LWR"],
+            "varpattern": output_variables["BiasLwrLatRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLwrLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean LWR",
+            "varpattern": output_variables["BiasLwrLonRmse"][0],
+            "xname": "longitude",
+            "yname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["LWR"],
+            "maskland": True,
+            "title": ["Mean LWR", "Mean LWR"],
+            "varpattern": output_variables["BiasLwrLonRmse"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
+    "BiasLwrMapRmse": {
+        "diagnostic": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["LWR"],
+            "maskland": True,
+            "title": ["Mean LWR", "Mean LWR"],
+            "varpattern": output_variables["BiasLwrMapRmse"][0],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "LWR",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
+        },
+    },
     "BiasPrLatRmse": {
         "diagnostic": {
             "plot_type": "curve",
@@ -277,141 +428,11 @@ plot_parameters = {
             "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
         },
     },
-    "BiasLhfLatRmse": {
-        "diagnostic": {
-            "plot_type": "curve",
-            "nbr_panel": 1,
-            "title": "Mean LHF",
-            "varpattern": output_variables["BiasLhfLatRmse"][0],
-            "xname": "latitude",
-            "yname": "LHF",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
-                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
-        },
-        "dive_down01": {
-            "plot_type": "map",
-            "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
-            "maskland": True,
-            "title": ["Mean LHF", "Mean LHF"],
-            "varpattern": output_variables["BiasLhfLatRmse"][1],
-            "xname": "longitude",
-            "yname": "latitude",
-            "zname": "LHF",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
-        },
-    },
-    "BiasLhfLonRmse": {
-        "diagnostic": {
-            "plot_type": "curve",
-            "nbr_panel": 1,
-            "title": "Mean LHF",
-            "varpattern": output_variables["BiasLhfLonRmse"][0],
-            "xname": "longitude",
-            "yname": "LHF",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
-                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
-        },
-        "dive_down01": {
-            "plot_type": "map",
-            "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
-            "maskland": True,
-            "title": ["Mean LHF", "Mean LHF"],
-            "varpattern": output_variables["BiasLhfLonRmse"][1],
-            "xname": "longitude",
-            "yname": "latitude",
-            "zname": "LHF",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
-        },
-    },
-    "BiasLhfMapRmse": {
-        "diagnostic": {
-            "plot_type": "map",
-            "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
-            "maskland": True,
-            "title": ["Mean LHF", "Mean LHF"],
-            "varpattern": output_variables["BiasLhfMapRmse"][0],
-            "xname": "longitude",
-            "yname": "latitude",
-            "zname": "LHF",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
-        },
-    },
-    "BiasLwrLatRmse": {
-        "diagnostic": {
-            "plot_type": "curve",
-            "nbr_panel": 1,
-            "title": "Mean LWR",
-            "varpattern": output_variables["BiasLwrLatRmse"][0],
-            "xname": "latitude",
-            "yname": "LWR",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
-                      "4) Zonal averaged (see box)\n\nMetric: RMSE$_y$",
-        },
-        "dive_down01": {
-            "plot_type": "map",
-            "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
-            "maskland": True,
-            "title": ["Mean LWR", "Mean LWR"],
-            "varpattern": output_variables["BiasLwrLatRmse"][1],
-            "xname": "longitude",
-            "yname": "latitude",
-            "zname": "LWR",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
-        },
-    },
-    "BiasLwrLonRmse": {
-        "diagnostic": {
-            "plot_type": "curve",
-            "nbr_panel": 1,
-            "title": "Mean LWR",
-            "varpattern": output_variables["BiasLwrLonRmse"][0],
-            "xname": "longitude",
-            "yname": "LWR",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
-                      "4) Meridional averaged (see box)\n\nMetric: RMSE$_x$",
-        },
-        "dive_down01": {
-            "plot_type": "map",
-            "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
-            "maskland": True,
-            "title": ["Mean LWR", "Mean LWR"],
-            "varpattern": output_variables["BiasLwrLonRmse"][1],
-            "xname": "longitude",
-            "yname": "latitude",
-            "zname": "LWR",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
-        },
-    },
-    "BiasLwrMapRmse": {
-        "diagnostic": {
-            "plot_type": "map",
-            "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
-            "maskland": True,
-            "title": ["Mean LWR", "Mean LWR"],
-            "varpattern": output_variables["BiasLwrMapRmse"][0],
-            "xname": "longitude",
-            "yname": "latitude",
-            "zname": "LWR",
-            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n\nMetric: RMSE$_{xy}$",
-        },
-    },
     "BiasShfLatRmse": {
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
-            "title": "Mean SHF",
+            "title": "Mean SHF",  # "a) Mean meridional SHF",  #
             "varpattern": output_variables["BiasShfLatRmse"][0],
             "xname": "latitude",
             "yname": "SHF",
@@ -421,8 +442,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["SHF"],
             "maskland": True,
             "title": ["Mean SHF", "Mean SHF"],
             "varpattern": output_variables["BiasShfLatRmse"][1],
@@ -446,8 +467,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["SHF"],
             "maskland": True,
             "title": ["Mean SHF", "Mean SHF"],
             "varpattern": output_variables["BiasShfLonRmse"][1],
@@ -461,8 +482,8 @@ plot_parameters = {
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["SHF"],
             "maskland": True,
             "title": ["Mean SHF", "Mean SHF"],
             "varpattern": output_variables["BiasShfMapRmse"][0],
@@ -486,8 +507,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
-            "label": dict_label["SST"],
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG30"],
             "maskland": True,
             "title": ["Mean SSH", "Mean SSH"],
             "varpattern": output_variables["BiasSshLatRmse"][1],
@@ -511,8 +532,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
-            "label": dict_label["SST"],
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG30"],
             "maskland": True,
             "title": ["Mean SSH", "Mean SSH"],
             "varpattern": output_variables["BiasSshLonRmse"][1],
@@ -526,8 +547,8 @@ plot_parameters = {
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
-            "label": dict_label["SST"],
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG30"],
             "maskland": True,
             "title": ["Mean SSH", "Mean SSH"],
             "varpattern": output_variables["BiasSshMapRmse"][0],
@@ -606,7 +627,7 @@ plot_parameters = {
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
-            "title": "Mean SWR",
+            "title": "Mean SWR",  # "a) Mean meridional SWR",  #
             "varpattern": output_variables["BiasSwrLatRmse"][0],
             "xname": "latitude",
             "yname": "SWR",
@@ -616,8 +637,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["SWR"],
             "maskland": True,
             "title": ["Mean SWR", "Mean SWR"],
             "varpattern": output_variables["BiasSwrLatRmse"][1],
@@ -641,8 +662,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["SWR"],
             "maskland": True,
             "title": ["Mean SWR", "Mean SWR"],
             "varpattern": output_variables["BiasSwrLonRmse"][1],
@@ -656,8 +677,8 @@ plot_parameters = {
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["SWR"],
             "maskland": True,
             "title": ["Mean SWR", "Mean SWR"],
             "varpattern": output_variables["BiasSwrMapRmse"][0],
@@ -747,7 +768,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUY"],
+            "label": dict_label["REG50"],
             "maskland": True,
             "title": ["Mean TAUY", "Mean TAUY"],
             "varpattern": output_variables["BiasTauyLatRmse"][1],
@@ -772,7 +793,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUY"],
+            "label": dict_label["REG50"],
             "maskland": True,
             "title": ["Mean TAUY", "Mean TAUY"],
             "varpattern": output_variables["BiasTauyLonRmse"][1],
@@ -787,7 +808,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUY"],
+            "label": dict_label["REG50"],
             "maskland": True,
             "title": ["Mean TAUY", "Mean TAUY"],
             "varpattern": output_variables["BiasTauyMapRmse"][0],
@@ -801,7 +822,7 @@ plot_parameters = {
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
-            "title": "Mean THF",
+            "title": "Mean THF",  # "a) Mean meridional THF",  #
             "varpattern": output_variables["BiasThfLatRmse"][0],
             "xname": "latitude",
             "yname": "THF",
@@ -811,8 +832,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["amplitude150"],
             "maskland": True,
             "title": ["Mean THF", "Mean THF"],
             "varpattern": output_variables["BiasThfLatRmse"][1],
@@ -836,8 +857,8 @@ plot_parameters = {
         "dive_down01": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["amplitude150"],
             "maskland": True,
             "title": ["Mean THF", "Mean THF"],
             "varpattern": output_variables["BiasThfLonRmse"][1],
@@ -851,8 +872,8 @@ plot_parameters = {
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUX"],
+            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["amplitude150"],
             "maskland": True,
             "title": ["Mean THF", "Mean THF"],
             "varpattern": output_variables["BiasThfMapRmse"][0],
@@ -1237,8 +1258,8 @@ plot_parameters = {
             "xname": "longitude",
             "yname": "reg(SSTA, SWRA)",
             "method":  "1) Linearly detrended\n2) Seasonal cycle removed\n" +
-                       "3) Regridded to 1°x1°\n4) 5S-5N meridional averaged\n5) 30° zonal running ave.\n" +
-                       "6) SWRA regressed onto SSTA or SSTA>0 or SSTA<0",
+                      "3) Regridded to 1°x1°\n4) 5S-5N meridional averaged\n5) 30° zonal running ave.\n" +
+                      "6) SWRA regressed onto SSTA or SSTA>0 or SSTA<0",
         },
         "dive_down03": {
             "plot_type": "hovmoeller",
@@ -1930,7 +1951,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 4,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG3"],
+            "label": dict_label["REG5"],
             "maskland": True,
             "title": ["La Nina PRA", "El Nino PRA"],
             "varpattern": output_variables["EnsoPrLonRmse"][4:],
@@ -1985,7 +2006,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 4,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG5"],
+            "label": dict_label["REG4"],
             "title": ["La Nina PRA", "El Nino PRA"],
             "varpattern": output_variables["EnsoPrTsRmse"][4:],
             "xname": "longitude",
@@ -2503,7 +2524,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG8"],
             "maskland": True,
             "title": ["reg(ENSO SSTA, SSHA)", "reg(ENSO SSTA, SSHA)"],
             "varpattern": output_variables["EnsoSshLonRmse"][3],
@@ -2517,7 +2538,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 4,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG16"],
             "maskland": True,
             "title": ["La Nina SSHA", "El Nino SSHA"],
             "varpattern": output_variables["EnsoSshLonRmse"][4:],
@@ -2558,7 +2579,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG20"],
+            "label": dict_label["REG5"],
             "title": ["reg(ENSO SSTA, SSHA)", "reg(ENSO SSTA, SSHA)"],
             "varpattern": output_variables["EnsoSshTsRmse"][3],
             "xname": "longitude",
@@ -2572,7 +2593,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 4,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG10"],
             "title": ["La Nina SSHA", "El Nino SSHA"],
             "varpattern": output_variables["EnsoSshTsRmse"][4:],
             "xname": "longitude",
@@ -3167,7 +3188,7 @@ plot_parameters = {
             "method": "1) N3.4 SST averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
                       "4) Detect El Nino and La Nina\n    (NDJ N3.4 SSTA > 0.5 STD 5 cons. seasons)\n" +
                       "5) SSTA regridded to 1°x1°\n6) 5S-5N meridional SSTA average\n" +
-                      "7) El Nino and La Nina TAUYA composited",
+                      "7) El Nino and La Nina SSTA composited",
         },
     },
     "EnsoTauxLonRmse": {
@@ -3201,7 +3222,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG20"],
             "maskland": True,
             "title": ["reg(ENSO SSTA, TAUXA)", "reg(ENSO SSTA, TAUXA)"],
             "varpattern": output_variables["EnsoTauxLonRmse"][3],
@@ -3215,7 +3236,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 4,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG40"],
             "maskland": True,
             "title": ["La Nina TAUXA", "El Nino TAUXA"],
             "varpattern": output_variables["EnsoTauxLonRmse"][4:],
@@ -3256,7 +3277,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG20"],
+            "label": dict_label["REG16"],
             "title": ["reg(ENSO SSTA, TAUXA)", "reg(ENSO SSTA, TAUXA)"],
             "varpattern": output_variables["EnsoTauxTsRmse"][3],
             "xname": "longitude",
@@ -3313,7 +3334,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG10"],
             "maskland": True,
             "title": ["reg(ENSO SSTA, TAUYA)", "reg(ENSO SSTA, TAUYA)"],
             "varpattern": output_variables["EnsoTauyLonRmse"][3],
@@ -3327,7 +3348,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 4,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG24"],
             "maskland": True,
             "title": ["La Nina TAUYA", "El Nino TAUYA"],
             "varpattern": output_variables["EnsoTauyLonRmse"][4:],
@@ -3368,7 +3389,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG20"],
+            "label": dict_label["REG5"],
             "title": ["reg(ENSO SSTA, TAUYA)", "reg(ENSO SSTA, TAUYA)"],
             "varpattern": output_variables["EnsoTauyTsRmse"][3],
             "xname": "longitude",
@@ -3382,7 +3403,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 4,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG30"],
+            "label": dict_label["REG10"],
             "title": ["La Nina TAUYA", "El Nino TAUYA"],
             "varpattern": output_variables["EnsoTauyTsRmse"][4:],
             "xname": "longitude",
@@ -3392,6 +3413,118 @@ plot_parameters = {
                       "4) Detect El Nino and La Nina\n    (NDJ N3.4 SSTA > 0.5 STD 5 cons. seasons)\n" +
                       "5) TAUYA regridded to 1°x1°\n6) 5S-5N meridional TAUYA average\n" +
                       "7) El Nino and La Nina TAUYA composited",
+        },
+    },
+    "EnsoThfLonRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "ENSO's THFA pattern",
+            "varpattern": output_variables["EnsoThfLonRmse"][0],
+            "xname": "longitude",
+            "yname": "reg(ENSO SSTA, THFA)",
+            "method": "1) N3.4 SST averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) THFA regridded to 1°x1°\n5) 5S-5N meridional THFA averaged\n" +
+                      "6) NDJ THFA regressed onto NDJ N3.4 SSTA\n\nMetric: RMSE$_x$",
+        },
+        "dive_down01": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "ENSO's THFA pattern",
+            "varpattern": output_variables["EnsoThfLonRmse"][1:3],
+            "colors": {"model": ["blue", "red"], "reference": ["blue", "red"]},
+            "linestyles": {"model": ["-", "-"], "reference": ["-.", "-."]},
+            "legend": ["La Nina", "El Nino"],
+            "xname": "longitude",
+            "yname": "ENSO THFA",
+            "method": "1) N3.4 SST averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) Detect El Nino and La Nina\n    (NDJ N3.4 SSTA > 0.5 STD 5 cons. seasons)\n" +
+                      "5) THFA regridded to 1°x1°\n6) 5S-5N meridional THFA averaged\n" +
+                      "7) El Nino and La Nina NDJ THFA composited",
+        },
+        "dive_down02": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG24"],
+            "maskland": True,
+            "title": ["reg(ENSO SSTA, THFA)", "reg(ENSO SSTA, THFA)"],
+            "varpattern": output_variables["EnsoThfLonRmse"][3],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "regression",
+            "method": "1) N3.4 SST averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) THFA regridded to 1°x1°\n5) NDJ THFA regressed onto NDJ N3.4 SSTA",
+        },
+        "dive_down03": {
+            "plot_type": "map",
+            "nbr_panel": 4,
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG50"],
+            "maskland": True,
+            "title": ["La Nina THFA", "El Nino THFA"],
+            "varpattern": output_variables["EnsoThfLonRmse"][4:],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "THFA",
+            "method": "1) N3.4 SST averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) Detect El Nino and La Nina\n    (NDJ N3.4 SSTA > 0.5 STD 5 cons. seasons)\n" +
+                      "5) THFA regridded to 1°x1°\n6) El Nino and La Nina NDJ THFA composited",
+        },
+    },
+    "EnsoThfTsRmse": {
+        "diagnostic": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "ENSO's THFA life-cycle",
+            "varpattern": output_variables["EnsoThfTsRmse"][0],
+            "xname": "months",
+            "yname": "reg(ENSO SSTA, THFA)",
+            "method": "1) Horizontal averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) REGION1 THFA regressed onto NDJ N3.4 SSTA\n\nMetric: RMSE$_{t}$",
+        },
+        "dive_down01": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "ENSO's THFA life-cycle",
+            "varpattern": output_variables["EnsoThfTsRmse"][1:3],
+            "colors": {"model": ["blue", "red"], "reference": ["blue", "red"]},
+            "linestyles": {"model": ["-", "-"], "reference": ["-.", "-."]},
+            "legend": ["La Nina", "El Nino"],
+            "xname": "months",
+            "yname": "ENSO THFA",
+            "method": "1) Horizontal averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) Detect El Nino and La Nina\n    (NDJ N3.4 SSTA > 0.5 STD 5 cons. seasons)\n" +
+                      "5) El Nino and La Nina THFA composited",
+        },
+        "dive_down02": {
+            "plot_type": "hovmoeller",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG20"],
+            "title": ["reg(ENSO SSTA, THFA)", "reg(ENSO SSTA, THFA)"],
+            "varpattern": output_variables["EnsoThfTsRmse"][3],
+            "xname": "longitude",
+            "yname": "months",
+            "zname": "regression",
+            "method": "1) N3.4 SST averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) THFA regridded to 1°x1°\n5) 5S-5N meridional THFA average\n" +
+                      "6) NDJ THFA regressed onto NDJ N3.4 SSTA",
+        },
+        "dive_down03": {
+            "plot_type": "hovmoeller",
+            "nbr_panel": 4,
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG40"],
+            "title": ["La Nina THFA", "El Nino THFA"],
+            "varpattern": output_variables["EnsoThfTsRmse"][4:],
+            "xname": "longitude",
+            "yname": "months",
+            "zname": "THFA",
+            "method": "1) N3.4 SST averaged\n2) Linearly detrended\n3) Seasonal cycle removed\n" +
+                      "4) Detect El Nino and La Nina\n    (NDJ N3.4 SSTA > 0.5 STD 5 cons. seasons)\n" +
+                      "5) THFA regridded to 1°x1°\n6) 5S-5N meridional THFA average\n" +
+                      "7) El Nino and La Nina THFA composited",
         },
     },
     "EnsoSeasonality": {
@@ -3554,6 +3687,41 @@ plot_parameters = {
             "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
         },
     },
+    "grad_lat_ssh": {
+        "diagnostic": {
+            "plot_type": "dot",
+            "nbr_panel": 1,
+            "title": "meridional SSH gradient",
+            "varpattern": "diagnostic",
+            "yname": "SSH grad",
+            "method": "1) REGION1 averaged\n2) REGION2 averaged\n3) Linearly detrended\n4) Off-equ minus equ\n" +
+                      "5) Temporal averaged\n\nMetric: abs((STD$_{mod}$-STD$_{ref}$)/STD$_{ref}$)*100",
+
+        },
+        "dive_down01": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean SSH",
+            "varpattern": output_variables["grad_lat_ssh"][0],
+            "xname": "latitude",
+            "yname": "SSH",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Zonal averaged (see box)",
+        },
+        "dive_down02": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],
+            "label": dict_label["amplitude75"],
+            "maskland": True,
+            "title": ["Mean SSH", "Mean SSH"],
+            "varpattern": output_variables["grad_lat_ssh"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SSH",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
     "grad_lat_sst": {
         "diagnostic": {
             "plot_type": "dot",
@@ -3624,6 +3792,41 @@ plot_parameters = {
             "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
         },
     },
+    "grad_lon_ssh": {
+        "diagnostic": {
+            "plot_type": "dot",
+            "nbr_panel": 1,
+            "title": "zonal SSH gradient",
+            "varpattern": "diagnostic",
+            "yname": "SSH grad",
+            "method": "1) REGION1 averaged\n2) REGION2 averaged\n3) Linearly detrended\n4) west minus east\n" +
+                      "5) Temporal averaged\n\nMetric: abs((STD$_{mod}$-STD$_{ref}$)/STD$_{ref}$)*100",
+
+        },
+        "dive_down01": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "Mean SSH",
+            "varpattern": output_variables["grad_lon_ssh"][0],
+            "xname": "longitude",
+            "yname": "SSH",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°\n" +
+                      "4) Meridional averaged (see box)",
+        },
+        "dive_down02": {
+            "plot_type": "map",
+            "nbr_panel": 2,
+            "colorbar": dict_colorbar["SST"],
+            "label": dict_label["amplitude75"],
+            "maskland": True,
+            "title": ["Mean SSH", "Mean SSH"],
+            "varpattern": output_variables["grad_lon_ssh"][1],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "SST",
+            "method": "1) Linearly detrended\n2) Temporal averaged\n3) Regridded to 1°x1°",
+        },
+    },
     "grad_lon_sst": {
         "diagnostic": {
             "plot_type": "dot",
@@ -3667,6 +3870,7 @@ plot_parameters = {
             "label": dict_label["REG2"],
             "maskland": False,
             "title": ["La Nina composite", "La Nina composite"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "prComp_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3684,6 +3888,7 @@ plot_parameters = {
             "label": dict_label["REG3"],
             "maskland": False,
             "title": ["La Nina composite", "La Nina composite"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "slp_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3701,6 +3906,7 @@ plot_parameters = {
             "label": dict_label["SKEW"],
             "maskland": False,
             "title": ["La Nina composite", "La Nina composite"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "ts_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3797,6 +4003,7 @@ plot_parameters = {
             "label": dict_label["SKEW"],
             "maskland": False,
             "title": ["El Nino composite", "El Nino composite"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "pr_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3814,6 +4021,7 @@ plot_parameters = {
             "label": dict_label["REG3"],
             "maskland": False,
             "title": ["El Nino composite", "El Nino composite"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "slp_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -3831,6 +4039,7 @@ plot_parameters = {
             "label": dict_label["SKEW"],
             "maskland": False,
             "title": ["El Nino composite", "El Nino composite"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "ts_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -4037,7 +4246,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["amplitude"],  # YYP: I do not know yet the colobar / label needed
-            "label": dict_label["amplitude"],
+            "label": dict_label["amplitude8"],
             "maskland": True,
             "title": ["SSH seasonal cycle std"],
             "varpattern": output_variables["SeasonalSshLatRmse"][1],
@@ -4050,8 +4259,8 @@ plot_parameters = {
         "dive_down02": {
             "plot_type": "hovmoeller",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
-            "label": dict_label["SST"],
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG10"],
             "title": ["SSH seasonal cycle", "SSH seasonal cycle"],
             "varpattern": output_variables["SeasonalSshLatRmse"][2],
             "xname": "latitude",
@@ -4076,7 +4285,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["amplitude"],  # YYP: I do not know yet the colobar / label needed
-            "label": dict_label["amplitude"],
+            "label": dict_label["amplitude8"],
             "maskland": True,
             "title": ["SSH seasonal cycle std"],
             "varpattern": output_variables["SeasonalSshLonRmse"][1],
@@ -4089,8 +4298,8 @@ plot_parameters = {
         "dive_down02": {
             "plot_type": "hovmoeller",
             "nbr_panel": 2,
-            "colorbar": dict_colorbar["SST"],  # YYP: I do not know yet the colobar / label needed
-            "label": dict_label["SST"],
+            "colorbar": dict_colorbar["anomalies"],  # YYP: I do not know yet the colobar / label needed
+            "label": dict_label["REG24"],
             "title": ["SSH seasonal cycle", "SSH seasonal cycle"],
             "varpattern": output_variables["SeasonalSshLonRmse"][2],
             "xname": "longitude",
@@ -4272,7 +4481,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["amplitude"],
-            "label": dict_label["amplitude60"],
+            "label": dict_label["amplitude30"],
             "maskland": True,
             "title": ["TAUY seasonal cycle std"],
             "varpattern": output_variables["SeasonalTauyLatRmse"][1],
@@ -4286,7 +4495,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["TAUY"],
+            "label": dict_label["REG40"],
             "title": ["TAUY seasonal cycle", "TAUY seasonal cycle"],
             "varpattern": output_variables["SeasonalTauyLatRmse"][2],
             "xname": "latitude",
@@ -4312,7 +4521,7 @@ plot_parameters = {
             "plot_type": "map",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["amplitude"],
-            "label": dict_label["amplitude60"],
+            "label": dict_label["amplitude30"],
             "maskland": True,
             "title": ["TAUY seasonal cycle std"],
             "varpattern": output_variables["SeasonalTauyLonRmse"][1],
@@ -4326,7 +4535,7 @@ plot_parameters = {
             "plot_type": "hovmoeller",
             "nbr_panel": 2,
             "colorbar": dict_colorbar["anomalies"],
-            "label": dict_label["REG80"],
+            "label": dict_label["REG40"],
             "title": ["TAUY seasonal cycle", "TAUY seasonal cycle"],
             "varpattern": output_variables["SeasonalTauyLonRmse"][2],
             "xname": "longitude",
@@ -4344,7 +4553,6 @@ reference_observations = {
     "slp": "ERA-Interim", "swr": "Tropflux", "taux": "Tropflux", "thf": "Tropflux"
 }
 
-
 def metric_variable_names(mc=True):
     if isinstance(mc, str) is True and mc in list(output_variables.keys()):
         dict_out = output_variables[mc]
@@ -4352,10 +4560,9 @@ def metric_variable_names(mc=True):
         dict_out = deepcopy(output_variables)
     return dict_out
 
-
 def plot_param(metric_collection, metric):
-    dict_mc = defCollection(metric_collection)
-    dict_metric = dict_mc["metrics_list"][metric]
+    dict_MC = defCollection(metric_collection)
+    dict_MCm = dict_MC["metrics_list"][metric]
     # get plot parameters
     dict_out = plot_parameters[metric.replace("_1", "").replace("_2", "").replace("_3", "")]
     # get metric computation
@@ -4366,17 +4573,16 @@ def plot_param(metric_collection, metric):
     elif "corr" in metric.lower():
         computation = "CORR"
     else:
-        if "metric_computation" in list(dict_metric.keys()):
-            computation = dict_metric["metric_computation"]
-        else:
-            if "common_collection_parameters" in list(dict_metric.keys()) and \
-               "metric_computation" in list(dict_metric["common_collection_parameters"].keys()):
-                computation = dict_mc["common_collection_parameters"]["metric_computation"]
-            else:
+        try:
+            computation = dict_MCm["metric_computation"]
+        except:
+            try:
+                computation = dict_MC["common_collection_parameters"]["metric_computation"]
+            except:
                 computation = default_arg_values("metric_computation")
     dict_out["metric_computation"] = computation
     # get metric variables
-    variables = dict_metric["variables"]
+    variables = dict_MCm["variables"]
     dict_out["metric_variables"] = variables
     # get metric reference
     references = dict((var, reference_observations[var]) for var in variables)
@@ -4391,5 +4597,5 @@ def plot_param(metric_collection, metric):
         refname = "ERA-Interim"
     dict_out["metric_reference"] = refname
     # get variable regions
-    dict_out["metric_regions"] = dict_metric["regions"]
+    dict_out["metric_regions"] = dict_MCm["regions"]
     return dict_out

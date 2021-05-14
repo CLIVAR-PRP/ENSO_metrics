@@ -7,33 +7,34 @@ import json
 # ENSO_metrics package functions:
 from .EnsoCollectionsLib import defCollection, ReferenceObservations
 from . import EnsoErrorsWarnings
-from .EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrMapRmse, BiasLhfLatRmse, BiasLhfLonRmse,\
-    BiasLhfMapRmse, BiasLwrLatRmse, BiasLwrLonRmse, BiasLwrMapRmse, BiasShfLatRmse, BiasShfLonRmse, BiasShfMapRmse,\
-    BiasSwrLatRmse, BiasSwrLonRmse, BiasSwrMapRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshMapRmse, BiasSstLatRmse,\
-    BiasSstLonRmse, BiasSstMapRmse, BiasSstSkLonRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxMapRmse,\
-    BiasTauyLatRmse, BiasTauyLonRmse, BiasTauyMapRmse, BiasThfLatRmse, BiasThfLonRmse, BiasThfMapRmse, EnsoAmpl,\
-    EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf, EnsoFbSstSwr,\
-    EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, EnsoPrDjfTel, EnsoPrJjaTel,\
-    EnsoSeasonality, EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity, EnsoPrLonRmse, EnsoSshLonRmse,\
-    EnsoSstLonRmse, EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew,\
-    EnsoPrTsRmse, EnsoSshTsRmse, EnsoSstTsRmse, EnsoTauxTsRmse, EnsoTauyTsRmse, grad_lat_pr, grad_lat_sst, grad_lon_pr,\
-    grad_lon_sst, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap,\
-    NinaSstTsRmse, NinoPrMap, NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse,\
-    NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse,\
-    SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse, SeasonalTauyLatRmse,\
-    SeasonalTauyLonRmse
+from .EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, BiasLwrLonRmse,\
+    BiasLwrMapRmse, BiasPrLatRmse, BiasPrLonRmse, BiasPrMapRmse, BiasShfLatRmse, BiasShfLonRmse, BiasShfMapRmse,\
+    BiasSshLatRmse, BiasSshLonRmse, BiasSshMapRmse, BiasSstLatRmse, BiasSstLonRmse, BiasSstMapRmse, BiasSstSkLonRmse,\
+    BiasSwrLatRmse, BiasSwrLonRmse, BiasSwrMapRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxMapRmse, BiasTauyLatRmse,\
+    BiasTauyLonRmse, BiasTauyMapRmse, BiasThfLatRmse, BiasThfLonRmse, BiasThfMapRmse, EnsoAmpl, EnsoDiversity,\
+    EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux,\
+    EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, EnsoPrDjfTel, EnsoPrJjaTel, EnsoSeasonality,\
+    EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity, EnsoPrLonRmse, EnsoSshLonRmse, EnsoSstLonRmse,\
+    EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoThfLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew,\
+    EnsoPrTsRmse, EnsoSshTsRmse, EnsoSstTsRmse, EnsoTauxTsRmse, EnsoTauyTsRmse, EnsoThfTsRmse, grad_lat_pr,\
+    grad_lat_ssh, grad_lat_sst, grad_lon_pr, grad_lon_ssh, grad_lon_sst, NinaPrMap, NinaSlpMap, NinaSstDiv,\
+    NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrMap, NinoSlpMap, NinoSstDiv,\
+    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
+    SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse,\
+    SeasonalTauxLatRmse, SeasonalTauxLonRmse, SeasonalTauyLatRmse, SeasonalTauyLonRmse
 from .EnsoToolsLib import math_metric_computation
 from .KeyArgLib import default_arg_values
 
 
 # sst only datasets (not good for surface temperature teleconnection)
 sst_only = [
-    "C-GLORSv5", "CFSR", "COBE", "COBE1", "COBE-1", "COBEv1", "COBE2", "COBE-2", "COBEv2", "ERSSTv3b", "ERSSTv4",
-    "ERSSTv5", "GODAS", "HadISST", "HadISST1", "HadISST-1", "HadISSTv1", "HadISST1.1", "HadISST1-1", "HadISST-1.1",
-    "HadISST-1-1", "HadISSTv1.1", "OAFlux", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2", "SODA3.11.2", "SODA3.12.2",
-    "Tropflux", "TropFlux", "Tropflux1", "TropFlux1", "Tropflux-1", "TropFlux-1", "Tropfluxv1", "TropFluxv1",
-    "Tropflux1.0", "TropFlux1.0", "Tropflux1-0", "TropFlux1-0", "Tropflux-1.0", "TropFlux-1.0", "Tropflux-1-0",
-    "TropFlux-1-0", "Tropfluxv1.0", "TropFluxv1.0"]
+    "C-GLORSv5", "C-GLORSv7", "CFSR", "COBE", "COBE1", "COBE-1", "COBEv1", "COBE2", "COBE-2", "COBEv2", "ERSSTv3b",
+    "ERSSTv4", "ERSSTv5", "GFDL-ECDA3.1", "GFDL-ECDA3-1", "GFDL-ECDA-3.1", "GFDL-ECDA-3-1", "GFDL-ECDAv3.1", "GODAS",
+    "HadISST", "HadISST1", "HadISST-1", "HadISSTv1", "HadISST1.1", "HadISST1-1", "HadISST-1.1", "HadISST-1-1",
+    "HadISSTv1.1", "OAFlux", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2", "SODA3.11.2", "SODA3.12.2", "Tropflux",
+    "TropFlux", "Tropflux1", "TropFlux1", "Tropflux-1", "TropFlux-1", "Tropfluxv1", "TropFluxv1", "Tropflux1.0",
+    "TropFlux1.0", "Tropflux1-0", "TropFlux1-0", "Tropflux-1.0", "TropFlux-1.0", "Tropflux-1-0", "TropFlux-1-0",
+    "Tropfluxv1.0", "TropFluxv1.0"]
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -550,7 +551,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     arg_var2["modelAreaName2"] = obsAreaName2[jj]
                     arg_var2["modelFileLandmask2"] = obsFileLandmask2[jj]
                     arg_var2["modelLandmaskName2"] = obsLandmaskName2[jj]
-                    arg_var2["modelInterpreter2"] = obsInterpreter2[jj]
+                    arg_var2['modelInterpreter2'] = obsInterpreter2[jj]
                     arg_var2["regionVar2"] = dict_regions[list_variables[1]]
                     arg_var2["obsNameVar2"] = obsNameVar2
                     arg_var2["obsFile2"] = obsFile2
@@ -559,7 +560,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     arg_var2["obsAreaName2"] = obsAreaName2
                     arg_var2["obsFileLandmask2"] = obsFileLandmask2
                     arg_var2["obsLandmaskName2"] = obsLandmaskName2
-                    arg_var2["obsInterpreter2"] = obsInterpreter2
+                    arg_var2['obsInterpreter2'] = obsInterpreter2
                 if netcdf is True:
                     netcdf_name_out = netcdf_name.replace("OBSNAME", modelName2)
                 else:
@@ -648,16 +649,16 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
 # Computation of the metric
 #
 dict_oneVar_modelAndObs = {
-    "BiasPrLatRmse": BiasPrLatRmse, "BiasPrLonRmse": BiasPrLonRmse, "BiasPrRmse": BiasPrMapRmse,
-    "BiasLhfLatRmse": BiasLhfLatRmse, "BiasLhfLonRmse": BiasLhfLonRmse, "BiasLhfRmse": BiasLhfMapRmse,
-    "BiasLwrLatRmse": BiasLwrLatRmse, "BiasLwrLonRmse": BiasLwrLonRmse, "BiasLwrRmse": BiasLwrMapRmse,
-    "BiasShfLatRmse": BiasShfLatRmse, "BiasShfLonRmse": BiasShfLonRmse, "BiasShfRmse": BiasShfMapRmse,
-    "BiasSshLatRmse": BiasSshLatRmse, "BiasSshLonRmse": BiasSshLonRmse, "BiasSshRmse": BiasSshMapRmse,
-    "BiasSstLatRmse": BiasSstLatRmse, "BiasSstLonRmse": BiasSstLonRmse, "BiasSstRmse": BiasSstMapRmse,
-    "BiasSwrLatRmse": BiasSwrLatRmse, "BiasSwrLonRmse": BiasSwrLonRmse, "BiasSwrRmse": BiasSwrMapRmse,
-    "BiasTauxLatRmse": BiasTauxLatRmse, "BiasTauxLonRmse": BiasTauxLonRmse, "BiasTauxRmse": BiasTauxMapRmse,
-    "BiasTauyLatRmse": BiasTauyLatRmse, "BiasTauyLonRmse": BiasTauyLonRmse, "BiasTauyRmse": BiasTauyMapRmse,
-    "BiasThfLatRmse": BiasThfLatRmse, "BiasThfLonRmse": BiasThfLonRmse, "BiasThfRmse": BiasThfMapRmse,
+    "BiasLhfLatRmse": BiasLhfLatRmse, "BiasLhfLonRmse": BiasLhfLonRmse, "BiasLhfMapRmse": BiasLhfMapRmse,
+    "BiasLwrLatRmse": BiasLwrLatRmse, "BiasLwrLonRmse": BiasLwrLonRmse, "BiasLwrMapRmse": BiasLwrMapRmse,
+    "BiasPrLatRmse": BiasPrLatRmse, "BiasPrLonRmse": BiasPrLonRmse, "BiasPrMapRmse": BiasPrMapRmse,
+    "BiasShfLatRmse": BiasShfLatRmse, "BiasShfLonRmse": BiasShfLonRmse, "BiasShfMapRmse": BiasShfMapRmse,
+    "BiasSshLatRmse": BiasSshLatRmse, "BiasSshLonRmse": BiasSshLonRmse, "BiasSshMapRmse": BiasSshMapRmse,
+    "BiasSstLatRmse": BiasSstLatRmse, "BiasSstLonRmse": BiasSstLonRmse, "BiasSstMapRmse": BiasSstMapRmse,
+    "BiasSwrLatRmse": BiasSwrLatRmse, "BiasSwrLonRmse": BiasSwrLonRmse, "BiasSwrMapRmse": BiasSwrMapRmse,
+    "BiasTauxLatRmse": BiasTauxLatRmse, "BiasTauxLonRmse": BiasTauxLonRmse, "BiasTauxMapRmse": BiasTauxMapRmse,
+    "BiasTauyLatRmse": BiasTauyLatRmse, "BiasTauyLonRmse": BiasTauyLonRmse, "BiasTauyMapRmse": BiasTauyMapRmse,
+    "BiasThfLatRmse": BiasThfLatRmse, "BiasThfLonRmse": BiasThfLonRmse, "BiasThfMapRmse": BiasThfMapRmse,
     "BiasSstSkLonRmse": BiasSstSkLonRmse,
     "EnsoSstLonRmse": EnsoSstLonRmse, "NinaSstLonRmse": NinaSstLonRmse, "NinoSstTsRmse": NinoSstTsRmse,
     "EnsoSstMap": EnsoSstMap, "EnsoSstMapDjf": EnsoSstMapDjf, "EnsoSstMapJja": EnsoSstMapJja, "NinaSstMap": NinaSstMap,
@@ -680,20 +681,22 @@ dict_twoVar_modelAndObs = {
     "EnsoSshLonRmse": EnsoSshLonRmse, "EnsoSshTsRmse": EnsoSshTsRmse,
     "EnsoTauxLonRmse": EnsoTauxLonRmse, "EnsoTauxTsRmse": EnsoTauxTsRmse,
     "EnsoTauyLonRmse": EnsoTauyLonRmse, "EnsoTauyTsRmse": EnsoTauyTsRmse,
+    "EnsoThfLonRmse": EnsoThfLonRmse, "EnsoThfTsRmse": EnsoThfTsRmse,
 }
 
 dict_oneVar = {
     "EnsoAmpl": EnsoAmpl, "EnsoDuration": EnsoDuration, "EnsoDiversity": EnsoDiversity,
     "EnsoSeasonality": EnsoSeasonality, "EnsoSstDiversity": EnsoSstDiversity, "EnsoSstSkew": EnsoSstSkew,
-    "grad_lat_pr": grad_lat_pr, "grad_lat_sst": grad_lat_sst, "grad_lon_pr": grad_lon_pr, "grad_lon_sst": grad_lon_sst,
-    "NinaSstDiv": NinaSstDiv, "NinaSstDur": NinaSstDur, "NinoSstDiv": NinoSstDiv, "NinoSstDiversity": NinoSstDiversity,
-    "NinoSstDur": NinoSstDur,
+    "grad_lat_pr": grad_lat_pr, "grad_lat_ssh": grad_lat_ssh, "grad_lat_sst": grad_lat_sst, "grad_lon_pr": grad_lon_pr,
+    "grad_lon_ssh": grad_lon_ssh, "grad_lon_sst": grad_lon_sst, "NinaSstDiv": NinaSstDiv, "NinaSstDur": NinaSstDur,
+    "NinoSstDiv": NinoSstDiv, "NinoSstDiversity": NinoSstDiversity, "NinoSstDur": NinoSstDur,
 }
 
 dict_twoVar = {
-    "EnsoFbSshSst": EnsoFbSshSst, "EnsoFbSstLhf": EnsoFbSstLhf, "EnsoFbSstLwr": EnsoFbSstLwr,
-    "EnsoFbSstShf": EnsoFbSstShf, "EnsoFbSstSwr": EnsoFbSstSwr, "EnsoFbSstTaux": EnsoFbSstTaux,
-    "EnsoFbSstThf": EnsoFbSstThf, "EnsoFbTauxSsh": EnsoFbTauxSsh, "EnsodSstOce": EnsodSstOce,
+    "EnsoFbSshSst": EnsoFbSshSst, "EnsoFbSstLhf": EnsoFbSstLhf,
+    "EnsoFbSstLwr": EnsoFbSstLwr, "EnsoFbSstShf": EnsoFbSstShf, "EnsoFbSstSwr": EnsoFbSstSwr,
+    "EnsoFbSstTaux": EnsoFbSstTaux, "EnsoFbSstThf": EnsoFbSstThf, "EnsoFbTauxSsh": EnsoFbTauxSsh,
+    "EnsodSstOce": EnsodSstOce,
 }
 
 
@@ -889,17 +892,17 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
 
     # if model is an observation
     if modelName.split("_")[0] in list_obs and obs_interpreter != "CMIP":
-        keyarg["project_interpreter_mod_var1"] = \
+        keyarg['project_interpreter_mod_var1'] = \
             modelName.split("_")[0] if modelInterpreter1 is None else deepcopy(modelInterpreter1)
-        if modelFile2 != "":
-            keyarg["project_interpreter_mod_var2"] = \
+        if modelFile2 != '':
+            keyarg['project_interpreter_mod_var2'] = \
                 modelName.split("_")[1] if modelInterpreter2 is None else deepcopy(modelInterpreter2)
     else:
-        keyarg["project_interpreter_mod_var1"] = keyarg["project_interpreter"]
-        if modelFile2 != "":
-            keyarg["project_interpreter_mod_var2"] = keyarg["project_interpreter"]
-        keyarg["time_bounds_mod"] = deepcopy(keyarg["time_bounds_obs"])
-
+        keyarg['project_interpreter_mod_var1'] = keyarg['project_interpreter']
+        if modelFile2 != '':
+            keyarg['project_interpreter_mod_var2'] = keyarg['project_interpreter']
+        if modelName.split("_")[0] in list_obs:
+            keyarg['time_bounds_mod'] = deepcopy(keyarg['time_bounds_obs'])
     # obsName could be a list if the user wants to compare the model with a set of observations
     # if obsName is just a name (string) it is put in a list
     if isinstance(obsNameVar1, str) is True or isinstance(obsNameVar1, str) is True:
@@ -970,6 +973,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             description_metric = "The metric is the statistical value between the model and the observations"
             diagnostic1 = dict()
             for ii in range(len(obsNameVar1)):
+                obs_int1 = deepcopy(obsNameVar1[ii]) if obsInterpreter1 is None else deepcopy(obsInterpreter1[ii])
+                keyarg["project_interpreter_obs_var1"] = "CMIP" if obs_interpreter == "CMIP" else deepcopy(obs_int1)
                 # computes the diagnostic/metric
                 if metric in list(dict_oneVar_modelAndObs.keys()):
                     output_name = obsNameVar1[ii]
@@ -977,21 +982,22 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         if "EnsoSstMap" in metric and output_name in sst_only:
                             pass
                         else:
-                            print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = "
-                                  + modelName + " and " + output_name + "\033[0m")
-                            keyarg["project_interpreter_mod"] = deepcopy(keyarg["project_interpreter_mod_var1"])
-                            keyarg["project_interpreter_obs"] = deepcopy(obsInterpreter1[ii])
+                            print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " +
+                                  modelName + " and " + output_name + "\033[0m")
                             diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
                                 modelLandmaskName1, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii],
                                 obsFileLandmask1[ii], obsLandmaskName1[ii], regionVar1, dataset1=modelName,
                                 dataset2=output_name, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
                                 metname=tmp_metric, **keyarg)
-                            del keyarg["project_interpreter_mod"]
-                            del keyarg["project_interpreter_obs"]
+                    del output_name
                 elif metric in list(dict_twoVar_modelAndObs.keys()):
                     for jj in range(len(obsNameVar2)):
                         output_name = obsNameVar1[ii] + "_" + obsNameVar2[jj]
+                        obs_int2 = deepcopy(obsNameVar2[jj]) if obsInterpreter2 is None else deepcopy(
+                            obsInterpreter2[jj])
+                        keyarg["project_interpreter_obs_var2"] = "CMIP" if obs_interpreter == "CMIP" else deepcopy(
+                            obs_int2)
                         if output_name != modelName:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
                                   modelName + " and " + output_name + "\033[0m")
@@ -1003,6 +1009,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                                 obsVarName2[jj], obsFileArea2[jj], obsAreaName2[jj], obsFileLandmask2[jj],
                                 obsLandmaskName2[jj], regionVar1, regionVar2, dataset1=modelName, dataset2=output_name,
                                 debug=debug, netcdf=netcdf, netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
+                        del obs_int2, output_name
+                del obs_int1
+                del keyarg["project_interpreter_obs_var1"]
             for obs in list(diagnostic1.keys()):
                 # puts metric values in its proper dictionary
                 if "value" in list(diagnostic1[obs].keys()):
@@ -1106,10 +1115,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             keyarg["time_bounds"] = keyarg["time_bounds_obs"]
             for ii in range(len(obsNameVar1)):
                 # sets observations
-                obs1 = obsNameVar1[ii]
-                keyarg["project_interpreter_var1"] = deepcopy(obsInterpreter1[ii])
+                keyarg["project_interpreter_var1"] = \
+                    "CMIP" if obs_interpreter == "CMIP" else deepcopy(obsInterpreter1[ii])
                 if metric in list(dict_oneVar.keys()):
-                    output_name = obs1
+                    output_name = deepcopy(obsNameVar1[ii])
                     if output_name != modelName:
                         print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(output_name) +
                               "\033[0m")
@@ -1117,12 +1126,15 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                             obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
                             netcdf_name=netcdf_name, metname=tmp_metric, **keyarg)
+                    del output_name
                 elif metric in list(dict_twoVar.keys()):
                     for jj in range(len(obsNameVar2)):
-                        obs2 = obsNameVar2[jj]
-                        output_name = obs1 + "_" + obs2
-                        keyarg["project_interpreter_var2"] = deepcopy(obsInterpreter2[jj])
-                        if output_name != modelName:
+                        output_name = deepcopy(obsNameVar1[ii]) + "_" + deepcopy(obsNameVar2[jj])
+                        keyarg["project_interpreter_var2"] = \
+                            "CMIP" if obs_interpreter == "CMIP" else deepcopy(obsInterpreter2[jj])
+                        if ("AVISO" in obsNameVar2[jj] and obsNameVar1[ii] == "Tropflux") or \
+                                obsNameVar2[jj] == obsNameVar1[ii]:
+                        # if output_name != modelName:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
                                   "\033[0m")
                             diag_obs[output_name] = dict_twoVar[metric](
@@ -1131,6 +1143,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                                 obsAreaName2[jj], obsFileLandmask2[jj], obsLandmaskName2[jj], regionVar2,
                                 dataset=output_name, debug=debug, netcdf=netcdf, netcdf_name=netcdf_name,
                                 metname=tmp_metric, **keyarg)
+                        del output_name
+                        del keyarg["project_interpreter_var2"]
+                del keyarg["project_interpreter_var1"]
             for obs in list(diag_obs.keys()):
                 # computes the metric
                 metric_val, metric_err, description_metric = math_metric_computation(
@@ -1218,6 +1233,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         else:
             dict_metadata = {
                 "metric": {"name": metric, "method": description_metric, "datasets": datasets, "units": units},
-                "diagnostic": dict_diagnostic_metadata}
+                "diagnostic": dict_diagnostic_metadata,
+            }
     return dict_metrics, dict_metadata, dict_dive_down, dict_dive_down_metadata
 # ---------------------------------------------------------------------------------------------------------------------#

@@ -6,14 +6,14 @@ from sys import exit as sys_exit
 # ---------------------------------------------------#
 # colors for printing
 class bcolors:
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -52,7 +52,7 @@ def plus_comma_space(string):
     elif not string:
         return string
     else:
-        return string + ", "
+        return str(string) + ", "
 
 
 def message_formating(inspect_stack):
@@ -149,13 +149,17 @@ def mismatch_shapes_error(tab1, tab2, inspect_stack):
         list of information about the program/module/line,... created using inspect.stack()
     :return:
     """
-    try: name1 = tab1.name
-    except: name1 = "no_name"
-    try: name2 = tab2.name
-    except: name2 = "no_name"
+    try:
+        name1 = tab1.name
+    except:
+        name1 = "no_name"
+    try:
+        name2 = tab2.name
+    except:
+        name2 = "no_name"
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": array shape",
-                    str().ljust(5) + "arrays shapes mismatch: " + str(name1) + " = " + str(tab1.shape) + ", and "
-                    + str(name2) + " = " + str(tab2.shape)]
+                    str().ljust(5) + "arrays shapes mismatch: " + str(name1) + " = " + str(tab1.shape) + "', and " +
+                    str(name2) + " = " + str(tab2.shape)]
     my_warning(list_strings)
     return
 
@@ -179,8 +183,8 @@ def object_type_error(parameter_name, type_parameter, type_parameter_should_be, 
     :return:
     """
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": object type",
-                    str().ljust(5) + str(parameter_name) + ": should be '" + str(type_parameter_should_be) + "', not '"
-                    + str(type_parameter) + "'"]
+                    str().ljust(5) + str(parameter_name) + ": should be '" + str(type_parameter_should_be) +
+                    "', not '" + str(type_parameter) + "'"]
     my_warning(list_strings)
     return
 
@@ -204,8 +208,8 @@ def too_short_time_period(metric_name, length, minimum_length, inspect_stack):
     :return:
     """
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": too short time-period",
-                    str().ljust(5) + str(metric_name) + ": the time-period is too short: " + str(length)
-                    + " (minimum time-period: " + str(minimum_length) + ")"]
+                    str().ljust(5) + str(metric_name) + ": the time-period is too short: " + str(length) +
+                    " (minimum time-period: " + str(minimum_length) + ")"]
     my_warning(list_strings)
     return
 
@@ -231,8 +235,8 @@ def unlikely_units(var_name, name_in_file, units, min_max, inspect_stack):
     :return:
     """
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": units",
-                    str().ljust(5) + "the file says that " + str(var_name) + " (" + str(name_in_file)
-                    + ") is in " + str(units) + " but it seems unlikely (" + str(min_max) + ")"]
+                    str().ljust(5) + "the file says that " + str(var_name) + " (" + str(name_in_file) + ") is in " +
+                    str(units) + " but it seems unlikely (" + str(min_max) + ")"]
     my_warning(list_strings)
     return
 
@@ -318,9 +322,9 @@ def unknown_units(var_name, name_in_file, units, inspect_stack):
         list of information about the program/module/line,... created using inspect.stack()
     :return:
     """
-    list_strings = ["ERROR" + message_formating(inspect_stack) + ": units",
-                    str().ljust(5) + "unknown units: " + str(var_name) + " (" + str(name_in_file)
-                    + ") is in " + str(units)]
+    list_strings = [
+        "ERROR" + message_formating(inspect_stack) + ": units",
+        str().ljust(5) + "unknown units: " + str(var_name) + " (" + str(name_in_file) + ") is in " + str(units)]
     my_warning(list_strings)
     return
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -328,10 +332,11 @@ def unknown_units(var_name, name_in_file, units, inspect_stack):
 
 # ---------------------------------------------------------------------------------------------------------------------#
 # Just prints
-def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="", file1="", file2="", file3="", file4="",
-               line1="", line2="", line3="", line4="", nina1="", nina2="", nina3="", nina4="", nino1="", nino2="",
-               nino3="", nino4="", shape1="", shape2="", shape3="", shape4="", time1="", time2="", time3="", time4="",
-               var1="", var2="", var3="", var4=""):
+def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="", axes5="", axes6="", file1="", file2="",
+               file3="", file4="", file5="", file6="", line1="", line2="", line3="", line4="", line5="", line6="",
+               nina1="", nina2="", nina3="", nina4="", nina5="", nina6="", nino1="", nino2="", nino3="", nino4="",
+               nino5="", nino6="", shape1="", shape2="", shape3="", shape4="", shape5="", shape6="", time1="", time2="",
+               time3="", time4="", time5="", time6="", var1="", var2="", var3="", var4="", var5="", var6=""):
     """
     #################################################################################
     Description:
@@ -352,6 +357,10 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         axis list of variable 3
     :param axes4: string, optional
         axis list of variable 4
+    :param axes5: string, optional
+        axis list of variable 5
+    :param axes6: string, optional
+        axis list of variable 6
     :param file1: string, optional
         file name of variable 1
     :param file2: string, optional
@@ -360,6 +369,10 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         file name of variable 3
     :param file4: string, optional
         file name of variable 4
+    :param file5: string, optional
+        file name of variable 5
+    :param file6: string, optional
+        file name of variable 6
     :param line1: string, optional
         just a line to print 1
     :param line2: string, optional
@@ -368,6 +381,10 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         just a line to print 3
     :param line4: string, optional
         just a line to print 4
+    :param line5: string, optional
+        just a line to print 5
+    :param line6: string, optional
+        just a line to print 6
     :param nina1: string, optional
         list of nina years 1
     :param nina2: string, optional
@@ -376,6 +393,10 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         list of nina years 3
     :param nina4: string, optional
         list of nina years 4
+    :param nina5: string, optional
+        list of nina years 5
+    :param nina6: string, optional
+        list of nina years 6
     :param nino1: string, optional
         list of nino years 1
     :param nino2: string, optional
@@ -384,6 +405,10 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         list of nino years 3
     :param nino4: string, optional
         list of nino years 4
+    :param nino5: string, optional
+        list of nino years 5
+    :param nino6: string, optional
+        list of nino years 6
     :param shape1: string, optional
         shape of the array containing variable 1
     :param shape2: string, optional
@@ -392,6 +417,10 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         shape of the array containing variable 3
     :param shape4: string, optional
         shape of the array containing variable 4
+    :param shape5: string, optional
+        shape of the array containing variable 5
+    :param shape6: string, optional
+        shape of the array containing variable 6
     :param time1: string, optional
         time bounds of variable 1
     :param time2: string, optional
@@ -400,6 +429,10 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         time bounds of variable 3
     :param time4: string, optional
         time bounds of variable 4
+    :param time5: string, optional
+        time bounds of variable 5
+    :param time6: string, optional
+        time bounds of variable 6
     :param var1: string, optional
         variable name 1
     :param var2: string, optional
@@ -408,43 +441,48 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         variable name 3
     :param var4: string, optional
         variable name 4
+    :param var5: string, optional
+        variable name 5
+    :param var6: string, optional
+        variable name 6
+
     :return:
     """
     # first variable
     print(color + str().ljust(nbr_spaces) + title + bcolors.ENDC)
     if file1:
-        print(color + str().ljust(nbr_spaces+5) + "file name 1: " + file1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "file name 1: " + file1 + bcolors.ENDC)
     if var1:
-        print(color + str().ljust(nbr_spaces+5) + "variable name 1: " + var1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "variable name 1: " + var1 + bcolors.ENDC)
     if axes1:
-        print(color + str().ljust(nbr_spaces+5) + "axes list 1: " + axes1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "axes list 1: " + axes1 + bcolors.ENDC)
     if time1:
-        print(color + str().ljust(nbr_spaces+5) + "time bounds 1: " + time1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "time bounds 1: " + time1 + bcolors.ENDC)
     if shape1:
-        print(color + str().ljust(nbr_spaces+5) + "shape 1: " + shape1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "shape 1: " + shape1 + bcolors.ENDC)
     if nina1:
-        print(color + str().ljust(nbr_spaces+5) + "nina year 1: " + nina1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nina year 1: " + nina1 + bcolors.ENDC)
     if nino1:
-        print(color + str().ljust(nbr_spaces+5) + "nino year 1: " + nino1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nino year 1: " + nino1 + bcolors.ENDC)
     if line1:
-        print(color + str().ljust(nbr_spaces+5) + line1 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + line1 + bcolors.ENDC)
     # second variable
     if file2:
-        print(color + str().ljust(nbr_spaces+5) + "file name 2: " + file2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "file name 2: " + file2 + bcolors.ENDC)
     if var2:
-        print(color + str().ljust(nbr_spaces+5) + "variable name 2: " + var2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "variable name 2: " + var2 + bcolors.ENDC)
     if axes2:
-        print(color + str().ljust(nbr_spaces+5) + "axes list 2: " + axes2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "axes list 2: " + axes2 + bcolors.ENDC)
     if time2:
-        print(color + str().ljust(nbr_spaces+5) + "time bounds 2: " + time2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "time bounds 2: " + time2 + bcolors.ENDC)
     if shape2:
-        print(color + str().ljust(nbr_spaces+5) + "shape 2: " + shape2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "shape 2: " + shape2 + bcolors.ENDC)
     if nina2:
-        print(color + str().ljust(nbr_spaces+5) + "nina year 2: " + nina2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nina year 2: " + nina2 + bcolors.ENDC)
     if nino2:
-        print(color + str().ljust(nbr_spaces+5) + "nino year 2: " + nino2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + "nino year 2: " + nino2 + bcolors.ENDC)
     if line2:
-        print(color + str().ljust(nbr_spaces+5) + line2 + bcolors.ENDC)
+        print(color + str().ljust(nbr_spaces + 5) + line2 + bcolors.ENDC)
     # third variable
     if file3:
         print(color + str().ljust(nbr_spaces + 5) + "file name 3: " + file3 + bcolors.ENDC)
@@ -479,5 +517,39 @@ def debug_mode(color, title, nbr_spaces, axes1="", axes2="", axes3="", axes4="",
         print(color + str().ljust(nbr_spaces + 5) + "nino year 4: " + nino4 + bcolors.ENDC)
     if line4:
         print(color + str().ljust(nbr_spaces + 5) + line4 + bcolors.ENDC)
+    # fifth variable
+    if file5:
+        print(color + str().ljust(nbr_spaces + 5) + "file name 5: " + file5 + bcolors.ENDC)
+    if var5:
+        print(color + str().ljust(nbr_spaces + 5) + "variable name 5: " + var5 + bcolors.ENDC)
+    if axes5:
+        print(color + str().ljust(nbr_spaces + 5) + "axes list 5: " + axes5 + bcolors.ENDC)
+    if time5:
+        print(color + str().ljust(nbr_spaces + 5) + "time bounds 5: " + time5 + bcolors.ENDC)
+    if shape5:
+        print(color + str().ljust(nbr_spaces + 5) + "shape 5: " + shape5 + bcolors.ENDC)
+    if nina5:
+        print(color + str().ljust(nbr_spaces + 5) + "nina year 5: " + nina5 + bcolors.ENDC)
+    if nino5:
+        print(color + str().ljust(nbr_spaces + 5) + "nino year 5: " + nino5 + bcolors.ENDC)
+    if line5:
+        print(color + str().ljust(nbr_spaces + 5) + line5 + bcolors.ENDC)
+    # sixth variable
+    if file6:
+        print(color + str().ljust(nbr_spaces + 5) + "file name 6: " + file6 + bcolors.ENDC)
+    if var6:
+        print(color + str().ljust(nbr_spaces + 5) + "variable name 6: " + var6 + bcolors.ENDC)
+    if axes6:
+        print(color + str().ljust(nbr_spaces + 5) + "axes list 6: " + axes6 + bcolors.ENDC)
+    if time6:
+        print(color + str().ljust(nbr_spaces + 5) + "time bounds 6: " + time6 + bcolors.ENDC)
+    if shape6:
+        print(color + str().ljust(nbr_spaces + 5) + "shape 6: " + shape6 + bcolors.ENDC)
+    if nina6:
+        print(color + str().ljust(nbr_spaces + 5) + "nina year 6: " + nina6 + bcolors.ENDC)
+    if nino6:
+        print(color + str().ljust(nbr_spaces + 5) + "nino year 6: " + nino6 + bcolors.ENDC)
+    if line6:
+        print(color + str().ljust(nbr_spaces + 5) + line6 + bcolors.ENDC)
     return
 # ---------------------------------------------------------------------------------------------------------------------#

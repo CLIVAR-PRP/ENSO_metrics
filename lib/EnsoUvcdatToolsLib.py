@@ -97,6 +97,30 @@ def ArrayZeros(tab, mid="new_variable_zeros"):
     return CDMS2createVariable(MV2zeros(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=mid)
 
 
+def AverageAxis(tab, axis="0", **kwargs):
+    """
+    #################################################################################
+    Description:
+    cdutil.averager applied along given axis
+    #################################################################################
+
+    for more information:
+    import cdutil
+    help(cdutil.averager)
+    """
+    keyerror = None
+    try:
+        averaged_tab = cdutil.averager(tab, axis=axis, weights="weighted", action="average")
+    except:
+        keyerror = "cannot perform average " + str(axis)
+        averaged_tab = None
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": average " + str(axis),
+            str().ljust(5) + "cdutil.averager cannot perform average " + str(axis)]
+        EnsoErrorsWarnings.my_warning(list_strings)
+    return averaged_tab, keyerror
+
+
 def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     """
     #################################################################################
@@ -160,7 +184,6 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     """
     keyerror = None
     lat_num = get_num_axis(tab, "latitude")
-    lon_num = get_num_axis(tab, "longitude")
     snum = str(lat_num)
     if areacell is None or tab.getGrid().shape != areacell.getGrid().shape:
         print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageMeridional" + "\033[0m")
@@ -176,6 +199,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
                                "newgrid_name": "generic_1x1deg"}
                 else:
                     kwargs2 = kwargs["regridding"]
+                lon_num = get_num_axis(tab, "longitude")
                 kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
@@ -193,7 +217,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
         lat_num_area = get_num_axis(areacell, "latitude")
         averaged_tab = MV2multiply(tab, areacell)
         averaged_tab = MV2sum(averaged_tab, axis=lat_num) / MV2sum(areacell, axis=lat_num_area)
-    if averaged_tab is not None:
+    if averaged_tab is not None and len(averaged_tab) > 1:
         lon = tab.getLongitude()
         if len(lon.shape) > 1:
             lonn = CDMS2createAxis(MV2array(lon[0, :]), id="longitude")
@@ -243,7 +267,6 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
     help(cdutil.averager)
     """
     keyerror = None
-    lat_num = get_num_axis(tab, "latitude")
     lon_num = get_num_axis(tab, "longitude")
     snum = str(lon_num)
     if areacell is None or tab.getGrid().shape != areacell.getGrid().shape:
@@ -260,6 +283,7 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
                                "newgrid_name": "generic_1x1deg"}
                 else:
                     kwargs2 = kwargs["regridding"]
+                lat_num = get_num_axis(tab, "latitude")
                 kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
@@ -276,7 +300,7 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
         lon_num_area = get_num_axis(areacell, "longitude")
         averaged_tab = MV2multiply(tab, areacell)
         averaged_tab = MV2sum(averaged_tab, axis=lon_num) / MV2sum(areacell, axis=lon_num_area)
-    if averaged_tab is not None:
+    if averaged_tab is not None and len(averaged_tab) > 1:
         lat = tab.getLatitude()
         if len(lat.shape) > 1:
             latn = CDMS2createAxis(MV2array(lat[:, 0]), id="latitude")
@@ -878,12 +902,13 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
             if keyerror is None:
                 tab = MV2masked_where(landmask_nd.mask, tab)
                 # if land = 100 instead of 1, divides landmask by 100
-                if MV2minimum(landmask_nd) == 0 and MV2maximum(landmask_nd) == 100:
+                if (MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100) or \
+                        ("units" in landmask.listattributes() and landmask.units == "%"):
                     landmask_nd = landmask_nd / 100.
                 if maskland is True:
-                    tab = MV2masked_where(landmask_nd != 0, tab)
+                    tab = MV2masked_where(landmask_nd >= 0.2, tab)
                 if maskocean is True:
-                    tab = MV2masked_where(landmask_nd != 1, tab)
+                    tab = MV2masked_where(landmask_nd <= 0.8, tab)
     return tab, keyerror
 
 
@@ -920,14 +945,15 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
             EnsoErrorsWarnings.my_warning(list_strings)
         if keyerror is None:
             # if land = 100 instead of 1, divides landmask by 100
-            if MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100:
+            if (MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100) or \
+                    ("units" in landmask.listattributes() and landmask.units == "%"):
                 landmask = landmask / 100.
             area = MV2masked_where(landmask.mask, area)
             if maskland is True:
-                area = MV2masked_where(landmask != 0, area)
+                area = MV2masked_where(landmask >= 0.2, area)
                 area = MV2multiply(area, 1-landmask)
             if maskocean is True:
-                area = MV2masked_where(landmask != 1, area)
+                area = MV2masked_where(landmask <= 0.8, area)
                 area = MV2multiply(area, landmask)
     return area, keyerror
 
@@ -1207,7 +1233,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "degC"
-    elif var_name in ["precipitations"]:
+    elif var_name in ["precipitation"]:
         if units in ["kg/m2/s", "kg/m^2/s", "kg/m**2/s", "kg m-2 s-1", "kg m^-2 s^-1", "kg m**-2 s**-1", "Kg/m2/s",
                      "Kg/m^2/s", "Kg/m**2/s", "Kg m-2 s-1", "Kg m^-2 s^-1", "Kg m**-2 s**-1"]:
             # changes units of the precipitation flux: from kg/(m2.s) to mm/day
@@ -1225,11 +1251,13 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                          "Pascals"]:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
-        units = "N/m2"
+        else:
+            tab = dict_operations["multiply"](tab, 1e3)
+        units = "10-3 N/m2"
     elif var_name in ["velocity"]:
         if units in ["cm/s", "cm s-1", "cm s^-1", "cm s**-1", "cm/sec", "cm sec-1", "cm sec^-1", "cm sec**-1"]:
             # unit change of the velocity: from cm/s to m/s
-            tab = dict_operations['multiply'](tab, 1e-2)
+            tab = dict_operations["multiply"](tab, 1e-2)
         elif units in ["m/s", "m s-1", "m s^-1", "m s**-1", "m/sec", "m sec-1", "m sec^-1", "m sec**-1"]:
             pass
         else:
@@ -1253,9 +1281,12 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "Pa"
-    elif var_name in ["depth", "sea surface height"]:
-        if units in ["cm", "centimeter", "centimeters"]:
-            # unit change of the sea surface height: from cm to m
+    elif var_name in ["depth"]:
+        if units in ["mm", "millimetre", "millimetres"]:
+            # unit change of the depth: from mm to m
+            tab = dict_operations["multiply"](tab, 1e-3)
+        elif units in ["cm", "centimeter", "centimeters"]:
+            # unit change of the depth: from cm to m
             tab = dict_operations["multiply"](tab, 1e-2)
         elif units in ["m", "meter", "meters"]:
             pass
@@ -1263,6 +1294,19 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "m"
+    elif var_name in ["sea surface height"]:
+        if units in ["mm", "millimetre", "millimetres"]:
+            # unit change of the depth: from mm to cm
+            tab = dict_operations["multiply"](tab, 1e-1)
+        elif units in ["cm", "centimeter", "centimeters"]:
+            pass
+        elif units in ["m", "meter", "meters"]:
+            # unit change of the sea surface height: from m to cm
+            tab = dict_operations["multiply"](tab, 1e2)
+        else:
+            EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
+            keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
+        units = "cm"
     else:
         list_strings = ["WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": variable name",
                         str().ljust(5) + "unknown variable name: " + var_name + " (" + name_in_file + ")"]
@@ -3460,15 +3504,24 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
 def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, compute_sea_cycle=False, debug=False,
                  region=None, **kwargs):
     keyerror = None
+    # removing linear trend before time average
+    if isinstance(kwargs["detrending"], dict) is True and ((isinstance(average, str) is True and average == "time") or
+                                                           (isinstance(average, list) is True and "time" in average)):
+        known_args = {"axis", "method", "bp"}
+        extra_args = set(kwargs["detrending"]) - known_args
+        if extra_args:
+            EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+        tab, info, keyerror = Detrend(tab, info, **kwargs["detrending"])
     # average
-    if average is not False:
+    if average is not False and keyerror is None:
         if debug is True:
-            EnsoErrorsWarnings.debug_mode('\033[93m', "EnsoUvcdatToolsLib PreProcessTS", 20)
-            dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]), 'shape1': str(tab.shape)}
-            EnsoErrorsWarnings.debug_mode('\033[93m', "averaging to perform: " + str(average), 25, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[93m", "EnsoUvcdatToolsLib PreProcessTS", 20)
+            dict_debug = {"axes1": str([ax.id for ax in tab.getAxisList()]), "shape1": str(tab.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[93m", "averaging to perform: " + str(average), 25, **dict_debug)
         if isinstance(average, str) is True:
             average = [average]
         if isinstance(average, list) is True:
+            tmp_info = ""
             for av in average:
                 try:
                     dict_average[av]
@@ -3477,12 +3530,22 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
                 else:
                     tab, keyerror = dict_average[av](tab, areacell, region=region, **kwargs)
                     if keyerror is None:
+                        tmp_info = tmp_info + av
+                        if av != average[-1]:
+                            tmp_info = tmp_info + "-"
+                        else:
+                            tmp_info = tmp_info + " average"
+                            if len(average) > 1:
+                                tmp_info = tmp_info + "s"
                         if debug is True:
-                            dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]),
-                                          'shape1': str(tab.shape)}
-                            EnsoErrorsWarnings.debug_mode('\033[93m', "performed " + str(av), 25, **dict_debug)
+                            dict_debug = {"axes1": str([ax.id for ax in tab.getAxisList()]),
+                                          "shape1": str(tab.shape)}
+                            EnsoErrorsWarnings.debug_mode("\033[93m", "performed " + str(av), 25, **dict_debug)
                     else:
                         break
+            if keyerror is None:
+                info = info + ", " + tmp_info
+            del tmp_info
         else:
             EnsoErrorsWarnings.unknown_averaging(average, list(dict_average.keys()), INSPECTstack())
     # continue preprocessing if not error happened yet
@@ -3490,32 +3553,35 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
         pass
     elif keyerror is None:
         # removing linear trend
-        if isinstance(kwargs['detrending'], dict):
-            known_args = {'axis', 'method', 'bp'}
-            extra_args = set(kwargs['detrending']) - known_args
+        if isinstance(kwargs["detrending"], dict) is True:
+            known_args = {"axis", "method", "bp"}
+            extra_args = set(kwargs["detrending"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tab, info, keyerror = Detrend(tab, info, **kwargs['detrending'])
-        # computes mean annual cycle
-        if compute_sea_cycle is True:
-            tab = annualcycle(tab)
-        # removes annual cycle (anomalies with respect to the annual cycle)
-        if compute_anom is True:
-            tab = ComputeInterannualAnomalies(tab)
-        # normalization of the anomalies
-        if kwargs['normalization']:
-            if kwargs['frequency'] is not None:
-                tab, keyerror = Normalize(tab, kwargs['frequency'])
-                info = info + ', normalized'
-        # continue preprocessing if not error happened yet
+            tab, info, keyerror = Detrend(tab, info, **kwargs["detrending"])
         if keyerror is None:
-            # smoothing time series
-            if isinstance(kwargs['smoothing'], dict):
-                known_args = {'axis', 'method', 'window'}
-                extra_args = set(kwargs['smoothing']) - known_args
-                if extra_args:
-                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-                tab, info = Smoothing(tab, info, **kwargs['smoothing'])
+            # computes mean annual cycle
+            if compute_sea_cycle is True:
+                tab = annualcycle(tab)
+            # removes annual cycle (anomalies with respect to the annual cycle)
+            if compute_anom is True:
+                tab = ComputeInterannualAnomalies(tab)
+            # normalization of the anomalies
+            if kwargs["normalization"] is True:
+                if kwargs["frequency"] is not None:
+                    tab, keyerror = Normalize(tab, kwargs["frequency"])
+                    info = info + ", normalized"
+            # continue preprocessing if not error happened yet
+            if keyerror is None:
+                # smoothing time series
+                if isinstance(kwargs["smoothing"], dict) is True:
+                    known_args = {"axis", "method", "window"}
+                    extra_args = set(kwargs["smoothing"]) - known_args
+                    if extra_args:
+                        EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                    tab, info = Smoothing(tab, info, **kwargs["smoothing"])
+            else:
+                tab = None
         else:
             tab = None
     else:
@@ -3681,15 +3747,18 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
             dict_debug = {'line1': 'areacell is None '}
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
-    if name_data.lower() in ["latent_heatflux", "lhf", "lwr", "meridional_wind_stress", "msla", "net_heating",
-                             "net_longwave_heatflux_downwards", "net_shortwave_heatflux_downwards",
-                             "net_surface_heatflux_downwards", "netflux", "sea_surface_height",
-                             "sea_surface_temperature", "sensible_heatflux", "shf", "sla", "sohefldo", "sometauy",
-                             "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swr", "tauuo", "tauvo", "taux",
-                             "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"]\
-            and "_Amon_" not in file_data:
+    if name_data.lower() in [
+        "adt", "eta_t", "evap_heat", "height", "latent_heatflux", "lhf", "lw_heat", "lwr", "meridional_wind_stress",
+        "msla", "net_heating", "net_longwave_heatflux_downwards", "net_shortwave_heatflux_downwards",
+        "net_surface_heatflux_downwards", "netflux", "sea_surface_height", "sea_surface_temperature", "sens_heat",
+        "sensible_heatflux", "shf", "sla", "sohefldo", "solatent", "solongwa", "sometauy", "sosensib", "soshfldo",
+        "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swflx", "swr", "tau_x", "tau_y", "tauuo", "tauvo",
+        "taux", "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"]\
+        and "_Amon_" not in file_data:
         landmask = None
     elif name_data.lower() in ["pr", "slp"] and "_Omon_" in file_data:
+        landmask = None
+    elif maskland is False and maskocean is False:
         landmask = None
     elif file_mask:
         landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)
@@ -3708,13 +3777,71 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
         tab_out, keyerror1 = ApplyLandmask(tab_out, landmask, maskland=maskland, maskocean=maskocean)
         if keyerror1 is None:
             if areacell is None:
-                areacell = ArrayOnes(landmask, id='areacell')
+                areacell = ArrayOnes(landmask, mid='areacell')
             areacell, keyerror2 = ApplyLandmaskToArea(areacell, landmask, maskland=maskland, maskocean=maskocean)
     if keyerror1 is not None or keyerror2 is not None:
         keyerror = add_up_errors([keyerror1, keyerror2])
     else:
         keyerror = None
     return tab_out, areacell, keyerror
+
+
+def remove_global_mean(tab_local, tab_global_mean, variable, info):
+    """
+    #################################################################################
+    Description:
+    Remove global mean from local value
+
+    Based on:
+    Landerer, F. W., P. J. Gleckler, T. Lee (2014) Evaluation of CMIP5 dynamic sea surface height multi-model
+    simulations against satellite observations. Clim. Dyn., doi: https://doi.org/10.1007/s00382-013-1939-x
+    "dynamic SSH, which is defined as the local sea surface height deviation from the global mean. Therefore, the global
+    mean of SSH is zero at every time step, and we do not consider global mean sea level changes here."
+
+    Uses CDAT
+    #################################################################################
+
+    :param tab_local: masked_array
+        masked_array (uvcdat cdms2) containing a local value, with many attributes attached (short_name, units,...)
+    :param tab_global_mean: masked_array
+        masked_array (uvcdat cdms2) containing the global mean time varying, with many attributes attached (short_name,
+        units,...)
+    :param variable: string
+        name of the variable from which the global mean is removed
+    :param info: string
+        information about what was done to 'model' and/or 'obs'
+    """
+    keyerror = None
+    # check the number of dimensions of the input file
+    if len(tab_local.shape) > 3:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many dimensions",
+            str().ljust(5) + "tab.shape = " + str(tab_local.shape)]
+        EnsoErrorsWarnings.my_warning(list_strings)
+        keyerror = "input array of the function EnsoUvcdatToolsLib.remove_global_mean has too many dimensions (" + \
+                   str(tab_local.shape) + " for a maximum of 3)"
+        tab_local = None
+    else:
+        # remove global mean from given file
+        axes, grid, mask = tab_local.getAxisList(), tab_local.getGrid(), tab_local.mask
+        if len(tab_local.shape) == 1:
+            tab_local = tab_local - tab_global_mean
+        else:
+            # get initial order
+            initorder = tab_local.getOrder()
+            # put time axis last
+            tab_local = tab_local.reorder("...t")
+            if len(tab_local.shape) == 2:
+                tab_local[:] = tab_local[:] - tab_global_mean
+            else:
+                tab_local[:, :] = tab_local[:, :] - tab_global_mean
+            tab_local = tab_local.reorder(initorder)
+        tab_local.setAxisList(axes)
+        tab_local.setGrid(grid)
+        tab_local = MV2masked_where(mask, tab_local)
+    if keyerror is not None:
+        info = str(info) + ", global mean " + str(variable) + " removed at every time step"
+    return tab_local, info, keyerror
 
 
 def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debug=False):
