@@ -1716,18 +1716,25 @@ def get_num_axis(tab, name_axis):
         position of the axis named "name_axis"
     """
     num = None
-    if name_axis == 'depth':
-        axis_nick = 'lev'
-        axis_nicks = ['z', 'Z', 'st_ocean', 'sw_ocean']
-    if name_axis == 'latitude':
-        axis_nick = 'lat'
-        axis_nicks = ['j', 'y', 'Y', 'yt_ocean', 'yu_ocean']
-    elif name_axis == 'longitude':
-        axis_nick = 'lon'
-        axis_nicks = ['i', 'x', 'X', 'xt_ocean', 'xu_ocean']
-    elif name_axis == 'time':
-        axis_nick = 'time'
-        axis_nicks = ['t', 'T']
+    if name_axis == "depth":
+        axis_nick = "lev"
+        axis_nicks = ["Level", "st_ocean", "sw_ocean", "z", "Z"]
+    elif name_axis == "latitude":
+        axis_nick = "lat"
+        axis_nicks = ["j", "Latitude", "y", "Y", "yt_ocean", "yu_ocean"]
+    elif name_axis == "longitude":
+        axis_nick = "lon"
+        axis_nicks = ["i", "Longitude", "x", "X", "xt_ocean", "xu_ocean"]
+    elif name_axis == "time":
+        axis_nick = "time"
+        axis_nicks = ["t", "T", "Time"]
+    else:
+        axis_nick = None
+        axis_nicks = [None]
+        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": axis",
+                        str().ljust(5) + "unknown axis named: " + str(name_axis),
+                        str().ljust(5) + "known names: depth, latitude, longitude, time"]
+        EnsoErrorsWarnings.my_error(list_strings)
     for nn in range(len(tab.shape)):
         if axis_nick in tab.getAxisList()[nn].id:
             num = nn

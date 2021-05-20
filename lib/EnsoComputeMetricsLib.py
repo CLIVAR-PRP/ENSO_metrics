@@ -14,14 +14,17 @@ from .EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, Bias
     BiasTauyLonRmse, BiasTauyMapRmse, BiasThfLatRmse, BiasThfLonRmse, BiasThfMapRmse, EnsoAmpl, EnsoDiversity,\
     EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux,\
     EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, EnsoPrDjfTel, EnsoPrJjaTel, EnsoSeasonality,\
-    EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity, EnsoPrLonRmse, EnsoSshLonRmse, EnsoSstLonRmse,\
-    EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoThfLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew,\
-    EnsoPrTsRmse, EnsoSshTsRmse, EnsoSstTsRmse, EnsoTauxTsRmse, EnsoTauyTsRmse, EnsoThfTsRmse, grad_lat_pr,\
+    EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity, EnsoLhfLonRmse, EnsoLwrLonRmse, EnsoPrLonRmse,\
+    EnsoShfLonRmse, EnsoSshLonRmse, EnsoSstLonRmse, EnsoSwrLonRmse, EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoThfLonRmse,\
+    EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew, EnsoLhfTsRmse, EnsoLwrTsRmse, EnsoPrTsRmse, EnsoShfTsRmse,\
+    EnsoSshTsRmse, EnsoSstTsRmse, EnsoSwrTsRmse, EnsoTauxTsRmse, EnsoTauyTsRmse, EnsoThfTsRmse, grad_lat_pr,\
     grad_lat_ssh, grad_lat_sst, grad_lon_pr, grad_lon_ssh, grad_lon_sst, NinaPrMap, NinaSlpMap, NinaSstDiv,\
     NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrMap, NinoSlpMap, NinoSstDiv,\
-    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalPrLatRmse,\
-    SeasonalPrLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse,\
-    SeasonalTauxLatRmse, SeasonalTauxLonRmse, SeasonalTauyLatRmse, SeasonalTauyLonRmse
+    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalLhfLatRmse,\
+    SeasonalLhfLonRmse, SeasonalLwrLatRmse, SeasonalLwrLonRmse, SeasonalPrLatRmse, SeasonalPrLonRmse,\
+    SeasonalShfLatRmse, SeasonalShfLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse,\
+    SeasonalSstLonRmse, SeasonalSwrLatRmse, SeasonalSwrLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse,\
+    SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, SeasonalThfLonRmse
 from .EnsoToolsLib import math_metric_computation
 from .KeyArgLib import default_arg_values
 
@@ -665,11 +668,16 @@ dict_oneVar_modelAndObs = {
     "NinoSstMap": NinoSstMap,
     "EnsoSstTsRmse": EnsoSstTsRmse, "NinaSstTsRmse": NinaSstTsRmse, "NinoSstLonRmse": NinoSstLonRmse,
     "NinaSstDivRmse": NinaSstDivRmse, "NinoSstDivRmse": NinoSstDivRmse,
+    "SeasonalLhfLatRmse": SeasonalLhfLatRmse, "SeasonalLhfLonRmse": SeasonalLhfLonRmse,
+    "SeasonalLwrLatRmse": SeasonalLwrLatRmse, "SeasonalLwrLonRmse": SeasonalLwrLonRmse,
     "SeasonalPrLatRmse": SeasonalPrLatRmse, "SeasonalPrLonRmse": SeasonalPrLonRmse,
+    "SeasonalShfLatRmse": SeasonalShfLatRmse, "SeasonalShfLonRmse": SeasonalShfLonRmse,
     "SeasonalSshLatRmse": SeasonalSshLatRmse, "SeasonalSshLonRmse": SeasonalSshLonRmse,
     "SeasonalSstLatRmse": SeasonalSstLatRmse, "SeasonalSstLonRmse": SeasonalSstLonRmse,
+    "SeasonalSwrLatRmse": SeasonalSwrLatRmse, "SeasonalSwrLonRmse": SeasonalSwrLonRmse,
     "SeasonalTauxLatRmse": SeasonalTauxLatRmse, "SeasonalTauxLonRmse": SeasonalTauxLonRmse,
     "SeasonalTauyLatRmse": SeasonalTauyLatRmse, "SeasonalTauyLonRmse": SeasonalTauyLonRmse,
+    "SeasonalThfLatRmse": SeasonalThfLatRmse, "SeasonalThfLonRmse": SeasonalThfLonRmse,
 }
 
 dict_twoVar_modelAndObs = {
@@ -677,8 +685,12 @@ dict_twoVar_modelAndObs = {
     "EnsoPrDjfTel": EnsoPrDjfTel, "EnsoPrJjaTel": EnsoPrJjaTel,
     "EnsoSlpMap": EnsoSlpMap, "EnsoSlpMapDjf": EnsoSlpMapDjf, "EnsoSlpMapJja": EnsoSlpMapJja,
     "NinaPrMap": NinaPrMap, "NinaSlpMap": NinaSlpMap, "NinoPrMap": NinoPrMap, "NinoSlpMap": NinoSlpMap,
+    "EnsoLhfLonRmse": EnsoLhfLonRmse, "EnsoLhfTsRmse": EnsoLhfTsRmse,
+    "EnsoLwrLonRmse": EnsoLwrLonRmse, "EnsoLwrTsRmse": EnsoLwrTsRmse,
     "EnsoPrLonRmse": EnsoPrLonRmse, "EnsoPrTsRmse": EnsoPrTsRmse,
+    "EnsoShfLonRmse": EnsoShfLonRmse, "EnsoShfTsRmse": EnsoShfTsRmse,
     "EnsoSshLonRmse": EnsoSshLonRmse, "EnsoSshTsRmse": EnsoSshTsRmse,
+    "EnsoSwrLonRmse": EnsoSwrLonRmse, "EnsoSwrTsRmse": EnsoSwrTsRmse,
     "EnsoTauxLonRmse": EnsoTauxLonRmse, "EnsoTauxTsRmse": EnsoTauxTsRmse,
     "EnsoTauyLonRmse": EnsoTauyLonRmse, "EnsoTauyTsRmse": EnsoTauyTsRmse,
     "EnsoThfLonRmse": EnsoThfLonRmse, "EnsoThfTsRmse": EnsoThfTsRmse,
@@ -998,7 +1010,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             obsInterpreter2[jj])
                         keyarg["project_interpreter_obs_var2"] = "CMIP" if obs_interpreter == "CMIP" else deepcopy(
                             obs_int2)
-                        if output_name != modelName:
+                        if obsNameVar1[ii] == "Tropflux":
+                        # if output_name != modelName:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
                                   modelName + " and " + output_name + "\033[0m")
                             diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
@@ -1132,8 +1145,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         output_name = deepcopy(obsNameVar1[ii]) + "_" + deepcopy(obsNameVar2[jj])
                         keyarg["project_interpreter_var2"] = \
                             "CMIP" if obs_interpreter == "CMIP" else deepcopy(obsInterpreter2[jj])
-                        if ("AVISO" in obsNameVar2[jj] and obsNameVar1[ii] == "Tropflux") or \
-                                obsNameVar2[jj] == obsNameVar1[ii]:
+                        if obsNameVar1[ii] == "Tropflux":
+                        # if ("AVISO" in obsNameVar2[jj] and obsNameVar1[ii] == "Tropflux") or \
+                        #         obsNameVar2[jj] == obsNameVar1[ii]:
                         # if output_name != modelName:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
                                   "\033[0m")

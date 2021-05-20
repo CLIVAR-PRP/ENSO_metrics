@@ -10587,6 +10587,1030 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     return metric_output
 
 
+def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhflandmaskfilemod, lhflandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   lhffileobs, lhfnameobs, lhfareafileobs, lhfareanameobs, lhflandmaskfileobs, lhflandmasknameobs,
+                   sstbox, lhfbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoLhfLonRmse() function computes LHFA (latent heat flux anomalies) pattern associated with ENSO in a 'lhfbox'
+    (usually the equatorial_pacific).
+    It is the regression of 'lhfbox' averaged LHFA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of equatorial_pacific LHFA onto nino3.4 SSTA).
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param lhffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LHF
+    :param lhfnamemod: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffilemod'
+    :param lhfareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LHF areacell
+    :param lhfareanamemod: string, optional
+        name of areacell for the LHF variable (areacella, areacello,...) in 'lhfareafilemod'
+    :param lhflandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LHF landmask
+    :param lhflandmasknamemod: string, optional
+        name of landmask for the LHF variable (sftlf,...) in 'lhflandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param lhffileobs: string
+        path_to/filename of the file (NetCDF) of the observed LHF
+    :param lhfnameobs: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffileobs'
+    :param lhfareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LHF areacell
+    :param lhfareanameobs: string, optional
+        name of areacell for the LHF variable (areacella, areacello,...) in 'lhfareafileobs'
+    :param lhflandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LHF landmask
+    :param lhflandmasknameobs: string, optional
+        name of landmask for the LHF variable (sftlf,...) in 'lhflandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param lhfbox: string
+        name of box (e.g. 'equatorial_pacific') for LHF
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoLhfLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    lat = ReferenceRegions(lhfbox)["latitude"]
+    name = "ENSO zonal LHFA pattern"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "zonal curve of " + lhfbox + " latent heat flux anomalies (LHFA; meridional averaged [" + str(lat[0]) + \
+             " ; " + str(lat[1]) + "]) regressed onto " + region_ev + " averaged sea surface temperature anomalies " + \
+             "(SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoLhfLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        lhf_mod, lhf_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+            lhffilemod, lhfnamemod, "heat flux", metric, lhfbox, file_area=lhfareafilemod, name_area=lhfareanamemod,
+            file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        lhf_obs, lhf_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+            lhffileobs, lhfnameobs, "heat flux", metric, lhfbox, file_area=lhfareafileobs, name_area=lhfareanameobs,
+            file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, lhf_mod, keyerror_mod = CheckTime(sst_mod, lhf_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, lhf_obs, keyerror_obs = CheckTime(sst_obs, lhf_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        # 2.2 LHF in 'lhfbox' are normalized / detrended / smoothed (running average) if applicable
+        lhf_mod, method, keyerror_mod2 = PreProcessTS(
+            lhf_mod, method, areacell=lhf_mod_areacell, compute_anom=False, region=lhfbox, **kwargs)
+        lhf_obs, _, keyerror_obs2 = PreProcessTS(
+            lhf_obs, "", areacell=lhf_obs_areacell, compute_anom=False, region=lhfbox, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del lhf_mod_areacell, lhf_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                "axes4": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod lhf) " + str(lhf_mod.shape), "shape4": "(obs lhf) " + str(lhf_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod lhf) " + str(TimeBounds(lhf_mod)), "time4": "(obs lhf) " + str(TimeBounds(lhf_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+        # 3.2 map of SST
+        lhf_mod = SeasonalMean(lhf_mod, season_ev, compute_anom=True)
+        lhf_obs = SeasonalMean(lhf_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in enso_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in enso_obs.getAxisList()]),
+                "axes3": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                "axes4": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(enso_mod.shape), "shape2": "(obs sst) " + str(enso_obs.shape),
+                "shape3": "(mod lhf) " + str(lhf_mod.shape), "shape4": "(obs lhf) " + str(lhf_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(enso_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(enso_obs)),
+                "time3": "(mod lhf) " + str(TimeBounds(lhf_mod)), "time4": "(obs lhf) " + str(TimeBounds(lhf_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Regression map
+        # ------------------------------------------------
+        # 4.1 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            lhf_mod, lhf_obs, method = TwoVarRegrid(lhf_mod, lhf_obs, method, region=lhfbox, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                              "axes2": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                              "shape1": "(mod lhf) " + str(lhf_mod.shape), "shape2": "(obs lhf) " + str(lhf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.2 Meridional average
+        lhf_lon_mod, keyerror_mod = AverageMeridional(lhf_mod)
+        lhf_lon_obs, keyerror_obs = AverageMeridional(lhf_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                          "axes2": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                          "shape1": "(mod lhf) " + str(lhf_mod.shape), "shape2": "(obs lhf) " + str(lhf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.3 Regression map
+        lhf_slope_mod = LinearRegressionTsAgainstMap(lhf_lon_mod, enso_mod, return_stderr=False)
+        lhf_slope_obs = LinearRegressionTsAgainstMap(lhf_lon_obs, enso_obs, return_stderr=False)
+        if debug is True:
+            dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_slope_mod.getAxisList()]),
+                          "axes2": "(obs lhf) " + str([ax.id for ax in lhf_slope_obs.getAxisList()]),
+                          "shape1": "(mod lhf) " + str(lhf_slope_mod.shape),
+                          "shape2": "(obs lhf) " + str(lhf_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstMap", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(lhf_slope_mod, lhf_slope_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(lhf_slope_mod, lhf_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lhf_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lhf_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            lhf_mod, lhf_mod_areacell, keyerror_mod = Read_data_mask_area(
+                lhffilemod, lhfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafilemod,
+                name_area=lhfareanamemod, file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            lhf_obs, lhf_obs_areacell, keyerror_obs = Read_data_mask_area(
+                lhffileobs, lhfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafileobs,
+                name_area=lhfareanameobs, file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, lhf_mod, keyerror_mod = CheckTime(sst_mod, lhf_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, lhf_obs, keyerror_obs = CheckTime(sst_obs, lhf_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # LHF in 'equatorial_pacific_LatExt2' are normalized / detrended / smoothed (running average) if applicable
+            smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+            kwargs["smoothing"] = deepcopy(smooth_ev)
+            lhf_mod, _, keyerror_mod = PreProcessTS(
+                lhf_mod, "", areacell=lhf_mod_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            lhf_obs, _, keyerror_obs = PreProcessTS(
+                lhf_obs, "", areacell=lhf_obs_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            kwargs["smoothing"] = deepcopy(smooth)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del lhf_mod_areacell, lhf_obs_areacell, smooth
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                              "axes2": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                              "shape1": "(mod lhf) " + str(lhf_mod.shape), "shape2": "(obs lhf) " + str(lhf_obs.shape),
+                              "time1": "(mod lhf) " + str(TimeBounds(lhf_mod)),
+                              "time2": "(obs lhf) " + str(TimeBounds(lhf_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Seasonal mean and anomalies
+            lhf_mod = SeasonalMean(lhf_mod, season_ev, compute_anom=True)
+            lhf_obs = SeasonalMean(lhf_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                              "axes2": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                              "shape1": "(mod lhf) " + str(lhf_mod.shape), "shape2": "(obs lhf) " + str(lhf_obs.shape),
+                              "time1": "(mod lhf) " + str(TimeBounds(lhf_mod)),
+                              "time2": "(obs lhf) " + str(TimeBounds(lhf_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                lhf_mod, lhf_obs, _ = TwoVarRegrid(
+                    lhf_mod, lhf_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                                  "axes2": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                                  "shape1": "(mod lhf) " + str(lhf_mod.shape),
+                                  "shape2": "(obs lhf) " + str(lhf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Linear regression
+            lhf_map_slope_mod = LinearRegressionTsAgainstMap(lhf_mod, enso_mod, return_stderr=False)
+            lhf_map_slope_obs = LinearRegressionTsAgainstMap(lhf_obs, enso_obs, return_stderr=False)
+            if debug is True:
+                dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_map_slope_mod.getAxisList()]),
+                              "axes2": "(obs lhf) " + str([ax.id for ax in lhf_map_slope_obs.getAxisList()]),
+                              "shape1": "(mod lhf) " + str(lhf_map_slope_mod.shape),
+                              "shape2": "(obs lhf) " + str(lhf_map_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode(
+                    "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_lhf_lon_mod = Composite(lhf_lon_mod, ln_years_mod, kwargs["frequency"])
+                ln_lhf_map_mod = Composite(lhf_mod, ln_years_mod, kwargs["frequency"])
+            else:
+                ln_lhf_lon_mod = MyEmpty(lhf_lon_mod[0], time=False)
+                ln_lhf_map_mod = MyEmpty(lhf_mod[0], time=False)
+            if len(en_years_mod) > 0:
+                en_lhf_lon_mod = Composite(lhf_lon_mod, en_years_mod, kwargs["frequency"])
+                en_lhf_map_mod = Composite(lhf_mod, en_years_mod, kwargs["frequency"])
+            else:
+                en_lhf_lon_mod = MyEmpty(lhf_lon_mod[0], time=False)
+                en_lhf_map_mod = MyEmpty(lhf_mod[0], time=False)
+            if len(ln_years_obs) > 0:
+                ln_lhf_lon_obs = Composite(lhf_lon_obs, ln_years_obs, kwargs["frequency"])
+                ln_lhf_map_obs = Composite(lhf_obs, ln_years_obs, kwargs["frequency"])
+            else:
+                ln_lhf_lon_obs = MyEmpty(lhf_lon_obs[0], time=False)
+                ln_lhf_map_obs = MyEmpty(lhf_obs[0], time=False)
+            if len(en_years_obs) > 0:
+                en_lhf_lon_obs = Composite(lhf_lon_obs, en_years_obs, kwargs["frequency"])
+                en_lhf_map_obs = Composite(lhf_obs, en_years_obs, kwargs["frequency"])
+            else:
+                en_lhf_lon_obs = MyEmpty(lhf_lon_obs[0], time=False)
+                en_lhf_map_obs = MyEmpty(lhf_obs[0], time=False)
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["zonal curve of " + lhfbox + " LHFA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of La Nina events composite during " + season_ev + "; Nina = " + region_ev + " SSTA < -" +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "zonal curve of " + lhfbox + " LHFA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific LHFA regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "map of tropical Pacific LHFA of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific LHFA of El Nino events composite during " + season_ev + "; Nino = " +
+                     region_ev + " SSTA > " + my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_lhf_lon_mod, en_lhf_lon_mod, lhf_map_slope_mod, ln_lhf_map_mod, en_lhf_map_mod]
+            my_ob = [ln_lhf_lon_obs, en_lhf_lon_obs, lhf_map_slope_obs, ln_lhf_map_obs, en_lhf_map_obs]
+            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
+            my_ax = ["0", "0", "xy", "xy", "xy"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset1: sm_std_mod}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset2: sm_std_obs}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
+                     "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lhf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lhf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrlandmaskfilemod, lwrlandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   lwrfileobs, lwrnameobs, lwrareafileobs, lwrareanameobs, lwrlandmaskfileobs, lwrlandmasknameobs,
+                   sstbox, lwrbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoLwrLonRmse() function computes LWRA (net surface longwave radiation anomalies) pattern associated with ENSO
+    in a 'lwrbox' (usually the equatorial_pacific).
+    It is the regression of 'lwrbox' averaged LWRA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of equatorial_pacific LWRA onto nino3.4 SSTA).
+
+    The net surface longwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into lwrfile and lwrname of this
+    function a list() of the four needed files and variable names (CMIP: rlds-rlus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param lwrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LWR
+    :param lwrnamemod: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfilemod'
+    :param lwrareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LWR areacell
+    :param lwrareanamemod: string, optional
+        name of areacell for the LWR variable (areacella, areacello,...) in 'lwrareafilemod'
+    :param lwrlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LWR landmask
+    :param lwrlandmasknamemod: string, optional
+        name of landmask for the LWR variable (sftlf,...) in 'lwrlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param lwrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed LWR
+    :param lwrnameobs: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfileobs'
+    :param lwrareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LWR areacell
+    :param lwrareanameobs: string, optional
+        name of areacell for the LWR variable (areacella, areacello,...) in 'lwrareafileobs'
+    :param lwrlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LWR landmask
+    :param lwrlandmasknameobs: string, optional
+        name of landmask for the LWR variable (sftlf,...) in 'lwrlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param lwrbox: string
+        name of box (e.g. 'equatorial_pacific') for LWR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoLwrLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    lat = ReferenceRegions(lwrbox)["latitude"]
+    name = "ENSO zonal LWRA pattern"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "zonal curve of " + lwrbox + " net surface longwave radiation anomalies (LWRA; meridional averaged " + \
+             "[" + str(lat[0]) + " ; " + str(lat[1]) + "]) regressed onto " + region_ev + " averaged sea surface " + \
+             "temperature anomalies (SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoLwrLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        lwr_mod, lwr_mod_areacell, keyerror_mod2 = Read_data_mask_area_multifile(
+            lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, lwrbox, file_area=lwrareafilemod,
+            name_area=lwrareanamemod, file_mask=lwrlandmaskfilemod, name_mask=lwrlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug,
+            interpreter="project_interpreter_mod_var2", **kwargs)
+        lwr_obs, lwr_obs_areacell, keyerror_obs2 = Read_data_mask_area_multifile(
+            lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, lwrbox, file_area=lwrareafileobs,
+            name_area=lwrareanameobs, file_mask=lwrlandmaskfileobs, name_mask=lwrlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug,
+            interpreter="project_interpreter_obs_var2", **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, lwr_mod, keyerror_mod = CheckTime(sst_mod, lwr_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, lwr_obs, keyerror_obs = CheckTime(sst_obs, lwr_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        # 2.2 LWR in 'lwrbox' are normalized / detrended / smoothed (running average) if applicable
+        lwr_mod, method, keyerror_mod2 = PreProcessTS(
+            lwr_mod, method, areacell=lwr_mod_areacell, compute_anom=False, region=lwrbox, **kwargs)
+        lwr_obs, _, keyerror_obs2 = PreProcessTS(
+            lwr_obs, "", areacell=lwr_obs_areacell, compute_anom=False, region=lwrbox, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del lwr_mod_areacell, lwr_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                "axes4": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod lwr) " + str(lwr_mod.shape), "shape4": "(obs lwr) " + str(lwr_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod lwr) " + str(TimeBounds(lwr_mod)), "time4": "(obs lwr) " + str(TimeBounds(lwr_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+        # 3.2 map of SST
+        lwr_mod = SeasonalMean(lwr_mod, season_ev, compute_anom=True)
+        lwr_obs = SeasonalMean(lwr_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in enso_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in enso_obs.getAxisList()]),
+                "axes3": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                "axes4": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(enso_mod.shape), "shape2": "(obs sst) " + str(enso_obs.shape),
+                "shape3": "(mod lwr) " + str(lwr_mod.shape), "shape4": "(obs lwr) " + str(lwr_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(enso_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(enso_obs)),
+                "time3": "(mod lwr) " + str(TimeBounds(lwr_mod)), "time4": "(obs lwr) " + str(TimeBounds(lwr_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Regression map
+        # ------------------------------------------------
+        # 4.1 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            lwr_mod, lwr_obs, method = TwoVarRegrid(lwr_mod, lwr_obs, method, region=lwrbox, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                              "axes2": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                              "shape1": "(mod lwr) " + str(lwr_mod.shape), "shape2": "(obs lwr) " + str(lwr_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.2 Meridional average
+        lwr_lon_mod, keyerror_mod = AverageMeridional(lwr_mod)
+        lwr_lon_obs, keyerror_obs = AverageMeridional(lwr_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                          "axes2": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                          "shape1": "(mod lwr) " + str(lwr_mod.shape), "shape2": "(obs lwr) " + str(lwr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.3 Regression map
+        lwr_slope_mod = LinearRegressionTsAgainstMap(lwr_lon_mod, enso_mod, return_stderr=False)
+        lwr_slope_obs = LinearRegressionTsAgainstMap(lwr_lon_obs, enso_obs, return_stderr=False)
+        if debug is True:
+            dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_slope_mod.getAxisList()]),
+                          "axes2": "(obs lwr) " + str([ax.id for ax in lwr_slope_obs.getAxisList()]),
+                          "shape1": "(mod lwr) " + str(lwr_slope_mod.shape),
+                          "shape2": "(obs lwr) " + str(lwr_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstMap", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(lwr_slope_mod, lwr_slope_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(lwr_slope_mod, lwr_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lwr_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lwr_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            lwr_mod, lwr_mod_areacell, keyerror_mod = Read_data_mask_area_multifile(
+                lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafilemod, name_area=lwrareanamemod, file_mask=lwrlandmaskfilemod,
+                name_mask=lwrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var2", **kwargs)
+            lwr_obs, lwr_obs_areacell, keyerror_obs = Read_data_mask_area_multifile(
+                lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafileobs, name_area=lwrareanameobs, file_mask=lwrlandmaskfileobs,
+                name_mask=lwrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, lwr_mod, keyerror_mod = CheckTime(sst_mod, lwr_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, lwr_obs, keyerror_obs = CheckTime(sst_obs, lwr_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # LWR in 'equatorial_pacific_LatExt2' are normalized / detrended / smoothed (running average) if applicable
+            smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+            kwargs["smoothing"] = deepcopy(smooth_ev)
+            lwr_mod, _, keyerror_mod = PreProcessTS(
+                lwr_mod, "", areacell=lwr_mod_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            lwr_obs, _, keyerror_obs = PreProcessTS(
+                lwr_obs, "", areacell=lwr_obs_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            kwargs["smoothing"] = deepcopy(smooth)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del lwr_mod_areacell, lwr_obs_areacell, smooth
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                              "axes2": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                              "shape1": "(mod lwr) " + str(lwr_mod.shape), "shape2": "(obs lwr) " + str(lwr_obs.shape),
+                              "time1": "(mod lwr) " + str(TimeBounds(lwr_mod)),
+                              "time2": "(obs lwr) " + str(TimeBounds(lwr_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Seasonal mean and anomalies
+            lwr_mod = SeasonalMean(lwr_mod, season_ev, compute_anom=True)
+            lwr_obs = SeasonalMean(lwr_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                              "axes2": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                              "shape1": "(mod lwr) " + str(lwr_mod.shape), "shape2": "(obs lwr) " + str(lwr_obs.shape),
+                              "time1": "(mod lwr) " + str(TimeBounds(lwr_mod)),
+                              "time2": "(obs lwr) " + str(TimeBounds(lwr_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                lwr_mod, lwr_obs, _ = TwoVarRegrid(
+                    lwr_mod, lwr_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                                  "axes2": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                                  "shape1": "(mod lwr) " + str(lwr_mod.shape),
+                                  "shape2": "(obs lwr) " + str(lwr_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Linear regression
+            lwr_map_slope_mod = LinearRegressionTsAgainstMap(lwr_mod, enso_mod, return_stderr=False)
+            lwr_map_slope_obs = LinearRegressionTsAgainstMap(lwr_obs, enso_obs, return_stderr=False)
+            if debug is True:
+                dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_map_slope_mod.getAxisList()]),
+                              "axes2": "(obs lwr) " + str([ax.id for ax in lwr_map_slope_obs.getAxisList()]),
+                              "shape1": "(mod lwr) " + str(lwr_map_slope_mod.shape),
+                              "shape2": "(obs lwr) " + str(lwr_map_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode(
+                    "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_lwr_lon_mod = Composite(lwr_lon_mod, ln_years_mod, kwargs["frequency"])
+                ln_lwr_map_mod = Composite(lwr_mod, ln_years_mod, kwargs["frequency"])
+            else:
+                ln_lwr_lon_mod = MyEmpty(lwr_lon_mod[0], time=False)
+                ln_lwr_map_mod = MyEmpty(lwr_mod[0], time=False)
+            if len(en_years_mod) > 0:
+                en_lwr_lon_mod = Composite(lwr_lon_mod, en_years_mod, kwargs["frequency"])
+                en_lwr_map_mod = Composite(lwr_mod, en_years_mod, kwargs["frequency"])
+            else:
+                en_lwr_lon_mod = MyEmpty(lwr_lon_mod[0], time=False)
+                en_lwr_map_mod = MyEmpty(lwr_mod[0], time=False)
+            if len(ln_years_obs) > 0:
+                ln_lwr_lon_obs = Composite(lwr_lon_obs, ln_years_obs, kwargs["frequency"])
+                ln_lwr_map_obs = Composite(lwr_obs, ln_years_obs, kwargs["frequency"])
+            else:
+                ln_lwr_lon_obs = MyEmpty(lwr_lon_obs[0], time=False)
+                ln_lwr_map_obs = MyEmpty(lwr_obs[0], time=False)
+            if len(en_years_obs) > 0:
+                en_lwr_lon_obs = Composite(lwr_lon_obs, en_years_obs, kwargs["frequency"])
+                en_lwr_map_obs = Composite(lwr_obs, en_years_obs, kwargs["frequency"])
+            else:
+                en_lwr_lon_obs = MyEmpty(lwr_lon_obs[0], time=False)
+                en_lwr_map_obs = MyEmpty(lwr_obs[0], time=False)
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["zonal curve of " + lwrbox + " LWRA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of La Nina events composite during " + season_ev + "; Nina = " + region_ev + " SSTA < -" +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "zonal curve of " + lwrbox + " LWRA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific LWRA regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "map of tropical Pacific LWRA of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific LWRA of El Nino events composite during " + season_ev + "; Nino = " +
+                     region_ev + " SSTA > " + my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_lwr_lon_mod, en_lwr_lon_mod, lwr_map_slope_mod, ln_lwr_map_mod, en_lwr_map_mod]
+            my_ob = [ln_lwr_lon_obs, en_lwr_lon_obs, lwr_map_slope_obs, ln_lwr_map_obs, en_lwr_map_obs]
+            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
+            my_ax = ["0", "0", "xy", "xy", "xy"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset1: sm_std_mod}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset2: sm_std_obs}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
+                     "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lwr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lwr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
 def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
@@ -11079,6 +12103,514 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             SaveNetcdf(file_name, global_attributes=dict3,
                        var1=pr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=pr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shflandmaskfilemod, shflandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   shffileobs, shfnameobs, shfareafileobs, shfareanameobs, shflandmaskfileobs, shflandmasknameobs,
+                   sstbox, shfbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoShfLonRmse() function computes SHFA (sensible heat flux anomalies) pattern associated with ENSO in a
+    'shfbox' (usually the equatorial_pacific).
+    It is the regression of 'shfbox' averaged SHFA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of equatorial_pacific SHFA onto nino3.4 SSTA).
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param shffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SHF
+    :param shfnamemod: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffilemod'
+    :param shfareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SHF areacell
+    :param shfareanamemod: string, optional
+        name of areacell for the SHF variable (areacella, areacello,...) in 'shfareafilemod'
+    :param shflandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SHF landmask
+    :param shflandmasknamemod: string, optional
+        name of landmask for the SHF variable (sftlf,...) in 'shflandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param shffileobs: string
+        path_to/filename of the file (NetCDF) of the observed SHF
+    :param shfnameobs: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffileobs'
+    :param shfareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SHF areacell
+    :param shfareanameobs: string, optional
+        name of areacell for the SHF variable (areacella, areacello,...) in 'shfareafileobs'
+    :param shflandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SHF landmask
+    :param shflandmasknameobs: string, optional
+        name of landmask for the SHF variable (sftlf,...) in 'shflandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param shfbox: string
+        name of box (e.g. 'equatorial_pacific') for SHF
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoShfLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    lat = ReferenceRegions(shfbox)["latitude"]
+    name = "ENSO zonal SHFA pattern"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "zonal curve of " + shfbox + " sensible heat flux anomalies (SHFA; meridional averaged [" + str(lat[0]) + \
+             " ; " + str(lat[1]) + "]) regressed onto " + region_ev + " averaged sea surface temperature anomalies " + \
+             "(SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoShfLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        shf_mod, shf_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+            shffilemod, shfnamemod, "heat flux", metric, shfbox, file_area=shfareafilemod, name_area=shfareanamemod,
+            file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        shf_obs, shf_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+            shffileobs, shfnameobs, "heat flux", metric, shfbox, file_area=shfareafileobs, name_area=shfareanameobs,
+            file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, shf_mod, keyerror_mod = CheckTime(sst_mod, shf_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, shf_obs, keyerror_obs = CheckTime(sst_obs, shf_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        # 2.2 SHF in 'shfbox' are normalized / detrended / smoothed (running average) if applicable
+        shf_mod, method, keyerror_mod2 = PreProcessTS(
+            shf_mod, method, areacell=shf_mod_areacell, compute_anom=False, region=shfbox, **kwargs)
+        shf_obs, _, keyerror_obs2 = PreProcessTS(
+            shf_obs, "", areacell=shf_obs_areacell, compute_anom=False, region=shfbox, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del shf_mod_areacell, shf_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                "axes4": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod shf) " + str(shf_mod.shape), "shape4": "(obs shf) " + str(shf_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod shf) " + str(TimeBounds(shf_mod)), "time4": "(obs shf) " + str(TimeBounds(shf_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+        # 3.2 map of SST
+        shf_mod = SeasonalMean(shf_mod, season_ev, compute_anom=True)
+        shf_obs = SeasonalMean(shf_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in enso_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in enso_obs.getAxisList()]),
+                "axes3": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                "axes4": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(enso_mod.shape), "shape2": "(obs sst) " + str(enso_obs.shape),
+                "shape3": "(mod shf) " + str(shf_mod.shape), "shape4": "(obs shf) " + str(shf_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(enso_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(enso_obs)),
+                "time3": "(mod shf) " + str(TimeBounds(shf_mod)), "time4": "(obs shf) " + str(TimeBounds(shf_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Regression map
+        # ------------------------------------------------
+        # 4.1 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            shf_mod, shf_obs, method = TwoVarRegrid(shf_mod, shf_obs, method, region=shfbox, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                              "axes2": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                              "shape1": "(mod shf) " + str(shf_mod.shape), "shape2": "(obs shf) " + str(shf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.2 Meridional average
+        shf_lon_mod, keyerror_mod = AverageMeridional(shf_mod)
+        shf_lon_obs, keyerror_obs = AverageMeridional(shf_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                          "axes2": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                          "shape1": "(mod shf) " + str(shf_mod.shape), "shape2": "(obs shf) " + str(shf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.3 Regression map
+        shf_slope_mod = LinearRegressionTsAgainstMap(shf_lon_mod, enso_mod, return_stderr=False)
+        shf_slope_obs = LinearRegressionTsAgainstMap(shf_lon_obs, enso_obs, return_stderr=False)
+        if debug is True:
+            dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_slope_mod.getAxisList()]),
+                          "axes2": "(obs shf) " + str([ax.id for ax in shf_slope_obs.getAxisList()]),
+                          "shape1": "(mod shf) " + str(shf_slope_mod.shape),
+                          "shape2": "(obs shf) " + str(shf_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstMap", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(shf_slope_mod, shf_slope_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(shf_slope_mod, shf_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(shf_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(shf_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            shf_mod, shf_mod_areacell, keyerror_mod = Read_data_mask_area(
+                shffilemod, shfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafilemod,
+                name_area=shfareanamemod, file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            shf_obs, shf_obs_areacell, keyerror_obs = Read_data_mask_area(
+                shffileobs, shfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafileobs,
+                name_area=shfareanameobs, file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, shf_mod, keyerror_mod = CheckTime(sst_mod, shf_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, shf_obs, keyerror_obs = CheckTime(sst_obs, shf_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # SHF in 'equatorial_pacific_LatExt2' are normalized / detrended / smoothed (running average) if applicable
+            smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+            kwargs["smoothing"] = deepcopy(smooth_ev)
+            shf_mod, _, keyerror_mod = PreProcessTS(
+                shf_mod, "", areacell=shf_mod_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            shf_obs, _, keyerror_obs = PreProcessTS(
+                shf_obs, "", areacell=shf_obs_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            kwargs["smoothing"] = deepcopy(smooth)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del shf_mod_areacell, shf_obs_areacell, smooth
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                              "axes2": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                              "shape1": "(mod shf) " + str(shf_mod.shape), "shape2": "(obs shf) " + str(shf_obs.shape),
+                              "time1": "(mod shf) " + str(TimeBounds(shf_mod)),
+                              "time2": "(obs shf) " + str(TimeBounds(shf_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Seasonal mean and anomalies
+            shf_mod = SeasonalMean(shf_mod, season_ev, compute_anom=True)
+            shf_obs = SeasonalMean(shf_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                              "axes2": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                              "shape1": "(mod shf) " + str(shf_mod.shape), "shape2": "(obs shf) " + str(shf_obs.shape),
+                              "time1": "(mod shf) " + str(TimeBounds(shf_mod)),
+                              "time2": "(obs shf) " + str(TimeBounds(shf_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                shf_mod, shf_obs, _ = TwoVarRegrid(
+                    shf_mod, shf_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                                  "axes2": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                                  "shape1": "(mod shf) " + str(shf_mod.shape),
+                                  "shape2": "(obs shf) " + str(shf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Linear regression
+            shf_map_slope_mod = LinearRegressionTsAgainstMap(shf_mod, enso_mod, return_stderr=False)
+            shf_map_slope_obs = LinearRegressionTsAgainstMap(shf_obs, enso_obs, return_stderr=False)
+            if debug is True:
+                dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_map_slope_mod.getAxisList()]),
+                              "axes2": "(obs shf) " + str([ax.id for ax in shf_map_slope_obs.getAxisList()]),
+                              "shape1": "(mod shf) " + str(shf_map_slope_mod.shape),
+                              "shape2": "(obs shf) " + str(shf_map_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode(
+                    "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_shf_lon_mod = Composite(shf_lon_mod, ln_years_mod, kwargs["frequency"])
+                ln_shf_map_mod = Composite(shf_mod, ln_years_mod, kwargs["frequency"])
+            else:
+                ln_shf_lon_mod = MyEmpty(shf_lon_mod[0], time=False)
+                ln_shf_map_mod = MyEmpty(shf_mod[0], time=False)
+            if len(en_years_mod) > 0:
+                en_shf_lon_mod = Composite(shf_lon_mod, en_years_mod, kwargs["frequency"])
+                en_shf_map_mod = Composite(shf_mod, en_years_mod, kwargs["frequency"])
+            else:
+                en_shf_lon_mod = MyEmpty(shf_lon_mod[0], time=False)
+                en_shf_map_mod = MyEmpty(shf_mod[0], time=False)
+            if len(ln_years_obs) > 0:
+                ln_shf_lon_obs = Composite(shf_lon_obs, ln_years_obs, kwargs["frequency"])
+                ln_shf_map_obs = Composite(shf_obs, ln_years_obs, kwargs["frequency"])
+            else:
+                ln_shf_lon_obs = MyEmpty(shf_lon_obs[0], time=False)
+                ln_shf_map_obs = MyEmpty(shf_obs[0], time=False)
+            if len(en_years_obs) > 0:
+                en_shf_lon_obs = Composite(shf_lon_obs, en_years_obs, kwargs["frequency"])
+                en_shf_map_obs = Composite(shf_obs, en_years_obs, kwargs["frequency"])
+            else:
+                en_shf_lon_obs = MyEmpty(shf_lon_obs[0], time=False)
+                en_shf_map_obs = MyEmpty(shf_obs[0], time=False)
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["zonal curve of " + shfbox + " SHFA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of La Nina events composite during " + season_ev + "; Nina = " + region_ev + " SSTA < -" +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "zonal curve of " + shfbox + " SHFA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific SHFA regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "map of tropical Pacific SHFA of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific SHFA of El Nino events composite during " + season_ev + "; Nino = " +
+                     region_ev + " SSTA > " + my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_shf_lon_mod, en_shf_lon_mod, shf_map_slope_mod, ln_shf_map_mod, en_shf_map_mod]
+            my_ob = [ln_shf_lon_obs, en_shf_lon_obs, shf_map_slope_obs, ln_shf_map_obs, en_shf_map_obs]
+            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
+            my_ax = ["0", "0", "xy", "xy", "xy"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset1: sm_std_mod}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset2: sm_std_obs}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
+                     "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=shf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=shf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
                 my_ty, my_un, my_units, nbr
     # Metric value
@@ -12099,6 +13631,522 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             SaveNetcdf(file_name, global_attributes=dict3,
                        var1=sst_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=sst_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrlandmaskfilemod, swrlandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   swrfileobs, swrnameobs, swrareafileobs, swrareanameobs, swrlandmaskfileobs, swrlandmasknameobs,
+                   sstbox, swrbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoSwrLonRmse() function computes SWRA (net surface shortwave radiation anomalies) pattern associated with ENSO
+    in a 'swrbox' (usually the equatorial_pacific).
+    It is the regression of 'swrbox' averaged SWRA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of equatorial_pacific SWRA onto nino3.4 SSTA).
+
+    The net surface shortwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into swrfile and swrname of this
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param swrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SWR
+    :param swrnamemod: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfilemod'
+    :param swrareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SWR areacell
+    :param swrareanamemod: string, optional
+        name of areacell for the SWR variable (areacella, areacello,...) in 'swrareafilemod'
+    :param swrlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SWR landmask
+    :param swrlandmasknamemod: string, optional
+        name of landmask for the SWR variable (sftlf,...) in 'swrlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param swrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SWR
+    :param swrnameobs: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfileobs'
+    :param swrareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SWR areacell
+    :param swrareanameobs: string, optional
+        name of areacell for the SWR variable (areacella, areacello,...) in 'swrareafileobs'
+    :param swrlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SWR landmask
+    :param swrlandmasknameobs: string, optional
+        name of landmask for the SWR variable (sftlf,...) in 'swrlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param swrbox: string
+        name of box (e.g. 'equatorial_pacific') for SWR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoSwrLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    lat = ReferenceRegions(swrbox)["latitude"]
+    name = "ENSO zonal SWRA pattern"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "zonal curve of " + swrbox + " net surface shortwave radiation anomalies (SWRA; meridional averaged " + \
+             "[" + str(lat[0]) + " ; " + str(lat[1]) + "]) regressed onto " + region_ev + " averaged sea surface " + \
+             "temperature anomalies (SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoSwrLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        swr_mod, swr_mod_areacell, keyerror_mod2 = Read_data_mask_area_multifile(
+            swrfilemod, swrnamemod, "heat flux", "swr", metric, swrbox, file_area=swrareafilemod,
+            name_area=swrareanamemod, file_mask=swrlandmaskfilemod, name_mask=swrlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug,
+            interpreter="project_interpreter_mod_var2", **kwargs)
+        swr_obs, swr_obs_areacell, keyerror_obs2 = Read_data_mask_area_multifile(
+            swrfileobs, swrnameobs, "heat flux", "swr", metric, swrbox, file_area=swrareafileobs,
+            name_area=swrareanameobs, file_mask=swrlandmaskfileobs, name_mask=swrlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug,
+            interpreter="project_interpreter_obs_var2", **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, swr_mod, keyerror_mod = CheckTime(sst_mod, swr_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, swr_obs, keyerror_obs = CheckTime(sst_obs, swr_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        # 2.2 SWR in 'swrbox' are normalized / detrended / smoothed (running average) if applicable
+        swr_mod, method, keyerror_mod2 = PreProcessTS(
+            swr_mod, method, areacell=swr_mod_areacell, compute_anom=False, region=swrbox, **kwargs)
+        swr_obs, _, keyerror_obs2 = PreProcessTS(
+            swr_obs, "", areacell=swr_obs_areacell, compute_anom=False, region=swrbox, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del swr_mod_areacell, swr_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                "axes4": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod swr) " + str(swr_mod.shape), "shape4": "(obs swr) " + str(swr_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod swr) " + str(TimeBounds(swr_mod)), "time4": "(obs swr) " + str(TimeBounds(swr_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+        # 3.2 map of SST
+        swr_mod = SeasonalMean(swr_mod, season_ev, compute_anom=True)
+        swr_obs = SeasonalMean(swr_obs, season_ev, compute_anom=True)
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in enso_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in enso_obs.getAxisList()]),
+                "axes3": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                "axes4": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(enso_mod.shape), "shape2": "(obs sst) " + str(enso_obs.shape),
+                "shape3": "(mod swr) " + str(swr_mod.shape), "shape4": "(obs swr) " + str(swr_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(enso_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(enso_obs)),
+                "time3": "(mod swr) " + str(TimeBounds(swr_mod)), "time4": "(obs swr) " + str(TimeBounds(swr_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Regression map
+        # ------------------------------------------------
+        # 4.1 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            swr_mod, swr_obs, method = TwoVarRegrid(swr_mod, swr_obs, method, region=swrbox, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                              "axes2": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                              "shape1": "(mod swr) " + str(swr_mod.shape), "shape2": "(obs swr) " + str(swr_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.2 Meridional average
+        swr_lon_mod, keyerror_mod = AverageMeridional(swr_mod)
+        swr_lon_obs, keyerror_obs = AverageMeridional(swr_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                          "axes2": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                          "shape1": "(mod swr) " + str(swr_mod.shape), "shape2": "(obs swr) " + str(swr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 4.3 Regression map
+        swr_slope_mod = LinearRegressionTsAgainstMap(swr_lon_mod, enso_mod, return_stderr=False)
+        swr_slope_obs = LinearRegressionTsAgainstMap(swr_lon_obs, enso_obs, return_stderr=False)
+        if debug is True:
+            dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_slope_mod.getAxisList()]),
+                          "axes2": "(obs swr) " + str([ax.id for ax in swr_slope_obs.getAxisList()]),
+                          "shape1": "(mod swr) " + str(swr_slope_mod.shape),
+                          "shape2": "(obs swr) " + str(swr_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstMap", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(swr_slope_mod, swr_slope_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(swr_slope_mod, swr_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(swr_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(swr_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            swr_mod, swr_mod_areacell, keyerror_mod = Read_data_mask_area_multifile(
+                swrfilemod, swrnamemod, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafilemod, name_area=swrareanamemod, file_mask=swrlandmaskfilemod,
+                name_mask=swrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var2", **kwargs)
+            swr_obs, swr_obs_areacell, keyerror_obs = Read_data_mask_area_multifile(
+                swrfileobs, swrnameobs, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafileobs, name_area=swrareanameobs, file_mask=swrlandmaskfileobs,
+                name_mask=swrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, swr_mod, keyerror_mod = CheckTime(sst_mod, swr_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, swr_obs, keyerror_obs = CheckTime(sst_obs, swr_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # SWR in 'equatorial_pacific_LatExt2' are normalized / detrended / smoothed (running average) if applicable
+            smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+            kwargs["smoothing"] = deepcopy(smooth_ev)
+            swr_mod, _, keyerror_mod = PreProcessTS(
+                swr_mod, "", areacell=swr_mod_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            swr_obs, _, keyerror_obs = PreProcessTS(
+                swr_obs, "", areacell=swr_obs_areacell, region="equatorial_pacific_LatExt2", **kwargs)
+            kwargs["smoothing"] = deepcopy(smooth)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del swr_mod_areacell, swr_obs_areacell, smooth
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                              "axes2": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                              "shape1": "(mod swr) " + str(swr_mod.shape), "shape2": "(obs swr) " + str(swr_obs.shape),
+                              "time1": "(mod swr) " + str(TimeBounds(swr_mod)),
+                              "time2": "(obs swr) " + str(TimeBounds(swr_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Seasonal mean and anomalies
+            swr_mod = SeasonalMean(swr_mod, season_ev, compute_anom=True)
+            swr_obs = SeasonalMean(swr_obs, season_ev, compute_anom=True)
+            if debug is True:
+                dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                              "axes2": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                              "shape1": "(mod swr) " + str(swr_mod.shape), "shape2": "(obs swr) " + str(swr_obs.shape),
+                              "time1": "(mod swr) " + str(TimeBounds(swr_mod)),
+                              "time2": "(obs swr) " + str(TimeBounds(swr_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                swr_mod, swr_obs, _ = TwoVarRegrid(
+                    swr_mod, swr_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                                  "axes2": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                                  "shape1": "(mod swr) " + str(swr_mod.shape),
+                                  "shape2": "(obs swr) " + str(swr_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Linear regression
+            swr_map_slope_mod = LinearRegressionTsAgainstMap(swr_mod, enso_mod, return_stderr=False)
+            swr_map_slope_obs = LinearRegressionTsAgainstMap(swr_obs, enso_obs, return_stderr=False)
+            if debug is True:
+                dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_map_slope_mod.getAxisList()]),
+                              "axes2": "(obs swr) " + str([ax.id for ax in swr_map_slope_obs.getAxisList()]),
+                              "shape1": "(mod swr) " + str(swr_map_slope_mod.shape),
+                              "shape2": "(obs swr) " + str(swr_map_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode(
+                    "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_swr_lon_mod = Composite(swr_lon_mod, ln_years_mod, kwargs["frequency"])
+                ln_swr_map_mod = Composite(swr_mod, ln_years_mod, kwargs["frequency"])
+            else:
+                ln_swr_lon_mod = MyEmpty(swr_lon_mod[0], time=False)
+                ln_swr_map_mod = MyEmpty(swr_mod[0], time=False)
+            if len(en_years_mod) > 0:
+                en_swr_lon_mod = Composite(swr_lon_mod, en_years_mod, kwargs["frequency"])
+                en_swr_map_mod = Composite(swr_mod, en_years_mod, kwargs["frequency"])
+            else:
+                en_swr_lon_mod = MyEmpty(swr_lon_mod[0], time=False)
+                en_swr_map_mod = MyEmpty(swr_mod[0], time=False)
+            if len(ln_years_obs) > 0:
+                ln_swr_lon_obs = Composite(swr_lon_obs, ln_years_obs, kwargs["frequency"])
+                ln_swr_map_obs = Composite(swr_obs, ln_years_obs, kwargs["frequency"])
+            else:
+                ln_swr_lon_obs = MyEmpty(swr_lon_obs[0], time=False)
+                ln_swr_map_obs = MyEmpty(swr_obs[0], time=False)
+            if len(en_years_obs) > 0:
+                en_swr_lon_obs = Composite(swr_lon_obs, en_years_obs, kwargs["frequency"])
+                en_swr_map_obs = Composite(swr_obs, en_years_obs, kwargs["frequency"])
+            else:
+                en_swr_lon_obs = MyEmpty(swr_lon_obs[0], time=False)
+                en_swr_map_obs = MyEmpty(swr_obs[0], time=False)
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["zonal curve of " + swrbox + " SWRA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of La Nina events composite during " + season_ev + "; Nina = " + region_ev + " SSTA < -" +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "zonal curve of " + swrbox + " SWRA (meridional averaged [" + str(lat[0]) + " ; " + str(lat[1]) +
+                     "]) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific SWRA regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "map of tropical Pacific SWRA of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "map of tropical Pacific SWRA of El Nino events composite during " + season_ev + "; Nino = " +
+                     region_ev + " SSTA > " + my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_swr_lon_mod, en_swr_lon_mod, swr_map_slope_mod, ln_swr_map_mod, en_swr_map_mod]
+            my_ob = [ln_swr_lon_obs, en_swr_lon_obs, swr_map_slope_obs, ln_swr_map_obs, en_swr_map_obs]
+            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
+            my_ax = ["0", "0", "xy", "xy", "xy"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset1: sm_std_mod}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": method.split(", ")[0], "arraySTD_" + dataset2: sm_std_obs}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
+                     "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=swr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=swr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
                 my_ty, my_un, my_units, nbr
     # Metric value
@@ -13649,6 +15697,990 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     return metric_output
 
 
+def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                  lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhflandmaskfilemod, lhflandmasknamemod,
+                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                  lhffileobs, lhfnameobs, lhfareafileobs, lhfareanameobs, lhflandmaskfileobs, lhflandmasknameobs,
+                  sstbox, lhfbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoLhfTsRmse() function computes LHFA (latent heat flux anomalies) life cycle associated with ENSO in a
+    'lhfbox' (usually the nino3.4) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and
+    lagging ENSO).
+    It is the regression of 'lhfbox' averaged LHFA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of nino3.4 LHFA onto nino3.4 SSTA).
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param lhffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LHF
+    :param lhfnamemod: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffilemod'
+    :param lhfareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LHF areacell
+    :param lhfareanamemod: string, optional
+        name of areacell for the LHF variable (areacella, areacello,...) in 'lhfareafilemod'
+    :param lhflandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LHF landmask
+    :param lhflandmasknamemod: string, optional
+        name of landmask for the LHF variable (sftlf,...) in 'lhflandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param lhffileobs: string
+        path_to/filename of the file (NetCDF) of the observed LHF
+    :param lhfnameobs: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffileobs'
+    :param lhfareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LHF areacell
+    :param lhfareanameobs: string, optional
+        name of areacell for the LHF variable (areacella, areacello,...) in 'lhfareafileobs'
+    :param lhflandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LHF landmask
+    :param lhflandmasknameobs: string, optional
+        name of landmask for the LHF variable (sftlf,...) in 'lhflandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param lhfbox: string
+        name of box (e.g. 'nino3.4') for LHF
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoLhfTsRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "ENSO life cyle LHFA"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "temporal curve of " + lhfbox + " averaged latent heat flux anomalies (LHFA) during " + \
+             str(nbr_years_window) + " years (centered on ENSO) regressed onto " + region_ev + " averaged sea " + \
+             "surface temperature anomalies (SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoLhfTsRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        lhf_mod, lhf_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+            lhffilemod, lhfnamemod, "heat flux", metric, lhfbox, file_area=lhfareafilemod, name_area=lhfareanamemod,
+            file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        lhf_obs, lhf_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+            lhffileobs, lhfnameobs, "heat flux", metric, lhfbox, file_area=lhfareafileobs, name_area=lhfareanameobs,
+            file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, lhf_mod, keyerror_mod = CheckTime(sst_mod, lhf_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, lhf_obs, keyerror_obs = CheckTime(sst_obs, lhf_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        # 2.2 LHF in 'lhfbox' are normalized / detrended / smoothed (running average) if applicable
+        lhf_mod, method, keyerror_mod2 = PreProcessTS(
+            lhf_mod, method, areacell=lhf_mod_areacell, average="horizontal", compute_anom=True, region=lhfbox,
+            **kwargs)
+        lhf_obs, _, keyerror_obs2 = PreProcessTS(
+            lhf_obs, "", areacell=lhf_obs_areacell, average="horizontal", compute_anom=True, region=lhfbox, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del lhf_mod_areacell, lhf_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                "axes4": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod lhf) " + str(lhf_mod.shape), "shape4": "(obs lhf) " + str(lhf_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod lhf) " + str(TimeBounds(lhf_mod)), "time4": "(obs lhf) " + str(TimeBounds(lhf_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+
+        # ------------------------------------------------
+        # 4. Regression time series
+        # ------------------------------------------------
+        # 4.1 Regression time series
+        lhf_slope_mod = LinearRegressionTsAgainstTs(
+            lhf_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        lhf_slope_obs = LinearRegressionTsAgainstTs(
+            lhf_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        if debug is True:
+            dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_slope_mod.getAxisList()]),
+                          "axes2": "(obs lhf) " + str([ax.id for ax in lhf_slope_obs.getAxisList()]),
+                          "shape1": "(mod lhf) " + str(lhf_slope_mod.shape),
+                          "shape2": "(obs lhf) " + str(lhf_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsAxis(lhf_slope_mod, lhf_slope_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(lhf_slope_mod, lhf_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lhf_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lhf_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+                lhffilemod, lhfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafilemod,
+                name_area=lhfareanamemod, file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+                lhffileobs, lhfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafileobs,
+                name_area=lhfareanameobs, file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, map_mod, keyerror_mod = CheckTime(sst_mod, map_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, map_obs, keyerror_obs = CheckTime(sst_obs, map_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess LHF (computes anomalies, normalizes, detrends, smoothes, averages,...)
+            map_mod, _, keyerror_mod = PreProcessTS(
+                map_mod, "", areacell=areacell_mod, compute_anom=True, region="equatorial_pacific", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(
+                map_obs, "", areacell=areacell_obs, compute_anom=True, region="equatorial_pacific", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs lhf) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod lhf) " + str(map_mod.shape), "shape2": "(obs lhf) " + str(map_obs.shape),
+                              "time1": "(mod lhf) " + str(TimeBounds(map_mod)),
+                              "time2": "(obs lhf) " + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                              "regridTool", "regridMethod"}
+                extra_args = set(kwargs["regridding"]) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs lhf) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod lhf) " + str(map_mod.shape),
+                                  "shape2": "(obs lhf) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Meridional average
+            lhf_hov_mod, keyerror_mod = AverageMeridional(map_mod)
+            lhf_hov_obs, keyerror_obs = AverageMeridional(map_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_hov_mod.getAxisList()]),
+                              "axes2": "(obs lhf) " + str([ax.id for ax in lhf_hov_obs.getAxisList()]),
+                              "shape1": "(mod lhf) " + str(lhf_hov_mod.shape),
+                              "shape2": "(obs lhf) " + str(lhf_hov_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional: netcdf", 15, **dict_debug)
+            # Linear regression
+            lhf_hov_slope_mod = LinearRegressionTsAgainstTs(
+                lhf_hov_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            lhf_hov_slope_obs = LinearRegressionTsAgainstTs(
+                lhf_hov_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            if debug is True:
+                dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_hov_slope_mod.getAxisList()]),
+                              "axes2": "(obs lhf) " + str([ax.id for ax in lhf_hov_slope_obs.getAxisList()]),
+                              "shape1": "(mod lhf) " + str(lhf_hov_slope_mod.shape),
+                              "shape2": "(obs lhf) " + str(lhf_hov_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_lhf_ts_mod = Composite(lhf_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_lhf_hov_mod = Composite(
+                    lhf_hov_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_lhf_ts_mod = MyEmpty(lhf_mod[:12 * nbr_years_window], time=True, time_id="months")
+                ln_lhf_hov_mod = MyEmpty(lhf_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_mod) > 0:
+                en_lhf_ts_mod = Composite(lhf_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_lhf_hov_mod = Composite(
+                    lhf_hov_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_lhf_ts_mod = MyEmpty(lhf_mod[:12 * nbr_years_window], time=True, time_id="months")
+                en_lhf_hov_mod = MyEmpty(lhf_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(ln_years_obs) > 0:
+                ln_lhf_ts_obs = Composite(lhf_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_lhf_hov_obs = Composite(
+                    lhf_hov_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_lhf_ts_obs = MyEmpty(lhf_obs[:12 * nbr_years_window], time=True, time_id="months")
+                ln_lhf_hov_obs = MyEmpty(lhf_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_obs) > 0:
+                en_lhf_ts_obs = Composite(lhf_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_lhf_hov_obs = Composite(
+                    lhf_hov_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_lhf_ts_obs = MyEmpty(lhf_obs[:12 * nbr_years_window], time=True, time_id="months")
+                en_lhf_hov_obs = MyEmpty(lhf_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["temporal curve of " + lhfbox + " averaged LHFA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " + region_ev +
+                     " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "temporal curve of " + lhfbox + " averaged LHFA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev +
+                     " SSTA > " + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of LHFA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "hovmoeller (time - longitude) of LHFA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of LHFA during " + str(nbr_years_window) + " years (centered on " +
+                     "ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_lhf_ts_mod, en_lhf_ts_mod, lhf_hov_slope_mod, ln_lhf_hov_mod, en_lhf_hov_mod]
+            my_ob = [ln_lhf_ts_obs, en_lhf_ts_obs, lhf_hov_slope_obs, ln_lhf_hov_obs, en_lhf_hov_obs]
+            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
+            my_ax = ["0", "0", "01", "01", "01"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "arraySTD_" + dataset1: sm_std_mod, "description": method.split(", ")[0]}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "arraySTD_" + dataset1: sm_std_obs, "description": method.split(", ")[0]}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_ts": sm_corr, "CORR_error_" + dataset2 + "_ts": sm_corr_error,
+                     "STD_" + dataset2 + "_ts": sm_std, "STD_error_" + dataset2 + "_ts": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lhf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lhf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                  lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrlandmaskfilemod, lwrlandmasknamemod,
+                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                  lwrfileobs, lwrnameobs, lwrareafileobs, lwrareanameobs, lwrlandmaskfileobs, lwrlandmasknameobs,
+                  sstbox, lwrbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoLwrTsRmse() function computes LWRA (net surface longwave radiation anomalies) life cycle associated with
+    ENSO in a 'lwrbox' (usually the nino3.4) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2
+    leading and lagging ENSO).
+    It is the regression of 'lwrbox' averaged LWRA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of nino3.4 LWRA onto nino3.4 SSTA).
+
+    The net surface longwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into lwrfile and lwrname of this
+    function a list() of the four needed files and variable names (CMIP: rlds-rlus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param lwrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LWR
+    :param lwrnamemod: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfilemod'
+    :param lwrareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LWR areacell
+    :param lwrareanamemod: string, optional
+        name of areacell for the LWR variable (areacella, areacello,...) in 'lwrareafilemod'
+    :param lwrlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled LWR landmask
+    :param lwrlandmasknamemod: string, optional
+        name of landmask for the LWR variable (sftlf,...) in 'lwrlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param lwrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed LWR
+    :param lwrnameobs: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfileobs'
+    :param lwrareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LWR areacell
+    :param lwrareanameobs: string, optional
+        name of areacell for the LWR variable (areacella, areacello,...) in 'lwrareafileobs'
+    :param lwrlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed LWR landmask
+    :param lwrlandmasknameobs: string, optional
+        name of landmask for the LWR variable (sftlf,...) in 'lwrlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param lwrbox: string
+        name of box (e.g. 'nino3.4') for LWR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoLwrTsRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "ENSO life cyle LWRA"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "temporal curve of " + lwrbox + " averaged net surface longwave radiation anomalies (LWRA) during " + \
+             str(nbr_years_window) + " years (centered on ENSO) regressed onto " + region_ev + " averaged sea " + \
+             "surface temperature anomalies (SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoLwrTsRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        lwr_mod, lwr_mod_areacell, keyerror_mod2 = Read_data_mask_area_multifile(
+            lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, lwrbox, file_area=lwrareafilemod,
+            name_area=lwrareanamemod, file_mask=lwrlandmaskfilemod, name_mask=lwrlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug,
+            interpreter="project_interpreter_mod_var2", **kwargs)
+        lwr_obs, lwr_obs_areacell, keyerror_obs2 = Read_data_mask_area_multifile(
+            lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, lwrbox, file_area=lwrareafileobs,
+            name_area=lwrareanameobs, file_mask=lwrlandmaskfileobs, name_mask=lwrlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug,
+            interpreter="project_interpreter_obs_var2", **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, lwr_mod, keyerror_mod = CheckTime(sst_mod, lwr_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, lwr_obs, keyerror_obs = CheckTime(sst_obs, lwr_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        # 2.2 LWR in 'lwrbox' are normalized / detrended / smoothed (running average) if applicable
+        lwr_mod, method, keyerror_mod2 = PreProcessTS(
+            lwr_mod, method, areacell=lwr_mod_areacell, average="horizontal", compute_anom=True, region=lwrbox,
+            **kwargs)
+        lwr_obs, _, keyerror_obs2 = PreProcessTS(
+            lwr_obs, "", areacell=lwr_obs_areacell, average="horizontal", compute_anom=True, region=lwrbox, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del lwr_mod_areacell, lwr_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                "axes4": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod lwr) " + str(lwr_mod.shape), "shape4": "(obs lwr) " + str(lwr_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod lwr) " + str(TimeBounds(lwr_mod)), "time4": "(obs lwr) " + str(TimeBounds(lwr_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+
+        # ------------------------------------------------
+        # 4. Regression time series
+        # ------------------------------------------------
+        # 4.1 Regression time series
+        lwr_slope_mod = LinearRegressionTsAgainstTs(
+            lwr_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        lwr_slope_obs = LinearRegressionTsAgainstTs(
+            lwr_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        if debug is True:
+            dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_slope_mod.getAxisList()]),
+                          "axes2": "(obs lwr) " + str([ax.id for ax in lwr_slope_obs.getAxisList()]),
+                          "shape1": "(mod lwr) " + str(lwr_slope_mod.shape),
+                          "shape2": "(obs lwr) " + str(lwr_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsAxis(lwr_slope_mod, lwr_slope_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(lwr_slope_mod, lwr_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lwr_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lwr_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, map_mod_areacell, keyerror_mod = Read_data_mask_area_multifile(
+                lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafilemod, name_area=lwrareanamemod, file_mask=lwrlandmaskfilemod,
+                name_mask=lwrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var2", **kwargs)
+            map_obs, map_obs_areacell, keyerror_obs = Read_data_mask_area_multifile(
+                lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafileobs, name_area=lwrareanameobs, file_mask=lwrlandmaskfileobs,
+                name_mask=lwrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, map_mod, keyerror_mod = CheckTime(sst_mod, map_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, map_obs, keyerror_obs = CheckTime(sst_obs, map_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess LWR (computes anomalies, normalizes, detrends, smoothes, averages,...)
+            map_mod, _, keyerror_mod = PreProcessTS(
+                map_mod, "", areacell=map_mod_areacell, compute_anom=True, region="equatorial_pacific", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(
+                map_obs, "", areacell=map_obs_areacell, compute_anom=True, region="equatorial_pacific", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del map_mod_areacell, map_obs_areacell
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs lwr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod lwr) " + str(map_mod.shape), "shape2": "(obs lwr) " + str(map_obs.shape),
+                              "time1": "(mod lwr) " + str(TimeBounds(map_mod)),
+                              "time2": "(obs lwr) " + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                              "regridTool", "regridMethod"}
+                extra_args = set(kwargs["regridding"]) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs lwr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod lwr) " + str(map_mod.shape),
+                                  "shape2": "(obs lwr) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Meridional average
+            lwr_hov_mod, keyerror_mod = AverageMeridional(map_mod)
+            lwr_hov_obs, keyerror_obs = AverageMeridional(map_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_hov_mod.getAxisList()]),
+                              "axes2": "(obs lwr) " + str([ax.id for ax in lwr_hov_obs.getAxisList()]),
+                              "shape1": "(mod lwr) " + str(lwr_hov_mod.shape),
+                              "shape2": "(obs lwr) " + str(lwr_hov_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional: netcdf", 15, **dict_debug)
+            # Linear regression
+            lwr_hov_slope_mod = LinearRegressionTsAgainstTs(
+                lwr_hov_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            lwr_hov_slope_obs = LinearRegressionTsAgainstTs(
+                lwr_hov_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            if debug is True:
+                dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_hov_slope_mod.getAxisList()]),
+                              "axes2": "(obs lwr) " + str([ax.id for ax in lwr_hov_slope_obs.getAxisList()]),
+                              "shape1": "(mod lwr) " + str(lwr_hov_slope_mod.shape),
+                              "shape2": "(obs lwr) " + str(lwr_hov_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_lwr_ts_mod = Composite(lwr_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_lwr_hov_mod = Composite(
+                    lwr_hov_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_lwr_ts_mod = MyEmpty(lwr_mod[:12 * nbr_years_window], time=True, time_id="months")
+                ln_lwr_hov_mod = MyEmpty(lwr_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_mod) > 0:
+                en_lwr_ts_mod = Composite(lwr_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_lwr_hov_mod = Composite(
+                    lwr_hov_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_lwr_ts_mod = MyEmpty(lwr_mod[:12 * nbr_years_window], time=True, time_id="months")
+                en_lwr_hov_mod = MyEmpty(lwr_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(ln_years_obs) > 0:
+                ln_lwr_ts_obs = Composite(lwr_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_lwr_hov_obs = Composite(
+                    lwr_hov_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_lwr_ts_obs = MyEmpty(lwr_obs[:12 * nbr_years_window], time=True, time_id="months")
+                ln_lwr_hov_obs = MyEmpty(lwr_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_obs) > 0:
+                en_lwr_ts_obs = Composite(lwr_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_lwr_hov_obs = Composite(
+                    lwr_hov_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_lwr_ts_obs = MyEmpty(lwr_obs[:12 * nbr_years_window], time=True, time_id="months")
+                en_lwr_hov_obs = MyEmpty(lwr_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["temporal curve of " + lwrbox + " averaged LWRA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " + region_ev +
+                     " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "temporal curve of " + lwrbox + " averaged LWRA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev +
+                     " SSTA > " + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of LWRA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "hovmoeller (time - longitude) of LWRA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of LWRA during " + str(nbr_years_window) + " years (centered on " +
+                     "ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_lwr_ts_mod, en_lwr_ts_mod, lwr_hov_slope_mod, ln_lwr_hov_mod, en_lwr_hov_mod]
+            my_ob = [ln_lwr_ts_obs, en_lwr_ts_obs, lwr_hov_slope_obs, ln_lwr_hov_obs, en_lwr_hov_obs]
+            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
+            my_ax = ["0", "0", "01", "01", "01"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "arraySTD_" + dataset1: sm_std_mod, "description": method.split(", ")[0]}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "arraySTD_" + dataset1: sm_std_obs, "description": method.split(", ")[0]}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_ts": sm_corr, "CORR_error_" + dataset2 + "_ts": sm_corr_error,
+                     "STD_" + dataset2 + "_ts": sm_std, "STD_error_" + dataset2 + "_ts": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lwr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lwr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
 def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                  prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
@@ -14119,6 +17151,494 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
             SaveNetcdf(file_name, global_attributes=dict3,
                        var1=pr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=pr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                  shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shflandmaskfilemod, shflandmasknamemod,
+                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                  shffileobs, shfnameobs, shfareafileobs, shfareanameobs, shflandmaskfileobs, shflandmasknameobs,
+                  sstbox, shfbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoShfTsRmse() function computes SHFA (sensible heat flux anomalies) life cycle associated with ENSO in a
+    'shfbox' (usually the nino3.4) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2 leading and
+    lagging ENSO).
+    It is the regression of 'shfbox' averaged SHFA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of nino3.4 SHFA onto nino3.4 SSTA).
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param shffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SHF
+    :param shfnamemod: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffilemod'
+    :param shfareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SHF areacell
+    :param shfareanamemod: string, optional
+        name of areacell for the SHF variable (areacella, areacello,...) in 'shfareafilemod'
+    :param shflandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SHF landmask
+    :param shflandmasknamemod: string, optional
+        name of landmask for the SHF variable (sftlf,...) in 'shflandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param shffileobs: string
+        path_to/filename of the file (NetCDF) of the observed SHF
+    :param shfnameobs: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffileobs'
+    :param shfareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SHF areacell
+    :param shfareanameobs: string, optional
+        name of areacell for the SHF variable (areacella, areacello,...) in 'shfareafileobs'
+    :param shflandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SHF landmask
+    :param shflandmasknameobs: string, optional
+        name of landmask for the SHF variable (sftlf,...) in 'shflandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param shfbox: string
+        name of box (e.g. 'nino3.4') for SHF
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoShfTsRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "ENSO life cyle SHFA"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "temporal curve of " + shfbox + " averaged sensible heat flux anomalies (SHFA) during " + \
+             str(nbr_years_window) + " years (centered on ENSO) regressed onto " + region_ev + " averaged sea " + \
+             "surface temperature anomalies (SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoShfTsRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        shf_mod, shf_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+            shffilemod, shfnamemod, "heat flux", metric, shfbox, file_area=shfareafilemod, name_area=shfareanamemod,
+            file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        shf_obs, shf_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+            shffileobs, shfnameobs, "heat flux", metric, shfbox, file_area=shfareafileobs, name_area=shfareanameobs,
+            file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, shf_mod, keyerror_mod = CheckTime(sst_mod, shf_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, shf_obs, keyerror_obs = CheckTime(sst_obs, shf_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        # 2.2 SHF in 'shfbox' are normalized / detrended / smoothed (running average) if applicable
+        shf_mod, method, keyerror_mod2 = PreProcessTS(
+            shf_mod, method, areacell=shf_mod_areacell, average="horizontal", compute_anom=True, region=shfbox,
+            **kwargs)
+        shf_obs, _, keyerror_obs2 = PreProcessTS(
+            shf_obs, "", areacell=shf_obs_areacell, average="horizontal", compute_anom=True, region=shfbox, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del shf_mod_areacell, shf_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                "axes4": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod shf) " + str(shf_mod.shape), "shape4": "(obs shf) " + str(shf_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod shf) " + str(TimeBounds(shf_mod)), "time4": "(obs shf) " + str(TimeBounds(shf_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+
+        # ------------------------------------------------
+        # 4. Regression time series
+        # ------------------------------------------------
+        # 4.1 Regression time series
+        shf_slope_mod = LinearRegressionTsAgainstTs(
+            shf_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        shf_slope_obs = LinearRegressionTsAgainstTs(
+            shf_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        if debug is True:
+            dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_slope_mod.getAxisList()]),
+                          "axes2": "(obs shf) " + str([ax.id for ax in shf_slope_obs.getAxisList()]),
+                          "shape1": "(mod shf) " + str(shf_slope_mod.shape),
+                          "shape2": "(obs shf) " + str(shf_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsAxis(shf_slope_mod, shf_slope_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(shf_slope_mod, shf_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(shf_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(shf_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+                shffilemod, shfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafilemod,
+                name_area=shfareanamemod, file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+                shffileobs, shfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafileobs,
+                name_area=shfareanameobs, file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, map_mod, keyerror_mod = CheckTime(sst_mod, map_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, map_obs, keyerror_obs = CheckTime(sst_obs, map_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess SHF (computes anomalies, normalizes, detrends, smoothes, averages,...)
+            map_mod, _, keyerror_mod = PreProcessTS(
+                map_mod, "", areacell=areacell_mod, compute_anom=True, region="equatorial_pacific", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(
+                map_obs, "", areacell=areacell_obs, compute_anom=True, region="equatorial_pacific", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs shf) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod shf) " + str(map_mod.shape), "shape2": "(obs shf) " + str(map_obs.shape),
+                              "time1": "(mod shf) " + str(TimeBounds(map_mod)),
+                              "time2": "(obs shf) " + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                              "regridTool", "regridMethod"}
+                extra_args = set(kwargs["regridding"]) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs shf) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod shf) " + str(map_mod.shape),
+                                  "shape2": "(obs shf) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Meridional average
+            shf_hov_mod, keyerror_mod = AverageMeridional(map_mod)
+            shf_hov_obs, keyerror_obs = AverageMeridional(map_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_hov_mod.getAxisList()]),
+                              "axes2": "(obs shf) " + str([ax.id for ax in shf_hov_obs.getAxisList()]),
+                              "shape1": "(mod shf) " + str(shf_hov_mod.shape),
+                              "shape2": "(obs shf) " + str(shf_hov_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional: netcdf", 15, **dict_debug)
+            # Linear regression
+            shf_hov_slope_mod = LinearRegressionTsAgainstTs(
+                shf_hov_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            shf_hov_slope_obs = LinearRegressionTsAgainstTs(
+                shf_hov_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            if debug is True:
+                dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_hov_slope_mod.getAxisList()]),
+                              "axes2": "(obs shf) " + str([ax.id for ax in shf_hov_slope_obs.getAxisList()]),
+                              "shape1": "(mod shf) " + str(shf_hov_slope_mod.shape),
+                              "shape2": "(obs shf) " + str(shf_hov_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_shf_ts_mod = Composite(shf_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_shf_hov_mod = Composite(
+                    shf_hov_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_shf_ts_mod = MyEmpty(shf_mod[:12 * nbr_years_window], time=True, time_id="months")
+                ln_shf_hov_mod = MyEmpty(shf_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_mod) > 0:
+                en_shf_ts_mod = Composite(shf_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_shf_hov_mod = Composite(
+                    shf_hov_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_shf_ts_mod = MyEmpty(shf_mod[:12 * nbr_years_window], time=True, time_id="months")
+                en_shf_hov_mod = MyEmpty(shf_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(ln_years_obs) > 0:
+                ln_shf_ts_obs = Composite(shf_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_shf_hov_obs = Composite(
+                    shf_hov_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_shf_ts_obs = MyEmpty(shf_obs[:12 * nbr_years_window], time=True, time_id="months")
+                ln_shf_hov_obs = MyEmpty(shf_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_obs) > 0:
+                en_shf_ts_obs = Composite(shf_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_shf_hov_obs = Composite(
+                    shf_hov_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_shf_ts_obs = MyEmpty(shf_obs[:12 * nbr_years_window], time=True, time_id="months")
+                en_shf_hov_obs = MyEmpty(shf_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["temporal curve of " + shfbox + " averaged SHFA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " + region_ev +
+                     " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "temporal curve of " + shfbox + " averaged SHFA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev +
+                     " SSTA > " + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of SHFA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "hovmoeller (time - longitude) of SHFA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of SHFA during " + str(nbr_years_window) + " years (centered on " +
+                     "ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_shf_ts_mod, en_shf_ts_mod, shf_hov_slope_mod, ln_shf_hov_mod, en_shf_hov_mod]
+            my_ob = [ln_shf_ts_obs, en_shf_ts_obs, shf_hov_slope_obs, ln_shf_hov_obs, en_shf_hov_obs]
+            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
+            my_ax = ["0", "0", "01", "01", "01"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "arraySTD_" + dataset1: sm_std_mod, "description": method.split(", ")[0]}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "arraySTD_" + dataset1: sm_std_obs, "description": method.split(", ")[0]}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_ts": sm_corr, "CORR_error_" + dataset2 + "_ts": sm_corr_error,
+                     "STD_" + dataset2 + "_ts": sm_std, "STD_error_" + dataset2 + "_ts": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=shf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=shf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
                 my_ty, my_un, my_units, nbr
     # Metric value
@@ -15099,6 +18619,502 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             SaveNetcdf(file_name, global_attributes=dict3,
                        var1=sst_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=sst_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_ty, my_un, my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_period_model": actualtimebounds_mod,
+        "time_period_observations": actualtimebounds_obs, "time_frequency": kwargs["frequency"], "keyerror": keyerror,
+        "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                  swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrlandmaskfilemod, swrlandmasknamemod,
+                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                  swrfileobs, swrnameobs, swrareafileobs, swrareanameobs, swrlandmaskfileobs, swrlandmasknameobs,
+                  sstbox, swrbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The EnsoSwrTsRmse() function computes SWRA (net surface shortwave radiation anomalies) life cycle associated with
+    ENSO in a 'swrbox' (usually the nino3.4) with a window of 'nbr_years_window' centered on ENSO (nbr_years_window/2
+    leading and lagging ENSO).
+    It is the regression of 'swrbox' averaged SWRA time series onto 'region_ev' averaged SSTA (sea surface temperature
+    anomalies) (usually the regression of nino3.4 SWRA onto nino3.4 SSTA).
+
+    The net surface shortwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into swrfile and swrname of this
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param swrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SWR
+    :param swrnamemod: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfilemod'
+    :param swrareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SWR areacell
+    :param swrareanamemod: string, optional
+        name of areacell for the SWR variable (areacella, areacello,...) in 'swrareafilemod'
+    :param swrlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SWR landmask
+    :param swrlandmasknamemod: string, optional
+        name of landmask for the SWR variable (sftlf,...) in 'swrlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param swrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SWR
+    :param swrnameobs: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfileobs'
+    :param swrareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SWR areacell
+    :param swrareanameobs: string, optional
+        name of areacell for the SWR variable (areacella, areacello,...) in 'swrareafileobs'
+    :param swrlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SWR landmask
+    :param swrlandmasknameobs: string, optional
+        name of landmask for the SWR variable (sftlf,...) in 'swrlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param swrbox: string
+        name of box (e.g. 'nino3.4') for SWR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param nbr_years_window: integer
+        number of years used to compute the composite (e.g. 6)
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'EnsoSwrTsRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+            enso_method3 = " (" + enso_method1 + ")"
+        if isinstance(length_ev, int) is True:
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive months"
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method = " (" + enso_method1 + "; " + enso_method2 + ")"
+        else:
+            enso_method = " (" + enso_method1 + enso_method2 + ")"
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "ENSO life cyle SWRA"
+    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2/C"
+    method = "temporal curve of " + swrbox + " averaged net surface shortwave radiation anomalies (SWRA) during " + \
+             str(nbr_years_window) + " years (centered on ENSO) regressed onto " + region_ev + " averaged sea " + \
+             "surface temperature anomalies (SSTA) during " + season_ev + enso_method3
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "EnsoSwrTsRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        swr_mod, swr_mod_areacell, keyerror_mod2 = Read_data_mask_area_multifile(
+            swrfilemod, swrnamemod, "heat flux", "swr", metric, swrbox, file_area=swrareafilemod,
+            name_area=swrareanamemod, file_mask=swrlandmaskfilemod, name_mask=swrlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug,
+            interpreter="project_interpreter_mod_var2", **kwargs)
+        swr_obs, swr_obs_areacell, keyerror_obs2 = Read_data_mask_area_multifile(
+            swrfileobs, swrnameobs, "heat flux", "swr", metric, swrbox, file_area=swrareafileobs,
+            name_area=swrareanameobs, file_mask=swrlandmaskfileobs, name_mask=swrlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug,
+            interpreter="project_interpreter_obs_var2", **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, swr_mod, keyerror_mod = CheckTime(sst_mod, swr_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, swr_obs, keyerror_obs = CheckTime(sst_obs, swr_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_box_mod, _, keyerror_mod1 = PreProcessTS(
+            sst_mod, "", areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_box_obs, _, keyerror_obs1 = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        kwargs["smoothing"] = deepcopy(smooth)
+        # 2.2 SWR in 'swrbox' are normalized / detrended / smoothed (running average) if applicable
+        swr_mod, method, keyerror_mod2 = PreProcessTS(
+            swr_mod, method, areacell=swr_mod_areacell, average="horizontal", compute_anom=True, region=swrbox,
+            **kwargs)
+        swr_obs, _, keyerror_obs2 = PreProcessTS(
+            swr_obs, "", areacell=swr_obs_areacell, average="horizontal", compute_anom=True, region=swrbox, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_obs1, keyerror_mod2, keyerror_obs2])
+        del swr_mod_areacell, swr_obs_areacell, smooth, sst_mod_areacell, sst_obs_areacell
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod sst) " + str([ax.id for ax in sst_box_mod.getAxisList()]),
+                "axes2": "(obs sst) " + str([ax.id for ax in sst_box_obs.getAxisList()]),
+                "axes3": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                "axes4": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                "shape1": "(mod sst) " + str(sst_box_mod.shape), "shape2": "(obs sst) " + str(sst_box_obs.shape),
+                "shape3": "(mod swr) " + str(swr_mod.shape), "shape4": "(obs swr) " + str(swr_obs.shape),
+                "time1": "(mod sst) " + str(TimeBounds(sst_box_mod)),
+                "time2": "(obs sst) " + str(TimeBounds(sst_box_obs)),
+                "time3": "(mod swr) " + str(TimeBounds(swr_mod)), "time4": "(obs swr) " + str(TimeBounds(swr_obs))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Seasonal mean and anomalies
+        # ------------------------------------------------
+        # 3.1 horizontally averaged SST
+        enso_mod = SeasonalMean(sst_box_mod, season_ev, compute_anom=True)
+        enso_obs = SeasonalMean(sst_box_obs, season_ev, compute_anom=True)
+
+        # ------------------------------------------------
+        # 4. Regression time series
+        # ------------------------------------------------
+        # 4.1 Regression time series
+        swr_slope_mod = LinearRegressionTsAgainstTs(
+            swr_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        swr_slope_obs = LinearRegressionTsAgainstTs(
+            swr_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"], debug=debug)
+        if debug is True:
+            dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_slope_mod.getAxisList()]),
+                          "axes2": "(obs swr) " + str([ax.id for ax in swr_slope_obs.getAxisList()]),
+                          "shape1": "(mod swr) " + str(swr_slope_mod.shape),
+                          "shape2": "(obs swr) " + str(swr_slope_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 5.1 Computes the root mean square difference
+        mv, keyerror = RmsAxis(swr_slope_mod, swr_slope_obs, axis=0, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 5.2 Supplementary metrics
+        sm_corr = float(Correlation(swr_slope_mod, swr_slope_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(swr_slope_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(swr_slope_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, map_mod_areacell, keyerror_mod = Read_data_mask_area_multifile(
+                swrfilemod, swrnamemod, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafilemod, name_area=swrareanamemod, file_mask=swrlandmaskfilemod,
+                name_mask=swrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var2", **kwargs)
+            map_obs, map_obs_areacell, keyerror_obs = Read_data_mask_area_multifile(
+                swrfileobs, swrnameobs, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafileobs, name_area=swrareanameobs, file_mask=swrlandmaskfileobs,
+                name_mask=swrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if the same time period is used for both variables
+            sst_mod, map_mod, keyerror_mod = CheckTime(sst_mod, map_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, map_obs, keyerror_obs = CheckTime(sst_obs, map_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess SWR (computes anomalies, normalizes, detrends, smoothes, averages,...)
+            map_mod, _, keyerror_mod = PreProcessTS(
+                map_mod, "", areacell=map_mod_areacell, compute_anom=True, region="equatorial_pacific", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(
+                map_obs, "", areacell=map_obs_areacell, compute_anom=True, region="equatorial_pacific", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del map_mod_areacell, map_obs_areacell
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs swr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod swr) " + str(map_mod.shape), "shape2": "(obs swr) " + str(map_obs.shape),
+                              "time1": "(mod swr) " + str(TimeBounds(map_mod)),
+                              "time2": "(obs swr) " + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netcdf", 15, **dict_debug)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                              "regridTool", "regridMethod"}
+                extra_args = set(kwargs["regridding"]) - known_args
+                if extra_args:
+                    EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs swr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod swr) " + str(map_mod.shape),
+                                  "shape2": "(obs swr) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Meridional average
+            swr_hov_mod, keyerror_mod = AverageMeridional(map_mod)
+            swr_hov_obs, keyerror_obs = AverageMeridional(map_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_hov_mod.getAxisList()]),
+                              "axes2": "(obs swr) " + str([ax.id for ax in swr_hov_obs.getAxisList()]),
+                              "shape1": "(mod swr) " + str(swr_hov_mod.shape),
+                              "shape2": "(obs swr) " + str(swr_hov_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional: netcdf", 15, **dict_debug)
+            # Linear regression
+            swr_hov_slope_mod = LinearRegressionTsAgainstTs(
+                swr_hov_mod, enso_mod, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            swr_hov_slope_obs = LinearRegressionTsAgainstTs(
+                swr_hov_obs, enso_obs, nbr_years_window, return_stderr=False, frequency=kwargs["frequency"],
+                debug=debug)
+            if debug is True:
+                dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_hov_slope_mod.getAxisList()]),
+                              "axes2": "(obs swr) " + str([ax.id for ax in swr_hov_slope_obs.getAxisList()]),
+                              "shape1": "(mod swr) " + str(swr_hov_slope_mod.shape),
+                              "shape2": "(obs swr) " + str(swr_hov_slope_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
+            # Lists event years
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                        compute_season=True, duration=length_ev)
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                        compute_season=True, duration=length_ev)
+            if debug is True:
+                dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                              "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                              "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                              "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents: netcdf", 15, **dict_debug)
+            # Composites
+            if len(ln_years_mod) > 0:
+                ln_swr_ts_mod = Composite(swr_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_swr_hov_mod = Composite(
+                    swr_hov_mod, ln_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_swr_ts_mod = MyEmpty(swr_mod[:12 * nbr_years_window], time=True, time_id="months")
+                ln_swr_hov_mod = MyEmpty(swr_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_mod) > 0:
+                en_swr_ts_mod = Composite(swr_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_swr_hov_mod = Composite(
+                    swr_hov_mod, en_years_mod, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_swr_ts_mod = MyEmpty(swr_mod[:12 * nbr_years_window], time=True, time_id="months")
+                en_swr_hov_mod = MyEmpty(swr_hov_mod[:12 * nbr_years_window], time=True, time_id="months")
+            if len(ln_years_obs) > 0:
+                ln_swr_ts_obs = Composite(swr_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                ln_swr_hov_obs = Composite(
+                    swr_hov_obs, ln_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                ln_swr_ts_obs = MyEmpty(swr_obs[:12 * nbr_years_window], time=True, time_id="months")
+                ln_swr_hov_obs = MyEmpty(swr_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            if len(en_years_obs) > 0:
+                en_swr_ts_obs = Composite(swr_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+                en_swr_hov_obs = Composite(
+                    swr_hov_obs, en_years_obs, kwargs["frequency"], nbr_years_window=nbr_years_window)
+            else:
+                en_swr_ts_obs = MyEmpty(swr_obs[:12 * nbr_years_window], time=True, time_id="months")
+                en_swr_hov_obs = MyEmpty(swr_hov_obs[:12 * nbr_years_window], time=True, time_id="months")
+            # Supplementary metrics
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "W/m2"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 3
+            my_ev = ["nina", "nino", None, "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, None, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, None, ln_years_obs, en_years_obs]
+            my_de = ["temporal curve of " + swrbox + " averaged SWRA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " + region_ev +
+                     " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "temporal curve of " + swrbox + " averaged SWRA during " + str(nbr_years_window) + " years " +
+                     "(centered on ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev +
+                     " SSTA > " + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of SWRA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) regressed onto " + region_ev + " averaged SSTA during " + season_ev +
+                     enso_method3,
+                     "hovmoeller (time - longitude) of SWRA across longitudes during " + str(nbr_years_window) +
+                     " years (centered on ENSO) of La Nina events composite during " + season_ev + "; Nina = " +
+                     region_ev + " SSTA < -" + my_thresh + " during " + season_ev + enso_method,
+                     "hovmoeller (time - longitude) of SWRA during " + str(nbr_years_window) + " years (centered on " +
+                     "ENSO) of El Nino events composite during " + season_ev + "; Nino = " + region_ev + " SSTA > " +
+                     my_thresh + " during " + season_ev + enso_method]
+            my_un = [my_units, my_units, units, my_units, my_units]
+            my_mo = [ln_swr_ts_mod, en_swr_ts_mod, swr_hov_slope_mod, ln_swr_hov_mod, en_swr_hov_mod]
+            my_ob = [ln_swr_ts_obs, en_swr_ts_obs, swr_hov_slope_obs, ln_swr_hov_obs, en_swr_hov_obs]
+            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
+            my_ax = ["0", "0", "01", "01", "01"]
+            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "arraySTD_" + dataset1: sm_std_mod, "description": method.split(", ")[0]}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "arraySTD_" + dataset1: sm_std_obs, "description": method.split(", ")[0]}
+            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+                     "frequency": kwargs["frequency"],
+                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "CORR_" + dataset2 + "_ts": sm_corr, "CORR_error_" + dataset2 + "_ts": sm_corr_error,
+                     "STD_" + dataset2 + "_ts": sm_std, "STD_error_" + dataset2 + "_ts": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=swr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=swr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
                 my_ty, my_un, my_units, nbr
     # Metric value
@@ -16790,11 +20806,11 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if netcdf is True:
             # Read file and select the right region
             sst_map, sst_map_areacell, keyerror1 = Read_data_mask_area(
-                sstfile, sstname, "temperature", metric, "equatorial_pacific", file_area=sstareafile,
+                sstfile, sstname, "temperature", metric, "equatorial_pacific_LonExt", file_area=sstareafile,
                 name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             ssh_map, ssh_map_areacell, keyerror2 = Read_data_mask_area(
-                sshfile, sshname, "sea surface height", metric, "equatorial_pacific", file_area=sshareafile,
+                sshfile, sshname, "sea surface height", metric, "equatorial_pacific_LonExt", file_area=sshareafile,
                 name_area=sshareaname, file_mask=sshlandmaskfile, name_mask=sshlandmaskname, maskland=False,
                 maskocean=False, debug=debug, **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
@@ -16810,9 +20826,9 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             sst_map, _, keyerror1 = PreProcessTS(sst_map, "", areacell=sst_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             ssh_map, _, keyerror2 = PreProcessTS(ssh_map, "", areacell=ssh_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
             del ssh_map_areacell, sst_map_areacell
             if keyerror is not None:
@@ -16826,8 +20842,8 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            sst_map = Regrid(sst_map, None, region="equatorial_pacific", **kwargs["regridding"])
-            ssh_map = Regrid(ssh_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
+            ssh_map = Regrid(ssh_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(sst) " + str([ax.id for ax in sst_map.getAxisList()]),
                               "axes2": "(ssh) " + str([ax.id for ax in ssh_map.getAxisList()]),
@@ -17105,11 +21121,11 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if netcdf is True:
             # Read file and select the right region
             sst_map, sst_map_areacell, keyerror1 = Read_data_mask_area(
-                sstfile, sstname, "temperature", metric, "equatorial_pacific", file_area=sstareafile,
+                sstfile, sstname, "temperature", metric, "equatorial_pacific_LonExt", file_area=sstareafile,
                 name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             lhf_map, lhf_map_areacell, keyerror2 = Read_data_mask_area(
-                lhffile, lhfname, "heat flux", metric, "equatorial_pacific", file_area=lhfareafile,
+                lhffile, lhfname, "heat flux", metric, "equatorial_pacific_LonExt", file_area=lhfareafile,
                 name_area=lhfareaname, file_mask=lhflandmaskfile, name_mask=lhflandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
@@ -17121,9 +21137,9 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             sst_map, _, keyerror1 = PreProcessTS(sst_map, "", areacell=sst_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             lhf_map, _, keyerror2 = PreProcessTS(lhf_map, "", areacell=lhf_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
             del lhf_map_areacell, sst_map_areacell
             if keyerror is not None:
@@ -17137,8 +21153,8 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            sst_map = Regrid(sst_map, None, region="equatorial_pacific", **kwargs["regridding"])
-            lhf_map = Regrid(lhf_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
+            lhf_map = Regrid(lhf_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(sst) " + str([ax.id for ax in sst_map.getAxisList()]),
                               "axes2": "(lhf) " + str([ax.id for ax in lhf_map.getAxisList()]),
@@ -17421,11 +21437,11 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if netcdf is True:
             # Read file and select the right region
             sst_map, sst_map_areacell, keyerror1 = Read_data_mask_area(
-                sstfile, sstname, "temperature", metric, "equatorial_pacific", file_area=sstareafile,
+                sstfile, sstname, "temperature", metric, "equatorial_pacific_LonExt", file_area=sstareafile,
                 name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             lwr_map, lwr_map_areacell, keyerror2 = Read_data_mask_area_multifile(
-                lwrfile, lwrname, "heat flux", "lwr", metric,  "equatorial_pacific", file_area=lwrareafile,
+                lwrfile, lwrname, "heat flux", "lwr", metric,  "equatorial_pacific_LonExt", file_area=lwrareafile,
                 name_area=lwrareaname, file_mask=lwrlandmaskfile, name_mask=lwrlandmaskname, maskland=True,
                 maskocean=False, debug=debug, interpreter="project_interpreter_var2", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
@@ -17437,9 +21453,9 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             sst_map, _, keyerror1 = PreProcessTS(sst_map, "", areacell=sst_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             lwr_map, _, keyerror2 = PreProcessTS(lwr_map, "", areacell=lwr_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
             del lwr_map_areacell, sst_map_areacell
             if keyerror is not None:
@@ -17453,8 +21469,8 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            sst_map = Regrid(sst_map, None, region="equatorial_pacific", **kwargs["regridding"])
-            lwr_map = Regrid(lwr_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
+            lwr_map = Regrid(lwr_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(sst) " + str([ax.id for ax in sst_map.getAxisList()]),
                               "axes2": "(lwr) " + str([ax.id for ax in lwr_map.getAxisList()]),
@@ -17732,11 +21748,11 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if netcdf is True:
             # Read file and select the right region
             sst_map, sst_map_areacell, keyerror1 = Read_data_mask_area(
-                sstfile, sstname, "temperature", metric, "equatorial_pacific", file_area=sstareafile,
+                sstfile, sstname, "temperature", metric, "equatorial_pacific_LonExt", file_area=sstareafile,
                 name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             shf_map, shf_map_areacell, keyerror2 = Read_data_mask_area(
-                shffile, shfname, "heat flux", metric, "equatorial_pacific", file_area=shfareafile,
+                shffile, shfname, "heat flux", metric, "equatorial_pacific_LonExt", file_area=shfareafile,
                 name_area=shfareaname, file_mask=shflandmaskfile, name_mask=shflandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
@@ -17748,9 +21764,9 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             sst_map, _, keyerror1 = PreProcessTS(sst_map, "", areacell=sst_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             shf_map, _, keyerror2 = PreProcessTS(shf_map, "", areacell=shf_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
             del shf_map_areacell, sst_map_areacell
             if keyerror is not None:
@@ -17764,8 +21780,8 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            sst_map = Regrid(sst_map, None, region="equatorial_pacific", **kwargs["regridding"])
-            shf_map = Regrid(shf_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
+            shf_map = Regrid(shf_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(sst) " + str([ax.id for ax in sst_map.getAxisList()]),
                               "axes2": "(shf) " + str([ax.id for ax in shf_map.getAxisList()]),
@@ -18048,11 +22064,11 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if netcdf is True:
             # Read file and select the right region
             sst_map, sst_map_areacell, keyerror1 = Read_data_mask_area(
-                sstfile, sstname, "temperature", metric, "equatorial_pacific", file_area=sstareafile,
+                sstfile, sstname, "temperature", metric, "equatorial_pacific_LonExt", file_area=sstareafile,
                 name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             swr_map, swr_map_areacell, keyerror2 = Read_data_mask_area_multifile(
-                swrfile, swrname, "heat flux", "swr", metric,  "equatorial_pacific", file_area=swrareafile,
+                swrfile, swrname, "heat flux", "swr", metric,  "equatorial_pacific_LonExt", file_area=swrareafile,
                 name_area=swrareaname, file_mask=swrlandmaskfile, name_mask=swrlandmaskname, maskland=True,
                 maskocean=False, debug=debug, interpreter="project_interpreter_var2", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
@@ -18064,9 +22080,9 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             sst_map, _, keyerror1 = PreProcessTS(sst_map, "", areacell=sst_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             swr_map, _, keyerror2 = PreProcessTS(swr_map, "", areacell=swr_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
             del swr_map_areacell, sst_map_areacell
             if keyerror is not None:
@@ -18080,8 +22096,8 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            sst_map = Regrid(sst_map, None, region="equatorial_pacific", **kwargs["regridding"])
-            swr_map = Regrid(swr_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
+            swr_map = Regrid(swr_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(sst) " + str([ax.id for ax in sst_map.getAxisList()]),
                               "axes2": "(swr) " + str([ax.id for ax in swr_map.getAxisList()]),
@@ -18359,7 +22375,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         if netcdf is True:
             # Read file and select the right region
             tau_map, tau_map_areacell, keyerror = Read_data_mask_area(
-                taufile, tauname, "wind stress", metric, "equatorial_pacific", file_area=tauareafile,
+                taufile, tauname, "wind stress", metric, "equatorial_pacific_LonExt", file_area=tauareafile,
                 name_area=tauareaname, file_mask=taulandmaskfile, name_mask=taulandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             if keyerror is not None:
@@ -18370,7 +22386,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             tau_map, _, keyerror = PreProcessTS(
-                tau_map, "", areacell=tau_map_areacell, compute_anom=True, region="equatorial_pacific", **kwargs)
+                tau_map, "", areacell=tau_map_areacell, compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             del tau_map_areacell
             if keyerror is not None:
                 break
@@ -18382,7 +22398,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            tau_map = Regrid(tau_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            tau_map = Regrid(tau_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(tau) " + str([ax.id for ax in tau_map.getAxisList()]),
                               "shape1": "(tau) " + str(tau_map.shape)}
@@ -18666,11 +22682,11 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         if netcdf is True:
             # Read file and select the right region
             sst_map, sst_map_areacell, keyerror1 = Read_data_mask_area(
-                sstfile, sstname, "temperature", metric, "equatorial_pacific", file_area=sstareafile,
+                sstfile, sstname, "temperature", metric, "equatorial_pacific_LonExt", file_area=sstareafile,
                 name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True,
                 maskocean=False, debug=debug, **kwargs)
             thf_map, thf_map_areacell, keyerror2 = Read_data_mask_area_multifile(
-                thffile, thfname, "heat flux", "thf", metric,  "equatorial_pacific", file_area=thfareafile,
+                thffile, thfname, "heat flux", "thf", metric,  "equatorial_pacific_LonExt", file_area=thfareafile,
                 name_area=thfareaname, file_mask=thflandmaskfile, name_mask=thflandmaskname, maskland=True,
                 maskocean=False, debug=debug, interpreter="project_interpreter_var2", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
@@ -18682,9 +22698,9 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             sst_map, _, keyerror1 = PreProcessTS(sst_map, "", areacell=sst_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             thf_map, _, keyerror2 = PreProcessTS(thf_map, "", areacell=thf_map_areacell, average=False,
-                                                 compute_anom=True, region="equatorial_pacific", **kwargs)
+                                                 compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             keyerror = add_up_errors([keyerror1, keyerror2])
             del thf_map_areacell, sst_map_areacell
             if keyerror is not None:
@@ -18698,8 +22714,8 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            sst_map = Regrid(sst_map, None, region="equatorial_pacific", **kwargs["regridding"])
-            thf_map = Regrid(thf_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            sst_map = Regrid(sst_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
+            thf_map = Regrid(thf_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(sst) " + str([ax.id for ax in sst_map.getAxisList()]),
                               "axes2": "(thf) " + str([ax.id for ax in thf_map.getAxisList()]),
@@ -18997,7 +23013,7 @@ def EnsoFbTauxSsh(taufile, tauname, tauareafile, tauareaname, taulandmaskfile, t
         if netcdf is True:
             # Read file and select the right region
             ssh_map, ssh_map_areacell, keyerror = Read_data_mask_area(
-                sshfile, sshname, "sea surface height", metric, "equatorial_pacific", file_area=sshareafile,
+                sshfile, sshname, "sea surface height", metric, "equatorial_pacific_LonExt", file_area=sshareafile,
                 name_area=sshareaname, file_mask=sshlandmaskfile, name_mask=sshlandmaskname, maskland=False,
                 maskocean=False, debug=debug, **kwargs)
             if keyerror is not None:
@@ -19012,7 +23028,7 @@ def EnsoFbTauxSsh(taufile, tauname, tauareafile, tauareaname, taulandmaskfile, t
                 break
             # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
             ssh_map, _, keyerror = PreProcessTS(
-                ssh_map, "", areacell=ssh_map_areacell, compute_anom=True, region="equatorial_pacific", **kwargs)
+                ssh_map, "", areacell=ssh_map_areacell, compute_anom=True, region="equatorial_pacific_LonExt", **kwargs)
             del ssh_map_areacell
             if keyerror is not None:
                 break
@@ -19024,7 +23040,7 @@ def EnsoFbTauxSsh(taufile, tauname, tauareafile, tauareaname, taulandmaskfile, t
             if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                 kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                         "newgrid_name": "generic_1x1deg"}
-            ssh_map = Regrid(ssh_map, None, region="equatorial_pacific", **kwargs["regridding"])
+            ssh_map = Regrid(ssh_map, None, region="equatorial_pacific_LonExt", **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(ssh) " + str([ax.id for ax in ssh_map.getAxisList()]),
                               "shape1": "(ssh) " + str(ssh_map.shape)}
@@ -20696,6 +24712,1374 @@ def grad_lon_sst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return metric_output
 
 
+def SeasonalLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhflandmaskfilemod, lhflandmasknamemod,
+                       lhffileobs, lhfnameobs, lhfareafileobs, lhfareanameobs, lhflandmaskfileobs, lhflandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalLhfLatRmse() function computes the climatological (12 months) LHF (latent heat flux) meridional
+    (latitude) standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the
+    nino3_LatExt)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param lhffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LHF
+    :param lhfnamemod: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffilemod'
+    :param lhfareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for LHF
+    :param lhfareanamemod: string
+        name of areacell variable (areacella, areacello) in 'lhfareafilemod'
+    :param lhflandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for LHF
+    :param lhflandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lhflandmaskfilemod'
+    :param lhffileobs: string
+        path_to/filename of the file (NetCDF) of the observed LHF
+    :param lhfnameobs: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffileobs'
+    :param lhfareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for LHF
+    :param lhfareanameobs: string
+        name of areacell variable (areacella, areacello) in 'lhfareafileobs'
+    :param lhflandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for LHF
+    :param lhflandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lhflandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific_LatExt') for LHF
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalLhfLatRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled LHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed LHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "LHF meridional seasonality RMSE"
+    units = "W/m2"
+    method = "Meridional root mean square error of " + box + " climatological latent heat flux (LHF) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalLhfLatRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        lhf_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+            lhffilemod, lhfnamemod, "heat flux", metric, box, file_area=lhfareafilemod, name_area=lhfareanamemod,
+            file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        lhf_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+            lhffileobs, lhfnameobs, "heat flux", metric, box, file_area=lhfareafileobs, name_area=lhfareanameobs,
+            file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(lhf_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(lhf_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(lhf_mod)
+        actualtimebounds_obs = TimeBounds(lhf_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 LHF averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        lhf_mod, method, keyerror_mod = PreProcessTS(
+            lhf_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        lhf_obs, _, keyerror_obs = PreProcessTS(
+            lhf_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lhf_mod.shape), "shape2": "(obs) " + str(lhf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and zonal average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        lhfStd_mod = Std(lhf_mod)
+        lhfStd_obs = Std(lhf_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lhfStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lhfStd_mod.shape), "shape2": "(obs) " + str(lhfStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            lhfStd_mod, lhfStd_obs, method = TwoVarRegrid(
+                lhfStd_mod, lhfStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lhfStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lhfStd_mod.shape), "shape2": "(obs) " + str(lhfStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Zonal average
+        lhfStdLat_mod, keyerror_mod = AverageZonal(lhfStd_mod)
+        lhfStdLat_obs, keyerror_obs = AverageZonal(lhfStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStdLat_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lhfStdLat_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lhfStdLat_mod.shape), "shape2": "(obs) " + str(lhfStdLat_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsMeridional(lhfStdLat_mod, lhfStdLat_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(lhfStdLat_mod, lhfStdLat_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lhfStdLat_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lhfStdLat_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+                lhffilemod, lhfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafilemod,
+                name_area=lhfareanamemod, file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+                lhffileobs, lhfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafileobs,
+                name_area=lhfareanameobs, file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess LHF (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                lhf_mod, lhf_obs, _ = TwoVarRegrid(lhf_mod, lhf_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(lhf_mod.shape), "shape2": "(obs) " + str(lhf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Zonal average
+            lhf_mod, keyerror_mod = AverageZonal(lhf_mod)
+            lhf_obs, keyerror_obs = AverageZonal(lhf_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lhf_mod.shape), "shape2": "(obs) " + str(lhf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LHF")
+            dict_metric, dict_nc = fill_dict_axis(
+                lhf_mod, lhf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of LHF across latitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of LHF across latitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of LHF across latitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lhfStdLat_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lhfStdLat_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalLhfLonRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhflandmaskfilemod, lhflandmasknamemod,
+                       lhffileobs, lhfnameobs, lhfareafileobs, lhfareanameobs, lhflandmaskfileobs, lhflandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalLhfLonRmse() function computes the climatological (12 months) LHF (latent heat flux) zonal (longitude)
+    standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param lhffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LHF
+    :param lhfnamemod: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffilemod'
+    :param lhfareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for LHF
+    :param lhfareanamemod: string
+        name of areacell variable (areacella, areacello) in 'lhfareafilemod'
+    :param lhflandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for LHF
+    :param lhflandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lhflandmaskfilemod'
+    :param lhffileobs: string
+        path_to/filename of the file (NetCDF) of the observed LHF
+    :param lhfnameobs: string
+        name of LHF variable (hfls, lhf, lhtfl, solatent) in 'lhffileobs'
+    :param lhfareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for LHF
+    :param lhfareanameobs: string
+        name of areacell variable (areacella, areacello) in 'lhfareafileobs'
+    :param lhflandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for LHF
+    :param lhflandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lhflandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for LHF
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalLhfLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled LHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed LHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "LHF zonal seasonality RMSE"
+    units = "W/m2"
+    method = "Zonal root mean square error of " + box + " climatological latent heat flux (LHF) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalLhfLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        lhf_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+            lhffilemod, lhfnamemod, "heat flux", metric, box, file_area=lhfareafilemod, name_area=lhfareanamemod,
+            file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        lhf_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+            lhffileobs, lhfnameobs, "heat flux", metric, box, file_area=lhfareafileobs, name_area=lhfareanameobs,
+            file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(lhf_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(lhf_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(lhf_mod)
+        actualtimebounds_obs = TimeBounds(lhf_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 LHF averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        lhf_mod, method, keyerror_mod = PreProcessTS(
+            lhf_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        lhf_obs, _, keyerror_obs = PreProcessTS(
+            lhf_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lhf_mod.shape), "shape2": "(obs) " + str(lhf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and meridional average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        lhfStd_mod = Std(lhf_mod)
+        lhfStd_obs = Std(lhf_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lhfStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lhfStd_mod.shape), "shape2": "(obs) " + str(lhfStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            lhfStd_mod, lhfStd_obs, method = TwoVarRegrid(
+                lhfStd_mod, lhfStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lhfStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lhfStd_mod.shape), "shape2": "(obs) " + str(lhfStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Meridional average
+        lhfStdLon_mod, keyerror_mod = AverageMeridional(lhfStd_mod)
+        lhfStdLon_obs, keyerror_obs = AverageMeridional(lhfStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStdLon_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lhfStdLon_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lhfStdLon_mod.shape), "shape2": "(obs) " + str(lhfStdLon_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(lhfStdLon_mod, lhfStdLon_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(lhfStdLon_mod, lhfStdLon_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lhfStdLon_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lhfStdLon_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+                lhffilemod, lhfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafilemod,
+                name_area=lhfareanamemod, file_mask=lhflandmaskfilemod, name_mask=lhflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+                lhffileobs, lhfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=lhfareafileobs,
+                name_area=lhfareanameobs, file_mask=lhflandmaskfileobs, name_mask=lhflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess LHF (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                lhf_mod, lhf_obs, _ = TwoVarRegrid(lhf_mod, lhf_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(lhf_mod.shape), "shape2": "(obs) " + str(lhf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Meridional average
+            lhf_mod, keyerror_mod = AverageMeridional(lhf_mod)
+            lhf_obs, keyerror_obs = AverageMeridional(lhf_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lhf_mod.shape), "shape2": "(obs) " + str(lhf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LHF")
+            dict_metric, dict_nc = fill_dict_axis(
+                lhf_mod, lhf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of LHF across longitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of LHF across longitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of LHF across longitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lhfStdLon_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lhfStdLon_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalLwrLatRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrlandmaskfilemod, lwrlandmasknamemod,
+                       lwrfileobs, lwrnameobs, lwrareafileobs, lwrareanameobs, lwrlandmaskfileobs, lwrlandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalLwrLatRmse() function computes the climatological (12 months) LWR (net surface longwave radiation)
+    meridional (latitude) standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the
+    nino3_LatExt)
+
+    The net surface longwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into lwrfile and lwrname of this
+    function a list() of the four needed files and variable names (CMIP: rlds-rlus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param lwrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LWR
+    :param lwrnamemod: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfilemod'
+    :param lwrareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for LWR
+    :param lwrareanamemod: string
+        name of areacell variable (areacella, areacello) in 'lwrareafilemod'
+    :param lwrlandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for LWR
+    :param lwrlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lwrlandmaskfilemod'
+    :param lwrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed LWR
+    :param lwrnameobs: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfileobs'
+    :param lwrareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for LWR
+    :param lwrareanameobs: string
+        name of areacell variable (areacella, areacello) in 'lwrareafileobs'
+    :param lwrlandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for LWR
+    :param lwrlandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lwrlandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific_LatExt') for LWR
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalLwrLatRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled LWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed LWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "LWR meridional seasonality RMSE"
+    units = "W/m2"
+    method = "Meridional root mean square error of " + box + " climatological net surface longwave radiation (LWR) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalLwrLatRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        lwr_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+            lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, box, file_area=lwrareafilemod, name_area=lwrareanamemod,
+            file_mask=lwrlandmaskfilemod, name_mask=lwrlandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+        lwr_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+            lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, box, file_area=lwrareafileobs, name_area=lwrareanameobs,
+            file_mask=lwrlandmaskfileobs, name_mask=lwrlandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(lwr_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(lwr_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(lwr_mod)
+        actualtimebounds_obs = TimeBounds(lwr_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 LWR averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        lwr_mod, method, keyerror_mod = PreProcessTS(
+            lwr_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        lwr_obs, _, keyerror_obs = PreProcessTS(
+            lwr_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lwr_mod.shape), "shape2": "(obs) " + str(lwr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and zonal average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        lwrStd_mod = Std(lwr_mod)
+        lwrStd_obs = Std(lwr_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lwrStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lwrStd_mod.shape), "shape2": "(obs) " + str(lwrStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            lwrStd_mod, lwrStd_obs, method = TwoVarRegrid(
+                lwrStd_mod, lwrStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lwrStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lwrStd_mod.shape), "shape2": "(obs) " + str(lwrStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Zonal average
+        lwrStdLat_mod, keyerror_mod = AverageZonal(lwrStd_mod)
+        lwrStdLat_obs, keyerror_obs = AverageZonal(lwrStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStdLat_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lwrStdLat_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lwrStdLat_mod.shape), "shape2": "(obs) " + str(lwrStdLat_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsMeridional(lwrStdLat_mod, lwrStdLat_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(lwrStdLat_mod, lwrStdLat_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lwrStdLat_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lwrStdLat_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+                lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafilemod, name_area=lwrareanamemod, file_mask=lwrlandmaskfilemod,
+                name_mask=lwrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+                lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafileobs, name_area=lwrareanameobs, file_mask=lwrlandmaskfileobs,
+                name_mask=lwrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess LWR (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                lwr_mod, lwr_obs, _ = TwoVarRegrid(lwr_mod, lwr_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(lwr_mod.shape), "shape2": "(obs) " + str(lwr_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Zonal average
+            lwr_mod, keyerror_mod = AverageZonal(lwr_mod)
+            lwr_obs, keyerror_obs = AverageZonal(lwr_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lwr_mod.shape), "shape2": "(obs) " + str(lwr_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LWR")
+            dict_metric, dict_nc = fill_dict_axis(
+                lwr_mod, lwr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of LWR across latitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of LWR across latitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of LWR across latitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lwrStdLat_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lwrStdLat_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalLwrLonRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrlandmaskfilemod, lwrlandmasknamemod,
+                       lwrfileobs, lwrnameobs, lwrareafileobs, lwrareanameobs, lwrlandmaskfileobs, lwrlandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalLwrLonRmse() function computes the climatological (12 months) LWR (net surface longwave radiation) zonal
+    (longitude) standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the Equatorial
+    Pacific)
+
+    The net surface longwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into lwrfile and lwrname of this
+    function a list() of the four needed files and variable names (CMIP: rlds-rlus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param lwrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled LWR
+    :param lwrnamemod: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfilemod'
+    :param lwrareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for LWR
+    :param lwrareanamemod: string
+        name of areacell variable (areacella, areacello) in 'lwrareafilemod'
+    :param lwrlandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for LWR
+    :param lwrlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lwrlandmaskfilemod'
+    :param lwrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed LWR
+    :param lwrnameobs: string
+        name of LWR variable (lwr, rls, dlwrf - ulwrf, rlds - rlus) (may be a list of variables) in 'lwrfileobs'
+    :param lwrareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for LWR
+    :param lwrareanameobs: string
+        name of areacell variable (areacella, areacello) in 'lwrareafileobs'
+    :param lwrlandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for LWR
+    :param lwrlandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'lwrlandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for LWR
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalLwrLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled LWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed LWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "LWR zonal seasonality RMSE"
+    units = "W/m2"
+    method = "Zonal root mean square error of " + box + " climatological net surface longwave radiation (LWR) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalLwrLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        lwr_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+            lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, box, file_area=lwrareafilemod, name_area=lwrareanamemod,
+            file_mask=lwrlandmaskfilemod, name_mask=lwrlandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+        lwr_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+            lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, box, file_area=lwrareafileobs, name_area=lwrareanameobs,
+            file_mask=lwrlandmaskfileobs, name_mask=lwrlandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(lwr_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(lwr_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(lwr_mod)
+        actualtimebounds_obs = TimeBounds(lwr_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 LWR averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        lwr_mod, method, keyerror_mod = PreProcessTS(
+            lwr_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        lwr_obs, _, keyerror_obs = PreProcessTS(
+            lwr_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lwr_mod.shape), "shape2": "(obs) " + str(lwr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and meridional average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        lwrStd_mod = Std(lwr_mod)
+        lwrStd_obs = Std(lwr_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lwrStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lwrStd_mod.shape), "shape2": "(obs) " + str(lwrStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            lwrStd_mod, lwrStd_obs, method = TwoVarRegrid(
+                lwrStd_mod, lwrStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lwrStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lwrStd_mod.shape), "shape2": "(obs) " + str(lwrStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Meridional average
+        lwrStdLon_mod, keyerror_mod = AverageMeridional(lwrStd_mod)
+        lwrStdLon_obs, keyerror_obs = AverageMeridional(lwrStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStdLon_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in lwrStdLon_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(lwrStdLon_mod.shape), "shape2": "(obs) " + str(lwrStdLon_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(lwrStdLon_mod, lwrStdLon_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(lwrStdLon_mod, lwrStdLon_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(lwrStdLon_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(lwrStdLon_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+                lwrfilemod, lwrnamemod, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafilemod, name_area=lwrareanamemod, file_mask=lwrlandmaskfilemod,
+                name_mask=lwrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+                lwrfileobs, lwrnameobs, "heat flux", "lwr", metric, "equatorial_pacific_LatExt2",
+                file_area=lwrareafileobs, name_area=lwrareanameobs, file_mask=lwrlandmaskfileobs,
+                name_mask=lwrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess LWR (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                lwr_mod, lwr_obs, _ = TwoVarRegrid(lwr_mod, lwr_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(lwr_mod.shape), "shape2": "(obs) " + str(lwr_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Meridional average
+            lwr_mod, keyerror_mod = AverageMeridional(lwr_mod)
+            lwr_obs, keyerror_obs = AverageMeridional(lwr_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(lwr_mod.shape), "shape2": "(obs) " + str(lwr_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LWR")
+            dict_metric, dict_nc = fill_dict_axis(
+                lwr_mod, lwr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of LWR across longitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of LWR across longitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of LWR across longitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=lwrStdLon_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=lwrStdLon_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
 def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                       prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs,
                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
@@ -21348,6 +26732,683 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             SaveNetcdf(file_name, global_attributes=dict3,
                        var1=prStdLon_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=prStdLon_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalShfLatRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shflandmaskfilemod, shflandmasknamemod,
+                       shffileobs, shfnameobs, shfareafileobs, shfareanameobs, shflandmaskfileobs, shflandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalShfLatRmse() function computes the climatological (12 months) SHF (sensible heat flux) meridional
+    (latitude) standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the
+    nino3_LatExt)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param shffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SHF
+    :param shfnamemod: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffilemod'
+    :param shfareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for SHF
+    :param shfareanamemod: string
+        name of areacell variable (areacella, areacello) in 'shfareafilemod'
+    :param shflandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for SHF
+    :param shflandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'shflandmaskfilemod'
+    :param shffileobs: string
+        path_to/filename of the file (NetCDF) of the observed SHF
+    :param shfnameobs: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffileobs'
+    :param shfareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for SHF
+    :param shfareanameobs: string
+        name of areacell variable (areacella, areacello) in 'shfareafileobs'
+    :param shflandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for SHF
+    :param shflandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'shflandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific_LatExt') for SHF
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalShfLatRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "SHF meridional seasonality RMSE"
+    units = "W/m2"
+    method = "Meridional root mean square error of " + box + " climatological sensible heat flux (SHF) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalShfLatRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        shf_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+            shffilemod, shfnamemod, "heat flux", metric, box, file_area=shfareafilemod, name_area=shfareanamemod,
+            file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        shf_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+            shffileobs, shfnameobs, "heat flux", metric, box, file_area=shfareafileobs, name_area=shfareanameobs,
+            file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(shf_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(shf_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(shf_mod)
+        actualtimebounds_obs = TimeBounds(shf_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SHF averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        shf_mod, method, keyerror_mod = PreProcessTS(
+            shf_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        shf_obs, _, keyerror_obs = PreProcessTS(
+            shf_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(shf_mod.shape), "shape2": "(obs) " + str(shf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and zonal average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        shfStd_mod = Std(shf_mod)
+        shfStd_obs = Std(shf_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in shfStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(shfStd_mod.shape), "shape2": "(obs) " + str(shfStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            shfStd_mod, shfStd_obs, method = TwoVarRegrid(
+                shfStd_mod, shfStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in shfStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(shfStd_mod.shape), "shape2": "(obs) " + str(shfStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Zonal average
+        shfStdLat_mod, keyerror_mod = AverageZonal(shfStd_mod)
+        shfStdLat_obs, keyerror_obs = AverageZonal(shfStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStdLat_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in shfStdLat_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(shfStdLat_mod.shape), "shape2": "(obs) " + str(shfStdLat_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsMeridional(shfStdLat_mod, shfStdLat_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(shfStdLat_mod, shfStdLat_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(shfStdLat_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(shfStdLat_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+                shffilemod, shfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafilemod,
+                name_area=shfareanamemod, file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+                shffileobs, shfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafileobs,
+                name_area=shfareanameobs, file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess SHF (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                shf_mod, shf_obs, _ = TwoVarRegrid(shf_mod, shf_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(shf_mod.shape), "shape2": "(obs) " + str(shf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Zonal average
+            shf_mod, keyerror_mod = AverageZonal(shf_mod)
+            shf_obs, keyerror_obs = AverageZonal(shf_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(shf_mod.shape), "shape2": "(obs) " + str(shf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SHF")
+            dict_metric, dict_nc = fill_dict_axis(
+                shf_mod, shf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of SHF across latitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of SHF across latitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of SHF across latitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=shfStdLat_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=shfStdLat_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalShfLonRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shflandmaskfilemod, shflandmasknamemod,
+                       shffileobs, shfnameobs, shfareafileobs, shfareanameobs, shflandmaskfileobs, shflandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalShfLonRmse() function computes the climatological (12 months) SHF (sensible heat flux) zonal (longitude)
+    standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param shffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SHF
+    :param shfnamemod: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffilemod'
+    :param shfareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for SHF
+    :param shfareanamemod: string
+        name of areacell variable (areacella, areacello) in 'shfareafilemod'
+    :param shflandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for SHF
+    :param shflandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'shflandmaskfilemod'
+    :param shffileobs: string
+        path_to/filename of the file (NetCDF) of the observed SHF
+    :param shfnameobs: string
+        name of SHF variable (hfss, shf, shtfl, sosensib) in 'shffileobs'
+    :param shfareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for SHF
+    :param shfareanameobs: string
+        name of areacell variable (areacella, areacello) in 'shfareafileobs'
+    :param shflandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for SHF
+    :param shflandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'shflandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for SHF
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalShfLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SHF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "SHF zonal seasonality RMSE"
+    units = "W/m2"
+    method = "Zonal root mean square error of " + box + " climatological sensible heat flux (SHF) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalShfLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        shf_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+            shffilemod, shfnamemod, "heat flux", metric, box, file_area=shfareafilemod, name_area=shfareanamemod,
+            file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        shf_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+            shffileobs, shfnameobs, "heat flux", metric, box, file_area=shfareafileobs, name_area=shfareanameobs,
+            file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(shf_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(shf_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(shf_mod)
+        actualtimebounds_obs = TimeBounds(shf_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SHF averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        shf_mod, method, keyerror_mod = PreProcessTS(
+            shf_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        shf_obs, _, keyerror_obs = PreProcessTS(
+            shf_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(shf_mod.shape), "shape2": "(obs) " + str(shf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and meridional average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        shfStd_mod = Std(shf_mod)
+        shfStd_obs = Std(shf_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in shfStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(shfStd_mod.shape), "shape2": "(obs) " + str(shfStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            shfStd_mod, shfStd_obs, method = TwoVarRegrid(
+                shfStd_mod, shfStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in shfStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(shfStd_mod.shape), "shape2": "(obs) " + str(shfStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Meridional average
+        shfStdLon_mod, keyerror_mod = AverageMeridional(shfStd_mod)
+        shfStdLon_obs, keyerror_obs = AverageMeridional(shfStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStdLon_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in shfStdLon_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(shfStdLon_mod.shape), "shape2": "(obs) " + str(shfStdLon_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(shfStdLon_mod, shfStdLon_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(shfStdLon_mod, shfStdLon_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(shfStdLon_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(shfStdLon_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area(
+                shffilemod, shfnamemod, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafilemod,
+                name_area=shfareanamemod, file_mask=shflandmaskfilemod, name_mask=shflandmasknamemod, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area(
+                shffileobs, shfnameobs, "heat flux", metric, "equatorial_pacific_LatExt2", file_area=shfareafileobs,
+                name_area=shfareanameobs, file_mask=shflandmaskfileobs, name_mask=shflandmasknameobs, maskland=True,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess SHF (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                shf_mod, shf_obs, _ = TwoVarRegrid(shf_mod, shf_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(shf_mod.shape), "shape2": "(obs) " + str(shf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Meridional average
+            shf_mod, keyerror_mod = AverageMeridional(shf_mod)
+            shf_obs, keyerror_obs = AverageMeridional(shf_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(shf_mod.shape), "shape2": "(obs) " + str(shf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SHF")
+            dict_metric, dict_nc = fill_dict_axis(
+                shf_mod, shf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of SHF across longitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of SHF across longitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of SHF across longitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=shfStdLon_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=shfStdLon_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del file_name, dict1, dict2, dict3, dict_metric, dict_nc
     # Metric value
     if debug is True:
@@ -22814,6 +28875,696 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     return metric_output
 
 
+def SeasonalSwrLatRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrlandmaskfilemod, swrlandmasknamemod,
+                       swrfileobs, swrnameobs, swrareafileobs, swrareanameobs, swrlandmaskfileobs, swrlandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalSwrLatRmse() function computes the climatological (12 months) SWR (net surface shortwave radiation)
+    meridional (latitude) standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the
+    nino3_LatExt)
+
+    The net surface shortwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into swrfile and swrname of this
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param swrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SWR
+    :param swrnamemod: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfilemod'
+    :param swrareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for SWR
+    :param swrareanamemod: string
+        name of areacell variable (areacella, areacello) in 'swrareafilemod'
+    :param swrlandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for SWR
+    :param swrlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'swrlandmaskfilemod'
+    :param swrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SWR
+    :param swrnameobs: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfileobs'
+    :param swrareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for SWR
+    :param swrareanameobs: string
+        name of areacell variable (areacella, areacello) in 'swrareafileobs'
+    :param swrlandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for SWR
+    :param swrlandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'swrlandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific_LatExt') for SWR
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalSwrLatRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "SWR meridional seasonality RMSE"
+    units = "W/m2"
+    method = "Meridional root mean square error of " + box + " climatological net surface shortwave radiation (SWR) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalSwrLatRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        swr_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+            swrfilemod, swrnamemod, "heat flux", "swr", metric, box, file_area=swrareafilemod, name_area=swrareanamemod,
+            file_mask=swrlandmaskfilemod, name_mask=swrlandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+        swr_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+            swrfileobs, swrnameobs, "heat flux", "swr", metric, box, file_area=swrareafileobs, name_area=swrareanameobs,
+            file_mask=swrlandmaskfileobs, name_mask=swrlandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(swr_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(swr_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(swr_mod)
+        actualtimebounds_obs = TimeBounds(swr_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SWR averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        swr_mod, method, keyerror_mod = PreProcessTS(
+            swr_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        swr_obs, _, keyerror_obs = PreProcessTS(
+            swr_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(swr_mod.shape), "shape2": "(obs) " + str(swr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and zonal average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        swrStd_mod = Std(swr_mod)
+        swrStd_obs = Std(swr_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in swrStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(swrStd_mod.shape), "shape2": "(obs) " + str(swrStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            swrStd_mod, swrStd_obs, method = TwoVarRegrid(
+                swrStd_mod, swrStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in swrStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(swrStd_mod.shape), "shape2": "(obs) " + str(swrStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Zonal average
+        swrStdLat_mod, keyerror_mod = AverageZonal(swrStd_mod)
+        swrStdLat_obs, keyerror_obs = AverageZonal(swrStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStdLat_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in swrStdLat_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(swrStdLat_mod.shape), "shape2": "(obs) " + str(swrStdLat_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsMeridional(swrStdLat_mod, swrStdLat_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(swrStdLat_mod, swrStdLat_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(swrStdLat_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(swrStdLat_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+                swrfilemod, swrnamemod, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafilemod, name_area=swrareanamemod, file_mask=swrlandmaskfilemod,
+                name_mask=swrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+                swrfileobs, swrnameobs, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafileobs, name_area=swrareanameobs, file_mask=swrlandmaskfileobs,
+                name_mask=swrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess SWR (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                swr_mod, swr_obs, _ = TwoVarRegrid(swr_mod, swr_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(swr_mod.shape), "shape2": "(obs) " + str(swr_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Zonal average
+            swr_mod, keyerror_mod = AverageZonal(swr_mod)
+            swr_obs, keyerror_obs = AverageZonal(swr_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(swr_mod.shape), "shape2": "(obs) " + str(swr_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SWR")
+            dict_metric, dict_nc = fill_dict_axis(
+                swr_mod, swr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of SWR across latitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of SWR across latitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of SWR across latitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=swrStdLat_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=swrStdLat_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalSwrLonRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrlandmaskfilemod, swrlandmasknamemod,
+                       swrfileobs, swrnameobs, swrareafileobs, swrareanameobs, swrlandmaskfileobs, swrlandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalSwrLonRmse() function computes the climatological (12 months) SWR (net surface shortwave radiation)
+    zonal (longitude) standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the
+    Equatorial Pacific)
+
+    The net surface shortwave radiation is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into swrfile and swrname of this
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param swrfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SWR
+    :param swrnamemod: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfilemod'
+    :param swrareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for SWR
+    :param swrareanamemod: string
+        name of areacell variable (areacella, areacello) in 'swrareafilemod'
+    :param swrlandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for SWR
+    :param swrlandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'swrlandmaskfilemod'
+    :param swrfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SWR
+    :param swrnameobs: string
+        name of SWR variable (rss, swr, dswrf - uswrf, rsds - rsus) (may be a list of variables) in 'swrfileobs'
+    :param swrareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for SWR
+    :param swrareanameobs: string
+        name of areacell variable (areacella, areacello) in 'swrareafileobs'
+    :param swrlandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for SWR
+    :param swrlandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'swrlandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for SWR
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalSwrLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SWR file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "SWR zonal seasonality RMSE"
+    units = "W/m2"
+    method = "Zonal root mean square error of " + box + " climatological net surface shortwave radiation (SWR) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalSwrLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        swr_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+            swrfilemod, swrnamemod, "heat flux", "swr", metric, box, file_area=swrareafilemod, name_area=swrareanamemod,
+            file_mask=swrlandmaskfilemod, name_mask=swrlandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+        swr_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+            swrfileobs, swrnameobs, "heat flux", "swr", metric, box, file_area=swrareafileobs, name_area=swrareanameobs,
+            file_mask=swrlandmaskfileobs, name_mask=swrlandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(swr_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(swr_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(swr_mod)
+        actualtimebounds_obs = TimeBounds(swr_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SWR averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        swr_mod, method, keyerror_mod = PreProcessTS(
+            swr_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        swr_obs, _, keyerror_obs = PreProcessTS(
+            swr_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(swr_mod.shape), "shape2": "(obs) " + str(swr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and meridional average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        swrStd_mod = Std(swr_mod)
+        swrStd_obs = Std(swr_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in swrStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(swrStd_mod.shape), "shape2": "(obs) " + str(swrStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            swrStd_mod, swrStd_obs, method = TwoVarRegrid(
+                swrStd_mod, swrStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in swrStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(swrStd_mod.shape), "shape2": "(obs) " + str(swrStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Meridional average
+        swrStdLon_mod, keyerror_mod = AverageMeridional(swrStd_mod)
+        swrStdLon_obs, keyerror_obs = AverageMeridional(swrStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStdLon_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in swrStdLon_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(swrStdLon_mod.shape), "shape2": "(obs) " + str(swrStdLon_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(swrStdLon_mod, swrStdLon_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(swrStdLon_mod, swrStdLon_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(swrStdLon_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(swrStdLon_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+                swrfilemod, swrnamemod, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafilemod, name_area=swrareanamemod, file_mask=swrlandmaskfilemod,
+                name_mask=swrlandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+                swrfileobs, swrnameobs, "heat flux", "swr", metric, "equatorial_pacific_LatExt2",
+                file_area=swrareafileobs, name_area=swrareanameobs, file_mask=swrlandmaskfileobs,
+                name_mask=swrlandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess SWR (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                swr_mod, swr_obs, _ = TwoVarRegrid(swr_mod, swr_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(swr_mod.shape), "shape2": "(obs) " + str(swr_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Meridional average
+            swr_mod, keyerror_mod = AverageMeridional(swr_mod)
+            swr_obs, keyerror_obs = AverageMeridional(swr_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(swr_mod.shape), "shape2": "(obs) " + str(swr_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SWR")
+            dict_metric, dict_nc = fill_dict_axis(
+                swr_mod, swr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of SWR across longitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of SWR across longitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of SWR across longitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=swrStdLon_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=swrStdLon_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
 def SeasonalTauxLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taulandmaskfilemod, taulandmasknamemod,
                         taufileobs, taunameobs, tauareafileobs, tauareanameobs, taulandmaskfileobs, taulandmasknameobs,
                         box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
@@ -24136,6 +30887,704 @@ def SeasonalTauyLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             SaveNetcdf(file_name, global_attributes=dict3,
                        var1=tauStdLon_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=tauStdLon_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalThfLatRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thflandmaskfilemod, thflandmasknamemod,
+                       thffileobs, thfnameobs, thfareafileobs, thfareanameobs, thflandmaskfileobs, thflandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalThfLatRmse() function computes the climatological (12 months) THF (net heat flux) meridional (latitude)
+    standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the nino3_LatExt)
+    The net heat flux is the sum of four term:
+         - net surface shortwave radiation,
+         - net surface longwave radiation,
+         - latent heat flux,
+         - sensible heat flux
+
+    The net heat flux is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into thffile and thfname of this
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus, rlds-rlus, hfls, hfss)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param thffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled THF
+    :param thfnamemod: string
+        name of THF variable (thf, netflux, thflx, thf + lwr + lhf + shf) (may be a list of variables) in 'thffilemod'
+    :param thfareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for THF
+    :param thfareanamemod: string
+        name of areacell variable (areacella, areacello) in 'thfareafilemod'
+    :param thflandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for THF
+    :param thflandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'thflandmaskfilemod'
+    :param thffileobs: string
+        path_to/filename of the file (NetCDF) of the observed THF
+    :param thfnameobs: string
+        name of THF variable (thf, netflux, thflx, thf + lwr + lhf + shf) (may be a list of variables) in 'thffileobs'
+    :param thfareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for THF
+    :param thfareanameobs: string
+        name of areacell variable (areacella, areacello) in 'thfareafileobs'
+    :param thflandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for THF
+    :param thflandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'thflandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific_LatExt') for THF
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalThfLatRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled THF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed THF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "THF meridional seasonality RMSE"
+    units = "W/m2"
+    method = "Meridional root mean square error of " + box + " climatological net heat flux (THF) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalThfLatRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        thf_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+            thffilemod, thfnamemod, "heat flux", "thf", metric, box, file_area=thfareafilemod, name_area=thfareanamemod,
+            file_mask=thflandmaskfilemod, name_mask=thflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+        thf_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+            thffileobs, thfnameobs, "heat flux", "thf", metric, box, file_area=thfareafileobs, name_area=thfareanameobs,
+            file_mask=thflandmaskfileobs, name_mask=thflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(thf_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(thf_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(thf_mod)
+        actualtimebounds_obs = TimeBounds(thf_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 THF averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        thf_mod, method, keyerror_mod = PreProcessTS(
+            thf_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        thf_obs, _, keyerror_obs = PreProcessTS(
+            thf_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(thf_mod.shape), "shape2": "(obs) " + str(thf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and zonal average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        thfStd_mod = Std(thf_mod)
+        thfStd_obs = Std(thf_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in thfStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(thfStd_mod.shape), "shape2": "(obs) " + str(thfStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            thfStd_mod, thfStd_obs, method = TwoVarRegrid(
+                thfStd_mod, thfStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in thfStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(thfStd_mod.shape), "shape2": "(obs) " + str(thfStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Zonal average
+        thfStdLat_mod, keyerror_mod = AverageZonal(thfStd_mod)
+        thfStdLat_obs, keyerror_obs = AverageZonal(thfStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStdLat_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in thfStdLat_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(thfStdLat_mod.shape), "shape2": "(obs) " + str(thfStdLat_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsMeridional(thfStdLat_mod, thfStdLat_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(thfStdLat_mod, thfStdLat_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(thfStdLat_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(thfStdLat_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+                thffilemod, thfnamemod, "heat flux", "thf", metric, "equatorial_pacific_LatExt2",
+                file_area=thfareafilemod, name_area=thfareanamemod, file_mask=thflandmaskfilemod,
+                name_mask=thflandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+                thffileobs, thfnameobs, "heat flux", "thf", metric, "equatorial_pacific_LatExt2",
+                file_area=thfareafileobs, name_area=thfareanameobs, file_mask=thflandmaskfileobs,
+                name_mask=thflandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess THF (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                thf_mod, thf_obs, _ = TwoVarRegrid(thf_mod, thf_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(thf_mod.shape), "shape2": "(obs) " + str(thf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Zonal average
+            thf_mod, keyerror_mod = AverageZonal(thf_mod)
+            thf_obs, keyerror_obs = AverageZonal(thf_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(thf_mod.shape), "shape2": "(obs) " + str(thf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of THF")
+            dict_metric, dict_nc = fill_dict_axis(
+                thf_mod, thf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of THF across latitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of THF across latitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of THF across latitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=thfStdLat_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=thfStdLat_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
+            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def SeasonalThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thflandmaskfilemod, thflandmasknamemod,
+                       thffileobs, thfnameobs, thfareafileobs, thfareanameobs, thflandmaskfileobs, thflandmasknameobs,
+                       box, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                       netcdf_name="", metname="", **kwargs):
+    """
+    The SeasonalThfLonRmse() function computes the climatological (12 months) THF (net heat flux) zonal (longitude)
+    standard deviation (of the climatology) root mean square error (RMSE) in a 'box' (usually the Equatorial Pacific)
+    The net heat flux is the sum of four term:
+         - net surface shortwave radiation,
+         - net surface longwave radiation,
+         - latent heat flux,
+         - sensible heat flux
+
+    The net heat flux is not always available is models or observations.
+    Either the user computes it and sends the filename and the varname or he feeds into thffile and thfname of this
+    function a list() of the four needed files and variable names (CMIP: rsds-rsus, rlds-rlus, hfls, hfss)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Mon May 17 2021
+
+    Inputs:
+    ------
+    :param thffilemod: string
+        path_to/filename of the file (NetCDF) of the modeled THF
+    :param thfnamemod: string
+        name of THF variable (thf, netflux, thflx, thf + lwr + lhf + shf) (may be a list of variables) in 'thffilemod'
+    :param thfareafilemod: string
+        path_to/filename of the file (NetCDF) of the model areacell for THF
+    :param thfareanamemod: string
+        name of areacell variable (areacella, areacello) in 'thfareafilemod'
+    :param thflandmaskfilemod: string
+        path_to/filename of the file (NetCDF) of the model landmask for THF
+    :param thflandmasknamemod: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'thflandmaskfilemod'
+    :param thffileobs: string
+        path_to/filename of the file (NetCDF) of the observed THF
+    :param thfnameobs: string
+        name of THF variable (thf, netflux, thflx, thf + lwr + lhf + shf) (may be a list of variables) in 'thffileobs'
+    :param thfareafileobs: string
+        path_to/filename of the file (NetCDF) of the observations areacell for THF
+    :param thfareanameobs: string
+        name of areacell variable (areacella, areacello) in 'thfareafileobs'
+    :param thflandmaskfileobs: string
+        path_to/filename of the file (NetCDF) of the observations landmask for THF
+    :param thflandmasknameobs: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'thflandmaskfileobs'
+    :param box: string
+        name of box ('equatorial_pacific') for THF
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'GPCPv2.3',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'SeasonalThfLonRmse_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled THF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed THF file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_model,
+        time_period_observations, ref, keyerror, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "regridding", "smoothing",
+                    "time_bounds_mod", "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "THF zonal seasonality RMSE"
+    units = "W/m2"
+    method = "Zonal root mean square error of " + box + " climatological net heat flux (THF) STD"
+    ref = "Using CDAT regridding and rms (uncentered and biased) calculation"
+    metric = "SeasonalThfLonRmse"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axis": None}
+    actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod, nbr_year_obs, keyerror = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        thf_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+            thffilemod, thfnamemod, "heat flux", "thf", metric, box, file_area=thfareafilemod, name_area=thfareanamemod,
+            file_mask=thflandmaskfilemod, name_mask=thflandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+        thf_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+            thffileobs, thfnameobs, "heat flux", "thf", metric, box, file_area=thfareafileobs, name_area=thfareanameobs,
+            file_mask=thflandmaskfileobs, name_mask=thflandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        # 1.2 Compute number of years for model and observation
+        nbr_year_mod = int(round(thf_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(thf_obs.shape[0] / 12.))
+        # 1.3 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(thf_mod)
+        actualtimebounds_obs = TimeBounds(thf_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 THF averaged in 'box' are normalized / detrended / smoothed (running average) if applicable
+        thf_mod, method, keyerror_mod = PreProcessTS(
+            thf_mod, method, areacell=areacell_mod, compute_sea_cycle=True, region=box, **kwargs)
+        thf_obs, _, keyerror_obs = PreProcessTS(
+            thf_obs, "", areacell=areacell_obs, compute_sea_cycle=True, region=box, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        del areacell_mod, areacell_obs
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(thf_mod.shape), "shape2": "(obs) " + str(thf_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Standard deviation and meridional average
+        # ------------------------------------------------
+        # 3.1 Standard deviation computation
+        thfStd_mod = Std(thf_mod)
+        thfStd_obs = Std(thf_obs)
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStd_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in thfStd_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(thfStd_mod.shape), "shape2": "(obs) " + str(thfStd_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Std", 15, **dict_debug)
+        # 3.2 Regridding
+        if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            thfStd_mod, thfStd_obs, method = TwoVarRegrid(
+                thfStd_mod, thfStd_obs, method, region=box, **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStd_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in thfStd_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(thfStd_mod.shape), "shape2": "(obs) " + str(thfStd_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+        # 3.3 Meridional average
+        thfStdLon_mod, keyerror_mod = AverageMeridional(thfStd_mod)
+        thfStdLon_obs, keyerror_obs = AverageMeridional(thfStd_obs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStdLon_mod.getAxisList()]),
+                          "axes2": "(obs) " + str([ax.id for ax in thfStdLon_obs.getAxisList()]),
+                          "shape1": "(mod) " + str(thfStdLon_mod.shape), "shape2": "(obs) " + str(thfStdLon_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 4. Metric value and supplementary metric values
+        # ------------------------------------------------
+        # 4.1 Computes the root mean square difference
+        mv, keyerror = RmsZonal(thfStdLon_mod, thfStdLon_obs, centered=centered_rmse, biased=biased_rmse)
+        mv_error = None
+        if keyerror is not None:
+            break
+        # 4.2 Supplementary metrics
+        sm_corr = float(Correlation(thfStdLon_mod, thfStdLon_obs, axis=0, centered=1, biased=1))
+        sm_corr_error = None
+        sm_std_mod = float(Std(thfStdLon_mod, weights=None, axis=0, centered=1, biased=1))
+        sm_std_obs = float(Std(thfStdLon_obs, weights=None, axis=0, centered=1, biased=1))
+        sm_std = sm_std_mod / sm_std_obs
+        sm_std_error = None
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, areacell_mod, keyerror_mod = Read_data_mask_area_multifile(
+                thffilemod, thfnamemod, "heat flux", "thf", metric, "equatorial_pacific_LatExt2",
+                file_area=thfareafilemod, name_area=thfareanamemod, file_mask=thflandmaskfilemod,
+                name_mask=thflandmasknamemod, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_mod"],
+                debug=debug, interpreter="project_interpreter_mod_var1", **kwargs)
+            map_obs, areacell_obs, keyerror_obs = Read_data_mask_area_multifile(
+                thffileobs, thfnameobs, "heat flux", "thf", metric, "equatorial_pacific_LatExt2",
+                file_area=thfareafileobs, name_area=thfareanameobs, file_mask=thflandmaskfileobs,
+                name_mask=thflandmasknameobs, maskland=True, maskocean=False, time_bounds=kwargs["time_bounds_obs"],
+                debug=debug, interpreter="project_interpreter_obs_var1", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess THF (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=areacell_mod, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=areacell_obs, compute_sea_cycle=True,
+                                                    region="equatorial_pacific_LatExt2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del areacell_mod, areacell_obs
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Standard deviation computation
+            map_mod = Std(map_mod)
+            map_obs = Std(map_obs)
+            # Regridding
+            if "regridding" in list(kwargs.keys()) and isinstance(kwargs["regridding"], dict) is True:
+                map_mod, map_obs, _ = TwoVarRegrid(
+                    map_mod, map_obs, "", region="equatorial_pacific_LatExt2", **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in map_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
+                thf_mod, thf_obs, _ = TwoVarRegrid(thf_mod, thf_obs, "", region=box, **kwargs["regridding"])
+                if debug is True:
+                    dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
+                                  "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
+                                  "shape1": "(mod) " + str(thf_mod.shape), "shape2": "(obs) " + str(thf_obs.shape)}
+                    EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 2", 15, **dict_debug)
+            # Meridional average
+            thf_mod, keyerror_mod = AverageMeridional(thf_mod)
+            thf_obs, keyerror_obs = AverageMeridional(thf_obs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
+                              "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
+                              "shape1": "(mod) " + str(thf_mod.shape), "shape2": "(obs) " + str(thf_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of THF")
+            dict_metric, dict_nc = fill_dict_axis(
+                thf_mod, thf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, description="mean annual cycle of THF across longitudes")
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_mod),
+                     "description": "standard deviation of the mean annual cycle of THF across longitudes"}
+            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "arraySTD": sm_std_obs,
+                     "time_period": str(actualtimebounds_obs),
+                     "description": "standard deviation of the mean annual cycle of THF across longitudes"}
+            dict3 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
+                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
+            dict3.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict3,
+                       var1=thfStdLon_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
+                       var2=thfStdLon_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del file_name, dict1, dict2, dict3, dict_metric, dict_nc
     # Metric value
     if debug is True:
