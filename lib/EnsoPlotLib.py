@@ -10,10 +10,11 @@ from .KeyArgLib import default_arg_values
 
 
 dict_colorbar = {
-    "amplitude": "amp",
-    "anomalies": "balance",
-    "PR": "rain",
-    "SST": "thermal",
+    "amplitude": "cmo.amp",
+    "anomalies": "cmo.balance",
+    "PR": "cmo.rain",
+    "PR_anomalies": "BrBG",
+    "SST": "cmo.thermal",
 }
 
 dict_label = {
@@ -270,6 +271,21 @@ output_variables = {
     "SeasonalTauyLonRmse": ["tauyMacStd_lon__", "tauyMacStd_map__", "tauyMac_hov__"],
     "SeasonalThfLatRmse": ["ThfMacStd_lat__", "ThfMacStd_map__", "ThfMac_hov__"],
     "SeasonalThfLonRmse": ["ThfMacStd_lon__", "ThfMacStd_map__", "ThfMac_hov__"],
+    "telecon_pr_djf": ["pr_region_all_years_djf__", "nina_pr_region_events_djf__", "nino_pr_region_events_djf__",
+                       "nina_pr_region_composite_djf__", "nino_pr_region_composite_djf__",
+                       "nina_pr_map_composite_djf__", "nino_pr_map_composite_djf__",
+                       "nina_pr_bst_region_composite_djf__", "nino_pr_bst_region_composite_djf__"],
+    "telecon_pr_amp_djf": [
+        "pr_cr_region_all_years_djf__", "nina_pr_cr_region_events_djf__", "nino_pr_cr_region_events_djf__",
+        "nina_pr_cr_region_composite_djf__", "nino_pr_cr_region_composite_djf__",
+        "nina_pr_cr_map_composite_djf__", "nino_pr_cr_map_composite_djf__",
+        "nina_pr_cr_bst_region_composite_djf__", "nino_pr_cr_bst_region_composite_djf__",
+        "nina_pr_cr_bst_region_range_djf__", "nino_pr_cr_bst_region_range_djf__"],
+    "telecon_pr_ano_djf": ["pr_region_all_years_djf__", "nina_pr_region_events_djf__", "nino_pr_region_events_djf__",
+                           "nina_pr_region_composite_djf__", "nino_pr_region_composite_djf__",
+                           "nina_pr_map_composite_djf__", "nino_pr_map_composite_djf__",
+                           "nina_pr_bst_region_composite_djf__", "nino_pr_bst_region_composite_djf__",
+                           "nina_pr_bst_region_range_djf__", "nino_pr_bst_region_range_djf__"],
 }
 
 plot_parameters = {
@@ -5423,6 +5439,129 @@ plot_parameters = {
                       "4) Meridional averaged (see box)",
         },
     },
+    "telecon_pr_djf": {
+        "template_type": "teleconnection",
+        "01_plot": {
+            "plot_type": "map",
+            "nbr_panel": 4,
+            "colorbar": dict_colorbar["PR_anomalies"],
+            "label": dict_label["REG4"],
+            "maskland": False,
+            "title": ["La Nina composite of DJF PRA", "El Nino composite of DJF PRA"],
+            "varpattern": output_variables["telecon_pr_djf"][5:7],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "DJF PRA composite",
+            "method": "",
+            "note": "Maps not used to compute the metric, just for visualization",
+        },
+        "02_plot": {
+            "plot_type": "dot",
+            "nbr_panel": 2,
+            "title": ["La Nina's DJF PRA", "El Nino's DJF PRA"],
+            "varpattern": output_variables["telecon_pr_djf"][1:3],
+            "varpattern_extra": output_variables["telecon_pr_djf"][7:],
+            "xname": "regions",
+            "yname": "PRA",
+            "zname": "DJF PRA composite & IQR",
+            "method": "",
+            "note": "",
+        },
+        "03_plot": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "ENSO composites of DJF PRA",
+            "varpattern": output_variables["telecon_pr_djf"][3:5],
+            "varpattern_extra": output_variables["telecon_pr_djf"][7:],
+            "xname": "regions",
+            "yname": "PRA",
+            "zname": "DJF PRA composite",
+            "method": "Description: MET_MET",
+            "note": "Metric value: MET_VAL MET_UNI",
+        },
+    },
+    "telecon_pr_ano_djf": {
+        "template_type": "teleconnection",
+        "01_plot": {
+            "plot_type": "map",
+            "nbr_panel": 4,
+            "colorbar": dict_colorbar["PR_anomalies"],
+            "label": dict_label["REG4"],
+            "maskland": False,
+            "title": ["La Nina composite of DJF PRA", "El Nino composite of DJF PRA"],
+            "varpattern": output_variables["telecon_pr_ano_djf"][5:7],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "DJF PRA composite",
+            "method": "",
+            "note": "Maps not used to compute the metric, just for visualization",
+        },
+        "02_plot": {
+            "plot_type": "dot",
+            "nbr_panel": 2,
+            "title": ["La Nina's DJF PRA", "El Nino's DJF PRA"],
+            "varpattern": output_variables["telecon_pr_ano_djf"][1:3],
+            "varpattern_extra": output_variables["telecon_pr_ano_djf"][7:],
+            "xname": "regions",
+            "yname": "PRA",
+            "zname": "DJF PRA composite & IQR",
+            "method": "",
+            "note": "",
+        },
+        "03_plot": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "ENSO composites of DJF PRA",
+            "varpattern": output_variables["telecon_pr_ano_djf"][3:5],
+            "varpattern_extra": output_variables["telecon_pr_ano_djf"][7:],
+            "xname": "regions",
+            "yname": "PRA",
+            "zname": "DJF PRA composite",
+            "method": "Description: MET_MET",
+            "note": "Metric value: MET_VAL MET_UNI",
+        },
+    },
+    "telecon_pr_amp_djf": {
+        "template_type": "teleconnection",
+        "01_plot": {
+            "plot_type": "map",
+            "nbr_panel": 4,
+            "colorbar": dict_colorbar["PR_anomalies"],
+            "label": dict_label["REG4"],
+            "maskland": False,
+            "title": ["La Nina composite of DJF PRA", "El Nino composite of DJF PRA"],
+            "varpattern": output_variables["telecon_pr_amp_djf"][5:7],
+            "xname": "longitude",
+            "yname": "latitude",
+            "zname": "DJF change of PR composite",
+            "method": "",
+            "note": "Maps not used to compute the metric, just for visualization",
+        },
+        "02_plot": {
+            "plot_type": "dot",
+            "nbr_panel": 2,
+            "title": ["La Nina's DJF PRA", "El Nino's DJF PRA"],
+            "varpattern": output_variables["telecon_pr_amp_djf"][1:3],
+            "varpattern_extra": output_variables["telecon_pr_amp_djf"][7:],
+            "xname": "regions",
+            "yname": "PRA",
+            "zname": "DJF change of PR composite & IQR",
+            "method": "",
+            "note": "",
+        },
+        "03_plot": {
+            "plot_type": "curve",
+            "nbr_panel": 1,
+            "title": "ENSO composites of DJF PRA",
+            "varpattern": output_variables["telecon_pr_amp_djf"][3:5],
+            "varpattern_extra": output_variables["telecon_pr_amp_djf"][7:],
+            "xname": "regions",
+            "yname": "PRA",
+            "zname": "DJF change of PR composite",
+            "method": "Description: MET_MET",
+            "note": "Metric value: MET_VAL MET_UNI",
+        },
+    },
 }
 
 
@@ -5431,12 +5570,14 @@ reference_observations = {
     "slp": "ERA-Interim", "swr": "Tropflux", "taux": "Tropflux", "thf": "Tropflux"
 }
 
+
 def metric_variable_names(mc=True):
     if isinstance(mc, str) is True and mc in list(output_variables.keys()):
         dict_out = output_variables[mc]
     else:
         dict_out = deepcopy(output_variables)
     return dict_out
+
 
 def plot_param(metric_collection, metric):
     dict_MC = defCollection(metric_collection)

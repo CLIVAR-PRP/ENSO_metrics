@@ -7,11 +7,13 @@ from os.path import join as OSpath__join
 from EnsoMetrics.EnsoPlotLib import plot_param
 from .EnsoPlotTemplate import cmip_boxplot, my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map,\
     my_scatterplot
-
+from .EnsoPlotTemplateSingleFig import plot_telecon
 
 dict_plot = {"boxplot": my_boxplot, "curve": my_curve, "dot": my_dotplot, "dot_to_box": my_dot_to_box,
              "hovmoeller": my_hovmoeller, "map": my_map, "scatterplot": my_scatterplot}
-
+dict_single_fig = {
+    "teleconnection": plot_telecon,
+}
 
 def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagnostic_units, metric_values,
                  metric_units, multi_member_ave, figure_name):
@@ -142,4 +144,27 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
         dt = datetime.now() - t1
         dt = str(int(round(dt.seconds / 60.)))
         print(str().ljust(30) + "took " + dt + " minute(s)")
+
+
+def plotter_1mod_1obs(metric_collection, metric, project, model, experiment, filename_nc, diagnostic_values,
+                      diagnostic_units, metric_values, metric_units, name_png, reference=None, member=None):
+    dict_param = plot_param(metric_collection, metric)
+    if reference is None:
+        reference = dict_param["metric_reference"]
+    if isinstance(diagnostic_units, str) is True:
+        diagnostic_units = diagnostic_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+    if isinstance(metric_units, str) is True:
+        metric_units = metric_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+    t1 = datetime.now()
+    # plot
+    dict_single_fig[dict_param["template_type"]](
+        model, project, filename_nc, dict_param, reference, name_png, diagnostic_values, diagnostic_units,
+        metric_values, metric_units, metric_variables=dict_param["metric_variables"],
+        metric_regions=dict_param["metric_regions"], member=member)
+    dt = datetime.now() - t1
+    hh = int(round(dt.seconds // 3600))
+    mm = int(round((dt.seconds % 3600) // 60))
+    ss = int(round((dt.seconds % 3600) % 60))
+    print(str().ljust(30) + "took " + str(hh).zfill(2) + ":" + str(mm).zfill(2) + ":" + str(ss).zfill(2))
+    return
 

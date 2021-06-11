@@ -88,12 +88,15 @@ def create_labels(label_name, label_ticks):
             mult = 10
         else:
             mult = 20
-        label_ticks = [ii for ii in label_ticks if ii % mult == 0]
+        if len(label_ticks) > 80:
+            label_ticks = [-60, 0, 60]
+        else:
+            label_ticks = [ii for ii in label_ticks if ii % mult == 0]
         if min(label_ticks) < 0 and max(label_ticks) > 0 and 0 not in label_ticks:
             label_ticks = NUMPYarray(label_ticks)
             while 0 not in label_ticks:
                 label_ticks = label_ticks + 1
-        label = [str(abs(int(ii))) + '$^\circ$S' if ii < 0 else (str(abs(int(ii))) + '$^\circ$N' if ii > 0 else 'eq')
+        label = [str(abs(int(ii))) + "S" if ii < 0 else (str(abs(int(ii))) + "N" if ii > 0 else "eq")
                  for ii in label_ticks]
     elif label_name == "longitude":
         if len(label_ticks) < 200:
@@ -105,8 +108,8 @@ def create_labels(label_name, label_ticks):
             label_ticks = NUMPYarray(label_ticks)
             while 180 not in label_ticks:
                 label_ticks = label_ticks + 10
-        label = [str(int(ii)) + "$^\circ$E" if ii < 180 else (
-            str(abs(int(ii) - 360)) + "$^\circ$W" if ii > 180 else "180$^\circ$") for ii in label_ticks]
+        label = [str(int(ii)) + "E" if ii < 180 else (
+            str(abs(int(ii) - 360)) + "W" if ii > 180 else "180") for ii in label_ticks]
     return label_ticks, label
 
 
@@ -122,6 +125,34 @@ def create_levels(labelbar):
         mult = 6
     delta = float(diff) / mult
     return [round(kk + jj * delta, 2) for kk in labelbar[:-1] for jj in range(mult)] + [labelbar[-1]]
+
+
+def create_lines(line_i, line_o=[], threshold=50):
+    if len(line_i) > 1:
+        words = line_i.split(" ")
+        tmp = ""
+        for ii, elt in enumerate(words):
+            tmp += elt
+            if ii != len(words) - 1:
+                if len(tmp + " " + str(words[ii + 1])) > threshold:
+                    line_o.append(tmp)
+                    tmp = ""
+                else:
+                    tmp += " "
+            else:
+                line_o.append(tmp)
+        del tmp, words
+    return line_o
+
+
+def create_round_string(number):
+    if number < 1.:
+        nbr_out = "{0:.2f}".format(round(number, 2))
+    elif number < 10.:
+        nbr_out = "{0:.1f}".format(round(number, 1))
+    else:
+        nbr_out = str(round(number, 0))
+    return nbr_out
 
 
 def format_metric(metric_type, metric_value, metric_units):

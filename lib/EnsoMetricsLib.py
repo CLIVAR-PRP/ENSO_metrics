@@ -10,13 +10,14 @@ from .EnsoCollectionsLib import ReferenceRegions
 from . import EnsoErrorsWarnings
 from .EnsoPlotLib import metric_variable_names
 from .EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
-from .EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageAxis, AverageHorizontal, AverageMeridional, \
-    AverageTemporal, AverageZonal, BasinMask, CheckTime, Composite, ComputeInterannualAnomalies, ComputePDF, \
-    Concatenate, Correlation, DetectEvents, DurationAllEvent, DurationEvent, Event_selection, fill_dict_axis, \
-    FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, \
-    LinearRegressionTsAgainstTs, MinMax, MyEmpty, PreProcessTS, Read_data_mask_area, Read_data_mask_area_multifile, \
-    Regrid, remove_global_mean, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, \
-    SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
+from .EnsoUvcdatToolsLib import ArrayListAx, ArrayOnes, ArrayToList, AverageAxis, AverageHorizontal, \
+    AverageMeridional, AverageTemporal, AverageZonal, BasinMask, CheckTime, Composite, ComputeInterannualAnomalies, \
+    ComputePDF, Concatenate, Correlation, DetectEvents, DurationAllEvent, DurationEvent, Event_selection, \
+    fill_dict_axis, FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, \
+    LinearRegressionTsAgainstTs, MinMax, MyEmpty, PreProcessTS, preprocess_ts_polygon, Read_data_mask_area, \
+    Read_data_mask_area_multifile, Regrid, remove_global_mean, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, \
+    SaveNetcdf, SeasonalMean, SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, telecon_array, \
+    telecon_change_rate, telecon_significance, TimeBounds, TsToMap, TwoVarRegrid
 from .KeyArgLib import default_arg_values
 
 
@@ -225,42 +226,35 @@ def BiasLhfMapRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhfla
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(lhf_mod, lhf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(lhf_mod, lhf_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(lhf_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(lhf_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                lhf_mod, lhf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LHF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean LHF map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean LHF map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=lhf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=lhf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -485,20 +479,13 @@ def BiasLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhfla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(lhf_mod, lhf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(lhf_mod, lhf_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(lhf_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(lhf_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -542,28 +529,24 @@ def BiasLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhfla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                lhf_mod, lhf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LHF across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean LHF map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LHF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean LHF across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean LHF across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=lhf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=lhf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -788,20 +771,13 @@ def BiasLhfLonRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhfla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(lhf_mod, lhf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(lhf_mod, lhf_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(lhf_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(lhf_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -845,28 +821,24 @@ def BiasLhfLonRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhfla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                lhf_mod, lhf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LHF across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean LHF map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LHF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean LHF across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean LHF across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=lhf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=lhf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del file_name, dict1, dict_metric, dict_nc
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -1084,42 +1056,35 @@ def BiasLwrMapRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrla
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(lwr_mod, lwr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(lwr_mod, lwr_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(lwr_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(lwr_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                lwr_mod, lwr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LWR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean LWR map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean LWR map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=lwr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=lwr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -1348,20 +1313,13 @@ def BiasLwrLatRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(lwr_mod, lwr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(lwr_mod, lwr_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(lwr_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(lwr_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -1407,28 +1365,24 @@ def BiasLwrLatRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                lwr_mod, lwr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LWR across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean LWR map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LWR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean LWR across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean LWR across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=lwr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=lwr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del file_name, dict1, dict_metric, dict_nc
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -1657,20 +1611,13 @@ def BiasLwrLonRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(lwr_mod, lwr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(lwr_mod, lwr_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(lwr_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(lwr_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -1716,28 +1663,24 @@ def BiasLwrLonRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                lwr_mod, lwr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LWR across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean LWR map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean LWR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean LWR across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean LWR across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=lwr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=lwr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -1950,42 +1893,35 @@ def BiasPrMapRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(pr_mod, pr_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(pr_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(pr_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                pr_mod, pr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean PR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean PR map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean PR map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=pr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=pr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -2209,20 +2145,13 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(pr_mod, pr_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(pr_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(pr_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -2266,28 +2195,24 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                pr_mod, pr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean PR across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean PR map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean PR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean PR across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean PR across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=pr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=pr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -2511,20 +2436,13 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(pr_mod, pr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(pr_mod, pr_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(pr_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(pr_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -2568,28 +2486,24 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                pr_mod, pr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean PR across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean PR map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean PR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean PR across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean PR across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=pr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=pr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -2803,42 +2717,35 @@ def BiasShfMapRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shfla
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(shf_mod, shf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(shf_mod, shf_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(shf_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(shf_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                shf_mod, shf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SHF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean SHF map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean SHF map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=shf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=shf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -3063,20 +2970,13 @@ def BiasShfLatRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shfla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(shf_mod, shf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(shf_mod, shf_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(shf_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(shf_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -3120,28 +3020,24 @@ def BiasShfLatRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shfla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                shf_mod, shf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SHF across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean SHF map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SHF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean SHF across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean SHF across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=shf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=shf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -3366,20 +3262,13 @@ def BiasShfLonRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shfla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(shf_mod, shf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(shf_mod, shf_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(shf_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(shf_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -3423,28 +3312,24 @@ def BiasShfLonRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shfla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                shf_mod, shf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SHF across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean SHF map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SHF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean SHF across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean SHF across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=shf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=shf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -3701,42 +3586,36 @@ def BiasSshMapRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
         ssh_obs = ssh_obs - mean_obs
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(ssh_mod, ssh_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(ssh_mod, ssh_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(ssh_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(ssh_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                ssh_mod, ssh_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="mean dynamic SSH map, mean spatial value removed")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean dynamic SSH map, mean spatial value removed"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean dynamic SSH map, mean spatial value removed"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=ssh_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=ssh_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -4004,20 +3883,13 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
         ssh_obs = ssh_obs - float(mean_obs)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(ssh_mod, ssh_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(ssh_mod, ssh_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(ssh_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(ssh_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -4083,30 +3955,25 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                ssh_mod, ssh_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="mean dynamic SSH across latitudes, mean spatial value removed")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean dynamic SSH map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean dynamic SSH map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "arraySTD": sm_std_obs,
-                     "description": "mean dynamic SSH across latitudes, mean spatial value removed"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "arraySTD": sm_std_obs,
-                     "description": "mean dynamic SSH across latitudes, mean spatial value removed"}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=ssh_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=ssh_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -4374,20 +4241,13 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
         ssh_obs = ssh_obs - mean_obs
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(ssh_mod, ssh_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(ssh_mod, ssh_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(ssh_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(ssh_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -4453,30 +4313,25 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                ssh_mod, ssh_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="mean dynamic SSH across longitudes, mean spatial value removed")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean dynamic SSH map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean dynamic SSH map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "arraySTD": sm_std_obs,
-                     "description": "mean dynamic SSH across longitudes, mean spatial value removed"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "arraySTD": sm_std_obs,
-                     "description": "mean dynamic SSH across longitudes, mean spatial value removed"}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=ssh_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=ssh_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -4690,42 +4545,35 @@ def BiasSstMapRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(sst_mod, sst_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(sst_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(sst_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                sst_mod, sst_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SST map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean SST map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean SST map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=sst_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=sst_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -4950,20 +4798,13 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(sst_mod, sst_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(sst_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(sst_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -5007,28 +4848,24 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                sst_mod, sst_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SST across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean SST map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SST map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean SST across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean SST across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=sst_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=sst_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -5253,20 +5090,13 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(sst_mod, sst_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(sst_mod, sst_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(sst_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(sst_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -5310,28 +5140,24 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                sst_mod, sst_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SST across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean SST map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SST map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean SST across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean SST across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=sst_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=sst_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -5549,42 +5375,35 @@ def BiasSwrMapRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrla
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(swr_mod, swr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(swr_mod, swr_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(swr_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(swr_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                swr_mod, swr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SWR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean SWR map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean SWR map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=swr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=swr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -5813,20 +5632,13 @@ def BiasSwrLatRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(swr_mod, swr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(swr_mod, swr_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(swr_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(swr_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -5872,28 +5684,24 @@ def BiasSwrLatRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                swr_mod, swr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SWR across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean SWR map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SWR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean SWR across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean SWR across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=swr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=swr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -6122,20 +5930,13 @@ def BiasSwrLonRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(swr_mod, swr_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(swr_mod, swr_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(swr_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(swr_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -6181,28 +5982,24 @@ def BiasSwrLonRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                swr_mod, swr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SWR across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean SWR map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean SWR map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean SWR across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean SWR across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=swr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=swr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -6416,42 +6213,35 @@ def BiasTauxMapRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(tau_mod, tau_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(tau_mod, tau_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(tau_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(tau_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Taux map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean Taux map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean Taux map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=tau_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=tau_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -6676,20 +6466,13 @@ def BiasTauxLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(tau_mod, tau_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(tau_mod, tau_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(tau_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(tau_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -6733,28 +6516,24 @@ def BiasTauxLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Taux across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean Taux map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Taux map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean Taux across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean Taux across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=tau_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=tau_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -7036,28 +6815,24 @@ def BiasTauxLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Taux across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean Taux map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Taux map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean Taux across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean Taux across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=tau_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=tau_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -7271,42 +7046,35 @@ def BiasTauyMapRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(tau_mod, tau_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(tau_mod, tau_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(tau_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(tau_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Tauy map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean Tauy map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean Tauy map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=tau_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=tau_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -7531,20 +7299,13 @@ def BiasTauyLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(tau_mod, tau_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(tau_mod, tau_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(tau_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(tau_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -7588,28 +7349,24 @@ def BiasTauyLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Tauy across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean Tauy map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Tauy map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean Tauy across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean Tauy across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=tau_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=tau_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -7834,20 +7591,13 @@ def BiasTauyLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(tau_mod, tau_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(tau_mod, tau_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(tau_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(tau_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -7891,28 +7641,24 @@ def BiasTauyLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Tauy across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean Tauy map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean Tauy map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean Tauy across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean Tauy across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=tau_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=tau_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -8135,42 +7881,35 @@ def BiasThfMapRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsHorizontal(thf_mod, thf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(thf_mod, thf_obs, axis="xy", centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(thf_mod, weights=None, axis="xy", centered=1, biased=1))
-        sm_std_obs = float(Std(thf_obs, weights=None, axis="xy", centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
+            # Supplementary metrics
+            dict_metric, dict_nc = dict(), dict()
+            dict_metric, dict_nc = fill_dict_axis(
+                thf_mod, thf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean THF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "spatialSTD": sm_std_mod, "description": "mean THF map"}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "spatialSTD": sm_std_obs, "description": "mean THF map"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
-                     "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                     "CORR_" + dataset2: sm_corr, "CORR_error_" + dataset2: sm_corr_error,
-                     "STD_" + dataset2: sm_std, "STD_error_" + dataset2: sm_std_error, "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=thf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=thf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2)
-            del dict1, dict2, dict3, file_name
+            dict1 = {
+                "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -8404,20 +8143,13 @@ def BiasThfLatRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsMeridional(thf_mod, thf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(thf_mod, thf_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(thf_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(thf_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -8463,28 +8195,24 @@ def BiasThfLatRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                thf_mod, thf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean THF across latitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean THF map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean THF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean THF across latitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean THF across latitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
-                "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=thf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=thf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -8718,20 +8446,13 @@ def BiasThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
             EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
 
         # ------------------------------------------------
-        # 4. Metric value and supplementary metric values
+        # 4. Metric value
         # ------------------------------------------------
-        # 4.1 Computes the root mean square difference
+        # 4.1 Computes the root mean square error
         mv, keyerror = RmsZonal(thf_mod, thf_obs, centered=centered_rmse, biased=biased_rmse)
         mv_error = None
         if keyerror is not None:
             break
-        # 4.2 Supplementary metrics
-        sm_corr = float(Correlation(thf_mod, thf_obs, axis=0, centered=1, biased=1))
-        sm_corr_error = None
-        sm_std_mod = float(Std(thf_mod, weights=None, axis=0, centered=1, biased=1))
-        sm_std_obs = float(Std(thf_obs, weights=None, axis=0, centered=1, biased=1))
-        sm_std = sm_std_mod / sm_std_obs
-        sm_std_error = None
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
@@ -8777,28 +8498,24 @@ def BiasThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
+                thf_mod, thf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                nbr_year_obs, 1, ovar[0], units, "0", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean THF across longitudes")
+            dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean THF map")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean THF map")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-            dict1 = {"units": units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "mean THF across longitudes", "arraySTD": sm_std_obs}
-            dict2 = {"units": units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "mean THF across longitudes", "arraySTD": sm_std_obs}
-            dict3 = {
+            dict1 = {
                 "metric_name": name, "metric_method": method, "metric_reference": ref, "frequency": kwargs["frequency"],
-                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
-                "CORR_" + dataset2 + "_lon": sm_corr, "CORR_error_" + dataset2 + "_lon": sm_corr_error,
-                "STD_" + dataset2 + "_lon": sm_std, "STD_error_" + dataset2 + "_lon": sm_std_error}
-            dict3.update(dict_metric)
-            SaveNetcdf(file_name, global_attributes=dict3,
-                       var1=thf_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
-                       var2=thf_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
-            del file_name, dict1, dict2, dict3, dict_metric, dict_nc
+                "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error}
+            dict1.update(dict_metric)
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_metric, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -11053,13 +10770,12 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_lhf_lon_mod, en_lhf_lon_mod, lhf_map_slope_mod, ln_lhf_map_mod, en_lhf_map_mod]
             my_ob = [ln_lhf_lon_obs, en_lhf_lon_obs, lhf_map_slope_obs, ln_lhf_map_obs, en_lhf_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -11081,7 +10797,7 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=lhf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=lhf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -11569,13 +11285,12 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_lwr_lon_mod, en_lwr_lon_mod, lwr_map_slope_mod, ln_lwr_map_mod, en_lwr_map_mod]
             my_ob = [ln_lwr_lon_obs, en_lwr_lon_obs, lwr_map_slope_obs, ln_lwr_map_obs, en_lwr_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -11597,7 +11312,7 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=lwr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=lwr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -12076,13 +11791,12 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_pr_lon_mod, en_pr_lon_mod, pr_map_slope_mod, ln_pr_map_mod, en_pr_map_mod]
             my_ob = [ln_pr_lon_obs, en_pr_lon_obs, pr_map_slope_obs, ln_pr_map_obs, en_pr_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -12104,7 +11818,7 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=pr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=pr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -12584,13 +12298,12 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_shf_lon_mod, en_shf_lon_mod, shf_map_slope_mod, ln_shf_map_mod, en_shf_map_mod]
             my_ob = [ln_shf_lon_obs, en_shf_lon_obs, shf_map_slope_obs, ln_shf_map_obs, en_shf_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -12612,7 +12325,7 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=shf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=shf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -13131,13 +12844,12 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_ssh_lon_mod, en_ssh_lon_mod, ssh_map_slope_mod, ln_ssh_map_mod, en_ssh_map_mod]
             my_ob = [ln_ssh_lon_obs, en_ssh_lon_obs, ssh_map_slope_obs, ln_ssh_map_obs, en_ssh_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -13159,7 +12871,7 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=ssh_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=ssh_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -13604,13 +13316,12 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [nina_sst_lon_mod, nino_sst_lon_mod, sst_map_slope_mod, nina_sst_map_mod, nino_sst_map_mod]
             my_ob = [nina_sst_lon_obs, nino_sst_lon_obs, sst_map_slope_obs, nina_sst_map_obs, nino_sst_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -13632,7 +13343,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=sst_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=sst_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -14120,13 +13831,12 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_swr_lon_mod, en_swr_lon_mod, swr_map_slope_mod, ln_swr_map_mod, en_swr_map_mod]
             my_ob = [ln_swr_lon_obs, en_swr_lon_obs, swr_map_slope_obs, ln_swr_map_obs, en_swr_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -14148,7 +13858,7 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=swr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=swr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -14627,13 +14337,12 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_tau_lon_mod, en_tau_lon_mod, tau_map_slope_mod, ln_tau_map_mod, en_tau_map_mod]
             my_ob = [ln_tau_lon_obs, en_tau_lon_obs, tau_map_slope_obs, ln_tau_map_obs, en_tau_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -14655,7 +14364,7 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                        var1=tau_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=tau_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -15134,13 +14843,12 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_tau_lon_mod, en_tau_lon_mod, tau_map_slope_mod, ln_tau_map_mod, en_tau_map_mod]
             my_ob = [ln_tau_lon_obs, en_tau_lon_obs, tau_map_slope_obs, ln_tau_map_obs, en_tau_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -15162,7 +14870,7 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                        var1=tau_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=tau_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -15655,13 +15363,12 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_thf_lon_mod, en_thf_lon_mod, thf_map_slope_mod, ln_thf_map_mod, en_thf_map_mod]
             my_ob = [ln_thf_lon_obs, en_thf_lon_obs, thf_map_slope_obs, ln_thf_map_obs, en_thf_map_obs]
-            my_ty = ["lon_nina", "lon_nino", "map", "map_nina", "map_nino"]
             my_ax = ["0", "0", "xy", "xy", "xy"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -15683,7 +15390,7 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=thf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=thf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -16143,13 +15850,12 @@ def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_lhf_ts_mod, en_lhf_ts_mod, lhf_hov_slope_mod, ln_lhf_hov_mod, en_lhf_hov_mod]
             my_ob = [ln_lhf_ts_obs, en_lhf_ts_obs, lhf_hov_slope_obs, ln_lhf_hov_obs, en_lhf_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -16171,7 +15877,7 @@ def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=lhf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=lhf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -16639,13 +16345,12 @@ def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_lwr_ts_mod, en_lwr_ts_mod, lwr_hov_slope_mod, ln_lwr_hov_mod, en_lwr_hov_mod]
             my_ob = [ln_lwr_ts_obs, en_lwr_ts_obs, lwr_hov_slope_obs, ln_lwr_hov_obs, en_lwr_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -16667,7 +16372,7 @@ def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=lwr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=lwr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -17124,13 +16829,12 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_pr_ts_mod, en_pr_ts_mod, pr_hov_slope_mod, ln_pr_hov_mod, en_pr_hov_mod]
             my_ob = [ln_pr_ts_obs, en_pr_ts_obs, pr_hov_slope_obs, ln_pr_hov_obs, en_pr_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -17152,7 +16856,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                        var1=pr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=pr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -17612,13 +17316,12 @@ def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_shf_ts_mod, en_shf_ts_mod, shf_hov_slope_mod, ln_shf_hov_mod, en_shf_hov_mod]
             my_ob = [ln_shf_ts_obs, en_shf_ts_obs, shf_hov_slope_obs, ln_shf_hov_obs, en_shf_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -17640,7 +17343,7 @@ def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=shf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=shf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -18147,13 +17850,12 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_ssh_ts_mod, en_ssh_ts_mod, ssh_hov_slope_mod, ln_ssh_hov_mod, en_ssh_hov_mod]
             my_ob = [ln_ssh_ts_obs, en_ssh_ts_obs, ssh_hov_slope_obs, ln_ssh_hov_obs, en_ssh_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -18175,7 +17877,7 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=ssh_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=ssh_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
@@ -18592,13 +18294,12 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_sst_ts_mod, en_sst_ts_mod, sst_hov_slope_mod, ln_sst_hov_mod, en_sst_hov_mod]
             my_ob = [ln_sst_ts_obs, en_sst_ts_obs, sst_hov_slope_obs, ln_sst_hov_obs, en_sst_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -18620,7 +18321,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=sst_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=sst_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -19088,13 +18789,12 @@ def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_swr_ts_mod, en_swr_ts_mod, swr_hov_slope_mod, ln_swr_hov_mod, en_swr_hov_mod]
             my_ob = [ln_swr_ts_obs, en_swr_ts_obs, swr_hov_slope_obs, ln_swr_hov_obs, en_swr_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -19116,7 +18816,7 @@ def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=swr_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=swr_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -19576,13 +19276,12 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_tau_ts_mod, en_tau_ts_mod, tau_hov_slope_mod, ln_tau_hov_mod, en_tau_hov_mod]
             my_ob = [ln_tau_ts_obs, en_tau_ts_obs, tau_hov_slope_obs, ln_tau_hov_obs, en_tau_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -19604,7 +19303,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=tau_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=tau_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -20064,13 +19763,12 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_tau_ts_mod, en_tau_ts_mod, tau_hov_slope_mod, ln_tau_hov_mod, en_tau_hov_mod]
             my_ob = [ln_tau_ts_obs, en_tau_ts_obs, tau_hov_slope_obs, ln_tau_hov_obs, en_tau_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -20092,7 +19790,7 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                        var1=tau_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=tau_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -20565,13 +20263,12 @@ def EnsoThfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             my_un = [my_units, my_units, units, my_units, my_units]
             my_mo = [ln_thf_ts_mod, en_thf_ts_mod, thf_hov_slope_mod, ln_thf_hov_mod, en_thf_hov_mod]
             my_ob = [ln_thf_ts_obs, en_thf_ts_obs, thf_hov_slope_obs, ln_thf_hov_obs, en_thf_hov_obs]
-            my_ty = ["ts_nina", "ts_nino", "hov", "hov_nina", "hov_nino"]
             my_ax = ["0", "0", "01", "01", "01"]
-            for jj, (evn, des, vna, add, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
-                    zip(my_ev, my_de, ovar[1:], my_ty, my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
+            for jj, (evn, des, vna, uni, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[1:], my_un, my_mo, my_ob, my_em, my_eo, my_ax)):
                 dict_metric, dict_nc = fill_dict_axis(
                     tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                    nbr_year_obs, nbr, vna, add, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    nbr_year_obs, nbr, vna, uni, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                     dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
                 nbr += 2
             # Save netCDF
@@ -20593,7 +20290,7 @@ def EnsoThfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                        var1=thf_slope_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=thf_slope_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
             del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
-                my_ty, my_un, my_units, nbr
+                my_un, my_units, nbr
     # Metric value
     if debug is True:
         dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
@@ -25009,14 +24706,17 @@ def SeasonalLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, l
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageZonal", 15, **dict_debug)
             # Supplementary metrics
             dict_metric, dict_nc = dict(), dict()
+            print(sorted(dict_nc.keys()))
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                 dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LHF")
+            print(sorted(dict_nc.keys()))
             dict_metric, dict_nc = fill_dict_axis(
                 lhf_mod, lhf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                 dict_metric=dict_metric, description="mean annual cycle of LHF across latitudes")
+            print(sorted(dict_nc.keys()))
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -25034,6 +24734,7 @@ def SeasonalLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, l
                 "CORR_" + dataset2 + "_lat": sm_corr, "CORR_error_" + dataset2 + "_lat": sm_corr_error,
                 "STD_" + dataset2 + "_lat": sm_std, "STD_error_" + dataset2 + "_lat": sm_std_error}
             dict3.update(dict_metric)
+            print(sorted(dict_nc.keys()))
             SaveNetcdf(file_name, global_attributes=dict3,
                        var1=lhfStdLat_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1,
                        var2=lhfStdLat_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2, **dict_nc)
@@ -25350,12 +25051,13 @@ def SeasonalLhfLonRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, l
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LHF")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of LHF")
             dict_metric, dict_nc = fill_dict_axis(
                 lhf_mod, lhf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of LHF across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of LHF across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -25695,12 +25397,13 @@ def SeasonalLwrLatRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, l
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LWR")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of LWR")
             dict_metric, dict_nc = fill_dict_axis(
                 lwr_mod, lwr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of LWR across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of LWR across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -26040,12 +25743,13 @@ def SeasonalLwrLonRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, l
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of LWR")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of LWR")
             dict_metric, dict_nc = fill_dict_axis(
                 lwr_mod, lwr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of LWR across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of LWR across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -26373,12 +26077,13 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of PR")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of PR")
             dict_metric, dict_nc = fill_dict_axis(
                 pr_mod, pr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of PR across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of PR across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -26706,12 +26411,13 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of PR")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of PR")
             dict_metric, dict_nc = fill_dict_axis(
                 pr_mod, pr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of PR across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of PR across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -27045,12 +26751,13 @@ def SeasonalShfLatRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SHF")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of SHF")
             dict_metric, dict_nc = fill_dict_axis(
                 shf_mod, shf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of SHF across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of SHF across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -27383,12 +27090,13 @@ def SeasonalShfLonRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SHF")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of SHF")
             dict_metric, dict_nc = fill_dict_axis(
                 shf_mod, shf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of SHF across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of SHF across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -27773,13 +27481,14 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric,
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
                 description="map of the standard deviation of the mean annual cycle of dynamic SSH")
             dict_metric, dict_nc = fill_dict_axis(
                 ssh_mod, ssh_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of dynamic SSH across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="mean annual cycle of dynamic SSH across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -28165,13 +27874,14 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric,
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
                 description="map of the standard deviation of the mean annual cycle of dynamic SSH")
             dict_metric, dict_nc = fill_dict_axis(
                 ssh_mod, ssh_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of dynamic SSH across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="mean annual cycle of dynamic SSH across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -28501,12 +28211,13 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SST")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of SST")
             dict_metric, dict_nc = fill_dict_axis(
                 sst_mod, sst_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of SST across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of SST across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -28835,12 +28546,13 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SST")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of SST")
             dict_metric, dict_nc = fill_dict_axis(
                 sst_mod, sst_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of SST across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of SST across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -29180,12 +28892,13 @@ def SeasonalSwrLatRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SWR")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of SWR")
             dict_metric, dict_nc = fill_dict_axis(
                 swr_mod, swr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of SWR across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of SWR across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -29525,12 +29238,13 @@ def SeasonalSwrLonRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, s
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of SWR")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of SWR")
             dict_metric, dict_nc = fill_dict_axis(
                 swr_mod, swr_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of SWR across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of SWR across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -29859,12 +29573,13 @@ def SeasonalTauxLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of Taux")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of Taux")
             dict_metric, dict_nc = fill_dict_axis(
                 tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of Taux across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of Taux across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -30193,12 +29908,13 @@ def SeasonalTauxLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of Taux")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of Taux")
             dict_metric, dict_nc = fill_dict_axis(
                 tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of Taux across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of Taux across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -30527,12 +30243,13 @@ def SeasonalTauyLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of Tauy")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of Tauy")
             dict_metric, dict_nc = fill_dict_axis(
                 tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of Tauy across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of Tauy across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -30861,12 +30578,13 @@ def SeasonalTauyLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of Tauy")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of Tauy")
             dict_metric, dict_nc = fill_dict_axis(
                 tau_mod, tau_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of Tauy across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of Tauy across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -31210,12 +30928,13 @@ def SeasonalThfLatRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, t
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of THF")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of THF")
             dict_metric, dict_nc = fill_dict_axis(
                 thf_mod, thf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of THF across latitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of THF across latitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -31559,12 +31278,13 @@ def SeasonalThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, t
             dict_metric, dict_nc = dict(), dict()
             dict_metric, dict_nc = fill_dict_axis(
                 map_mod, map_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 3, ovar[1], "map", units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="map of the standard deviation of the mean annual cycle of THF")
+                nbr_year_obs, 3, ovar[1], units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc,
+                description="map of the standard deviation of the mean annual cycle of THF")
             dict_metric, dict_nc = fill_dict_axis(
                 thf_mod, thf_obs, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
-                nbr_year_obs, 5, ovar[2], "hov", units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
-                dict_metric=dict_metric, description="mean annual cycle of THF across longitudes")
+                nbr_year_obs, 5, ovar[2], units, "01", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                dict_metric=dict_metric, dict_nc=dict_nc, description="mean annual cycle of THF across longitudes")
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
@@ -31596,6 +31316,1947 @@ def SeasonalThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, t
         "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
         "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
         "keyerror": keyerror, "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def telecon_pr_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                   prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
+                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
+                   prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                   netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The telecon_pr_djf() function computes PRA (precipitation anomalies) averaged in multiple regions (usually the AR6
+    regions), then computes the DJF composites during El Niño events and La Niña events.
+
+    The metric is the percentage of regions where observations and models have opposite signs of the teleconnection.
+    The regions used to compute the metric are selected if anomalies are significant during either El Niño or La Niña
+    (different regions may be selected for each type of event).
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Thu May 20 2021
+
+    Based on:
+    Power, S. B., F. P. D. Delage (2018) El Niño–Southern Oscillation and Associated Climatic Conditions around the
+    World during the Latter Half of the Twenty-First Century. J. Clim., doi:10.1175/JCLI-D-18-0138.1
+    Perry, S. J., S. McGregor, A. Sen Gupta, M. H. England, N. Maher (2020) Projected late 21st century changes to the
+    regional impacts of the El Niño-Southern Oscillation. Clim. Dyn., doi:10.1007/s00382-019-05006-6
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param prfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemod: string
+        name of PR variable (pr, prec, precip, rain) in 'prfilemod'
+    :param prareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR areacell
+    :param prareanamemod: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemod'
+    :param prlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR landmask
+    :param prlandmasknamemod: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, prec, precip, rain) in 'prfileobs'
+    :param prareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR areacell
+    :param prareanameobs: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafileobs'
+    :param prlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR landmask
+    :param prlandmasknameobs: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param prbox: string
+        name of box (e.g. 'equatorial_pacific') for PR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'telecon_pr_djf_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method1, enso_method2, enso_method3 = "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+        if isinstance(length_ev, int) is True:
+            if season_ev in ["JFM", "FMA", "MAM", "AMJ", "MJJ", "JJA", "JAS", "ASO", "SON", "OND", "NDJ", "DJF"]:
+                tname = "overlaping seasons"
+            else:
+                tname = "months"
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive " + str(tname)
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method3 = "; " + enso_method1 + "; " + enso_method2
+        else:
+            enso_method3 = "; " + enso_method1 + enso_method2
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+    enso_method = season_ev + " SSTA > " + my_thresh + enso_method3
+
+    # significance test
+    if "significance" in list(kwargs.keys()) and (isinstance(kwargs["significance"], int) is True or
+                                                  isinstance(kwargs["significance"], float) is True):
+        significance = True
+        level = kwargs["significance"]
+        sig_method = " (regions must have significant PRA in the observations at the " + str(level) + \
+                     "% confidence level)"
+    else:
+        significance, level, sig_method = False, None, ""
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "PRA sign during EN and LN"
+    units = "%"
+    method = "precipitation anomalies (PRA) averaged in " + str(len(prbox)) + " regions composited during DJF of El" + \
+             " Nino and La Nina events (sea surface temperature anomalies; " + enso_method + "), the metric is the " + \
+             "percentage of regions in which model and observations have opposite signs" + sig_method
+    method_sst = "SST"
+    method_pr = "PR"
+    ref = "Using CDAT averager"
+    metric = "telecon_pr_djf"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        method_sst += ", read & mask land"
+        prl_mod, prl_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod, name_area=prareanamemod,
+            file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=False, maskocean=True,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        pro_mod, pro_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+            prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod, name_area=prareanamemod,
+            file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        prl_obs, prl_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs, name_area=prareanameobs,
+            file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=False, maskocean=True,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        pro_obs, pro_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+            prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs, name_area=prareanameobs,
+            file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        method_pr += ", read & mask land or ocean"
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, prl_mod, keyerror_mod1 = CheckTime(sst_mod, prl_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_mod, pro_mod, keyerror_mod2 = CheckTime(sst_mod, pro_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, prl_obs, keyerror_obs1 = CheckTime(sst_obs, prl_obs, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, pro_obs, keyerror_obs2 = CheckTime(sst_obs, pro_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_mod, method_sst, keyerror_mod = PreProcessTS(
+            sst_mod, method_sst, areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_obs, _, keyerror_obs = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        kwargs["smoothing"] = deepcopy(smooth)
+        # 2.2 PR in 'prbox' are normalized / detrended / smoothed (running average) if applicable
+        if not isinstance(prbox, list):
+            prbox = [prbox]
+        dict_pr_mod, dict_pr_obs = dict(), dict()
+        for reg in prbox:
+            region_ref = ReferenceRegions(reg)
+            mask_l = region_ref["maskland"] if "maskland" in list(region_ref.keys()) else False
+            mask_o = region_ref["maskocean"] if "maskocean" in list(region_ref.keys()) else False
+            if (mask_l is True and mask_o is True) or (mask_l is False and mask_o is False):
+                keyerror = "land or ocean should be masked (" + str(reg) + ": land = " + str(mask_l) + \
+                           ", ocean = " + str(mask_o) + ")"
+                tmp = None
+            else:
+                if mask_l is False and mask_o is True:
+                    dict_pr_mod[reg], tmp, keyerror_mod = preprocess_ts_polygon(
+                        prl_mod, "", areacell=prl_mod_areacell, average="horizontal", region=reg, **kwargs)
+                    dict_pr_obs[reg], _, keyerror_obs = preprocess_ts_polygon(
+                        prl_obs, "", areacell=prl_obs_areacell, average="horizontal", region=reg, **kwargs)
+                else:
+                    dict_pr_mod[reg], tmp, keyerror_mod = preprocess_ts_polygon(
+                        pro_mod, "", areacell=pro_mod_areacell, average="horizontal", region=reg, **kwargs)
+                    dict_pr_obs[reg], _, keyerror_obs = preprocess_ts_polygon(
+                        pro_obs, "", areacell=pro_obs_areacell, average="horizontal", region=reg, **kwargs)
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if reg == prbox[-1]:
+                method_pr += tmp
+            del mask_l, mask_o, region_ref, tmp
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod sst) " + str([ax.id for ax in sst_mod.getAxisList()]),
+                          "axes2": "(obs sst) " + str([ax.id for ax in sst_obs.getAxisList()]),
+                          "axes3": "(mod pr0) " + str([ax.id for ax in dict_pr_mod[prbox[0]].getAxisList()]),
+                          "axes4": "(obs pr0) " + str([ax.id for ax in dict_pr_obs[prbox[0]].getAxisList()]),
+                          "shape1": "(mod sst) " + str(sst_mod.shape), "shape2": "(obs sst) " + str(sst_obs.shape),
+                          "shape3": "(mod pr0) " + str(dict_pr_mod[prbox[0]].shape),
+                          "shape4": "(obs pr0) " + str(dict_pr_obs[prbox[0]].shape),
+                          "time1": "(mod sst) " + str(TimeBounds(sst_mod)),
+                          "time2": "(obs sst) " + str(TimeBounds(sst_obs)),
+                          "time3": "(mod pr0) " + str(TimeBounds(dict_pr_mod[prbox[0]])),
+                          "time4": "(obs pr0) " + str(TimeBounds(dict_pr_obs[prbox[0]]))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+        del prl_mod_areacell, prl_obs_areacell, pro_mod_areacell, pro_obs_areacell, smooth, sst_mod_areacell, \
+            sst_obs_areacell
+
+        # ------------------------------------------------
+        # 3. Detect events, seasonal mean and anomalies, create 2D array
+        # ------------------------------------------------
+        # 3.1 Detect ENSO events
+        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                    compute_season=True, duration=length_ev)
+        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                    compute_season=True, duration=length_ev)
+        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                    compute_season=True, duration=length_ev)
+        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                    compute_season=True, duration=length_ev)
+        method_sst += ", detect ENSO events: NDJ average & seasonal mean removed (" + str(enso_method) + ")"
+        if debug is True:
+            dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                          "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                          "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                          "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents", 15, **dict_debug)
+        if len(ln_years_mod) < 2 or len(en_years_mod) < 2 or len(ln_years_obs) < 2 or len(en_years_obs) < 2:
+            keyerror = "too few ENSO events have been detected during the given periods (mod =" + \
+                       " " + str(actualtimebounds_mod) + ", obs = " + str(actualtimebounds_obs) + ") and using " + \
+                       "given ENSO definition (" + enso_method + "). A minimum of 2 events of each category is " + \
+                       "required to compute this metric (mod EN = " + str(en_years_mod) + ", mod LN =" + \
+                       " " + str(ln_years_mod) + ", obs EN = " + str(en_years_obs) + ", obs LN =" + \
+                       " " + str(ln_years_obs) + ")"
+            break
+        # 3.2 Seasonal mean and anomalies of horizontally averaged PR
+        for reg in prbox:
+            dict_pr_mod[reg] = SeasonalMean(dict_pr_mod[reg], "DJF", compute_anom=True)
+            dict_pr_obs[reg] = SeasonalMean(dict_pr_obs[reg], "DJF", compute_anom=True)
+            if reg == prbox[-1]:
+                method_pr += ", DJF average & seasonal mean removed"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod pr0) " + str([ax.id for ax in dict_pr_mod[prbox[0]].getAxisList()]),
+                "axes2": "(obs pr0) " + str([ax.id for ax in dict_pr_obs[prbox[0]].getAxisList()]),
+                "shape1": "(mod pr0) " + str(dict_pr_mod[prbox[0]].shape),
+                "shape2": "(obs pr0) " + str(dict_pr_obs[prbox[0]].shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean", 15, **dict_debug)
+        # 3.3 Create 2D array pr(time, regions)
+        long_name = "IPCC WGI regions v4"
+        reference = "https://doi.org/10.5194/essd-12-2959-2020"
+        short_name = "ipcc_wgi_regions_v4"
+        pr_mod, keyerror_mod = telecon_array(
+            dict_pr_mod, prbox, ax_long_name=long_name, ax_reference=reference, ax_short_name=short_name)
+        pr_obs, keyerror_obs = telecon_array(
+            dict_pr_obs, prbox, ax_long_name=long_name, ax_reference=reference, ax_short_name=short_name)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+
+        # ------------------------------------------------
+        # 4. Compute composites anomalies and amplification
+        # ------------------------------------------------
+        # 4.1 Select events, composite
+        en_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=en_years_mod)
+        en_pr_ave_mod, keyerror_mod1 = AverageAxis(en_pr_mod)
+        ln_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=ln_years_mod)
+        ln_pr_ave_mod, keyerror_mod2 = AverageAxis(ln_pr_mod)
+        en_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=en_years_obs)
+        en_pr_ave_obs, keyerror_obs1 = AverageAxis(en_pr_obs)
+        ln_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=ln_years_obs)
+        ln_pr_ave_obs, keyerror_obs2 = AverageAxis(ln_pr_obs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        method_pr += ", select ENSO events & and compute composite"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_mod.shape), "shape2": "(mod LN) " + str(ln_pr_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_obs.shape), "shape4": "(obs LN) " + str(ln_pr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Event_selection", 15, **dict_debug)
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_ave_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_ave_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_ave_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_ave_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_ave_mod.shape), "shape2": "(mod LN) " + str(ln_pr_ave_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_ave_obs.shape), "shape4": "(obs LN) " + str(ln_pr_ave_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageAxis", 15, **dict_debug)
+
+        # 4.2 Significance
+        if significance is True:
+            en_pr_sig_mod = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
+            ln_pr_sig_mod = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
+            en_pr_sig_obs = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
+            ln_pr_sig_obs = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
+            method_pr += ", compute significance of the composite (Monte Carlo resampling " + str(level) + \
+                         "% confidence level)"
+        else:
+            en_pr_sig_mod, ln_pr_sig_mod = ArrayOnes(pr_ave_mod[0]), ArrayOnes(pr_ave_mod[0])
+            en_pr_sig_obs, ln_pr_sig_obs = ArrayOnes(pr_ave_obs[0]), ArrayOnes(pr_ave_obs[0])
+        if sum(ln_pr_sig_obs) == 0 or sum(en_pr_sig_obs) == 0 or sum(ln_pr_sig_obs) + sum(en_pr_sig_obs) < 5:
+            keyerror = "too few regions have significant PRA during ENSO events" + str(sig_method) + ". A least 1" + \
+                       "region must be significant during EN and 1 during LN, and a minimum of 5 regions (EN + LN) " + \
+                       "is required to compute this metric (obs EN = " + str(int(round(sum(en_pr_sig_obs)))) + ", " + \
+                       "obs LN = " + str(int(round(sum(ln_pr_sig_obs)))) + ")"
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_sig_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_sig_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_sig_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_sig_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_sig_mod.shape), "shape2": "(mod LN) " + str(ln_pr_sig_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_sig_obs.shape), "shape4": "(obs LN) " + str(ln_pr_sig_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value
+        # ------------------------------------------------
+        # 5.1 Sum the number of regions with significant anomalies in the observations, that have opposite anomalies
+        # sign in observations and model
+        en_sum = sum([1 for ii, si in enumerate(en_pr_sig_obs)
+                      if si == 1 and NUMPYsign(en_pr_ave_mod[ii]) != NUMPYsign(en_pr_ave_obs[ii])])
+        ln_sum = sum([1 for ii, si in enumerate(ln_pr_sig_obs)
+                      if si == 1 and NUMPYsign(ln_pr_ave_mod[ii]) != NUMPYsign(ln_pr_ave_obs[ii])])
+        mv = (en_sum + ln_sum) * 100. / (sum(en_pr_sig_obs) + sum(ln_pr_sig_obs))
+        mv_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, map_mod_areacell, keyerror_mod = Read_data_mask_area(
+                prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod,
+                name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=False,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, map_obs_areacell, keyerror_obs = Read_data_mask_area(
+                prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs,
+                name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=False,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if both variables have the same time period and if the minimum number of time steps is respected
+            sst_mod, map_mod, keyerror_mod = CheckTime(sst_mod, map_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, map_obs, keyerror_obs = CheckTime(sst_obs, map_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess PR (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=map_mod_areacell, region="global2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=map_obs_areacell, region="global2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del map_mod_areacell, map_obs_areacell
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape),
+                              "time1": "(mod pr) " + str(TimeBounds(map_mod)),
+                              "time2": "(obs pr) " + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Seasonal mean and anomalies of global PR map
+            map_mod = SeasonalMean(map_mod, "DJF", compute_anom=True)
+            map_obs = SeasonalMean(map_obs, "DJF", compute_anom=True)
+            if debug is True:
+                dict_debug = {
+                    "axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                    "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                    "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean: netcdf", 15, **dict_debug)
+            # Regridding PR map
+            if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
+                kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                                        "newgrid_name": "generic_1x1deg"}
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            map_mod, map_obs, _ = TwoVarRegrid(map_mod, map_obs, "", region="global2", **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Composites PR map
+            en_map_mod = Composite(map_mod, en_years_mod, kwargs["frequency"])
+            ln_map_mod = Composite(map_mod, ln_years_mod, kwargs["frequency"])
+            en_map_obs = Composite(map_obs, en_years_obs, kwargs["frequency"])
+            ln_map_obs = Composite(map_obs, ln_years_obs, kwargs["frequency"])
+            if debug is True:
+                dict_debug = {
+                    "axes1": "(mod EN) " + str([ax.id for ax in en_map_mod.getAxisList()]),
+                    "axes2": "(mod LN) " + str([ax.id for ax in ln_map_mod.getAxisList()]),
+                    "axes3": "(obs EN) " + str([ax.id for ax in en_map_obs.getAxisList()]),
+                    "axes4": "(obs LN) " + str([ax.id for ax in ln_map_obs.getAxisList()]),
+                    "shape1": "(mod EN) " + str(en_map_mod.shape), "shape2": "(mod LN) " + str(ln_map_mod.shape),
+                    "shape3": "(obs EN) " + str(en_map_obs.shape), "shape4": "(obs LN) " + str(ln_map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after Composite: netcdf", 15, **dict_debug)
+            # Supplementary metric values
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "mm/day"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 7
+            my_ev = ["nina", "nino", "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, ln_years_obs, en_years_obs]
+            my_de = ["PRA averaged in " + str(len(prbox)) + " regions of La Nina events composite during DJF; Nina = " +
+                     season_ev + " SSTA < -" + my_thresh + enso_method3,
+                     "PRA averaged in " + str(len(prbox)) + " regions of El Nino events composite during DJF; Nino = " +
+                     season_ev + " SSTA > " + my_thresh + enso_method3,
+                     "PRA map of La Nina events composite during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh +
+                     enso_method3,
+                     "PRA map of El Nino events composite during DJF; Nino = " + season_ev + " SSTA > " + my_thresh +
+                     enso_method3]
+            my_mo = [ln_pr_ave_mod, en_pr_ave_mod, ln_map_mod, en_map_mod]
+            my_ob = [ln_pr_ave_obs, en_pr_ave_obs, ln_map_obs, en_map_obs]
+            my_ax = ["0", "0", "xy", "xy"]
+            for jj, (evn, des, vna, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[3:7], my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, my_units, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            if significance is True:
+                si1 = "significativity at the " + str(level) + "% confidence level of PRA "
+                si2 = "; 100000 random selections (with replacement) of "
+                si3 = " years of the time series are compared to the "
+                rav = "averaged in " + str(len(prbox)) + " regions "
+                rma = "map "
+                en1 = "of El Nino events composite during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + \
+                      enso_method3
+                en2 = "El Nino composite"
+                ln1 = "of La Nina events composite during DJF; Nino = " + season_ev + " SSTA < -" + my_thresh + \
+                      enso_method3
+                ln2 = "La Nina composite"
+                my_ar = [ln_pr_sig_mod, ln_pr_sig_obs, en_pr_sig_mod, en_pr_sig_obs]
+                my_e1 = deepcopy(my_ev)
+                my_e2 = [ln1, en1, ln1, en1]
+                my_e3 = [ln2, en2, ln2, en2]
+                my_ey = [ln_years_mod, ln_years_obs, en_years_mod, en_years_obs]
+                my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
+                my_re = [rav, rav, rav, rav]
+                my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
+                my_vn = [va + da for va in ovar[7:] for da in [dataset1, dataset2]]
+                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(
+                    my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": "", "number_of_years_used": ny, "time_period": str(tb), e1 + "_years": ey,
+                        "description": si1 + re + e2 + si2 + str(len(ey)) + si3 + e3}
+                    dict_nc["var" + str(nbr) + "_name"] = vn
+                    nbr += 1
+                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn, rav, rma, si1, \
+                    si2, si3
+            dict1 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF time series"}
+            dict2 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF time series"}
+            dict3 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
+                                    "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
+            dict4 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
+                                    "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
+            dict5 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino events" +
+                                    " during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+            dict6 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino events" +
+                                    " during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+            dict7 = {"metric_name": name, "metric_method": method, "metric_reference": ref, "frequency":
+                     kwargs["frequency"], "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "computation_steps": method_sst + "\n" + method_pr}
+            dict7.update(dict_metric)
+            SaveNetcdf(
+                file_name, var1_time_name="seasons_" + dataset1, var2_time_name="seasons_" + dataset2,
+                var1=pr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1, global_attributes=dict7,
+                var2=pr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2,
+                var3=ln_pr_mod, var3_attributes=dict3, var3_name=ovar[1] + dataset1,
+                var4=ln_pr_obs, var4_attributes=dict4, var4_name=ovar[1] + dataset2,
+                var5=en_pr_mod, var5_attributes=dict5, var5_name=ovar[2] + dataset1,
+                var6=en_pr_obs, var6_attributes=dict6, var6_name=ovar[2] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag, "method_detail": method_sst + "\n" + method_pr}
+    return metric_output
+
+
+def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                       prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
+                       sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                       prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
+                       prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                       netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The telecon_pr_amp_djf() function computes PRA (precipitation anomalies) averaged in multiple regions (usually the
+    AR6 regions), then computes the DJF composites during El Niño events and La Niña events.
+
+    The metric is the percentage of regions where the observed change rate (percentage change of the season's averaged
+    rainfall) composite does not fall within modeled range (bootstrap).
+    The regions used to compute the metric are selected if the change rate si significant during either El Niño or La
+    Niña (different regions may be selected for each type of event).
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Thu May 20 2021
+
+    Based on:
+    Deser, C., I. R. Simpson, A. S. Phillips, K. A. McKinnon (2018) How Well Do We Know ENSO’s Climate Impacts over
+    North America, and How Do We Evaluate Models Accordingly? J. Clim., doi:10.1175/JCLI-D-17-0783.1
+    Power, S. B., F. P. D. Delage (2018) El Niño–Southern Oscillation and Associated Climatic Conditions around the
+    World during the Latter Half of the Twenty-First Century. J. Clim., doi:10.1175/JCLI-D-18-0138.1
+    Perry, S. J., S. McGregor, A. Sen Gupta, M. H. England, N. Maher (2020) Projected late 21st century changes to the
+    regional impacts of the El Niño-Southern Oscillation. Clim. Dyn., doi:10.1007/s00382-019-05006-6
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param prfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemod: string
+        name of PR variable (pr, prec, precip, rain) in 'prfilemod'
+    :param prareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR areacell
+    :param prareanamemod: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemod'
+    :param prlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR landmask
+    :param prlandmasknamemod: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, prec, precip, rain) in 'prfileobs'
+    :param prareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR areacell
+    :param prareanameobs: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafileobs'
+    :param prlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR landmask
+    :param prlandmasknameobs: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param prbox: string
+        name of box (e.g. 'equatorial_pacific') for PR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'telecon_pr_amp_djf_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method1, enso_method2, enso_method3 = "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+        if isinstance(length_ev, int) is True:
+            if season_ev in ["JFM", "FMA", "MAM", "AMJ", "MJJ", "JJA", "JAS", "ASO", "SON", "OND", "NDJ", "DJF"]:
+                tname = "overlaping seasons"
+            else:
+                tname = "months"
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive " + str(tname)
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method3 = "; " + enso_method1 + "; " + enso_method2
+        else:
+            enso_method3 = "; " + enso_method1 + enso_method2
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+    enso_method = season_ev + " SSTA > " + my_thresh + enso_method3
+
+    # significance test
+    if "significance" in list(kwargs.keys()) and (isinstance(kwargs["significance"], int) is True or
+                                                  isinstance(kwargs["significance"], float) is True):
+        significance = True
+        level = kwargs["significance"]
+        sig_method = " (regions must have significant PRA in the observations at the " + str(level) + \
+                     "% confidence level)"
+    else:
+        significance, level, sig_method = False, None, ""
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "PRcr compared during EN and LN"
+    units = "%"
+    method = "precipitation change rate (PRcr) averaged in " + str(len(prbox)) + " regions composited during DJF of" + \
+             " El Nino and La Nina events (sea surface temperature anomalies; " + enso_method + "), the metric is " + \
+             "the percentage of regions in which the observed PRcr does not fall within modeled range (Monte Carlo " + \
+             "resampling " + str(level) + "% confidence level)" + sig_method
+    method_sst = "SST"
+    method_pr = "PR"
+    ref = "Using CDAT averager"
+    metric = "telecon_pr_amp_djf"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        method_sst += ", read & mask land"
+        prl_mod, prl_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod, name_area=prareanamemod,
+            file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=False, maskocean=True,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        pro_mod, pro_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+            prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod, name_area=prareanamemod,
+            file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        prl_obs, prl_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs, name_area=prareanameobs,
+            file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=False, maskocean=True,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        pro_obs, pro_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+            prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs, name_area=prareanameobs,
+            file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        method_pr += ", read & mask land or ocean"
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, prl_mod, keyerror_mod1 = CheckTime(sst_mod, prl_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_mod, pro_mod, keyerror_mod2 = CheckTime(sst_mod, pro_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, prl_obs, keyerror_obs1 = CheckTime(sst_obs, prl_obs, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, pro_obs, keyerror_obs2 = CheckTime(sst_obs, pro_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_mod, method_sst, keyerror_mod = PreProcessTS(
+            sst_mod, method_sst, areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_obs, _, keyerror_obs = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        kwargs["smoothing"] = deepcopy(smooth)
+        # 2.2 PR in 'prbox' are normalized / detrended / smoothed (running average) if applicable
+        if not isinstance(prbox, list):
+            prbox = [prbox]
+        dict_pr_mod, dict_pr_obs = dict(), dict()
+        for reg in prbox:
+            region_ref = ReferenceRegions(reg)
+            mask_l = region_ref["maskland"] if "maskland" in list(region_ref.keys()) else False
+            mask_o = region_ref["maskocean"] if "maskocean" in list(region_ref.keys()) else False
+            if (mask_l is True and mask_o is True) or (mask_l is False and mask_o is False):
+                keyerror = "land or ocean should be masked (" + str(reg) + ": land = " + str(mask_l) + \
+                           ", ocean = " + str(mask_o) + ")"
+                tmp = None
+            else:
+                if mask_l is False and mask_o is True:
+                    dict_pr_mod[reg], tmp, keyerror_mod = preprocess_ts_polygon(
+                        prl_mod, "", areacell=prl_mod_areacell, average="horizontal", region=reg, **kwargs)
+                    dict_pr_obs[reg], _, keyerror_obs = preprocess_ts_polygon(
+                        prl_obs, "", areacell=prl_obs_areacell, average="horizontal", region=reg, **kwargs)
+                else:
+                    dict_pr_mod[reg], tmp, keyerror_mod = preprocess_ts_polygon(
+                        pro_mod, "", areacell=pro_mod_areacell, average="horizontal", region=reg, **kwargs)
+                    dict_pr_obs[reg], _, keyerror_obs = preprocess_ts_polygon(
+                        pro_obs, "", areacell=pro_obs_areacell, average="horizontal", region=reg, **kwargs)
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if reg == prbox[-1]:
+                method_pr += tmp
+            del mask_l, mask_o, region_ref, tmp
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod sst) " + str([ax.id for ax in sst_mod.getAxisList()]),
+                          "axes2": "(obs sst) " + str([ax.id for ax in sst_obs.getAxisList()]),
+                          "axes3": "(mod pr0) " + str([ax.id for ax in dict_pr_mod[prbox[0]].getAxisList()]),
+                          "axes4": "(obs pr0) " + str([ax.id for ax in dict_pr_obs[prbox[0]].getAxisList()]),
+                          "shape1": "(mod sst) " + str(sst_mod.shape), "shape2": "(obs sst) " + str(sst_obs.shape),
+                          "shape3": "(mod pr0) " + str(dict_pr_mod[prbox[0]].shape),
+                          "shape4": "(obs pr0) " + str(dict_pr_obs[prbox[0]].shape),
+                          "time1": "(mod sst) " + str(TimeBounds(sst_mod)),
+                          "time2": "(obs sst) " + str(TimeBounds(sst_obs)),
+                          "time3": "(mod pr0) " + str(TimeBounds(dict_pr_mod[prbox[0]])),
+                          "time4": "(obs pr0) " + str(TimeBounds(dict_pr_obs[prbox[0]]))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+        del prl_mod_areacell, prl_obs_areacell, pro_mod_areacell, pro_obs_areacell, smooth, sst_mod_areacell, \
+            sst_obs_areacell
+
+        # ------------------------------------------------
+        # 3. Detect events, seasonal mean and change rate, create 2D array
+        # ------------------------------------------------
+        # 3.1 Detect ENSO events
+        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                    compute_season=True, duration=length_ev)
+        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                    compute_season=True, duration=length_ev)
+        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                    compute_season=True, duration=length_ev)
+        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                    compute_season=True, duration=length_ev)
+        method_sst += ", detect ENSO events: NDJ average & seasonal mean removed (" + str(enso_method) + ")"
+        if debug is True:
+            dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                          "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                          "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                          "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents", 15, **dict_debug)
+        if len(ln_years_mod) < 2 or len(en_years_mod) < 2 or len(ln_years_obs) < 2 or len(en_years_obs) < 2:
+            keyerror = "too few ENSO events have been detected during the given periods (mod =" + \
+                       " " + str(actualtimebounds_mod) + ", obs = " + str(actualtimebounds_obs) + ") and using " + \
+                       "given ENSO definition (" + enso_method + "). A minimum of 2 events of each category is " + \
+                       "required to compute this metric (mod EN = " + str(en_years_mod) + ", mod LN =" + \
+                       " " + str(ln_years_mod) + ", obs EN = " + str(en_years_obs) + ", obs LN =" + \
+                       " " + str(ln_years_obs) + ")"
+            break
+        # 3.2 Seasonal mean and change rate of horizontally averaged PR
+        for reg in prbox:
+            dict_pr_mod[reg] = telecon_change_rate(SeasonalMean(dict_pr_mod[reg], "DJF", compute_anom=False))
+            dict_pr_obs[reg] = telecon_change_rate(SeasonalMean(dict_pr_obs[reg], "DJF", compute_anom=False))
+            if reg == prbox[-1]:
+                method_pr += ", DJF average & change rate ([val - mean] * 100. / mean)"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod pr0) " + str([ax.id for ax in dict_pr_mod[prbox[0]].getAxisList()]),
+                "axes2": "(obs pr0) " + str([ax.id for ax in dict_pr_obs[prbox[0]].getAxisList()]),
+                "shape1": "(mod pr0) " + str(dict_pr_mod[prbox[0]].shape),
+                "shape2": "(obs pr0) " + str(dict_pr_obs[prbox[0]].shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean", 15, **dict_debug)
+        # 3.3 Create 2D array pr(time, regions)
+        long_name = "IPCC WGI regions v4"
+        reference = "https://doi.org/10.5194/essd-12-2959-2020"
+        short_name = "ipcc_wgi_regions_v4"
+        pr_mod, keyerror_mod = telecon_array(
+            dict_pr_mod, prbox, ax_long_name=long_name, ax_reference=reference, ax_short_name=short_name)
+        pr_obs, keyerror_obs = telecon_array(
+            dict_pr_obs, prbox, ax_long_name=long_name, ax_reference=reference, ax_short_name=short_name)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+
+        # ------------------------------------------------
+        # 4. Compute composites PRcr
+        # ------------------------------------------------
+        # 4.1 Select events, composite
+        en_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=en_years_mod)
+        en_pr_ave_mod, keyerror_mod1 = AverageAxis(en_pr_mod)
+        ln_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=ln_years_mod)
+        ln_pr_ave_mod, keyerror_mod2 = AverageAxis(ln_pr_mod)
+        en_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=en_years_obs)
+        en_pr_ave_obs, keyerror_obs1 = AverageAxis(en_pr_obs)
+        ln_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=ln_years_obs)
+        ln_pr_ave_obs, keyerror_obs2 = AverageAxis(ln_pr_obs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        method_pr += ", select ENSO events & and compute composite"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_mod.shape), "shape2": "(mod LN) " + str(ln_pr_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_obs.shape), "shape4": "(obs LN) " + str(ln_pr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Event_selection", 15, **dict_debug)
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_ave_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_ave_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_ave_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_ave_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_ave_mod.shape), "shape2": "(mod LN) " + str(ln_pr_ave_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_ave_obs.shape), "shape4": "(obs LN) " + str(ln_pr_ave_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageAxis", 15, **dict_debug)
+
+        # 4.2 Significance: region
+        if significance is True:
+            en_pr_sig_r_mod = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
+            ln_pr_sig_r_mod = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
+            en_pr_sig_r_obs = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
+            ln_pr_sig_r_obs = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
+            method_pr += ", compute significance of the composite (Monte Carlo resampling " + str(level) + \
+                         "% confidence level) to know if the regions have significant PRcr"
+        else:
+            en_pr_sig_r_mod, ln_pr_sig_r_mod = ArrayOnes(pr_mod[0]), ArrayOnes(pr_mod[0])
+            en_pr_sig_r_obs, ln_pr_sig_r_obs = ArrayOnes(pr_obs[0]), ArrayOnes(pr_obs[0])
+        if sum(en_pr_sig_r_obs) == 0 or sum(ln_pr_sig_r_obs) == 0 or sum(en_pr_sig_r_obs) + sum(ln_pr_sig_r_obs) < 5:
+            keyerror = "too few regions have significant PRcr during ENSO events" + str(sig_method) + ". A least 1" + \
+                       "region must be significant during EN and 1 during LN, and a minimum of 5 regions (EN + LN) " + \
+                       "is required to compute this metric (obs EN = " + str(int(round(sum(en_pr_sig_r_obs)))) + \
+                       ", obs LN = " + str(int(round(sum(ln_pr_sig_r_obs)))) + ")"
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_sig_r_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_sig_r_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_sig_r_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_sig_r_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_sig_r_mod.shape), "shape2": "(mod LN) " + str(ln_pr_sig_r_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_sig_r_obs.shape), "shape4": "(obs LN) " + str(ln_pr_sig_r_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
+        # 4.3 Significance: observed anomalies within modeled range?
+        en_pr_sig_a = telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=100)
+        ln_pr_sig_a = telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=100)
+        method_pr += ", compute the full range of the modeled composite (Monte Carlo resampling) to know if " + \
+                     "observed anomalies fall within modeled range"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(o in m EN) " + str([ax.id for ax in en_pr_sig_a.getAxisList()]),
+                "axes2": "(o in m LN) " + str([ax.id for ax in ln_pr_sig_a.getAxisList()]),
+                "shape1": "(o in m EN) " + str(en_pr_sig_a.shape), "shape2": "(o in m LN) " + str(ln_pr_sig_a.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value
+        # ------------------------------------------------
+        # 5.1 Sum the number of regions with significant PRcr in the observations, in which the observed PRcr does not
+        # fall within modeled range
+        en_sum = sum([1 for ii, si in enumerate(en_pr_sig_r_obs) if si == 1 and en_pr_sig_a[ii] == 1])
+        ln_sum = sum([1 for ii, si in enumerate(ln_pr_sig_r_obs) if si == 1 and ln_pr_sig_a[ii] == 1])
+        mv = (en_sum + ln_sum) * 100. / (sum(en_pr_sig_r_obs) + sum(ln_pr_sig_r_obs))
+        mv_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, map_mod_areacell, keyerror_mod = Read_data_mask_area(
+                prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod,
+                name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=False,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, map_obs_areacell, keyerror_obs = Read_data_mask_area(
+                prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs,
+                name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=False,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if both variables have the same time period and if the minimum number of time steps is respected
+            sst_mod, map_mod, keyerror_mod = CheckTime(sst_mod, map_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, map_obs, keyerror_obs = CheckTime(sst_obs, map_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess PR (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=map_mod_areacell, region="global2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=map_obs_areacell, region="global2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del map_mod_areacell, map_obs_areacell
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape),
+                              "time1": "(mod pr) " + str(TimeBounds(map_mod)),
+                              "time2": "(obs pr) " + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Seasonal mean and anomalies of global PR map
+            map_mod = telecon_change_rate(SeasonalMean(map_mod, "DJF", compute_anom=False))
+            map_obs = telecon_change_rate(SeasonalMean(map_obs, "DJF", compute_anom=False))
+            if debug is True:
+                dict_debug = {
+                    "axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                    "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                    "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean: netcdf", 15, **dict_debug)
+            # Regridding PR map
+            if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
+                kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                                        "newgrid_name": "generic_1x1deg"}
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            map_mod, map_obs, _ = TwoVarRegrid(map_mod, map_obs, "", region="global2", **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Composites PR map
+            en_map_mod = Composite(map_mod, en_years_mod, kwargs["frequency"])
+            ln_map_mod = Composite(map_mod, ln_years_mod, kwargs["frequency"])
+            en_map_obs = Composite(map_obs, en_years_obs, kwargs["frequency"])
+            ln_map_obs = Composite(map_obs, ln_years_obs, kwargs["frequency"])
+            if debug is True:
+                dict_debug = {
+                    "axes1": "(mod EN) " + str([ax.id for ax in en_map_mod.getAxisList()]),
+                    "axes2": "(mod LN) " + str([ax.id for ax in ln_map_mod.getAxisList()]),
+                    "axes3": "(obs EN) " + str([ax.id for ax in en_map_obs.getAxisList()]),
+                    "axes4": "(obs LN) " + str([ax.id for ax in ln_map_obs.getAxisList()]),
+                    "shape1": "(mod EN) " + str(en_map_mod.shape), "shape2": "(mod LN) " + str(ln_map_mod.shape),
+                    "shape3": "(obs EN) " + str(en_map_obs.shape), "shape4": "(obs LN) " + str(ln_map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after Composite: netcdf", 15, **dict_debug)
+            # Supplementary metric values
+            my_units = "%"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 7
+            my_ev = ["nina", "nino", "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, ln_years_obs, en_years_obs]
+            my_de = ["PRcr averaged in " + str(len(prbox)) + " regions of La Nina events composite during DJF; Nina =" +
+                     " " + season_ev + " SSTA < -" + my_thresh + enso_method3,
+                     "PRcr averaged in " + str(len(prbox)) + " regions of El Nino events composite during DJF; Nino =" +
+                     " " + season_ev + " SSTA > " + my_thresh + enso_method3,
+                     "PRcr map of La Nina events composite during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh +
+                     enso_method3,
+                     "PRcr map of El Nino events composite during DJF; Nino = " + season_ev + " SSTA > " + my_thresh +
+                     enso_method3]
+            my_mo = [ln_pr_ave_mod, en_pr_ave_mod, ln_map_mod, en_map_mod]
+            my_ob = [ln_pr_ave_obs, en_pr_ave_obs, ln_map_obs, en_map_obs]
+            my_ax = ["0", "0", "xy", "xy"]
+            for jj, (evn, des, vna, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[3:7], my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, my_units, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            if significance is True:
+                si1 = "significativity at the " + str(level) + "% confidence level of PRcr "
+                si2 = "; 100000 random selections (with replacement) of "
+                si3 = " years of the time series are compared to the "
+                rav = "averaged in " + str(len(prbox)) + " regions "
+                rma = "map "
+                en1 = "of El Nino events composite during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + \
+                      enso_method3
+                en2 = "El Nino composite"
+                ln1 = "of La Nina events composite during DJF; Nino = " + season_ev + " SSTA < -" + my_thresh + \
+                      enso_method3
+                ln2 = "La Nina composite"
+                my_ar = [ln_pr_sig_r_mod, ln_pr_sig_r_obs, en_pr_sig_r_mod, en_pr_sig_r_obs]
+                my_e1 = deepcopy(my_ev)
+                my_e2 = [ln1, en1, ln1, en1]
+                my_e3 = [ln2, en2, ln2, en2]
+                my_ey = [ln_years_mod, ln_years_obs, en_years_mod, en_years_obs]
+                my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
+                my_re = [rav, rav, rav, rav]
+                my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
+                my_vn = [va + da for va in ovar[7:9] for da in [dataset1, dataset2]]
+                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(
+                    my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": "1 if region is significant", "number_of_years_used": ny, "time_period": str(tb),
+                        e1 + "_years": ey, "description": si1 + re + e2 + si2 + str(len(ey)) + si3 + e3}
+                    dict_nc["var" + str(nbr) + "_name"] = vn
+                    nbr += 1
+                my_e1, my_e2 = ["nina", "nino"], ["La Nina composite", "El Nino composite"]
+                my_e3, my_e4 = [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs]
+                for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_a, en_pr_sig_a], my_e1, my_e2, my_e3, my_e4, ovar[9:]):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": "1 if observed composite does not fall within modeled range",
+                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
+                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
+                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
+                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
+                        "description": "is observed " + str(e2) + " composite within modeled range? Range is the" +
+                                       " " + str(level) + "% interval of 100000 random composites generated by " +
+                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
+                                       " modeled " + str(e2)}
+                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset2)
+                    nbr += 1
+                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_e4, my_ey, my_ny, my_re, my_tb, my_vn, rav, \
+                    rma, si1, si2, si3
+            dict1 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF time series"}
+            dict2 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF time series"}
+            dict3 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
+                                    "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
+            dict4 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
+                                    "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
+            dict5 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of all El Nino " +
+                                    "events during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+            dict6 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of all El Nino " +
+                                    "events during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+            dict7 = {"metric_name": name, "metric_method": method, "metric_reference": ref, "frequency":
+                     kwargs["frequency"], "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "computation_steps": method_sst + "\n" + method_pr}
+            dict7.update(dict_metric)
+            SaveNetcdf(
+                file_name, var1_time_name="seasons_" + dataset1, var2_time_name="seasons_" + dataset2,
+                var1=pr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1, global_attributes=dict7,
+                var2=pr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2,
+                var3=ln_pr_mod, var3_attributes=dict3, var3_name=ovar[1] + dataset1,
+                var4=ln_pr_obs, var4_attributes=dict4, var4_name=ovar[1] + dataset2,
+                var5=en_pr_mod, var5_attributes=dict5, var5_name=ovar[2] + dataset1,
+                var6=en_pr_obs, var6_attributes=dict6, var6_name=ovar[2] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag, "method_detail": method_sst + "\n" + method_pr}
+    return metric_output
+
+
+def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
+                       prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
+                       sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
+                       prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
+                       prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                       netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The telecon_pr_ano_djf() function computes PRA (precipitation anomalies) averaged in multiple regions (usually the
+    AR6 regions), then computes the DJF composites during El Niño events and La Niña events.
+
+    The metric is the percentage of regions where observed composite does not fall within modeled range (bootstrap).
+    The regions used to compute the metric are selected if anomalies are significant during either El Niño or La Niña
+    (different regions may be selected for each type of event).
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Thu May 20 2021
+
+    Based on:
+    Deser, C., I. R. Simpson, A. S. Phillips, K. A. McKinnon (2018) How Well Do We Know ENSO’s Climate Impacts over
+    North America, and How Do We Evaluate Models Accordingly? J. Clim., doi:10.1175/JCLI-D-17-0783.1
+    Power, S. B., F. P. D. Delage (2018) El Niño–Southern Oscillation and Associated Climatic Conditions around the
+    World during the Latter Half of the Twenty-First Century. J. Clim., doi:10.1175/JCLI-D-18-0138.1
+    Perry, S. J., S. McGregor, A. Sen Gupta, M. H. England, N. Maher (2020) Projected late 21st century changes to the
+    regional impacts of the El Niño-Southern Oscillation. Clim. Dyn., doi:10.1007/s00382-019-05006-6
+
+    Inputs:
+    ------
+    :param sstfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled SST
+    :param sstnamemod: string
+        name of SST variable (sst, tos, ts) in 'sstfilemod'
+    :param sstareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST areacell
+    :param sstareanamemod: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafilemod'
+    :param sstlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled SST landmask
+    :param sstlandmasknamemod: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfilemod'
+    :param prfilemod: string
+        path_to/filename of the file (NetCDF) of the modeled PR
+    :param prnamemod: string
+        name of PR variable (pr, prec, precip, rain) in 'prfilemod'
+    :param prareafilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR areacell
+    :param prareanamemod: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafilemod'
+    :param prlandmaskfilemod: string, optional
+        path_to/filename of the file (NetCDF) of the modeled PR landmask
+    :param prlandmasknamemod: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfilemod'
+    :param sstfileobs: string
+        path_to/filename of the file (NetCDF) of the observed SST
+    :param sstnameobs: string
+        name of SST variable (sst, tos, ts) in 'sstfileobs'
+    :param sstareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST areacell
+    :param sstareanameobs: string, optional
+        name of areacell for the SST variable (areacella, areacello,...) in 'sstareafileobs'
+    :param sstlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed SST landmask
+    :param sstlandmasknameobs: string, optional
+        name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
+    :param prfileobs: string
+        path_to/filename of the file (NetCDF) of the observed PR
+    :param prnameobs: string
+        name of PR variable (pr, prec, precip, rain) in 'prfileobs'
+    :param prareafileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR areacell
+    :param prareanameobs: string, optional
+        name of areacell for the PR variable (areacella, areacello,...) in 'prareafileobs'
+    :param prlandmaskfileobs: string, optional
+        path_to/filename of the file (NetCDF) of the observed PR landmask
+    :param prlandmasknameobs: string, optional
+        name of landmask for the PR variable (sftlf,...) in 'prlandmaskfileobs'
+    :param sstbox: string
+        name of box (e.g. 'equatorial_pacific') for SST
+    :param prbox: string
+        name of box (e.g. 'equatorial_pacific') for PR
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+    :param centered_rmse: int, optional
+        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
+        set to 1. NOTE: Most other statistic functions return a centered statistic by default
+    :param biased_rmse: int, optional
+        default value = 1 returns biased statistic (number of elements along given axis)
+        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
+    :param dataset1: string, optional
+        name of model dataset (e.g., 'model', 'ACCESS1-0', ...)
+    :param dataset2: string, optional
+        name of observational dataset (e.g., 'obs', 'ERA-Interim',...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'telecon_pr_ano_djf_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds_mod: tuple, optional
+        tuple of the first and last dates to extract from the modeled SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+    :param time_bounds_obs: tuple, optional
+        tuple of the first and last dates to extract from the observed SST file (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        name, value, value_error, units, method, nyears_model, nyears_observations, time_frequency, time_period_mod,
+        time_period_obs, ref, dive_down_diag
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Setting variables
+    length_ev = event_definition["duration_min"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    normalize = event_definition["normalization"]
+    enso_method1, enso_method2, enso_method3 = "", "", ""
+    if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
+        if isinstance(smooth_ev, dict) is True:
+            enso_method1 = "SSTA smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                           " weighted running mean"
+        if isinstance(length_ev, int) is True:
+            if season_ev in ["JFM", "FMA", "MAM", "AMJ", "MJJ", "JJA", "JAS", "ASO", "SON", "OND", "NDJ", "DJF"]:
+                tname = "overlaping seasons"
+            else:
+                tname = "months"
+            enso_method2 = "threshold met during at least " + str(length_ev) + " consecutive " + str(tname)
+        if isinstance(smooth_ev, dict) is True and isinstance(length_ev, int) is True:
+            enso_method3 = "; " + enso_method1 + "; " + enso_method2
+        else:
+            enso_method3 = "; " + enso_method1 + enso_method2
+    my_thresh = str(thresh_ev) + "std" if normalize is True else str(thresh_ev) + "C"
+    enso_method = season_ev + " SSTA > " + my_thresh + enso_method3
+
+    # significance test
+    if "significance" in list(kwargs.keys()) and (isinstance(kwargs["significance"], int) is True or
+                                                  isinstance(kwargs["significance"], float) is True):
+        significance = True
+        level = kwargs["significance"]
+        sig_method = " (regions must have significant PRA in the observations at the " + str(level) + \
+                     "% confidence level)"
+    else:
+        significance, level, sig_method = False, None, ""
+
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
+                    "time_bounds_obs"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "PRA sign during EN and LN"
+    units = "%"
+    method = "precipitation anomalies (PRA) averaged in " + str(len(prbox)) + " regions composited during DJF of El" + \
+             " Nino and La Nina events (sea surface temperature anomalies; " + enso_method + "), the metric is the " + \
+             "percentage of regions in which observed composite does not fall within modeled range (Monte Carlo " + \
+             "resampling " + str(level) + "% confidence level)" + sig_method
+    method_sst = "SST"
+    method_pr = "PR"
+    ref = "Using CDAT averager"
+    metric = "telecon_pr_ano_djf"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"model": None, "observations": None, "axisLat": None, "axisLon": None}
+    actualtimebounds_mod, actualtimebounds_obs, keyerror, nbr_year_mod, nbr_year_obs = None, None, None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        sst_mod, sst_mod_areacell, keyerror_mod = Read_data_mask_area(
+            sstfilemod, sstnamemod, "temperature", metric, region_ev, file_area=sstareafilemod,
+            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        sst_obs, sst_obs_areacell, keyerror_obs = Read_data_mask_area(
+            sstfileobs, sstnameobs, "temperature", metric, region_ev, file_area=sstareafileobs,
+            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True,
+            maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        method_sst += ", read & mask land"
+        prl_mod, prl_mod_areacell, keyerror_mod1 = Read_data_mask_area(
+            prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod, name_area=prareanamemod,
+            file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=False, maskocean=True,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        pro_mod, pro_mod_areacell, keyerror_mod2 = Read_data_mask_area(
+            prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod, name_area=prareanamemod,
+            file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+        prl_obs, prl_obs_areacell, keyerror_obs1 = Read_data_mask_area(
+            prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs, name_area=prareanameobs,
+            file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=False, maskocean=True,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        pro_obs, pro_obs_areacell, keyerror_obs2 = Read_data_mask_area(
+            prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs, name_area=prareanameobs,
+            file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=True, maskocean=False,
+            time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        method_pr += ", read & mask land or ocean"
+        # 1.2 Checks if both variables have the same time period and if the minimum number of time steps is respected
+        sst_mod, prl_mod, keyerror_mod1 = CheckTime(sst_mod, prl_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_mod, pro_mod, keyerror_mod2 = CheckTime(sst_mod, pro_mod, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, prl_obs, keyerror_obs1 = CheckTime(sst_obs, prl_obs, metric_name=metric, debug=debug, **kwargs)
+        sst_obs, pro_obs, keyerror_obs2 = CheckTime(sst_obs, pro_obs, metric_name=metric, debug=debug, **kwargs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        # 1.3 Compute number of years for model and observation
+        nbr_year_mod = int(round(sst_mod.shape[0] / 12.))
+        nbr_year_obs = int(round(sst_obs.shape[0] / 12.))
+        # 1.4 Read time period used for model and observation
+        actualtimebounds_mod = TimeBounds(sst_mod)
+        actualtimebounds_obs = TimeBounds(sst_obs)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST averaged in 'region_ev' are normalized / detrended / smoothed (running average) if applicable
+        smooth = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        sst_mod, method_sst, keyerror_mod = PreProcessTS(
+            sst_mod, method_sst, areacell=sst_mod_areacell, average="horizontal", region=region_ev, **kwargs)
+        sst_obs, _, keyerror_obs = PreProcessTS(
+            sst_obs, "", areacell=sst_obs_areacell, average="horizontal", region=region_ev, **kwargs)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+        kwargs["smoothing"] = deepcopy(smooth)
+        # 2.2 PR in 'prbox' are normalized / detrended / smoothed (running average) if applicable
+        if not isinstance(prbox, list):
+            prbox = [prbox]
+        dict_pr_mod, dict_pr_obs = dict(), dict()
+        for reg in prbox:
+            region_ref = ReferenceRegions(reg)
+            mask_l = region_ref["maskland"] if "maskland" in list(region_ref.keys()) else False
+            mask_o = region_ref["maskocean"] if "maskocean" in list(region_ref.keys()) else False
+            if (mask_l is True and mask_o is True) or (mask_l is False and mask_o is False):
+                keyerror = "land or ocean should be masked (" + str(reg) + ": land = " + str(mask_l) + \
+                           ", ocean = " + str(mask_o) + ")"
+                tmp = None
+            else:
+                if mask_l is False and mask_o is True:
+                    dict_pr_mod[reg], tmp, keyerror_mod = preprocess_ts_polygon(
+                        prl_mod, "", areacell=prl_mod_areacell, average="horizontal", region=reg, **kwargs)
+                    dict_pr_obs[reg], _, keyerror_obs = preprocess_ts_polygon(
+                        prl_obs, "", areacell=prl_obs_areacell, average="horizontal", region=reg, **kwargs)
+                else:
+                    dict_pr_mod[reg], tmp, keyerror_mod = preprocess_ts_polygon(
+                        pro_mod, "", areacell=pro_mod_areacell, average="horizontal", region=reg, **kwargs)
+                    dict_pr_obs[reg], _, keyerror_obs = preprocess_ts_polygon(
+                        pro_obs, "", areacell=pro_obs_areacell, average="horizontal", region=reg, **kwargs)
+                keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            if reg == prbox[-1]:
+                method_pr += tmp
+            del mask_l, mask_o, region_ref, tmp
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": "(mod sst) " + str([ax.id for ax in sst_mod.getAxisList()]),
+                          "axes2": "(obs sst) " + str([ax.id for ax in sst_obs.getAxisList()]),
+                          "axes3": "(mod pr0) " + str([ax.id for ax in dict_pr_mod[prbox[0]].getAxisList()]),
+                          "axes4": "(obs pr0) " + str([ax.id for ax in dict_pr_obs[prbox[0]].getAxisList()]),
+                          "shape1": "(mod sst) " + str(sst_mod.shape), "shape2": "(obs sst) " + str(sst_obs.shape),
+                          "shape3": "(mod pr0) " + str(dict_pr_mod[prbox[0]].shape),
+                          "shape4": "(obs pr0) " + str(dict_pr_obs[prbox[0]].shape),
+                          "time1": "(mod sst) " + str(TimeBounds(sst_mod)),
+                          "time2": "(obs sst) " + str(TimeBounds(sst_obs)),
+                          "time3": "(mod pr0) " + str(TimeBounds(dict_pr_mod[prbox[0]])),
+                          "time4": "(obs pr0) " + str(TimeBounds(dict_pr_obs[prbox[0]]))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
+        del prl_mod_areacell, prl_obs_areacell, pro_mod_areacell, pro_obs_areacell, smooth, sst_mod_areacell, \
+            sst_obs_areacell
+
+        # ------------------------------------------------
+        # 3. Detect events, seasonal mean and anomalies, create 2D array
+        # ------------------------------------------------
+        # 3.1 Detect ENSO events
+        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                    compute_season=True, duration=length_ev)
+        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                    compute_season=True, duration=length_ev)
+        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+                                    compute_season=True, duration=length_ev)
+        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+                                    compute_season=True, duration=length_ev)
+        method_sst += ", detect ENSO events: NDJ average & seasonal mean removed (" + str(enso_method) + ")"
+        if debug is True:
+            dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
+                          "nina2": "(obs) nbr(" + str(len(ln_years_obs)) + "): " + str(ln_years_obs),
+                          "nino1": "(mod) nbr(" + str(len(en_years_mod)) + "): " + str(en_years_mod),
+                          "nino2": "(obs) nbr(" + str(len(en_years_obs)) + "): " + str(en_years_obs)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents", 15, **dict_debug)
+        if len(ln_years_mod) < 2 or len(en_years_mod) < 2 or len(ln_years_obs) < 2 or len(en_years_obs) < 2:
+            keyerror = "too few ENSO events have been detected during the given periods (mod =" + \
+                       " " + str(actualtimebounds_mod) + ", obs = " + str(actualtimebounds_obs) + ") and using " + \
+                       "given ENSO definition (" + enso_method + "). A minimum of 2 events of each category is " + \
+                       "required to compute this metric (mod EN = " + str(en_years_mod) + ", mod LN =" + \
+                       " " + str(ln_years_mod) + ", obs EN = " + str(en_years_obs) + ", obs LN =" + \
+                       " " + str(ln_years_obs) + ")"
+            break
+        # 3.2 Seasonal mean and anomalies of horizontally averaged PR
+        for reg in prbox:
+            dict_pr_mod[reg] = SeasonalMean(dict_pr_mod[reg], "DJF", compute_anom=True)
+            dict_pr_obs[reg] = SeasonalMean(dict_pr_obs[reg], "DJF", compute_anom=True)
+            if reg == prbox[-1]:
+                method_pr += ", DJF average & seasonal mean removed"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod pr0) " + str([ax.id for ax in dict_pr_mod[prbox[0]].getAxisList()]),
+                "axes2": "(obs pr0) " + str([ax.id for ax in dict_pr_obs[prbox[0]].getAxisList()]),
+                "shape1": "(mod pr0) " + str(dict_pr_mod[prbox[0]].shape),
+                "shape2": "(obs pr0) " + str(dict_pr_obs[prbox[0]].shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean", 15, **dict_debug)
+        # 3.3 Create 2D array pr(time, regions)
+        long_name = "IPCC WGI regions v4"
+        reference = "https://doi.org/10.5194/essd-12-2959-2020"
+        short_name = "ipcc_wgi_regions_v4"
+        pr_mod, keyerror_mod = telecon_array(
+            dict_pr_mod, prbox, ax_long_name=long_name, ax_reference=reference, ax_short_name=short_name)
+        pr_obs, keyerror_obs = telecon_array(
+            dict_pr_obs, prbox, ax_long_name=long_name, ax_reference=reference, ax_short_name=short_name)
+        keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+        if keyerror is not None:
+            break
+
+        # ------------------------------------------------
+        # 4. Compute composites anomalies and amplification
+        # ------------------------------------------------
+        # 4.1 Select events, composite
+        en_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=en_years_mod)
+        en_pr_ave_mod, keyerror_mod1 = AverageAxis(en_pr_mod)
+        ln_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=ln_years_mod)
+        ln_pr_ave_mod, keyerror_mod2 = AverageAxis(ln_pr_mod)
+        en_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=en_years_obs)
+        en_pr_ave_obs, keyerror_obs1 = AverageAxis(en_pr_obs)
+        ln_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=ln_years_obs)
+        ln_pr_ave_obs, keyerror_obs2 = AverageAxis(ln_pr_obs)
+        keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
+        if keyerror is not None:
+            break
+        method_pr += ", select ENSO events & and compute composite"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_mod.shape), "shape2": "(mod LN) " + str(ln_pr_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_obs.shape), "shape4": "(obs LN) " + str(ln_pr_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after Event_selection", 15, **dict_debug)
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_ave_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_ave_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_ave_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_ave_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_ave_mod.shape), "shape2": "(mod LN) " + str(ln_pr_ave_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_ave_obs.shape), "shape4": "(obs LN) " + str(ln_pr_ave_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageAxis", 15, **dict_debug)
+
+        # 4.2 Significance: region
+        if significance is True:
+            en_pr_sig_r_mod = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
+            ln_pr_sig_r_mod = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
+            en_pr_sig_r_obs = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
+            ln_pr_sig_r_obs = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
+            method_pr += ", compute significance of the composite (Monte Carlo resampling " + str(level) + \
+                         "% confidence level) to know if the regions have significant anomalies"
+        else:
+            en_pr_sig_r_mod, ln_pr_sig_r_mod = ArrayOnes(pr_mod[0]), ArrayOnes(pr_mod[0])
+            en_pr_sig_r_obs, ln_pr_sig_r_obs = ArrayOnes(pr_obs[0]), ArrayOnes(pr_obs[0])
+        if sum(en_pr_sig_r_obs) == 0 or sum(ln_pr_sig_r_obs) == 0 or sum(en_pr_sig_r_obs) + sum(ln_pr_sig_r_obs) < 5:
+            keyerror = "too few regions have significant PRA during ENSO events" + str(sig_method) + ". A least 1" + \
+                       "region must be significant during EN and 1 during LN, and a minimum of 5 regions (EN + LN) " + \
+                       "is required to compute this metric (obs EN = " + str(int(round(sum(en_pr_sig_r_obs)))) + \
+                       ", obs LN = " + str(int(round(sum(ln_pr_sig_r_obs)))) + ")"
+            break
+        if debug is True:
+            dict_debug = {
+                "axes1": "(mod EN) " + str([ax.id for ax in en_pr_sig_r_mod.getAxisList()]),
+                "axes2": "(mod LN) " + str([ax.id for ax in ln_pr_sig_r_mod.getAxisList()]),
+                "axes3": "(obs EN) " + str([ax.id for ax in en_pr_sig_r_obs.getAxisList()]),
+                "axes4": "(obs LN) " + str([ax.id for ax in ln_pr_sig_r_obs.getAxisList()]),
+                "shape1": "(mod EN) " + str(en_pr_sig_r_mod.shape), "shape2": "(mod LN) " + str(ln_pr_sig_r_mod.shape),
+                "shape3": "(obs EN) " + str(en_pr_sig_r_obs.shape), "shape4": "(obs LN) " + str(ln_pr_sig_r_obs.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
+        # 4.3 Significance: observed anomalies within modeled range?
+        en_pr_sig_a = telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=100)
+        ln_pr_sig_a = telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=100)
+        method_pr += ", compute the full range of the modeled composite (Monte Carlo resampling) to know if " + \
+                     "observed anomalies fall within modeled range"
+        if debug is True:
+            dict_debug = {
+                "axes1": "(o in m EN) " + str([ax.id for ax in en_pr_sig_a.getAxisList()]),
+                "axes2": "(o in m LN) " + str([ax.id for ax in ln_pr_sig_a.getAxisList()]),
+                "shape1": "(o in m EN) " + str(en_pr_sig_a.shape), "shape2": "(o in m LN) " + str(ln_pr_sig_a.shape)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 5. Metric value
+        # ------------------------------------------------
+        # 5.1 Sum the number of regions with significant anomalies in the observations, in which the observed composite
+        # does not fall within modeled range
+        en_sum = sum([1 for ii, si in enumerate(en_pr_sig_r_obs) if si == 1 and en_pr_sig_a[ii] == 1])
+        ln_sum = sum([1 for ii, si in enumerate(ln_pr_sig_r_obs) if si == 1 and ln_pr_sig_a[ii] == 1])
+        mv = (en_sum + ln_sum) * 100. / (sum(en_pr_sig_r_obs) + sum(ln_pr_sig_r_obs))
+        mv_error = None
+
+        # ------------------------------------------------
+        # 6. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Read file and select the right region
+            map_mod, map_mod_areacell, keyerror_mod = Read_data_mask_area(
+                prfilemod, prnamemod, "precipitation", metric, "global2", file_area=prareafilemod,
+                name_area=prareanamemod, file_mask=prlandmaskfilemod, name_mask=prlandmasknamemod, maskland=False,
+                maskocean=False, time_bounds=kwargs["time_bounds_mod"], debug=debug, **kwargs)
+            map_obs, map_obs_areacell, keyerror_obs = Read_data_mask_area(
+                prfileobs, prnameobs, "precipitation", metric, "global2", file_area=prareafileobs,
+                name_area=prareanameobs, file_mask=prlandmaskfileobs, name_mask=prlandmasknameobs, maskland=False,
+                maskocean=False, time_bounds=kwargs["time_bounds_obs"], debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Checks if both variables have the same time period and if the minimum number of time steps is respected
+            sst_mod, map_mod, keyerror_mod = CheckTime(sst_mod, map_mod, metric_name=metric, debug=debug, **kwargs)
+            sst_obs, map_obs, keyerror_obs = CheckTime(sst_obs, map_obs, metric_name=metric, debug=debug, **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            if keyerror is not None:
+                break
+            # Preprocess PR (computes anomalies, normalizes, detrends TS, smoothes TS, ...)
+            map_mod, _, keyerror_mod = PreProcessTS(map_mod, "", areacell=map_mod_areacell, region="global2", **kwargs)
+            map_obs, _, keyerror_obs = PreProcessTS(map_obs, "", areacell=map_obs_areacell, region="global2", **kwargs)
+            keyerror = add_up_errors([keyerror_mod, keyerror_obs])
+            del map_mod_areacell, map_obs_areacell
+            if keyerror is not None:
+                break
+            if debug is True:
+                dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape),
+                              "time1": "(mod pr) " + str(TimeBounds(map_mod)),
+                              "time2": "(obs pr) " + str(TimeBounds(map_obs))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS: netCDF", 15, **dict_debug)
+            # Seasonal mean and anomalies of global PR map
+            map_mod = SeasonalMean(map_mod, "DJF", compute_anom=True)
+            map_obs = SeasonalMean(map_obs, "DJF", compute_anom=True)
+            if debug is True:
+                dict_debug = {
+                    "axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                    "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                    "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after SeasonalMean: netcdf", 15, **dict_debug)
+            # Regridding PR map
+            if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
+                kwargs["regridding"] = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                                        "newgrid_name": "generic_1x1deg"}
+            known_args = {"model_orand_obs", "newgrid", "missing", "order", "mask", "newgrid_name", "regridder",
+                          "regridTool", "regridMethod"}
+            extra_args = set(kwargs["regridding"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            map_mod, map_obs, _ = TwoVarRegrid(map_mod, map_obs, "", region="global2", **kwargs["regridding"])
+            if debug is True:
+                dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
+                              "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
+                              "shape1": "(mod pr) " + str(map_mod.shape), "shape2": "(obs pr) " + str(map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf", 15, **dict_debug)
+            # Composites PR map
+            en_map_mod = Composite(map_mod, en_years_mod, kwargs["frequency"])
+            ln_map_mod = Composite(map_mod, ln_years_mod, kwargs["frequency"])
+            en_map_obs = Composite(map_obs, en_years_obs, kwargs["frequency"])
+            ln_map_obs = Composite(map_obs, ln_years_obs, kwargs["frequency"])
+            if debug is True:
+                dict_debug = {
+                    "axes1": "(mod EN) " + str([ax.id for ax in en_map_mod.getAxisList()]),
+                    "axes2": "(mod LN) " + str([ax.id for ax in ln_map_mod.getAxisList()]),
+                    "axes3": "(obs EN) " + str([ax.id for ax in en_map_obs.getAxisList()]),
+                    "axes4": "(obs LN) " + str([ax.id for ax in ln_map_obs.getAxisList()]),
+                    "shape1": "(mod EN) " + str(en_map_mod.shape), "shape2": "(mod LN) " + str(ln_map_mod.shape),
+                    "shape3": "(obs EN) " + str(en_map_obs.shape), "shape4": "(obs LN) " + str(ln_map_obs.shape)}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after Composite: netcdf", 15, **dict_debug)
+            # Supplementary metric values
+            my_units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "mm/day"
+            dict_metric, dict_nc = dict(), dict()
+            nbr = 7
+            my_ev = ["nina", "nino", "nina", "nino"]
+            my_em = [ln_years_mod, en_years_mod, ln_years_mod, en_years_mod]
+            my_eo = [ln_years_obs, en_years_obs, ln_years_obs, en_years_obs]
+            my_de = ["PRA averaged in " + str(len(prbox)) + " regions of La Nina events composite during DJF; Nina = " +
+                     season_ev + " SSTA < -" + my_thresh + enso_method3,
+                     "PRA averaged in " + str(len(prbox)) + " regions of El Nino events composite during DJF; Nino = " +
+                     season_ev + " SSTA > " + my_thresh + enso_method3,
+                     "PRA map of La Nina events composite during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh +
+                     enso_method3,
+                     "PRA map of El Nino events composite during DJF; Nino = " + season_ev + " SSTA > " + my_thresh +
+                     enso_method3]
+            my_mo = [ln_pr_ave_mod, en_pr_ave_mod, ln_map_mod, en_map_mod]
+            my_ob = [ln_pr_ave_obs, en_pr_ave_obs, ln_map_obs, en_map_obs]
+            my_ax = ["0", "0", "xy", "xy"]
+            for jj, (evn, des, vna, tab1, tab2, ev1, ev2, axi) in enumerate(
+                    zip(my_ev, my_de, ovar[3:7], my_mo, my_ob, my_em, my_eo, my_ax)):
+                dict_metric, dict_nc = fill_dict_axis(
+                    tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs, nbr_year_mod,
+                    nbr_year_obs, nbr, vna, my_units, axi, centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                    dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=des)
+                nbr += 2
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            if significance is True:
+                si1 = "significativity at the " + str(level) + "% confidence level of PRA "
+                si2 = "; 100000 random selections (with replacement) of "
+                si3 = " years of the time series are compared to the "
+                rav = "averaged in " + str(len(prbox)) + " regions "
+                rma = "map "
+                en1 = "of El Nino events composite during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + \
+                      enso_method3
+                en2 = "El Nino composite"
+                ln1 = "of La Nina events composite during DJF; Nino = " + season_ev + " SSTA < -" + my_thresh + \
+                      enso_method3
+                ln2 = "La Nina composite"
+                my_ar = [ln_pr_sig_r_mod, ln_pr_sig_r_obs, en_pr_sig_r_mod, en_pr_sig_r_obs]
+                my_e1 = deepcopy(my_ev)
+                my_e2 = [ln1, en1, ln1, en1]
+                my_e3 = [ln2, en2, ln2, en2]
+                my_ey = [ln_years_mod, ln_years_obs, en_years_mod, en_years_obs]
+                my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
+                my_re = [rav, rav, rav, rav]
+                my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
+                my_vn = [va + da for va in ovar[7:9] for da in [dataset1, dataset2]]
+                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(
+                    my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": "1 if region is significant", "number_of_years_used": ny, "time_period": str(tb),
+                        e1 + "_years": ey, "description": si1 + re + e2 + si2 + str(len(ey)) + si3 + e3}
+                    dict_nc["var" + str(nbr) + "_name"] = vn
+                    nbr += 1
+                my_e1, my_e2 = ["nina", "nino"], ["La Nina composite", "El Nino composite"]
+                my_e3, my_e4 = [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs]
+                for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_a, en_pr_sig_a], my_e1, my_e2, my_e3, my_e4, ovar[9:]):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": "1 if observed composite does not fall within modeled range",
+                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
+                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
+                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
+                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
+                        "description": "is observed " + str(e2) + " composite within modeled range? Range is the" +
+                                       " " + str(level) + "% interval of 100000 random composites generated by " +
+                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
+                                       " modeled " + str(e2)}
+                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset2)
+                    nbr += 1
+                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_e4, my_ey, my_ny, my_re, my_tb, my_vn, rav, \
+                    rma, si1, si2, si3
+            dict1 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF time series"}
+            dict2 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF time series"}
+            dict3 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
+                                    "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
+            dict4 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
+                                    "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
+            dict5 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino events" +
+                                    " during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+            dict6 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino events" +
+                                    " during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+            dict7 = {"metric_name": name, "metric_method": method, "metric_reference": ref, "frequency":
+                     kwargs["frequency"], "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
+                     "computation_steps": method_sst + "\n" + method_pr}
+            dict7.update(dict_metric)
+            SaveNetcdf(
+                file_name, var1_time_name="seasons_" + dataset1, var2_time_name="seasons_" + dataset2,
+                var1=pr_mod, var1_attributes=dict1, var1_name=ovar[0] + dataset1, global_attributes=dict7,
+                var2=pr_obs, var2_attributes=dict2, var2_name=ovar[0] + dataset2,
+                var3=ln_pr_mod, var3_attributes=dict3, var3_name=ovar[1] + dataset1,
+                var4=ln_pr_obs, var4_attributes=dict4, var4_name=ovar[1] + dataset2,
+                var5=en_pr_mod, var5_attributes=dict5, var5_name=ovar[2] + dataset1,
+                var6=en_pr_obs, var6_attributes=dict6, var6_name=ovar[2] + dataset2, **dict_nc)
+            del dict1, dict2, dict3, dict_metric, dict_nc, file_name, my_ax, my_de, my_ev, my_em, my_eo, my_mo, my_ob, \
+                my_units, nbr
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "ref": ref,
+        "nyears_model": nbr_year_mod, "nyears_observations": nbr_year_obs, "time_frequency": kwargs["frequency"],
+        "time_period_model": actualtimebounds_mod, "time_period_observations": actualtimebounds_obs,
+        "keyerror": keyerror, "dive_down_diag": dive_down_diag, "method_detail": method_sst + "\n" + method_pr}
     return metric_output
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -32628,7 +34289,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                             [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                     dict_metric, dict_nc = fill_dict_axis(
                                         tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                         centered_rmse=centered_rmse, biased_rmse=biased_rmse, dict_metric=dict_metric,
                                         dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=de)
                                     nbr += 2
@@ -32642,7 +34303,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                         longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                     dict_metric, dict_nc = fill_dict_axis(
                                         tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                         centered_rmse=centered_rmse, biased_rmse=biased_rmse, dict_metric=dict_metric,
                                         dict_nc=dict_nc, description=Method.split(", ")[0].replace(prbox, reg))
                                     nbr += 2
@@ -32656,7 +34317,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg + "_" + evn,
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
                                             my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de.replace(prbox, reg))
@@ -33156,7 +34817,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                                 [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de)
@@ -33171,7 +34832,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc,
                                             description=Method.split(", ")[0].replace(prbox, reg))
@@ -33187,10 +34848,9 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                             dict_metric, dict_nc = fill_dict_axis(
                                                 tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod,
                                                 actualtimebounds_obs, yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
-                                                "map_" + reg + "_" + evn, my_units, "xy", centered_rmse=centered_rmse,
-                                                biased_rmse=biased_rmse, dict_metric=dict_metric, dict_nc=dict_nc,
-                                                ev_name=evn, events1=ev1, events2=ev2,
-                                                description=de.replace(prbox, reg))
+                                                my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                                                dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
+                                                events2=ev2, description=de.replace(prbox, reg))
                                             nbr += 2
                                         del dictreg, tmp1, tmp2
                                     if ".nc" in netcdf_name:
@@ -33692,7 +35352,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                                 [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de)
@@ -33707,7 +35367,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc,
                                             description=Method.split(", ")[0].replace(prbox, reg))
@@ -33723,10 +35383,9 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                                             dict_metric, dict_nc = fill_dict_axis(
                                                 tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod,
                                                 actualtimebounds_obs, yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
-                                                "map_" + reg + "_" + evn, my_units, "xy", centered_rmse=centered_rmse,
-                                                biased_rmse=biased_rmse, dict_metric=dict_metric, dict_nc=dict_nc,
-                                                ev_name=evn, events1=ev1, events2=ev2,
-                                                description=de.replace(prbox, reg))
+                                                my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                                                dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
+                                                events2=ev2, description=de.replace(prbox, reg))
                                             nbr += 2
                                         del dictreg, tmp1, tmp2
                                     if ".nc" in netcdf_name:
@@ -34971,7 +36630,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                             [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                     dict_metric, dict_nc = fill_dict_axis(
                                         tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                         centered_rmse=centered_rmse, biased_rmse=biased_rmse, dict_metric=dict_metric,
                                         dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=de)
                                     nbr += 2
@@ -34985,7 +36644,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                         longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                     dict_metric, dict_nc = fill_dict_axis(
                                         tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                         centered_rmse=centered_rmse, biased_rmse=biased_rmse, dict_metric=dict_metric,
                                         dict_nc=dict_nc, description=Method.split(", ")[0].replace(slpbox, reg))
                                     nbr += 2
@@ -34999,7 +36658,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg + "_" + evn,
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
                                             my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de.replace(slpbox, reg))
@@ -35503,7 +37162,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                                 [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de)
@@ -35518,7 +37177,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc,
                                             description=Method.split(", ")[0].replace(slpbox, reg))
@@ -35534,10 +37193,9 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             dict_metric, dict_nc = fill_dict_axis(
                                                 tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod,
                                                 actualtimebounds_obs, yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
-                                                "map_" + reg + "_" + evn, my_units, "xy", centered_rmse=centered_rmse,
-                                                biased_rmse=biased_rmse, dict_metric=dict_metric, dict_nc=dict_nc,
-                                                ev_name=evn, events1=ev1, events2=ev2,
-                                                description=de.replace(slpbox, reg))
+                                                my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                                                dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
+                                                events2=ev2, description=de.replace(slpbox, reg))
                                             nbr += 2
                                         del dictreg, tmp1, tmp2
                                     if ".nc" in netcdf_name:
@@ -36043,7 +37701,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                                 [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de)
@@ -36058,7 +37716,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc,
                                             description=Method.split(", ")[0].replace(slpbox, reg))
@@ -36074,10 +37732,9 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             dict_metric, dict_nc = fill_dict_axis(
                                                 tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod,
                                                 actualtimebounds_obs, yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
-                                                "map_" + reg + "_" + evn, my_units, "xy", centered_rmse=centered_rmse,
-                                                biased_rmse=biased_rmse, dict_metric=dict_metric, dict_nc=dict_nc,
-                                                ev_name=evn, events1=ev1, events2=ev2,
-                                                description=de.replace(slpbox, reg))
+                                                my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                                                dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
+                                                events2=ev2, description=de.replace(slpbox, reg))
                                             nbr += 2
                                         del dictreg, tmp1, tmp2
                                     if ".nc" in netcdf_name:
@@ -36547,7 +38204,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                             [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                     dict_metric, dict_nc = fill_dict_axis(
                                         tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                         centered_rmse=centered_rmse, biased_rmse=biased_rmse, dict_metric=dict_metric,
                                         dict_nc=dict_nc, ev_name=evn, events1=ev1, events2=ev2, description=de)
                                     nbr += 2
@@ -36561,7 +38218,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                         longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                     dict_metric, dict_nc = fill_dict_axis(
                                         tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                        yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                         centered_rmse=centered_rmse, biased_rmse=biased_rmse, dict_metric=dict_metric,
                                         dict_nc=dict_nc, description=Method.split(", ")[0].replace(tasbox, reg))
                                     nbr += 2
@@ -36575,7 +38232,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg + "_" + evn,
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
                                             my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de.replace(tasbox, reg))
@@ -37052,7 +38709,7 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                                 [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de)
@@ -37067,7 +38724,7 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc,
                                             description=Method.split(", ")[0].replace(tasbox, reg))
@@ -37083,10 +38740,9 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             dict_metric, dict_nc = fill_dict_axis(
                                                 tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod,
                                                 actualtimebounds_obs, yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
-                                                "map_" + reg + "_" + evn, my_units, "xy", centered_rmse=centered_rmse,
-                                                biased_rmse=biased_rmse, dict_metric=dict_metric, dict_nc=dict_nc,
-                                                ev_name=evn, events1=ev1, events2=ev2,
-                                                description=de.replace(tasbox, reg))
+                                                my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                                                dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
+                                                events2=ev2, description=de.replace(tasbox, reg))
                                             nbr += 2
                                         del dictreg, tmp1, tmp2
                                     if ".nc" in netcdf_name:
@@ -37565,7 +39221,7 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                                 [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs])):
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tab1, tab2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map", my_units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], my_units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
                                             events2=ev2, description=de)
@@ -37580,7 +39236,7 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             longitude=dictreg["longitude"], latitude=dictreg["latitude"])
                                         dict_metric, dict_nc = fill_dict_axis(
                                             tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod, actualtimebounds_obs,
-                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], "map_" + reg, Units, "xy",
+                                            yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2], Units, "xy",
                                             centered_rmse=centered_rmse, biased_rmse=biased_rmse,
                                             dict_metric=dict_metric, dict_nc=dict_nc,
                                             description=Method.split(", ")[0].replace(tasbox, reg))
@@ -37596,10 +39252,9 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                                             dict_metric, dict_nc = fill_dict_axis(
                                                 tmp1, tmp2, dataset1, dataset2, actualtimebounds_mod,
                                                 actualtimebounds_obs, yearN_mod, yearN_obs, nbr, ovar[(nbr - 1) // 2],
-                                                "map_" + reg + "_" + evn, my_units, "xy", centered_rmse=centered_rmse,
-                                                biased_rmse=biased_rmse, dict_metric=dict_metric, dict_nc=dict_nc,
-                                                ev_name=evn, events1=ev1, events2=ev2,
-                                                description=de.replace(tasbox, reg))
+                                                my_units, "xy", centered_rmse=centered_rmse, biased_rmse=biased_rmse,
+                                                dict_metric=dict_metric, dict_nc=dict_nc, ev_name=evn, events1=ev1,
+                                                events2=ev2, description=de.replace(tasbox, reg))
                                             nbr += 2
                                         del dictreg, tmp1, tmp2
                                     if ".nc" in netcdf_name:

@@ -4,17 +4,23 @@ from calendar import monthrange
 import copy
 from datetime import date
 from inspect import stack as INSPECTstack
+from matplotlib.path import Path as MATPLOTLIBpath
 import ntpath
+from numpy import arange as NParange
 from numpy import array as NParray
 from numpy import exp as NPexp
 from numpy import histogram as NPhistogram
 from numpy import isnan as NPisnan
+from numpy import mean as NPmean
+from numpy import meshgrid as NPmeshgrid
 from numpy import nan as NPnan
 from numpy import nonzero as NPnonzero
 from numpy import ones as NPones
 from numpy import product as NPproduct
+from numpy import vstack as NPvstack
 from numpy import where as NPwhere
 from numpy.ma.core import MaskedArray as NPma__core__MaskedArray
+from numpy.random import randint as NPrandom__randint
 from os.path import isdir as OSpath_isdir
 from os.path import isfile as OSpath__isfile
 from os.path import join as OSpath__join
@@ -43,6 +49,7 @@ from cdtime import comptime as CDTIMEcomptime
 import cdutil
 from genutil.statistics import correlation as GENUTILcorrelation
 from genutil.statistics import linearregression as GENUTILlinearregression
+from genutil.statistics import percentiles as GENUTILpercentiles
 from genutil.statistics import rms as GENUTILrms
 from genutil.statistics import std as GENUTILstd
 from MV2 import add as MV2add
@@ -53,8 +60,8 @@ from MV2 import compress as MV2compress
 from MV2 import concatenate as MV2concatenate
 from MV2 import divide as MV2divide
 from MV2 import masked_where as MV2masked_where
-from MV2 import maximum as MV2maximum
-from MV2 import minimum as MV2minimum
+from MV2 import max as MV2max
+from MV2 import min as MV2min
 from MV2 import multiply as MV2multiply
 from MV2 import ones as MV2ones
 from MV2 import subtract as MV2subtract
@@ -313,6 +320,168 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
     return averaged_tab, keyerror
 
 
+def averager_polygon(larray, larea, lregion, input_region="global2", **kwargs):
+    """
+    #################################################################################
+    Description:
+    Adapt the given array to keep only the given region, even if the given region is a polygon
+    #################################################################################
+
+    :param larray: masked_array
+        masked_array to average
+    :param larea: masked_array
+        masked_array with the area of each grid cell
+    :param lregion: string
+        name of a region (e.g., 'equatorial_pacific') to select and then average
+        must be defined in .EnsoCollectionsLib.ReferenceRegions
+    :param input_region: string, optional
+        name of a region (e.g., 'global2') of the given larray (in case it needs to be regridded)
+        must be defined in .EnsoCollectionsLib.ReferenceRegions
+        default value is 'global2'
+    :param kwargs: dict, optional
+        dict with processing information, such as regridding if needed
+        e.g.,
+        kwargs = {
+            "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                           "newgrid_name": "generic_1x1deg"},
+        }
+
+    :return: larray_out: masked_array
+        larray horizontally averaged in given lregion if the computation is successful, else, None
+    :return: keyerror: string or None
+        None if the computation is successful, else, a string defining the error
+    """
+    keyerror = None
+    # get the definition of the region
+    region_ref = ReferenceRegions(lregion)
+    # if the region is a polygon, set unwanted area to 0 in unwanted region
+    if "polygon" in list(region_ref.keys()) and region_ref["polygon"] is True:
+        # if the grid is not regular, regrid
+        if len(larray.getLatitude()[:].shape) > 1:
+            # check if regridding is defined, if not, set a default
+            if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
+                kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                           "newgrid_name": "generic_1x1deg"}
+            else:
+                kwargs2 = kwargs["regridding"]
+            # find generic horizontal resolution closest to the original grid
+            lat_num = get_num_axis(larray, "latitude")
+            lon_num = get_num_axis(larray, "longitude")
+            kwargs2["newgrid_name"] = \
+                closest_grid(input_region, len(larray.getAxis(lat_num)[:]), len(larray.getAxis(lon_num)[:]))
+            print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
+                  " to perform average \033[0m")
+            # regrid given array
+            larray_in = Regrid(larray, None, region=input_region, **kwargs2)
+            # if the given area does not correspond to the given array, create an area of ones, else, regrid given area
+            if larea is None or larray.getGrid().shape != larea.getGrid().shape:
+                larea_in = ArrayOnes(larray_in[0], mid="areacell")
+            else:
+                larea_in = Regrid(larea, None, region=lregion, **kwargs2)
+            del kwargs2, lat_num, lon_num
+        else:
+            # no need to modify given array
+            larray_in = copy.copy(larray)
+            # if the given area does not correspond to the given array, create an area of ones, else, regrid given area
+            if larea is None or larray.getGrid().shape != larea.getGrid().shape:
+                larea_in = ArrayOnes(larray_in[0], mid="areacell")
+            else:
+                larea_in = copy.copy(larea)
+        # get lat and lon
+        lat = copy.deepcopy(larea_in.getLatitude()[:])
+        lon = copy.deepcopy(larea_in.getLongitude()[:])
+        # map size
+        nx, ny = len(lon), len(lat)
+        # loop on the polygon's vertices
+        poly_verts = list()
+        for l1, l2 in zip(region_ref["latitude"], region_ref["longitude"]):
+            # find the closest lat and lon grid point and get its coordinates (position in the grid)
+            i1 = min(range(len(lat)), key=lambda ii: abs(lat[ii] - l1))
+            i2 = min(range(len(lon)), key=lambda ii: abs(lon[ii] - l2))
+            # define found coordinates as the vertex of the polygon
+            poly_verts.append((i2, i1))
+            del i1, i2
+        # Create vertex coordinates for each grid cell...
+        # (<0,0> is at the top left of the grid in this system)
+        x, y = NPmeshgrid(NParange(nx), NParange(ny))
+        x, y = x.flatten(), y.flatten()
+        points = NPvstack((x, y)).T
+        path = MATPLOTLIBpath(poly_verts)
+        mask1 = path.contains_points(points)
+        mask1 = mask1.reshape((ny, nx))
+        if min(region_ref["longitude"]) < 0 or max(region_ref["longitude"]) > 360:
+            # loop on the polygon's vertices
+            poly_verts = list()
+            for l1, l2 in zip(region_ref["latitude"], region_ref["longitude"]):
+                # change longitude
+                if min(region_ref["longitude"]) < 0:
+                    l3 = l2 + 360
+                else:
+                    l3 = l2 - 360
+                # find the closest lat and lon grid point and get its coordinates (position in the grid)
+                i1 = min(range(len(lat)), key=lambda ii: abs(lat[ii] - l1))
+                i2 = min(range(len(lon)), key=lambda ii: abs(lon[ii] - l3))
+                # define found coordinates as the vertex of the polygon
+                poly_verts.append((i2, i1))
+                del i1, i2, l3
+            # Create vertex coordinates for each grid cell...
+            x, y = NPmeshgrid(NParange(nx), NParange(ny))
+            x, y = x.flatten(), y.flatten()
+            points = NPvstack((x, y)).T
+            path = MATPLOTLIBpath(poly_verts)
+            mask2 = path.contains_points(points)
+            mask2 = mask2.reshape((ny, nx))
+            # add mask2 to mask1
+            mask1 = MV2where(mask2, mask2, mask1)
+            del mask2
+        # this new area is 0 outside the polygon, cell area inside the polygon
+        larea_new = MV2where(mask1, larea_in, 0)
+        larea_new = CDMS2createVariable(larea_new, axes=larea_in.getAxisList(), grid=larea_in.getGrid(),
+                                        mask=larea_in.mask, id="areacell")
+        # create a mask of the same dimension as larray_in
+        mask_nd = MV2ones(larray_in.shape)
+        if mask_nd.shape == larea_new.shape:
+            mask_nd = MV2where(larea_new == 0, 0, mask_nd)
+        elif mask_nd[0].shape == larea_new.shape:
+            mask_nd[:] = MV2where(larea_new == 0, 0, mask_nd[0])
+        elif mask_nd[0, 0].shape == larea_new.shape:
+            mask_nd[:, :] = MV2where(larea_new == 0, 0, mask_nd[0, 0])
+        elif mask_nd[0, 0, 0].shape == larea_new.shape:
+            mask_nd[:, :, :] = MV2where(larea_new == 0, 0, mask_nd[0, 0, 0])
+        elif mask_nd[0, 0, 0, 0].shape == larea_new.shape:
+            mask_nd[:, :, :, :] = MV2where(larea_new == 0, 0, mask_nd[0, 0, 0, 0])
+        else:
+            keyerror = "averager_polygon, create mask: given array must be more than 4D and this is not taken into " + \
+                       "account yet (" + str(larray_in.shape) + ") and area (" + str(larea_new.shape) + ")"
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": region mask shape",
+                str().ljust(5) + keyerror, str().ljust(5) + "cannot reshape region mask"]
+            EnsoErrorsWarnings.my_warning(list_strings)
+        # set larray to 0 outside the polygon
+        if keyerror is None:
+            laxes, lgrid, lmask = larray_in.getAxisList(), larray_in.getGrid(), larray_in.mask
+            larray_in = MV2where(mask_nd == 0, 0, larray_in)
+            larray_in = MV2masked_where(lmask, larray_in)
+            larray_in.setAxisList(laxes)
+            larray_in.setGrid(lgrid)
+            del laxes, lgrid, lmask
+        del larea_in, mask_nd, mask1, nx, ny, path, points, poly_verts, x, y
+    else:
+        # select region in given array
+        larray_in = larray(latitude=region_ref["latitude"], longitude=region_ref["longitude"])
+        # select region in given areacell
+        if larea is not None:
+            larea_new = larea(latitude=region_ref["latitude"], longitude=region_ref["longitude"])
+        else:
+            larea_new = copy.copy(larea)
+    # use usual averager with modified array and/or area if applicable
+    if keyerror is None:
+        larray_out, keyerror = AverageHorizontal(larray_in, areacell=larea_new, region=lregion, **kwargs)
+    else:
+        larray_out = None
+    return larray_out, keyerror
+
+
 # Dictionary of averaging methods
 dict_average = {"horizontal": AverageHorizontal, "meridional": AverageMeridional, "time": AverageTemporal,
                 "zonal": AverageZonal}
@@ -456,7 +625,6 @@ def OperationMultiply(tab, number_or_tab):
     axes = tab.getAxisList()
     att = tab.attributes
     if len(tab.shape) > 1:
-        mask = tab.mask
         dictvar = {"axes": axes, "mask": tab.mask, "grid": tab.getGrid(), "attributes": att}
     else:
         dictvar = {"axes": axes, "attributes": att}
@@ -902,7 +1070,7 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
             if keyerror is None:
                 tab = MV2masked_where(landmask_nd.mask, tab)
                 # if land = 100 instead of 1, divides landmask by 100
-                if (MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100) or \
+                if (MV2min(landmask) == 0 and MV2max(landmask) == 100) or \
                         ("units" in landmask.listattributes() and landmask.units == "%"):
                     landmask_nd = landmask_nd / 100.
                 if maskland is True:
@@ -945,7 +1113,7 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
             EnsoErrorsWarnings.my_warning(list_strings)
         if keyerror is None:
             # if land = 100 instead of 1, divides landmask by 100
-            if (MV2minimum(landmask) == 0 and MV2maximum(landmask) == 100) or \
+            if (MV2min(landmask) == 0 and MV2max(landmask) == 100) or \
                     ("units" in landmask.listattributes() and landmask.units == "%"):
                 landmask = landmask / 100.
             area = MV2masked_where(landmask.mask, area)
@@ -1211,11 +1379,11 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                      "degreesKelvin", "degreesKelvins", "deg K", "deg Kelvin", "deg Kelvins", "deg_K", "deg_Kelvin",
                      "deg_Kelvins", "degK", "degKelvin", "degKelvins", "deg. K", "deg. Kelvin", "deg. Kelvins"]:
             # check if the temperature units is really K
-            if float(MV2minimum(tab)) > 150:
+            if float(MV2min(tab)) > 150:
                 # unit change of the temperature: from K to degC
                 tab = dict_operations["minus"](tab, 273.15)
             else:
-                minmax = [MV2minimum(tab), MV2maximum(tab)]
+                minmax = MinMax(tab)
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, units, minmax, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
         elif units in ["C", "celsius", "Celsius", "degree C", "degree celsius", "degree Celsius", "degree_C",
@@ -1225,8 +1393,8 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                        "deg_celsius", "deg_Celsius", "degC", "degcelsius", "degCelsius", "deg. C", "deg. celsius",
                        "deg. Celsius"]:
             # check if the temperature units is really degC
-            if float(MV2minimum(tab)) > 50:
-                minmax = [MV2minimum(tab), MV2maximum(tab)]
+            if float(MV2min(tab)) > 50:
+                minmax = MinMax(tab)
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, minmax, units, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
         else:
@@ -1869,7 +2037,7 @@ def kurtosis_temporal(tab):
 
 
 def MinMax(tab):
-    return [float(MV2minimum(tab)), float(MV2maximum(tab))]
+    return [float(MV2min(tab)), float(MV2max(tab))]
 
 
 def MyEmpty(tab, time=True, time_id=''):
@@ -2012,11 +2180,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             # I need to be in the ocean point of view so the heat fluxes must be downwards
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib ReadAndSelectRegion" + "\033[0m")
             print("\033[93m" + str().ljust(25) + varname + " sign reversed" + "\033[0m")
-            print("\033[93m" + str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
+            print("\033[93m" + str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2min(tab), 2)) + " to " +
+                  "{0:+.2f}".format(round(MV2max(tab), 2)) + "\033[0m")
             tab = -1 * tab
-            print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
+            print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2min(tab), 2)) + " to " +
+                  "{0:+.2f}".format(round(MV2max(tab), 2)) + "\033[0m")
             reversed_sign = True
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
@@ -2164,7 +2332,7 @@ def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs)
     # Temp corrections for cdms2 to find the right axis
     CDMS2setAutoBounds('on')
     # Get landmask
-    if OSpath__isfile(filename):
+    if OSpath__isfile(filename) is True:
         # Open file and get time dimension
         fi = CDMS2open(filename)
         if box is None:  # no box given
@@ -3157,9 +3325,9 @@ def CustomLinearRegression1d(y, x, sign_x=1):
     return slope, intercept, stderr
 
 
-def fill_dict_axis(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nyear1, nyear2, nbr, var_name, add_name,
-                   units, axis, centered_rmse=0, biased_rmse=1, dict_metric={}, dict_nc={}, ev_name=None, events1=None,
-                   events2=None, description=None):
+def fill_dict_axis(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nyear1, nyear2, nbr, var_name, units, axis,
+                   centered_rmse=0, biased_rmse=1, dict_metric={}, dict_nc={}, ev_name=None, events1=None, events2=None,
+                   description=None):
     # Metric 1
     rmse_dive, keyerror = RmsAxis(tab1, tab2, axis=axis, centered=centered_rmse, biased=biased_rmse)
     rmse_error_dive = None
@@ -3171,21 +3339,11 @@ def fill_dict_axis(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nye
     std_obs_dive = float(Std(tab2, weights=None, axis=axis, centered=1, biased=1))
     std_dive = float(std_mod_dive) / float(std_obs_dive)
     std_error_dive = None
-    list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
-                     "STD_" + dataset2, "STD_error_" + dataset2]
+    list_met_name = ["RMSE", "RMSE_error", "CORR", "CORR_error", "STD", "STD_error"]
     list_metric_value = [float(rmse_dive), rmse_error_dive, corr_dive, corr_error_dive, std_dive, std_error_dive]
     for tmp1, tmp2 in zip(list_met_name, list_metric_value):
-        if isinstance(add_name, str) is True:
-            dict_metric[tmp1 + "_" + add_name] = tmp2
-        else:
-            dict_metric[tmp1] = tmp2
-    # if axis in ["t", "x", "xy", "y"]:
-    #     key = "temporal" if axis == "t" else ("zonal" if axis == "x" else ("meridional" if axis == "y" else "spatial"))
-    # else:
-    #     key = "array"
+        dict_metric[var_name + dataset2 + "_" + tmp1] = tmp2
     dict_nc["var" + str(nbr)] = tab1
-    # dict_dive = {"units": units, "number_of_years_used": nyear1, "time_period": str(timebounds1),
-    #              key+"STD_" + dataset1: std_mod_dive}
     dict_dive = {"units": units, "number_of_years_used": nyear1, "time_period": str(timebounds1),
                  "arraySTD": std_mod_dive}
     if isinstance(description, str) is True:
@@ -3194,8 +3352,6 @@ def fill_dict_axis(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nye
         dict_dive[ev_name + "_years"] = str(events1)
     dict_nc["var" + str(nbr) + "_attributes"] = copy.deepcopy(dict_dive)
     dict_nc["var" + str(nbr) + "_name"] = var_name + dataset1
-    # dict_dive = {"units": units, "number_of_years_used": nyear2, "time_period": str(timebounds2),
-    #              key+"STD_" + dataset2: std_obs_dive}
     dict_dive = {"units": units, "number_of_years_used": nyear2, "time_period": str(timebounds2),
                  "arraySTD": std_obs_dive}
     if isinstance(description, str) is True:
@@ -3555,10 +3711,57 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
             del tmp_info
         else:
             EnsoErrorsWarnings.unknown_averaging(average, list(dict_average.keys()), INSPECTstack())
-    # continue preprocessing if not error happened yet
+    # continue preprocessing if no error happened yet
     if isinstance(average, list) is True and "time" in average:
         pass
     elif keyerror is None:
+        # removing linear trend
+        if isinstance(kwargs["detrending"], dict) is True:
+            known_args = {"axis", "method", "bp"}
+            extra_args = set(kwargs["detrending"]) - known_args
+            if extra_args:
+                EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+            tab, info, keyerror = Detrend(tab, info, **kwargs["detrending"])
+        if keyerror is None:
+            # computes mean annual cycle
+            if compute_sea_cycle is True:
+                tab = annualcycle(tab)
+            # removes annual cycle (anomalies with respect to the annual cycle)
+            if compute_anom is True:
+                tab = ComputeInterannualAnomalies(tab)
+            # normalization of the anomalies
+            if kwargs["normalization"] is True:
+                if kwargs["frequency"] is not None:
+                    tab, keyerror = Normalize(tab, kwargs["frequency"])
+                    info = info + ", normalized"
+            # continue preprocessing if not error happened yet
+            if keyerror is None:
+                # smoothing time series
+                if isinstance(kwargs["smoothing"], dict) is True:
+                    known_args = {"axis", "method", "window"}
+                    extra_args = set(kwargs["smoothing"]) - known_args
+                    if extra_args:
+                        EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
+                    tab, info = Smoothing(tab, info, **kwargs["smoothing"])
+            else:
+                tab = None
+        else:
+            tab = None
+    else:
+        tab = None
+    return tab, info, keyerror
+
+
+def preprocess_ts_polygon(tab, info, areacell=None, average="horizontal", compute_anom=False, compute_sea_cycle=False,
+                          region=None, **kwargs):
+    keyerror = None
+    # average
+    if average == "horizontal" and isinstance(region, str) is True:
+        tab, keyerror = averager_polygon(tab, areacell, region, **kwargs)
+        if keyerror is None:
+            info = str(info) + ", " + str(average) + " average"
+    # continue preprocessing if no error happened yet
+    if keyerror is None:
         # removing linear trend
         if isinstance(kwargs["detrending"], dict) is True:
             known_args = {"axis", "method", "bp"}
@@ -3963,6 +4166,147 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
                       'shape3': '(dSSToce) ' + str(dSSToce.shape)}
         EnsoErrorsWarnings.debug_mode('\033[93m', 'output', 25, **dict_debug)
     return dSST, dSSTthf, dSSToce
+
+
+def telecon_array(ldict, list_regions, ax_long_name=None, ax_reference=None, ax_short_name=None):
+    """
+    #################################################################################
+    Description:
+    Create an array from the dictionary of horizontally averaged regions
+    #################################################################################
+
+    :param ldict: dictionary
+        dictionary of masked_array
+    :param list_regions: list
+        list of the region names in which the variable in ldict as been horizontally averaged
+        e.g., list_regions = ['WNA', 'CNA', 'ENA', 'CAM', 'AMZ', 'NEB', 'WSA', 'SSA'] for american regions
+    :param ax_long_name: string, optional
+        long_name of the region axis
+        e.g., ax_long_name = 'AR5 v3 regions modified according to Perry et al. (2020)'
+        default value is None
+    :param ax_reference: string, optional
+        reference of the region axis
+        e.g., ax_reference = 'https://doi.org/10.1007/s00382-019-05006-6'
+        default value is None
+    :param ax_short_name: string, optional
+        short_name of the region axis
+        e.g., ax_short_name = 'modified_ar5_v3_regions'
+        default value is None
+
+    :return: tab_o: masked_array
+        masked_array with the list of regions as the last dimension if the computation is successful, else, None
+    :return: keyerror: string or None
+        None if the computation is successful, else, a string defining the error
+    """
+    keyerror = None
+    # output axes
+    aax_o = ldict[list_regions[0]].getAxisList()
+    rax_o = CDMS2createAxis(MV2array(list(range(len(list_regions)))), id="regions")
+    rax_o.regions = str(list_regions)
+    if isinstance(ax_short_name, str) is True:
+        rax_o.short_name = ax_short_name
+    if isinstance(ax_long_name, str) is True:
+        rax_o.long_name = ax_long_name
+    if isinstance(ax_reference, str) is True:
+        rax_o.reference = ax_reference
+    # create array
+    tab_o = MV2zeros((len(ldict[list_regions[0]]), len(list_regions)))
+    for ii, reg in enumerate(list_regions):
+        if len(ldict[reg].shape) == 1:
+            tab_o[:, ii] = ldict[reg]
+        elif len(ldict[reg].shape) == 2:
+            tab_o[:, :, ii] = ldict[reg]
+        elif len(ldict[reg].shape) == 3:
+            tab_o[:, :, :, ii] = ldict[reg]
+        elif len(ldict[reg].shape) == 4:
+            tab_o[:, :, :, :, ii] = ldict[reg]
+        else:
+            keyerror = "telecon_array, create array: input array must be more than 4D and this is not taken into " + \
+                       "account yet (" + str(ldict[reg].shape) + ")"
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": input array shape",
+                str().ljust(5) + keyerror,
+                str().ljust(5) + "cannot reshape input array with the list of regions as the last dimension"]
+            EnsoErrorsWarnings.my_warning(list_strings)
+            break
+    if keyerror is None:
+        tab_o.setAxisList(aax_o + [rax_o])
+    else:
+        tab_o = None
+    return tab_o, keyerror
+
+
+def telecon_change_rate(larray):
+    """
+    #################################################################################
+    Description:
+    Compute the change rate (amplification rate)
+    #################################################################################
+
+    :param larray: masked_array
+        masked_array of the original array (all years)
+        e.g., larray(time, x, y, z)
+
+    :return change_rate: masked_array
+        masked_array of the change rate (amplification rate)
+    """
+    mean = MV2average(larray, axis=0)
+    change_rate = (larray[:] - mean) * 100. / mean
+    change_rate = CDMS2createVariable(change_rate, axes=larray.getAxisList(), grid=larray.getGrid(), mask=larray.mask,
+                                      id="amplification_rate")
+    return change_rate
+
+
+def telecon_significance(larray1, larray2, lnech, lsig_level=90, lnum_samples=100000):
+    """
+    #################################################################################
+    Description:
+    Create an array from the dictionary of horizontally averaged regions
+    #################################################################################
+
+    :param larray1: masked_array
+        masked_array of the composited events
+        e.g., larray1(events, x, y, z)
+    :param larray2: masked_array
+        masked_array of the original array (all years), from which events have been selected, with time as first
+        dimension
+        e.g., larray2(time, x, y, z)
+    :param lnech: integer
+        number of events to select in each random selections
+    :param lsig_level: integer, optional
+        confidence level of the significance test (95 is 95% confidence level)
+        default value is 90
+    :param lnum_samples: integer, optional
+        number of random selections (with replacement) of the given sample to use for the significance test
+        default value is 100000
+
+    :return: significance: masked_array
+        masked_array shaped like larray1.shape, with 1 if the composite is significant, else 0
+    """
+    # random selection among all years
+    idx = NPrandom__randint(0, len(larray2), (lnum_samples, lnech))
+    samples = NParray(larray2)[idx]
+    # average randomly selected years (create lnum_samples composites)
+    stat2 = NPmean(samples, axis=1)
+    # compute lower and higher threshold of the given significance level
+    if lsig_level == 100:
+        low = MV2min(stat2, axis=0)
+        high = MV2min(stat2, axis=0)
+    else:
+        low = GENUTILpercentiles(stat2, percentiles=[(100 - lsig_level) / 2.], axis=0)[0]
+        high = GENUTILpercentiles(stat2, percentiles=[lsig_level + ((100 - lsig_level) / 2.)], axis=0)[0]
+    # set to -1 if < 0 and 1 if > 0
+    vlow = MV2zeros(low.shape)
+    vlow = MV2where(larray1 < low, 1, vlow)
+    vhigh = MV2zeros(high.shape)
+    vhigh = MV2where(larray1 > high, 1, vhigh)
+    # if both low and high are < 0 or low and high are > 0 it means that the teleconnection is significant in the
+    # region
+    significance = MV2zeros(low.shape)
+    significance = MV2where(vlow + vhigh > 0, 1, significance)
+    significance = CDMS2createVariable(significance, axes=larray1.getAxisList(), grid=larray1.getGrid(),
+                                       mask=larray1.mask, id="significance")
+    return significance
 
 
 def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):

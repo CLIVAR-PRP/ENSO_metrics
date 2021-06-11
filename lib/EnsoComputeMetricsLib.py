@@ -24,7 +24,8 @@ from .EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, Bias
     SeasonalLhfLonRmse, SeasonalLwrLatRmse, SeasonalLwrLonRmse, SeasonalPrLatRmse, SeasonalPrLonRmse,\
     SeasonalShfLatRmse, SeasonalShfLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse,\
     SeasonalSstLonRmse, SeasonalSwrLatRmse, SeasonalSwrLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse,\
-    SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, SeasonalThfLonRmse
+    SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, SeasonalThfLonRmse, telecon_pr_djf, \
+    telecon_pr_ano_djf, telecon_pr_amp_djf
 from .EnsoToolsLib import math_metric_computation
 from .KeyArgLib import default_arg_values
 
@@ -694,6 +695,8 @@ dict_twoVar_modelAndObs = {
     "EnsoTauxLonRmse": EnsoTauxLonRmse, "EnsoTauxTsRmse": EnsoTauxTsRmse,
     "EnsoTauyLonRmse": EnsoTauyLonRmse, "EnsoTauyTsRmse": EnsoTauyTsRmse,
     "EnsoThfLonRmse": EnsoThfLonRmse, "EnsoThfTsRmse": EnsoThfTsRmse,
+    "telecon_pr_djf": telecon_pr_djf,
+    "telecon_pr_ano_djf": telecon_pr_ano_djf, "telecon_pr_amp_djf": telecon_pr_amp_djf,
 }
 
 dict_oneVar = {
@@ -1010,8 +1013,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             obsInterpreter2[jj])
                         keyarg["project_interpreter_obs_var2"] = "CMIP" if obs_interpreter == "CMIP" else deepcopy(
                             obs_int2)
-                        if obsNameVar1[ii] == "Tropflux":
-                        # if output_name != modelName:
+                        if output_name != modelName:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
                                   modelName + " and " + output_name + "\033[0m")
                             diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
@@ -1145,10 +1147,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         output_name = deepcopy(obsNameVar1[ii]) + "_" + deepcopy(obsNameVar2[jj])
                         keyarg["project_interpreter_var2"] = \
                             "CMIP" if obs_interpreter == "CMIP" else deepcopy(obsInterpreter2[jj])
-                        if obsNameVar1[ii] == "Tropflux":
+                        # if obsNameVar1[ii] == "Tropflux":
                         # if ("AVISO" in obsNameVar2[jj] and obsNameVar1[ii] == "Tropflux") or \
                         #         obsNameVar2[jj] == obsNameVar1[ii]:
-                        # if output_name != modelName:
+                        if output_name != modelName:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
                                   "\033[0m")
                             diag_obs[output_name] = dict_twoVar[metric](
