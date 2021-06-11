@@ -1013,7 +1013,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                             obsInterpreter2[jj])
                         keyarg["project_interpreter_obs_var2"] = "CMIP" if obs_interpreter == "CMIP" else deepcopy(
                             obs_int2)
-                        if output_name != modelName:
+                        if output_name != modelName and \
+                                ((obsNameVar1[ii] in obsNameVar2 and obsNameVar1[ii] == obsNameVar2[jj]) or
+                                 (obsNameVar1[ii] not in obsNameVar2)):
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
                                   modelName + " and " + output_name + "\033[0m")
                             diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
