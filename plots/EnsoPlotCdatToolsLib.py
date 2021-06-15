@@ -10,11 +10,18 @@
 # ---------------------------------------------------#
 from copy import deepcopy
 from inspect import stack as INSPECTstack
+from numpy import array as NUMPYarray
+from numpy import mean as NUMPYmean
+from numpy.random import randint as NUMPYrandom__randint
 # CDAT
 from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
-from MV2 import maximum as MV2maximum
-from MV2 import minimum as MV2minimum
+from genutil.statistics import percentiles as GENUTILstatistics__percentiles
+from MV2 import masked_where as MV2masked_where
+from MV2 import max as MV2max
+from MV2 import min as MV2min
+from MV2 import where as MV2where
+from MV2 import zeros as MV2zeros
 # ENSO_metrics package functions:
 from EnsoMetrics import EnsoErrorsWarnings
 
@@ -62,18 +69,90 @@ def minimaxi(array, mini=1e20, maxi=-1e20):
     """
     if isinstance(array, list) is True:
         for tmp in array:
-            v1, v2 = float(MV2minimum(tmp)), float(MV2maximum(tmp))
+            v1, v2 = float(MV2min(tmp)), float(MV2max(tmp))
             if v1 < mini:
                 mini = deepcopy(v1)
             if v2 > maxi:
                 maxi = deepcopy(v2)
     else:
-        v1, v2 = float(MV2minimum(array)), float(MV2maximum(array))
+        v1, v2 = float(MV2min(array)), float(MV2max(array))
         if v1 < mini:
             mini = deepcopy(v1)
         if v2 > maxi:
             maxi = deepcopy(v2)
     return mini, maxi
+
+
+def my_mask(larray, larray_mask):
+    """
+    #################################################################################
+    Description:
+    Mask where given mask equal 1
+    #################################################################################
+
+    :param larray: masked_array
+        masked_array to mask
+    :param larray_mask: masked_array
+        masked_array in which 0 means the values will be masked
+
+    :return larray_out: masked_array
+        masked_array with larray where larray_mask != 0 else masked
+    """
+    larray_out = MV2masked_where(larray_mask == 0, larray)
+    return larray_out
+
+
+def my_sig(larray1, larray2, larray3):
+    tab = my_mask(NUMPYmean(larray2, axis=0), larray3).compressed()
+    low, hig = larray1
+    vlow = MV2zeros(low.shape)
+    vlow = MV2where(tab < low, 1, vlow)
+    vhigh = MV2zeros(hig.shape)
+    vhigh = MV2where(tab > hig, 1, vhigh)
+    significance = MV2zeros(low.shape)
+    significance = MV2where(vlow + vhigh > 0, 1, significance).compressed()
+    return significance
+
+
+def significance_range(larray, lnech, lsig_level=90, lnum_samples=1000000):
+    """
+    #################################################################################
+    Description:
+    Create an array from the dictionary of horizontally averaged regions
+    #################################################################################
+
+    :param larray: masked_array
+        masked_array of the original array (all years), from which events have been selected, with time as first
+        dimension
+        e.g., larray(time, x, y, z)
+    :param lnech: integer
+        number of events to select in each random selections
+    :param lsig_level: integer, optional
+        confidence level of the significance test (95 is 95% confidence level)
+        default value is 90
+    :param lnum_samples: integer, optional
+        number of random selections (with replacement) of the given sample to use for the significance test
+        default value is 100000
+
+    :return: low: masked_array
+        masked_array shaped like larray.shape, with the minimum value of the significance test
+    :return: high: masked_array
+        masked_array shaped like larray.shape, with the maximum value of the significance test
+    """
+    # random selection among all years
+    idx = NUMPYrandom__randint(0, len(larray), (lnum_samples, lnech))
+    samples = NUMPYarray(larray)[idx]
+    # average randomly selected years (create lnum_samples composites)
+    stat2 = NUMPYmean(samples, axis=1)
+    # compute lower and higher threshold of the given significance level
+    if lsig_level == 100:
+        low = MV2min(stat2, axis=0)
+        high = MV2max(stat2, axis=0)
+    else:
+        low = GENUTILstatistics__percentiles(stat2, percentiles=[(100 - lsig_level) / 2.], axis=0)[0]
+        high = GENUTILstatistics__percentiles(stat2, percentiles=[lsig_level + ((100 - lsig_level) / 2.)], axis=0)[0]
+    return low, high
+
 
 def read_data(netcdf_file, netcdf_var, mod_name, ref_name, dict_diagnostic, dict_metric, member=None,
               netcdf_var_extra=None):

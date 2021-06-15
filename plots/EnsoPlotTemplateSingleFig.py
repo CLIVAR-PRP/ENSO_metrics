@@ -25,15 +25,16 @@ from numpy import array as NUMPYarray
 from numpy import linspace as NUMPYlinspace
 from numpy import mean as NUMPYmean
 from numpy import meshgrid as NUMPYmeshgrid
+from numpy import moveaxis as NUMPYmoveaxis
 from numpy import percentile as NUMPYpercentile
 from numpy.ma import masked_where as NUMPYmasked_where
 import string
 # ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
 from .EnsoPlotToolsLib import create_labels, create_levels, create_lines, create_round_string, format_metric, \
-    minimaxi, minmax_plot, my_average, my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, \
+    minmax_plot, my_average, my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, \
     return_metrics_type, shading_levels
-from .EnsoPlotCdatToolsLib import read_data
+from .EnsoPlotCdatToolsLib import minimaxi, my_mask, my_sig, read_data, significance_range
 
 # ---------------------------------------------------#
 
@@ -516,3 +517,384 @@ def plot_telecon(model, project, nc_file, dict_param, reference, figure_name, di
     plt.savefig(str(figure_name) + ".eps", bbox_inches="tight", format="eps")
     plt.close()
     return
+
+
+def plot_telecon_1mem(model, project, nc_file, dict_param, reference, figure_name, dict_diagnostic_values,
+                      diagnostic_units, dict_metric_values, metric_units, metric_variables=None, metric_regions=None,
+                      member=None):
+    # get data
+    nc_var = list()
+    for kk in list(dict_param.keys()):
+        if "_plot" in kk:
+            nc_var += dict_param[kk]["varpattern"]
+    nc_var_extra = list()
+    for kk in list(dict_param.keys()):
+        if "_plot" in kk:
+            if "varpattern_extra" in list(dict_param[kk].keys()):
+                nc_var_extra += dict_param[kk]["varpattern_extra"]
+    dict_mod, dict_obs, dia_mod, dia_obs, met_val, att_glo, dict_mod_extra, dict_obs_extra = read_data(
+        nc_file, nc_var, model, reference, dict_diagnostic_values, dict_metric_values, member=member,
+        netcdf_var_extra=nc_var_extra)
+    met_val = create_round_string(met_val)
+    # get regions
+    list_regions = metric_regions[metric_variables[-1]]
+    # initialization of the plot
+    nbrx, nbry = 32, 32
+    fig = plt.figure(0, figsize=(nbrx / 4, nbry / 4))
+    gs = GridSpec(nbry, nbrx, figure=fig)
+    fontsize = 10
+    # ---------------------------------------------------#
+    # maps
+    # ---------------------------------------------------#
+    pkey = "01_plot"
+    colorbar = dict_param[pkey]["colorbar"]
+    labelbar = dict_param[pkey]["label"]
+    sizex, sizey = 14, 7
+    deltx, delty = 1, 1
+    counter = 0
+    y_pos = 0
+    for ii, vv in enumerate(dict_param[pkey]["varpattern"]):
+        for jj, (d1, d2) in enumerate(zip([dict_mod, dict_obs], [model, reference])):
+            # array and attributes
+            tab = d1[vv]["array"]
+            tax = d1[vv]["attributes"]["time_period"]
+            if "arraySTD" in list(d1[vv]["attributes"].keys()):
+                compare = "$\sigma$ = " + create_round_string(float(d1[vv]["attributes"]["arraySTD"]))
+                if d2 == model:
+                    if str(vv) + str(reference) + "_RMSE" in list(att_glo.keys()) or \
+                            str(vv) + str(reference) + "_" + str(reference) + "_RMSE" in list(att_glo.keys()):
+                        if str(vv) + str(reference) + "_RMSE" in list(att_glo.keys()):
+                            att_na = str(vv) + str(reference) + "_RMSE"
+                        else:
+                            att_na = str(vv) + str(reference) + "_" + str(reference) + "_RMSE"
+                        compare += "; rmse = " + create_round_string(float(att_glo[att_na]))
+                        del att_na
+                    if str(vv) + str(reference) + "_CORR" in list(att_glo.keys()) or \
+                            str(vv) + str(reference) + "_" + str(reference) + "_CORR" in list(att_glo.keys()):
+                        if str(vv) + str(reference) + "_CORR" in list(att_glo.keys()):
+                            att_na = str(vv) + str(reference) + "_CORR"
+                        else:
+                            att_na = str(vv) + str(reference) + "_" + str(reference) + "_CORR"
+                        compare += "; R = " + create_round_string(float(att_glo[att_na]))
+                        del att_na
+            else:
+                compare = None
+            if "nina" in vv and "nina_years" in list(d1[vv]["attributes"].keys()):
+                nbr_ev = str(len(d1[vv]["attributes"]["nina_years"].split(", "))).zfill(2)
+            elif "nino" in vv and "nino_years" in list(d1[vv]["attributes"].keys()):
+                nbr_ev = str(len(d1[vv]["attributes"]["nino_years"].split(", "))).zfill(2)
+            else:
+                nbr_ev = None
+            lat = list(tab.getLatitude()[:])
+            lon = list(tab.getLongitude()[:])
+            # ticks
+            xlabel_ticks = list(range(int(MATHfloor(min(lon))), int(MATHceil(max(lon))) + 1))
+            xlabel_ticks, xlabel = create_labels(dict_param[pkey]["xname"], xlabel_ticks)
+            ylabel_ticks = list(range(int(MATHfloor(min(lat))), int(MATHceil(max(lat))) + 1))
+            ylabel_ticks, ylabel = create_labels(dict_param[pkey]["yname"], ylabel_ticks)
+            # ax
+            ax = plt.subplot(gs[y_pos: y_pos + sizey, jj * (sizex + deltx):  jj * (sizex + deltx) + sizex])
+            locmap = Basemap(projection="cyl", llcrnrlat=lat[0], urcrnrlat=lat[-1], llcrnrlon=lon[0], urcrnrlon=lon[-1],
+                             ax=ax)
+            # draw coastlines
+            locmap.drawcoastlines(linewidth=0.5)
+            # x-y axes
+            ax.set_xticks(xlabel_ticks[1: -1], minor=False)
+            ax.set_xticks([kk - (xlabel_ticks[1] - xlabel_ticks[0]) / 2. for kk in xlabel_ticks], minor=True)
+            if ii == len(dict_param[pkey]["varpattern"]) - 1:
+                ax.set_xticklabels(xlabel[1: -1])
+            else:
+                ax.set_xticklabels(["" for kk in xlabel[1: -1]])
+            ax.set_xlim(min(xlabel_ticks), max(xlabel_ticks))
+            for tick in ax.xaxis.get_major_ticks():
+                tick.label.set_fontsize(fontsize)
+            ax.set_yticks(ylabel_ticks, minor=False)
+            ax.set_yticks([kk - (ylabel_ticks[1] - ylabel_ticks[0]) / 2. for kk in ylabel_ticks], minor=True)
+            if jj == 0:
+                ax.set_yticklabels(ylabel)
+            else:
+                ax.set_yticklabels(["" for kk in ylabel])
+            ax.set_ylim(-90, 90)
+            for tick in ax.yaxis.get_major_ticks():
+                tick.label.set_fontsize(fontsize)
+            ax.tick_params(axis="both", direction="in", which="both", bottom=True, top=True, left=True, right=True)
+            # title
+            x1, x2 = ax.get_xlim()
+            y1, y2 = ax.get_ylim()
+            dx, dy = (x2 - x1) / 100., (y2 - y1) / 100.
+            ax.scatter(x1 + 3. * dx, y2 - 7. * dy, s=150, marker="s", c="darkgrey", zorder=2)
+            ax.text(x1 + 3. * dx, y2 - 7. * dy, numbering[counter], fontsize=fontsize, weight="bold", zorder=6,
+                    ha="center", va="center")
+            if ii == 0:
+                color = dict_col[project.upper()] if jj == 0 else dict_col["REF"]
+                t1 = str(tax.split(", ")[0].split("-")[0].split("'")[1]).zfill(4)
+                t2 = str(tax.split(", ")[1].split("-")[0].split("'")[1]).zfill(4)
+                if d2 == model and isinstance(member, str) is True:
+                    txt = str(d2) + " " + str(member) + "\n" + str(t1) + "-" + str(t2)
+                else:
+                    txt = str(d2) + "\n" + str(t1) + "-" + str(t2)
+                ax.text(0.5, 1.1, txt, fontsize=fontsize, color=color, ha="center", va="bottom", weight="bold",
+                        transform=ax.transAxes)
+                del color, t1, t2, txt
+            # comparison numbers
+            if isinstance(compare, str) is True:
+                ax.text(x1 + 1.1 * dx, y1 + 2 * dy, compare, fontsize=6, zorder=6, ha="left", va="bottom",
+                        bbox=dict(lw=0, facecolor="white", pad=1, alpha=1))
+            # number of events
+            if isinstance(nbr_ev, str) is True:
+                ax.text(x2 - 1.1 * dx, y1 + 2 * dy, nbr_ev, fontsize=6, zorder=6, ha="right", va="bottom",
+                        bbox=dict(lw=0, facecolor="white", pad=1, alpha=1))
+            # shading
+            xx, yy = NUMPYmeshgrid(lon, lat)
+            levels = create_levels(labelbar)
+            cs = locmap.contourf(xx, yy, tab, levels=levels, extend="both", cmap=colorbar)
+            # plot regions
+            for reg in list_regions:
+                my_reg = ReferenceRegions(reg)
+                if "polygon" in list(my_reg.keys()) and my_reg["polygon"] is True:
+                    lats, lons = my_reg["latitude"], my_reg["longitude"]
+                else:
+                    lats = list(my_reg["latitude"]) + list(reversed(list(my_reg["latitude"])))
+                    lons = [list(my_reg["longitude"])[0]] * 2 + [list(my_reg["longitude"])[1]] * 2
+                xy = NUMPYarray([[l1, l2] for l1, l2 in zip(lons, lats)])
+                ax.add_patch(Polygon(xy, linewidth=1, edgecolor="grey", facecolor="none", zorder=1))
+                if min(lons) < 0 or max(lons) > 360:
+                    if min(lons) < 0:
+                        lons = list(NUMPYarray(lons) + 360.)
+                    else:
+                        lons = list(NUMPYarray(lons) - 360.)
+                    xy = NUMPYarray([[l1, l2] for l1, l2 in zip(lons, lats)])
+                    ax.add_patch(Polygon(xy, linewidth=1, edgecolor="grey", facecolor="none", zorder=1))
+                del lats, lons, my_reg, xy
+            counter += 1
+            if jj == 0:
+                x11 = ax.get_position().x0
+                y11 = ax.get_position().y0
+                y22 = ax.get_position().y1
+            if jj == 1:
+                x22 = ax.get_position().x1
+            if ii == 0 and jj == 1:
+                x1_fig = ax.get_position().x0
+                x2_fig = ax.get_position().x1
+                y2_fig = ax.get_position().y1
+            if ii == len(dict_param[pkey]["varpattern"]) - 1 and jj == 1:
+                y1_fig = ax.get_position().y0
+            # delete
+            del dx, dy, lat, levels, locmap, lon, tab, tax, x1, x2, xlabel_ticks, xlabel, xx, y1, y2, ylabel_ticks, \
+                ylabel, yy
+        txt = "La Nina" if "nina" in vv else "El Nino"
+        ax.text(x11 - 2.1 * (x22 - x11) / (2 * sizex + deltx), y11 + (y22 - y11) / 2., txt, fontsize=fontsize,
+                color="k", ha="right", va="center", rotation=90, weight="bold", transform=fig.transFigure)
+        del txt
+        y_pos += sizey + delty
+    cax = plt.axes([x2_fig + (x2_fig - x1_fig) / 25., y1_fig, (x2_fig - x1_fig) / 25., y2_fig - y1_fig])
+    cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=labelbar, pad=0.35, extend="both")
+    cbar.set_label(dict_param[pkey]["zname"] + " (" + str(d1[vv]["attributes"]["units"]) + ")", fontsize=fontsize)
+    cbar.ax.tick_params(labelsize=fontsize)
+    # method and note
+    lines = list()
+    txt = dict_param[pkey]["method"].replace("MET_MET", str(att_glo["metric_method"]))
+    txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
+    lines = create_lines(txt, line_o=lines, threshold=80)
+    lines += ["Numbers at the bottom right of the maps: number of events"]
+    txt = dict_param[pkey]["note"].replace("MET_MET", str(att_glo["metric_method"]))
+    txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
+    lines = create_lines(txt, line_o=lines, threshold=80)
+    txt = ""
+    for ii, elt in enumerate(lines):
+        txt += elt
+        if ii != len(lines) - 1:
+            txt += "\n"
+    ax.text(x11 - 2.1 * (x22 - x11) / (2 * sizex + deltx), y11 - 1.3 * (y22 - y11) / sizey, txt, fontsize=fontsize,
+            color="k", ha="left", va="top", transform=fig.transFigure)
+    y_pos += 3
+    # delete
+    del ax, cax, cbar, lines, txt
+    # ---------------------------------------------------#
+    # dotplot
+    # ---------------------------------------------------#
+    pkey = "02_plot"
+    dict_nbr_ev = dict()
+    for v1, v3 in zip(dict_param[pkey]["varpattern"], dict_param["01_plot"]["varpattern"]):
+        for jj, (d1, d2) in enumerate(zip([dict_mod, dict_obs], [model, reference])):
+            if "nina" in v1 and "nina_years" in list(d1[v3]["attributes"].keys()):
+                nbr_ev = len(d1[v3]["attributes"]["nina_years"].split(", "))
+            elif "nino" in v1 and "nino_years" in list(d1[v3]["attributes"].keys()):
+                nbr_ev = len(d1[v3]["attributes"]["nino_years"].split(", "))
+            else:
+                nbr_ev = None
+            if v1 in list(dict_nbr_ev.keys()):
+                dict_nbr_ev[v1][d2] = nbr_ev
+            else:
+                dict_nbr_ev[v1] = {d2: nbr_ev}
+            del nbr_ev
+    dict_range = dict()
+    for v1, v2 in zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"]):
+        low, hig = significance_range(dict_mod[v1]["array"], dict_nbr_ev[v1][reference], lsig_level=100)
+        low = my_mask(low, dict_obs_extra[v2]["array"]).compressed()
+        hig = my_mask(hig, dict_obs_extra[v2]["array"]).compressed()
+        dict_range[v1] = [low, hig]
+        del hig, low
+    if isinstance(dict_mod_extra, dict) is True and isinstance(dict_obs_extra, dict) is True and \
+            "varpattern_extra" in list(dict_param[pkey].keys()) and \
+            dict_param[pkey]["varpattern_extra"][0] in dict_mod_extra.keys() and \
+            dict_param[pkey]["varpattern_extra"][0] in dict_obs_extra.keys() and \
+            dict_param[pkey]["varpattern_extra"][1] in dict_mod_extra.keys() and \
+            dict_param[pkey]["varpattern_extra"][1] in dict_obs_extra.keys():
+        tmp1 = [
+            minimaxi(my_mask(NUMPYmean(dict_obs[v1]["array"], axis=0), dict_obs_extra[v2]["array"]))
+            for v1, v2 in zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"])]
+        tmp2 = [minimaxi(dict_range[v1]) for v1 in dict_param[pkey]["varpattern"]]
+        list_reg1 = [reg for ii, reg in enumerate(list_regions)
+                     if dict_obs_extra[dict_param[pkey]["varpattern_extra"][0]]["array"][ii] == 1]
+        list_reg2 = [reg for ii, reg in enumerate(list_regions)
+                     if dict_obs_extra[dict_param[pkey]["varpattern_extra"][1]]["array"][ii] == 1]
+        list_reg1 = [reg for reg in list_regions if reg in list_reg1 + list_reg2]
+    else:
+        tmp1 = [minimaxi(NUMPYmean(dict_obs[v1]["array"], axis=0)) for v1 in dict_param[pkey]["varpattern"]]
+        tmp2 = [
+            minimaxi(significance_range(dict_mod[v1]["array"], dict_nbr_ev[v1][reference], lsig_level=100))
+            for v1 in dict_param[pkey]["varpattern"]]
+        list_reg1 = [reg for reg in list_regions]
+    list_reg2 = [ii for ii, reg in enumerate(list_regions) if reg in list_reg1]
+    sizex, sizey = len(list_reg2) if len(list_reg2) < nbrx else len(list_reg2) / 2, 5
+    deltx, delty = 1, 1
+    mini, maxi = minimaxi([tmp1, tmp2])
+    maxi = max([abs(mini), maxi])
+    tmp = MATHceil(maxi * 2)
+    if (tmp % 2 == 0 and tmp > 3) or tmp > 20:
+        if 20 < tmp < 400:
+            tmp = MATHceil(tmp / 10.)
+            tmp += tmp % 4
+            tmp = tmp * 10
+        elif tmp > 400:
+            tmp = MATHceil(tmp / 100.)
+            tmp += tmp % 4
+            tmp = tmp * 100
+        dy = int(round(0.25 * tmp, 0))
+        y_ticks = list(range(-dy, dy + 1, dy))
+        y_label = [str(ii) for ii in y_ticks]
+    else:
+        dy = 0.25 * tmp
+        y_ticks = [round(ii, 2) for ii in NUMPYarange(-dy, dy + 0.1, dy)]
+        y_label = list()
+        for ii in y_ticks:
+            if len(str(dy).split(".")[1]) == 2:
+                y_label.append("{0:.2f}".format(round(ii, 2)))
+            else:
+                y_label.append("{0:.1f}".format(round(ii, 1)))
+    for ii, (v1, v2) in enumerate(zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"])):
+        # ax
+        ax = plt.subplot(gs[y_pos: y_pos + sizey, 0: sizex])
+        # x-y axes
+        ax.set_xticks(list(range(len(list_reg1))), minor=False)
+        ax.set_xticklabels(["" for kk in list_reg1])
+        ax.set_xlim(-0.5, len(list_reg1) - 0.5)
+        ax.set_yticks(y_ticks, minor=False)
+        ax.set_yticks([kk - (y_ticks[1] - y_ticks[0]) / 2. for kk in y_ticks], minor=True)
+        ax.set_yticklabels(y_label)
+        ax.set_ylim(-1.1 * maxi, 1.1 * maxi)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(fontsize)
+        ax.tick_params(axis="both", direction="in", which="both", bottom=False, top=False, left=True, right=True)
+        x1, x2 = ax.get_xlim()
+        y1, y2 = ax.get_ylim()
+        i1 = [round(kk, 2) for kk in NUMPYarange(x1 + 1, x2, 1)]
+        i2, i3 = [y1 for kk in i1], [y2 for kk in i1]
+        ax.vlines(i1, i2, i3, color="grey", linestyle="-", lw=1, zorder=1)
+        ax.hlines([0], [x1], [x2], color="grey", linestyle="-", lw=1, zorder=1)
+        # title
+        dx, dy = (x2 - x1) / 100., (y2 - y1) / 100.
+        ax.scatter(x1 + 1.8 * dx, y2 - 10. * dy, s=150, marker="s", c="darkgrey", zorder=2)
+        ax.text(x1 + 1.8 * dx, y2 - 10. * dy, numbering[counter], fontsize=10, weight="bold", zorder=6, ha="center",
+                va="center")
+        for jj, (d1, d2) in enumerate(zip([dict_mod, dict_obs], [model, reference])):
+            # array and lat-lon
+            tab = NUMPYarray([list(d1[v1]["array"][:, kk]) for kk in range(len(list_regions)) if kk in list_reg2])
+            # markers
+            inds = [round(kk, 2) for kk in NUMPYarange(-0.25 + jj * 0.5, len(list_reg2) - 1 + jj * 0.5, 1)]
+            color = dict_col[project.upper()] if jj == 0 else dict_col["REF"]
+            mean = NUMPYmean(tab, axis=1)
+            for i1, i2, i3 in zip(inds, mean, list_reg2):
+                if dict_obs_extra[v2]["array"][i3] == 1:
+                    ax.plot([i1], [i2], markersize=4, color=color, marker="D", fillstyle="full",
+                            markeredgecolor=color, markeredgewidth=1, zorder=3)
+            # model range
+            if d2 == model:
+                low, hig = dict_range[v1]
+                nbr = 0
+                for i1, i4 in zip(inds, list_reg2):
+                    if dict_obs_extra[v2]["array"][i4] == 1:
+                        i2, i3 = low[nbr], hig[nbr]
+                        ax.plot([i1, i1], [i2, i3], color=color, lw=1, ls="-", zorder=3)
+                        ax.plot([i1 - 0.8 * dx, i1 + 0.8 * dx], [i2, i2], color=color, lw=1, ls="-", zorder=3)
+                        ax.plot([i1 - 0.8 * dx, i1 + 0.8 * dx], [i3, i3], color=color, lw=1, ls="-", zorder=3)
+                        nbr += 1
+                        del i4
+                # good?
+                tab_o = NUMPYarray([list(dict_obs[v1]["array"][:, kk])
+                                    for kk in range(len(list_regions)) if kk in list_reg2])
+                tab_o = NUMPYmean(tab_o, axis=1)
+                nbr = 0
+                for i1, i4, i5 in zip(inds, tab_o, list_reg2):
+                    if dict_obs_extra[v2]["array"][i5] == 1:
+                        i2, i3 = low[nbr], hig[nbr]
+                        if i2 <= i4 <= i3:
+                            ax.vlines(i1 + 0.25, y1, y2, color="springgreen", linestyle="-", lw=5, zorder=1)
+                        else:
+                            ax.vlines(i1 + 0.25, y1, y2, color="lightcoral", linestyle="-", lw=5, zorder=1)
+                        nbr += 1
+                del hig, low, tab_o
+        x11 = ax.get_position().x0
+        x22 = ax.get_position().x1
+        y11 = ax.get_position().y0
+        y22 = ax.get_position().y1
+        txt = "La Nina" if "nina" in v1 else "El Nino"
+        ax.text(x11 - 2.1 * (x22 - x11) / sizex, y11 + (y22 - y11) / 2., txt, fontsize=fontsize, color="k",
+                ha="right", va="center", rotation=90, weight="bold", transform=fig.transFigure)
+        del txt
+        counter += 1
+        if ii == len(dict_param[pkey]["varpattern"]) - 1:
+            y1_fig = ax.get_position().y0
+            for kk, reg in enumerate(list_reg1):
+                ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, ha="right", va="top", rotation=45)
+        y_pos += sizey + delty
+    # zname
+    txt = dict_param[pkey]["zname"] + "\n(" + str(d1[vv]["attributes"]["units"]) + ")"
+    ax.text(x2_fig + (x2_fig - x1_fig) / 15., y1_fig + (y2_fig - y1_fig) / 2., txt, fontsize=fontsize, color="k",
+            ha="center", va="center", rotation=90, transform=fig.transFigure)
+    # method and note
+    if ' ':
+        list_sig = list()
+        for v1, v2 in zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"]):
+            sig = my_sig(dict_range[v1], dict_obs[v1]["array"], dict_obs_extra[v2]["array"])
+            list_sig += list(sig)
+            del sig
+        my_val = create_round_string(sum(list_sig) * 100. / len(list_sig))
+    lines = list()
+    txt = dict_param[pkey]["method"].replace("MET_MET", str(att_glo["metric_method"]))
+    # txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
+    txt = txt.replace("MET_VAL", str(my_val)).replace("MET_UNI", str(metric_units))
+    txt = txt.replace("Monte Carlo resampling 90% confidence level", "full range of Monte Carlo resampling")
+    lines = create_lines(txt, line_o=lines, threshold=90)
+    lines += [""]
+    txt = dict_param[pkey]["note"].replace("MET_MET", str(att_glo["metric_method"]))
+    # txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
+    txt = txt.replace("MET_VAL", str(my_val)).replace("MET_UNI", str(metric_units))
+    txt = txt.replace("Monte Carlo resampling 90% confidence level", "full range of Monte Carlo resampling")
+    lines = create_lines(txt, line_o=lines, threshold=90)
+    txt = ""
+    for ii, elt in enumerate(lines):
+        txt += elt
+        if ii != len(lines) - 1:
+            txt += "\n"
+    ax.text(x11 - 2.1 * (x22 - x11) / sizex, y11 - 2.5 * (y22 - y11) / sizey, txt, fontsize=fontsize,
+            color="k", ha="left", va="top", transform=fig.transFigure)
+    y_pos += 2
+    # delete
+    del ax, lines, txt
+    plt.savefig(figure_name, bbox_inches="tight")
+    plt.savefig(str(figure_name) + ".eps", bbox_inches="tight", format="eps")
+    plt.close()
+    return
+

@@ -7,12 +7,12 @@ from os.path import join as OSpath__join
 from EnsoMetrics.EnsoPlotLib import plot_param
 from .EnsoPlotTemplate import cmip_boxplot, my_boxplot, my_curve, my_dotplot, my_dot_to_box, my_hovmoeller, my_map,\
     my_scatterplot
-from .EnsoPlotTemplateSingleFig import plot_telecon
+from .EnsoPlotTemplateSingleFig import plot_telecon, plot_telecon_1mem#, plot_telecon_amp, plot_telecon_ano
 
 dict_plot = {"boxplot": my_boxplot, "curve": my_curve, "dot": my_dotplot, "dot_to_box": my_dot_to_box,
              "hovmoeller": my_hovmoeller, "map": my_map, "scatterplot": my_scatterplot}
 dict_single_fig = {
-    "teleconnection": plot_telecon,
+    "teleconnection": plot_telecon, "teleconnection_1mem": plot_telecon_1mem, #"teleconnection_ano": plot_telecon_ano,
 }
 
 def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagnostic_units, metric_values,

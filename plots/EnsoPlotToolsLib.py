@@ -15,9 +15,9 @@ from numpy.ma import masked_invalid as NUMPYma__masked_invalid
 from numpy.random import randint as NUMPYrandom__randint
 from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 
-# xarray based functions
-from xarray import open_dataset
-from xarray import where as XARRAYwhere
+# # xarray based functions
+# from xarray import open_dataset
+# from xarray import where as XARRAYwhere
 
 # ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceObservations
@@ -151,7 +151,7 @@ def create_round_string(number):
     elif number < 10.:
         nbr_out = "{0:.1f}".format(round(number, 1))
     else:
-        nbr_out = str(round(number, 0))
+        nbr_out = str(int(round(number, 0)))
     return nbr_out
 
 

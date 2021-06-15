@@ -1188,6 +1188,7 @@ def defCollection(mc=True):
                     "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "pr": ["ERA-Interim", "GPCPv2.3"]},
                     "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
                                    "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
+                    "range_bst": 90,
                     "significance": 90,
                 },
                 "telecon_pr_ano_djf": {
@@ -1203,6 +1204,7 @@ def defCollection(mc=True):
                     "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "pr": ["ERA-Interim", "GPCPv2.3"]},
                     "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
                                    "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
+                    "range_bst": 90,
                     "significance": 90,
                 },
             },

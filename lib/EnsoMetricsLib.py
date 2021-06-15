@@ -31732,10 +31732,10 @@ def telecon_pr_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
         # 4.2 Significance
         if significance is True:
-            en_pr_sig_mod = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
-            ln_pr_sig_mod = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
-            en_pr_sig_obs = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
-            ln_pr_sig_obs = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
+            en_pr_sig_mod, _ = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
+            ln_pr_sig_mod, _ = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
+            en_pr_sig_obs, _ = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
+            ln_pr_sig_obs, _ = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
             method_pr += ", compute significance of the composite (Monte Carlo resampling " + str(level) + \
                          "% confidence level)"
         else:
@@ -32132,6 +32132,11 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                      "% confidence level)"
     else:
         significance, level, sig_method = False, None, ""
+    if "range_bst" in list(kwargs.keys()) and (isinstance(kwargs["range_bst"], int) is True or
+                                               isinstance(kwargs["range_bst"], float) is True):
+        range_bst = kwargs["range_bst"]
+    else:
+        range_bst = 100
 
     # Test given kwargs
     needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
@@ -32145,8 +32150,8 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     units = "%"
     method = "precipitation change rate (PRcr) averaged in " + str(len(prbox)) + " regions composited during DJF of" + \
              " El Nino and La Nina events (sea surface temperature anomalies; " + enso_method + "), the metric is " + \
-             "the percentage of regions in which the observed PRcr does not fall within modeled range (Monte Carlo " + \
-             "resampling " + str(level) + "% confidence level)" + sig_method
+             "the percentage of regions in which the observed PRcr does not fall within modeled range " + \
+             "(" + str(range_bst) + " of the Monte Carlo resampling)" + sig_method
     method_sst = "SST"
     method_pr = "PR"
     ref = "Using CDAT averager"
@@ -32364,10 +32369,10 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
         # 4.2 Significance: region
         if significance is True:
-            en_pr_sig_r_mod = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
-            ln_pr_sig_r_mod = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
-            en_pr_sig_r_obs = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
-            ln_pr_sig_r_obs = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
+            en_pr_sig_r_mod, _ = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
+            ln_pr_sig_r_mod, _ = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
+            en_pr_sig_r_obs, _ = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
+            ln_pr_sig_r_obs, _ = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
             method_pr += ", compute significance of the composite (Monte Carlo resampling " + str(level) + \
                          "% confidence level) to know if the regions have significant PRcr"
         else:
@@ -32389,10 +32394,12 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 "shape3": "(obs EN) " + str(en_pr_sig_r_obs.shape), "shape4": "(obs LN) " + str(ln_pr_sig_r_obs.shape)}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
         # 4.3 Significance: observed anomalies within modeled range?
-        en_pr_sig_a = telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=100)
-        ln_pr_sig_a = telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=100)
-        method_pr += ", compute the full range of the modeled composite (Monte Carlo resampling) to know if " + \
-                     "observed anomalies fall within modeled range"
+        en_pr_sig_a, en_pr_sig_v = \
+            telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=range_bst)
+        ln_pr_sig_a, ln_pr_sig_v = \
+            telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=range_bst)
+        method_pr += ", compute the " + str(range_bst) + " range of the modeled composite (Monte Carlo resampling) " + \
+                     "to know if observed anomalies fall within modeled range"
         if debug is True:
             dict_debug = {
                 "axes1": "(o in m EN) " + str([ax.id for ax in en_pr_sig_a.getAxisList()]),
@@ -32514,6 +32521,36 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            my_e1, my_e2 = ["nina", "nino"], ["La Nina", "El Nino"]
+            my_e3, my_e4 = [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs]
+            for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_v, en_pr_sig_v], my_e1, my_e2, my_e3, my_e4, ovar[7: 9]):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": my_units,
+                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
+                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
+                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
+                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
+                        "description": "low and high values of " + str(e2) + " composite's Monte Carlo resampling " +
+                                       "(" + str(range_bst) + "% interval), 100000 random composites generated by " +
+                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
+                                       " modeled " + str(e2)}
+                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset1)
+                    nbr += 1
+            for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_a, en_pr_sig_a], my_e1, my_e2, my_e3, my_e4, ovar[9: 11]):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": "1 if observed composite does not fall within modeled range",
+                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
+                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
+                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
+                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
+                        "description": "is observed " + str(e2) + " composite within modeled range? Range is the" +
+                                       " " + str(range_bst) + "% interval of 100000 random composites generated by " +
+                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
+                                       " modeled " + str(e2)}
+                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset2)
+                    nbr += 1
             if significance is True:
                 si1 = "significativity at the " + str(level) + "% confidence level of PRcr "
                 si2 = "; 100000 random selections (with replacement) of "
@@ -32534,7 +32571,7 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
                 my_re = [rav, rav, rav, rav]
                 my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
-                my_vn = [va + da for va in ovar[7:9] for da in [dataset1, dataset2]]
+                my_vn = [va + da for va in ovar[11:] for da in [dataset1, dataset2]]
                 for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(
                     my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn):
                     dict_nc["var" + str(nbr)] = ar
@@ -32543,38 +32580,26 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                         e1 + "_years": ey, "description": si1 + re + e2 + si2 + str(len(ey)) + si3 + e3}
                     dict_nc["var" + str(nbr) + "_name"] = vn
                     nbr += 1
-                my_e1, my_e2 = ["nina", "nino"], ["La Nina composite", "El Nino composite"]
-                my_e3, my_e4 = [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs]
-                for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_a, en_pr_sig_a], my_e1, my_e2, my_e3, my_e4, ovar[9:]):
-                    dict_nc["var" + str(nbr)] = ar
-                    dict_nc["var" + str(nbr) + "_attributes"] = {
-                        "units": "1 if observed composite does not fall within modeled range",
-                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
-                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
-                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
-                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
-                        "description": "is observed " + str(e2) + " composite within modeled range? Range is the" +
-                                       " " + str(level) + "% interval of 100000 random composites generated by " +
-                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
-                                       " modeled " + str(e2)}
-                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset2)
-                    nbr += 1
-                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_e4, my_ey, my_ny, my_re, my_tb, my_vn, rav, \
-                    rma, si1, si2, si3
+                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn, rav, rma, si1, \
+                    si2, si3
             dict1 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
                      "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF time series"}
             dict2 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
                      "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF time series"}
             dict3 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "nina_years": ln_years_mod,
                      "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
                                     "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
             dict4 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "nina_years": ln_years_obs,
                      "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
                                     "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
             dict5 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "nino_years": en_years_mod,
                      "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of all El Nino " +
                                     "events during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
             dict6 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "nino_years": en_years_obs,
                      "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF of all El Nino " +
                                     "events during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
             dict7 = {"metric_name": name, "metric_method": method, "metric_reference": ref, "frequency":
@@ -32788,6 +32813,12 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                      "% confidence level)"
     else:
         significance, level, sig_method = False, None, ""
+    # range of the model
+    if "range_bst" in list(kwargs.keys()) and (isinstance(kwargs["range_bst"], int) is True or
+                                               isinstance(kwargs["range_bst"], float) is True):
+        range_bst = kwargs["range_bst"]
+    else:
+        range_bst = 100
 
     # Test given kwargs
     needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
@@ -32801,8 +32832,8 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     units = "%"
     method = "precipitation anomalies (PRA) averaged in " + str(len(prbox)) + " regions composited during DJF of El" + \
              " Nino and La Nina events (sea surface temperature anomalies; " + enso_method + "), the metric is the " + \
-             "percentage of regions in which observed composite does not fall within modeled range (Monte Carlo " + \
-             "resampling " + str(level) + "% confidence level)" + sig_method
+             "percentage of regions in which observed composite does not fall within modeled range " + \
+             "(" + str(range_bst) + " of the Monte Carlo resampling)" + sig_method
     method_sst = "SST"
     method_pr = "PR"
     ref = "Using CDAT averager"
@@ -33020,10 +33051,10 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
         # 4.2 Significance: region
         if significance is True:
-            en_pr_sig_r_mod = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
-            ln_pr_sig_r_mod = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
-            en_pr_sig_r_obs = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
-            ln_pr_sig_r_obs = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
+            en_pr_sig_r_mod, _ = telecon_significance(en_pr_ave_mod, pr_mod, len(en_years_mod), lsig_level=level)
+            ln_pr_sig_r_mod, _ = telecon_significance(ln_pr_ave_mod, pr_mod, len(ln_years_mod), lsig_level=level)
+            en_pr_sig_r_obs, _ = telecon_significance(en_pr_ave_obs, pr_obs, len(en_years_obs), lsig_level=level)
+            ln_pr_sig_r_obs, _ = telecon_significance(ln_pr_ave_obs, pr_obs, len(ln_years_obs), lsig_level=level)
             method_pr += ", compute significance of the composite (Monte Carlo resampling " + str(level) + \
                          "% confidence level) to know if the regions have significant anomalies"
         else:
@@ -33045,10 +33076,12 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 "shape3": "(obs EN) " + str(en_pr_sig_r_obs.shape), "shape4": "(obs LN) " + str(ln_pr_sig_r_obs.shape)}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
         # 4.3 Significance: observed anomalies within modeled range?
-        en_pr_sig_a = telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=100)
-        ln_pr_sig_a = telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=100)
-        method_pr += ", compute the full range of the modeled composite (Monte Carlo resampling) to know if " + \
-                     "observed anomalies fall within modeled range"
+        en_pr_sig_a, en_pr_sig_v = \
+            telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=range_bst)
+        ln_pr_sig_a, ln_pr_sig_v = \
+            telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=range_bst)
+        method_pr += ", compute the " + str(range_bst) + " range of the modeled composite (Monte Carlo resampling) " + \
+                     "to know if observed anomalies fall within modeled range"
         if debug is True:
             dict_debug = {
                 "axes1": "(o in m EN) " + str([ax.id for ax in en_pr_sig_a.getAxisList()]),
@@ -33170,6 +33203,36 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
+            my_e1, my_e2 = ["nina", "nino"], ["La Nina", "El Nino"]
+            my_e3, my_e4 = [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs]
+            for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_v, en_pr_sig_v], my_e1, my_e2, my_e3, my_e4, ovar[7: 9]):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": my_units,
+                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
+                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
+                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
+                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
+                        "description": "low and high values of " + str(e2) + " composite's Monte Carlo resampling " +
+                                       "(" + str(range_bst) + "% interval), 100000 random composites generated by " +
+                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
+                                       " modeled " + str(e2)}
+                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset1)
+                    nbr += 1
+            for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_a, en_pr_sig_a], my_e1, my_e2, my_e3, my_e4, ovar[9: 11]):
+                    dict_nc["var" + str(nbr)] = ar
+                    dict_nc["var" + str(nbr) + "_attributes"] = {
+                        "units": "1 if observed composite does not fall within modeled range",
+                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
+                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
+                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
+                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
+                        "description": "is observed " + str(e2) + " composite within modeled range? Range is the" +
+                                       " " + str(range_bst) + "% interval of 100000 random composites generated by " +
+                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
+                                       " modeled " + str(e2)}
+                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset2)
+                    nbr += 1
             if significance is True:
                 si1 = "significativity at the " + str(level) + "% confidence level of PRA "
                 si2 = "; 100000 random selections (with replacement) of "
@@ -33190,7 +33253,7 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
                 my_re = [rav, rav, rav, rav]
                 my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
-                my_vn = [va + da for va in ovar[7:9] for da in [dataset1, dataset2]]
+                my_vn = [va + da for va in ovar[11:] for da in [dataset1, dataset2]]
                 for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(
                     my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn):
                     dict_nc["var" + str(nbr)] = ar
@@ -33199,40 +33262,28 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                         e1 + "_years": ey, "description": si1 + re + e2 + si2 + str(len(ey)) + si3 + e3}
                     dict_nc["var" + str(nbr) + "_name"] = vn
                     nbr += 1
-                my_e1, my_e2 = ["nina", "nino"], ["La Nina composite", "El Nino composite"]
-                my_e3, my_e4 = [ln_years_mod, en_years_mod], [ln_years_obs, en_years_obs]
-                for ar, e1, e2, e3, e4, vn in zip([ln_pr_sig_a, en_pr_sig_a], my_e1, my_e2, my_e3, my_e4, ovar[9:]):
-                    dict_nc["var" + str(nbr)] = ar
-                    dict_nc["var" + str(nbr) + "_attributes"] = {
-                        "units": "1 if observed composite does not fall within modeled range",
-                        "number_of_years_used_" + str(dataset1): nbr_year_mod,
-                        "number_of_years_used_" + str(dataset2): nbr_year_obs,
-                        "time_period_" + str(dataset1): str(actualtimebounds_mod), e1 + "_years_" + str(dataset1): e3,
-                        "time_period_" + str(dataset2): str(actualtimebounds_obs), e1 + "_years_" + str(dataset2): e4,
-                        "description": "is observed " + str(e2) + " composite within modeled range? Range is the" +
-                                       " " + str(level) + "% interval of 100000 random composites generated by " +
-                                       "selecting (with replacement) " + str(len(e4)) + " of the " + str(len(e3)) +
-                                       " modeled " + str(e2)}
-                    dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset2)
-                    nbr += 1
-                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_e4, my_ey, my_ny, my_re, my_tb, my_vn, rav, \
-                    rma, si1, si2, si3
+                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn, rav, rma, si1, \
+                    si2, si3
             dict1 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
                      "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF time series"}
             dict2 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
                      "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF time series"}
             dict3 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
+                     "nina_years": ln_years_mod,
                      "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
                                     "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
             dict4 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
+                     "nina_years": ln_years_obs,
                      "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of La Nina events " +
                                     "during DJF; Nina = " + season_ev + " SSTA < -" + my_thresh + enso_method3}
             dict5 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
-                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino events" +
-                                    " during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+                     "nino_years": en_years_mod,
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino " +
+                                    "events during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
             dict6 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
-                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino events" +
-                                    " during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
+                     "nino_years": en_years_obs,
+                     "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF of all El Nino " +
+                                    "events during DJF; Nino = " + season_ev + " SSTA > " + my_thresh + enso_method3}
             dict7 = {"metric_name": name, "metric_method": method, "metric_reference": ref, "frequency":
                      kwargs["frequency"], "metric_value_" + dataset2: mv, "metric_value_error_" + dataset2: mv_error,
                      "computation_steps": method_sst + "\n" + method_pr}

@@ -4282,6 +4282,8 @@ def telecon_significance(larray1, larray2, lnech, lsig_level=90, lnum_samples=10
 
     :return: significance: masked_array
         masked_array shaped like larray1.shape, with 1 if the composite is significant, else 0
+    :return: range_bst: masked_array
+        masked_array with the low and high values of the bootstrap at the given confidence level
     """
     # random selection among all years
     idx = NPrandom__randint(0, len(larray2), (lnum_samples, lnech))
@@ -4291,7 +4293,7 @@ def telecon_significance(larray1, larray2, lnech, lsig_level=90, lnum_samples=10
     # compute lower and higher threshold of the given significance level
     if lsig_level == 100:
         low = MV2min(stat2, axis=0)
-        high = MV2min(stat2, axis=0)
+        high = MV2max(stat2, axis=0)
     else:
         low = GENUTILpercentiles(stat2, percentiles=[(100 - lsig_level) / 2.], axis=0)[0]
         high = GENUTILpercentiles(stat2, percentiles=[lsig_level + ((100 - lsig_level) / 2.)], axis=0)[0]
@@ -4306,7 +4308,15 @@ def telecon_significance(larray1, larray2, lnech, lsig_level=90, lnum_samples=10
     significance = MV2where(vlow + vhigh > 0, 1, significance)
     significance = CDMS2createVariable(significance, axes=larray1.getAxisList(), grid=larray1.getGrid(),
                                        mask=larray1.mask, id="significance")
-    return significance
+    range_bst = MV2array([low, high])
+    mask_nd = MV2zeros(range_bst.shape)
+    mask_nd[:] = larray1.mask
+    ax_o = CDMS2createAxis(MV2array(list(range(2))), id="lowhigh")
+    ax_o.short_name = str((100 - lsig_level) / 2.) + "_and_" + str() + "_precentiles"
+    ax_o.long_name = str((100 - lsig_level) / 2.) + " and " + str() + " Precentiles of the Bootstrap"
+    range_bst = CDMS2createVariable(range_bst, axes=[ax_o] + larray1.getAxisList(), grid=larray1.getGrid(),
+                                    mask=mask_nd, id="range")
+    return significance, range_bst
 
 
 def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True):
