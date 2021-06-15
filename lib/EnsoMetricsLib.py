@@ -32394,10 +32394,10 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 "shape3": "(obs EN) " + str(en_pr_sig_r_obs.shape), "shape4": "(obs LN) " + str(ln_pr_sig_r_obs.shape)}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
         # 4.3 Significance: observed anomalies within modeled range?
-        en_pr_sig_a, en_pr_sig_v = \
-            telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=range_bst)
-        ln_pr_sig_a, ln_pr_sig_v = \
-            telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=range_bst)
+        en_pr_sig_a, en_pr_sig_v = telecon_significance(
+            en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=range_bst)
+        ln_pr_sig_a, ln_pr_sig_v = telecon_significance(
+            ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=range_bst)
         method_pr += ", compute the " + str(range_bst) + " range of the modeled composite (Monte Carlo resampling) " + \
                      "to know if observed anomalies fall within modeled range"
         if debug is True:
