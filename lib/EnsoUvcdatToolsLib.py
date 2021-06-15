@@ -4309,13 +4309,11 @@ def telecon_significance(larray1, larray2, lnech, lsig_level=90, lnum_samples=10
     significance = CDMS2createVariable(significance, axes=larray1.getAxisList(), grid=larray1.getGrid(),
                                        mask=larray1.mask, id="significance")
     range_bst = MV2array([low, high])
-    mask_nd = MV2zeros(range_bst.shape)
-    mask_nd[:] = larray1.mask
-    ax_o = CDMS2createAxis(MV2array(list(range(2))), id="lowhigh")
+    ax_o = CDMS2createAxis(list(range(2)), id="lowhigh")
     ax_o.short_name = str((100 - lsig_level) / 2.) + "_and_" + str() + "_precentiles"
     ax_o.long_name = str((100 - lsig_level) / 2.) + " and " + str() + " Precentiles of the Bootstrap"
     range_bst = CDMS2createVariable(range_bst, axes=[ax_o] + larray1.getAxisList(), grid=larray1.getGrid(),
-                                    mask=mask_nd, id="range")
+                                    id="range")
     return significance, range_bst
 
 

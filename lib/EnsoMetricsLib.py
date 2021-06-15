@@ -32552,7 +32552,7 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                     dict_nc["var" + str(nbr) + "_name"] = vn + str(dataset2)
                     nbr += 1
             if significance is True:
-                si1 = "significativity at the " + str(level) + "% confidence level of PRcr "
+                si1 = "significativity at the " + str(level) + "% confidence level of PRA "
                 si2 = "; 100000 random selections (with replacement) of "
                 si3 = " years of the time series are compared to the "
                 rav = "averaged in " + str(len(prbox)) + " regions "
@@ -32564,24 +32564,21 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                       enso_method3
                 ln2 = "La Nina composite"
                 my_ar = [ln_pr_sig_r_mod, ln_pr_sig_r_obs, en_pr_sig_r_mod, en_pr_sig_r_obs]
-                my_e1 = deepcopy(my_ev)
-                my_e2 = [ln1, en1, ln1, en1]
-                my_e3 = [ln2, en2, ln2, en2]
+                my_e1 = ["nina", "nina", "nino", "nino"]
+                my_e2 = [ln1, ln1, en1, en1]
+                my_e3 = [ln2, ln2, en2, en2]
                 my_ey = [ln_years_mod, ln_years_obs, en_years_mod, en_years_obs]
                 my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
-                my_re = [rav, rav, rav, rav]
                 my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
                 my_vn = [va + da for va in ovar[11:] for da in [dataset1, dataset2]]
-                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(
-                    my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn):
+                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn):
                     dict_nc["var" + str(nbr)] = ar
                     dict_nc["var" + str(nbr) + "_attributes"] = {
                         "units": "1 if region is significant", "number_of_years_used": ny, "time_period": str(tb),
-                        e1 + "_years": ey, "description": si1 + re + e2 + si2 + str(len(ey)) + si3 + e3}
+                        e1 + "_years": ey, "description": si1 + rav + e2 + si2 + str(len(ey)) + si3 + e3}
                     dict_nc["var" + str(nbr) + "_name"] = vn
                     nbr += 1
-                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn, rav, rma, si1, \
-                    si2, si3
+                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn, rav, rma, si1, si2, si3
             dict1 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
                      "description": "PRcr averaged in " + str(len(prbox)) + " regions during DJF time series"}
             dict2 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),
@@ -33076,10 +33073,10 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 "shape3": "(obs EN) " + str(en_pr_sig_r_obs.shape), "shape4": "(obs LN) " + str(ln_pr_sig_r_obs.shape)}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after telecon_significance", 15, **dict_debug)
         # 4.3 Significance: observed anomalies within modeled range?
-        en_pr_sig_a, en_pr_sig_v = \
-            telecon_significance(en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=range_bst)
-        ln_pr_sig_a, ln_pr_sig_v = \
-            telecon_significance(ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=range_bst)
+        en_pr_sig_a, en_pr_sig_v = telecon_significance(
+            en_pr_ave_obs, en_pr_mod, len(en_years_obs), lsig_level=range_bst)
+        ln_pr_sig_a, ln_pr_sig_v = telecon_significance(
+            ln_pr_ave_obs, ln_pr_mod, len(ln_years_obs), lsig_level=range_bst)
         method_pr += ", compute the " + str(range_bst) + " range of the modeled composite (Monte Carlo resampling) " + \
                      "to know if observed anomalies fall within modeled range"
         if debug is True:
@@ -33246,24 +33243,21 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                       enso_method3
                 ln2 = "La Nina composite"
                 my_ar = [ln_pr_sig_r_mod, ln_pr_sig_r_obs, en_pr_sig_r_mod, en_pr_sig_r_obs]
-                my_e1 = deepcopy(my_ev)
-                my_e2 = [ln1, en1, ln1, en1]
-                my_e3 = [ln2, en2, ln2, en2]
+                my_e1 = ["nina", "nina", "nino", "nino"]
+                my_e2 = [ln1, ln1, en1, en1]
+                my_e3 = [ln2, ln2, en2, en2]
                 my_ey = [ln_years_mod, ln_years_obs, en_years_mod, en_years_obs]
                 my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
-                my_re = [rav, rav, rav, rav]
                 my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
                 my_vn = [va + da for va in ovar[11:] for da in [dataset1, dataset2]]
-                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(
-                    my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn):
+                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn):
                     dict_nc["var" + str(nbr)] = ar
                     dict_nc["var" + str(nbr) + "_attributes"] = {
                         "units": "1 if region is significant", "number_of_years_used": ny, "time_period": str(tb),
-                        e1 + "_years": ey, "description": si1 + re + e2 + si2 + str(len(ey)) + si3 + e3}
+                        e1 + "_years": ey, "description": si1 + rav + e2 + si2 + str(len(ey)) + si3 + e3}
                     dict_nc["var" + str(nbr) + "_name"] = vn
                     nbr += 1
-                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_re, my_tb, my_vn, rav, rma, si1, \
-                    si2, si3
+                del en1, en2, ln1, ln2, my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn, rav, rma, si1, si2, si3
             dict1 = {"units": my_units, "number_of_years_used": nbr_year_mod, "time_period": str(actualtimebounds_mod),
                      "description": "PRA averaged in " + str(len(prbox)) + " regions during DJF time series"}
             dict2 = {"units": my_units, "number_of_years_used": nbr_year_obs, "time_period": str(actualtimebounds_obs),

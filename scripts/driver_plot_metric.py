@@ -27,7 +27,7 @@ metric_collection = "telecon_mix"
 project = "CMIP6"
 model = "CNRM-CM6-1"
 experiment = "historical"
-member = "r1i1p1f2"
+member = "r10i1p1f2"
 # computation version, 'v20200427' for models and 'v20201231' for obs are provided with the package
 version_mod = "v20200427"
 version_obs = "v20201231"

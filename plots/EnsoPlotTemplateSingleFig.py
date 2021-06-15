@@ -715,12 +715,12 @@ def plot_telecon_1mem(model, project, nc_file, dict_param, reference, figure_nam
     # ---------------------------------------------------#
     pkey = "02_plot"
     dict_nbr_ev = dict()
-    for v1, v3 in zip(dict_param[pkey]["varpattern"], dict_param["01_plot"]["varpattern"]):
+    for v1 in dict_param[pkey]["varpattern"]:
         for jj, (d1, d2) in enumerate(zip([dict_mod, dict_obs], [model, reference])):
-            if "nina" in v1 and "nina_years" in list(d1[v3]["attributes"].keys()):
-                nbr_ev = len(d1[v3]["attributes"]["nina_years"].split(", "))
-            elif "nino" in v1 and "nino_years" in list(d1[v3]["attributes"].keys()):
-                nbr_ev = len(d1[v3]["attributes"]["nino_years"].split(", "))
+            if "nina" in v1 and "nina_years" in list(d1[v1]["attributes"].keys()):
+                nbr_ev = len(d1[v1]["attributes"]["nina_years"].split(", "))
+            elif "nino" in v1 and "nino_years" in list(d1[v1]["attributes"].keys()):
+                nbr_ev = len(d1[v1]["attributes"]["nino_years"].split(", "))
             else:
                 nbr_ev = None
             if v1 in list(dict_nbr_ev.keys()):
@@ -728,36 +728,24 @@ def plot_telecon_1mem(model, project, nc_file, dict_param, reference, figure_nam
             else:
                 dict_nbr_ev[v1] = {d2: nbr_ev}
             del nbr_ev
-    dict_range = dict()
-    for v1, v2 in zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"]):
-        low, hig = significance_range(dict_mod[v1]["array"], dict_nbr_ev[v1][reference], lsig_level=100)
-        low = my_mask(low, dict_obs_extra[v2]["array"]).compressed()
-        hig = my_mask(hig, dict_obs_extra[v2]["array"]).compressed()
-        dict_range[v1] = [low, hig]
-        del hig, low
     if isinstance(dict_mod_extra, dict) is True and isinstance(dict_obs_extra, dict) is True and \
-            "varpattern_extra" in list(dict_param[pkey].keys()) and \
-            dict_param[pkey]["varpattern_extra"][0] in dict_mod_extra.keys() and \
-            dict_param[pkey]["varpattern_extra"][0] in dict_obs_extra.keys() and \
-            dict_param[pkey]["varpattern_extra"][1] in dict_mod_extra.keys() and \
-            dict_param[pkey]["varpattern_extra"][1] in dict_obs_extra.keys():
+            "varpattern_extra" in list(dict_param[pkey].keys()):
         tmp1 = [
-            minimaxi(my_mask(NUMPYmean(dict_obs[v1]["array"], axis=0), dict_obs_extra[v2]["array"]))
-            for v1, v2 in zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"])]
-        tmp2 = [minimaxi(dict_range[v1]) for v1 in dict_param[pkey]["varpattern"]]
+            minimaxi(my_mask(dict_obs[v1]["array"], dict_obs_extra[v2]["array"]))
+            for v1, v2 in zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"][-2:])]
+        tmp2 = [minimaxi([my_mask(dict_mod_extra[v1]["array"][0], dict_obs_extra[v2]["array"]),
+                          my_mask(dict_mod_extra[v1]["array"][1], dict_obs_extra[v2]["array"])])
+                for v1, v2 in zip(dict_param[pkey]["varpattern_extra"][:2], dict_param[pkey]["varpattern_extra"][-2:])]
         list_reg1 = [reg for ii, reg in enumerate(list_regions)
-                     if dict_obs_extra[dict_param[pkey]["varpattern_extra"][0]]["array"][ii] == 1]
-        list_reg2 = [reg for ii, reg in enumerate(list_regions)
-                     if dict_obs_extra[dict_param[pkey]["varpattern_extra"][1]]["array"][ii] == 1]
-        list_reg1 = [reg for reg in list_regions if reg in list_reg1 + list_reg2]
+                     if dict_obs_extra[dict_param[pkey]["varpattern_extra"][-2]]["array"][ii] == 1] + \
+                    [reg for ii, reg in enumerate(list_regions)
+                     if dict_obs_extra[dict_param[pkey]["varpattern_extra"][-1]]["array"][ii] == 1]
+        list_reg1 = [reg for reg in list_regions if reg in list_reg1]
     else:
-        tmp1 = [minimaxi(NUMPYmean(dict_obs[v1]["array"], axis=0)) for v1 in dict_param[pkey]["varpattern"]]
-        tmp2 = [
-            minimaxi(significance_range(dict_mod[v1]["array"], dict_nbr_ev[v1][reference], lsig_level=100))
-            for v1 in dict_param[pkey]["varpattern"]]
+        tmp1 = [minimaxi(dict_obs[v1]["array"]) for v1 in dict_param[pkey]["varpattern"]]
+        tmp2 = [minimaxi(dict_mod[v1]["array"]) for v1 in dict_param[pkey]["varpattern_extra"][:2]]
         list_reg1 = [reg for reg in list_regions]
-    list_reg2 = [ii for ii, reg in enumerate(list_regions) if reg in list_reg1]
-    sizex, sizey = len(list_reg2) if len(list_reg2) < nbrx else len(list_reg2) / 2, 5
+    sizex, sizey = len(list_reg1) if len(list_reg1) < nbrx else len(list_reg1) / 2, 5
     deltx, delty = 1, 1
     mini, maxi = minimaxi([tmp1, tmp2])
     maxi = max([abs(mini), maxi])
@@ -783,7 +771,9 @@ def plot_telecon_1mem(model, project, nc_file, dict_param, reference, figure_nam
                 y_label.append("{0:.2f}".format(round(ii, 2)))
             else:
                 y_label.append("{0:.1f}".format(round(ii, 1)))
-    for ii, (v1, v2) in enumerate(zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"])):
+    for ii, (v1, v2, v3, v4) in enumerate(
+            zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"][:2],
+                dict_param[pkey]["varpattern_extra"][2: 4], dict_param[pkey]["varpattern_extra"][4:])):
         # ax
         ax = plt.subplot(gs[y_pos: y_pos + sizey, 0: sizex])
         # x-y axes
@@ -810,41 +800,37 @@ def plot_telecon_1mem(model, project, nc_file, dict_param, reference, figure_nam
                 va="center")
         for jj, (d1, d2) in enumerate(zip([dict_mod, dict_obs], [model, reference])):
             # array and lat-lon
-            tab = NUMPYarray([list(d1[v1]["array"][:, kk]) for kk in range(len(list_regions)) if kk in list_reg2])
-            # markers
-            inds = [round(kk, 2) for kk in NUMPYarange(-0.25 + jj * 0.5, len(list_reg2) - 1 + jj * 0.5, 1)]
+            print(v1, v2, v3, v4)
+            tab1 = d1[v1]["array"]
+            tab4 = dict_obs_extra[v4]["array"]
+            # markers and range
+            inds = [reg for kk, reg in enumerate(list_regions) if tab4[kk] == 1]
             color = dict_col[project.upper()] if jj == 0 else dict_col["REF"]
-            mean = NUMPYmean(tab, axis=1)
-            for i1, i2, i3 in zip(inds, mean, list_reg2):
-                if dict_obs_extra[v2]["array"][i3] == 1:
-                    ax.plot([i1], [i2], markersize=4, color=color, marker="D", fillstyle="full",
-                            markeredgecolor=color, markeredgewidth=1, zorder=3)
-            # model range
+            nbr = 0
             if d2 == model:
-                low, hig = dict_range[v1]
-                nbr = 0
-                for i1, i4 in zip(inds, list_reg2):
-                    if dict_obs_extra[v2]["array"][i4] == 1:
-                        i2, i3 = low[nbr], hig[nbr]
-                        ax.plot([i1, i1], [i2, i3], color=color, lw=1, ls="-", zorder=3)
-                        ax.plot([i1 - 0.8 * dx, i1 + 0.8 * dx], [i2, i2], color=color, lw=1, ls="-", zorder=3)
-                        ax.plot([i1 - 0.8 * dx, i1 + 0.8 * dx], [i3, i3], color=color, lw=1, ls="-", zorder=3)
-                        nbr += 1
-                        del i4
-                # good?
-                tab_o = NUMPYarray([list(dict_obs[v1]["array"][:, kk])
-                                    for kk in range(len(list_regions)) if kk in list_reg2])
-                tab_o = NUMPYmean(tab_o, axis=1)
-                nbr = 0
-                for i1, i4, i5 in zip(inds, tab_o, list_reg2):
-                    if dict_obs_extra[v2]["array"][i5] == 1:
-                        i2, i3 = low[nbr], hig[nbr]
-                        if i2 <= i4 <= i3:
-                            ax.vlines(i1 + 0.25, y1, y2, color="springgreen", linestyle="-", lw=5, zorder=1)
+                tab2 = dict_mod_extra[v2]["array"].reorder("10")
+                tab3 = dict_obs_extra[v3]["array"]
+                for kk, (i1, i4, i2, i3) in enumerate(zip(tab1, tab4, tab2, tab3)):
+                    if i4 == 1:
+                        i5 = list_reg1.index(inds[nbr])
+                        if i3 == 0:
+                            ax.plot([i5], [i1], markersize=6, color=color, marker="D", fillstyle="full",
+                                    markeredgecolor=color, markeredgewidth=2, zorder=3)
                         else:
-                            ax.vlines(i1 + 0.25, y1, y2, color="lightcoral", linestyle="-", lw=5, zorder=1)
+                            ax.plot([i5], [i1], markersize=6, color="white", marker="D", fillstyle="full",
+                                    markeredgecolor=color, markeredgewidth=2, zorder=3)
+                        ax.plot([i5, i5], [min(i2), max(i2)], color=color, lw=1, ls="-", zorder=2)
+                        ax.plot([i5 - 0.3, i5 + 0.3], [min(i2), min(i2)], color=color, lw=1, ls="-", zorder=5)
+                        ax.plot([i5 - 0.3, i5 + 0.3], [max(i2), max(i2)], color=color, lw=1, ls="-", zorder=5)
                         nbr += 1
-                del hig, low, tab_o
+                del tab2, tab3
+            else:
+                for kk, (i1, i4) in enumerate(zip(tab1, tab4)):
+                    if i4 == 1:
+                        i5 = list_reg1.index(inds[nbr])
+                        ax.plot([i5 - 0.4, i5 + 0.4], [i1, i1], color=color, lw=2, ls="-", zorder=4)
+                        nbr += 1
+            del color, inds, nbr, tab1, tab4
         x11 = ax.get_position().x0
         x22 = ax.get_position().x1
         y11 = ax.get_position().y0
@@ -858,30 +844,25 @@ def plot_telecon_1mem(model, project, nc_file, dict_param, reference, figure_nam
             y1_fig = ax.get_position().y0
             for kk, reg in enumerate(list_reg1):
                 ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, ha="right", va="top", rotation=45)
+        if ii == 0:
+            y2_fig = ax.get_position().y1
+        else:
+            x1_fig = ax.get_position().x0
+            x2_fig = ax.get_position().x1
+            y1_fig = ax.get_position().y0
         y_pos += sizey + delty
     # zname
     txt = dict_param[pkey]["zname"] + "\n(" + str(d1[vv]["attributes"]["units"]) + ")"
     ax.text(x2_fig + (x2_fig - x1_fig) / 15., y1_fig + (y2_fig - y1_fig) / 2., txt, fontsize=fontsize, color="k",
             ha="center", va="center", rotation=90, transform=fig.transFigure)
     # method and note
-    if ' ':
-        list_sig = list()
-        for v1, v2 in zip(dict_param[pkey]["varpattern"], dict_param[pkey]["varpattern_extra"]):
-            sig = my_sig(dict_range[v1], dict_obs[v1]["array"], dict_obs_extra[v2]["array"])
-            list_sig += list(sig)
-            del sig
-        my_val = create_round_string(sum(list_sig) * 100. / len(list_sig))
     lines = list()
     txt = dict_param[pkey]["method"].replace("MET_MET", str(att_glo["metric_method"]))
-    # txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
-    txt = txt.replace("MET_VAL", str(my_val)).replace("MET_UNI", str(metric_units))
-    txt = txt.replace("Monte Carlo resampling 90% confidence level", "full range of Monte Carlo resampling")
+    txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
     lines = create_lines(txt, line_o=lines, threshold=90)
     lines += [""]
     txt = dict_param[pkey]["note"].replace("MET_MET", str(att_glo["metric_method"]))
-    # txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
-    txt = txt.replace("MET_VAL", str(my_val)).replace("MET_UNI", str(metric_units))
-    txt = txt.replace("Monte Carlo resampling 90% confidence level", "full range of Monte Carlo resampling")
+    txt = txt.replace("MET_VAL", str(met_val)).replace("MET_UNI", str(metric_units))
     lines = create_lines(txt, line_o=lines, threshold=90)
     txt = ""
     for ii, elt in enumerate(lines):
