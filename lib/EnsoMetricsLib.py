@@ -32571,7 +32571,7 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
                 my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
                 my_vn = [va + da for va in ovar[11:] for da in [dataset1, dataset2]]
-                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn):
+                for ar, e1, e2, e3, ey, ny, tb, vn in zip(my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn):
                     dict_nc["var" + str(nbr)] = ar
                     dict_nc["var" + str(nbr) + "_attributes"] = {
                         "units": "1 if region is significant", "number_of_years_used": ny, "time_period": str(tb),
@@ -33250,7 +33250,7 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                 my_ny = [nbr_year_mod, nbr_year_obs, nbr_year_mod, nbr_year_obs]
                 my_tb = [actualtimebounds_mod, actualtimebounds_obs, actualtimebounds_mod, actualtimebounds_obs]
                 my_vn = [va + da for va in ovar[11:] for da in [dataset1, dataset2]]
-                for ar, e1, e2, e3, ey, ny, re, tb, vn in zip(my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn):
+                for ar, e1, e2, e3, ey, ny, tb, vn in zip(my_ar, my_e1, my_e2, my_e3, my_ey, my_ny, my_tb, my_vn):
                     dict_nc["var" + str(nbr)] = ar
                     dict_nc["var" + str(nbr) + "_attributes"] = {
                         "units": "1 if region is significant", "number_of_years_used": ny, "time_period": str(tb),
