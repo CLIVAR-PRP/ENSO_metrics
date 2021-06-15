@@ -32337,13 +32337,13 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         # ------------------------------------------------
         # 4.1 Select events, composite
         en_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=en_years_mod)
-        en_pr_ave_mod, keyerror_mod1 = AverageAxis(en_pr_mod)
+        en_pr_ave_mod, keyerror_mod1 = AverageAxis(en_pr_mod, weights="unweighted")
         ln_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=ln_years_mod)
-        ln_pr_ave_mod, keyerror_mod2 = AverageAxis(ln_pr_mod)
+        ln_pr_ave_mod, keyerror_mod2 = AverageAxis(ln_pr_mod, weights="unweighted")
         en_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=en_years_obs)
-        en_pr_ave_obs, keyerror_obs1 = AverageAxis(en_pr_obs)
+        en_pr_ave_obs, keyerror_obs1 = AverageAxis(en_pr_obs, weights="unweighted")
         ln_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=ln_years_obs)
-        ln_pr_ave_obs, keyerror_obs2 = AverageAxis(ln_pr_obs)
+        ln_pr_ave_obs, keyerror_obs2 = AverageAxis(ln_pr_obs, weights="unweighted")
         keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
         if keyerror is not None:
             break
@@ -33016,13 +33016,13 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         # ------------------------------------------------
         # 4.1 Select events, composite
         en_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=en_years_mod)
-        en_pr_ave_mod, keyerror_mod1 = AverageAxis(en_pr_mod)
+        en_pr_ave_mod, keyerror_mod1 = AverageAxis(en_pr_mod, weights="unweighted")
         ln_pr_mod = Event_selection(pr_mod, kwargs["frequency"], list_event_years=ln_years_mod)
-        ln_pr_ave_mod, keyerror_mod2 = AverageAxis(ln_pr_mod)
+        ln_pr_ave_mod, keyerror_mod2 = AverageAxis(ln_pr_mod, weights="unweighted")
         en_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=en_years_obs)
-        en_pr_ave_obs, keyerror_obs1 = AverageAxis(en_pr_obs)
+        en_pr_ave_obs, keyerror_obs1 = AverageAxis(en_pr_obs, weights="unweighted")
         ln_pr_obs = Event_selection(pr_obs, kwargs["frequency"], list_event_years=ln_years_obs)
-        ln_pr_ave_obs, keyerror_obs2 = AverageAxis(ln_pr_obs)
+        ln_pr_ave_obs, keyerror_obs2 = AverageAxis(ln_pr_obs, weights="unweighted")
         keyerror = add_up_errors([keyerror_mod1, keyerror_mod2, keyerror_obs1, keyerror_obs2])
         if keyerror is not None:
             break

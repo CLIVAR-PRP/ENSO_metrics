@@ -104,7 +104,7 @@ def ArrayZeros(tab, mid="new_variable_zeros"):
     return CDMS2createVariable(MV2zeros(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=mid)
 
 
-def AverageAxis(tab, axis="0", **kwargs):
+def AverageAxis(tab, axis="0", weights="weighted", **kwargs):
     """
     #################################################################################
     Description:
@@ -117,7 +117,7 @@ def AverageAxis(tab, axis="0", **kwargs):
     """
     keyerror = None
     try:
-        averaged_tab = cdutil.averager(tab, axis=axis, weights="weighted", action="average")
+        averaged_tab = cdutil.averager(tab, axis=axis, weights=weights, action="average")
     except:
         keyerror = "cannot perform average " + str(axis)
         averaged_tab = None
