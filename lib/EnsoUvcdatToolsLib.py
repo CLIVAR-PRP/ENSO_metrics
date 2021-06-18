@@ -8,6 +8,7 @@ from matplotlib.path import Path as MATPLOTLIBpath
 import ntpath
 from numpy import arange as NParange
 from numpy import array as NParray
+from numpy import bool_ as NPbool_
 from numpy import exp as NPexp
 from numpy import histogram as NPhistogram
 from numpy import isnan as NPisnan
@@ -4302,18 +4303,34 @@ def telecon_significance(larray1, larray2, lnech, lsig_level=90, lnum_samples=10
     vlow = MV2where(larray1 < low, 1, vlow)
     vhigh = MV2zeros(high.shape)
     vhigh = MV2where(larray1 > high, 1, vhigh)
+    # get first event for its mask (in case it is not the same as the composite's)
+    larray3 = larray2[0]
     # if both low and high are < 0 or low and high are > 0 it means that the teleconnection is significant in the
     # region
     significance = MV2zeros(low.shape)
     significance = MV2where(vlow + vhigh > 0, 1, significance)
+    if type(larray3.mask) != NPbool_:
+        significance = MV2where(larray3.mask, 0, significance)
+    # make an array with both low and high
+    range_bst = MV2array([low, high])
+    # create variable
     significance = CDMS2createVariable(significance, axes=larray1.getAxisList(), grid=larray1.getGrid(),
                                        mask=larray1.mask, id="significance")
-    range_bst = MV2array([low, high])
     ax_o = CDMS2createAxis(list(range(2)), id="lowhigh")
     ax_o.short_name = str((100 - lsig_level) / 2.) + "_and_" + str() + "_precentiles"
     ax_o.long_name = str((100 - lsig_level) / 2.) + " and " + str() + " Precentiles of the Bootstrap"
-    range_bst = CDMS2createVariable(range_bst, axes=[ax_o] + larray1.getAxisList(), grid=larray1.getGrid(),
-                                    id="range")
+    axes = [ax_o] + larray1.getAxisList()[1:]
+    if type(larray1.mask) == NPbool_ and type(larray3.mask) == NPbool_:
+        range_bst = CDMS2createVariable(range_bst, axes=axes, grid=larray1.getGrid(), id="range")
+    else:
+        lmask = MV2zeros(range_bst.shape)
+        if type(larray1.mask) != NPbool_:
+            lmask[:] += larray1.mask.astype("f")
+        if type(larray3.mask) != NPbool_:
+            lmask[:] += larray3.mask.astype("f")
+        lmask = MV2where(lmask > 0, True, False)
+        range_bst = CDMS2createVariable(range_bst, axes=axes, grid=larray1.getGrid(), mask=lmask, id="range")
+        del lmask
     return significance, range_bst
 
 

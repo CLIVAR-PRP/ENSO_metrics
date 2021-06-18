@@ -11,12 +11,18 @@
 from copy import deepcopy
 from inspect import stack as INSPECTstack
 from numpy import array as NUMPYarray
+from numpy import bool_ as NUMPYbool_
 from numpy import mean as NUMPYmean
 from numpy.random import randint as NUMPYrandom__randint
 # CDAT
+from cdms2 import createAxis as CDMS2createAxis
+from cdms2 import createVariable as CDMS2createVariable
 from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
 from genutil.statistics import percentiles as GENUTILstatistics__percentiles
+from MV2 import array as MV2array
+from MV2 import average as MV2average
+from MV2 import concatenate as MV2concatenate
 from MV2 import masked_where as MV2masked_where
 from MV2 import max as MV2max
 from MV2 import min as MV2min
@@ -48,6 +54,141 @@ class bcolors:
 # ---------------------------------------------------------------------------------------------------------------------#
 # Functions
 # ---------------------------------------------------------------------------------------------------------------------#
+def member_average(ldict_members, lvariable):
+    """
+    #################################################################################
+    Description:
+    Compute the average across ensemble members
+    #################################################################################
+
+    :param ldict_members: dictionary
+        dictionary of ensemble members
+        level 1: member names
+        level 2: variable names
+        level 3: 'array' or 'attributes'
+        level 4: masked_array arr[region, x, y, z]
+    :param lvariable: string
+        name of the variable name to read (level 2 of the dictionary)
+
+    :return: masked_array
+        ensemble members average
+    """
+    lmem = sorted(list(ldict_members.keys()), key=lambda v: v.upper())
+    list1 = MV2average(MV2array([ldict_members[mem][lvariable]["array"] for mem in lmem]), axis=0)
+    ltab = ldict_members[lmem[0]][lvariable]["array"]
+    list1 = CDMS2createVariable(list1, axes=ltab.getAxisList(), grid=ltab.getGrid(), mask=ltab.mask, id=ltab.id)
+    return list1
+
+
+def member_range(ldict_members, lvariable, lsample_size, lsig_level=90, lnum_samples=1000000, lmin_samples=100,
+                 lmax_samples=10000, larray_mask=None):
+    """
+    #################################################################################
+    Description:
+    Generate 'lnum_samples' random composites, with the sample size corresponding to 'lsample_size' to find the
+    'lsig_level'% interval. The minimum and maximum values of this interval is returned (i.e., the range)
+    #################################################################################
+
+    :param ldict_members:
+        dictionary of ensemble members
+        level 1: member names
+        level 2: variable names
+        level 3: 'array' or 'attributes'
+        level 4: masked_array arr[events, region, x, y, z]
+    :param lvariable: string
+        name of the variable name to read (level 2 of the dictionary)
+    :param lsample_size: integer
+        number of events to select to create each composite
+    :param lsig_level: integer, optional
+        confidence level of the significance test (90 is 90% confidence level, the 5% and 95% percentiles are detected)
+        default value is 90
+    :param lnum_samples: integer, optional
+        number of random selections (with replacement) of the given sample to use for the significance test
+        default value is 100,000
+    :param lmin_samples: integer, optional
+        minimum number of composites created when a member is selected
+        default value is 100
+    :param lmax_samples: integer, optional
+        maximum number of composites created when a member is selected
+        default value is 10,000
+    :param larray_mask: masked_array
+        masked_array in which 0 means the values will be masked
+        Default is None (data will not be masked )
+
+    :return: masked_array
+        masked_array of the shape arr[range, region, x, y, z], the first dimension is the minimum and maximum values of
+        given confidence interval of the Monte Carlo resampling
+    """
+    if lmin_samples > lnum_samples / 100.:
+        lmin_samples = int(round(lnum_samples / 100., 0))
+    if lmax_samples > lnum_samples / 10.:
+        lmax_samples = int(round(lnum_samples / 10., 0))
+    s1 = (100 - lsig_level) / 2.
+    s2 = lsig_level + s1
+    # list the member names
+    lmem = sorted(list(ldict_members.keys()), key=lambda v: v.upper())
+    lnbr_mem = len(lmem)
+    # Monte Carlo resampling
+    larray_o = 1
+    lnbr_samples_done = 0
+    while lnbr_samples_done < lnum_samples:
+        # first, randomly select a member
+        smem = lmem[NUMPYrandom__randint(0, lnbr_mem)]
+        # second, randomly select a number of composites that will be created
+        lnbr_left_to_do = lnum_samples - lnbr_samples_done
+        if lnbr_left_to_do < lmax_samples:
+            if lnbr_left_to_do < min(lmin_samples * 10., lmax_samples / 10.) or lnbr_left_to_do <= lmin_samples:
+                snum = deepcopy(lnbr_left_to_do)
+            else:
+                snum = NUMPYrandom__randint(lmin_samples, lnbr_left_to_do)
+        else:
+            snum = NUMPYrandom__randint(lmin_samples, lmax_samples)
+        # random selection among events
+        larray = ldict_members[smem][lvariable]["array"]
+        idx = NUMPYrandom__randint(0, len(larray), (snum, lsample_size))
+        samples = NUMPYarray(larray)[idx]
+        # average randomly selected years (create lnum composites)
+        stat = NUMPYmean(samples, axis=1)
+        # concatenate array
+        if lnbr_samples_done == 0:
+            larray_o = deepcopy(stat)
+        else:
+            larray_o = MV2concatenate((larray_o, stat))
+        # increment the number of composite created
+        lnbr_samples_done += snum
+        # delete
+        del idx, larray, lnbr_left_to_do, samples, smem, snum, stat
+    # compute lower and higher threshold of the given significance level
+    if lsig_level == 100:
+        low = MV2min(larray_o, axis=0)
+        high = MV2max(larray_o, axis=0)
+    else:
+        low = GENUTILstatistics__percentiles(larray_o, percentiles=[s1], axis=0)[0]
+        high = GENUTILstatistics__percentiles(larray_o, percentiles=[s2], axis=0)[0]
+    # create array
+    larray_o = MV2array([low, high])
+    ax_o = CDMS2createAxis(list(range(2)), id="lowhigh")
+    ax_o.short_name = str(s1) + "_and_" + str(s2) + "_precentiles"
+    ax_o.long_name = str(s1) + " and " + str(s2) + " Precentiles of the Bootstrap"
+    # create variable
+    larray = ldict_members[lmem[0]][lvariable]["array"]
+    axes = [ax_o] + larray.getAxisList()[1:]
+    if type(larray.mask) == NUMPYbool_:
+        larray_o = CDMS2createVariable(larray_o, axes=axes, grid=larray.getGrid(), id="range")
+    else:
+        lmask = MV2zeros(larray_o.shape)
+        lmask[:] = larray[0].mask
+        larray_o = CDMS2createVariable(larray_o, axes=axes, grid=larray.getGrid(), mask=lmask, id="range")
+        del lmask
+    # mask with given mask if
+    if larray_mask is not None:
+        lmask = MV2zeros(larray_o.shape)
+        lmask[:] = larray_mask
+        larray_o = my_mask(larray_o, lmask)
+        del lmask
+    return larray_o
+
+
 def minimaxi(array, mini=1e20, maxi=-1e20):
     """
     #################################################################################
@@ -276,33 +417,39 @@ def read_data(netcdf_file, netcdf_var, mod_name, ref_name, dict_diagnostic, dict
         dia_mod = dict_diagnostic[var_name1]
     else:
         dia_mod = dict_diagnostic[var_name2]
-    var_name1 = deepcopy(ref_name)
-    var_name2 = str(var_name1) + "_" + str(ref_name)
-    if var_name1 not in list_keys and var_name2 not in list_keys:
+    var_name3 = deepcopy(ref_name)
+    var_name4 = str(var_name3) + "_" + str(ref_name)
+    if var_name3 not in list_keys and var_name4 not in list_keys:
         dia_ref = None
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
             ": cannot find diagnostic for given reference",
-            str().ljust(5) + "cannot find " + str(var_name1) + " or " + str(var_name2) + " in given dictionary",
+            str().ljust(5) + "cannot find " + str(var_name3) + " or " + str(var_name4) + " in given dictionary",
             str().ljust(5) + "dictionary keys: " + str(list_keys)]
         EnsoErrorsWarnings.my_error(list_strings)
-    elif var_name1 in list_keys:
-        dia_ref = dict_diagnostic[var_name1]
+    elif var_name3 in list_keys:
+        dia_ref = dict_diagnostic[var_name3]
     else:
-        dia_ref = dict_diagnostic[var_name2]
+        dia_ref = dict_diagnostic[var_name4]
     # read metric value
     list_keys = sorted(list(dict_metric.keys()), key=lambda v: v.upper())
-    if var_name1 not in list_keys and var_name2 not in list_keys:
+    if var_name1 not in list_keys and var_name2 not in list_keys and var_name3 not in list_keys and \
+            var_name4 not in list_keys:
         met_val = None
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": cannot find metric for given reference",
-            str().ljust(5) + "cannot find " + str(var_name1) + " or " + str(var_name2) + " in given dictionary",
+            str().ljust(5) + "cannot find " + str(var_name1) + " or " + str(var_name2) + " or " + str(var_name3) +
+            " or " + str(var_name4) + " in given dictionary",
             str().ljust(5) + "dictionary keys: " + str(list_keys)]
         EnsoErrorsWarnings.my_error(list_strings)
     elif var_name1 in list_keys:
         met_val = dict_metric[var_name1]
-    else:
+    elif var_name2 in list_keys:
         met_val = dict_metric[var_name2]
+    elif var_name3 in list_keys:
+        met_val = dict_metric[var_name3]
+    else:
+        met_val = dict_metric[var_name4]
     return dict_mod, dict_ref, dia_mod, dia_ref, met_val, att_glo, dict_mod_extra, dict_ref_extra
 
 

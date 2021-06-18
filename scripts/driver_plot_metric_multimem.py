@@ -16,7 +16,8 @@ from glob import iglob as GLOBiglob
 import json
 from os.path import join as OSpath__join
 # ENSO_metrics functions
-from EnsoPlots.EnsoMetricPlot import plotter_1mod_1obs
+from EnsoPlots.EnsoMetricPlot import plotter_multimem_1obs
+
 # ---------------------------------------------------#
 
 
@@ -25,9 +26,8 @@ from EnsoPlots.EnsoMetricPlot import plotter_1mod_1obs
 # ---------------------------------------------------#
 metric_collection = "telecon_mix"
 project = "CMIP6"
-model = "CNRM-CM6-1"
+model = "MIROC6"  # "CNRM-CM6-1"  # "NorCPM1"  #
 experiment = "historical"
-member = "r10i1p1f2"
 # computation version, 'v20200427' for models and 'v20201231' for obs are provided with the package
 version_mod = "v20200427"
 version_obs = "v20201231"
@@ -44,23 +44,21 @@ dict_json = {
     "obs2obs": {
         "ENSO_perf": "share/EnsoMetrics/obs2obs_historical_ENSO_perf_" + version_obs + "_allObservations.json",
         "ENSO_proc": "share/EnsoMetrics/obs2obs_historical_ENSO_proc_" + version_obs + "_allObservations.json",
-        "ENSO_tel":  "share/EnsoMetrics/obs2obs_historical_ENSO_tel_" + version_obs + "_allObservations.json"}}
+        "ENSO_tel": "share/EnsoMetrics/obs2obs_historical_ENSO_tel_" + version_obs + "_allObservations.json"}}
 # path
 # path = "/Users/yannplanton/Documents/Yann/Fac/2016_2018_postdoc_LOCEAN/data/v20210105_metrics_macbook"
 path_j = "/Users/yannplanton/Documents/Yann/Fac/2019_2021_postdoc_NOAA/2021_06_11_teleconnections/Data"
 path_n = "/Users/yannplanton/Documents/Yann/Fac/2019_2021_postdoc_NOAA/2021_06_11_teleconnections/Data/" + \
-         str(project).lower() + "/historical/" + str(metric_collection)
+    str(project).lower() + "/historical/" + str(metric_collection)
 path_p = "/Users/yannplanton/Documents/Yann/Fac/2019_2021_postdoc_NOAA/2021_06_11_teleconnections/Plots"
 # figure pattern
 figure_pattern = str(project.lower()) + "_" + str(experiment) + "_" + str(metric_collection) + "_METRIC_" + \
-                 str(model) + "_" + str(member)
+    str(model) + "_NBR_MEM"
 # json pattern
-# json_pattern = "yplanton_" + str(metric_collection) + "_" + str(model) + "_vs_OBSERVATION_METRIC.json"
 json_pattern = str(metric_collection) + "_v20210611_allModels_allRuns.json"
 # netcdf pattern
-# netcdf_pattern = "yplanton_" + str(metric_collection) + "_" + str(model) + "_vs_OBSERVATION_METRIC.nc"
-netcdf_pattern = str(metric_collection) + "_" + str(project) + "_" + str(model) + "_" + str(experiment) + "_" + \
-                 str(member) + "_METRIC.nc"
+netcdf_pattern = str(metric_collection) + "_" + str(project) + "_" + str(model) + "_" + str(experiment) + "_MEM" + \
+    "_METRIC.nc"
 # list metrics
 list_metrics = ["telecon_pr_ano_djf", "telecon_pr_amp_djf"]
 # list observations
@@ -76,28 +74,34 @@ for met in list_metrics:
         # observation name without dots
         obs2 = obs.replace(".", "")
         # get json file
-        json_file = json_pattern.replace("OBSERVATION", obs2).replace("METRIC", met)
-        json_file = list(GLOBiglob(OSpath__join(path_j, json_file)))[0]
+        json_file = list(GLOBiglob(OSpath__join(path_j, json_pattern)))[0]
         with open(json_file) as ff:
-            data_json = json.load(ff)["RESULTS"]["model"][model][member]
+            data_json = json.load(ff)["RESULTS"]["model"][model]
         ff.close()
-        # get NetCDF file
-        netcdf_file = netcdf_pattern.replace("OBSERVATION", obs2).replace("METRIC", met)
-        netcdf_file = list(GLOBiglob(OSpath__join(path_n, netcdf_file)))[0]
+        # list members
+        list_members = sorted(list(data_json.keys()), key=lambda v: v.upper())
+        # get NetCDF files
+        netcdf_file = OSpath__join(path_n, netcdf_pattern.replace("METRIC", met))
+        netcdf_file = dict(
+            (str(model) + "_" + str(k1), list(GLOBiglob(netcdf_file.replace("MEM", k1)))[0]) for k1 in list_members)
         # get diagnostic values for the given model and observations
-        dict_dia = data_json["value"][met]["diagnostic"]
-        diagnostic_values = dict((key1, dict_dia[key1]["value"]) for key1 in list(dict_dia.keys()))
-        diagnostic_units = data_json["metadata"][met]["diagnostic"]["units"]
+        diagnostic_values = dict(
+            (k2, data_json[k1]["value"][met]["diagnostic"][k2]["value"])
+            for k1 in list_members for k2 in list(data_json[k1]["value"][met]["diagnostic"].keys())
+            if k2 == model or k2 == str(model) + "_" + str(k1))
+        diagnostic_values[obs] = data_json[list_members[0]]["value"][met]["diagnostic"][obs]["value"]
+        diagnostic_units = data_json[list_members[0]]["metadata"][met]["diagnostic"]["units"]
         # get metric values computed with the given model and observations
-        dict_met = data_json["value"][met]["metric"]
-        metric_values = dict((key1, dict_met[key1]["value"]) for key1 in list(dict_met.keys()))
-        metric_units = data_json["metadata"][met]["metric"]["units"]
+        metric_values = dict(
+            (str(model) + "_" + str(k1), data_json[k1]["value"][met]["metric"][obs]["value"]) for k1 in list_members)
+        metric_units = data_json[list_members[0]]["metadata"][met]["metric"]["units"]
         # figure name
-        name_png = OSpath__join(path_p, figure_pattern.replace("METRIC", met) + "_" + str(obs2))
+        name_png = OSpath__join(path_p, figure_pattern.replace("METRIC", met))
+        name_png = name_png.replace("NBR_MEM", str(len(list_members)) + "mem") + "_" + str(obs2)
         # plot
-        plotter_1mod_1obs(
+        plotter_multimem_1obs(
             metric_collection, met, project, model, experiment, netcdf_file, diagnostic_values, diagnostic_units,
-            metric_values, metric_units, name_png, reference=obs, member=member)
+            metric_values, metric_units, name_png, reference=obs, member=list_members)
         # delete
-        del diagnostic_units, diagnostic_values, dict_dia, dict_met, ff, json_file, metric_values, metric_units, \
-            name_png, netcdf_file, obs2
+        del diagnostic_units, diagnostic_values, ff, json_file, list_members, metric_values, metric_units, name_png, \
+            netcdf_file, obs2
