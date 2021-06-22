@@ -460,7 +460,8 @@ def BiasLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhfla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            lhf_mod, lhf_obs, method = TwoVarRegrid(lhf_mod, lhf_obs, method, region=box, **kwargs["regridding"])
+            lhf_mod, lhf_obs, method = TwoVarRegrid(
+                lhf_mod, lhf_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
@@ -752,7 +753,8 @@ def BiasLhfLonRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhfla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            lhf_mod, lhf_obs, method = TwoVarRegrid(lhf_mod, lhf_obs, method, region=box, **kwargs["regridding"])
+            lhf_mod, lhf_obs, method = TwoVarRegrid(
+                lhf_mod, lhf_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
@@ -1294,7 +1296,8 @@ def BiasLwrLatRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            lwr_mod, lwr_obs, method = TwoVarRegrid(lwr_mod, lwr_obs, method, region=box, **kwargs["regridding"])
+            lwr_mod, lwr_obs, method = TwoVarRegrid(
+                lwr_mod, lwr_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
@@ -1592,7 +1595,8 @@ def BiasLwrLonRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            lwr_mod, lwr_obs, method = TwoVarRegrid(lwr_mod, lwr_obs, method, region=box, **kwargs["regridding"])
+            lwr_mod, lwr_obs, method = TwoVarRegrid(
+                lwr_mod, lwr_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
@@ -2126,7 +2130,8 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            pr_mod, pr_obs, method = TwoVarRegrid(pr_mod, pr_obs, method, region=box, **kwargs["regridding"])
+            pr_mod, pr_obs, method = TwoVarRegrid(
+                pr_mod, pr_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in pr_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -2417,7 +2422,8 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            pr_mod, pr_obs, method = TwoVarRegrid(pr_mod, pr_obs, method, region=box, **kwargs["regridding"])
+            pr_mod, pr_obs, method = TwoVarRegrid(
+                pr_mod, pr_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in pr_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -2951,7 +2957,8 @@ def BiasShfLatRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shfla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            shf_mod, shf_obs, method = TwoVarRegrid(shf_mod, shf_obs, method, region=box, **kwargs["regridding"])
+            shf_mod, shf_obs, method = TwoVarRegrid(
+                shf_mod, shf_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
@@ -3243,7 +3250,8 @@ def BiasShfLonRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shfla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            shf_mod, shf_obs, method = TwoVarRegrid(shf_mod, shf_obs, method, region=box, **kwargs["regridding"])
+            shf_mod, shf_obs, method = TwoVarRegrid(
+                shf_mod, shf_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
@@ -3855,7 +3863,8 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            ssh_mod, ssh_obs, method = TwoVarRegrid(ssh_mod, ssh_obs, method, region=box, **kwargs["regridding"])
+            ssh_mod, ssh_obs, method = TwoVarRegrid(
+                ssh_mod, ssh_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in ssh_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in ssh_obs.getAxisList()]),
@@ -4213,7 +4222,8 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            ssh_mod, ssh_obs, method = TwoVarRegrid(ssh_mod, ssh_obs, method, region=box, **kwargs["regridding"])
+            ssh_mod, ssh_obs, method = TwoVarRegrid(
+                ssh_mod, ssh_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in ssh_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in ssh_obs.getAxisList()]),
@@ -4779,7 +4789,8 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            sst_mod, sst_obs, method = TwoVarRegrid(sst_mod, sst_obs, method, region=box, **kwargs["regridding"])
+            sst_mod, sst_obs, method = TwoVarRegrid(
+                sst_mod, sst_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sst_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in sst_obs.getAxisList()]),
@@ -5071,7 +5082,8 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            sst_mod, sst_obs, method = TwoVarRegrid(sst_mod, sst_obs, method, region=box, **kwargs["regridding"])
+            sst_mod, sst_obs, method = TwoVarRegrid(
+                sst_mod, sst_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sst_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in sst_obs.getAxisList()]),
@@ -5613,7 +5625,8 @@ def BiasSwrLatRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            swr_mod, swr_obs, method = TwoVarRegrid(swr_mod, swr_obs, method, region=box, **kwargs["regridding"])
+            swr_mod, swr_obs, method = TwoVarRegrid(
+                swr_mod, swr_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
@@ -5911,7 +5924,8 @@ def BiasSwrLonRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            swr_mod, swr_obs, method = TwoVarRegrid(swr_mod, swr_obs, method, region=box, **kwargs["regridding"])
+            swr_mod, swr_obs, method = TwoVarRegrid(
+                swr_mod, swr_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
@@ -6447,7 +6461,8 @@ def BiasTauxLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tau_mod, tau_obs, method = TwoVarRegrid(tau_mod, tau_obs, method, region=box, **kwargs["regridding"])
+            tau_mod, tau_obs, method = TwoVarRegrid(
+                tau_mod, tau_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -6739,7 +6754,8 @@ def BiasTauxLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tau_mod, tau_obs, method = TwoVarRegrid(tau_mod, tau_obs, method, region=box, **kwargs["regridding"])
+            tau_mod, tau_obs, method = TwoVarRegrid(
+                tau_mod, tau_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -7280,7 +7296,8 @@ def BiasTauyLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tau_mod, tau_obs, method = TwoVarRegrid(tau_mod, tau_obs, method, region=box, **kwargs["regridding"])
+            tau_mod, tau_obs, method = TwoVarRegrid(
+                tau_mod, tau_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -7572,7 +7589,8 @@ def BiasTauyLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, taul
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tau_mod, tau_obs, method = TwoVarRegrid(tau_mod, tau_obs, method, region=box, **kwargs["regridding"])
+            tau_mod, tau_obs, method = TwoVarRegrid(
+                tau_mod, tau_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -8124,7 +8142,8 @@ def BiasThfLatRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            thf_mod, thf_obs, method = TwoVarRegrid(thf_mod, thf_obs, method, region=box, **kwargs["regridding"])
+            thf_mod, thf_obs, method = TwoVarRegrid(
+                thf_mod, thf_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
@@ -8427,7 +8446,8 @@ def BiasThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            thf_mod, thf_obs, method = TwoVarRegrid(thf_mod, thf_obs, method, region=box, **kwargs["regridding"])
+            thf_mod, thf_obs, method = TwoVarRegrid(
+                thf_mod, thf_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
@@ -9504,7 +9524,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
             if debug is True:
                 dict_debug = {"axes1": "(sst_map) " + str([ax.id for ax in sst_map.getAxisList()]),
                               "shape1": "(sst_map) " + str(sst_map.shape)}
-                EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after Regrid", 15, **dict_debug)
         # 3.3 Meridional average
         sst_lon, keyerror = AverageMeridional(sst_map)
         if keyerror is not None:
@@ -10594,7 +10614,8 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            lhf_mod, lhf_obs, method = TwoVarRegrid(lhf_mod, lhf_obs, method, region=lhfbox, **kwargs["regridding"])
+            lhf_mod, lhf_obs, method = TwoVarRegrid(
+                lhf_mod, lhf_obs, method, region=lhfbox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
                               "axes2": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
@@ -10610,7 +10631,7 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in lhf_mod.getAxisList()]),
                           "axes2": "(obs lhf) " + str([ax.id for ax in lhf_obs.getAxisList()]),
                           "shape1": "(mod lhf) " + str(lhf_mod.shape), "shape2": "(obs lhf) " + str(lhf_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         lhf_slope_mod = LinearRegressionTsAgainstMap(lhf_lon_mod, enso_mod, return_stderr=False)
         lhf_slope_obs = LinearRegressionTsAgainstMap(lhf_lon_obs, enso_obs, return_stderr=False)
@@ -11107,7 +11128,8 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            lwr_mod, lwr_obs, method = TwoVarRegrid(lwr_mod, lwr_obs, method, region=lwrbox, **kwargs["regridding"])
+            lwr_mod, lwr_obs, method = TwoVarRegrid(
+                lwr_mod, lwr_obs, method, region=lwrbox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
                               "axes2": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
@@ -11123,7 +11145,7 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in lwr_mod.getAxisList()]),
                           "axes2": "(obs lwr) " + str([ax.id for ax in lwr_obs.getAxisList()]),
                           "shape1": "(mod lwr) " + str(lwr_mod.shape), "shape2": "(obs lwr) " + str(lwr_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         lwr_slope_mod = LinearRegressionTsAgainstMap(lwr_lon_mod, enso_mod, return_stderr=False)
         lwr_slope_obs = LinearRegressionTsAgainstMap(lwr_lon_obs, enso_obs, return_stderr=False)
@@ -11616,7 +11638,8 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            pr_mod, pr_obs, method = TwoVarRegrid(pr_mod, pr_obs, method, region=prbox, **kwargs["regridding"])
+            pr_mod, pr_obs, method = TwoVarRegrid(
+                pr_mod, pr_obs, method, region=prbox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in pr_mod.getAxisList()]),
                               "axes2": "(obs pr) " + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -11632,7 +11655,7 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
             dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in pr_mod.getAxisList()]),
                           "axes2": "(obs pr) " + str([ax.id for ax in pr_obs.getAxisList()]),
                           "shape1": "(mod pr) " + str(pr_mod.shape), "shape2": "(obs pr) " + str(pr_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         pr_slope_mod = LinearRegressionTsAgainstMap(pr_lon_mod, enso_mod, return_stderr=False)
         pr_slope_obs = LinearRegressionTsAgainstMap(pr_lon_obs, enso_obs, return_stderr=False)
@@ -12122,7 +12145,8 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            shf_mod, shf_obs, method = TwoVarRegrid(shf_mod, shf_obs, method, region=shfbox, **kwargs["regridding"])
+            shf_mod, shf_obs, method = TwoVarRegrid(
+                shf_mod, shf_obs, method, region=shfbox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
                               "axes2": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
@@ -12138,7 +12162,7 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in shf_mod.getAxisList()]),
                           "axes2": "(obs shf) " + str([ax.id for ax in shf_obs.getAxisList()]),
                           "shape1": "(mod shf) " + str(shf_mod.shape), "shape2": "(obs shf) " + str(shf_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         shf_slope_mod = LinearRegressionTsAgainstMap(shf_lon_mod, enso_mod, return_stderr=False)
         shf_slope_obs = LinearRegressionTsAgainstMap(shf_lon_obs, enso_obs, return_stderr=False)
@@ -12657,7 +12681,8 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            ssh_mod, ssh_obs, method = TwoVarRegrid(ssh_mod, ssh_obs, method, region=sshbox, **kwargs["regridding"])
+            ssh_mod, ssh_obs, method = TwoVarRegrid(
+                ssh_mod, ssh_obs, method, region=sshbox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod ssh) " + str([ax.id for ax in ssh_mod.getAxisList()]),
                               "axes2": "(obs ssh) " + str([ax.id for ax in ssh_obs.getAxisList()]),
@@ -12673,7 +12698,7 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {"axes1": "(mod ssh) " + str([ax.id for ax in ssh_mod.getAxisList()]),
                           "axes2": "(obs ssh) " + str([ax.id for ax in ssh_obs.getAxisList()]),
                           "shape1": "(mod ssh) " + str(ssh_mod.shape), "shape2": "(obs ssh) " + str(ssh_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression
         ssh_slope_mod = LinearRegressionTsAgainstMap(ssh_lon_mod, enso_mod, return_stderr=False)
         ssh_slope_obs = LinearRegressionTsAgainstMap(ssh_lon_obs, enso_obs, return_stderr=False)
@@ -13142,7 +13167,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sst_map_mod, sst_map_obs, method = TwoVarRegrid(
-                sst_map_mod, sst_map_obs, method, region=box, **kwargs["regridding"])
+                sst_map_mod, sst_map_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod map) " + str([ax.id for ax in sst_map_mod.getAxisList()]),
                               "axes2": "(obs map) " + str([ax.id for ax in sst_map_obs.getAxisList()]),
@@ -13653,7 +13678,8 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            swr_mod, swr_obs, method = TwoVarRegrid(swr_mod, swr_obs, method, region=swrbox, **kwargs["regridding"])
+            swr_mod, swr_obs, method = TwoVarRegrid(
+                swr_mod, swr_obs, method, region=swrbox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
                               "axes2": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
@@ -13669,7 +13695,7 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in swr_mod.getAxisList()]),
                           "axes2": "(obs swr) " + str([ax.id for ax in swr_obs.getAxisList()]),
                           "shape1": "(mod swr) " + str(swr_mod.shape), "shape2": "(obs swr) " + str(swr_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         swr_slope_mod = LinearRegressionTsAgainstMap(swr_lon_mod, enso_mod, return_stderr=False)
         swr_slope_obs = LinearRegressionTsAgainstMap(swr_lon_obs, enso_obs, return_stderr=False)
@@ -14161,7 +14187,8 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tau_mod, tau_obs, method = TwoVarRegrid(tau_mod, tau_obs, method, region=taubox, **kwargs["regridding"])
+            tau_mod, tau_obs, method = TwoVarRegrid(
+                tau_mod, tau_obs, method, region=taubox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod Tau) " + str([ax.id for ax in tau_mod.getAxisList()]),
                               "axes2": "(obs Tau) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -14177,7 +14204,7 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
             dict_debug = {"axes1": "(mod Tau) " + str([ax.id for ax in tau_mod.getAxisList()]),
                           "axes2": "(obs Tau) " + str([ax.id for ax in tau_obs.getAxisList()]),
                           "shape1": "(mod Tau) " + str(tau_mod.shape), "shape2": "(obs Tau) " + str(tau_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         tau_slope_mod = LinearRegressionTsAgainstMap(tau_lon_mod, enso_mod, return_stderr=False)
         tau_slope_obs = LinearRegressionTsAgainstMap(tau_lon_obs, enso_obs, return_stderr=False)
@@ -14667,7 +14694,8 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            tau_mod, tau_obs, method = TwoVarRegrid(tau_mod, tau_obs, method, region=taubox, **kwargs["regridding"])
+            tau_mod, tau_obs, method = TwoVarRegrid(
+                tau_mod, tau_obs, method, region=taubox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod Tau) " + str([ax.id for ax in tau_mod.getAxisList()]),
                               "axes2": "(obs Tau) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -14683,7 +14711,7 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
             dict_debug = {"axes1": "(mod Tau) " + str([ax.id for ax in tau_mod.getAxisList()]),
                           "axes2": "(obs Tau) " + str([ax.id for ax in tau_obs.getAxisList()]),
                           "shape1": "(mod Tau) " + str(tau_mod.shape), "shape2": "(obs Tau) " + str(tau_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         tau_slope_mod = LinearRegressionTsAgainstMap(tau_lon_mod, enso_mod, return_stderr=False)
         tau_slope_obs = LinearRegressionTsAgainstMap(tau_lon_obs, enso_obs, return_stderr=False)
@@ -15185,7 +15213,8 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             extra_args = set(kwargs["regridding"]) - known_args
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
-            thf_mod, thf_obs, method = TwoVarRegrid(thf_mod, thf_obs, method, region=thfbox, **kwargs["regridding"])
+            thf_mod, thf_obs, method = TwoVarRegrid(
+                thf_mod, thf_obs, method, region=thfbox, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod thf) " + str([ax.id for ax in thf_mod.getAxisList()]),
                               "axes2": "(obs thf) " + str([ax.id for ax in thf_obs.getAxisList()]),
@@ -15201,7 +15230,7 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
             dict_debug = {"axes1": "(mod thf) " + str([ax.id for ax in thf_mod.getAxisList()]),
                           "axes2": "(obs thf) " + str([ax.id for ax in thf_obs.getAxisList()]),
                           "shape1": "(mod thf) " + str(thf_mod.shape), "shape2": "(obs thf) " + str(thf_obs.shape)}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid", 15, **dict_debug)
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after AverageMeridional", 15, **dict_debug)
         # 4.3 Regression map
         thf_slope_mod = LinearRegressionTsAgainstMap(thf_lon_mod, enso_mod, return_stderr=False)
         thf_slope_obs = LinearRegressionTsAgainstMap(thf_lon_obs, enso_obs, return_stderr=False)
@@ -15749,7 +15778,7 @@ def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod lhf) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs lhf) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -16244,7 +16273,7 @@ def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod lwr) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs lwr) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -16730,7 +16759,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod pr) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs pr) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -17215,7 +17244,7 @@ def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod shf) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs shf) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -17745,7 +17774,7 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod ssh) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs ssh) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -18189,7 +18218,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod thf) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs thf) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -18688,7 +18717,7 @@ def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod swr) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs swr) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -19175,7 +19204,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod Tau) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs Tau) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -19662,7 +19691,7 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod Tau) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs Tau) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -20162,7 +20191,7 @@ def EnsoThfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 if extra_args:
                     EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                 map_mod, map_obs, _ = TwoVarRegrid(
-                    map_mod, map_obs, "", region="equatorial_pacific", **kwargs["regridding"])
+                    map_mod, map_obs, "", region="equatorial_pacific", common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod thf) " + str([ax.id for ax in map_mod.getAxisList()]),
                                   "axes2": "(obs thf) " + str([ax.id for ax in map_obs.getAxisList()]),
@@ -20433,7 +20462,8 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # 1.1 Read file and select the right region
         sst, sst_areacell, keyerror1 = Read_data_mask_area(
             sstfile, sstname, "temperature", metric, sstbox, file_area=sstareafile, name_area=sstareaname,
-            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, spatial_average=True,
+            debug=debug, **kwargs)
         ssh, ssh_areacell, keyerror2 = Read_data_mask_area(
             sshfile, sshname, "sea surface height", metric, sshbox, file_area=sshareafile, name_area=sshareaname,
             file_mask=sshlandmaskfile, name_mask=sshlandmaskname, maskland=False, maskocean=False, debug=debug,
@@ -20767,10 +20797,12 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # 1.1 Read file and select the right region
         sst, sst_areacell, keyerror1 = Read_data_mask_area(
             sstfile, sstname, "temperature", metric, sstbox, file_area=sstareafile, name_area=sstareaname,
-            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, spatial_average=True,
+            debug=debug, **kwargs)
         lhf, lhf_areacell, keyerror2 = Read_data_mask_area(
             lhffile, lhfname, "heat flux", metric, lhfbox, file_area=lhfareafile, name_area=lhfareaname,
-            file_mask=lhflandmaskfile, name_mask=lhflandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            file_mask=lhflandmaskfile, name_mask=lhflandmaskname, maskland=True, maskocean=False, spatial_average=True,
+            debug=debug, **kwargs)
         keyerror = add_up_errors([keyerror1, keyerror2])
         if keyerror is not None:
             break
@@ -21082,11 +21114,12 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # 1.1 Read file and select the right region
         sst, sst_areacell, keyerror1 = Read_data_mask_area(
             sstfile, sstname, "temperature", metric, sstbox, file_area=sstareafile, name_area=sstareaname,
-            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
+            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, spatial_average=True,
+            debug=debug, **kwargs)
         lwr, lwr_areacell, keyerror2 = Read_data_mask_area_multifile(
             lwrfile, lwrname, "heat flux", "lwr", metric, lwrbox, file_area=lwrareafile, name_area=lwrareaname,
-            file_mask=lwrlandmaskfile, name_mask=lwrlandmaskname, maskland=True, maskocean=False, debug=debug,
-            interpreter="project_interpreter_var2", **kwargs)
+            file_mask=lwrlandmaskfile, name_mask=lwrlandmaskname, maskland=True, maskocean=False, spatial_average=True,
+            debug=debug, interpreter="project_interpreter_var2", **kwargs)
         keyerror = add_up_errors([keyerror1, keyerror2])
         if keyerror is not None:
             break
@@ -22647,8 +22680,7 @@ def EnsoFbTauxSsh(taufile, tauname, tauareafile, tauareaname, taulandmaskfile, t
             **kwargs)
         tau, tau_areacell, keyerror3 = Read_data_mask_area(
             taufile, tauname, "wind stress", metric, taubox, file_area=tauareafile, name_area=tauareaname,
-            file_mask=taulandmaskfile, name_mask=taulandmaskname, maskland=True, maskocean=False, debug=debug,
-            **kwargs)
+            file_mask=taulandmaskfile, name_mask=taulandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
         keyerror = add_up_errors([keyerror1, keyerror2, keyerror3])
         if keyerror is not None:
             break
@@ -24611,7 +24643,7 @@ def SeasonalLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, l
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             lhfStd_mod, lhfStd_obs, method = TwoVarRegrid(
-                lhfStd_mod, lhfStd_obs, method, region=box, **kwargs["regridding"])
+                lhfStd_mod, lhfStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lhfStd_obs.getAxisList()]),
@@ -24687,7 +24719,8 @@ def SeasonalLhfLatRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, l
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                lhf_mod, lhf_obs, _ = TwoVarRegrid(lhf_mod, lhf_obs, "", region=box, **kwargs["regridding"])
+                lhf_mod, lhf_obs, _ = TwoVarRegrid(
+                    lhf_mod, lhf_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
@@ -24953,7 +24986,7 @@ def SeasonalLhfLonRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, l
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             lhfStd_mod, lhfStd_obs, method = TwoVarRegrid(
-                lhfStd_mod, lhfStd_obs, method, region=box, **kwargs["regridding"])
+                lhfStd_mod, lhfStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhfStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lhfStd_obs.getAxisList()]),
@@ -25030,7 +25063,8 @@ def SeasonalLhfLonRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, l
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                lhf_mod, lhf_obs, _ = TwoVarRegrid(lhf_mod, lhf_obs, "", region=box, **kwargs["regridding"])
+                lhf_mod, lhf_obs, _ = TwoVarRegrid(
+                    lhf_mod, lhf_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lhf_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in lhf_obs.getAxisList()]),
@@ -25298,7 +25332,7 @@ def SeasonalLwrLatRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, l
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             lwrStd_mod, lwrStd_obs, method = TwoVarRegrid(
-                lwrStd_mod, lwrStd_obs, method, region=box, **kwargs["regridding"])
+                lwrStd_mod, lwrStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lwrStd_obs.getAxisList()]),
@@ -25376,7 +25410,8 @@ def SeasonalLwrLatRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, l
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                lwr_mod, lwr_obs, _ = TwoVarRegrid(lwr_mod, lwr_obs, "", region=box, **kwargs["regridding"])
+                lwr_mod, lwr_obs, _ = TwoVarRegrid(
+                    lwr_mod, lwr_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
@@ -25644,7 +25679,7 @@ def SeasonalLwrLonRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, l
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             lwrStd_mod, lwrStd_obs, method = TwoVarRegrid(
-                lwrStd_mod, lwrStd_obs, method, region=box, **kwargs["regridding"])
+                lwrStd_mod, lwrStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwrStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in lwrStd_obs.getAxisList()]),
@@ -25722,7 +25757,8 @@ def SeasonalLwrLonRmse(lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, l
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                lwr_mod, lwr_obs, _ = TwoVarRegrid(lwr_mod, lwr_obs, "", region=box, **kwargs["regridding"])
+                lwr_mod, lwr_obs, _ = TwoVarRegrid(
+                    lwr_mod, lwr_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in lwr_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in lwr_obs.getAxisList()]),
@@ -25980,7 +26016,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             prStd_mod, prStd_obs, method = TwoVarRegrid(
-                prStd_mod, prStd_obs, method, region=box, **kwargs["regridding"])
+                prStd_mod, prStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in prStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in prStd_obs.getAxisList()]),
@@ -26056,7 +26092,8 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                pr_mod, pr_obs, _ = TwoVarRegrid(pr_mod, pr_obs, "", region=box, **kwargs["regridding"])
+                pr_mod, pr_obs, _ = TwoVarRegrid(
+                    pr_mod, pr_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in pr_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -26314,7 +26351,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             prStd_mod, prStd_obs, method = TwoVarRegrid(
-                prStd_mod, prStd_obs, method, region=box, **kwargs["regridding"])
+                prStd_mod, prStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in prStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in prStd_obs.getAxisList()]),
@@ -26390,7 +26427,8 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                pr_mod, pr_obs, _ = TwoVarRegrid(pr_mod, pr_obs, "", region=box, **kwargs["regridding"])
+                pr_mod, pr_obs, _ = TwoVarRegrid(
+                    pr_mod, pr_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in pr_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in pr_obs.getAxisList()]),
@@ -26654,7 +26692,7 @@ def SeasonalShfLatRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             shfStd_mod, shfStd_obs, method = TwoVarRegrid(
-                shfStd_mod, shfStd_obs, method, region=box, **kwargs["regridding"])
+                shfStd_mod, shfStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in shfStd_obs.getAxisList()]),
@@ -26730,7 +26768,8 @@ def SeasonalShfLatRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                shf_mod, shf_obs, _ = TwoVarRegrid(shf_mod, shf_obs, "", region=box, **kwargs["regridding"])
+                shf_mod, shf_obs, _ = TwoVarRegrid(
+                    shf_mod, shf_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
@@ -26993,7 +27032,7 @@ def SeasonalShfLonRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             shfStd_mod, shfStd_obs, method = TwoVarRegrid(
-                shfStd_mod, shfStd_obs, method, region=box, **kwargs["regridding"])
+                shfStd_mod, shfStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shfStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in shfStd_obs.getAxisList()]),
@@ -27069,7 +27108,8 @@ def SeasonalShfLonRmse(shffilemod, shfnamemod, shfareafilemod, shfareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                shf_mod, shf_obs, _ = TwoVarRegrid(shf_mod, shf_obs, "", region=box, **kwargs["regridding"])
+                shf_mod, shf_obs, _ = TwoVarRegrid(
+                    shf_mod, shf_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in shf_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in shf_obs.getAxisList()]),
@@ -27362,7 +27402,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sshStd_mod, sshStd_obs, method = TwoVarRegrid(
-                sshStd_mod, sshStd_obs, method, region=box, **kwargs["regridding"])
+                sshStd_mod, sshStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sshStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in sshStd_obs.getAxisList()]),
@@ -27451,7 +27491,8 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                ssh_mod, ssh_obs, _ = TwoVarRegrid(ssh_mod, ssh_obs, "", region=box, **kwargs["regridding"])
+                ssh_mod, ssh_obs, _ = TwoVarRegrid(
+                    ssh_mod, ssh_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in ssh_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in ssh_obs.getAxisList()]),
@@ -27755,7 +27796,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sshStd_mod, sshStd_obs, method = TwoVarRegrid(
-                sshStd_mod, sshStd_obs, method, region=box, **kwargs["regridding"])
+                sshStd_mod, sshStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sshStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in sshStd_obs.getAxisList()]),
@@ -27844,7 +27885,8 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                ssh_mod, ssh_obs, _ = TwoVarRegrid(ssh_mod, ssh_obs, "", region=box, **kwargs["regridding"])
+                ssh_mod, ssh_obs, _ = TwoVarRegrid(
+                    ssh_mod, ssh_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in ssh_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in ssh_obs.getAxisList()]),
@@ -28114,7 +28156,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sstStd_mod, sstStd_obs, method = TwoVarRegrid(
-                sstStd_mod, sstStd_obs, method, region=box, **kwargs["regridding"])
+                sstStd_mod, sstStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sstStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in sstStd_obs.getAxisList()]),
@@ -28190,7 +28232,8 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                sst_mod, sst_obs, _ = TwoVarRegrid(sst_mod, sst_obs, "", region=box, **kwargs["regridding"])
+                sst_mod, sst_obs, _ = TwoVarRegrid(
+                    sst_mod, sst_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sst_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in sst_obs.getAxisList()]),
@@ -28449,7 +28492,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             sstStd_mod, sstStd_obs, method = TwoVarRegrid(
-                sstStd_mod, sstStd_obs, method, region=box, **kwargs["regridding"])
+                sstStd_mod, sstStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sstStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in sstStd_obs.getAxisList()]),
@@ -28525,7 +28568,8 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                sst_mod, sst_obs, _ = TwoVarRegrid(sst_mod, sst_obs, "", region=box, **kwargs["regridding"])
+                sst_mod, sst_obs, _ = TwoVarRegrid(
+                    sst_mod, sst_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in sst_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in sst_obs.getAxisList()]),
@@ -28793,7 +28837,7 @@ def SeasonalSwrLatRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             swrStd_mod, swrStd_obs, method = TwoVarRegrid(
-                swrStd_mod, swrStd_obs, method, region=box, **kwargs["regridding"])
+                swrStd_mod, swrStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in swrStd_obs.getAxisList()]),
@@ -28871,7 +28915,8 @@ def SeasonalSwrLatRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                swr_mod, swr_obs, _ = TwoVarRegrid(swr_mod, swr_obs, "", region=box, **kwargs["regridding"])
+                swr_mod, swr_obs, _ = TwoVarRegrid(
+                    swr_mod, swr_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
@@ -29139,7 +29184,7 @@ def SeasonalSwrLonRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, s
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             swrStd_mod, swrStd_obs, method = TwoVarRegrid(
-                swrStd_mod, swrStd_obs, method, region=box, **kwargs["regridding"])
+                swrStd_mod, swrStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swrStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in swrStd_obs.getAxisList()]),
@@ -29217,7 +29262,8 @@ def SeasonalSwrLonRmse(swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, s
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                swr_mod, swr_obs, _ = TwoVarRegrid(swr_mod, swr_obs, "", region=box, **kwargs["regridding"])
+                swr_mod, swr_obs, _ = TwoVarRegrid(
+                    swr_mod, swr_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in swr_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in swr_obs.getAxisList()]),
@@ -29476,7 +29522,7 @@ def SeasonalTauxLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tauStd_mod, tauStd_obs, method = TwoVarRegrid(
-                tauStd_mod, tauStd_obs, method, region=box, **kwargs["regridding"])
+                tauStd_mod, tauStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tauStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tauStd_obs.getAxisList()]),
@@ -29552,7 +29598,8 @@ def SeasonalTauxLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                tau_mod, tau_obs, _ = TwoVarRegrid(tau_mod, tau_obs, "", region=box, **kwargs["regridding"])
+                tau_mod, tau_obs, _ = TwoVarRegrid(
+                    tau_mod, tau_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -29811,7 +29858,7 @@ def SeasonalTauxLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tauStd_mod, tauStd_obs, method = TwoVarRegrid(
-                tauStd_mod, tauStd_obs, method, region=box, **kwargs["regridding"])
+                tauStd_mod, tauStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tauStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tauStd_obs.getAxisList()]),
@@ -29887,7 +29934,8 @@ def SeasonalTauxLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                tau_mod, tau_obs, _ = TwoVarRegrid(tau_mod, tau_obs, "", region=box, **kwargs["regridding"])
+                tau_mod, tau_obs, _ = TwoVarRegrid(
+                    tau_mod, tau_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -30146,7 +30194,7 @@ def SeasonalTauyLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tauStd_mod, tauStd_obs, method = TwoVarRegrid(
-                tauStd_mod, tauStd_obs, method, region=box, **kwargs["regridding"])
+                tauStd_mod, tauStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tauStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tauStd_obs.getAxisList()]),
@@ -30222,7 +30270,8 @@ def SeasonalTauyLatRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                tau_mod, tau_obs, _ = TwoVarRegrid(tau_mod, tau_obs, "", region=box, **kwargs["regridding"])
+                tau_mod, tau_obs, _ = TwoVarRegrid(
+                    tau_mod, tau_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -30481,7 +30530,7 @@ def SeasonalTauyLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             tauStd_mod, tauStd_obs, method = TwoVarRegrid(
-                tauStd_mod, tauStd_obs, method, region=box, **kwargs["regridding"])
+                tauStd_mod, tauStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tauStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in tauStd_obs.getAxisList()]),
@@ -30557,7 +30606,8 @@ def SeasonalTauyLonRmse(taufilemod, taunamemod, tauareafilemod, tauareanamemod, 
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                tau_mod, tau_obs, _ = TwoVarRegrid(tau_mod, tau_obs, "", region=box, **kwargs["regridding"])
+                tau_mod, tau_obs, _ = TwoVarRegrid(
+                    tau_mod, tau_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in tau_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in tau_obs.getAxisList()]),
@@ -30829,7 +30879,7 @@ def SeasonalThfLatRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, t
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             thfStd_mod, thfStd_obs, method = TwoVarRegrid(
-                thfStd_mod, thfStd_obs, method, region=box, **kwargs["regridding"])
+                thfStd_mod, thfStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in thfStd_obs.getAxisList()]),
@@ -30907,7 +30957,8 @@ def SeasonalThfLatRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, t
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                thf_mod, thf_obs, _ = TwoVarRegrid(thf_mod, thf_obs, "", region=box, **kwargs["regridding"])
+                thf_mod, thf_obs, _ = TwoVarRegrid(
+                    thf_mod, thf_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
@@ -31179,7 +31230,7 @@ def SeasonalThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, t
             if extra_args:
                 EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
             thfStd_mod, thfStd_obs, method = TwoVarRegrid(
-                thfStd_mod, thfStd_obs, method, region=box, **kwargs["regridding"])
+                thfStd_mod, thfStd_obs, method, region=box, common_mask=False, **kwargs["regridding"])
             if debug is True:
                 dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thfStd_mod.getAxisList()]),
                               "axes2": "(obs) " + str([ax.id for ax in thfStd_obs.getAxisList()]),
@@ -31257,7 +31308,8 @@ def SeasonalThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, t
                                   "axes2": "(obs) " + str([ax.id for ax in map_obs.getAxisList()]),
                                   "shape1": "(mod) " + str(map_mod.shape), "shape2": "(obs) " + str(map_obs.shape)}
                     EnsoErrorsWarnings.debug_mode("\033[92m", "after TwoVarRegrid: netcdf map 1", 15, **dict_debug)
-                thf_mod, thf_obs, _ = TwoVarRegrid(thf_mod, thf_obs, "", region=box, **kwargs["regridding"])
+                thf_mod, thf_obs, _ = TwoVarRegrid(
+                    thf_mod, thf_obs, "", region=box, common_mask=False, **kwargs["regridding"])
                 if debug is True:
                     dict_debug = {"axes1": "(mod) " + str([ax.id for ax in thf_mod.getAxisList()]),
                                   "axes2": "(obs) " + str([ax.id for ax in thf_obs.getAxisList()]),
@@ -33445,16 +33497,14 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     # Read file and select the right region
     if debug is True:
         EnsoErrorsWarnings.debug_mode('\033[92m', metric, 10)
-    sst_mod, mod_areacell, keyerror_mod = \
-        Read_data_mask_area(sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod,
-                            name_area=sstareanamemod, file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod,
-                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_mod'], debug=debug,
-                            **kwargs)
-    sst_obs, obs_areacell, keyerror_obs = \
-        Read_data_mask_area(sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs,
-                            name_area=sstareanameobs, file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs,
-                            maskland=True, maskocean=False, time_bounds=kwargs['time_bounds_obs'], debug=debug,
-                            **kwargs)
+    sst_mod, mod_areacell, keyerror_mod = Read_data_mask_area(
+        sstfilemod, sstnamemod, 'temperature', metric, box, file_area=sstareafilemod, name_area=sstareanamemod,
+        file_mask=sstlandmaskfilemod, name_mask=sstlandmasknamemod, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_mod'], debug=debug, **kwargs)
+    sst_obs, obs_areacell, keyerror_obs = Read_data_mask_area(
+        sstfileobs, sstnameobs, 'temperature', metric, box, file_area=sstareafileobs, name_area=sstareanameobs,
+        file_mask=sstlandmaskfileobs, name_mask=sstlandmasknameobs, maskland=True, maskocean=False,
+        time_bounds=kwargs['time_bounds_obs'], debug=debug, **kwargs)
 
     # Number of years
     yearN_mod = int(round(sst_mod.shape[0] / 12))

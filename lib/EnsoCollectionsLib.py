@@ -887,7 +887,7 @@ def defCollection(mc=True):
                 },
                 "EnsoSwrLonRmse": {
                     "variables": ["sst", "swr"],
-                    "regions": {"swr": "equatorial_pacific", "sst": "nino3.4"},
+                    "regions": {"sst": "nino3.4", "swr": "equatorial_pacific"},
                     "obs_name": {"swr": ["ERA-Interim", "OAFlux"], "sst": ["ERA-Interim", "HadISST", "Tropflux"]},
                     "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
                                    "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
@@ -903,7 +903,7 @@ def defCollection(mc=True):
                 },
                 "EnsoTauxLonRmse": {
                     "variables": ["sst", "taux"],
-                    "regions": {"taux": "equatorial_pacific", "sst": "nino3.4"},
+                    "regions": {"sst": "nino3.4", "taux": "equatorial_pacific"},
                     "obs_name": {"taux": ["ERA-Interim", "Tropflux"], "sst": ["ERA-Interim", "HadISST", "Tropflux"]},
                     "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
                                    "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
@@ -919,7 +919,7 @@ def defCollection(mc=True):
                 },
                 "EnsoTauyLonRmse": {
                     "variables": ["sst", "tauy"],
-                    "regions": {"tauy": "equatorial_pacific", "sst": "nino3.4"},
+                    "regions": {"sst": "nino3.4", "tauy": "equatorial_pacific"},
                     "obs_name": {"tauy": ["ERA-Interim", "Tropflux"], "sst": ["ERA-Interim", "HadISST", "Tropflux"]},
                     "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
                                    "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
@@ -935,7 +935,7 @@ def defCollection(mc=True):
                 },
                 "EnsoThfLonRmse": {
                     "variables": ["sst", "thf"],
-                    "regions": {"sst": "nino3.4", "thf": "equatorial_pacific", },
+                    "regions": {"sst": "nino3.4", "thf": "equatorial_pacific"},
                     "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "thf": ["ERA-Interim", "OAFlux"]},
                     "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
                                    "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},

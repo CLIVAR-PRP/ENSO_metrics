@@ -1069,15 +1069,14 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                             str().ljust(5) + keyerror, str().ljust(5) + "cannot reshape landmask"]
                         EnsoErrorsWarnings.my_warning(list_strings)
             if keyerror is None:
-                tab = MV2masked_where(landmask_nd.mask, tab)
                 # if land = 100 instead of 1, divides landmask by 100
                 if (MV2min(landmask) == 0 and MV2max(landmask) == 100) or \
                         ("units" in landmask.listattributes() and landmask.units == "%"):
                     landmask_nd = landmask_nd / 100.
                 if maskland is True:
-                    tab = MV2masked_where(landmask_nd >= 0.2, tab)
+                    tab = MV2masked_where(landmask_nd > 0.8, tab)
                 if maskocean is True:
-                    tab = MV2masked_where(landmask_nd <= 0.8, tab)
+                    tab = MV2masked_where(landmask_nd < 0.2, tab)
     return tab, keyerror
 
 
@@ -1117,12 +1116,11 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
             if (MV2min(landmask) == 0 and MV2max(landmask) == 100) or \
                     ("units" in landmask.listattributes() and landmask.units == "%"):
                 landmask = landmask / 100.
-            area = MV2masked_where(landmask.mask, area)
             if maskland is True:
-                area = MV2masked_where(landmask >= 0.2, area)
-                area = MV2multiply(area, 1-landmask)
+                area = MV2masked_where(landmask > 0.8, area)
+                area = MV2multiply(area, 1 - landmask)
             if maskocean is True:
-                area = MV2masked_where(landmask <= 0.8, area)
+                area = MV2masked_where(landmask < 0.2, area)
                 area = MV2multiply(area, landmask)
     return area, keyerror
 
@@ -3872,11 +3870,10 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
                                   file_mask='', name_mask='', maskland=False, maskocean=False, debug=False,
                                   interpreter='', **kwargs):
     dict_area, dict_keye, dict_var = dict(), dict(), dict()
-    if isinstance(file_data, str):
-        tab, areacell, keyerror = \
-            Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area=file_area,
-                                name_area=name_area, file_mask=file_mask, name_mask=name_mask, maskland=maskland,
-                                maskocean=maskocean, debug=debug, **kwargs)
+    if isinstance(file_data, str) is True:
+        tab, areacell, keyerror = Read_data_mask_area(
+            file_data, name_data, type_data, metric, region, file_area=file_area, name_area=name_area,
+            file_mask=file_mask, name_mask=name_mask, maskland=maskland, maskocean=maskocean, debug=debug, **kwargs)
         dict_area[name_data], dict_keye[name_data], dict_var[name_data] = areacell, keyerror, tab
     else:
         for ii in range(len(file_data)):
@@ -3916,9 +3913,9 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
                 ln1 = ''
             else:
                 ln1 = name_mask[ii]
-            tab, areacell, keyerror = \
-                Read_data_mask_area(ff1, nn1, type_data, metric, region, file_area=fa1, name_area=an1, file_mask=fl1,
-                                    name_mask=ln1, maskland=maskland, maskocean=maskocean, debug=debug, **kwargs)
+            tab, areacell, keyerror = Read_data_mask_area(
+                ff1, nn1, type_data, metric, region, file_area=fa1, name_area=an1, file_mask=fl1,  name_mask=ln1,
+                maskland=maskland, maskocean=maskocean, debug=debug, **kwargs)
             dict_area[nn1], dict_keye[nn1], dict_var[nn1] = areacell, keyerror, tab
     keyerror = add_up_errors([dict_keye[ii] for ii in list(dict_keye.keys())])
     if keyerror is None:
@@ -4440,7 +4437,7 @@ def TsToMap(tab, map_ref):
     return map_out
 
 
-def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None, **keyarg):
+def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None, common_mask=True, **keyarg):
     """
     #################################################################################
     Description:
@@ -4455,15 +4452,18 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
         observations data
     :param info: string
         information about what was done to 'model' and 'obs'
-    :param region: string
+    :param region: string, optional
         name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
     :param model_orand_obs: integer, optional
         0 if you want to regrid model data toward observations data
         1 if you want to regrid observations data toward model data
         2 if you want to regrid model AND observations data toward 'newgrid'
         default value = 0
-    :param newgrid: CDMS grid
+    :param newgrid: CDMS grid, optional
         grid toward which model data and observations data are regridded if model_orand_obs=2
+    :param common_mask: boolean, optional
+        True to apply model mask to obs and obs mask to model
+        default value is True
 
     usual kwargs:
     :param newgrid_name: string, optional
@@ -4508,27 +4508,28 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
         info = info + ', observations and model regridded to ' + str(grid_name)
     else:
         info = info + ', observations and model NOT regridded'
-    if model.shape == obs.shape:
-        if model.mask.shape != ():
-            mask = model.mask
-            if obs.mask.shape != ():
-                mask = MV2where(obs.mask, obs.mask, mask)
-        else:
-            if obs.mask.shape != ():
-                mask = obs.mask
+    if common_mask is True:
+        if model.shape == obs.shape:
+            if model.mask.shape != ():
+                mask = model.mask
+                if obs.mask.shape != ():
+                    mask = MV2where(obs.mask, obs.mask, mask)
             else:
-                mask = MV2where(MV2zeros(model.shape)==0, False, True)
-        model = MV2masked_where(mask, model)
-        obs = MV2masked_where(mask, obs)
-    else:
-        if obs[0].mask.shape != ():
-            tab = MV2zeros(model.shape)
-            for tt in range(len(tab)):
-                tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
-            model = MV2masked_where(tab.mask, model)
-        if model[0].mask != ():
-            tab = MV2zeros(obs.shape)
-            for tt in range(len(tab)):
-                tab[tt] = MV2masked_where(model[0].mask, tab[tt])
-            obs = MV2masked_where(tab.mask, obs)
+                if obs.mask.shape != ():
+                    mask = obs.mask
+                else:
+                    mask = MV2where(MV2zeros(model.shape)==0, False, True)
+            model = MV2masked_where(mask, model)
+            obs = MV2masked_where(mask, obs)
+        else:
+            if obs[0].mask.shape != ():
+                tab = MV2zeros(model.shape)
+                for tt in range(len(tab)):
+                    tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
+                model = MV2masked_where(tab.mask, model)
+            if model[0].mask != ():
+                tab = MV2zeros(obs.shape)
+                for tt in range(len(tab)):
+                    tab[tt] = MV2masked_where(model[0].mask, tab[tt])
+                obs = MV2masked_where(tab.mask, obs)
     return model, obs, info
