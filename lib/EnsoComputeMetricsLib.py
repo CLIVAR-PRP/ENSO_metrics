@@ -5,9 +5,9 @@ from inspect import stack as INSPECTstack
 import json
 
 # ENSO_metrics package functions:
-from .EnsoCollectionsLib import defCollection, ReferenceObservations
-from . import EnsoErrorsWarnings
-from .EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, BiasLwrLonRmse,\
+from EnsoMetrics.EnsoCollectionsLib import defCollection, ReferenceObservations
+from EnsoMetrics import EnsoErrorsWarnings
+from EnsoMetrics.EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, BiasLwrLonRmse,\
     BiasLwrMapRmse, BiasPrLatRmse, BiasPrLonRmse, BiasPrMapRmse, BiasShfLatRmse, BiasShfLonRmse, BiasShfMapRmse,\
     BiasSshLatRmse, BiasSshLonRmse, BiasSshMapRmse, BiasSstLatRmse, BiasSstLonRmse, BiasSstMapRmse, BiasSstSkLonRmse,\
     BiasSwrLatRmse, BiasSwrLonRmse, BiasSwrMapRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxMapRmse, BiasTauyLatRmse,\
@@ -26,8 +26,8 @@ from .EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, Bias
     SeasonalSstLonRmse, SeasonalSwrLatRmse, SeasonalSwrLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse,\
     SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, SeasonalThfLonRmse, telecon_pr_djf, \
     telecon_pr_ano_djf, telecon_pr_amp_djf
-from .EnsoToolsLib import math_metric_computation
-from .KeyArgLib import default_arg_values
+from EnsoMetrics.EnsoToolsLib import math_metric_computation
+from EnsoMetrics.KeyArgLib import default_arg_values
 
 
 # sst only datasets (not good for surface temperature teleconnection)
@@ -645,6 +645,286 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
     json_name_out = netcdf_name.replace("OBSNAME", "observation")
     group_json_obs(pattern, json_name_out, "all")
     return
+
+
+def ComputeCollection_ObsOnly_with_ref(metricCollection, dictDatasets, user_regridding={}, debug=False, dive_down=False,
+                                       netcdf=False, netcdf_name="", observed_fyear=None, observed_lyear=None,
+                                       modeled_fyear=None, modeled_lyear=None, obs_interpreter=None):
+    dict_mc = defCollection(metricCollection)
+    dict_col_meta = {
+        "name": dict_mc["long_name"], "description_of_the_collection": dict_mc["description"], "metrics": {},
+    }
+    dict_col_dd_meta = {
+        "name": dict_mc["long_name"], "description_of_the_collection": dict_mc["description"], "metrics": {},
+    }
+    dict_col_valu = dict()
+    dict_col_dd_valu = dict()
+    dict_m = dict_mc["metrics_list"]
+    list_metrics = sorted(list(dict_m.keys()), key=lambda v: v.upper())
+    for metric in list_metrics:
+        print("\033[94m" + str().ljust(5) + "ComputeCollection: metric = " + str(metric) + "\033[0m")
+        # sets arguments for this metric
+        list_variables = dict_m[metric]["variables"]
+        dict_regions = dict_m[metric]["regions"]
+        # references name(s), file(s), variable(s) name in file(s)
+        refNameVar1, refFile1, refVarName1, refFileArea1, refAreaName1 = list(), list(), list(), list(), list()
+        refFileLandmask1, refLandmaskName1, refInterpreter1 = list(), list(), list()
+        for ref in sorted(list(dictDatasets["references"].keys()), key=lambda v: v.upper()):
+            try:
+                dictDatasets["references"][ref][list_variables[0]]
+            except:
+                pass
+            else:
+                refNameVar1.append(ref)
+                refFile1.append(dictDatasets["references"][ref][list_variables[0]]["path + filename"])
+                refVarName1.append(dictDatasets["references"][ref][list_variables[0]]["varname"])
+                try:
+                    refFileArea1.append(dictDatasets["references"][ref][list_variables[0]]["path + filename_area"])
+                except:
+                    refFileArea1.append(None)
+                    refAreaName1.append(None)
+                else:
+                    refAreaName1.append(dictDatasets["references"][ref][list_variables[0]]["areaname"])
+                try:
+                    refFileLandmask1.append(
+                        dictDatasets["references"][ref][list_variables[0]]["path + filename_landmask"])
+                except:
+                    refFileLandmask1.append(None)
+                    refLandmaskName1.append(None)
+                else:
+                    refLandmaskName1.append(dictDatasets["references"][ref][list_variables[0]]["landmaskname"])
+                try:
+                    refInterpreter1.append(dictDatasets["references"][ref][list_variables[0]]["obs_interpreter"])
+                except:
+                    refInterpreter1.append(ref)
+        # same if a second variable is needed
+        refNameVar2, refFile2, refVarName2, refFileArea2, refAreaName2 = list(), list(), list(), list(), list()
+        refFileLandmask2, refLandmaskName2, refInterpreter2 = list(), list(), list()
+        if len(list_variables) > 1:
+            for ref in sorted(list(dictDatasets["references"].keys()), key=lambda v: v.upper()):
+                try:
+                    dictDatasets["references"][ref][list_variables[1]]
+                except:
+                    pass
+                else:
+                    refNameVar2.append(ref)
+                    refFile2.append(dictDatasets["references"][ref][list_variables[1]]["path + filename"])
+                    refVarName2.append(dictDatasets["references"][ref][list_variables[1]]["varname"])
+                    try:
+                        refFileArea2.append(
+                            dictDatasets["references"][ref][list_variables[1]]["path + filename_area"])
+                    except:
+                        refFileArea2.append(None)
+                        refAreaName2.append(None)
+                    else:
+                        refAreaName2.append(dictDatasets["references"][ref][list_variables[1]]["areaname"])
+                    try:
+                        refFileLandmask2.append(
+                            dictDatasets["references"][ref][list_variables[1]]["path + filename_landmask"])
+                    except:
+                        refFileLandmask2.append(None)
+                        refLandmaskName2.append(None)
+                    else:
+                        refLandmaskName2.append(
+                            dictDatasets["references"][ref][list_variables[1]]["landmaskname"])
+                    try:
+                        refInterpreter2.append(
+                            dictDatasets["references"][ref][list_variables[0]]["obs_interpreter"])
+                    except:
+                        refInterpreter2.append(ref)
+        # observations name(s), file(s), variable(s) name in file(s)
+        obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1 = list(), list(), list(), list(), list()
+        obsFileLandmask1, obsLandmaskName1, obsInterpreter1 = list(), list(), list()
+        for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
+            try:
+                dictDatasets["observations"][obs][list_variables[0]]
+            except:
+                pass
+            else:
+                obsNameVar1.append(obs)
+                obsFile1.append(dictDatasets["observations"][obs][list_variables[0]]["path + filename"])
+                obsVarName1.append(dictDatasets["observations"][obs][list_variables[0]]["varname"])
+                try:
+                    obsFileArea1.append(dictDatasets["observations"][obs][list_variables[0]]["path + filename_area"])
+                except:
+                    obsFileArea1.append(None)
+                    obsAreaName1.append(None)
+                else:
+                    obsAreaName1.append(dictDatasets["observations"][obs][list_variables[0]]["areaname"])
+                try:
+                    obsFileLandmask1.append(
+                        dictDatasets["observations"][obs][list_variables[0]]["path + filename_landmask"])
+                except:
+                    obsFileLandmask1.append(None)
+                    obsLandmaskName1.append(None)
+                else:
+                    obsLandmaskName1.append(dictDatasets["observations"][obs][list_variables[0]]["landmaskname"])
+                try:
+                    obsInterpreter1.append(dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                except:
+                    obsInterpreter1.append(obs)
+        # same if a second variable is needed
+        obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2 = list(), list(), list(), list(), list()
+        obsFileLandmask2, obsLandmaskName2, obsInterpreter2 = list(), list(), list()
+        if len(list_variables) > 1:
+            for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
+                try:
+                    dictDatasets["observations"][obs][list_variables[1]]
+                except:
+                    pass
+                else:
+                    obsNameVar2.append(obs)
+                    obsFile2.append(dictDatasets["observations"][obs][list_variables[1]]["path + filename"])
+                    obsVarName2.append(dictDatasets["observations"][obs][list_variables[1]]["varname"])
+                    try:
+                        obsFileArea2.append(
+                            dictDatasets["observations"][obs][list_variables[1]]["path + filename_area"])
+                    except:
+                        obsFileArea2.append(None)
+                        obsAreaName2.append(None)
+                    else:
+                        obsAreaName2.append(dictDatasets["observations"][obs][list_variables[1]]["areaname"])
+                    try:
+                        obsFileLandmask2.append(
+                            dictDatasets["observations"][obs][list_variables[1]]["path + filename_landmask"])
+                    except:
+                        obsFileLandmask2.append(None)
+                        obsLandmaskName2.append(None)
+                    else:
+                        obsLandmaskName2.append(
+                            dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
+                    try:
+                        obsInterpreter2.append(
+                            dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                    except:
+                        obsInterpreter2.append(obs)
+        # observations as model
+        for ii in range(len(obsFileArea1)):
+            modelName = obsNameVar1[ii]
+            modelFile1 = obsFile1[ii]
+            modelVarName1 = obsVarName1[ii]
+            modelFileArea1 = obsFileArea1[ii]
+            modelAreaName1 = obsAreaName1[ii]
+            modelFileLandmask1 = obsFileLandmask1[ii]
+            modelLandmaskName1 = obsLandmaskName1[ii]
+            modelInterpreter1 = obsInterpreter1[ii]
+            arg_var2 = {
+                "modelFileArea1": modelFileArea1, "modelAreaName1": modelAreaName1,
+                "modelFileLandmask1": modelFileLandmask1, "modelLandmaskName1": modelLandmaskName1,
+                "modelInterpreter1": modelInterpreter1, "obsFileArea1": refFileArea1, "obsAreaName1": refAreaName1,
+                "obsFileLandmask1": refFileLandmask1, "obsLandmaskName1": refLandmaskName1,
+                "obsInterpreter1": refInterpreter1, "observed_fyear": observed_fyear, "observed_lyear": observed_lyear,
+                "modeled_fyear": modeled_fyear, "modeled_lyear": modeled_lyear}
+            if len(list_variables) == 1:
+                nbr = 1
+            else:
+                nbr = len(obsNameVar2)
+            for jj in range(nbr):
+                try:
+                    obsNameVar2[jj]
+                except:
+                    modelName2 = deepcopy(modelName)
+                else:
+                    modelName2 = modelName + "_" + obsNameVar2[jj]
+                    arg_var2["modelFile2"] = obsFile2[jj]
+                    arg_var2["modelVarName2"] = obsVarName2[jj]
+                    arg_var2["modelFileArea2"] = obsFileArea2[jj]
+                    arg_var2["modelAreaName2"] = obsAreaName2[jj]
+                    arg_var2["modelFileLandmask2"] = obsFileLandmask2[jj]
+                    arg_var2["modelLandmaskName2"] = obsLandmaskName2[jj]
+                    arg_var2['modelInterpreter2'] = obsInterpreter2[jj]
+                    arg_var2["regionVar2"] = dict_regions[list_variables[1]]
+                    arg_var2["obsNameVar2"] = refNameVar2
+                    arg_var2["obsFile2"] = refFile2
+                    arg_var2["obsVarName2"] = refVarName2
+                    arg_var2["obsFileArea2"] = refFileArea2
+                    arg_var2["obsAreaName2"] = refAreaName2
+                    arg_var2["obsFileLandmask2"] = refFileLandmask2
+                    arg_var2["obsLandmaskName2"] = refLandmaskName2
+                    arg_var2['obsInterpreter2'] = refInterpreter2
+                if netcdf is True:
+                    netcdf_name_out = netcdf_name.replace("OBSNAME", modelName2)
+                else:
+                    netcdf_name_out = ""
+                json_name_out = netcdf_name.replace("OBSNAME", "tmp1_" + modelName2 + "_" + metric)
+                if ("EnsoSstMap" in metric and modelName2 in sst_only) or \
+                        len(list(GLOBiglob(json_name_out + ".json"))) == 1:
+                    pass
+                else:
+                    print(modelName2 + "_as_model")
+                    valu, vame, dive, dime = ComputeMetric(
+                        metricCollection, metric, modelName2, modelFile1, modelVarName1, refNameVar1,
+                        refFile1, refVarName1, dict_regions[list_variables[0]], user_regridding=user_regridding,
+                        debug=debug, netcdf=netcdf, netcdf_name=netcdf_name_out, obs_interpreter=obs_interpreter,
+                        **arg_var2)
+                    keys1 = list(valu.keys())
+                    keys2 = list(set([kk.replace("value", "").replace("__", "").replace("_error", "")
+                                      for ll in list(valu[keys1[0]].keys()) for kk in list(valu[keys1[0]][ll].keys())]))
+                    if len(keys2) > 1:
+                        for kk in keys2:
+                            mm1, dd1 = dict(), dict()
+                            keys3 = list(valu["metric"].keys())
+                            for ll in keys3:
+                                mm1[ll] = {"value": valu["metric"][ll][kk + "__value"],
+                                           "value_error": valu["metric"][ll][kk + "__value_error"]}
+                            keys3 = list(valu["diagnostic"].keys())
+                            for ll in keys3:
+                                dd1[ll] = {"value": valu["diagnostic"][ll][kk + "__value"],
+                                           "value_error": valu["diagnostic"][ll][kk + "__value_error"]}
+                            mm2 = dict((ll,
+                                        vame["metric"][ll]) for ll in list(vame["metric"].keys()) if "units" not in ll)
+                            mm2["units"] = vame["metric"][kk + "__units"]
+                            dict1 = {"metric": mm1, "diagnostic": dd1}
+                            dict2 = {"metric": mm2, "diagnostic": vame["diagnostic"]}
+                            try:
+                                dict_col_valu[modelName2]
+                            except:
+                                dict_col_valu[modelName2] = {metric + kk: dict1}
+                                dict_col_meta[modelName2] = {"metrics": {metric + kk: dict2}}
+                                dict_col_dd_valu[modelName2] = {metric + kk: dive}
+                                dict_col_dd_meta[modelName2] = {"metrics": {metric + kk: dime}}
+                            else:
+                                dict_col_valu[modelName2][metric + kk] = dict1
+                                dict_col_meta[modelName2]["metrics"][metric + kk] = dict2
+                                dict_col_dd_valu[modelName2][metric + kk] = dive
+                                dict_col_dd_meta[modelName2]["metrics"][metric + kk] = dime
+                            del dd1, dict1, dict2, keys3, mm1, mm2
+                    else:
+                        try:
+                            dict_col_valu[modelName2]
+                        except:
+                            dict_col_valu[modelName2] = {metric: valu}
+                            dict_col_meta[modelName2] = {"metrics": {metric: vame}}
+                            dict_col_dd_valu[modelName2] = {metric: dive}
+                            dict_col_dd_meta[modelName2] = {"metrics": {metric: dime}}
+                        else:
+                            dict_col_valu[modelName2][metric] = valu
+                            dict_col_meta[modelName2]["metrics"][metric] = vame
+                            dict_col_dd_valu[modelName2][metric] = dive
+                            dict_col_dd_meta[modelName2]["metrics"][metric] = dime
+                    # save json
+                    dict_out = {modelName2: {
+                        "r1i1p1": {"value": dict_col_valu[modelName2], "metadata": dict_col_meta[modelName2]}}}
+                    save_json_obs(dict_out, json_name_out)
+                    del dict_out, dime, dive, keys1, keys2, valu
+                del json_name_out, modelName2, netcdf_name_out
+            del arg_var2, modelName, modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, \
+                modelLandmaskName1, modelInterpreter1, nbr
+        # read all jsons and group them
+        pattern = netcdf_name.replace("OBSNAME", "tmp1_*_" + metric + ".json")
+        json_name_out = netcdf_name.replace("OBSNAME", "tmp2_" + metric)
+        group_json_obs(pattern, json_name_out, metric)
+        del dict_regions, json_name_out, list_variables, obsAreaName1, obsAreaName2, obsFile1, obsFile2, obsFileArea1, \
+            obsFileArea2, obsFileLandmask1, obsFileLandmask2, obsInterpreter1, obsInterpreter2, obsLandmaskName1, \
+            obsLandmaskName2, obsNameVar1, obsNameVar2, obsVarName1, obsVarName2, refAreaName1, refAreaName2, \
+            refFile1, refFile2, refFileArea1, refFileArea2, refFileLandmask1, refFileLandmask2, refInterpreter1, \
+            refInterpreter2, refLandmaskName1, refLandmaskName2, refNameVar1, refNameVar2, refVarName1, refVarName2, \
+            pattern
+    # read all jsons and group them
+    pattern = netcdf_name.replace("OBSNAME", "tmp2_*.json")
+    json_name_out = netcdf_name.replace("OBSNAME", "observation")
+    group_json_obs(pattern, json_name_out, "all")
+    return
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -941,6 +1221,9 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     dict_dive_down_metadata = dict()
 
     multimetric = False
+
+    print("obs period used: " + str(keyarg["time_bounds_obs"]))
+    print(obsNameVar1)
 
     # test files
     if isinstance(modelFile1, list):

@@ -143,7 +143,8 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     keyerror = None
     lat_num = get_num_axis(tab, "latitude")
     lon_num = get_num_axis(tab, "longitude")
-    snum = str(lat_num) + str(lon_num)
+    tmp = sorted([lat_num, lon_num])
+    snum = str(tmp[0]) + str(tmp[1])
     if areacell is None or tab.getGrid().shape != areacell.getGrid().shape:
         print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
         if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
@@ -1074,9 +1075,9 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                         ("units" in landmask.listattributes() and landmask.units == "%"):
                     landmask_nd = landmask_nd / 100.
                 if maskland is True:
-                    tab = MV2masked_where(landmask_nd > 0.8, tab)
+                    tab = MV2masked_where(landmask_nd >= 0.2, tab)
                 if maskocean is True:
-                    tab = MV2masked_where(landmask_nd < 0.2, tab)
+                    tab = MV2masked_where(landmask_nd <= 0.8, tab)
     return tab, keyerror
 
 
@@ -1117,10 +1118,10 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
                     ("units" in landmask.listattributes() and landmask.units == "%"):
                 landmask = landmask / 100.
             if maskland is True:
-                area = MV2masked_where(landmask > 0.8, area)
+                area = MV2masked_where(landmask >= 0.2, area)
                 area = MV2multiply(area, 1 - landmask)
             if maskocean is True:
-                area = MV2masked_where(landmask < 0.2, area)
+                area = MV2masked_where(landmask <= 0.8, area)
                 area = MV2multiply(area, landmask)
     return area, keyerror
 
@@ -2179,11 +2180,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             # I need to be in the ocean point of view so the heat fluxes must be downwards
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib ReadAndSelectRegion" + "\033[0m")
             print("\033[93m" + str().ljust(25) + varname + " sign reversed" + "\033[0m")
-            print("\033[93m" + str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2min(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2max(tab), 2)) + "\033[0m")
+            print("\033[93m" + str().ljust(5) + "range old = " + "{0:+.2f}".format(round(float(MV2min(tab)), 2)) +
+                  " to " + "{0:+.2f}".format(round(float(MV2max(tab)), 2)) + "\033[0m")
             tab = -1 * tab
-            print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2min(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2max(tab), 2)) + "\033[0m")
+            print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(float(MV2min(tab)), 2)) +
+                  " to " + "{0:+.2f}".format(round(float(MV2max(tab)), 2)) + "\033[0m")
             reversed_sign = True
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
@@ -3962,7 +3963,7 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
         "sensible_heatflux", "shf", "sla", "sohefldo", "solatent", "solongwa", "sometauy", "sosensib", "soshfldo",
         "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swflx", "swr", "tau_x", "tau_y", "tauuo", "tauvo",
         "taux", "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"]\
-        and "_Amon_" not in file_data:
+        and "_Amon_" not in file_data and "oisst" not in file_data.lower():
         landmask = None
     elif name_data.lower() in ["pr", "slp"] and "_Omon_" in file_data:
         landmask = None

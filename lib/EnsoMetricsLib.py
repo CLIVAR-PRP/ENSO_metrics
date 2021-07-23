@@ -20462,8 +20462,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # 1.1 Read file and select the right region
         sst, sst_areacell, keyerror1 = Read_data_mask_area(
             sstfile, sstname, "temperature", metric, sstbox, file_area=sstareafile, name_area=sstareaname,
-            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, spatial_average=True,
-            debug=debug, **kwargs)
+            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
         ssh, ssh_areacell, keyerror2 = Read_data_mask_area(
             sshfile, sshname, "sea surface height", metric, sshbox, file_area=sshareafile, name_area=sshareaname,
             file_mask=sshlandmaskfile, name_mask=sshlandmaskname, maskland=False, maskocean=False, debug=debug,
@@ -20797,12 +20796,10 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # 1.1 Read file and select the right region
         sst, sst_areacell, keyerror1 = Read_data_mask_area(
             sstfile, sstname, "temperature", metric, sstbox, file_area=sstareafile, name_area=sstareaname,
-            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, spatial_average=True,
-            debug=debug, **kwargs)
+            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
         lhf, lhf_areacell, keyerror2 = Read_data_mask_area(
             lhffile, lhfname, "heat flux", metric, lhfbox, file_area=lhfareafile, name_area=lhfareaname,
-            file_mask=lhflandmaskfile, name_mask=lhflandmaskname, maskland=True, maskocean=False, spatial_average=True,
-            debug=debug, **kwargs)
+            file_mask=lhflandmaskfile, name_mask=lhflandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
         keyerror = add_up_errors([keyerror1, keyerror2])
         if keyerror is not None:
             break
@@ -21114,12 +21111,11 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # 1.1 Read file and select the right region
         sst, sst_areacell, keyerror1 = Read_data_mask_area(
             sstfile, sstname, "temperature", metric, sstbox, file_area=sstareafile, name_area=sstareaname,
-            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, spatial_average=True,
-            debug=debug, **kwargs)
+            file_mask=sstlandmaskfile, name_mask=sstlandmaskname, maskland=True, maskocean=False, debug=debug, **kwargs)
         lwr, lwr_areacell, keyerror2 = Read_data_mask_area_multifile(
             lwrfile, lwrname, "heat flux", "lwr", metric, lwrbox, file_area=lwrareafile, name_area=lwrareaname,
-            file_mask=lwrlandmaskfile, name_mask=lwrlandmaskname, maskland=True, maskocean=False, spatial_average=True,
-            debug=debug, interpreter="project_interpreter_var2", **kwargs)
+            file_mask=lwrlandmaskfile, name_mask=lwrlandmaskname, maskland=True, maskocean=False, debug=debug,
+            interpreter="project_interpreter_var2", **kwargs)
         keyerror = add_up_errors([keyerror1, keyerror2])
         if keyerror is not None:
             break
