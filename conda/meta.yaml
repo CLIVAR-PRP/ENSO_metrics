@@ -1,43 +1,50 @@
-{% set name = "ensometrics" %}
-{% set version = "0.1" %}
+{% set name = "enso_metrics" %}
+{% set version = "1.1.1" %}
 
 package:
     name: {{ name|lower }}
     version: {{ version }}
 
 source:
-    git_url: https://github.com/eguil/Enso_metrics.git
-    git_rev: master
-    
+    url: https://github.com/CLIVAR-PRP/ENSO_metrics/archive/refs/tags/v{{ version }}.tar.gz
+    sha256: abc17f7f48669becc7ae38aed056fbf1f9d5b92fa2788c2d772c485eaca9297e    
 
 build:
-  number: 0
-  skip: True  # [win or py3k]
-  script: python setup.py install
+  number: 1
+  skip: True  # [win]
+  script: {{ PYTHON }} -m pip install . -vv
 
 requirements:
-  build:
+  host:
     - python
-    - setuptools
+    - pip
   run:
     - python
     - cdms2
-    - numpy
-    - udunits2
+    - cdutil
     - genutil
+    - numpy
+    - scipy
+    - udunits2
 
 test:
-  command:
-    - export UVCDAT_ANONYMOUS_LOG=false && python run_tests.py -v2
+  imports:
+    - EnsoMetrics.EnsoCollectionsLib
+    - EnsoMetrics.EnsoComputeMetricsLib
+  commands:
+    - pip check
+  requires:
+    - pip
 
 about:
-    home:  http://github.com/eguil/Enso_metrics
-    license: 'CCLRC'
+    home: https://github.com/CLIVAR-PRP/ENSO_metrics
+    license: BSD-3-Clause
     license_file: LICENSE
     summary: "Library to compute ENSO metrics"
 
 extra:
   recipe-maintainers:
-    - doutriaux1
     - eguil
     - lee1043
+    - acordonez
+    - yyplanton
