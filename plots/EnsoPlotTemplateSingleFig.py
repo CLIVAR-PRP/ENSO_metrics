@@ -27,7 +27,8 @@ import string
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
 from EnsoMetrics import EnsoErrorsWarnings
 from .EnsoPlotToolsLib import create_labels, create_levels, create_lines, create_round_string
-from .EnsoPlotCdatToolsLib import member_average, member_range, minimaxi, my_mask, read_data
+from .EnsoPlotCdatToolsLib import member_average, member_range, minimaxi, my_mask, my_rmse, read_data, \
+    significance_range
 
 # ---------------------------------------------------#
 
@@ -907,10 +908,11 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
                            if dict_reg_per_ev[dict_param[pkey]["varpattern_extra"][-2]][ii] +
                            dict_reg_per_ev[dict_param[pkey]["varpattern_extra"][-1]][ii] >= 1]
     # initialization of the plot
-    nbrx, nbry = 32, 80
+    nbrx, nbry = 32, 144
     fig = plt.figure(0, figsize=(nbrx / 4, nbry / 4))
     gs = GridSpec(nbry, nbrx, figure=fig)
     fontsize = 10
+    nbr_sample = 100000
     # ---------------------------------------------------#
     # maps
     # ---------------------------------------------------#
@@ -1122,7 +1124,17 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
                         nbr += 1
                         del i4
             del color, inds, nbr, tab1, tab2
-        if ii == len(lv1) - 1:
+        # marker definition
+        if ii == 0:
+            ax.plot([x1 + 5. * dx], [y1 - 13. * dy], markersize=5, color="k", marker="D", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 7. * dx, y1 - 13. * dy, "obs within the range of ensemble's composite", fontsize=fontsize,
+                    ha="left", va="center")
+            ax.plot([x1 + 90. * dx], [y1 - 13. * dy], markersize=5, color="none", marker="D", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 92. * dx, y1 - 13. * dy, "not", fontsize=fontsize, ha="left", va="center")
+        # write region names on x axis
+        elif ii == len(lv1) - 1:
             for kk, reg in enumerate(significant_regions):
                 ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, color="k", ha="right", va="top", rotation=45)
         x1 = ax.get_position().x0
@@ -1214,23 +1226,33 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
         for kk, (i1, i2, i3) in enumerate(zip(tab1, tab2, tab3)):
             if i3 >= 1:
                 i4 = significant_regions.index(inds[nbr])
-                sum_mem = sum(i2)
-                xy = NUMPYarray([[i4 - 0.3, y1], [i4 - 0.3, sum_mem], [i4 + 0.3, sum_mem], [i4 + 0.3, y1]])
+                within_int = len(member) - sum(i2)
+                xy = NUMPYarray([[i4 - 0.3, y1], [i4 - 0.3, within_int], [i4 + 0.3, within_int], [i4 + 0.3, y1]])
                 if NUMPYisnan(i1) or isinstance(i1, float) is False:
                     # no model data
                     ax.text(i4, y1 + (y2 - y1) / 2., "no data", fontsize=fontsize, ha="center", va="center",
                             color=color, rotation=90, bbox=dict(lw=0, facecolor="white", pad=1, alpha=1))
                     nbr_wrong += 1
                 else:
-                    if sum_mem < tr2:
+                    if within_int < tr2:
                         ax.add_patch(Polygon(xy, linewidth=2, edgecolor=color, facecolor="none", zorder=4))
                         nbr_wrong += 1
                     else:
                         ax.add_patch(Polygon(xy, linewidth=2, edgecolor=color, facecolor=color, zorder=4))
                 nbr += 1
                 nbr_total += 1
-                del i4, sum_mem, xy
-        if ii == len(lv1) - 1:
+                del i4, xy, within_int
+        # marker definition
+        if ii == 0:
+            ax.plot([x1 + 5. * dx], [y1 - 13. * dy], markersize=8, color="k", marker="s", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 7. * dx, y1 - 13. * dy, str(int(round(tr1 * 100, 0))) + "% of the members", fontsize=fontsize,
+                    ha="left", va="center")
+            ax.plot([x1 + 90. * dx], [y1 - 13. * dy], markersize=8, color="none", marker="s", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 92. * dx, y1 - 13. * dy, "less", fontsize=fontsize, ha="left", va="center")
+        # write region names on x axis
+        elif ii == len(lv1) - 1:
             for kk, reg in enumerate(significant_regions):
                 ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, color="k", ha="right", va="top", rotation=45)
         x1 = ax.get_position().x0
@@ -1272,6 +1294,125 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
     y_pos += sizey + delty
     del delty, lv1, lv2, maxi, nbr_total, nbr_wrong, sizex, sizey, tr1, tr2, y_label, y_ticks, y2_fig
     # ---------------------------------------------------#
+    # proposed metric number 2bis
+    # ---------------------------------------------------#
+    sizex, sizey = len(significant_regions) if len(significant_regions) < nbrx else len(significant_regions) / 2, 5
+    delty = 1
+    y2_fig = 1
+    lv1, lv2, lv3 = dict_param[pkey]["varpattern"][: 2], dict_param[pkey]["varpattern_extra"][-4: -2], \
+        dict_param[pkey]["varpattern_extra"][-2:]
+    tr1 = 3. / 4
+    tr2 = MATHfloor(len(member) * tr1)
+    # range
+    maxi = len(member)
+    maxi += maxi % 4
+    dy = int(round(0.25 * maxi, 0))
+    y_ticks = list(range(0, maxi + 1, dy))
+    y_label = [str(ii) for ii in y_ticks]
+    # template
+    list_values = list()
+    for ii, (v1, v2, v3) in enumerate(zip(lv1, lv2, lv3)):
+        # ax
+        ax = plt.subplot(gs[y_pos: y_pos + sizey, 0: sizex])
+        # x-y axes
+        ax.set_xticks(list(range(len(significant_regions))), minor=False)
+        ax.set_xticklabels([""] * len(significant_regions))
+        ax.set_xlim(-0.5, len(significant_regions) - 0.5)
+        ax.set_yticks(y_ticks, minor=False)
+        ax.set_yticks([kk - (y_ticks[1] - y_ticks[0]) / 2. for kk in y_ticks], minor=True)
+        ax.set_yticklabels(y_label)
+        ax.set_ylim(0, maxi)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(fontsize)
+        ax.tick_params(axis="both", direction="in", which="both", bottom=False, top=False, left=True, right=True)
+        x1, x2 = ax.get_xlim()
+        y1, y2 = ax.get_ylim()
+        i1 = [round(kk, 2) for kk in NUMPYarange(x1 + 1, x2, 1)]
+        i2, i3 = [y1] * len(i1), [y2] * len(i1)
+        ax.vlines(i1, i2, i3, color="grey", linestyle="-", lw=1, zorder=1)
+        ax.hlines([tr2], [x1], [x2], color="green", linestyle="-", lw=1, zorder=1)
+        # title
+        dx, dy = (x2 - x1) / 100., (y2 - y1) / 100.
+        ax.scatter(x1 + 1.8 * dx, y2 - 10. * dy, s=150, marker="s", c="darkgrey", zorder=2)
+        ax.text(x1 + 1.8 * dx, y2 - 10. * dy, numbering[counter], fontsize=10, weight="bold", zorder=6, ha="center",
+                va="center")
+        # array
+        tab1 = dict_mod[member[0]][v1]["array"]
+        tab2 = [[dict_obs_extra[mem][v2]["array"][kk] for mem in member] for kk, reg in enumerate(list_regions)]
+        tab3 = dict_reg_per_ev[v3]
+        inds = [reg for kk, reg in enumerate(list_regions) if tab3[kk] >= 1]
+        # histogram
+        color = dict_col[project.upper()]
+        nbr = 0
+        for kk, (i1, i2, i3) in enumerate(zip(tab1, tab2, tab3)):
+            if i3 >= 1:
+                i4 = significant_regions.index(inds[nbr])
+                not_within = sum(i2)
+                within_int = len(member) - not_within
+                xy = NUMPYarray([[i4 - 0.3, y1], [i4 - 0.3, within_int], [i4 + 0.3, within_int], [i4 + 0.3, y1]])
+                if NUMPYisnan(i1) or isinstance(i1, float) is False:
+                    # no model data
+                    ax.text(i4, y1 + (y2 - y1) / 2., "no data", fontsize=fontsize, ha="center", va="center",
+                            color=color, rotation=90, bbox=dict(lw=0, facecolor="white", pad=1, alpha=1))
+                else:
+                    if within_int < tr2:
+                        ax.add_patch(Polygon(xy, linewidth=2, edgecolor=color, facecolor="none", zorder=4))
+                    else:
+                        ax.add_patch(Polygon(xy, linewidth=2, edgecolor=color, facecolor=color, zorder=4))
+                    list_values.append(not_within * 100. / len(member))
+                nbr += 1
+                del i4, not_within, xy, within_int
+        # marker definition
+        if ii == 0:
+            ax.plot([x1 + 5. * dx], [y1 - 13. * dy], markersize=8, color="k", marker="s", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 7. * dx, y1 - 13. * dy, str(int(round(tr1 * 100, 0))) + "% of the members", fontsize=fontsize,
+                    ha="left", va="center")
+            ax.plot([x1 + 90. * dx], [y1 - 13. * dy], markersize=8, color="none", marker="s", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 92. * dx, y1 - 13. * dy, "less", fontsize=fontsize, ha="left", va="center")
+        # write region names on x axis
+        elif ii == len(lv1) - 1:
+            for kk, reg in enumerate(significant_regions):
+                ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, color="k", ha="right", va="top", rotation=45)
+        x1 = ax.get_position().x0
+        x2 = ax.get_position().x1
+        y1 = ax.get_position().y0
+        y2 = ax.get_position().y1
+        txt = "La Nina" if "nina" in v1 else "El Nino"
+        ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 + (y2 - y1) / 2., txt, fontsize=fontsize, color="k",
+                ha="right", va="center", rotation=90, weight="bold", transform=fig.transFigure)
+        if ii == 0:
+            ax.text(0., 1.03, "Q2bis: Is the obs composite within the modeled range\n(Monte Carlo resampling)?",
+                    fontsize=fontsize, color="k", ha="left", va="bottom", weight="bold", transform=ax.transAxes)
+            y2_fig = ax.get_position().y1
+        else:
+            # y name for both panels
+            txt = "number of members"
+            ax.text(x2 + (x2 - x1) / 15., y1 + (y2_fig - y1) / 2., txt, fontsize=fontsize,
+                    color="k", ha="center", va="center", rotation=90, transform=fig.transFigure)
+            # method and note
+            txt = att_glo[member[0]]["metric_method"].split("within modeled range ")[1].split(" (regions must have")[0]
+            if "(90 of the Monte Carlo resampling)" in txt:
+                txt = txt.replace("(90 of the Monte Carlo resampling)", "(90% of the Monte Carlo resampling)")
+            txt = "The metric is the percentage of regions in which the observed composite does not fall within the" + \
+                " modeled range " + str(txt) + " (metric value = " + \
+                str(create_round_string(NUMPYmean(list_values))) + "%)"
+            lines = create_lines(txt, line_o=[], threshold=85)
+            txt = ""
+            for kk, elt in enumerate(lines):
+                txt += elt
+                if kk != len(lines) - 1:
+                    txt += "\n"
+            ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 - 2.5 * (y2 - y1) / sizey, txt, fontsize=fontsize,
+                    color="k", ha="left", va="top", transform=fig.transFigure)
+            del lines
+        counter += 1
+        y_pos += sizey + delty
+        del ax, dx, dy, i1, i2, txt, x1, x2, y1, y2
+    y_pos += sizey + delty
+    del delty, list_values, lv1, lv2, maxi, sizex, sizey, tr1, tr2, y_label, y_ticks, y2_fig
+    # ---------------------------------------------------#
     # proposed metric number 3
     # ---------------------------------------------------#
     sizex, sizey = len(significant_regions) if len(significant_regions) < nbrx else len(significant_regions) / 2, 5
@@ -1287,7 +1428,7 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
             if isinstance(dict_obs[v1]["attributes"]["nina_years"], str) is True:
                 nbr_ev = len(dict_obs[v1]["attributes"]["nina_years"].split(", "))
             else:
-                nbr_ev = len(dict_obs[v2]["attributes"]["nina_years"])
+                nbr_ev = len(dict_obs[1]["attributes"]["nina_years"])
         elif "nino" in v1 and "nino_years" in list(dict_obs[v1]["attributes"].keys()):
             if isinstance(dict_obs[v1]["attributes"]["nino_years"], str) is True:
                 nbr_ev = len(dict_obs[v1]["attributes"]["nino_years"].split(", "))
@@ -1302,7 +1443,8 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
                 str(sorted(list(dict_obs[v1]["attributes"].keys()), key=lambda v: v.upper()))]
             EnsoErrorsWarnings.my_error(list_strings)
         dict_mem_ave[v1] = my_mask(member_average(dict_mod, v1), dict_reg_per_ev[v3])
-        dict_mem_ran[v1] = member_range(dict_mod, v2, nbr_ev, lsig_level=tr1, larray_mask=dict_reg_per_ev[v3])
+        dict_mem_ran[v1] = member_range(dict_mod, v2, nbr_ev, lsig_level=tr1, lnum_samples=nbr_sample,
+                                        larray_mask=dict_reg_per_ev[v3])
         del nbr_ev
     tmp = list()
     for d2 in [model, reference]:
@@ -1400,8 +1542,17 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
                 nbr += 1
                 nbr_total += 1
                 del i5
+        # marker definition
+        if ii == 0:
+            ax.plot([x1 + 5. * dx], [y1 - 13. * dy], markersize=5, color="k", marker="D", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 7. * dx, y1 - 13. * dy, "obs within bst of ensemble's mean", fontsize=fontsize, ha="left",
+                    va="center")
+            ax.plot([x1 + 90. * dx], [y1 - 13. * dy], markersize=5, color="none", marker="D", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 92. * dx, y1 - 13. * dy, "not", fontsize=fontsize, ha="left", va="center")
         # write region names on x axis
-        if ii == len(lv1) - 1:
+        elif ii == len(lv1) - 1:
             for kk, reg in enumerate(significant_regions):
                 ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, color="k", ha="right", va="top", rotation=45)
         # write event type on the left
@@ -1420,13 +1571,11 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
             y2_fig = ax.get_position().y1
         else:
             # y name for both panels
-            txt = "number of members"
+            txt = dict_param[pkey]["zname"].replace("composite", "ensemble's\nmean") + \
+                " (" + str(dict_obs[lv1[0]]["attributes"]["units"]) + ")"
             ax.text(x2 + (x2 - x1) / 15., y1 + (y2_fig - y1) / 2., txt, fontsize=fontsize,
                     color="k", ha="center", va="center", rotation=90, transform=fig.transFigure)
             # method and note
-            txt = att_glo[member[0]]["metric_method"].split("within modeled range ")[1].split(" (regions must have")[0]
-            if "(90 of the Monte Carlo resampling)" in txt:
-                txt = txt.replace("(90 of the Monte Carlo resampling)", "(90% of the Monte Carlo resampling)")
             txt = "The metric is the percentage of regions in which the observed composite does not fall within the" + \
                 " modeled range computed with the ensemble (" + str(tr1) + "% of the Monte Carlo resampling) " + \
                 "(metric value = " + str(create_round_string(nbr_wrong * 100. / nbr_total)) + "%)"
@@ -1445,7 +1594,480 @@ def plot_telecon_multimem(model, project, experiment, nc_file, dict_param, refer
     y_pos += sizey + 1
     del delty, dict_mem_ave, dict_mem_ran, lv1, lv2, lv3, maxi, mini, nbr_total, nbr_wrong, sizex, sizey, tmp, tr1, \
         y_label, y_ticks, y2_fig
-    plt.savefig(figure_name, bbox_inches="tight")
+    # ---------------------------------------------------#
+    # proposed metric number 4
+    # ---------------------------------------------------#
+    sizex, sizey = len(significant_regions) if len(significant_regions) < nbrx else len(significant_regions) / 2, 5
+    delty = 1
+    y2_fig = 1
+    lv1, lv2 = dict_param[pkey]["varpattern"][:2], dict_param[pkey]["varpattern_extra"][-2:]
+    # percentage of observed values
+    dict_percent = dict()
+    lmem = sorted(list(dict_mod.keys()), key=lambda v: v.upper())
+    for mem in lmem:
+        dict1 = dict()
+        for v1 in lv1:
+            dict1[v1] = {"array": (dict_mod[mem][v1]["array"] - dict_obs[v1]["array"]) * 100. / dict_obs[v1]["array"]}
+        dict_percent[mem] = dict1
+        del dict1
+    # ensemble mean and bst
+    dict_mem_ave, dict_mem_ran = dict(), dict()
+    for v1, v2 in zip(lv1, lv2):
+        dict_mem_ave[v1] = my_mask(member_average(dict_percent, v1), dict_reg_per_ev[v2])
+        dict_mem_ran[v1] = significance_range(dict_percent, v1, len(lmem), lnum_samples=nbr_sample,
+                                              larray_mask=dict_reg_per_ev[v2])
+    # y axis range
+    tmp = list()
+    for v1 in lv1:
+        tmp.append(minimaxi(dict_mem_ave[v1]))
+        tmp.append(minimaxi(dict_mem_ran[v1]))
+    mini, maxi = minimaxi(tmp)
+    maxi = max([abs(mini), maxi])
+    tmp = MATHceil(maxi * 2)
+    if (tmp % 2 == 0 and tmp > 3) or tmp > 20:
+        if 20 < tmp < 400:
+            tmp = MATHceil(tmp / 10.)
+            tmp += tmp % 4
+            tmp = tmp * 10
+        elif tmp > 400:
+            tmp = MATHceil(tmp / 100.)
+            tmp += tmp % 4
+            tmp = tmp * 100
+        dy = int(round(0.25 * tmp, 0))
+        y_ticks = list(range(-dy, dy + 1, dy))
+        y_label = [str(ii) for ii in y_ticks]
+    else:
+        dy = 0.25 * tmp
+        y_ticks = [round(ii, 2) for ii in NUMPYarange(-dy, dy + 0.1, dy)]
+        y_label = list()
+        for ii in y_ticks:
+            if len(str(dy).split(".")[1]) == 2:
+                y_label.append("{0:.2f}".format(round(ii, 2)))
+            else:
+                y_label.append("{0:.1f}".format(round(ii, 1)))
+    # template
+    list_values = list()
+    for ii, (v1, v2) in enumerate(zip(lv1, lv2)):
+        # ax
+        ax = plt.subplot(gs[y_pos: y_pos + sizey, 0: sizex])
+        # x-y axes
+        ax.set_xticks(list(range(len(significant_regions))), minor=False)
+        ax.set_xticklabels([""] * len(significant_regions))
+        ax.set_xlim(-0.5, len(significant_regions) - 0.5)
+        ax.set_yticks(y_ticks, minor=False)
+        ax.set_yticks([kk - (y_ticks[1] - y_ticks[0]) / 2. for kk in y_ticks], minor=True)
+        ax.set_yticklabels(y_label)
+        ax.set_ylim(-1.1 * maxi, 1.1 * maxi)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(fontsize)
+        ax.tick_params(axis="both", direction="in", which="both", bottom=False, top=False, left=True, right=True)
+        x1, x2 = ax.get_xlim()
+        y1, y2 = ax.get_ylim()
+        i1 = [round(kk, 2) for kk in NUMPYarange(x1 + 1, x2, 1)]
+        i2, i3 = [y1] * len(i1), [y2] * len(i1)
+        ax.vlines(i1, i2, i3, color="grey", linestyle="-", lw=1, zorder=1)
+        ax.hlines([0], [x1], [x2], color="grey", linestyle="-", lw=1, zorder=1)
+        # title
+        dx, dy = (x2 - x1) / 100., (y2 - y1) / 100.
+        ax.scatter(x1 + 1.8 * dx, y2 - 10. * dy, s=150, marker="s", c="darkgrey", zorder=2)
+        ax.text(x1 + 1.8 * dx, y2 - 10. * dy, numbering[counter], fontsize=10, weight="bold", zorder=6, ha="center",
+                va="center")
+        # array
+        tab1 = dict_mem_ave[v1]
+        tab2 = dict_mem_ran[v1].reorder("10")
+        tab3 = dict_reg_per_ev[v2]
+        inds = [reg for kk, reg in enumerate(list_regions) if tab3[kk] >= 1]
+        co1, co2 = dict_col[project.upper()], dict_col["REF"]
+        # marker and range
+        nbr = 0
+        for kk, (i1, i2, i3) in enumerate(zip(tab1, tab2, tab3)):
+            if i3 >= 1:
+                i4 = significant_regions.index(inds[nbr])
+                if NUMPYisnan(i1) or isinstance(i1, float) is False:
+                    # no model data
+                    ax.text(i4, y1 + (y2 - y1) / 2., "no data", fontsize=fontsize, ha="center", va="center", color=co1,
+                            rotation=90, bbox=dict(lw=0, facecolor="white", pad=1, alpha=1))
+                else:
+                    if -50 <= i1 <= 50:
+                        # modeled error not too large
+                        ax.plot([i4], [i1], markersize=6, color=co1, marker="D", fillstyle="full",
+                                markeredgecolor=co1, markeredgewidth=2, zorder=3)
+                    else:
+                        # large modeled error
+                        ax.plot([i4], [i1], markersize=6, color="white", marker="D", fillstyle="full",
+                                markeredgecolor=co1, markeredgewidth=2, zorder=3)
+                    # modeled range
+                    ax.plot([i4, i4], [min(i2), max(i2)], color=co1, lw=1, ls="-", zorder=2)
+                    ax.plot([i4 - 0.3, i4 + 0.3], [min(i2), min(i2)], color=co1, lw=1, ls="-", zorder=5)
+                    ax.plot([i4 - 0.3, i4 + 0.3], [max(i2), max(i2)], color=co1, lw=1, ls="-", zorder=5)
+                    list_values.append(abs(i1))
+                nbr += 1
+                del i4
+        # marker definition
+        if ii == 0:
+            ax.plot([x1 + 5. * dx], [y1 - 13. * dy], markersize=5, color="k", marker="D", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 7. * dx, y1 - 13. * dy, "-50% < ensemble mean < +50%", fontsize=fontsize, ha="left",
+                    va="center")
+            ax.plot([x1 + 90. * dx], [y1 - 13. * dy], markersize=5, color="none", marker="D", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 92. * dx, y1 - 13. * dy, "not", fontsize=fontsize, ha="left", va="center")
+        # write region names on x axis
+        elif ii == len(lv1) - 1:
+            for kk, reg in enumerate(significant_regions):
+                ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, color="k", ha="right", va="top", rotation=45)
+        # write event type on the left
+        x1 = ax.get_position().x0
+        x2 = ax.get_position().x1
+        y1 = ax.get_position().y0
+        y2 = ax.get_position().y1
+        txt = "La Nina" if "nina" in v1 else "El Nino"
+        ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 + (y2 - y1) / 2., txt, fontsize=fontsize, color="k",
+                ha="right", va="center", rotation=90, weight="bold", transform=fig.transFigure)
+        if ii == 0:
+            # write the question asked
+            ax.text(0., 1.03, "Q4: What is the ensemble's mean relative error?", fontsize=fontsize, color="k",
+                    ha="left", va="bottom", weight="bold", transform=ax.transAxes)
+            y2_fig = ax.get_position().y1
+        else:
+            # y name for both panels
+            txt = dict_param[pkey]["zname"].replace("composite", "relative difference\nensemble's mean") + " (%)"
+            ax.text(x2 + (x2 - x1) / 15., y1 + (y2_fig - y1) / 2., txt, fontsize=fontsize,  color="k", ha="center",
+                    va="center", rotation=90, transform=fig.transFigure)
+            # method and note
+            txt = "The metric is the averaged (across regions) absolute value of the relative difference, using the" + \
+                " ensemble's mean (EM) |(EN - obs) * 100 / obs| (metric value = " + \
+                str(create_round_string(NUMPYmean(list_values))) + "%)"
+            lines = create_lines(txt, line_o=[], threshold=85)
+            txt = ""
+            for kk, elt in enumerate(lines):
+                txt += elt
+                if kk != len(lines) - 1:
+                    txt += "\n"
+            ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 - 2.5 * (y2 - y1) / sizey, txt, fontsize=fontsize,
+                    color="k", ha="left", va="top", transform=fig.transFigure)
+            del lines
+        counter += 1
+        y_pos += sizey + delty
+        del ax, co1, co2, dx, dy, i1, i2, i3, inds, nbr, tab1, tab2, tab3, txt, x1, x2, y1, y2
+    y_pos += sizey + 1
+    del delty, dict_mem_ave, dict_mem_ran, dict_percent, list_values, lv1, lv2, maxi, mini, sizex, sizey, tmp, \
+        y_label, y_ticks, y2_fig
+    # ---------------------------------------------------#
+    # proposed metric number 4bis
+    # ---------------------------------------------------#
+    sizex, sizey = len(significant_regions) if len(significant_regions) < nbrx else len(significant_regions) / 2, 5
+    delty = 1
+    y2_fig = 1
+    lv1, lv2 = dict_param[pkey]["varpattern"][:2], dict_param[pkey]["varpattern_extra"][-2:]
+    # percentage of observed values
+    dict_percent = dict()
+    lmem = sorted(list(dict_mod.keys()), key=lambda v: v.upper())
+    for mem in lmem:
+        dict1 = dict()
+        for v1 in lv1:
+            dict1[v1] = {"array": (dict_mod[mem][v1]["array"] - dict_obs[v1]["array"]) * 100. / dict_obs[v1]["array"]}
+        dict_percent[mem] = dict1
+        del dict1
+    # ensemble mean and bst
+    dict_mem_ave, dict_mem_ran = dict(), dict()
+    for v1, v2 in zip(lv1, lv2):
+        dict_mem_ave[v1] = my_mask(member_average(dict_percent, v1), dict_reg_per_ev[v2])
+        dict_mem_ran[v1] = significance_range(dict_percent, v1, len(lmem), lnum_samples=nbr_sample,
+                                              larray_mask=dict_reg_per_ev[v2])
+    # y axis range
+    tmp = list()
+    for v1 in lv1:
+        tmp.append(minimaxi(dict_mem_ave[v1]))
+        tmp.append(minimaxi(dict_mem_ran[v1]))
+    mini, maxi = minimaxi(tmp)
+    maxi = max([abs(mini), maxi])
+    tmp = MATHceil(maxi * 2)
+    if (tmp % 2 == 0 and tmp > 3) or tmp > 20:
+        if 20 < tmp < 400:
+            tmp = MATHceil(tmp / 10.)
+            tmp += tmp % 4
+            tmp = tmp * 10
+        elif tmp > 400:
+            tmp = MATHceil(tmp / 100.)
+            tmp += tmp % 4
+            tmp = tmp * 100
+        dy = int(round(0.25 * tmp, 0))
+        y_ticks = list(range(-dy, dy + 1, dy))
+        y_label = [str(ii) for ii in y_ticks]
+    else:
+        dy = 0.25 * tmp
+        y_ticks = [round(ii, 2) for ii in NUMPYarange(-dy, dy + 0.1, dy)]
+        y_label = list()
+        for ii in y_ticks:
+            if len(str(dy).split(".")[1]) == 2:
+                y_label.append("{0:.2f}".format(round(ii, 2)))
+            else:
+                y_label.append("{0:.1f}".format(round(ii, 1)))
+    # template
+    list_values = list()
+    for ii, (v1, v2) in enumerate(zip(lv1, lv2)):
+        # ax
+        ax = plt.subplot(gs[y_pos: y_pos + sizey, 0: sizex])
+        # x-y axes
+        ax.set_xticks(list(range(len(significant_regions))), minor=False)
+        ax.set_xticklabels([""] * len(significant_regions))
+        ax.set_xlim(-0.5, len(significant_regions) - 0.5)
+        ax.set_yticks(y_ticks, minor=False)
+        ax.set_yticks([kk - (y_ticks[1] - y_ticks[0]) / 2. for kk in y_ticks], minor=True)
+        ax.set_yticklabels(y_label)
+        ax.set_ylim(-1.1 * maxi, 1.1 * maxi)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(fontsize)
+        ax.tick_params(axis="both", direction="in", which="both", bottom=False, top=False, left=True, right=True)
+        x1, x2 = ax.get_xlim()
+        y1, y2 = ax.get_ylim()
+        i1 = [round(kk, 2) for kk in NUMPYarange(x1 + 1, x2, 1)]
+        i2, i3 = [y1] * len(i1), [y2] * len(i1)
+        ax.vlines(i1, i2, i3, color="grey", linestyle="-", lw=1, zorder=1)
+        ax.hlines([0], [x1], [x2], color="grey", linestyle="-", lw=1, zorder=1)
+        # title
+        dx, dy = (x2 - x1) / 100., (y2 - y1) / 100.
+        ax.scatter(x1 + 1.8 * dx, y2 - 10. * dy, s=150, marker="s", c="darkgrey", zorder=2)
+        ax.text(x1 + 1.8 * dx, y2 - 10. * dy, numbering[counter], fontsize=10, weight="bold", zorder=6, ha="center",
+                va="center")
+        # array
+        tab1 = dict_mem_ave[v1]
+        tab2 = dict_mem_ran[v1].reorder("10")
+        tab3 = dict_reg_per_ev[v2]
+        inds = [reg for kk, reg in enumerate(list_regions) if tab3[kk] >= 1]
+        co1, co2 = dict_col[project.upper()], dict_col["REF"]
+        # marker and range
+        nbr = 0
+        for kk, (i1, i2, i3) in enumerate(zip(tab1, tab2, tab3)):
+            if i3 >= 1:
+                i4 = significant_regions.index(inds[nbr])
+                if NUMPYisnan(i1) or isinstance(i1, float) is False:
+                    # no model data
+                    ax.text(i4, y1 + (y2 - y1) / 2., "no data", fontsize=fontsize, ha="center", va="center", color=co1,
+                            rotation=90, bbox=dict(lw=0, facecolor="white", pad=1, alpha=1))
+                else:
+                    if -50 <= i1 <= 50:
+                        # modeled error not too large
+                        ax.plot([i4], [i1], markersize=6, color=co1, marker="D", fillstyle="full",
+                                markeredgecolor=co1, markeredgewidth=2, zorder=3)
+                    else:
+                        # large modeled error
+                        ax.plot([i4], [i1], markersize=6, color="white", marker="D", fillstyle="full",
+                                markeredgecolor=co1, markeredgewidth=2, zorder=3)
+                    # modeled range
+                    ax.plot([i4, i4], [min(i2), max(i2)], color=co1, lw=1, ls="-", zorder=2)
+                    ax.plot([i4 - 0.3, i4 + 0.3], [min(i2), min(i2)], color=co1, lw=1, ls="-", zorder=5)
+                    ax.plot([i4 - 0.3, i4 + 0.3], [max(i2), max(i2)], color=co1, lw=1, ls="-", zorder=5)
+                    list_values.append(i1)
+                nbr += 1
+                del i4
+        # marker definition
+        if ii == 0:
+            ax.plot([x1 + 5. * dx], [y1 - 13. * dy], markersize=5, color="k", marker="D", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 7. * dx, y1 - 13. * dy, "-50% < ensemble mean < +50%", fontsize=fontsize, ha="left",
+                    va="center")
+            ax.plot([x1 + 90. * dx], [y1 - 13. * dy], markersize=5, color="none", marker="D", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 92. * dx, y1 - 13. * dy, "not", fontsize=fontsize, ha="left", va="center")
+        # write region names on x axis
+        elif ii == len(lv1) - 1:
+            for kk, reg in enumerate(significant_regions):
+                ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, color="k", ha="right", va="top", rotation=45)
+        # write event type on the left
+        x1 = ax.get_position().x0
+        x2 = ax.get_position().x1
+        y1 = ax.get_position().y0
+        y2 = ax.get_position().y1
+        txt = "La Nina" if "nina" in v1 else "El Nino"
+        ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 + (y2 - y1) / 2., txt, fontsize=fontsize, color="k",
+                ha="right", va="center", rotation=90, weight="bold", transform=fig.transFigure)
+        if ii == 0:
+            # write the question asked
+            ax.text(0., 1.03, "Q4bis: What is the ensemble's mean relative error?", fontsize=fontsize, color="k",
+                    ha="left", va="bottom", weight="bold", transform=ax.transAxes)
+            y2_fig = ax.get_position().y1
+        else:
+            # y name for both panels
+            txt = dict_param[pkey]["zname"].replace("composite", "relative difference\nensemble's mean") + " (%)"
+            ax.text(x2 + (x2 - x1) / 15., y1 + (y2_fig - y1) / 2., txt, fontsize=fontsize, color="k", ha="center",
+                    va="center", rotation=90, transform=fig.transFigure)
+            # method and note
+            txt = "The metric is the rmse(ensemble's mean, obs) of the relative difference, using the" + \
+                " ensemble's mean (EM) |(EN - obs) * 100 / obs| (metric value = " + \
+                str(create_round_string(my_rmse(list_values))) + "%)"
+            lines = create_lines(txt, line_o=[], threshold=85)
+            txt = ""
+            for kk, elt in enumerate(lines):
+                txt += elt
+                if kk != len(lines) - 1:
+                    txt += "\n"
+            ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 - 2.5 * (y2 - y1) / sizey, txt, fontsize=fontsize,
+                    color="k", ha="left", va="top", transform=fig.transFigure)
+            del lines
+        counter += 1
+        y_pos += sizey + delty
+        del ax, co1, co2, dx, dy, i1, i2, i3, inds, nbr, tab1, tab2, tab3, txt, x1, x2, y1, y2
+    y_pos += sizey + 1
+    del delty, dict_mem_ave, dict_mem_ran, dict_percent, list_values, lv1, lv2, maxi, mini, sizex, sizey, tmp, \
+        y_label, y_ticks, y2_fig
+    # ---------------------------------------------------#
+    # proposed metric number 4ter
+    # ---------------------------------------------------#
+    sizex, sizey = len(significant_regions) if len(significant_regions) < nbrx else len(significant_regions) / 2, 5
+    delty = 1
+    y2_fig = 1
+    lv1, lv2 = dict_param[pkey]["varpattern"][:2], dict_param[pkey]["varpattern_extra"][-2:]
+    # ensemble mean and bst
+    dict_mem_ave, dict_mem_ran = dict(), dict()
+    for v1, v2 in zip(lv1, lv2):
+        dict_mem_ave[v1] = my_mask(member_average(dict_mod, v1), dict_reg_per_ev[v2])
+        dict_mem_ran[v1] = significance_range(dict_mod, v1, len(lmem), lsig_level=100, lnum_samples=nbr_sample,
+                                              larray_mask=dict_reg_per_ev[v2])
+    # y axis range
+    tmp = list()
+    for v1 in lv1:
+        tmp.append(minimaxi(dict_mem_ave[v1]))
+        tmp.append(minimaxi(dict_mem_ran[v1]))
+    mini, maxi = minimaxi(tmp)
+    maxi = max([abs(mini), maxi])
+    tmp = MATHceil(maxi * 2)
+    if (tmp % 2 == 0 and tmp > 3) or tmp > 20:
+        if 20 < tmp < 400:
+            tmp = MATHceil(tmp / 10.)
+            tmp += tmp % 4
+            tmp = tmp * 10
+        elif tmp > 400:
+            tmp = MATHceil(tmp / 100.)
+            tmp += tmp % 4
+            tmp = tmp * 100
+        dy = int(round(0.25 * tmp, 0))
+        y_ticks = list(range(-dy, dy + 1, dy))
+        y_label = [str(ii) for ii in y_ticks]
+    else:
+        dy = 0.25 * tmp
+        y_ticks = [round(ii, 2) for ii in NUMPYarange(-dy, dy + 0.1, dy)]
+        y_label = list()
+        for ii in y_ticks:
+            if len(str(dy).split(".")[1]) == 2:
+                y_label.append("{0:.2f}".format(round(ii, 2)))
+            else:
+                y_label.append("{0:.1f}".format(round(ii, 1)))
+    # template
+    list_values_mod, list_values_obs = list(), list()
+    for ii, (v1, v2) in enumerate(zip(lv1, lv2)):
+        # ax
+        ax = plt.subplot(gs[y_pos: y_pos + sizey, 0: sizex])
+        # x-y axes
+        ax.set_xticks(list(range(len(significant_regions))), minor=False)
+        ax.set_xticklabels([""] * len(significant_regions))
+        ax.set_xlim(-0.5, len(significant_regions) - 0.5)
+        ax.set_yticks(y_ticks, minor=False)
+        ax.set_yticks([kk - (y_ticks[1] - y_ticks[0]) / 2. for kk in y_ticks], minor=True)
+        ax.set_yticklabels(y_label)
+        ax.set_ylim(-1.1 * maxi, 1.1 * maxi)
+        for tick in ax.yaxis.get_major_ticks():
+            tick.label.set_fontsize(fontsize)
+        ax.tick_params(axis="both", direction="in", which="both", bottom=False, top=False, left=True, right=True)
+        x1, x2 = ax.get_xlim()
+        y1, y2 = ax.get_ylim()
+        i1 = [round(kk, 2) for kk in NUMPYarange(x1 + 1, x2, 1)]
+        i2, i3 = [y1] * len(i1), [y2] * len(i1)
+        ax.vlines(i1, i2, i3, color="grey", linestyle="-", lw=1, zorder=1)
+        ax.hlines([0], [x1], [x2], color="grey", linestyle="-", lw=1, zorder=1)
+        # title
+        dx, dy = (x2 - x1) / 100., (y2 - y1) / 100.
+        ax.scatter(x1 + 1.8 * dx, y2 - 10. * dy, s=150, marker="s", c="darkgrey", zorder=2)
+        ax.text(x1 + 1.8 * dx, y2 - 10. * dy, numbering[counter], fontsize=10, weight="bold", zorder=6, ha="center",
+                va="center")
+        # array
+        tab1 = dict_mem_ave[v1]
+        tab2 = dict_mem_ran[v1].reorder("10")
+        tab3 = dict_reg_per_ev[v2]
+        tab4 = dict_obs[v1]["array"]
+        inds = [reg for kk, reg in enumerate(list_regions) if tab3[kk] >= 1]
+        co1, co2 = dict_col[project.upper()], dict_col["REF"]
+        # marker and range
+        nbr = 0
+        for kk, (i1, i2, i3, i4) in enumerate(zip(tab1, tab2, tab3, tab4)):
+            if i3 >= 1:
+                i5 = significant_regions.index(inds[nbr])
+                # model
+                if NUMPYisnan(i1) or isinstance(i1, float) is False:
+                    # no model data
+                    ax.text(i5, y1 + (y2 - y1) / 2., "no data", fontsize=fontsize, ha="center", va="center", color=co1,
+                            rotation=90, bbox=dict(lw=0, facecolor="white", pad=1, alpha=1))
+                else:
+                    if min(i2) <= i4 <= max(i2):
+                        # obs within modeled range
+                        ax.plot([i5], [i1], markersize=6, color=co1, marker="D", fillstyle="full",
+                                markeredgecolor=co1, markeredgewidth=2, zorder=3)
+                    else:
+                        # obs not within modeled range
+                        ax.plot([i5], [i1], markersize=6, color="white", marker="D", fillstyle="full",
+                                markeredgecolor=co1, markeredgewidth=2, zorder=3)
+                    # modeled range
+                    ax.plot([i5, i5], [min(i2), max(i2)], color=co1, lw=1, ls="-", zorder=2)
+                    ax.plot([i5 - 0.3, i5 + 0.3], [min(i2), min(i2)], color=co1, lw=1, ls="-", zorder=5)
+                    ax.plot([i5 - 0.3, i5 + 0.3], [max(i2), max(i2)], color=co1, lw=1, ls="-", zorder=5)
+                    list_values_mod.append(i1)
+                    list_values_obs.append(i4)
+                # obs
+                ax.plot([i5 - 0.4, i5 + 0.4], [i4, i4], color=co2, lw=2, ls="-", zorder=4)
+                nbr += 1
+                del i5
+        # marker definition
+        if ii == 0:
+            ax.plot([x1 + 5. * dx], [y1 - 13. * dy], markersize=5, color="k", marker="D", fillstyle="full",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 7. * dx, y1 - 13. * dy, "min(bst) < obs < max(bst)", fontsize=fontsize, ha="left",
+                    va="center")
+            ax.plot([x1 + 90. * dx], [y1 - 13. * dy], markersize=5, color="none", marker="D", fillstyle="none",
+                    markeredgecolor="k", markeredgewidth=1, zorder=3, clip_on=False)
+            ax.text(x1 + 92. * dx, y1 - 13. * dy, "not", fontsize=fontsize, ha="left", va="center")
+        # write region names on x axis
+        elif ii == len(lv1) - 1:
+            for kk, reg in enumerate(significant_regions):
+                ax.text(kk + 2 * dx, y1 - 2 * dy, reg, fontsize=fontsize, color="k", ha="right", va="top", rotation=45)
+        # write event type on the left
+        x1 = ax.get_position().x0
+        x2 = ax.get_position().x1
+        y1 = ax.get_position().y0
+        y2 = ax.get_position().y1
+        txt = "La Nina" if "nina" in v1 else "El Nino"
+        ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 + (y2 - y1) / 2., txt, fontsize=fontsize, color="k",
+                ha="right", va="center", rotation=90, weight="bold", transform=fig.transFigure)
+        if ii == 0:
+            # write the question asked
+            ax.text(0., 1.03, "Q4ter: What is the ensemble's mean error?", fontsize=fontsize, color="k",
+                    ha="left", va="bottom", weight="bold", transform=ax.transAxes)
+            y2_fig = ax.get_position().y1
+        else:
+            # y name for both panels
+            txt = dict_param[pkey]["zname"].replace("composite", "relative difference\nensemble's mean") + " (%)"
+            ax.text(x2 + (x2 - x1) / 15., y1 + (y2_fig - y1) / 2., txt, fontsize=fontsize, color="k", ha="center",
+                    va="center", rotation=90, transform=fig.transFigure)
+            # method and note
+            txt = "The metric is the rmse(ensemble's mean, obs) (metric value = " + \
+                str(create_round_string(my_rmse(list_values_mod, larray2=list_values_obs))) + \
+                str(dict_obs[lv1[0]]["attributes"]["units"]) + ")"
+            lines = create_lines(txt, line_o=[], threshold=85)
+            txt = ""
+            for kk, elt in enumerate(lines):
+                txt += elt
+                if kk != len(lines) - 1:
+                    txt += "\n"
+            ax.text(x1 - 2.1 * (x2 - x1) / sizex, y1 - 2.5 * (y2 - y1) / sizey, txt, fontsize=fontsize,
+                    color="k", ha="left", va="top", transform=fig.transFigure)
+            del lines
+        counter += 1
+        y_pos += sizey + delty
+        del ax, co1, co2, dx, dy, i1, i2, i3, inds, nbr, tab1, tab2, tab3, tab4, txt, x1, x2, y1, y2
+    y_pos += sizey + 1
+    del delty, dict_mem_ave, dict_mem_ran, list_values_mod, list_values_obs, lv1, lv2, maxi, mini, sizex, sizey, tmp, \
+        y_label, y_ticks, y2_fig
+    # plt.savefig(figure_name, bbox_inches="tight")
     plt.savefig(str(figure_name) + ".eps", bbox_inches="tight", format="eps")
     plt.close()
     return

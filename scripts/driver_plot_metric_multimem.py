@@ -26,7 +26,7 @@ from EnsoPlots.EnsoMetricPlot import plotter_multimem_1obs
 # ---------------------------------------------------#
 metric_collection = "telecon_mix"
 project = "CMIP6"
-model = "MIROC6"  # "CNRM-CM6-1"  # "NorCPM1"  #
+model = "ACCESS-ESM1-5"  # "CanESM5"  # "CNRM-CM6-1"  # "IPSL-CM6A-LR"  # "MIROC-ES2L"  # "MIROC6"  # "NorCPM1"  #
 experiment = "historical"
 # computation version, 'v20200427' for models and 'v20201231' for obs are provided with the package
 version_mod = "v20200427"
@@ -62,7 +62,7 @@ netcdf_pattern = str(metric_collection) + "_" + str(project) + "_" + str(model) 
 # list metrics
 list_metrics = ["telecon_pr_ano_djf", "telecon_pr_amp_djf"]
 # list observations
-list_observations = ["OISSTv2_CMAP", "OISSTv2_GPCPv2.3"]
+list_observations = ["OISSTv2_GPCPv2.3", "OISSTv2_CMAP"]
 # ---------------------------------------------------#
 
 

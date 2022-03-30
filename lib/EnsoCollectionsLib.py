@@ -10,6 +10,42 @@
 def defCollection(mc=True):
     # Name, list of metrics
     metrics_collection = {
+        "ENSO_IV": {
+            "long_name": "Metrics Collection for ENSO internal variability",
+            "metrics_list": {
+                "EnsoAmpl": {
+                    "variables": ["sst"],
+                    "regions": {"sst": "nino3.4"},
+                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
+                    "metric_computation": "abs_relative_difference",
+                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
+                                   "newgrid_name": "generic_1x1deg"},
+                },
+                "ave_ts_box_global": {
+                    "variables": ["sst"],
+                    "regions": {"sst": "global2"},
+                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
+                    "metric_computation": "abs_relative_difference",
+                },
+                "nstar": {
+                    "variables": ["sst"],
+                    "regions": {"sst": "nino3.4"},
+                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
+                    "metric_computation": "abs_relative_difference",
+                },
+            },
+            "common_collection_parameters": {
+                "detrending": {"method": "linear"},
+                "frequency": "monthly",
+                "min_time_steps": 240,
+                "normalization": False,
+                "project_interpreter": "CMIP",
+                "observed_period": None,
+                "modeled_period": None,
+            },
+            "plot_order": ["EnsoAmpl"],
+            "description": "understanding the low frequency modulation of ENSO variance",
+        },
         "ENSO_perf": {
             "long_name": "Metrics Collection for ENSO performance",
             "metrics_list": {
@@ -2099,7 +2135,7 @@ def ReferenceObservations(dataset=True):
                 "shf": {"var_name": "sensible_heatflux"},
                 "ssh": {"var_name": "sea_surface_height"},
                 "sst": {"var_name": "sea_surface_temperature"},
-                "swr": {"var_name": "net_surface_heatflux_downwards"},
+                "swr": {"var_name": "net_shortwave_heatflux_downwards"},
                 "taux": {"var_name": "zonal_wind_stress"},
                 "tauy": {"var_name": "meridional_wind_stress"},
                 "thf": {"var_name": "net_surface_heatflux_downwards"},
@@ -2824,9 +2860,9 @@ def CmipVariables():
             # areacell
             "areacell": {"var_name": "areacella", "cf_name": "cell_area", "cf_units": "m2"},
             # landmask
-            "landmask": {"var_name": "sftlf", "cf_name": "cell_area", "cf_units": "1"},
+            "landmask": {"var_name": "sftlf", "cf_name": "land_area_fraction", "cf_units": "1"},
             # latent heat flux
-            "lhf": {"var_name": "hfls", "cf_name": "land_area_fraction", "cf_units": "W m-2"},
+            "lhf": {"var_name": "hfls", "cf_name": "surface_upward_latent_heat_flux", "cf_units": "W m-2"},
             # longwave radiation computed from these variables IN THAT ORDER
             # lwr = rlds - rlus
             # sometimes lwr is included in the datasets in a variable called "rls"

@@ -20,6 +20,7 @@ from cdms2 import createVariable as CDMS2createVariable
 from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
 from genutil.statistics import percentiles as GENUTILstatistics__percentiles
+from genutil.statistics import rms as GENUTILstatistics__rms
 from MV2 import array as MV2array
 from MV2 import average as MV2average
 from MV2 import concatenate as MV2concatenate
@@ -89,7 +90,7 @@ def member_range(ldict_members, lvariable, lsample_size, lsig_level=90, lnum_sam
     'lsig_level'% interval. The minimum and maximum values of this interval is returned (i.e., the range)
     #################################################################################
 
-    :param ldict_members:
+    :param ldict_members: dictionary
         dictionary of ensemble members
         level 1: member names
         level 2: variable names
@@ -113,9 +114,9 @@ def member_range(ldict_members, lvariable, lsample_size, lsig_level=90, lnum_sam
         default value is 10,000
     :param larray_mask: masked_array
         masked_array in which 0 means the values will be masked
-        Default is None (data will not be masked )
+        Default is None (data will not be masked)
 
-    :return: masked_array
+    :return larray_o: masked_array
         masked_array of the shape arr[range, region, x, y, z], the first dimension is the minimum and maximum values of
         given confidence interval of the Monte Carlo resampling
     """
@@ -243,6 +244,31 @@ def my_mask(larray, larray_mask):
     return larray_out
 
 
+def my_rmse(larray1, larray2=None):
+    """
+    #################################################################################
+    Description:
+    Mask where given mask equal 1
+    #################################################################################
+
+    :param larray1: masked_array
+        masked_array to evaluate
+    :param larray2: masked_array, optional
+        masked_array to evaluate larray1 against
+        default is None (larray1 evaluated against 0)
+
+    :return rmse: float
+        rmse between larray1 and 0 or larray2 if given
+    """
+    larray_i1 = MV2array(larray1)
+    if larray2 is None:
+        larray_i2 = MV2zeros(larray_i1.shape)
+    else:
+        larray_i2 = MV2array(larray2)
+    rmse = float(GENUTILstatistics__rms(larray_i1, larray_i2, centered=0, biased=1))
+    return rmse
+
+
 def my_sig(larray1, larray2, larray3):
     tab = my_mask(NUMPYmean(larray2, axis=0), larray3).compressed()
     low, hig = larray1
@@ -255,34 +281,48 @@ def my_sig(larray1, larray2, larray3):
     return significance
 
 
-def significance_range(larray, lnech, lsig_level=90, lnum_samples=1000000):
+def significance_range(ldict_members, lvariable, lsample_size, lsig_level=90, lnum_samples=1000000, larray_mask=None):
     """
     #################################################################################
     Description:
-    Create an array from the dictionary of horizontally averaged regions
+    Generate 'lnum_samples' random ensemble mean, with the sample size corresponding to 'lsample_size' to find the
+    'lsig_level'% interval. The minimum and maximum values of this interval is returned (i.e., the range)
     #################################################################################
 
-    :param larray: masked_array
-        masked_array of the original array (all years), from which events have been selected, with time as first
-        dimension
-        e.g., larray(time, x, y, z)
-    :param lnech: integer
-        number of events to select in each random selections
+    :param ldict_members:
+        dictionary of ensemble members
+        level 1: member names
+        level 2: variable names
+        level 3: 'array' or 'attributes'
+        level 4: masked_array arr[region, x, y, z]
+    :param lvariable: string
+        name of the variable name to read (level 2 of the dictionary)
+    :param lsample_size: integer
+        number of events to select to create each composite
     :param lsig_level: integer, optional
-        confidence level of the significance test (95 is 95% confidence level)
+        confidence level of the significance test (90 is 90% confidence level, the 5% and 95% percentiles are detected)
         default value is 90
     :param lnum_samples: integer, optional
         number of random selections (with replacement) of the given sample to use for the significance test
-        default value is 100000
+        default value is 100,000
+    :param larray_mask: masked_array
+        masked_array in which 0 means the values will be masked
+        Default is None (data will not be masked)
 
-    :return: low: masked_array
-        masked_array shaped like larray.shape, with the minimum value of the significance test
-    :return: high: masked_array
-        masked_array shaped like larray.shape, with the maximum value of the significance test
+    :return larray_o: masked_array
+        masked_array of the shape arr[range, region, x, y, z], the first dimension is the minimum and maximum values of
+        given confidence interval of the Monte Carlo resampling
     """
+    # percentiles of the distribution to compute
+    s1 = (100 - lsig_level) / 2.
+    s2 = lsig_level + s1
+    # create array from dict
+    lmem = sorted(list(ldict_members.keys()), key=lambda v: v.upper())
+    larray1 = ldict_members[lmem[0]][lvariable]["array"]
+    larray2 = MV2array([ldict_members[mem][lvariable]["array"] for mem in lmem])
     # random selection among all years
-    idx = NUMPYrandom__randint(0, len(larray), (lnum_samples, lnech))
-    samples = NUMPYarray(larray)[idx]
+    idx = NUMPYrandom__randint(0, len(larray2), (lnum_samples, lsample_size))
+    samples = NUMPYarray(larray2)[idx]
     # average randomly selected years (create lnum_samples composites)
     stat2 = NUMPYmean(samples, axis=1)
     # compute lower and higher threshold of the given significance level
@@ -290,9 +330,29 @@ def significance_range(larray, lnech, lsig_level=90, lnum_samples=1000000):
         low = MV2min(stat2, axis=0)
         high = MV2max(stat2, axis=0)
     else:
-        low = GENUTILstatistics__percentiles(stat2, percentiles=[(100 - lsig_level) / 2.], axis=0)[0]
-        high = GENUTILstatistics__percentiles(stat2, percentiles=[lsig_level + ((100 - lsig_level) / 2.)], axis=0)[0]
-    return low, high
+        low = GENUTILstatistics__percentiles(stat2, percentiles=[s1], axis=0)[0]
+        high = GENUTILstatistics__percentiles(stat2, percentiles=[s2], axis=0)[0]
+    # create array
+    larray_o = MV2array([low, high])
+    ax_o = CDMS2createAxis(list(range(2)), id="lowhigh")
+    ax_o.short_name = str(s1) + "_and_" + str(s2) + "_precentiles"
+    ax_o.long_name = str(s1) + " and " + str(s2) + " Precentiles of the Bootstrap"
+    # create variable
+    axes = [ax_o] + larray1.getAxisList()
+    if type(larray1.mask) == NUMPYbool_:
+        larray_o = CDMS2createVariable(larray_o, axes=axes, grid=larray1.getGrid(), id="range")
+    else:
+        lmask = MV2zeros(larray_o.shape)
+        lmask[:] = larray1.mask
+        larray_o = CDMS2createVariable(larray_o, axes=axes, grid=larray1.getGrid(), mask=lmask, id="range")
+        del lmask
+    # mask with given mask if
+    if larray_mask is not None:
+        lmask = MV2zeros(larray_o.shape)
+        lmask[:] = larray_mask
+        larray_o = my_mask(larray_o, lmask)
+        del lmask
+    return larray_o
 
 
 def read_data(netcdf_file, netcdf_var, mod_name, ref_name, dict_diagnostic, dict_metric, member=None,

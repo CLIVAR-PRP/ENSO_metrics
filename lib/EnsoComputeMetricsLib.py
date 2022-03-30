@@ -5,27 +5,27 @@ from inspect import stack as INSPECTstack
 import json
 
 # ENSO_metrics package functions:
-from EnsoMetrics.EnsoCollectionsLib import defCollection, ReferenceObservations
+from EnsoMetrics.EnsoCollectionsLib import defCollection, ReferenceObservations, ReferenceRegions
 from EnsoMetrics import EnsoErrorsWarnings
-from EnsoMetrics.EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, BiasLwrLonRmse,\
-    BiasLwrMapRmse, BiasPrLatRmse, BiasPrLonRmse, BiasPrMapRmse, BiasShfLatRmse, BiasShfLonRmse, BiasShfMapRmse,\
-    BiasSshLatRmse, BiasSshLonRmse, BiasSshMapRmse, BiasSstLatRmse, BiasSstLonRmse, BiasSstMapRmse, BiasSstSkLonRmse,\
-    BiasSwrLatRmse, BiasSwrLonRmse, BiasSwrMapRmse, BiasTauxLatRmse, BiasTauxLonRmse, BiasTauxMapRmse, BiasTauyLatRmse,\
-    BiasTauyLonRmse, BiasTauyMapRmse, BiasThfLatRmse, BiasThfLonRmse, BiasThfMapRmse, EnsoAmpl, EnsoDiversity,\
-    EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux,\
-    EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, EnsoPrDjfTel, EnsoPrJjaTel, EnsoSeasonality,\
-    EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity, EnsoLhfLonRmse, EnsoLwrLonRmse, EnsoPrLonRmse,\
-    EnsoShfLonRmse, EnsoSshLonRmse, EnsoSstLonRmse, EnsoSwrLonRmse, EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoThfLonRmse,\
-    EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew, EnsoLhfTsRmse, EnsoLwrTsRmse, EnsoPrTsRmse, EnsoShfTsRmse,\
-    EnsoSshTsRmse, EnsoSstTsRmse, EnsoSwrTsRmse, EnsoTauxTsRmse, EnsoTauyTsRmse, EnsoThfTsRmse, grad_lat_pr,\
-    grad_lat_ssh, grad_lat_sst, grad_lon_pr, grad_lon_ssh, grad_lon_sst, NinaPrMap, NinaSlpMap, NinaSstDiv,\
-    NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrMap, NinoSlpMap, NinoSstDiv,\
-    NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, SeasonalLhfLatRmse,\
-    SeasonalLhfLonRmse, SeasonalLwrLatRmse, SeasonalLwrLonRmse, SeasonalPrLatRmse, SeasonalPrLonRmse,\
-    SeasonalShfLatRmse, SeasonalShfLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse,\
-    SeasonalSstLonRmse, SeasonalSwrLatRmse, SeasonalSwrLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse,\
-    SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, SeasonalThfLonRmse, telecon_pr_djf, \
-    telecon_pr_ano_djf, telecon_pr_amp_djf
+from EnsoMetrics.EnsoMetricsLib import ave_ts_box, BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, \
+    BiasLwrLonRmse, BiasLwrMapRmse, BiasPrLatRmse, BiasPrLonRmse, BiasPrMapRmse, BiasShfLatRmse, BiasShfLonRmse, \
+    BiasShfMapRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshMapRmse, BiasSstLatRmse, BiasSstLonRmse, BiasSstMapRmse, \
+    BiasSstSkLonRmse, BiasSwrLatRmse, BiasSwrLonRmse, BiasSwrMapRmse, BiasTauxLatRmse, BiasTauxLonRmse, \
+    BiasTauxMapRmse, BiasTauyLatRmse, BiasTauyLonRmse, BiasTauyMapRmse, BiasThfLatRmse, BiasThfLonRmse, \
+    BiasThfMapRmse, EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, \
+    EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, \
+    EnsoPrDjfTel, EnsoPrJjaTel, EnsoSeasonality, EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity, \
+    EnsoLhfLonRmse, EnsoLwrLonRmse, EnsoPrLonRmse, EnsoShfLonRmse, EnsoSshLonRmse, EnsoSstLonRmse, EnsoSwrLonRmse, \
+    EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoThfLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew, \
+    EnsoLhfTsRmse, EnsoLwrTsRmse, EnsoPrTsRmse, EnsoShfTsRmse, EnsoSshTsRmse, EnsoSstTsRmse, EnsoSwrTsRmse, \
+    EnsoTauxTsRmse, EnsoTauyTsRmse, EnsoThfTsRmse, grad_lat_pr, grad_lat_ssh, grad_lat_sst, grad_lon_pr, grad_lon_ssh, \
+    grad_lon_sst, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, \
+    NinaSstTsRmse, NinoPrMap, NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, \
+    NinoSstMap, NinoSstTsRmse, nstar, SeasonalLhfLatRmse, SeasonalLhfLonRmse, SeasonalLwrLatRmse, SeasonalLwrLonRmse, \
+    SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalShfLatRmse, SeasonalShfLonRmse, SeasonalSshLatRmse, \
+    SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalSwrLatRmse, SeasonalSwrLonRmse, \
+    SeasonalTauxLatRmse, SeasonalTauxLonRmse, SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, \
+    SeasonalThfLonRmse, telecon_pr_djf,  telecon_pr_ano_djf, telecon_pr_amp_djf
 from EnsoMetrics.EnsoToolsLib import math_metric_computation
 from EnsoMetrics.KeyArgLib import default_arg_values
 
@@ -848,7 +848,9 @@ def ComputeCollection_ObsOnly_with_ref(metricCollection, dictDatasets, user_regr
                     netcdf_name_out = ""
                 json_name_out = netcdf_name.replace("OBSNAME", "tmp1_" + modelName2 + "_" + metric)
                 if ("EnsoSstMap" in metric and modelName2 in sst_only) or \
-                        len(list(GLOBiglob(json_name_out + ".json"))) == 1:
+                        len(list(GLOBiglob(json_name_out + ".json"))) == 1 or \
+                        (modelName2 == modelName and modelName2 == str(refNameVar1[0])) or \
+                        (modelName2 != modelName and modelName2 == str(refNameVar1[0]) + "_" + str(refNameVar2[0])):
                     pass
                 else:
                     print(modelName2 + "_as_model")
@@ -980,11 +982,11 @@ dict_twoVar_modelAndObs = {
 }
 
 dict_oneVar = {
-    "EnsoAmpl": EnsoAmpl, "EnsoDuration": EnsoDuration, "EnsoDiversity": EnsoDiversity,
+    "ave_ts_box": ave_ts_box, "EnsoAmpl": EnsoAmpl, "EnsoDuration": EnsoDuration, "EnsoDiversity": EnsoDiversity,
     "EnsoSeasonality": EnsoSeasonality, "EnsoSstDiversity": EnsoSstDiversity, "EnsoSstSkew": EnsoSstSkew,
     "grad_lat_pr": grad_lat_pr, "grad_lat_ssh": grad_lat_ssh, "grad_lat_sst": grad_lat_sst, "grad_lon_pr": grad_lon_pr,
     "grad_lon_ssh": grad_lon_ssh, "grad_lon_sst": grad_lon_sst, "NinaSstDiv": NinaSstDiv, "NinaSstDur": NinaSstDur,
-    "NinoSstDiv": NinoSstDiv, "NinoSstDiversity": NinoSstDiversity, "NinoSstDur": NinoSstDur,
+    "NinoSstDiv": NinoSstDiv, "NinoSstDiversity": NinoSstDiversity, "NinoSstDur": NinoSstDur, "nstar": nstar,
 }
 
 dict_twoVar = {
@@ -1145,6 +1147,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     """
     tmp_metric = deepcopy(metric)
     metric = metric.replace("_1", "").replace("_2", "").replace("_3", "").replace("_4", "").replace("_5", "")
+    if metric.split("_")[-1] in list(ReferenceRegions().keys()):
+        metric = metric.replace("_" + str(metric.split("_")[-1]), "")
     # retrieving keyargs from EnsoCollectionsLib.defCollection
     dict_mc = defCollection(metricCollection)
     list_obs = sorted(list(ReferenceObservations().keys()), key=lambda v: v.upper())
@@ -1221,9 +1225,6 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     dict_dive_down_metadata = dict()
 
     multimetric = False
-
-    print("obs period used: " + str(keyarg["time_bounds_obs"]))
-    print(obsNameVar1)
 
     # test files
     if isinstance(modelFile1, list):

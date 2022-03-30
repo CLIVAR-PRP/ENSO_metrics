@@ -127,14 +127,20 @@ def create_levels(labelbar):
     return [round(kk + jj * delta, 2) for kk in labelbar[:-1] for jj in range(mult)] + [labelbar[-1]]
 
 
-def create_lines(line_i, line_o=[], threshold=50):
+def create_lines(line_i, line_o=None, threshold=50):
+    if line_o is None:
+        line_o = list()
     if len(line_i) > 1:
         words = line_i.split(" ")
         tmp = ""
         for ii, elt in enumerate(words):
             tmp += elt
             if ii != len(words) - 1:
-                if len(tmp + " " + str(words[ii + 1])) > threshold:
+                if "\n" in words[ii + 1]:
+                    line_o.append(tmp)
+                    words[ii + 1] = words[ii + 1].replace("\n", "")
+                    tmp = ""
+                elif len(tmp + " " + str(words[ii + 1])) > threshold:
                     line_o.append(tmp)
                     tmp = ""
                 else:

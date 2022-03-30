@@ -11,13 +11,14 @@ from . import EnsoErrorsWarnings
 from .EnsoPlotLib import metric_variable_names
 from .EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
 from .EnsoUvcdatToolsLib import ArrayListAx, ArrayOnes, ArrayToList, AverageAxis, AverageHorizontal, \
-    AverageMeridional, AverageTemporal, AverageZonal, BasinMask, CheckTime, Composite, ComputeInterannualAnomalies, \
-    ComputePDF, Concatenate, Correlation, DetectEvents, DurationAllEvent, DurationEvent, Event_selection, \
-    fill_dict_axis, FindXYMinMaxInTs, get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, \
-    LinearRegressionTsAgainstTs, MinMax, MyEmpty, PreProcessTS, preprocess_ts_polygon, Read_data_mask_area, \
-    Read_data_mask_area_multifile, Regrid, remove_global_mean, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, \
-    SaveNetcdf, SeasonalMean, SkewnessTemporal, SlabOcean, Smoothing, Std, StdMonthly, telecon_array, \
-    telecon_change_rate, telecon_significance, TimeBounds, TsToMap, TwoVarRegrid
+    AverageMeridional, AverageTemporal, AverageZonal, BasinMask, CheckTime, Composite, compute_degrees_of_freedom, \
+    ComputeInterannualAnomalies, compute_degrees_of_freedom, ComputePDF, Concatenate, Correlation, DetectEvents, \
+    DurationAllEvent, DurationEvent, Event_selection, fill_dict_axis, FindXYMinMaxInTs, get_year_by_year, \
+    LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, LinearRegressionTsAgainstTs, MinMax, MyEmpty, \
+    PreProcessTS, preprocess_ts_polygon, Read_data_mask_area, Read_data_mask_area_multifile, Regrid, \
+    remove_global_mean, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, \
+    SlabOcean, Smoothing, Std, StdMonthly, telecon_array, telecon_change_rate, telecon_significance, TimeBounds, \
+    TsToMap, TwoVarRegrid
 from .KeyArgLib import default_arg_values
 
 
@@ -26,6 +27,199 @@ from .KeyArgLib import default_arg_values
 # Library to compute ENSO metrics
 # These functions have file names and variable names as inputs and metric as output
 #
+def ave_ts_box(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset="",
+        debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The ave_ts_box() function computes the temporal mean of 'sstbox' TS (surface temperature)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Wed Mar 30 2022
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of TS
+    :param sstname: string
+        name of TS variable (skt, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for TS
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for TS
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param sstbox: string
+        name of box (e.g. 'global2') for TS
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'ave_ts_box_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        dive_down_diag, keyerror, method, method_detail, name, nyears, ref, time_frequency, time_period, units, value,
+        value_error
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "time mean TS"
+    units = "C"
+    method = "mean state of " + str(sstbox) + " averaged surface temperature (TS)"
+    method_sst = "TS"
+    ref = "Using CDAT averaging"
+    metric = "ave_ts_box"
+    if metname == "":
+        metname = deepcopy(metric) + "_" + str(sstbox)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
+    actualtimebounds, nbr_year, keyerror = None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        region_ref = ReferenceRegions(sstbox)
+        mask_l = region_ref["maskland"] if "maskland" in list(region_ref.keys()) else False
+        mask_o = region_ref["maskocean"] if "maskocean" in list(region_ref.keys()) else False
+        if mask_l is True and mask_o is True:
+            keyerror = "both land and ocean are masked (" + str(sstbox) + ": land = " + str(mask_l) + ", ocean = " + \
+                str(mask_o) + "), it should not be the case"
+            break
+        sst, areacell, keyerror = Read_data_mask_area(sstfile, sstname, "temperature", metric, sstbox,
+            file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+            maskland=mask_l, maskocean=mask_o, debug=debug, **kwargs)
+        if keyerror is not None:
+            break
+        method_sst += ", read"
+        if mask_l is True:
+            method_sst += "& mask land"
+        if mask_o is True:
+            method_sst += "& mask ocean"
+        # 1.2 Compute number of years
+        nbr_year = int(round(sst.shape[0] / 12.))
+        # 1.3 Read time period used
+        actualtimebounds = TimeBounds(sst)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 TS in 'sstbox' are normalized / detrended / smoothed (running average) if applicable
+        sst, method_sst, keyerror = preprocess_ts_polygon(sst, method_sst, areacell=areacell, average="horizontal",
+            region=sstbox, **kwargs)
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": str([ax.id for ax in sst.getAxisList()]), "shape1": str(sst.shape),
+                "time1": str(TimeBounds(sst))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Metric value
+        # ------------------------------------------------
+        # 3.1 Computes time mean
+        mv, keyerror = AverageTemporal(sst)
+        if keyerror is not None:
+            break
+        method_sst += ", compute time average"
+        # 3.2 Standard error of the mean (SEM)
+        std = float(Std(sst))
+        mv_error = std / len(sst)**(1/2)
+
+        # ------------------------------------------------
+        # 4. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Supplementary metrics
+            dict_nc = {"var1": sst}
+            dict_nc["var1_attributes"] = {"arrayAVE": mv, "arraySTD": std,
+                "description": "time series of " + str(sstbox) + " averaged TS", "number_of_years_used": nyear,
+                "time_period": str(timebounds), "units": units}
+            dict_nc["var1_name"] = ovar[0] + str(sstbox) + "_" + str(dataset)
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + str(metname) + ".nc"
+            dict1 = {"computation_steps": method_sst, "frequency": kwargs["frequency"], "metric_method": method,
+                "metric_name": name, "metric_reference": ref}
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_nc, file_name
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {"dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method,
+        "method_detail": method_sst, "name": name, "nyears": nbr_year, "ref": ref,
+        "time_frequency": kwargs["frequency"], "time_period": actualtimebounds, "units": units, "value": mv,
+        "value_error": mv_error}
+    return metric_output
+
+
 def BiasLhfMapRmse(lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhflandmaskfilemod, lhflandmasknamemod,
                    lhffileobs, lhfnameobs, lhfareafileobs, lhfareanameobs, lhflandmaskfileobs, lhflandmasknameobs, box,
                    centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False, netcdf_name="",
@@ -24434,6 +24628,205 @@ def grad_lon_sst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         "name": name, "value": mv, "value_error": mv_error, "units": units, "method": method, "nyears": nbr_year,
         "time_frequency": kwargs["frequency"], "time_period": actualtimebounds, "ref": ref, "keyerror": keyerror,
         "dive_down_diag": dive_down_diag}
+    return metric_output
+
+
+def nstar(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset="",
+        debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+    """
+    The nstar() function computes the number of degrees of freedom of a time series based on the autocorrelation
+    function of 'sstbox' averaged SSTA (sea surface temperature anomalies) (usually the nino3.4 SSTA)
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Wed Mar 30 2022
+
+    Based on:
+    Atwood and Coauthors, 2017: Characterizing unforced multi-decadal variability of ENSO: a case study with the GFDL
+    CM2.1 coupled GCM. Climate Dynamics, 49, 2845–2862, https://doi.org/10.1007/s00382-016-3477-9
+
+    Inputs:
+    ------
+    :param sstfile: string
+        path_to/filename of the file (NetCDF) of SST
+    :param sstname: string
+        name of SST variable (sst, tos, ts) in 'sstfile'
+    :param sstareafile: string
+        path_to/filename of the file (NetCDF) of the areacell for SST
+    :param sstareaname: string
+        name of areacell variable (areacella, areacello) in 'sstareafile'
+    :param sstlandmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for SST
+    :param sstlandmaskname: string
+        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
+    :param sstbox: string
+        name of box (e.g. 'nino3.4') for SST
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'nstar_2'
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        dive_down_diag, keyerror, method, method_detail, name, nyears, ref, regions, time_frequency, time_period, units,
+        value, value_error
+
+    Method:
+    -------
+        uses tools from uvcdat library
+
+    Notes:
+    -----
+        TODO: add error calculation to rmse (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+
+    # Define metric attributes
+    name = "number of degrees of freedom"
+    units = ""
+    method = "number of degrees of freedom of " + sstbox + " averaged sea surface temperature anomalies (SSTA)"
+    method_sst = "SST"
+    ref = "Using CDAT averaging"
+    metric = "nstar"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
+    actualtimebounds, nbr_year, keyerror = None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        # 1.1 Read file and select the right region
+        region_ref = ReferenceRegions(sstbox)
+        mask_l = region_ref["maskland"] if "maskland" in list(region_ref.keys()) else False
+        mask_o = region_ref["maskocean"] if "maskocean" in list(region_ref.keys()) else False
+        if mask_l is True and mask_o is True:
+            keyerror = "both land and ocean are masked (" + str(sstbox) + ": land = " + str(mask_l) + ", ocean = " + \
+                str(mask_o) + "), it should not be the case"
+            break
+        sst, areacell, keyerror = Read_data_mask_area(sstfile, sstname, "temperature", metric, sstbox,
+            file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
+            maskland=mask_l, maskocean=mask_o, debug=debug, **kwargs)
+        if keyerror is not None:
+            break
+        method_sst += ", read"
+        if mask_l is True:
+            method_sst += "& mask land"
+        if mask_o is True:
+            method_sst += "& mask ocean"
+        # 1.2 Compute number of years
+        nbr_year = int(round(sst.shape[0] / 12.))
+        # 1.3 Read time period used
+        actualtimebounds = TimeBounds(sst)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        # 2.1 SST in 'sstbox' are normalized / detrended / smoothed (running average) if applicable
+        sst, method_sst, keyerror = preprocess_ts_polygon(sst, method_sst, areacell=areacell, average="horizontal",
+            compute_anom=True, region=sstbox, **kwargs)
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"axes1": str([ax.id for ax in sst.getAxisList()]), "shape1": str(sst.shape),
+                "time1": str(TimeBounds(sst))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Metric value
+        # ------------------------------------------------
+        # 3.1 Computes the number of degrees of freedom
+        mv, nbr_decorr = compute_degrees_of_freedom(sst)
+        method_sst += ", compute number of degrees of freedom (as in Atwood et al. 2017; " + \
+            "https://doi.org/10.1007/s00382-016-3477-9)"
+        mv_error = None
+
+        # ------------------------------------------------
+        # 4. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Supplementary metrics
+            dict_nc = {"var1": sst}
+            dict_nc["var1_attributes"] = {"arraySTD": float(Std(sst)), "decorrelation_time": nbr_decorr,
+                "degrees_of_freedom": mv, "description": "time series of " + str(sstbox) + " averaged SSTA",
+                "number_of_years_used": nyear, "time_period": str(timebounds), "units": units}
+            dict_nc["var1_name"] = ovar[0] + str(dataset)
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + str(metname) + ".nc"
+            dict1 = {"computation_steps": method_sst, "frequency": kwargs["frequency"], "metric_method": method,
+                "metric_name": name, "metric_reference": ref}
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+            del dict1, dict_nc, file_name
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {"dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method,
+        "method_detail": method_sst, "name": name, "nyears": nbr_year, "ref": ref,
+        "time_frequency": kwargs["frequency"], "time_period": actualtimebounds, "units": units, "value": mv,
+        "value_error": mv_error}
     return metric_output
 
 

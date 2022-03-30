@@ -18,6 +18,7 @@ from numpy import nan as NPnan
 from numpy import nonzero as NPnonzero
 from numpy import ones as NPones
 from numpy import product as NPproduct
+from numpy import sign as NPsign
 from numpy import vstack as NPvstack
 from numpy import where as NPwhere
 from numpy.ma.core import MaskedArray as NPma__core__MaskedArray
@@ -48,6 +49,7 @@ from cdms2 import setAutoBounds as CDMS2setAutoBounds
 from cdms2 import open as CDMS2open
 from cdtime import comptime as CDTIMEcomptime
 import cdutil
+from genutil.statistics import autocorrelation as GENUTILautocorrelation
 from genutil.statistics import correlation as GENUTILcorrelation
 from genutil.statistics import linearregression as GENUTILlinearregression
 from genutil.statistics import percentiles as GENUTILpercentiles
@@ -1483,6 +1485,28 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
         return tab
     else:
         return tab, units, keyerror
+
+
+def compute_degrees_of_freedom(larr_i):
+    # maximum lag of autocorrelation
+    llag = len(larr_i) // 2
+    # autocorrelation
+    lautocorrelation = GENUTILautocorrelation(larr_i, lag=llag, axis=0)
+    # find double sing change
+    lk1, lnbr = 0, 2
+    for lk1 in list(range(len(lautocorrelation) - 1)):
+        if NPsign(lautocorrelation[lk1]) != NPsign(lautocorrelation[lk1 + 1]):
+            lnbr -= 1
+        if lnbr == 0:
+            break
+    # number of months needed to reach the first two sign changes in the autocorrelation function
+    lmonth = lk1 + 1
+    # dimensionless factor by which the effective degrees of freedom are reduced relative to the number of data points
+    # in each interval
+    ltau_d = 1 + sum(NParray(lautocorrelation[:lmonth])**2)
+    # degrees of freedom
+    ln_star = len(larr_i) / ltau_d
+    return ln_star, lmonth
 
 
 def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):

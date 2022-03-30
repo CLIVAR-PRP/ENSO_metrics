@@ -66,6 +66,7 @@ dict_label = {
 }
 
 output_variables = {
+    "ave_ts_box": ["ave_ts__"],
     "BiasLhfLatRmse": ["lhf_lat__", "lhf_map__"],
     "BiasLhfLonRmse": ["lhf_lon__", "lhf_map__"],
     "BiasLhfMapRmse": ["lhf_map__"],
@@ -251,6 +252,7 @@ output_variables = {
     "grad_lon_pr": ["pr_lon__", "pr_map__"],
     "grad_lon_ssh": ["ssh_lon__", "ssh_map__"],
     "grad_lon_sst": ["sst_lon__", "sst_map__"],
+    "nstar": ["sst_ts__"],
     "SeasonalLhfLatRmse": ["lhfMacStd_lat__", "lhfMacStd_map__", "lhfMac_hov__"],
     "SeasonalLhfLonRmse": ["lhfMacStd_lon__", "lhfMacStd_map__", "lhfMac_hov__"],
     "SeasonalLwrLatRmse": ["lwrMacStd_lat__", "lwrMacStd_map__", "lwrMac_hov__"],
