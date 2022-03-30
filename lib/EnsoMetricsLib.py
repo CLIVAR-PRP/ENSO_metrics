@@ -184,6 +184,7 @@ def ave_ts_box(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         mv, keyerror = AverageTemporal(sst)
         if keyerror is not None:
             break
+        mv = float(mv)
         method_sst += ", compute time average"
         # 3.2 Standard error of the mean (SEM)
         std = float(Std(sst))
@@ -24735,7 +24736,7 @@ def nstar(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandma
     # Define metric attributes
     name = "number of degrees of freedom"
     units = ""
-    method = "number of degrees of freedom of " + sstbox + " averaged sea surface temperature anomalies (SSTA)"
+    method = "number of degrees of freedom of " + str(sstbox) + " averaged sea surface temperature anomalies (SSTA)"
     method_sst = "SST"
     ref = "Using CDAT averaging"
     metric = "nstar"
