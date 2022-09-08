@@ -2,36 +2,146 @@
 #
 # Define ENSO metrics collections as a function of science question/realm
 #
-# Draft version
-#
+from copy import deepcopy
 
 
 # Define metrics collections
-def defCollection(mc=True):
+def defCollection(metric_collection=True):
     # Name, list of metrics
-    metrics_collection = {
+    dict_metric_collections = {
         "ENSO_IV": {
             "long_name": "Metrics Collection for ENSO internal variability",
             "metrics_list": {
-                "EnsoAmpl": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
+                "stat_box_ave_pr_global": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "global"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
                     "metric_computation": "abs_relative_difference",
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
+                    "internal_variable_name": "pr",
+                    "statistic": "mean state",
                 },
-                "ave_ts_box_global": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "global2"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
+                "stat_box_ave_pr_itcz_ne": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "itcz_ne"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
                     "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                    "statistic": "mean state",
                 },
-                "nstar": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
+                "stat_box_ave_pr_itcz_se": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "itcz_ne"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
                     "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                    "statistic": "mean state",
+                },
+                "stat_box_ave_pr_nino3": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "nino3"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                    "statistic": "mean state",
+                },
+                "stat_box_ave_ts_global": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "global"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                    "statistic": "mean state",
+                },
+                "stat_box_ave_ts_nino3": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                    "statistic": "mean state",
+                },
+                "stat_box_ave_ts_nino3.4": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3.4"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                    "statistic": "mean state",
+                },
+                "stat_box_var_pr_itcz_ne": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "itcz_ne"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                    "statistic": "variance",
+                },
+                "stat_box_var_pr_itcz_se": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "itcz_ne"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                    "statistic": "variance",
+                },
+                "stat_box_var_pr_nino3": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "nino3"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                    "statistic": "variance",
+                },
+                "stat_box_var_ts_nino3": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                    "statistic": "variance",
+                },
+                "stat_box_var_ts_nino3.4": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3.4"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                    "statistic": "variance",
+                },
+                "nstar_pr_itcz_ne": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "itcz_ne"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                },
+                "nstar_pr_itcz_se": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "itcz_se"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                },
+                "nstar_pr_nino3": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "nino3"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                },
+                "nstar_ts_nino3": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3"},
+                    "obs_name": {"ts": ["ERA-Interim", "HadISST", "Tropflux"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                },
+                "nstar_ts_nino3.4": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3.4"},
+                    "obs_name": {"ts": ["ERA-Interim", "HadISST", "Tropflux"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
                 },
             },
             "common_collection_parameters": {
@@ -43,7 +153,11 @@ def defCollection(mc=True):
                 "observed_period": None,
                 "modeled_period": None,
             },
-            "plot_order": ["EnsoAmpl"],
+            "plot_order": [
+                "stat_box_ave_pr_global", "stat_box_ave_pr_itcz_ne", "stat_box_ave_pr_itcz_se", "stat_box_ave_pr_nino3",
+                "stat_box_ave_ts_global", "stat_box_ave_ts_nino3", "stat_box_ave_ts_nino3.4", "stat_box_var_pr_itcz_ne",
+                "stat_box_var_pr_itcz_se", "stat_box_var_pr_nino3", "stat_box_var_ts_nino3", "stat_box_var_ts_nino3.4",
+                "nstar_pr_itcz_ne", "nstar_pr_itcz_se", "nstar_pr_nino3", "nstar_ts_nino3", "nstar_ts_nino3.4"],
             "description": "understanding the low frequency modulation of ENSO variance",
         },
         "ENSO_perf": {
@@ -262,28 +376,6 @@ def defCollection(mc=True):
                 #     "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
                 #                    "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
                 # },
-                # "NinoSstDiversity_1": {
-                #     "variables": ["sst"],
-                #     "regions": {"sst": "equatorial_pacific"},
-                #     "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                #     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
-                #                          "normalization": False, "duration_min": 1},
-                #     "smoothing": {"window": 5, "method": "triangle"},
-                #     "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                #                    "newgrid_name": "generic_1x1deg"},
-                #     "metric_computation": "abs_relative_difference",
-                # },
-                # "NinoSstDiversity_2": {
-                #     "variables": ["sst"],
-                #     "regions": {"sst": "equatorial_pacific"},
-                #     "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                #     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
-                #                          "normalization": True, "duration_min": 1},
-                #     "smoothing": {"window": 5, "method": "triangle"},
-                #     "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                #                    "newgrid_name": "generic_1x1deg"},
-                #     "metric_computation": "abs_relative_difference",
-                # },
             },
             "common_collection_parameters": {
                 "detrending": {"method": "linear"},
@@ -329,7 +421,7 @@ def defCollection(mc=True):
                 },
                 "EnsoPrMapDjf": {
                     "variables": ["sst", "pr"],
-                    "regions": {"pr": "global", "sst": "nino3.4"},
+                    "regions": {"pr": "global_no_poles", "sst": "nino3.4"},
                     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
                                          "normalization": False, "duration_min": 1},
                     "smoothing": {"window": 5, "method": "triangle"},
@@ -339,7 +431,7 @@ def defCollection(mc=True):
                 },
                 "EnsoPrMapJja": {
                     "variables": ["sst", "pr"],
-                    "regions": {"pr": "global", "sst": "nino3.4"},
+                    "regions": {"pr": "global_no_poles", "sst": "nino3.4"},
                     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
                                          "normalization": False, "duration_min": 1},
                     "smoothing": {"window": 5, "method": "triangle"},
@@ -349,7 +441,7 @@ def defCollection(mc=True):
                 },
                 # "EnsoSlpMapDjf": {
                 #     "variables": ["sst", "slp"],
-                #     "regions": {"slp": "global", "sst": "nino3.4"},
+                #     "regions": {"slp": "global_no_poles", "sst": "nino3.4"},
                 #     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
                 #                          "normalization": False, "duration_min": 1},
                 #     "smoothing": {"window": 5, "method": "triangle"},
@@ -359,7 +451,7 @@ def defCollection(mc=True):
                 # },
                 # "EnsoSlpMapJja": {
                 #     "variables": ["sst", "slp"],
-                #     "regions": {"slp": "global", "sst": "nino3.4"},
+                #     "regions": {"slp": "global_no_poles", "sst": "nino3.4"},
                 #     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
                 #                          "normalization": False, "duration_min": 1},
                 #     "smoothing": {"window": 5, "method": "triangle"},
@@ -369,7 +461,7 @@ def defCollection(mc=True):
                 # },
                 "EnsoSstMapDjf": {
                     "variables": ["sst"],
-                    "regions": {"sst": "global"},
+                    "regions": {"sst": "global_no_poles"},
                     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
                                          "normalization": False, "duration_min": 1},
                     "smoothing": {"window": 5, "method": "triangle"},
@@ -379,7 +471,7 @@ def defCollection(mc=True):
                 },
                 "EnsoSstMapJja": {
                     "variables": ["sst"],
-                    "regions": {"sst": "global"},
+                    "regions": {"sst": "global_no_poles"},
                     "event_definition": {"region_ev": "nino3.4", "season_ev": "DEC", "threshold": 0.75,
                                          "normalization": False, "duration_min": 1},
                     "smoothing": {"window": 5, "method": "triangle"},
@@ -1358,624 +1450,12 @@ def defCollection(mc=True):
             "plot_order": ["telecon_pr_amp_djf", "telecon_pr_ano_djf"],
             "description": "How well are ENSO's regional teleconnections represented in historical simulations?",
         },
-        "BAMS_but_SSH_com": {
-            "long_name": "Metrics Collection with all the metrics from the BAMS but those using SSH and the teleconnection ones",
-            "metrics_list": {
-                "BiasPrLatRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "nino3_LatExt"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasPrLonRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "equatorial_pacific"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasTauxLonRmse": {
-                    "variables": ["taux"],
-                    "regions": {"taux": "equatorial_pacific"},
-                    "obs_name": {"taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoAmpl": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoDuration": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "nbr_years_window": 6,
-                    "smoothing": {"window": 5, "method": "triangle"},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsodSstOce_2": {
-                    "variables": ["sst", "thf"],
-                    "regions": {"sst": "nino3", "thf": "nino3"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "thf": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoFbSstTaux": {
-                    "variables": ["sst", "taux"],
-                    "regions": {"sst": "nino3", "taux": "nino4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoFbSstThf": {
-                    "variables": ["sst", "thf"],
-                    "regions": {"sst": "nino3", "thf": "nino3"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "thf": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSeasonality": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSstDiversity_2": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoSstSkew": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "metric_computation": "abs_relative_difference",
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoSstTsRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "nbr_years_window": 6,
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "smoothing": {"window": 5, "method": "triangle"},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "grad_lat_pr": {
-                    "variables": ["pr"],
-                    "regions": {"pr": ["grad_off", "grad_equ"]},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lat_sst": {
-                    "variables": ["sst"],
-                    "regions": {"sst": ["grad_off", "grad_equ"]},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lon_pr": {
-                    "variables": ["pr"],
-                    "regions": {"pr": ["grad_west", "grad_east"]},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lon_sst": {
-                    "variables": ["sst"],
-                    "regions": {"sst": ["grad_west", "grad_east"]},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "SeasonalPrLatRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "nino3_LatExt"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalPrLonRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "equatorial_pacific"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalTauxLonRmse": {
-                    "variables": ["taux"],
-                    "regions": {"taux": "equatorial_pacific"},
-                    "obs_name": {"taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-            },
-            "common_collection_parameters": {
-                "detrending": {"method": "linear"},
-                "event_definition": {"region_ev": "nino3.4", "season_ev": "NDJ", "threshold": 0.5,
-                                     "normalization": True, "smoothing": False, "duration_min": 5},
-                "frequency": "monthly",
-                "min_time_steps": 120,
-                "normalization": False,
-                "project_interpreter": "CMIP",
-                "observed_period": ("1982-01-01 00:00:00", "2014-12-31 23:59:60.0"),
-                "modeled_period": ("1982-01-01 00:00:00", "2014-12-31 23:59:60.0"),
-            },
-            "plot_order": [
-                "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "BiasTauxLonRmse",
-                "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSstLonRmse", "SeasonalTauxLonRmse",
-                "grad_lat_pr", "grad_lon_pr", "grad_lat_sst", "grad_lon_sst",
-                "EnsoSstLonRmse", "EnsoSstTsRmse", "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration",
-                "EnsoSstDiversity_2", "EnsoFbSstTaux", "EnsoFbSstThf", "EnsodSstOce_2"],
-            "description": "How well is ENSO represented in historical simulations?",
-        },
-        "BAMS_but_SSH_ext": {
-            "long_name": "Metrics Collection with all the metrics from the BAMS but those using SSH and the teleconnection ones",
-            "metrics_list": {
-                "BiasPrLatRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "nino3_LatExt"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasPrLonRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "equatorial_pacific"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasTauxLonRmse": {
-                    "variables": ["taux"],
-                    "regions": {"taux": "equatorial_pacific"},
-                    "obs_name": {"taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoAmpl": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoDuration": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "nbr_years_window": 6,
-                    "smoothing": {"window": 5, "method": "triangle"},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsodSstOce_2": {
-                    "variables": ["sst", "thf"],
-                    "regions": {"sst": "nino3", "thf": "nino3"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "thf": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoFbSstTaux": {
-                    "variables": ["sst", "taux"],
-                    "regions": {"sst": "nino3", "taux": "nino4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoFbSstThf": {
-                    "variables": ["sst", "thf"],
-                    "regions": {"sst": "nino3", "thf": "nino3"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "thf": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSeasonality": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSstDiversity_2": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoSstSkew": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "metric_computation": "abs_relative_difference",
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoSstTsRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "nbr_years_window": 6,
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "smoothing": {"window": 5, "method": "triangle"},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "grad_lat_pr": {
-                    "variables": ["pr"],
-                    "regions": {"pr": ["grad_off", "grad_equ"]},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lat_sst": {
-                    "variables": ["sst"],
-                    "regions": {"sst": ["grad_off", "grad_equ"]},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lon_pr": {
-                    "variables": ["pr"],
-                    "regions": {"pr": ["grad_west", "grad_east"]},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lon_sst": {
-                    "variables": ["sst"],
-                    "regions": {"sst": ["grad_west", "grad_east"]},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "SeasonalPrLatRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "nino3_LatExt"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalPrLonRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "equatorial_pacific"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalTauxLonRmse": {
-                    "variables": ["taux"],
-                    "regions": {"taux": "equatorial_pacific"},
-                    "obs_name": {"taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-            },
-            "common_collection_parameters": {
-                "detrending": {"method": "linear"},
-                "event_definition": {"region_ev": "nino3.4", "season_ev": "NDJ", "threshold": 0.5,
-                                     "normalization": True, "smoothing": False, "duration_min": 5},
-                "frequency": "monthly",
-                "min_time_steps": 120,
-                "normalization": False,
-                "project_interpreter": "CMIP",
-                "observed_period": ("1901-01-01 00:00:00", "2010-12-31 23:59:60.0"),
-                "modeled_period": ("1901-01-01 00:00:00", "2010-12-31 23:59:60.0"),
-            },
-            "plot_order": [
-                "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "BiasTauxLonRmse",
-                "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSstLonRmse", "SeasonalTauxLonRmse",
-                "grad_lat_pr", "grad_lon_pr", "grad_lat_sst", "grad_lon_sst",
-                "EnsoSstLonRmse", "EnsoSstTsRmse", "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration",
-                "EnsoSstDiversity_2", "EnsoFbSstTaux", "EnsoFbSstThf", "EnsodSstOce_2"],
-            "description": "How well is ENSO represented in historical simulations?",
-        },
-        "BAMS_but_SSH_mix": {
-            "long_name": "Metrics Collection with all the metrics from the BAMS but those using SSH and the teleconnection ones",
-            "metrics_list": {
-                "BiasPrLatRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "nino3_LatExt"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasPrLonRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "equatorial_pacific"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "BiasTauxLonRmse": {
-                    "variables": ["taux"],
-                    "regions": {"taux": "equatorial_pacific"},
-                    "obs_name": {"taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoAmpl": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoDuration": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "nbr_years_window": 6,
-                    "smoothing": {"window": 5, "method": "triangle"},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsodSstOce_2": {
-                    "variables": ["sst", "thf"],
-                    "regions": {"sst": "nino3", "thf": "nino3"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "thf": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoFbSstTaux": {
-                    "variables": ["sst", "taux"],
-                    "regions": {"sst": "nino3", "taux": "nino4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoFbSstThf": {
-                    "variables": ["sst", "thf"],
-                    "regions": {"sst": "nino3", "thf": "nino3"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "thf": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSeasonality": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSstDiversity_2": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoSstSkew": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "metric_computation": "abs_relative_difference",
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                },
-                "EnsoSstTsRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "nino3.4"},
-                    "nbr_years_window": 6,
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "smoothing": {"window": 5, "method": "triangle"},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "grad_lat_pr": {
-                    "variables": ["pr"],
-                    "regions": {"pr": ["grad_off", "grad_equ"]},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lat_sst": {
-                    "variables": ["sst"],
-                    "regions": {"sst": ["grad_off", "grad_equ"]},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lon_pr": {
-                    "variables": ["pr"],
-                    "regions": {"pr": ["grad_west", "grad_east"]},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "grad_lon_sst": {
-                    "variables": ["sst"],
-                    "regions": {"sst": ["grad_west", "grad_east"]},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "SeasonalPrLatRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "nino3_LatExt"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalPrLonRmse": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "equatorial_pacific"},
-                    "obs_name": {"pr": ["ERA-Interim", "GPCPv2.3"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalSstLonRmse": {
-                    "variables": ["sst"],
-                    "regions": {"sst": "equatorial_pacific"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-                "SeasonalTauxLonRmse": {
-                    "variables": ["taux"],
-                    "regions": {"taux": "equatorial_pacific"},
-                    "obs_name": {"taux": ["ERA-Interim", "Tropflux"]},
-                    "regridding": {"model_orand_obs": 2, "regridder": "cdms", "regridTool": "esmf",
-                                   "regridMethod": "linear", "newgrid_name": "generic_1x1deg"},
-                },
-            },
-            "common_collection_parameters": {
-                "detrending": {"method": "linear"},
-                "event_definition": {"region_ev": "nino3.4", "season_ev": "NDJ", "threshold": 0.5,
-                                     "normalization": True, "smoothing": False, "duration_min": 5},
-                "frequency": "monthly",
-                "min_time_steps": 120,
-                "normalization": False,
-                "project_interpreter": "CMIP",
-                "observed_period": ("1982-01-01 00:00:00", "2014-12-31 23:59:60.0"),
-                "modeled_period": ("1901-01-01 00:00:00", "2010-12-31 23:59:60.0"),
-            },
-            "plot_order": [
-                "BiasPrLatRmse", "BiasPrLonRmse", "BiasSstLonRmse", "BiasTauxLonRmse",
-                "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSstLonRmse", "SeasonalTauxLonRmse",
-                "grad_lat_pr", "grad_lon_pr", "grad_lat_sst", "grad_lon_sst",
-                "EnsoSstLonRmse", "EnsoSstTsRmse", "EnsoAmpl", "EnsoSeasonality", "EnsoSstSkew", "EnsoDuration",
-                "EnsoSstDiversity_2", "EnsoFbSstTaux", "EnsoFbSstThf", "EnsodSstOce_2"],
-            "description": "How well is ENSO represented in historical simulations?",
-        },
-        "BAMS_SSH_com": {
-            "long_name": "Metrics Collection with all the metrics from the BAMS using SSH",
-            "metrics_list": {
-                "EnsoFbSshSst": {
-                    "variables": ["sst", "ssh"],
-                    "regions": {"sst": "nino3", "ssh": "nino3"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "ssh": ["AVISO"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-                "EnsoFbTauxSsh": {
-                    "variables": ["taux", "ssh"],
-                    "regions": {"ssh": "nino3", "taux": "nino4"},
-                    "obs_name": {"sst": ["ERA-Interim", "HadISST", "Tropflux"], "ssh": ["AVISO"]},
-                    "regridding": {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                                   "newgrid_name": "generic_1x1deg"},
-                    "metric_computation": "abs_relative_difference",
-                },
-            },
-            "common_collection_parameters": {
-                "detrending": {"method": "linear"},
-                "event_definition": {"region_ev": "nino3.4", "season_ev": "NDJ", "threshold": 0.5,
-                                     "normalization": True, "smoothing": False, "duration_min": 5},
-                "frequency": "monthly",
-                "min_time_steps": 120,
-                "normalization": False,
-                "project_interpreter": "CMIP",
-                "observed_period": ("1993-01-01 00:00:00", "2014-12-31 23:59:60.0"),
-                "modeled_period": ("1993-01-01 00:00:00", "2014-12-31 23:59:60.0"),
-            },
-            "plot_order": ["EnsoFbTauxSsh", "EnsoFbSshSst"],
-            "description": "How well is ENSO represented in historical simulations?",
-        },
     }
-    if mc is True:
-        return metrics_collection
+    if metric_collection in list(dict_metric_collections.keys()):
+        output = dict_metric_collections[metric_collection]
     else:
-        return metrics_collection[mc]
+        output = deepcopy(dict_metric_collections)
+    return output
 
 
 # List of reference observations for each variables
@@ -2062,17 +1542,7 @@ def ReferenceObservations(dataset=True):
         "AVISO": {
             "website": "https://www.aviso.altimetry.fr/en/data/products/sea-surface-height-products/global.html",
             "file_name": "dt_global_allsat_msla_h_y????_m??.nc",
-            "variable_name_in_file": {"ssh": {"var_name": "sla"}, },
-        },
-        "AVISO_adt": {
-            "website": "https://www.aviso.altimetry.fr/en/data/products/sea-surface-height-products/global.html",
-            "file_name": "dt_global_twosat_phy_l4_*.nc",
             "variable_name_in_file": {"ssh": {"var_name": "adt"}, },
-        },
-        "AVISO_sla": {
-            "website": "https://www.aviso.altimetry.fr/en/data/products/sea-surface-height-products/global.html",
-            "file_name": "dt_global_twosat_phy_l4_*.nc",
-            "variable_name_in_file": {"ssh": {"var_name": "sla"}, },
         },
         "CERA-20C": {
             "website": "https://apps.ecmwf.int/datasets/data/cera20c/levtype=sfc/type=an/",
@@ -2112,7 +1582,7 @@ def ReferenceObservations(dataset=True):
                 "shf": {"var_name": "hfss"},
                 "slp": {"var_name": "psl"},
                 "ssh": {"var_name": "zos"},
-                "sst": {"var_name": "tos"},
+                "sst": {"var_name": "ts"},
                 # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
                 # swr = rsds - rsus
                 "swr": {"var_name": ["rsds", "rsus"], "algebric_calculation": ["plus", "minus"]},
@@ -2124,6 +1594,7 @@ def ReferenceObservations(dataset=True):
                     "var_name": ["hfls", "hfss", "rlds", "rlus", "rsds", "rsus"],
                     "algebric_calculation": ["plus", "plus", "plus", "minus", "plus", "minus"],
                 },
+                "ts": {"var_name": "ts"},
             },
         },
         "C-GLORSv5": {
@@ -2268,22 +1739,22 @@ def ReferenceObservations(dataset=True):
             "file_name": "*" + "<var_name>" + "*.nc",
             "variable_name_in_file": {
                 "landmask": {"var_name": "lsm"},
-                "lhf": {"var_name": "hfls"},
-                "lwr": {"var_name": "rls"},
-                "pr": {"var_name": "pr"},
-                "shf": {"var_name": "hfss"},
-                "slp": {"var_name": "psl"},
-                "sst": {"var_name": "ts"},
-                "swr": {"var_name": "rss"},
-                "taux": {"var_name": "tauu"},
-                "tauy": {"var_name": "tauv"},
+                "lhf": {"var_name": "slhf"},
+                "lwr": {"var_name": "str"},
+                "pr": {"var_name": "mtpr"},
+                "shf": {"var_name": "sshf"},
+                "slp": {"var_name": "msl"},
+                "sst": {"var_name": "skt"},
+                "swr": {"var_name": "ssr"},
+                "taux": {"var_name": "ewss"},
+                "tauy": {"var_name": "nsss"},
                 # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
-                # tfh = hfls + hfss + rls + rss
+                # thf = slhf + sshf + str + ssr
                 "thf": {
-                    "var_name": ["hfls", "hfss", "rls", "rss"],
+                    "var_name": ["slhf", "sshf", "str", "ssr"],
                     "algebric_calculation": ["plus", "plus", "plus", "plus"],
                 },
-                "ts": {"var_name": "ts"},
+                "ts": {"var_name": "skt"},
             },
         },
         "ERSSTv3b": {
@@ -2540,6 +2011,16 @@ def ReferenceObservations(dataset=True):
                 "thf": {"var_name": "sohefldo"},
             },
         },
+        "SODA2.2.4": {
+            "website": "https://iridl.ldeo.columbia.edu/SOURCES/.CARTON-GIESE/.SODA/.v2p2p4/?Set-Language=en",
+            "file_name": "*_soda2.2.4_mn_ocean_*.nc",
+            "variable_name_in_file": {
+                "ssh": {"var_name": "ssh"},
+                "sst": {"var_name": "sst"},
+                "taux": {"var_name": "taux"},
+                "tauy": {"var_name": "tauy"},
+            },
+        },
         "SODA3.3.2": {
             "website": "https://www2.atmos.umd.edu/~ocean/index_files/soda3.3.2_mn_download.htm",
             "file_name": "soda3.3.2_mn_ocean_reg_????.nc",
@@ -2584,6 +2065,17 @@ def ReferenceObservations(dataset=True):
                 "thf": {"var_name": "net_heating"},
             },
         },
+        "SODA3.15.2": {
+            "website": "https://dsrs.atmos.umd.edu/DATA/soda3.15.2/REGRIDED/ocean/",
+            "file_name": "soda3.15.2_mn_ocean_reg_????.nc",
+            "variable_name_in_file": {
+                "ssh": {"var_name": "ssh"},
+                "sst": {"var_name": "sst"},
+                "taux": {"var_name": "taux"},
+                "tauy": {"var_name": "tauy"},
+                "thf": {"var_name": "net_heating"},
+            },
+        },
         "Tropflux": {
             "website": "https://incois.gov.in/tropflux/tf_products.jsp",
             "file_name": "<var_name>" + "_tropflux_1m_*.nc",
@@ -2599,56 +2091,84 @@ def ReferenceObservations(dataset=True):
             },
         },
     }
-    if dataset is True:
-        return dict_ref_obs
+    if dataset in list(dict_ref_obs.keys()):
+        output = dict_ref_obs[dataset]
     else:
-        return dict_ref_obs[dataset]
+        output = deepcopy(dict_ref_obs)
+    return output
 
 
+# List of reference regions
 def ReferenceRegions(region=True):
     dict_reference_regions = {
-        "global": {"long_name": "Global 60S-60N", "latitude": (-60., 60.), "longitude": (0., 360.)},
-        "global2": {"long_name": "Global", "latitude": (-90., 90.), "longitude": (0., 360.)},
-        "tropical_pacific": {
-            "long_name": "Tropical Pacific (TP)", "latitude": (-30., 30.), "longitude": (120., 280.),
-        },
-        "equatorial_pacific": {
-            "long_name": "Equatorial Pacific (EP)", "latitude": (-5., 5.), "longitude": (150., 270.),
-        },
-        "equatorial_pacific_LonExt": {
-            "long_name": "Equatorial Pacific extended in longitude", "latitude": (-5., 5.), "longitude": (140., 280.),
-        },
-        "equatorial_pacific_LatExt": {
-            "long_name": "Equatorial Pacific (EP)", "latitude": (-15., 15.), "longitude": (150., 270.),
-        },
-        "equatorial_pacific_LatExt2": {
-            "long_name": "Equatorial Pacific extended in latitude", "latitude": (-15., 15.), "longitude": (120., 285.),
-        },
-        "eastern_equatorial_pacific": {
-            "long_name": "Eastern Equatorial Pacific (EEP)", "latitude": (-5., 5.), "longitude": (205., 280.),
-        },
-        "grad_east": {
-            "long_name": "Eastern Tropical Pacific", "latitude": (-8, 8), "longitude": (205., 280.),
-        },
-        "grad_equ": {
-            "long_name": "Eastern Near-Equatorial Pacific", "latitude": (-2.5, 2.5), "longitude": (210., 270.),
-        },
-        "grad_off": {
-            "long_name": "Eastern Off-Equatorial Pacific", "latitude": (5., 10.), "longitude": (210., 270.),
-        },
-        "grad_west": {
-            "long_name": "Western Tropical Pacific", "latitude": (-8, 8), "longitude": (130., 205.),
-        },
-        "western_equatorial_pacific": {
-            "long_name": "Western Equatorial Pacific (WEP)", "latitude": (-5., 5.), "longitude": (120., 205.),
-        },
-        "nino1+2": {"long_name": "Niño 1+2", "latitude": (-10., 0.), "longitude": (270., 280.)},
-        "nino3": {"long_name": "Niño 3", "latitude": (-5., 5.), "longitude": (210., 270.)},
-        "nino3_LatExt": {
-            "long_name": "Niño 3 extended in latitude", "latitude": (-15., 15.), "longitude": (210., 270.)
-        },
-        "nino3.4": {"long_name": "Niño 3.4", "latitude": (-5., 5.), "longitude": (190., 240.)},
-        "nino4": {"long_name": "Niño 4", "latitude": (-5., 5.), "longitude": (160., 210.)},
+        "global_no_poles": {"long_name": "Global 60S-60N", "short_name": "GL60", "maskland": False, "maskocean": False,
+                            "latitude": (-60., 60.), "longitude": (0., 360.)},
+        "global": {"long_name": "Global", "short_name": "GLOB", "maskland": False, "maskocean": False,
+                   "latitude": (-90., 90.), "longitude": (0., 360.)},
+        "equatorial_atlantic": {"long_name": "Equatorial Atlantic", "short_name": "EATL", "maskland": True,
+                                "maskocean": False, "latitude": (-5., 2.), "longitude": (-30., 10.)},
+        "equatorial_pacific": {"long_name": "Equatorial Pacific", "short_name": "EPAC", "maskland": True,
+                               "maskocean": False, "latitude": (-5., 5.), "longitude": (150., 270.)},
+        "equatorial_pacific_LonExt": {"long_name": "Equatorial Pacific extended in longitude", "short_name": "EPXL",
+                                      "maskland": True, "maskocean": False, "latitude": (-5., 5.),
+                                      "longitude": (140., 280.)},
+        "equatorial_pacific_LatExt": {"long_name": "Equatorial Pacific extended in latitude", "short_name": "EPYL",
+                                      "maskland": True, "maskocean": False, "latitude": (-15., 15.),
+                                      "longitude": (150., 270.)},
+        "equatorial_pacific_LatExt2": {"long_name": "Equatorial Pacific extended in latitude and longitude",
+                                       "short_name": "EPXYL", "maskland": True, "maskocean": False,
+                                       "latitude": (-15., 15.), "longitude": (120., 285.)},
+        "eastern_equatorial_pacific": {"long_name": "Eastern Equatorial Pacific", "short_name": "EEPAC",
+                                       "maskland": True, "maskocean": False, "latitude": (-5., 5.),
+                                       "longitude": (205., 280.)},
+        "grad_east": {"long_name": "Eastern Tropical Pacific", "short_name": "ETPAC", "maskland": True,
+                      "maskocean": False, "latitude": (-8, 8), "longitude": (205., 280.)},
+        "grad_equ": {"long_name": "Eastern Near-Equatorial Pacific", "short_name": "ECPAC", "maskland": True,
+                     "maskocean": False, "latitude": (-2.5, 2.5), "longitude": (210., 270.)},
+        "grad_off": {"long_name": "Eastern Off-Equatorial Pacific", "short_name": "EOPAC", "maskland": True,
+                     "maskocean": False, "latitude": (5., 10.), "longitude": (210., 270.)},
+        "grad_west": {"long_name": "Western Tropical Pacific", "short_name": "WTPAC", "maskland": True,
+                      "maskocean": False, "latitude": (-8, 8), "longitude": (130., 205.)},
+        "itcz_ne": {"long_name": "Northeastern Equatorial Pacific (N3 north)", "short_name": "N3NO", "maskland": True,
+                    "maskocean": False, "latitude": (5., 15.), "longitude": (210., 270.)},
+        "itcz_nw": {"long_name": "Northwestern Equatorial Pacific (N4 north)", "short_name": "N4NO", "maskland": True,
+                    "maskocean": False, "latitude": (5., 15.), "longitude": (160., 210.)},
+        "itcz_se": {"long_name": "Southeastern Equatorial Pacific (N3 south)", "short_name": "N3SO", "maskland": True,
+                    "maskocean": False, "latitude": (-15., -5.), "longitude": (210., 270.)},
+        "itcz_sw": {"long_name": "Southwestern Equatorial Pacific (N4 south)", "short_name": "N4SO", "maskland": True,
+                    "maskocean": False, "latitude": (-15., -5.), "longitude": (160., 210.)},
+        "nino1+2": {"long_name": "Niño 1+2", "short_name": "N1+2", "maskland": True, "maskocean": False,
+                    "latitude": (-10., 0.), "longitude": (270., 280.)},
+        "nino3": {"long_name": "Niño 3", "short_name": "NIN3", "maskland": True, "maskocean": False,
+                  "latitude": (-5., 5.), "longitude": (210., 270.)},
+        "nino3_LatExt": {"long_name": "Niño 3 extended in latitude", "short_name": "N3YL", "maskland": True,
+                         "maskocean": False, "latitude": (-15., 15.), "longitude": (210., 270.)},
+        "nino3.4": {"long_name": "Niño 3.4", "short_name": "N3.4", "maskland": True, "maskocean": False,
+                    "latitude": (-5., 5.), "longitude": (190., 240.)},
+        "nino4": {"long_name": "Niño 4", "short_name": "NIN4", "maskland": True, "maskocean": False,
+                  "latitude": (-5., 5.), "longitude": (160., 210.)},
+        "nino4small": {"long_name": "Near-Equatorial Niño 4", "short_name": "WCPAC", "maskland": True,
+                       "maskocean": False, "latitude": (-2., 2.), "longitude": (160., 210.)},
+        "north_tropical_atlantic": {"long_name": "North Tropical Atlantic (NTA)", "short_name": "NTATL",
+                                    "maskland": True, "maskocean": False, "latitude": (0., 30.),
+                                    "longitude": (-60., 20.)},
+        "southeastern_equatorial_indian": {"long_name": "Southeastern Equatorial Indian", "short_name": "SEEI",
+                                           "maskland": True, "maskocean": False, "latitude": (-10., 0.),
+                                           "longitude": (90., 110.)},
+        "tropic": {"long_name": "Tropic", "short_name": "TROP", "maskland": True, "maskocean": False,
+                   "latitude": (-30., 30.), "longitude": (0., 360.)},
+        "tropical_atlantic": {"long_name": "Tropical Atlantic", "short_name": "TATL", "maskland": True,
+                              "maskocean": False, "latitude": (-30., 30.), "longitude": (-60., 20.)},
+        "tropical_indian": {"long_name": "Tropical Indian", "short_name": "TIND", "maskland": True, "maskocean": False,
+                            "latitude": (-30., 30.), "longitude": (40., 120.)},
+        "tropical_pacific": {"long_name": "Tropical Pacific", "short_name": "TPAC", "maskland": True,
+                             "maskocean": False, "latitude": (-30., 30.), "longitude": (120., 280.)},
+        "western_equatorial_indian": {"long_name": "Western Equatorial Indian (WEI)", "short_name": "WEIN",
+                                      "maskland": True, "maskocean": False, "latitude": (-10., 10.),
+                                      "longitude": (50., 70.)},
+        "western_equatorial_pacific": {"long_name": "Western Equatorial Pacific", "short_name": "WEPAC",
+                                       "maskland": True, "maskocean": False, "latitude": (-5., 5.),
+                                       "longitude": (120., 205.)},
         # IPCC climate reference regions defined in Iturbide et al. (2020; https://doi.org/10.5194/essd-12-2959-2020)
         "GIC": {
             "long_name": "POLAR, Land, Greenland / Iceland", "polygon": True, "maskland": False, "maskocean": True,
@@ -2844,10 +2364,76 @@ def ReferenceRegions(region=True):
         #         "latitude": (-1.2, -20., -50., -56.7, -56.7, 0.5),
         #         "longitude": (280.3, 293.6, 287.9, 292.7, 278., 278.)},
     }
-    if region is True:
-        return dict_reference_regions
+    if region in list(dict_reference_regions.keys()):
+        output = dict_reference_regions[region]
     else:
-        return dict_reference_regions[region]
+        output = deepcopy(dict_reference_regions)
+    return output
+
+
+# List of reference variables
+def reference_variables(variable=True):
+    dict_code_variables = {
+        # line keys:
+        # "<internal_metrics_variable_name>": {"cf_name":<as per ref above>, "cf_unit": "<unit_in_file>",
+        #                                      "long_name": "<description of the content of each variable>",
+        #                                      "short_name": "<nickname>", "variable_type": "<type_of_variable>"}
+        # areacell
+        "areacell": {"cf_name": "cell_area", "cf_units": "m2", "long_name": "Grid-Cell Area for Atmospheric Variables",
+                     "short_name": "area", "units": "m2", "variable_type": "area"},
+        # landmask
+        "landmask": {"cf_name": "land_area_fraction", "cf_units": "1", "short_name": "land", "units": "1",
+                     "long_name": "Grid-Cell Land Fraction for Atmospheric Variables", "variable_type": "fraction"},
+        # latent heat flux
+        "lhf": {"cf_name": "surface_upward_latent_heat_flux", "cf_units": "W m-2",
+                "long_name": "Surface Downward Latent Heat Flux (positive = heat into the ocean)",
+                "short_name": "LHF", "units": "W/m2", "variable_type": "heat flux"},
+        # longwave radiation
+        "lwr": {"cf_name": ["surface_downwelling_longwave_flux_in_air", "surface_upwelling_longwave_flux_in_air"],
+                "cf_units": "W m-2", "short_name": "LWR", "units": "W/m2", "variable_type": "heat flux",
+                "long_name": "Net Surface Downward Longwave Radiation (positive = heat into the ocean)"},
+        # Rainfall
+        "pr": {"cf_name": "rainfall_flux", "cf_units": "kg m-2 s-1", "long_name": "precipitation", "short_name": "PR",
+               "units": "mm/day", "variable_type": "precipitation"},
+        # Sea Level Pressure
+        "slp": {"cf_name": "air_pressure_at_mean_sea_level", "cf_units": "Pa", "long_name": "Sea Level Pressure",
+                "short_name": "SLP", "units": "Pa", "variable_type": "pressure"},
+        # sensible heat flux
+        "shf": {"cf_name": "surface_upward_sensible_heat_flux", "cf_units": "W m-2",
+                "long_name": "Surface Downward Sensible Heat Flux (positive = heat into the ocean)",
+                "short_name": "SHF", "units": "W/m2", "variable_type": "heat flux"},
+        # sea surface height
+        "ssh": {"cf_name": "sea_surface_height_above_geoid", "cf_units": "m",
+                "long_name": "Sea Surface Height (Above Geoid or Anomaly Above Sea Level)",
+                "short_name": "SSH", "units": "cm", "variable_type": "sea surface height"},
+        # sea surface temperature
+        "sst": {"cf_name": "surface_temperature", "cf_units": "K", "long_name": "Sea Surface Temperature",
+                "short_name": "SST", "units": "degC", "variable_type": "temperature"},
+        # shortwave radiation
+        "swr": {"cf_name": ["surface_downwelling_shortwave_flux_in_air", "surface_upwelling_shortwave_flux_in_air"],
+                "cf_units": "W m-2", "short_name": "SWR", "units": "W/m2", "variable_type": "heat flux",
+                "long_name": "Net Surface Downward Shortwave Radiation (positive = heat into the ocean)"},
+        # zonal surface wind stress
+        "taux": {"cf_name": "surface_downward_eastward_stress", "cf_units": "Pa", "variable_type": "wind stress",
+                 "long_name": "Surface Downward Eastward Wind Stress", "short_name": "Taux", "units": "1e-3 N/m2"},
+        # meridional surface wind stress
+        "tauy": {"cf_name": "surface_downward_northward_stress", "cf_units": "Pa", "variable_type": "wind stress",
+                 "long_name": "Surface Downward Northward Wind Stress", "short_name": "Tauy", "units": "1e-3 N/m2"},
+        # total heat flux
+        "thf": {"cf_name": ["surface_upward_latent_heat_flux", "surface_upward_sensible_heat_flux",
+                            "surface_downwelling_longwave_flux_in_air", "surface_upwelling_longwave_flux_in_air",
+                            "surface_downwelling_shortwave_flux_in_air", "surface_upwelling_shortwave_flux_in_air"],
+                "cf_units": "W m-2", "short_name": "THF", "units": "W/m2", "variable_type": "heat flux",
+                "long_name": "Net Surface Downward Heat Flux (positive = heat into the ocean)"},
+        # surface temperature
+        "ts": {"cf_name": "surface_temperature", "cf_units": "K", "variable_type": "temperature",
+               "long_name": "Surface Temperature (skin for open ocean)", "short_name": "TS", "units": "degC"},
+    }
+    if variable in list(dict_code_variables.keys()):
+        output = dict_code_variables[variable]
+    else:
+        output = deepcopy(dict_code_variables)
+    return output
 
 
 def CmipVariables():

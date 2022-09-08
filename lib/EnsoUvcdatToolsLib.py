@@ -491,23 +491,23 @@ dict_average = {"horizontal": AverageHorizontal, "meridional": AverageMeridional
                 "zonal": AverageZonal}
 
 
-def Concatenate(tab1, tab2, events1=[], events2=[]):
+def Concatenate(tab1, tab2, events1=None, events2=None):
+    if isinstance(events1, list) is False:
+        events1 = list()
+    if isinstance(events2, list) is False:
+        events2 = list()
     my_events = events1 + events2
     if len(my_events) > 0:
         my_events_sort = sorted(my_events)
-        for yy in my_events_sort:
-            try:
-                tab_out
-            except:
-                if yy in events1:
-                    tab_out = MV2array([tab1[events1.index(yy)]])
-                else:
-                    tab_out = MV2array([tab2[events2.index(yy)]])
+        if my_events_sort[0] in events1:
+            tab_out = MV2array([tab1[events1.index(my_events_sort[0])]])
+        else:
+            tab_out = MV2array([tab2[events2.index(my_events_sort[0])]])
+        for yy in my_events_sort[1:]:
+            if yy in events1:
+                tab_out = MV2concatenate((tab_out, MV2array([tab1[events1.index(yy)]])))
             else:
-                if yy in events1:
-                    tab_out = MV2concatenate((tab_out, MV2array([tab1[events1.index(yy)]])))
-                else:
-                    tab_out = MV2concatenate((tab_out, MV2array([tab2[events2.index(yy)]])))
+                tab_out = MV2concatenate((tab_out, MV2array([tab2[events2.index(yy)]])))
         axes = CDMS2createAxis(MV2array(my_events_sort, dtype="int32"), id="years")
         if len(events1):
             tmp = copy.copy(tab1)
@@ -692,6 +692,7 @@ def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
         value of root mean square difference
     """
     keyerror = None
+    rmse = None
     # Computes the root mean square difference
     try:
         rmse = GENUTILrms(tab, ref, weights=weights, axis=axis, centered=centered, biased=biased)
@@ -704,10 +705,8 @@ def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
                         str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
                         str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())]
         EnsoErrorsWarnings.my_warning(list_strings)
-    try:
+    if rmse is not None:
         rmse = float(rmse)
-    except:
-        rmse = None
     return rmse, keyerror
 
 
@@ -735,6 +734,7 @@ def RmsHorizontal(tab, ref, centered=0, biased=1):
         value of root mean square difference
     """
     keyerror = None
+    rmse = None
     # Computes the root mean square difference
     try:
         rmse = GENUTILrms(tab, ref, weights="weighted", axis="xy", centered=centered, biased=biased)
@@ -755,10 +755,8 @@ def RmsHorizontal(tab, ref, centered=0, biased=1):
                 str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
                 str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())]
             EnsoErrorsWarnings.my_warning(list_strings)
-    try:
+    if rmse is not None:
         rmse = float(rmse)
-    except:
-        rmse = None
     return rmse, keyerror
 
 
@@ -786,6 +784,7 @@ def RmsMeridional(tab, ref, centered=0, biased=1):
         value of root mean square difference
     """
     keyerror = None
+    rmse = None
     # Computes the root mean square difference
     try:
         rmse = GENUTILrms(tab, ref, axis="y", centered=centered, biased=biased)
@@ -804,10 +803,8 @@ def RmsMeridional(tab, ref, centered=0, biased=1):
                 str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
                 str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())]
             EnsoErrorsWarnings.my_warning(list_strings)
-    try:
+    if rmse is not None:
         rmse = float(rmse)
-    except:
-        rmse = None
     return rmse, keyerror
 
 
@@ -835,6 +832,7 @@ def RmsTemporal(tab, ref, centered=0, biased=1):
         value of root mean square difference
     """
     keyerror = None
+    rmse = None
     # Computes the root mean square difference
     try:
         rmse = GENUTILrms(tab, ref, axis="t", centered=centered, biased=biased)
@@ -853,10 +851,8 @@ def RmsTemporal(tab, ref, centered=0, biased=1):
                 str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
                 str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())]
             EnsoErrorsWarnings.my_warning(list_strings)
-    try:
+    if rmse is not None:
         rmse = float(rmse)
-    except:
-        rmse = None
     return rmse, keyerror
 
 
@@ -884,6 +880,7 @@ def RmsZonal(tab, ref, centered=0, biased=1):
         value of root mean square difference
     """
     keyerror = None
+    rmse = None
     # Computes the root mean square difference
     try:
         rmse = GENUTILrms(tab, ref, axis="x", centered=centered, biased=biased)
@@ -902,10 +899,8 @@ def RmsZonal(tab, ref, centered=0, biased=1):
                 str().ljust(15) + "order: ref = " + str(ref.getOrder()) + ", tab = " + str(tab.getOrder()),
                 str().ljust(15) + "axes: ref = " + str(ref.getAxisList()) + ", tab = " + str(tab.getAxisList())]
             EnsoErrorsWarnings.my_warning(list_strings)
-    try:
+    if rmse is not None:
         rmse = float(rmse)
-    except:
-        rmse = None
     return rmse, keyerror
 
 
@@ -1509,10 +1504,11 @@ def compute_degrees_of_freedom(larr_i):
     return ln_star, lmonth
 
 
-def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
+def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=None):
     if frequency not in ["daily", "monthly", "yearly"]:
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
-    if len(list_event_years) == 0:
+    if isinstance(list_event_years, list) is False or (
+            isinstance(list_event_years, list) is True and len(list_event_years) == 0):
         tax = tab.getTime().asComponentTime()
         list_event_years = sorted(list(set([tax[ii].year for ii in range(len(tax))])))
     else:
@@ -1928,13 +1924,13 @@ def get_num_axis(tab, name_axis):
                         str().ljust(5) + "known names: depth, latitude, longitude, time"]
         EnsoErrorsWarnings.my_error(list_strings)
     for nn in range(len(tab.shape)):
-        if axis_nick in tab.getAxisList()[nn].id:
+        if axis_nick in str(tab.getAxisList()[nn].id).lower():
             num = nn
             break
     if num is None:
         for nn in range(len(tab.shape)):
             for ax in axis_nicks:
-                if ax == tab.getAxisList()[nn].id:
+                if ax == str(tab.getAxisList()[nn].id).lower():
                     num = nn
                     break
     if num is None:
@@ -1979,6 +1975,7 @@ def get_year_by_year(tab, frequency='monthly'):
         m2 = time_ax[-1].month
         t2 = 12
     else:
+        m1, m2, months, t2, tmm = None, None, None, None, None
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
     years = sorted(set(MV2array(list(tt.year for tt in time_ax))))
     tyy = CDMS2createAxis(MV2array(years, dtype='int32'), id='years')
@@ -2091,6 +2088,7 @@ def Normalize(tab, frequency):
         normalized data
     """
     keyerror = None
+    tab_out = None
     axes = tab.getAxisList()
     if frequency == 'daily':
         time_steps_per_year = 365
@@ -2119,14 +2117,14 @@ def Normalize(tab, frequency):
     else:
         # reshape tab like [yy,nb]
         new_tab = list()
-        for yy in range(len(tab)/time_steps_per_year):
+        for yy in range(len(tab) // time_steps_per_year):
             new_tab.append(tab[yy * time_steps_per_year:(yy + 1) * time_steps_per_year])
         new_tab = MV2array(new_tab)
         std = MV2zeros(new_tab[0].shape)
         for dd in range(time_steps_per_year):
             std[dd] = float(GENUTILstd(new_tab[:,dd], weights=None, axis=0, centered=1, biased=1))
         tab_out = copy.copy(tab)
-        for yy in range(len(tab) / time_steps_per_year):
+        for yy in range(len(tab) // time_steps_per_year):
             tab_out[yy * time_steps_per_year:(yy + 1) * time_steps_per_year] = \
                 tab_out[yy * time_steps_per_year:(yy + 1) * time_steps_per_year] / std
         if len(tab.shape) == 1:
@@ -2186,6 +2184,9 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         else:
             # read file
             tab = fi(varname, time=time_bounds, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+    # mask large values
+    tab = MV2masked_where(tab >= 1e20, tab)
+    tab = MV2masked_where(tab <= -1e20, tab)
     # sign correction
     try:
         att1 = tab.attributes['standard_name'].lower().replace(" ", "_")
@@ -2271,6 +2272,8 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
                 print("\033[93m" + str().ljust(25) + "NOTE: taux sign reversed by the code (mean nino4 = " +
                       str(float(taux)) + ")" + "\033[0m")
                 tab = -1 * tab
+        # delete
+        del keyerror, taux
     fi.close()
     return tab
 
@@ -2521,15 +2524,13 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         # to do this, kwargs['newgrid_name'] and kwargs['region'] must be defined
         #
         # define the grid type
+        GridType = "generic"
         for gtype in ["equalarea", "gaussian", "generic", "uniform"]:
             if gtype in kwargs['newgrid_name']:
                 GridType = gtype
                 break
-        try:
-            GridType
-        except:
-            GridType = "generic"
         # define resolution (same resolution in lon and lat)
+        GridRes = 1.
         for res in ["0.25x0.25deg", "0.5x0.5deg", "0.75x0.75deg", "1x1deg", "1.25x1.25deg", "1.5x1.5deg",
                     "1.75x1.75deg", "2x2deg", "2.25x2.25deg", "2.5x2.5deg", "2.75x2.75deg"]:
             if res in kwargs['newgrid_name']:
@@ -2556,10 +2557,6 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
                 else:
                     GridRes = 2.75
                 break
-        try:
-            GridRes
-        except:
-            GridRes = 1.
         # define bounds of 'region'
         region_ref = ReferenceRegions(kwargs["region"])
         lat1, lat2 = region_ref["latitude"][0], region_ref["latitude"][1]
@@ -3181,16 +3178,17 @@ def StdMonthly(tab):
 
 def TimeButNotTime(tab, new_time_name, frequency):
     tab_out = copy.copy(tab)
-    time_num = get_num_axis(tab_out, 'time')
+    time_num = get_num_axis(tab_out, "time")
     timeax = tab_out.getAxis(time_num).asComponentTime()
     year1, month1, day1 = timeax[0].year, timeax[0].month, timeax[0].day
-    if frequency == 'daily':
-        freq = 'days'
-    elif frequency == 'monthly':
-        freq = 'months'
-    elif frequency == 'yearly':
-        freq = 'years'
+    if frequency == "daily":
+        freq = "days"
+    elif frequency == "monthly":
+        freq = "months"
+    elif frequency == "yearly":
+        freq = "years"
     else:
+        freq = None
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
     axis = CDMS2createAxis(list(range(len(tab_out))), id=new_time_name)
     axis.units = freq + " since " + str(year1) + "-" + str(month1) + "-" + str(day1)
@@ -3783,7 +3781,25 @@ def preprocess_ts_polygon(tab, info, areacell=None, average="horizontal", comput
     if average == "horizontal" and isinstance(region, str) is True:
         tab, keyerror = averager_polygon(tab, areacell, region, **kwargs)
         if keyerror is None:
-            info = str(info) + ", " + str(average) + " average"
+            region_ref = ReferenceRegions(region)
+            llat = region_ref["latitude"]
+            llat0 = int(round(llat[0], 0)) if int(llat[0]) == llat[0] else copy.deepcopy(llat[0])
+            llat1 = int(round(llat[1], 0)) if int(llat[1]) == llat[1] else copy.deepcopy(llat[1])
+            llat0 = str(abs(llat0)) + "S" if llat[0] < 0 else str(llat0) + "N"
+            llat1 = str(abs(llat1)) + "S" if llat[1] < 0 else str(llat1) + "N"
+            llon = region_ref["longitude"]
+            llon0 = int(round(llon[0], 0)) if int(llon[0]) == llon[0] else copy.deepcopy(llon[0])
+            llon1 = int(round(llon[1], 0)) if int(llon[1]) == llon[1] else copy.deepcopy(llon[1])
+            llon0 = str(llon0) if llon[0] == 180 else (
+                str(llon0) + "E" if llon[0] < 180 else str(abs(llon0 - 360)) + "W")
+            if "E" in llon0 and int(llon0.replace("E", "")) < 0:
+                llon0 = abs(int(llon0.replace("E", ""))) + "W"
+            llon1 = str(llon1) if llon[1] == 180 else (
+                str(llon1) + "E" if llon[1] < 180 else str(abs(llon1 - 360)) + "W")
+            if region in ["global", "global_no_poles", "tropic"]:
+                llon0, llon1 = "0E", "360E"
+            info = str(info) + ", " + str(average) + " average in " + str(region) + " region [" + str(llat0) + " - " + \
+                str(llat1) + "; " + str(llon0) + " - " + str(llon1) + "]"
     # continue preprocessing if no error happened yet
     if keyerror is None:
         # removing linear trend
@@ -3797,9 +3813,11 @@ def preprocess_ts_polygon(tab, info, areacell=None, average="horizontal", comput
             # computes mean annual cycle
             if compute_sea_cycle is True:
                 tab = annualcycle(tab)
+                info = info + ", seasonal cycle computed"
             # removes annual cycle (anomalies with respect to the annual cycle)
             if compute_anom is True:
                 tab = ComputeInterannualAnomalies(tab)
+                info = info + ", interannual anomalies computed"
             # normalization of the anomalies
             if kwargs["normalization"] is True:
                 if kwargs["frequency"] is not None:
@@ -4191,6 +4209,66 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
     return dSST, dSSTthf, dSSToce
 
 
+def telecon_agreement(larr_obs, lsig_obs, larr_mod, lsig_mod, luse_also_reg_significant_in_model=False):
+    """
+    #################################################################################
+    Description:
+    Computes the significance of the composited values
+    #################################################################################
+
+    :param larray1: masked_array
+        masked_array of the composited events
+        e.g., larray1(events, x, y, z)
+    :param larray2: masked_array
+        masked_array of the original array (all years), from which events have been selected, with time as first
+        dimension
+        e.g., larray2(time, x, y, z)
+    :param lnech: integer
+        number of events to select in each random selections
+    :param lsig_level: integer, optional
+        confidence level of the significance test (95 is 95% confidence level)
+        default value is 90
+    :param lnum_samples: integer, optional
+        number of random selections (with replacement) of the given sample to use for the significance test
+        default value is 100000
+
+    :return: significance: masked_array
+        masked_array shaped like larray1.shape, with 1 if the composite is significant, else 0
+    :return: range_bst: masked_array
+        masked_array with the low and high values of the bootstrap at the given confidence level
+    """
+    if luse_also_reg_significant_in_model is False:
+        # mask regions where the observed composite is not significant
+        larr_obs_t = MV2masked_where(lsig_obs == 0, larr_obs)
+        larr_mod_t = MV2masked_where(lsig_obs == 0, larr_mod)
+        lsig_obs_t = MV2masked_where(lsig_obs == 0, lsig_obs)
+        lsig_mod_t = MV2masked_where(lsig_obs == 0, lsig_mod)
+    else:
+        # mask where neither observed nor modeled composites are significant
+        lboth = lsig_obs + lsig_mod
+        larr_obs_t = MV2masked_where(lboth == 0, larr_obs)
+        larr_mod_t = MV2masked_where(lboth == 0, larr_mod)
+        lsig_obs_t = MV2masked_where(lboth == 0, lsig_obs)
+        lsig_mod_t = MV2masked_where(lboth == 0, lsig_mod)
+        # delete
+        del lboth
+    # compute composite sign
+    larr_obs_m_or_p = MV2where(larr_obs_t < 0, -1, larr_obs_t)
+    larr_obs_m_or_p = MV2where(larr_obs_t > 0, 1, larr_obs_m_or_p)
+    larr_mod_m_or_p = MV2where(larr_mod_t < 0, -1, larr_mod_t)
+    larr_mod_m_or_p = MV2where(larr_mod_t > 0, 1, larr_mod_m_or_p)
+    # 1 where model and obs agree on the sign of the composite, else 0
+    lm_or_p = MV2where(larr_obs_m_or_p == larr_mod_m_or_p, 1, 0)
+    # 1 where model and obs agree on the significance composite, else 0
+    lsignif = MV2where(lsig_obs_t == lsig_mod_t, 1, 0)
+    # 1 where observed nor modeled composites agree on the sign and significance
+    larr_o = lm_or_p + lsignif
+    larr_o = MV2where(larr_o == 2, 1, 0)
+    larr_o = CDMS2createVariable(larr_o, axes=larr_obs.getAxisList(), grid=larr_obs.getGrid(), mask=larr_obs.mask,
+        id="sign_and_significance_agreement")
+    return larr_o
+
+
 def telecon_array(ldict, list_regions, ax_long_name=None, ax_reference=None, ax_short_name=None):
     """
     #################################################################################
@@ -4280,11 +4358,58 @@ def telecon_change_rate(larray):
     return change_rate
 
 
+def telecon_same_sign(larr_ano_mod, larr_ano_obs, larr_sig_mod, larr_sig_obs):
+    """
+    #################################################################################
+    Description:
+    Computes the significance of the composited values
+    #################################################################################
+
+    :param larr_ano_mod: masked_array
+        masked_array of modeled composited events
+        e.g., larray1(events, x, y, z)
+    :param larr_ano_obs: masked_array
+        masked_array of observed composited events
+        e.g., larray1(events, x, y, z)
+    :param larr_sig_mod: masked_array
+        masked_array of the significance of modeled composited events (1 where significant, 0 elsewhere)
+        e.g., larray1(events, x, y, z)
+    :param larr_sig_obs: masked_array
+        masked_array of the significance of observed composited events (1 where significant, 0 elsewhere)
+        e.g., larray1(events, x, y, z)
+
+    :return: larr_o: masked_array
+        masked_array shaped like larr_ano_obs.shape, with 1 if model and obs composites do not agree either in terms
+        of significance or sign, else 0 (if they agree for both)
+    """
+    # output array
+    larr_o = MV2zeros(larr_ano_obs.shape)
+    # find anomalies signs
+    lsign_mod = MV2where(larr_ano_mod < 0, -1, larr_o)
+    lsign_mod = MV2where(larr_ano_mod > 0, 1, lsign_mod)
+    lsign_obs = MV2where(larr_ano_obs < 0, -1, larr_o)
+    lsign_obs = MV2where(larr_ano_obs > 0, 1, lsign_obs)
+    # find where model and obs have the same sign
+    lsign_agreement = MV2where(lsign_obs == lsign_mod, 1, larr_o)
+    # find where model and obs have the same significance
+    lsignificance_agreement = MV2where(larr_sig_obs == larr_sig_mod, 1, larr_o)
+    # find where model and obs have the same sign and the same significance
+    larr_o = MV2where(lsign_agreement + lsignificance_agreement != 2, 1, larr_o)
+    if type(larr_ano_mod.mask) != NPbool_:
+        larr_o = MV2where(larr_ano_mod.mask, 0, larr_o)
+    if type(larr_ano_obs.mask) != NPbool_:
+        larr_o = MV2where(larr_ano_obs.mask, 0, larr_o)
+    # create variable
+    larr_o = CDMS2createVariable(larr_o, axes=larr_ano_mod.getAxisList(), grid=larr_ano_mod.getGrid(),
+        mask=larr_ano_mod.mask, id="significance_and_sign_agreement")
+    return larr_o
+
+
 def telecon_significance(larray1, larray2, lnech, lsig_level=90, lnum_samples=100000):
     """
     #################################################################################
     Description:
-    Create an array from the dictionary of horizontally averaged regions
+    Computes the significance of the composited values
     #################################################################################
 
     :param larray1: masked_array

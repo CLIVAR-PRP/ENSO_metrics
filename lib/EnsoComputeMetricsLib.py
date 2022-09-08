@@ -5,7 +5,7 @@ from inspect import stack as INSPECTstack
 import json
 
 # ENSO_metrics package functions:
-from EnsoMetrics.EnsoCollectionsLib import defCollection, ReferenceObservations, ReferenceRegions
+from EnsoMetrics.EnsoCollectionsLib import defCollection, ReferenceObservations, ReferenceRegions, reference_variables
 from EnsoMetrics import EnsoErrorsWarnings
 from EnsoMetrics.EnsoMetricsLib import ave_ts_box, BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, \
     BiasLwrLonRmse, BiasLwrMapRmse, BiasPrLatRmse, BiasPrLonRmse, BiasPrMapRmse, BiasShfLatRmse, BiasShfLonRmse, \
@@ -25,20 +25,22 @@ from EnsoMetrics.EnsoMetricsLib import ave_ts_box, BiasLhfLatRmse, BiasLhfLonRms
     SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalShfLatRmse, SeasonalShfLonRmse, SeasonalSshLatRmse, \
     SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalSwrLatRmse, SeasonalSwrLonRmse, \
     SeasonalTauxLatRmse, SeasonalTauxLonRmse, SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, \
-    SeasonalThfLonRmse, telecon_pr_djf,  telecon_pr_ano_djf, telecon_pr_amp_djf
+    SeasonalThfLonRmse, stat_box, telecon_pr_djf, telecon_pr_amp_djf, telecon_pr_ano_djf, telecon_pr_sig_djf
 from EnsoMetrics.EnsoToolsLib import math_metric_computation
 from EnsoMetrics.KeyArgLib import default_arg_values
 
 
+# sla only datasets (not good for mean ssh evaluation)
+sla_only = ["CSIRO_SSH", "JPL_MEASURES"]
 # sst only datasets (not good for surface temperature teleconnection)
 sst_only = [
-    "C-GLORSv5", "C-GLORSv7", "CFSR", "COBE", "COBE1", "COBE-1", "COBEv1", "COBE2", "COBE-2", "COBEv2", "ERSSTv3b",
-    "ERSSTv4", "ERSSTv5", "GFDL-ECDA3.1", "GFDL-ECDA3-1", "GFDL-ECDA-3.1", "GFDL-ECDA-3-1", "GFDL-ECDAv3.1", "GODAS",
-    "HadISST", "HadISST1", "HadISST-1", "HadISSTv1", "HadISST1.1", "HadISST1-1", "HadISST-1.1", "HadISST-1-1",
-    "HadISSTv1.1", "OAFlux", "ORAS4", "ORAS5", "SODA3.3.2" "SODA3.4.2", "SODA3.11.2", "SODA3.12.2", "Tropflux",
-    "TropFlux", "Tropflux1", "TropFlux1", "Tropflux-1", "TropFlux-1", "Tropfluxv1", "TropFluxv1", "Tropflux1.0",
-    "TropFlux1.0", "Tropflux1-0", "TropFlux1-0", "Tropflux-1.0", "TropFlux-1.0", "Tropflux-1-0", "TropFlux-1-0",
-    "Tropfluxv1.0", "TropFluxv1.0"]
+    "C-GLORSv5", "C-GLORSv7", "COBE", "COBE1", "COBE-1", "COBEv1", "COBE2", "COBE-2", "COBEv2", "ERSST3b", "ERSST-3b",
+    "ERSSTv3b", "ERSST4", "ERSST-4", "ERSSTv4", "ERSST5", "ERSST-5", "ERSSTv5", "GFDL-ECDA3.1", "GFDL-ECDA3-1",
+    "GFDL-ECDA-3.1", "GFDL-ECDA-3-1", "GFDL-ECDAv3.1", "GODAS", "HadISST", "HadISST1", "HadISST-1", "HadISSTv1",
+    "HadISST1.1", "HadISST1-1", "HadISST-1.1", "HadISST-1-1", "HadISSTv1.1", "OAFlux", "ORAS4", "ORAS5", "SODA2.2.4",
+    "SODA3.3.2", "SODA3.4.2", "SODA3.11.2", "SODA3.12.2", "SODA3.15.2", "Tropflux", "TropFlux", "Tropflux1",
+    "TropFlux1", "Tropflux-1", "TropFlux-1", "Tropfluxv1", "TropFluxv1", "Tropflux1.0", "TropFlux1.0", "Tropflux1-0",
+    "TropFlux1-0", "Tropflux-1.0", "TropFlux-1.0", "Tropflux-1-0", "TropFlux-1-0", "Tropfluxv1.0", "TropFluxv1.0"]
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -978,7 +980,8 @@ dict_twoVar_modelAndObs = {
     "EnsoTauyLonRmse": EnsoTauyLonRmse, "EnsoTauyTsRmse": EnsoTauyTsRmse,
     "EnsoThfLonRmse": EnsoThfLonRmse, "EnsoThfTsRmse": EnsoThfTsRmse,
     "telecon_pr_djf": telecon_pr_djf,
-    "telecon_pr_ano_djf": telecon_pr_ano_djf, "telecon_pr_amp_djf": telecon_pr_amp_djf,
+    "telecon_pr_amp_djf": telecon_pr_amp_djf, "telecon_pr_ano_djf": telecon_pr_ano_djf,
+    "telecon_pr_sig_djf": telecon_pr_sig_djf,
 }
 
 dict_oneVar = {
@@ -987,6 +990,7 @@ dict_oneVar = {
     "grad_lat_pr": grad_lat_pr, "grad_lat_ssh": grad_lat_ssh, "grad_lat_sst": grad_lat_sst, "grad_lon_pr": grad_lon_pr,
     "grad_lon_ssh": grad_lon_ssh, "grad_lon_sst": grad_lon_sst, "NinaSstDiv": NinaSstDiv, "NinaSstDur": NinaSstDur,
     "NinoSstDiv": NinoSstDiv, "NinoSstDiversity": NinoSstDiversity, "NinoSstDur": NinoSstDur, "nstar": nstar,
+    "stat_box": stat_box,
 }
 
 dict_twoVar = {
@@ -1147,8 +1151,20 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     """
     tmp_metric = deepcopy(metric)
     metric = metric.replace("_1", "").replace("_2", "").replace("_3", "").replace("_4", "").replace("_5", "")
-    if metric.split("_")[-1] in list(ReferenceRegions().keys()):
-        metric = metric.replace("_" + str(metric.split("_")[-1]), "")
+    # remove statistics, variables and regions from metric name
+    if "nstar" in metric or "stat_box" in metric:
+        # remove statistics from name
+        for k1 in ["ave", "ske", "std", "var"]:
+            if "_" + str(k1) + "_" in metric:
+                metric = metric.replace("_" + str(k1), "")
+        # remove variables from metric name
+        for k1 in list(reference_variables().keys()):
+            if "_" + str(k1) + "_" in metric:
+                metric = metric.replace("_" + str(k1), "")
+        # remove regions from metric name
+        for k1 in list(ReferenceRegions().keys()):
+            if "_" + str(k1) in metric and metric.split("_" + str(k1))[-1] == "":
+                metric = metric.replace("_" + str(k1), "")
     # retrieving keyargs from EnsoCollectionsLib.defCollection
     dict_mc = defCollection(metricCollection)
     list_obs = sorted(list(ReferenceObservations().keys()), key=lambda v: v.upper())
@@ -1278,7 +1294,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 if metric in list(dict_oneVar_modelAndObs.keys()):
                     output_name = obsNameVar1[ii]
                     if output_name != modelName:
-                        if "EnsoSstMap" in metric and output_name in sst_only:
+                        if ("EnsoSstMap" in metric and output_name in sst_only) or (
+                                "BiasSsh" in metric and output_name in sla_only):
                             pass
                         else:
                             print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " +

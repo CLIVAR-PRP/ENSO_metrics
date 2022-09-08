@@ -66,6 +66,7 @@ dict_label = {
 }
 
 output_variables = {
+    "stat_box": ["stat_box__"],
     "ave_ts_box": ["ave_ts__"],
     "BiasLhfLatRmse": ["lhf_lat__", "lhf_map__"],
     "BiasLhfLonRmse": ["lhf_lon__", "lhf_map__"],
@@ -252,7 +253,7 @@ output_variables = {
     "grad_lon_pr": ["pr_lon__", "pr_map__"],
     "grad_lon_ssh": ["ssh_lon__", "ssh_map__"],
     "grad_lon_sst": ["sst_lon__", "sst_map__"],
-    "nstar": ["sst_ts__"],
+    "nstar": ["nstar__"],
     "SeasonalLhfLatRmse": ["lhfMacStd_lat__", "lhfMacStd_map__", "lhfMac_hov__"],
     "SeasonalLhfLonRmse": ["lhfMacStd_lon__", "lhfMacStd_map__", "lhfMac_hov__"],
     "SeasonalLwrLatRmse": ["lwrMacStd_lat__", "lwrMacStd_map__", "lwrMac_hov__"],
@@ -289,6 +290,11 @@ output_variables = {
                            "nina_pr_map_composite_djf__", "nino_pr_map_composite_djf__",
                            "nina_pr_region_range_djf__", "nino_pr_region_range_djf__",
                            "nina_pr_bst_region_range_djf__", "nino_pr_bst_region_range_djf__",
+                           "nina_pr_bst_region_composite_djf__", "nino_pr_bst_region_composite_djf__"],
+    "telecon_pr_sig_djf": ["pr_region_all_years_djf__", "nina_pr_region_events_djf__", "nino_pr_region_events_djf__",
+                           "nina_pr_region_composite_djf__", "nino_pr_region_composite_djf__",
+                           "nina_pr_map_composite_djf__", "nino_pr_map_composite_djf__",
+                           "nina_pr_region_agree_djf__", "nino_pr_region_agree_djf__",
                            "nina_pr_bst_region_composite_djf__", "nino_pr_bst_region_composite_djf__"],
 }
 
