@@ -12,14 +12,6 @@ def defCollection(metric_collection=True):
         "ENSO_IV": {
             "long_name": "Metrics Collection for ENSO internal variability",
             "metrics_list": {
-                "stat_box_ave_pr_global": {
-                    "variables": ["pr"],
-                    "regions": {"pr": "global"},
-                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
-                    "metric_computation": "abs_relative_difference",
-                    "internal_variable_name": "pr",
-                    "statistic": "mean state",
-                },
                 "stat_box_ave_pr_itcz_ne": {
                     "variables": ["pr"],
                     "regions": {"pr": "itcz_ne"},
@@ -154,8 +146,8 @@ def defCollection(metric_collection=True):
                 "modeled_period": None,
             },
             "plot_order": [
-                "stat_box_ave_pr_global", "stat_box_ave_pr_itcz_ne", "stat_box_ave_pr_itcz_se", "stat_box_ave_pr_nino3",
-                "stat_box_ave_ts_global", "stat_box_ave_ts_nino3", "stat_box_ave_ts_nino3.4", "stat_box_var_pr_itcz_ne",
+                "stat_box_ave_pr_itcz_ne", "stat_box_ave_pr_itcz_se", "stat_box_ave_pr_nino3", "stat_box_ave_ts_global",
+                "stat_box_ave_ts_nino3", "stat_box_ave_ts_nino3.4", "stat_box_var_pr_itcz_ne",
                 "stat_box_var_pr_itcz_se", "stat_box_var_pr_nino3", "stat_box_var_ts_nino3", "stat_box_var_ts_nino3.4",
                 "nstar_pr_itcz_ne", "nstar_pr_itcz_se", "nstar_pr_nino3", "nstar_ts_nino3", "nstar_ts_nino3.4"],
             "description": "understanding the low frequency modulation of ENSO variance",
