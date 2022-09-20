@@ -9265,7 +9265,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                      "frequency": kwargs["frequency"]}
             SaveNetcdf(file_name, global_attributes=dict4, var1=sst_hov, var1_attributes=dict1,
                        var1_name=ovar[0] + dataset, var2=sst_map, var2_attributes=dict2, var2_name=ovar[1] + dataset,
-                       var3=sst, var3_attributes=dict3, var2_name=ovar[2] + dataset, var3_time_name="months_" + dataset)
+                       var3=sst, var3_attributes=dict3, var3_name=ovar[2] + dataset, var3_time_name="months_" + dataset)
             del dict1, dict2, dict3, dict4, file_name
     # Metric value
     if debug is True:
