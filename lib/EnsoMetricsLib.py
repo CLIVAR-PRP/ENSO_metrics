@@ -9259,11 +9259,14 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                                     "averaged [" + str(lat[0]) + " ; " + str(lat[1]) + "])"}
             dict2 = {"units": units, "number_of_years_used": nbr_year, "time_period": str(actualtimebounds),
                      "description": "map of standard deviation of tropical Pacific SSTA"}
-            dict3 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
+            dict3 = {"units": units, "number_of_years_used": nbr_year, "time_period": str(actualtimebounds),
+                     "description": "time series of " + str(sstbox) + " averaged SSTA", "arraySTD_" + dataset: mv}
+            dict4 = {"metric_name": name, "metric_method": method, "metric_reference": ref,
                      "frequency": kwargs["frequency"]}
-            SaveNetcdf(file_name, global_attributes=dict3, var1=sst_hov, var1_attributes=dict1,
-                       var1_name=ovar[0] + dataset, var2=sst_map, var2_attributes=dict2, var2_name=ovar[1] + dataset)
-            del dict1, dict2, dict3, file_name
+            SaveNetcdf(file_name, global_attributes=dict4, var1=sst_hov, var1_attributes=dict1,
+                       var1_name=ovar[0] + dataset, var2=sst_map, var2_attributes=dict2, var2_name=ovar[1] + dataset,
+                       var3=sst, var3_attributes=dict3, var2_name=ovar[2] + dataset, var3_time_name="months_" + dataset)
+            del dict1, dict2, dict3, dict4, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}

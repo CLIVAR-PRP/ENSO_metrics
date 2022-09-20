@@ -98,7 +98,7 @@ output_variables = {
     "BiasThfLatRmse": ["thf_lat__", "thf_map__"],
     "BiasThfLonRmse": ["thf_lon__", "thf_map__"],
     "BiasThfMapRmse": ["thf_map__"],
-    "EnsoAmpl": ["sstStd_lon__", "sstStd_map__"],
+    "EnsoAmpl": ["sstStd_lon__", "sstStd_map__", "sst_ts__"],
     "EnsoSstSkew": ["sstSke_lon__", "sstSke_map__"],
     "EnsoSeasonality": [
         "sstStd_ts__", "sstStd_hov__", "sstStd_NDJ_lon__", "sstStd_MAM_lon__", "sstStd_NDJ_map__",
