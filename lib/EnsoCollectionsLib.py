@@ -22,7 +22,7 @@ def defCollection(metric_collection=True):
                 },
                 "stat_box_ave_pr_itcz_se": {
                     "variables": ["pr"],
-                    "regions": {"pr": "itcz_ne"},
+                    "regions": {"pr": "itcz_se"},
                     "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
                     "metric_computation": "abs_relative_difference",
                     "internal_variable_name": "pr",
@@ -70,7 +70,7 @@ def defCollection(metric_collection=True):
                 },
                 "stat_box_var_pr_itcz_se": {
                     "variables": ["pr"],
-                    "regions": {"pr": "itcz_ne"},
+                    "regions": {"pr": "itcz_se"},
                     "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
                     "metric_computation": "abs_relative_difference",
                     "internal_variable_name": "pr",

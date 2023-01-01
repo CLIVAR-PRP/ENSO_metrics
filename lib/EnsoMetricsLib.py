@@ -9368,7 +9368,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
 
     # Define metric attributes
     name = "ENSO SSTA skewness"
-    units = "" if "normalization" in list(kwargs.keys()) and kwargs["normalization"] is True else "C"
+    units = ""  # skewness has no units: it's a pure number
     method = "Skewness of " + sstbox + " averaged sea surface temperature anomalies (SSTA)"
     ref = "Using CDAT regression calculation"
     metric = "EnsoSstSkew"
