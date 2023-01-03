@@ -163,6 +163,14 @@ def defCollection(metric_collection=True):
                     "internal_variable_name": "pr",
                     "statistic": "mean state",
                 },
+                "stat_box_ave_ts_nino3": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                    "statistic": "mean state",
+                },
                 "stat_box_ave_ts_nino3.4": {
                     "variables": ["ts"],
                     "regions": {"ts": "nino3.4"},
@@ -179,6 +187,14 @@ def defCollection(metric_collection=True):
                     "internal_variable_name": "pr",
                     "statistic": "skewness",
                 },
+                "stat_box_ske_ts_nino3": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
+                    "statistic": "skewness",
+                },
                 "stat_box_ske_ts_nino3.4": {
                     "variables": ["ts"],
                     "regions": {"ts": "nino3.4"},
@@ -193,6 +209,14 @@ def defCollection(metric_collection=True):
                     "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
                     "metric_computation": "abs_relative_difference",
                     "internal_variable_name": "pr",
+                    "statistic": "variance",
+                },
+                "stat_box_var_ts_nino3": {
+                    "variables": ["ts"],
+                    "regions": {"ts": "nino3"},
+                    "obs_name": {"ts": ["ERA-Interim", "OISSTv2"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "ts",
                     "statistic": "variance",
                 },
                 "stat_box_var_ts_nino3.4": {
