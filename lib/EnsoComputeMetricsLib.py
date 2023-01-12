@@ -7,25 +7,26 @@ import json
 # ENSO_metrics package functions:
 from EnsoMetrics.EnsoCollectionsLib import defCollection, ReferenceObservations, ReferenceRegions, reference_variables
 from EnsoMetrics import EnsoErrorsWarnings
-from EnsoMetrics.EnsoMetricsLib import ave_ts_box, BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, \
+from EnsoMetrics.EnsoMetricsLib import BiasLhfLatRmse, BiasLhfLonRmse, BiasLhfMapRmse, BiasLwrLatRmse, \
     BiasLwrLonRmse, BiasLwrMapRmse, BiasPrLatRmse, BiasPrLonRmse, BiasPrMapRmse, BiasShfLatRmse, BiasShfLonRmse, \
     BiasShfMapRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshMapRmse, BiasSstLatRmse, BiasSstLonRmse, BiasSstMapRmse, \
     BiasSstSkLonRmse, BiasSwrLatRmse, BiasSwrLonRmse, BiasSwrMapRmse, BiasTauxLatRmse, BiasTauxLonRmse, \
     BiasTauxMapRmse, BiasTauyLatRmse, BiasTauyLonRmse, BiasTauyMapRmse, BiasThfLatRmse, BiasThfLonRmse, \
-    BiasThfMapRmse, EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, EnsoFbSstLhf, EnsoFbSstLwr, \
-    EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, EnsoPrMapDjf, EnsoPrMapJja, \
-    EnsoPrDjfTel, EnsoPrJjaTel, EnsoSeasonality, EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, EnsoSstDiversity, \
-    EnsoLhfLonRmse, EnsoLwrLonRmse, EnsoPrLonRmse, EnsoShfLonRmse, EnsoSshLonRmse, EnsoSstLonRmse, EnsoSwrLonRmse, \
-    EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoThfLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, EnsoSstSkew, \
-    EnsoLhfTsRmse, EnsoLwrTsRmse, EnsoPrTsRmse, EnsoShfTsRmse, EnsoSshTsRmse, EnsoSstTsRmse, EnsoSwrTsRmse, \
-    EnsoTauxTsRmse, EnsoTauyTsRmse, EnsoThfTsRmse, grad_lat_pr, grad_lat_ssh, grad_lat_sst, grad_lon_pr, grad_lon_ssh, \
-    grad_lon_sst, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, NinaSstLonRmse, NinaSstMap, \
-    NinaSstTsRmse, NinoPrMap, NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, NinoSstDur, NinoSstLonRmse, \
-    NinoSstMap, NinoSstTsRmse, nstar, SeasonalLhfLatRmse, SeasonalLhfLonRmse, SeasonalLwrLatRmse, SeasonalLwrLonRmse, \
-    SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalShfLatRmse, SeasonalShfLonRmse, SeasonalSshLatRmse, \
-    SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, SeasonalSwrLatRmse, SeasonalSwrLonRmse, \
-    SeasonalTauxLatRmse, SeasonalTauxLonRmse, SeasonalTauyLatRmse, SeasonalTauyLonRmse, SeasonalThfLatRmse, \
-    SeasonalThfLonRmse, stat_box, telecon_pr_djf, telecon_pr_amp_djf, telecon_pr_ano_djf, telecon_pr_sig_djf
+    BiasThfMapRmse, dcorr, enso_wait_time, EnsoAmpl, EnsoDiversity, EnsodSstOce, EnsoDuration, EnsoFbSshSst, \
+    EnsoFbSstLhf, EnsoFbSstLwr, EnsoFbSstShf, EnsoFbSstSwr, EnsoFbSstTaux, EnsoFbSstThf, EnsoFbTauxSsh, EnsoPrMap, \
+    EnsoPrMapDjf, EnsoPrMapJja, EnsoPrDjfTel, EnsoPrJjaTel, EnsoSeasonality, EnsoSlpMap, EnsoSlpMapDjf, EnsoSlpMapJja, \
+    EnsoSstDiversity, EnsoLhfLonRmse, EnsoLwrLonRmse, EnsoPrLonRmse, EnsoShfLonRmse, EnsoSshLonRmse, EnsoSstLonRmse, \
+    EnsoSwrLonRmse, EnsoTauxLonRmse, EnsoTauyLonRmse, EnsoThfLonRmse, EnsoSstMap, EnsoSstMapDjf, EnsoSstMapJja, \
+    EnsoSstSkew, EnsoLhfTsRmse, EnsoLwrTsRmse, EnsoPrTsRmse, EnsoShfTsRmse, EnsoSshTsRmse, EnsoSstTsRmse, \
+    EnsoSwrTsRmse, EnsoTauxTsRmse, EnsoTauyTsRmse, EnsoThfTsRmse, grad_lat_pr, grad_lat_ssh, grad_lat_sst, \
+    grad_lon_pr, grad_lon_ssh, grad_lon_sst, NinaPrMap, NinaSlpMap, NinaSstDiv, NinaSstDivRmse, NinaSstDur, \
+    NinaSstLonRmse, NinaSstMap, NinaSstTsRmse, NinoPrMap, NinoSlpMap, NinoSstDiv, NinoSstDiversity, NinoSstDivRmse, \
+    NinoSstDur, NinoSstLonRmse, NinoSstMap, NinoSstTsRmse, nstar, SeasonalLhfLatRmse, SeasonalLhfLonRmse, \
+    SeasonalLwrLatRmse, SeasonalLwrLonRmse, SeasonalPrLatRmse, SeasonalPrLonRmse, SeasonalShfLatRmse, \
+    SeasonalShfLonRmse, SeasonalSshLatRmse, SeasonalSshLonRmse, SeasonalSstLatRmse, SeasonalSstLonRmse, \
+    SeasonalSwrLatRmse, SeasonalSwrLonRmse, SeasonalTauxLatRmse, SeasonalTauxLonRmse, SeasonalTauyLatRmse, \
+    SeasonalTauyLonRmse, SeasonalThfLatRmse, SeasonalThfLonRmse, stat_box, telecon_pr_djf, telecon_pr_amp_djf, \
+    telecon_pr_ano_djf, telecon_pr_sig_djf
 from EnsoMetrics.EnsoToolsLib import math_metric_computation
 from EnsoMetrics.KeyArgLib import default_arg_values
 
@@ -985,12 +986,12 @@ dict_twoVar_modelAndObs = {
 }
 
 dict_oneVar = {
-    "ave_ts_box": ave_ts_box, "EnsoAmpl": EnsoAmpl, "EnsoDuration": EnsoDuration, "EnsoDiversity": EnsoDiversity,
-    "EnsoSeasonality": EnsoSeasonality, "EnsoSstDiversity": EnsoSstDiversity, "EnsoSstSkew": EnsoSstSkew,
-    "grad_lat_pr": grad_lat_pr, "grad_lat_ssh": grad_lat_ssh, "grad_lat_sst": grad_lat_sst, "grad_lon_pr": grad_lon_pr,
-    "grad_lon_ssh": grad_lon_ssh, "grad_lon_sst": grad_lon_sst, "NinaSstDiv": NinaSstDiv, "NinaSstDur": NinaSstDur,
-    "NinoSstDiv": NinoSstDiv, "NinoSstDiversity": NinoSstDiversity, "NinoSstDur": NinoSstDur, "nstar": nstar,
-    "stat_box": stat_box,
+    "dcorr": dcorr, "enso_wait_time": enso_wait_time, "EnsoAmpl": EnsoAmpl, "EnsoDuration": EnsoDuration,
+    "EnsoDiversity": EnsoDiversity, "EnsoSeasonality": EnsoSeasonality, "EnsoSstDiversity": EnsoSstDiversity,
+    "EnsoSstSkew": EnsoSstSkew, "grad_lat_pr": grad_lat_pr, "grad_lat_ssh": grad_lat_ssh, "grad_lat_sst": grad_lat_sst,
+    "grad_lon_pr": grad_lon_pr, "grad_lon_ssh": grad_lon_ssh, "grad_lon_sst": grad_lon_sst, "NinaSstDiv": NinaSstDiv,
+    "NinaSstDur": NinaSstDur, "NinoSstDiv": NinoSstDiv, "NinoSstDiversity": NinoSstDiversity, "NinoSstDur": NinoSstDur,
+    "nstar": nstar, "stat_box": stat_box,
 }
 
 dict_twoVar = {
@@ -1152,7 +1153,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     tmp_metric = deepcopy(metric)
     metric = metric.replace("_1", "").replace("_2", "").replace("_3", "").replace("_4", "").replace("_5", "")
     # remove statistics, variables and regions from metric name
-    if "nstar" in metric or "stat_box" in metric:
+    if "dcorr" in metric or "nstar" in metric or "stat_box" in metric:
         # remove statistics from name
         for k1 in ["ave", "ske", "std", "var"]:
             if "_" + str(k1) + "_" in metric:

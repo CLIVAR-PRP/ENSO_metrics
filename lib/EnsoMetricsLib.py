@@ -13,9 +13,9 @@ from .EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_di
 from .EnsoUvcdatToolsLib import ArrayListAx, ArrayOnes, ArrayToList, AverageAxis, AverageHorizontal, \
     AverageMeridional, AverageTemporal, AverageZonal, BasinMask, CheckTime, Composite, compute_degrees_of_freedom, \
     ComputeInterannualAnomalies, compute_degrees_of_freedom, ComputePDF, Concatenate, Correlation, DetectEvents, \
-    DurationAllEvent, DurationEvent, Event_selection, fill_dict_axis, FindXYMinMaxInTs, get_year_by_year, \
-    LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, LinearRegressionTsAgainstTs, MinMax, MyEmpty, \
-    PreProcessTS, preprocess_ts_polygon, Read_data_mask_area, Read_data_mask_area_multifile, Regrid, \
+    DurationAllEvent, DurationEvent, enso_time_interval, Event_selection, fill_dict_axis, FindXYMinMaxInTs, \
+    get_year_by_year, LinearRegressionAndNonlinearity, LinearRegressionTsAgainstMap, LinearRegressionTsAgainstTs, \
+    MinMax, MyEmpty, PreProcessTS, preprocess_ts_polygon, Read_data_mask_area, Read_data_mask_area_multifile, Regrid, \
     remove_global_mean, RmsAxis, RmsHorizontal, RmsMeridional, RmsZonal, SaveNetcdf, SeasonalMean, SkewnessTemporal, \
     SlabOcean, Smoothing, Std, StdMonthly, telecon_array, telecon_change_rate, telecon_same_sign, \
     telecon_significance, TimeBounds, TsToMap, TwoVarRegrid
@@ -28,8 +28,8 @@ from .KeyArgLib import default_arg_values
 # These functions have file names and variable names as inputs and metric as output
 #
 def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box, dataset="",
-        debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", statistic="mean state",
-        **kwargs):
+             debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", statistic="mean state",
+             **kwargs):
     """
     The stat_box() function computes the 'statistic' of 'var_box' averaged 'internal_variable_name' (lhf, lwr, pr, shf,
     slp, ssh, sst, swr, taux, tauy, thf, ts)
@@ -139,41 +139,61 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         if arg not in list(kwargs.keys()):
             kwargs[arg] = default_arg_values(arg)
     # reference region
-    ref_reg = deepcopy(ReferenceRegions(var_box))
+    reg_di = {var_box: deepcopy(ReferenceRegions(var_box))}
+    reg_ln = reg_di[var_box]["long_name"]
+    reg_sn = reg_di[var_box]["short_name"]
+    reg_s2 = ""
+    if "regions" in list(reg_di[var_box].keys()):
+        reg_list = reg_di[var_box]["regions"]
+        for reg in reg_list:
+            reg_di[reg] = deepcopy(ReferenceRegions(reg))
+            reg_s2 += reg_di[reg]["short_name"]
+            if reg != reg_list[-1]:
+                reg_s2 += " minus "
+    else:
+        reg_list = [var_box]
+        reg_s2 = deepcopy(reg_sn)
+    if internal_variable_name == "ssh" and var_box != "global":
+        reg_di["global"] = deepcopy(ReferenceRegions("global"))
+        reg_list += ["global"]
+        reg_s2 += " GMSL removed"
     # reference variable
     ref_var = deepcopy(reference_variables(internal_variable_name))
+    var_ln = ref_var["long_name"]
+    var_sn = ref_var["short_name"]
     # reference statistic
     if statistic in ["mean state", "skewness", "standard deviation", "variance"]:
         sta_ano = "" if statistic == "mean state" else "A"
         sta_sh2 = "mean" if statistic == "mean state" else ("SKE" if statistic == "skewness" else (
-            "STD" if statistic == "standard deviation" else "VAR"))
+                  "STD" if statistic == "standard deviation" else "VAR"))
         sta_sh1 = "_ave" if statistic == "mean state" else "_" + str(sta_sh2).lower()
     else:
         sta_ano, sta_sh1, sta_sh2 = None, None, None
 
     # Define metric attributes
-    name = str(sta_sh2) + " of " + str(ref_reg["short_name"]) + " " + str(ref_var["short_name"]) + str(sta_ano)
+    name = str(sta_sh2) + " of " + str(reg_sn) + " " + str(var_sn) + str(sta_ano)
     units1 = deepcopy(ref_var["units"])
     units2 = deepcopy(units1)
     if statistic == "variance":
         units2 = "degC2" if units2 == "degC" else ("cm2" if units2 == "cm" else ("m4" if units2 == "m2" else (
-            "mm2/day2" if units2 == "mm/day" else ("1e-3 N2/m4" if units2 == "1e-3 N/m2" else (
-            "Pa2" if units2 == "Pa" else ("W2/m4" if units2 == "W/m2" else deepcopy(units2)))))))
-    method = str(statistic) + " of " + str(ref_reg["long_name"]) + " (" + str(ref_reg["short_name"]) + ") averaged " + \
-        str(ref_var["long_name"]) + " (" + str(ref_var["short_name"]) + ")"
-    method_var = str(ref_var["short_name"]) + ": "
+                 "mm2/day2" if units2 == "mm/day" else ("1e-3 N2/m4" if units2 == "1e-3 N/m2" else (
+                 "Pa2" if units2 == "Pa" else ("W2/m4" if units2 == "W/m2" else deepcopy(units2)))))))
+    method = str(statistic) + " of " + str(reg_ln) + " (" + str(reg_s2) + ") averaged " + str(var_ln) + " (" + \
+             str(var_sn) + ")"
+    if sta_ano == "A":
+        method += " anomalies"
+    method_var = str(var_sn) + ": "
     ref = "Using CDAT averaging"
     if sta_ano == "A":
         ref += " and computing interannual anomalies"
-    metric = "stat_box_" + str(sta_sh1) + "_" + str(ref_var["short_name"]).lower() + "_" + \
-        str(ref_reg["short_name"]).lower()
+    metric = "stat_box_" + str(sta_sh1) + "_" + str(var_sn).lower() + "_" + str(reg_sn).lower()
     if metname == "":
         metname = deepcopy(metric)
     ovar = metric_variable_names(metric)
 
     # Values in case of error (failure)
     mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
-    actualtimebounds, nbr_year, keyerror = None, None, None
+    nbr_year, timebounds, keyerror = None, None, None
 
     # Create a fake loop to be able to break out if an error occur
     for break_loop in range(1):
@@ -181,29 +201,31 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         # ------------------------------------------------
         # 1. Read files
         # ------------------------------------------------
+        r1 = reg_list[0]
         if debug is True:
             EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
-        # 1.1 Read file and select the right region
-        mask_l = ref_reg["maskland"] if "maskland" in list(ref_reg.keys()) else False
-        mask_o = ref_reg["maskocean"] if "maskocean" in list(ref_reg.keys()) else False
+        # 1.1 read file and select the 'r1' region
+        mask_l = reg_di[r1]["maskland"] if "maskland" in list(reg_di[r1].keys()) else False
+        mask_o = reg_di[r1]["maskocean"] if "maskocean" in list(reg_di[r1].keys()) else False
         if mask_l is True and mask_o is True:
-            keyerror = "both land and ocean are masked (" + str(var_box) + ": land = " + str(mask_l) + ", ocean = " + \
-                str(mask_o) + "), it should not be the case"
+            keyerror = "both land and ocean are masked (" + str(r1) + ": land = " + str(mask_l) + ", ocean = " + \
+                       str(mask_o) + "), it should not be the case"
             break
-        arr, areacell, keyerror = Read_data_mask_area(var_file, var_name, ref_var["variable_type"], metric, var_box,
-            file_area=var_areafile, name_area=var_areaname, file_mask=var_landmaskfile, name_mask=var_landmaskname,
-            maskland=mask_l, maskocean=mask_o, debug=debug, **kwargs)
+        arr, areacell, keyerror = Read_data_mask_area(
+            var_file, var_name, ref_var["variable_type"], metric, r1, file_area=var_areafile, name_area=var_areaname,
+            file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l, maskocean=mask_o, debug=debug,
+            **kwargs)
         if keyerror is not None:
             break
-        method_var += str(counter) + ") read"
+        method_var += str(counter) + ") read in " + str(r1)
         if mask_l is True:
-            method_var += " & mask land"
+            method_var += " & land masked"
         if mask_o is True:
-            method_var += " & mask ocean"
-        # 1.2 Compute number of years
+            method_var += " & ocean masked"
+        # 1.2 compute number of years
         nbr_year = arr.shape[0] // 12
-        # 1.3 Read time period used
-        actualtimebounds = TimeBounds(arr)
+        # 1.3 read time period used
+        timebounds = TimeBounds(arr)
 
         # ------------------------------------------------
         # 2. Preprocess
@@ -214,9 +236,9 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         kwargs["normalization"] = False
         my_smo = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
         kwargs["smoothing"] = False
-        # 2.1 horizontal average of 'internal_variable_name' in 'var_box'
-        arr, tmp, keyerror = preprocess_ts_polygon(arr, "", areacell=areacell, average="horizontal", region=var_box,
-            **kwargs)
+        # 2.1 horizontal average of 'internal_variable_name' in 'r1'
+        arr, tmp, keyerror = preprocess_ts_polygon(
+            arr, "", areacell=areacell, average="horizontal", region=r1, **kwargs)
         if keyerror is not None:
             break
         for k1 in tmp.split(", "):
@@ -224,37 +246,50 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
             counter += 1
         if debug is True:
             dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
-                "time1": str(TimeBounds(arr))}
+                          "time1": str(TimeBounds(arr))}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon", 15, **dict_debug)
-        # 2.2 compute the dynamic sea level: GMSL removed
-        if internal_variable_name == "ssh" and var_box != "global":
-            # 2.2.1 Read 'global' 'internal_variable_name'
-            arr_g, areacell, keyerror = Read_data_mask_area(var_file, var_name, ref_var["variable_type"], metric,
-                "global", file_area=var_areafile, name_area=var_areaname, file_mask=var_landmaskfile,
-                name_mask=var_landmaskname, maskland=False, maskocean=False, debug=debug, **kwargs)
+        # 2.2 read, average and remove from 'arr'
+        for r2 in reg_list[1:]:
+            # 2.2.1 read file and select the 'r2' region
+            mask_l = reg_di[r2]["maskland"] if "maskland" in list(reg_di[r2].keys()) else False
+            mask_o = reg_di[r2]["maskocean"] if "maskocean" in list(reg_di[r2].keys()) else False
+            if mask_l is True and mask_o is True:
+                keyerror = "both land and ocean are masked (" + str(r2) + ": land = " + str(mask_l) + ", ocean = " + \
+                           str(mask_o) + "), it should not be the case"
+                break
+            ar2, areacell, keyerror = Read_data_mask_area(
+                var_file, var_name, ref_var["variable_type"], metric, r2, file_area=var_areafile,
+                name_area=var_areaname, file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l,
+                maskocean=mask_o, debug=debug, **kwargs)
             if keyerror is not None:
                 break
-            # 2.2.2 horizontal average of 'internal_variable_name' in 'global'
-            arr_g, _, keyerror = preprocess_ts_polygon(arr_g, method_var, areacell=areacell, average="horizontal",
-                region="global", **kwargs)
+            method_var += str(counter) + ") read in " + str(r2)
+            if mask_l is True:
+                method_var += " & land masked"
+            if mask_o is True:
+                method_var += " & ocean masked"
+            # 2.2.2 horizontal average of 'internal_variable_name' in 'r2'
+            ar2, tmp, keyerror = preprocess_ts_polygon(
+                ar2, "", areacell=areacell, average="horizontal", region=r2, **kwargs)
             if keyerror is not None:
                 break
-            # 2.2.2 remove global mean to local mean
-            arr, _, keyerror = remove_global_mean(arr, arr_g, "", "")
-            if keyerror is not None:
-                break
-            method_var += ";; " + str(counter) + ") global mean sea level removed (sea surface height averaged over" + \
-                " global region [90S-90N ; 0E-360E])"
+            if debug is True:
+                dict_debug = {"axes1": str([ax.id for ax in ar2.getAxisList()]), "shape1": str(ar2.shape),
+                              "time1": str(TimeBounds(ar2))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon " + str(r2), 15, **dict_debug)
+            for k1 in tmp.split(", "):
+                method_var += " & " + str(k1)
+            # 2.2.3 remove ar2 from arr
+            arr -= ar2
+            method_var += " & removed at each time step"
             counter += 1
             if debug is True:
-                dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
-                    "time1": str(TimeBounds(arr))}
-                EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon (global)", 15, **dict_debug)
-            # delete
-            del arr_g
+                dict_debug = {"axes1": str([ax.id for ax in ar2.getAxisList()]), "shape1": str(arr.shape),
+                              "time1": str(TimeBounds(arr))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after arr -= ar2", 15, **dict_debug)
         if keyerror is not None:
             break
-        # 2.3 'var_box' averaged 'internal_variable_name' anomalies / normalized / detrended / smoothed if applicable
+        # 2.3 compute anomalies / normalization / detrend / smooth if applicable
         kwargs["detrending"] = deepcopy(my_det)
         kwargs["normalization"] = deepcopy(my_nor)
         kwargs["smoothing"] = deepcopy(my_smo)
@@ -267,13 +302,13 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
             counter += 1
         if debug is True:
             dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
-                "time1": str(TimeBounds(arr))}
+                          "time1": str(TimeBounds(arr))}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon (ano, det, ...)", 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Metric value
         # ------------------------------------------------
-        # 3.1 Computes metric
+        # 3.1 computes metric
         ave, keyerror = AverageTemporal(arr)
         if keyerror is not None:
             break
@@ -290,7 +325,7 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         else:
             mv = deepcopy(var)
         method_var += ";; " + str(counter) + ") compute " + str(statistic)
-        # 3.2 Computes error
+        # 3.2 computes error
         if statistic == "mean state":
             mv_error = std / len(arr)**(1/2)
         elif statistic == "skewness":
@@ -306,222 +341,29 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         if netcdf is True:
             # Supplementary metrics
             dict_nc = {"var1": arr}
-            dict_nc["var1_attributes"] = {"arrayAVE": ave, "arraySKE": ske, "arraySTD": std, "arrayVAR": var,
-                "description": "time series of " + str(var_box) + " averaged " + str(ref_var["short_name"]) +
-                    str(sta_ano),
-                "number_of_years_used": nyear, "time_period": str(timebounds), "units": units1}
-            dict_nc["var1_name"] = str(internal_variable_name)+ "_" + str(var_box) + str(sta_ano) + "__" + str(dataset)
+            dict_nc["var1_attributes"] = {
+                "arrayAVE": ave, "arraySKE": ske, "arraySTD": std, "arrayVAR": var,
+                "description": "time series of " + str(var_box) + " averaged " + str(var_sn) + str(sta_ano),
+                "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units1}
+            dict_nc["var1_name"] = str(var_sn).lower() + str(sta_ano) + "_" + str(var_box) + "__" + str(dataset)
+            dict_nc["var1_time_name"] = "months_" + str(dataset)
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + str(metname) + ".nc"
             dict1 = {"computation_steps": method_var, "frequency": kwargs["frequency"], "metric_method": method,
-                "metric_name": name, "metric_reference": ref}
+                     "metric_name": name, "metric_reference": ref}
             SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
-            del dict1, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
         EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
     # Create output
-    metric_output = {"dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method,
-        "method_detail": method_var, "name": name, "nyears": nbr_year, "ref": ref, "units": units2,
-        "time_frequency": kwargs["frequency"], "time_period": actualtimebounds, "value": mv, "value_error": mv_error}
-    return metric_output
-
-
-def ave_ts_box(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset="",
-        debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
-    """
-    The ave_ts_box() function computes the temporal mean of 'sstbox' TS (surface temperature)
-
-    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
-    Co-author:
-
-    Created on Wed Mar 30 2022
-
-    Inputs:
-    ------
-    :param sstfile: string
-        path_to/filename of the file (NetCDF) of TS
-    :param sstname: string
-        name of TS variable (skt, ts) in 'sstfile'
-    :param sstareafile: string
-        path_to/filename of the file (NetCDF) of the areacell for TS
-    :param sstareaname: string
-        name of areacell variable (areacella, areacello) in 'sstareafile'
-    :param sstlandmaskfile: string
-        path_to/filename of the file (NetCDF) of the landmask for TS
-    :param sstlandmaskname: string
-        name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
-    :param sstbox: string
-        name of box (e.g. 'global') for TS
-    :param dataset: string, optional
-        name of current dataset (e.g., 'model', 'obs', ...)
-    :param debug: bolean, optional
-        default value = False debug mode not activated
-        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-    :param netcdf: boolean, optional
-        default value = False dive_down are not saved in NetCDFs
-        If you want to save the dive down diagnostics set it to True
-    :param netcdf_name: string, optional
-        default value = '' NetCDFs are saved where the program is ran without a root name
-        the name of a metric will be append at the end of the root name
-        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
-    :param metname: string, optional
-        default value = '' metric name is not changed
-        e.g., metname = 'ave_ts_box_2'
-    usual kwargs:
-    :param detrending: dict, optional
-        see EnsoUvcdatToolsLib.Detrend for options
-        the aim if to specify if the trend must be removed
-        detrending method can be specified
-        default value is False
-    :param frequency: string, optional
-        time frequency of the datasets
-        e.g., frequency='monthly'
-        default value is None
-    :param min_time_steps: int, optional
-        minimum number of time steps for the metric to make sens
-        e.g., for 30 years of monthly data mintimesteps=360
-        default value is None
-    :param normalization: boolean, optional
-        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
-        anything but true
-        default value is False
-    :param regridding: dict, optional
-        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
-        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
-        observations are regridded toward another grid
-        interpolation tool and method can be specified
-        default value is False
-    :param smoothing: dict, optional
-        see EnsoUvcdatToolsLib.Smoothing for options
-        the aim if to specify if variables are smoothed (running mean)
-        smoothing axis, window and method can be specified
-        default value is False
-    :param time_bounds: tuple, optional
-        tuple of the first and last dates to extract from the files (strings)
-        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
-        default value is None
-
-    Output:
-    ------
-    :return metric_output: dict
-        dive_down_diag, keyerror, method, method_detail, name, nyears, ref, time_frequency, time_period, units, value,
-        value_error
-
-    Method:
-    -------
-        uses tools from uvcdat library
-
-    """
-    # Test given kwargs
-    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds"]
-    for arg in needed_kwarg:
-        if arg not in list(kwargs.keys()):
-            kwargs[arg] = default_arg_values(arg)
-
-    # Define metric attributes
-    name = "time mean TS"
-    units = "C"
-    method = "mean state of " + str(sstbox) + " averaged surface temperature (TS)"
-    method_sst = "TS"
-    ref = "Using CDAT averaging"
-    metric = "ave_ts_box"
-    if metname == "":
-        metname = deepcopy(metric) + "_" + str(sstbox)
-    ovar = metric_variable_names(metric)
-
-    # Values in case of error (failure)
-    mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
-    actualtimebounds, nbr_year, keyerror = None, None, None
-
-    # Create a fake loop to be able to break out if an error occur
-    for break_loop in range(1):
-        # ------------------------------------------------
-        # 1. Read files
-        # ------------------------------------------------
-        if debug is True:
-            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
-        # 1.1 Read file and select the right region
-        region_ref = ReferenceRegions(sstbox)
-        mask_l = region_ref["maskland"] if "maskland" in list(region_ref.keys()) else False
-        mask_o = region_ref["maskocean"] if "maskocean" in list(region_ref.keys()) else False
-        if mask_l is True and mask_o is True:
-            keyerror = "both land and ocean are masked (" + str(sstbox) + ": land = " + str(mask_l) + ", ocean = " + \
-                str(mask_o) + "), it should not be the case"
-            break
-        sst, areacell, keyerror = Read_data_mask_area(sstfile, sstname, "temperature", metric, sstbox,
-            file_area=sstareafile, name_area=sstareaname, file_mask=sstlandmaskfile, name_mask=sstlandmaskname,
-            maskland=mask_l, maskocean=mask_o, debug=debug, **kwargs)
-        if keyerror is not None:
-            break
-        method_sst += ", read"
-        if mask_l is True:
-            method_sst += "& mask land"
-        if mask_o is True:
-            method_sst += "& mask ocean"
-        # 1.2 Compute number of years
-        nbr_year = int(round(sst.shape[0] / 12.))
-        # 1.3 Read time period used
-        actualtimebounds = TimeBounds(sst)
-
-        # ------------------------------------------------
-        # 2. Preprocess
-        # ------------------------------------------------
-        # 2.1 TS in 'sstbox' are normalized / detrended / smoothed (running average) if applicable
-        sst, method_sst, keyerror = preprocess_ts_polygon(sst, method_sst, areacell=areacell, average="horizontal",
-            region=sstbox, **kwargs)
-        if keyerror is not None:
-            break
-        if debug is True:
-            dict_debug = {"axes1": str([ax.id for ax in sst.getAxisList()]), "shape1": str(sst.shape),
-                "time1": str(TimeBounds(sst))}
-            EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon", 15, **dict_debug)
-
-        # ------------------------------------------------
-        # 3. Metric value
-        # ------------------------------------------------
-        # 3.1 Computes time mean
-        mv, keyerror = AverageTemporal(sst)
-        if keyerror is not None:
-            break
-        mv = float(mv)
-        method_sst += ", compute time average"
-        # 3.2 Standard error of the mean (SEM)
-        std = float(Std(sst))
-        mv_error = std / len(sst)**(1/2)
-
-        # ------------------------------------------------
-        # 4. Supplementary dive down diagnostics
-        # ------------------------------------------------
-        if netcdf is True:
-            # Supplementary metrics
-            dict_nc = {"var1": sst}
-            dict_nc["var1_attributes"] = {"arrayAVE": mv, "arraySTD": std,
-                "description": "time series of " + str(sstbox) + " averaged TS", "number_of_years_used": nyear,
-                "time_period": str(timebounds), "units": units}
-            dict_nc["var1_name"] = ovar[0] + str(sstbox) + "_" + str(dataset)
-            # Save netCDF
-            if ".nc" in netcdf_name:
-                file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
-            else:
-                file_name = deepcopy(netcdf_name) + "_" + str(metname) + ".nc"
-            dict1 = {"computation_steps": method_sst, "frequency": kwargs["frequency"], "metric_method": method,
-                "metric_name": name, "metric_reference": ref}
-            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
-            del dict1, dict_nc, file_name
-    # Metric value
-    if debug is True:
-        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
-        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
-    # Create output
-    metric_output = {"dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method,
-        "method_detail": method_sst, "name": name, "nyears": nbr_year, "ref": ref,
-        "time_frequency": kwargs["frequency"], "time_period": actualtimebounds, "units": units, "value": mv,
-        "value_error": mv_error}
+    metric_output = {
+        "dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method, "method_detail": method_var,
+        "name": name, "nyears": nbr_year, "ref": ref, "time_frequency": kwargs["frequency"], "time_period": timebounds,
+        "units": units2, "value": mv, "value_error": mv_error}
     return metric_output
 
 
@@ -9048,6 +8890,676 @@ def BiasThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
     return metric_output
 
 
+def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box, dataset="",
+          debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", **kwargs):
+    """
+    The dcorr() function computes the number of time steps needed to reach the first two sign changes in the
+    autocorrelation function of 'var_box' averaged 'internal_variable_name' anomalies (lhf, lwr, pr, shf, slp, ssh, sst,
+    swr, taux, tauy, thf, ts) (usualy nino3.4 averaged sst anomalies)
+
+    Author: Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Wed Jan 11 2024
+
+    Based on:
+    Russon and Coauthors, 2014: Assessing the significance of changes in ENSO amplitude using variance metrics. Journal
+    of Climate, 27, 4911–4922, https://doi.org/10.1175/JCLI-D-13-00077.1
+
+    Inputs:
+    ------
+    :param var_file: string
+        path_to/filename of the file (NetCDF)
+    :param var_name: string
+        name of a variable in 'var_file'
+            lhf:  evap_heat, hfls, latent_heatflux, lhf, lhtfl, slhf, solatent
+            lwr:  lw_heat, lwr (dlwrf - ulwrf or rlds - rlus), net_longwave_heatflux_downwards, rls, solongwa, str
+            pr:   mtpr, pr, prate, precip
+            shf:  hfss, shf, shtfl, sens_heat, sensible_heatflux, sosensib, sshf
+            slp:  msl, prmsl, psl, slp
+            ssh:  adt, eta_t, height, sea_surface_height, SLA, sossheig, ssh, sshg, zos
+            sst:  sea_surface_temperature, skt, sosstsst, sst, tmpsf, tos, ts
+            swr:  net_shortwave_heatflux_downwards, soshfldo, rss, ssr, swflx, swr (dswrf - uswrf or rsds - rsus)
+            taux: ewss, sozotaux, tau_x, tauu, tauuo, taux, uflx, zonal_wind_stress
+            tauy: nsss, meridional_wind_stress, sometauy, tau_y, tauv, tauvo, tauy, vflx
+            thf:  net_heating, net_surface_heatflux_downwards, netflux, sohefldo, thf (lhf + lwr + shf + swr), thflx
+            ts:   skt, ts
+    :param var_areafile: string
+        path_to/filename of the file (NetCDF) of the areacell for the given variable
+    :param var_areaname: string
+        name of areacell variable (areacella, areacello) in 'var_areafile'
+    :param var_landmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for the given variable
+    :param var_landmaskname: string
+        name of landmask variable (land, lsm, lsmask, landmask, mask, sftlf) in 'var_landmaskfile'
+    :param var_box: string
+        name of box (e.g. 'global') for the given variable
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'nstar_2'
+    :param internal_variable_name: string, optional
+        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
+        default value = 'ts' (surface temperature)
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param normalization: boolean, optional
+        True to normalize by the standard deviation (needs the frequency to be defined), if you don't want it pass
+        anything but true
+        default value is False
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        dive_down_diag, keyerror, method, method_detail, name, nyears, ref, time_frequency, time_period, units, value,
+        value_error
+
+    Method:
+    -------
+        uses tools from cdat library
+
+    Notes:
+    -----
+        TODO: add error calculation for decorrelation time (function of nyears)
+
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+    dco_meth = kwargs["dcorr_method"] if "dcorr_method" in list(kwargs.keys()) else "anomalies"
+    sta_ano = "A" if dco_meth in ["anomalies", "anomaly", "interannual_anomalies", "interannual_anomaly"] else ""
+    # reference region
+    reg_di = {var_box: deepcopy(ReferenceRegions(var_box))}
+    reg_ln = reg_di[var_box]["long_name"]
+    reg_sn = reg_di[var_box]["short_name"]
+    reg_s2 = ""
+    if "regions" in list(reg_di[var_box].keys()):
+        reg_list = reg_di[var_box]["regions"]
+        for reg in reg_list:
+            reg_di[reg] = deepcopy(ReferenceRegions(reg))
+        for reg in reg_list:
+            reg_di[reg] = deepcopy(ReferenceRegions(reg))
+            reg_s2 += reg_di[reg]["short_name"]
+            if reg != reg_list[-1]:
+                reg_s2 += " minus "
+    else:
+        reg_list = [var_box]
+        reg_s2 = deepcopy(reg_sn)
+    if internal_variable_name == "ssh" and var_box != "global":
+        reg_di["global"] = deepcopy(ReferenceRegions("global"))
+        reg_list += ["global"]
+        reg_s2 += " GMSL removed"
+    # reference variable
+    ref_var = deepcopy(reference_variables(internal_variable_name))
+    var_ln = ref_var["long_name"]
+    var_sn = ref_var["short_name"]
+
+    # Define metric attributes
+    name = "decorrelation time of " + str(reg_sn) + " " + str(var_sn) + str(sta_ano)
+    units = "month"
+    method = "decorrelation time of " + str(reg_ln) + " (" + str(reg_s2) + ") averaged " + str(var_ln) + " (" + \
+             str(var_sn) + ")"
+    if sta_ano == "A":
+        method += " anomalies"
+    method_var = str(var_sn) + ": "
+    ref = "Using CDAT averaging"
+    if sta_ano == "A":
+        ref += " and computing interannual anomalies"
+    metric = "dcorr_" + str(var_sn).lower() + "_" + str(reg_sn).lower()
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
+    nbr_year, timebounds, keyerror = None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        counter = 1
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        r1 = reg_list[0]
+        # 1.1 read file and select the 'r1' region
+        mask_l = reg_di[r1]["maskland"] if "maskland" in list(reg_di[r1].keys()) else False
+        mask_o = reg_di[r1]["maskocean"] if "maskocean" in list(reg_di[r1].keys()) else False
+        if mask_l is True and mask_o is True:
+            keyerror = "both land and ocean are masked (" + str(r1) + ": land = " + str(mask_l) + ", ocean = " + \
+                       str(mask_o) + "), it should not be the case"
+            break
+        arr, areacell, keyerror = Read_data_mask_area(
+            var_file, var_name, ref_var["variable_type"], metric, r1, file_area=var_areafile, name_area=var_areaname,
+            file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l, maskocean=mask_o, debug=debug,
+            **kwargs)
+        if keyerror is not None:
+            break
+        method_var += str(counter) + ") read in " + str(r1)
+        if mask_l is True:
+            method_var += " & land masked"
+        if mask_o is True:
+            method_var += " & ocean masked"
+        # 1.2 compute number of years
+        nbr_year = arr.shape[0] // 12
+        # 1.3 read time period used
+        timebounds = TimeBounds(arr)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        my_det = deepcopy(kwargs["detrending"]) if "detrending" in list(kwargs.keys()) else False
+        kwargs["detrending"] = False
+        my_nor = deepcopy(kwargs["normalization"]) if "normalization" in list(kwargs.keys()) else False
+        kwargs["normalization"] = False
+        my_smo = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
+        kwargs["smoothing"] = False
+        # 2.1 horizontal average of 'internal_variable_name' in 'r1'
+        arr, tmp, keyerror = preprocess_ts_polygon(
+            arr, "", areacell=areacell, average="horizontal", region=r1, **kwargs)
+        if keyerror is not None:
+            break
+        for k1 in tmp.split(", "):
+            method_var += ";; " + str(counter) + ") " + str(k1)
+            counter += 1
+        if debug is True:
+            dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
+                          "time1": str(TimeBounds(arr))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon", 15, **dict_debug)
+        # 2.2 read, average and remove from 'arr'
+        for r2 in reg_list[1:]:
+            # 2.2.1 read file and select the 'r2' region
+            mask_l = reg_di[r2]["maskland"] if "maskland" in list(reg_di[r2].keys()) else False
+            mask_o = reg_di[r2]["maskocean"] if "maskocean" in list(reg_di[r2].keys()) else False
+            if mask_l is True and mask_o is True:
+                keyerror = "both land and ocean are masked (" + str(r2) + ": land = " + str(mask_l) + ", ocean = " + \
+                           str(mask_o) + "), it should not be the case"
+                break
+            ar2, areacell, keyerror = Read_data_mask_area(
+                var_file, var_name, ref_var["variable_type"], metric, r2, file_area=var_areafile,
+                name_area=var_areaname, file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l,
+                maskocean=mask_o, debug=debug, **kwargs)
+            if keyerror is not None:
+                break
+            method_var += str(counter) + ") read in " + str(r2)
+            if mask_l is True:
+                method_var += " & land masked"
+            if mask_o is True:
+                method_var += " & ocean masked"
+            # 2.2.2 horizontal average of 'internal_variable_name' in 'r2'
+            ar2, tmp, keyerror = preprocess_ts_polygon(
+                ar2, "", areacell=areacell, average="horizontal", region=r2, **kwargs)
+            if keyerror is not None:
+                break
+            for k1 in tmp.split(", "):
+                method_var += " & " + str(k1)
+            # 2.2.3 remove ar2 from arr
+            arr -= ar2
+            method_var += " & removed at each time step"
+            counter += 1
+            if debug is True:
+                dict_debug = {"axes1": str([ax.id for ax in ar2.getAxisList()]), "shape1": str(arr.shape),
+                              "time1": str(TimeBounds(arr))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after arr -= ar2", 15, **dict_debug)
+        if keyerror is not None:
+            break
+        # 2.3 compute anomalies / normalization / detrend / smooth if applicable
+        kwargs["detrending"] = deepcopy(my_det)
+        kwargs["normalization"] = deepcopy(my_nor)
+        kwargs["smoothing"] = deepcopy(my_smo)
+        compute_anom = True if sta_ano == "A" else False
+        arr, tmp, keyerror = preprocess_ts_polygon(arr, "", compute_anom=compute_anom, **kwargs)
+        if keyerror is not None:
+            break
+        for k1 in tmp.split(", "):
+            method_var += ";; " + str(counter) + ") " + str(k1)
+            counter += 1
+        if debug is True:
+            dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
+                          "time1": str(TimeBounds(arr))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon (ano, det, ...)", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Metric value
+        # ------------------------------------------------
+        # 3.1 computes the decorrelation time
+        nstar, mv = compute_degrees_of_freedom(arr)
+        method_var += ";; " + str(counter) + ") compute decorrelation time (as in Russon et al. 2014; " + \
+                      "https://doi.org/10.1175/JCLI-D-13-00077.1)"
+        mv_error = None
+
+        # ------------------------------------------------
+        # 4. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # Supplementary metrics
+            dict_nc = {"var1": arr}
+            dict_nc["var1_attributes"] = {
+                "arraySTD": float(Std(arr)), "decorrelation_time": mv, "degrees_of_freedom": nstar,
+                "description": "time series of " + str(var_box) + " averaged " + str(var_sn) + str(sta_ano),
+                "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": deepcopy(ref_var["units"])}
+            dict_nc["var1_name"] = str(var_sn).lower() + str(sta_ano) + "_" + str(var_box) + "__" + str(dataset)
+            dict_nc["var1_time_name"]= "months_" + str(dataset)
+            # Save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + str(metname) + ".nc"
+            dict1 = {"computation_steps": method_var, "frequency": kwargs["frequency"], "metric_method": method,
+                     "metric_name": name, "metric_reference": ref}
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method, "method_detail": method_var,
+        "name": name, "nyears": nbr_year, "ref": ref, "time_frequency": kwargs["frequency"], "time_period": timebounds,
+        "units": units, "value": mv, "value_error": mv_error}
+    return metric_output
+
+
+def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box,
+                   event_definition, dataset="", debug=False, netcdf=False, netcdf_name="", metname="",
+                   internal_variable_name="ts", **kwargs):
+    """
+    The enso_wait_time() function computes the average wait time between 2 ENSO events.
+    ENSO is defined according to 'event_definition' (usualy abs(nino3.4 SSTA) > 0.5 STD during at least 5 consecutive
+    overlapping 3-month seasons). The wait time is the number of months between 2 events.
+
+    Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
+    Co-author:
+
+    Created on Tue Jan 10 2023
+
+    Inputs:
+    ------
+    :param var_file: string
+        path_to/filename of the file (NetCDF)
+    :param var_name: string
+        name of a variable in 'var_file'
+            lhf:  evap_heat, hfls, latent_heatflux, lhf, lhtfl, slhf, solatent
+            lwr:  lw_heat, lwr (dlwrf - ulwrf or rlds - rlus), net_longwave_heatflux_downwards, rls, solongwa, str
+            pr:   mtpr, pr, prate, precip
+            shf:  hfss, shf, shtfl, sens_heat, sensible_heatflux, sosensib, sshf
+            slp:  msl, prmsl, psl, slp
+            ssh:  adt, eta_t, height, sea_surface_height, SLA, sossheig, ssh, sshg, zos
+            sst:  sea_surface_temperature, skt, sosstsst, sst, tmpsf, tos, ts
+            swr:  net_shortwave_heatflux_downwards, soshfldo, rss, ssr, swflx, swr (dswrf - uswrf or rsds - rsus)
+            taux: ewss, sozotaux, tau_x, tauu, tauuo, taux, uflx, zonal_wind_stress
+            tauy: nsss, meridional_wind_stress, sometauy, tau_y, tauv, tauvo, tauy, vflx
+            thf:  net_heating, net_surface_heatflux_downwards, netflux, sohefldo, thf (lhf + lwr + shf + swr), thflx
+            ts:   skt, ts
+    :param var_areafile: string
+        path_to/filename of the file (NetCDF) of the areacell for the given variable
+    :param var_areaname: string
+        name of areacell variable (areacella, areacello) in 'var_areafile'
+    :param var_landmaskfile: string
+        path_to/filename of the file (NetCDF) of the landmask for the given variable
+    :param var_landmaskname: string
+        name of landmask variable (land, lsm, lsmask, landmask, mask, sftlf) in 'var_landmaskfile'
+    :param var_box: string
+        name of box (e.g. 'nino3.4') for the given variable
+    :param event_definition: dict
+        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
+        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'NDJ', 'threshold': 0.5, 'normalization': True,
+            'smoothing': False, 'duration_min': 5}
+    :param dataset: string, optional
+        name of current dataset (e.g., 'model', 'obs', ...)
+    :param debug: bolean, optional
+        default value = False debug mode not activated
+        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param netcdf: boolean, optional
+        default value = False dive_down are not saved in NetCDFs
+        If you want to save the dive down diagnostics set it to True
+    :param netcdf_name: string, optional
+        default value = '' NetCDFs are saved where the program is ran without a root name
+        the name of a metric will be append at the end of the root name
+        e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'enso_wait_time_2'
+    :param internal_variable_name: string, optional
+        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
+        default value = 'ts' (surface temperature)
+    usual kwargs:
+    :param detrending: dict, optional
+        see EnsoUvcdatToolsLib.Detrend for options
+        the aim if to specify if the trend must be removed
+        detrending method can be specified
+        default value is False
+    :param frequency: string, optional
+        time frequency of the datasets
+        e.g., frequency='monthly'
+        default value is None
+    :param min_time_steps: int, optional
+        minimum number of time steps for the metric to make sens
+        e.g., for 30 years of monthly data mintimesteps=360
+        default value is None
+    :param regridding: dict, optional
+        see EnsoUvcdatToolsLib.TwoVarRegrid and EnsoUvcdatToolsLib.Regrid for options
+        the aim if to specify if the model is regridded toward the observations or vice versa, of if both model and
+        observations are regridded toward another grid
+        interpolation tool and method can be specified
+        default value is False
+    :param time_bounds: tuple, optional
+        tuple of the first and last dates to extract from the files (strings)
+        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
+        default value is None
+
+    Output:
+    ------
+    :return metric_output: dict
+        dive_down_diag, keyerror, method, method_detail, name, nyears, ref, time_frequency, time_period, units, value,
+        value_error
+
+    Method:
+    -------
+        uses tools from cdat library
+    """
+    # Test given kwargs
+    needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds"]
+    for arg in needed_kwarg:
+        if arg not in list(kwargs.keys()):
+            kwargs[arg] = default_arg_values(arg)
+    int_meth = kwargs["enso_wait_time_method"] if "enso_wait_time_method" in list(kwargs.keys()) else "simple"
+    # reference variable
+    ref_var = deepcopy(reference_variables(internal_variable_name))
+    var_ln = ref_var["long_name"]
+    var_sn = ref_var["short_name"]
+    # Setting variables
+    anomal_ev = event_definition["interannual_anomalies"]
+    length_ev = event_definition["duration_min"]
+    normal_ev = event_definition["normalization"]
+    region_ev = event_definition["region_ev"]
+    season_ev = event_definition["season_ev"]
+    smooth_ev = event_definition["smoothing"]
+    thresh_ev = event_definition["threshold"]
+    units_ev = "std" if normal_ev is True else deepcopy(ref_var["units"])
+    sta_ano = "A" if anomal_ev is True else ""
+    # method for ENSO events detection
+    enso_method = str(season_ev) + " " + str(region_ev) + " " + str(var_sn) + str(sta_ano) + " > " + str(thresh_ev) + \
+                  str(units_ev) + " (" + str(sta_ano) + str(sta_ano) + " < -" + str(thresh_ev) + str(units_ev) + ")"
+    if isinstance(length_ev, int) is True:
+        enso_method = " during at least " + str(length_ev) + " consecutive "
+        if season_ev in ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]:
+            enso_method += "months"
+        else:
+            enso_method += "overlapping seasons"
+    if isinstance(smooth_ev, dict) is True:
+        enso_method = ", time series smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+                      " weighted running mean"
+    # reference region
+    reg_di = {region_ev: deepcopy(ReferenceRegions(region_ev))}
+    reg_ln = reg_di[region_ev]["long_name"]
+    reg_sn = reg_di[region_ev]["short_name"]
+    reg_s2 = ""
+    if "regions" in list(reg_di[region_ev].keys()):
+        reg_list = reg_di[region_ev]["regions"]
+        for reg in reg_list:
+            reg_di[reg] = deepcopy(ReferenceRegions(reg))
+            reg_s2 += reg_di[reg]["short_name"]
+            if reg != reg_list[-1]:
+                reg_s2 += " minus "
+    else:
+        reg_list = [region_ev]
+        reg_s2 = deepcopy(reg_sn)
+    if internal_variable_name == "ssh" and var_box != "global":
+        reg_di["global"] = deepcopy(ReferenceRegions("global"))
+        reg_list += ["global"]
+        reg_s2 += " GMSL removed"
+
+    # Define metric attributes
+    name = "ENSO wait time"
+    units = "months"
+    method = "average time between ENSO events, with ENSO defined as " + str(enso_method)
+    method_var = str(var_sn) + ": "
+    ref = "Using CDAT averaging"
+    if sta_ano == "A":
+        ref += " and computing interannual anomalies"
+    metric = "enso_wait_time"
+    if metname == "":
+        metname = deepcopy(metric)
+    ovar = metric_variable_names(metric)
+
+    # Values in case of error (failure)
+    mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
+    nbr_year, timebounds, keyerror = None, None, None
+
+    # Create a fake loop to be able to break out if an error occur
+    for break_loop in range(1):
+        counter = 1
+        # ------------------------------------------------
+        # 1. Read files
+        # ------------------------------------------------
+        if debug is True:
+            EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
+        r1 = reg_list[0]
+        # 1.1 read file and select the 'r1' region
+        mask_l = reg_di[r1]["maskland"] if "maskland" in list(reg_di[r1].keys()) else False
+        mask_o = reg_di[r1]["maskocean"] if "maskocean" in list(reg_di[r1].keys()) else False
+        if mask_l is True and mask_o is True:
+            keyerror = "both land and ocean are masked (" + str(r1) + ": land = " + str(mask_l) + ", ocean = " + \
+                       str(mask_o) + "), it should not be the case"
+            break
+        arr, areacell, keyerror = Read_data_mask_area(
+            var_file, var_name, ref_var["variable_type"], metric, r1, file_area=var_areafile, name_area=var_areaname,
+            file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l, maskocean=mask_o, debug=debug,
+            **kwargs)
+        if keyerror is not None:
+            break
+        method_var += str(counter) + ") read in " + str(r1)
+        if mask_l is True:
+            method_var += " & land masked"
+        if mask_o is True:
+            method_var += " & ocean masked"
+        # 1.2 compute number of years
+        nbr_year = arr.shape[0] // 12
+        # 1.3 read time period used
+        timebounds = TimeBounds(arr)
+
+        # ------------------------------------------------
+        # 2. Preprocess
+        # ------------------------------------------------
+        my_det = deepcopy(kwargs["detrending"]) if "detrending" in list(kwargs.keys()) else False
+        kwargs["detrending"] = False
+        kwargs["normalization"] = False
+        kwargs["smoothing"] = False
+        # 2.1 horizontal average of 'internal_variable_name' in 'r1'
+        arr, tmp, keyerror = preprocess_ts_polygon(
+            arr, "", areacell=areacell, average="horizontal", region=r1, **kwargs)
+        if keyerror is not None:
+            break
+        for k1 in tmp.split(", "):
+            method_var += ";; " + str(counter) + ") " + str(k1)
+            counter += 1
+        if debug is True:
+            dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
+                          "time1": str(TimeBounds(arr))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon", 15, **dict_debug)
+        # 2.2 read, average and remove from 'arr'
+        for r2 in reg_list[1:]:
+            # 2.2.1 read file and select the 'r2' region
+            mask_l = reg_di[r2]["maskland"] if "maskland" in list(reg_di[r2].keys()) else False
+            mask_o = reg_di[r2]["maskocean"] if "maskocean" in list(reg_di[r2].keys()) else False
+            if mask_l is True and mask_o is True:
+                keyerror = "both land and ocean are masked (" + str(r2) + ": land = " + str(mask_l) + ", ocean = " + \
+                           str(mask_o) + "), it should not be the case"
+                break
+            ar2, areacell, keyerror = Read_data_mask_area(
+                var_file, var_name, ref_var["variable_type"], metric, r2, file_area=var_areafile,
+                name_area=var_areaname, file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l,
+                maskocean=mask_o, debug=debug, **kwargs)
+            if keyerror is not None:
+                break
+            method_var += str(counter) + ") read in " + str(r2)
+            if mask_l is True:
+                method_var += " & land masked"
+            if mask_o is True:
+                method_var += " & ocean masked"
+            # 2.2.2 horizontal average of 'internal_variable_name' in 'r2'
+            ar2, tmp, keyerror = preprocess_ts_polygon(
+                ar2, "", areacell=areacell, average="horizontal", region=r2, **kwargs)
+            if keyerror is not None:
+                break
+            for k1 in tmp.split(", "):
+                method_var += " & " + str(k1)
+            # 2.2.3 remove ar2 from arr
+            arr -= ar2
+            method_var += " & removed at each time step"
+            counter += 1
+            if debug is True:
+                dict_debug = {"axes1": str([ax.id for ax in ar2.getAxisList()]), "shape1": str(arr.shape),
+                              "time1": str(TimeBounds(arr))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after arr -= ar2", 15, **dict_debug)
+        if keyerror is not None:
+            break
+        # 2.3 compute anomalies / normalization / detrend / smooth if applicable
+        kwargs["detrending"] = deepcopy(my_det)
+        kwargs["smoothing"] = deepcopy(smooth_ev)
+        arr, tmp, keyerror = preprocess_ts_polygon(arr, "", **kwargs)
+        if keyerror is not None:
+            break
+        for k1 in tmp.split(", "):
+            method_var += ";; " + str(counter) + ") " + str(k1)
+            counter += 1
+        if debug is True:
+            dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
+                          "time1": str(TimeBounds(arr))}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon (ano, det, ...)", 15, **dict_debug)
+
+        # ------------------------------------------------
+        # 3. Detect events
+        # ------------------------------------------------
+        # 3.1 list El Nino and La Nina event years
+        compute_anom = True if sta_ano == "A" else False
+        ln_years = DetectEvents(arr, season_ev, -thresh_ev, normalize=normal_ev, nino=False, compute_anom=compute_anom,
+                                compute_season=True, duration=length_ev)
+        en_years = DetectEvents(arr, season_ev, thresh_ev, normalize=normal_ev, nino=True, compute_anom=compute_anom,
+                                compute_season=True, duration=length_ev)
+        if debug is True:
+            dict_debug = {"nina1": "nbr(" + str(len(ln_years)) + "): " + str(ln_years),
+                          "nino1": "nbr(" + str(len(en_years)) + "): " + str(en_years)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents", 15, **dict_debug)
+        method_var += ";; " + str(counter) + ") ENSO events defined as " + str(enso_method)
+        counter += 1
+        # 3.2 compute intervals between events
+        if len(ln_years) + len(en_years) > 2:
+            ev_intervals, tmp, keyerror = enso_time_interval(
+                arr, season_ev, thresh_ev, compute_anom=compute_anom, compute_season=True, method=int_meth,
+                nina_events=ln_years, nino_events=en_years, normalize=normal_ev)
+        else:
+            ev_intervals = None
+            keyerror = "not enough ENSO events (EN=" + str(len(en_years)) + " ; LN=" + str(len(ln_years)) + ")"
+        if keyerror is not None:
+            break
+        if debug is True:
+            dict_debug = {"line1": "nbr(" + str(len(ev_intervals)) + "): " + str(ev_intervals)}
+            EnsoErrorsWarnings.debug_mode("\033[92m", "after enso_time_interval", 15, **dict_debug)
+        method_var += ";; " + str(counter) + ") " + str(tmp)
+
+        # ------------------------------------------------
+        # 4. Metric value
+        # ------------------------------------------------
+        # 4.1 average interval time
+        mv = sum(ev_intervals) / len(ev_intervals)
+        # 4.2 error
+        mv_error = float(Std(ev_intervals)) / len(ev_intervals)**(1/2)
+
+        # ------------------------------------------------
+        # 5. Supplementary dive down diagnostics
+        # ------------------------------------------------
+        if netcdf is True:
+            # 5.1 save the list of interval time between ENSO events
+            dict_nc = {"var1": ev_intervals}
+            dict_nc["var1_attributes"] = {
+                "description": "interval between ENSO events", "nina_years": str(ln_years), "nino_years": str(en_years),
+                "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units}
+            dict_nc["var1_name"] = ovar[0] + str(dataset)
+            # 5.2 save the list of interval time between La Nina events
+            if len(ln_years) > 2:
+                ln_intervals, _, keyerror = enso_time_interval(
+                    arr, season_ev, thresh_ev, compute_anom=compute_anom, compute_season=True, method=int_meth,
+                    nina_events=ln_years, normalize=normal_ev)
+                if keyerror is None:
+                    dict_nc["var2"] = ln_intervals
+                    dict_nc["var2_attributes"] = {
+                        "description": "interval between La Nina events", "nina_years": str(ln_years),
+                        "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units}
+                    dict_nc["var2_name"] = ovar[1] + str(dataset)
+            # 5.3 save the list of interval time between El Nino events
+            if len(en_years) > 2:
+                en_intervals, _, keyerror = enso_time_interval(
+                    arr, season_ev, thresh_ev, compute_anom=compute_anom, compute_season=True, method=int_meth,
+                    nino_events=en_years, normalize=normal_ev)
+                if keyerror is None:
+                    dict_nc["var3"] = en_intervals
+                    dict_nc["var3_attributes"] = {
+                        "description": "interval between El Nino events", "nino_years": str(en_years),
+                        "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units}
+                    dict_nc["var3_name"] = ovar[2] + str(dataset)
+            # save netCDF
+            if ".nc" in netcdf_name:
+                file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
+            else:
+                file_name = deepcopy(netcdf_name) + "_" + str(metname) + ".nc"
+            dict1 = {"computation_steps": method_var, "frequency": kwargs["frequency"], "metric_method": method,
+                     "metric_name": name, "metric_reference": ref}
+            SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
+    # Metric value
+    if debug is True:
+        dict_debug = {"line1": "diagnostic value: " + str(mv), "line2": "diagnostic value_error: " + str(mv_error)}
+        EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
+    # Create output
+    metric_output = {
+        "dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method, "method_detail": method_var,
+        "name": name, "nyears": nbr_year, "ref": ref, "time_frequency": kwargs["frequency"], "time_period": timebounds,
+        "units": units, "value": mv, "value_error": mv_error}
+    return metric_output
+
+
 def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, dataset="",
              debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
@@ -9996,9 +10508,9 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
             EnsoErrorsWarnings.debug_mode("\033[92m", "after PreProcessTS", 15, **dict_debug)
         # 2.2 SSTA > 'threshold' (SSTA < -'threshold') during 'season' are considered as El Nino (La Nina) events
         # Lists event years
-        ln_years = DetectEvents(enso_sst, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        ln_years = DetectEvents(enso_sst, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                 compute_season=True, duration=length_ev)
-        en_years = DetectEvents(enso_sst, season_ev, thresh_ev, normalization=normalize, nino=True,
+        en_years = DetectEvents(enso_sst, season_ev, thresh_ev, normalize=normalize, nino=True,
                                 compute_season=True, duration=length_ev)
         if debug is True:
             dict_debug = {"nina1": "nbr(" + str(len(ln_years)) + "): " + str(ln_years),
@@ -10364,9 +10876,9 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         # ------------------------------------------------
         if netcdf is True:
             # Lists event years
-            nina_years = DetectEvents(enso_sst, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            nina_years = DetectEvents(enso_sst, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                       compute_season=True, duration=length_ev)
-            nino_years = DetectEvents(enso_sst, season_ev, thresh_ev, normalization=normalize, nino=True,
+            nino_years = DetectEvents(enso_sst, season_ev, thresh_ev, normalize=normalize, nino=True,
                                       compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "nbr(" + str(len(nina_years)) + "): " + str(nina_years),
@@ -10665,9 +11177,9 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
         # 3. Detect ENSO events
         # ------------------------------------------------
         # 3.1 Lists event years
-        nina_years = DetectEvents(enso_sst, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        nina_years = DetectEvents(enso_sst, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                   compute_season=True, duration=length_ev)
-        nino_years = DetectEvents(enso_sst, season_ev, thresh_ev, normalization=normalize, nino=True,
+        nino_years = DetectEvents(enso_sst, season_ev, thresh_ev, normalize=normalize, nino=True,
                                   compute_season=True, duration=length_ev)
         if debug is True:
             dict_debug = {"nina1": str(nina_years), "nino1": str(nino_years)}
@@ -11232,13 +11744,13 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -11748,13 +12260,13 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -12255,13 +12767,13 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -12763,13 +13275,13 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -13314,13 +13826,13 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -13782,13 +14294,13 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            nina_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            nina_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                           compute_season=True, duration=length_ev)
-            nino_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            nino_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                           compute_season=True, duration=length_ev)
-            nina_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            nina_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                           compute_season=True, duration=length_ev)
-            nino_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            nino_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                           compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(nina_years_mod)) + "): " + str(nina_years_mod),
@@ -14298,13 +14810,13 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -14805,13 +15317,13 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -15312,13 +15824,13 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -15833,13 +16345,13 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                 EnsoErrorsWarnings.debug_mode(
                     "\033[92m", "after LinearRegressionTsAgainstMap: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -16313,13 +16825,13 @@ def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               "shape2": "(obs lhf) " + str(lhf_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -16808,13 +17320,13 @@ def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               "shape2": "(obs lwr) " + str(lwr_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -17292,13 +17804,13 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                               "shape2": "(obs pr) " + str(pr_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -17779,13 +18291,13 @@ def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               "shape2": "(obs shf) " + str(shf_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -18309,13 +18821,13 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               "shape2": "(obs ssh) " + str(ssh_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -18753,13 +19265,13 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               "shape2": "(obs sst) " + str(sst_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -19252,13 +19764,13 @@ def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               "shape2": "(obs swr) " + str(swr_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -19739,13 +20251,13 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               "shape2": "(obs Tau) " + str(tau_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -20226,13 +20738,13 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               "shape2": "(obs Tau) " + str(tau_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -20726,13 +21238,13 @@ def EnsoThfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                               "shape2": "(obs thf) " + str(thf_hov_slope_obs.shape)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after LinearRegressionTsAgainstTs: netcdf", 15, **dict_debug)
             # Lists event years
-            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_mod = DetectEvents(sst_box_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_mod = DetectEvents(sst_box_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
-            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+            ln_years_obs = DetectEvents(sst_box_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                         compute_season=True, duration=length_ev)
-            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+            en_years_obs = DetectEvents(sst_box_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                         compute_season=True, duration=length_ev)
             if debug is True:
                 dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -24940,7 +25452,7 @@ def grad_lon_sst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box, dataset="",
-        debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", **kwargs):
+          debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", **kwargs):
     """
     The nstar() function computes the number of degrees of freedom of a time series based on the autocorrelation
     function of 'var_box' averaged 'internal_variable_name' anomalies (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux,
@@ -25047,7 +25559,7 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
 
     Notes:
     -----
-        TODO: add error calculation to rmse (function of nyears)
+        TODO: add error calculation for number of degrees of freedom (function of nyears)
 
     """
     # Test given kwargs
@@ -25055,26 +25567,51 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
     for arg in needed_kwarg:
         if arg not in list(kwargs.keys()):
             kwargs[arg] = default_arg_values(arg)
+    nst_meth = kwargs["nstar_method"] if "nstar_method" in list(kwargs.keys()) else "anomalies"
+    sta_ano = "A" if nst_meth in ["anomalies", "anomaly", "interannual_anomalies", "interannual_anomaly"] else ""
     # reference region
-    ref_reg = deepcopy(ReferenceRegions(var_box))
+    reg_di = {var_box: deepcopy(ReferenceRegions(var_box))}
+    reg_ln = reg_di[var_box]["long_name"]
+    reg_sn = reg_di[var_box]["short_name"]
+    reg_s2 = ""
+    if "regions" in list(reg_di[var_box].keys()):
+        reg_list = reg_di[var_box]["regions"]
+        for reg in reg_list:
+            reg_di[reg] = deepcopy(ReferenceRegions(reg))
+            reg_s2 += reg_di[reg]["short_name"]
+            if reg != reg_list[-1]:
+                reg_s2 += " minus "
+    else:
+        reg_list = [var_box]
+        reg_s2 = deepcopy(reg_sn)
+    if internal_variable_name == "ssh" and var_box != "global":
+        reg_di["global"] = deepcopy(ReferenceRegions("global"))
+        reg_list += ["global"]
+        reg_s2 += " GMSL removed"
     # reference variable
     ref_var = deepcopy(reference_variables(internal_variable_name))
+    var_ln = ref_var["long_name"]
+    var_sn = ref_var["short_name"]
 
     # Define metric attributes
-    name = "n* of " + str(ref_reg["short_name"]) + " " + str(ref_var["short_name"]) + "A"
+    name = "n* of " + str(reg_sn) + " " + str(var_sn) + str(sta_ano)
     units = ""
-    method = "number of degrees of freedom of " + str(ref_reg["long_name"]) + " (" + str(ref_reg["short_name"]) + \
-        ") averaged " + str(ref_var["long_name"]) + " (" + str(ref_var["short_name"]) + ")"
-    method_var = str(ref_var["short_name"]) + ": "
-    ref = "Using CDAT averaging and computing interannual anomalies"
-    metric = "nstar_" + str(ref_var["short_name"]).lower() + "_" + str(ref_reg["short_name"]).lower()
+    method = "number of degrees of freedom of " + str(reg_ln) + " (" + str(reg_s2) + ") averaged " + str(var_ln) + \
+             " (" + str(var_sn) + ")"
+    if sta_ano == "A":
+        method += " anomalies"
+    method_var = str(var_sn) + ": "
+    ref = "Using CDAT averaging"
+    if sta_ano == "A":
+        ref += " and computing interannual anomalies"
+    metric = "nstar_" + str(var_sn).lower() + "_" + str(reg_sn).lower()
     if metname == "":
         metname = deepcopy(metric)
     ovar = metric_variable_names(metric)
 
     # Values in case of error (failure)
     mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
-    actualtimebounds, nbr_year, keyerror = None, None, None
+    nbr_year, timebounds, keyerror = None, None, None
 
     # Create a fake loop to be able to break out if an error occur
     for break_loop in range(1):
@@ -25084,27 +25621,29 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         # ------------------------------------------------
         if debug is True:
             EnsoErrorsWarnings.debug_mode("\033[92m", metric, 10)
-        # 1.1 Read file and select the right region
-        mask_l = ref_reg["maskland"] if "maskland" in list(ref_reg.keys()) else False
-        mask_o = ref_reg["maskocean"] if "maskocean" in list(ref_reg.keys()) else False
+        r1 = reg_list[0]
+        # 1.1 read file and select the 'r1' region
+        mask_l = reg_di[r1]["maskland"] if "maskland" in list(reg_di[r1].keys()) else False
+        mask_o = reg_di[r1]["maskocean"] if "maskocean" in list(reg_di[r1].keys()) else False
         if mask_l is True and mask_o is True:
-            keyerror = "both land and ocean are masked (" + str(var_box) + ": land = " + str(mask_l) + ", ocean = " + \
-                str(mask_o) + "), it should not be the case"
+            keyerror = "both land and ocean are masked (" + str(r1) + ": land = " + str(mask_l) + ", ocean = " + \
+                       str(mask_o) + "), it should not be the case"
             break
-        arr, areacell, keyerror = Read_data_mask_area(var_file, var_name, ref_var["variable_type"], metric, var_box,
-            file_area=var_areafile, name_area=var_areaname, file_mask=var_landmaskfile, name_mask=var_landmaskname,
-            maskland=mask_l, maskocean=mask_o, debug=debug, **kwargs)
+        arr, areacell, keyerror = Read_data_mask_area(
+            var_file, var_name, ref_var["variable_type"], metric, r1, file_area=var_areafile, name_area=var_areaname,
+            file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l, maskocean=mask_o, debug=debug,
+            **kwargs)
         if keyerror is not None:
             break
-        method_var += str(counter) + ") read"
+        method_var += str(counter) + ") read in " + str(r1)
         if mask_l is True:
-            method_var += " & mask land"
+            method_var += " & land masked"
         if mask_o is True:
-            method_var += " & mask ocean"
-        # 1.2 Compute number of years
+            method_var += " & ocean masked"
+        # 1.2 compute number of years
         nbr_year = arr.shape[0] // 12
-        # 1.3 Read time period used
-        actualtimebounds = TimeBounds(arr)
+        # 1.3 read time period used
+        timebounds = TimeBounds(arr)
 
         # ------------------------------------------------
         # 2. Preprocess
@@ -25115,9 +25654,9 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         kwargs["normalization"] = False
         my_smo = deepcopy(kwargs["smoothing"]) if "smoothing" in list(kwargs.keys()) else False
         kwargs["smoothing"] = False
-        # 2.1 horizontal average of 'internal_variable_name' in 'var_box'
-        arr, tmp, keyerror = preprocess_ts_polygon(arr, "", areacell=areacell, average="horizontal", region=var_box,
-            **kwargs)
+        # 2.1 horizontal average of 'internal_variable_name' in 'r1'
+        arr, tmp, keyerror = preprocess_ts_polygon(
+            arr, "", areacell=areacell, average="horizontal", region=r1, **kwargs)
         if keyerror is not None:
             break
         for k1 in tmp.split(", "):
@@ -25125,41 +25664,51 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
             counter += 1
         if debug is True:
             dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
-                "time1": str(TimeBounds(arr))}
+                          "time1": str(TimeBounds(arr))}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon", 15, **dict_debug)
-        # 2.2 compute the dynamic sea level: GMSL removed
-        if internal_variable_name == "ssh" and var_box != "global":
-            # 2.2.1 Read 'global' 'internal_variable_name'
-            arr_g, areacell, keyerror = Read_data_mask_area(var_file, var_name, ref_var["variable_type"], metric,
-                "global", file_area=var_areafile, name_area=var_areaname, file_mask=var_landmaskfile,
-                name_mask=var_landmaskname, maskland=False, maskocean=False, debug=debug, **kwargs)
+        # 2.2 read, average and remove from 'arr'
+        for r2 in reg_list[1:]:
+            # 2.2.1 read file and select the 'r2' region
+            mask_l = reg_di[r2]["maskland"] if "maskland" in list(reg_di[r2].keys()) else False
+            mask_o = reg_di[r2]["maskocean"] if "maskocean" in list(reg_di[r2].keys()) else False
+            if mask_l is True and mask_o is True:
+                keyerror = "both land and ocean are masked (" + str(r2) + ": land = " + str(mask_l) + ", ocean = " + \
+                           str(mask_o) + "), it should not be the case"
+                break
+            ar2, areacell, keyerror = Read_data_mask_area(
+                var_file, var_name, ref_var["variable_type"], metric, r2, file_area=var_areafile,
+                name_area=var_areaname, file_mask=var_landmaskfile, name_mask=var_landmaskname, maskland=mask_l,
+                maskocean=mask_o, debug=debug, **kwargs)
             if keyerror is not None:
                 break
-            # 2.2.2 horizontal average of 'internal_variable_name' in 'global'
-            arr_g, _, keyerror = preprocess_ts_polygon(arr_g, method_var, areacell=areacell, average="horizontal",
-                region="global", **kwargs)
+            method_var += str(counter) + ") read in " + str(r2)
+            if mask_l is True:
+                method_var += " & land masked"
+            if mask_o is True:
+                method_var += " & ocean masked"
+            # 2.2.2 horizontal average of 'internal_variable_name' in 'r2'
+            ar2, tmp, keyerror = preprocess_ts_polygon(
+                ar2, "", areacell=areacell, average="horizontal", region=r2, **kwargs)
             if keyerror is not None:
                 break
-            # 2.2.2 remove global mean to local mean
-            arr, _, keyerror = remove_global_mean(arr, arr_g, "", "")
-            if keyerror is not None:
-                break
-            method_var += ";; " + str(counter) + ") global mean sea level removed (sea surface height averaged over" + \
-                " global region [90S-90N ; 0E-360E])"
+            for k1 in tmp.split(", "):
+                method_var += " & " + str(k1)
+            # 2.2.3 remove ar2 from arr
+            arr -= ar2
+            method_var += " & removed at each time step"
             counter += 1
             if debug is True:
-                dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
-                    "time1": str(TimeBounds(arr))}
-                EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon (global)", 15, **dict_debug)
-            # delete
-            del arr_g
+                dict_debug = {"axes1": str([ax.id for ax in ar2.getAxisList()]), "shape1": str(arr.shape),
+                              "time1": str(TimeBounds(arr))}
+                EnsoErrorsWarnings.debug_mode("\033[92m", "after arr -= ar2", 15, **dict_debug)
         if keyerror is not None:
             break
-        # 2.3 'var_box' averaged 'internal_variable_name' anomalies / normalized / detrended / smoothed if applicable
+        # 2.3 compute anomalies / normalization / detrend / smooth if applicable
         kwargs["detrending"] = deepcopy(my_det)
         kwargs["normalization"] = deepcopy(my_nor)
         kwargs["smoothing"] = deepcopy(my_smo)
-        arr, tmp, keyerror = preprocess_ts_polygon(arr, "", compute_anom=True, **kwargs)
+        compute_anom = True if sta_ano == "A" else False
+        arr, tmp, keyerror = preprocess_ts_polygon(arr, "", compute_anom=compute_anom, **kwargs)
         if keyerror is not None:
             break
         for k1 in tmp.split(", "):
@@ -25167,13 +25716,13 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
             counter += 1
         if debug is True:
             dict_debug = {"axes1": str([ax.id for ax in arr.getAxisList()]), "shape1": str(arr.shape),
-                "time1": str(TimeBounds(arr))}
+                          "time1": str(TimeBounds(arr))}
             EnsoErrorsWarnings.debug_mode("\033[92m", "after preprocess_ts_polygon (ano, det, ...)", 15, **dict_debug)
 
         # ------------------------------------------------
         # 3. Metric value
         # ------------------------------------------------
-        # 3.1 Computes the number of degrees of freedom
+        # 3.1 computes the number of degrees of freedom
         mv, nbr_decorr = compute_degrees_of_freedom(arr)
         method_var += ";; " + str(counter) + ") compute number of degrees of freedom (as in Atwood et al. 2017; " + \
             "https://doi.org/10.1007/s00382-016-3477-9)"
@@ -25185,28 +25734,29 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         if netcdf is True:
             # Supplementary metrics
             dict_nc = {"var1": arr}
-            dict_nc["var1_attributes"] = {"arraySTD": float(Std(arr)), "decorrelation_time": nbr_decorr,
-                "degrees_of_freedom": mv, "number_of_years_used": nyear, "time_period": str(timebounds),
-                "units": deepcopy(ref_var["units"]),
-                "description": "time series of " + str(var_box) + " averaged " + str(ref_var["short_name"]) + "A"}
-            dict_nc["var1_name"] = str(internal_variable_name)+ "_" + str(var_box) + "A__" + str(dataset)
+            dict_nc["var1_attributes"] = {
+                "arraySTD": float(Std(arr)), "decorrelation_time": nbr_decorr, "degrees_of_freedom": mv,
+                "description": "time series of " + str(var_box) + " averaged " + str(var_sn) + str(sta_ano),
+                "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": deepcopy(ref_var["units"])}
+            dict_nc["var1_name"] = str(var_sn).lower() + str(sta_ano) + "_" + str(var_box) + "__" + str(dataset)
+            dict_nc["var1_time_name"] = "months_" + str(dataset)
             # Save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
             else:
                 file_name = deepcopy(netcdf_name) + "_" + str(metname) + ".nc"
             dict1 = {"computation_steps": method_var, "frequency": kwargs["frequency"], "metric_method": method,
-                "metric_name": name, "metric_reference": ref}
+                     "metric_name": name, "metric_reference": ref}
             SaveNetcdf(file_name, global_attributes=dict1, **dict_nc)
-            del dict1, dict_nc, file_name
     # Metric value
     if debug is True:
         dict_debug = {"line1": "metric value: " + str(mv), "line2": "metric value_error: " + str(mv_error)}
         EnsoErrorsWarnings.debug_mode("\033[92m", "end of " + metric, 10, **dict_debug)
     # Create output
-    metric_output = {"dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method,
-        "method_detail": method_var, "name": name, "nyears": nbr_year, "ref": ref, "units": units,
-        "time_frequency": kwargs["frequency"], "time_period": actualtimebounds, "value": mv, "value_error": mv_error}
+    metric_output = {
+        "dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method, "method_detail": method_var,
+        "name": name, "nyears": nbr_year, "ref": ref, "time_frequency": kwargs["frequency"], "time_period": timebounds,
+        "units": units, "value": mv, "value_error": mv_error}
     return metric_output
 
 
@@ -32468,14 +33018,18 @@ def telecon_pr_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         # 3. Detect events, seasonal mean and anomalies, create 2D array
         # ------------------------------------------------
         # 3.1 Detect ENSO events
-        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
-                                    compute_season=True, duration=length_ev)
-        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
-                                    compute_season=True, duration=length_ev)
-        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
-                                    compute_season=True, duration=length_ev)
-        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
-                                    compute_season=True, duration=length_ev)
+        en_years_mod = DetectEvents(
+            sst_mod, season_ev, thresh_ev, compute_anom=True, compute_season=True, duration=length_ev,
+            nino=True, normalize=normalize)
+        ln_years_mod = DetectEvents(
+            sst_mod, season_ev, -thresh_ev, compute_anom=True, compute_season=True, duration=length_ev,
+            nino=False, normalize=normalize)
+        en_years_obs = DetectEvents(
+            sst_obs, season_ev, thresh_ev, compute_anom=True, compute_season=True, duration=length_ev,
+            nino=True, normalize=normalize)
+        ln_years_obs = DetectEvents(
+            sst_obs, season_ev, -thresh_ev, compute_anom=True, compute_season=True, duration=length_ev,
+            nino=False, normalize=normalize)
         method_sst += ", detect ENSO events: NDJ average & seasonal mean removed (" + str(enso_method) + ")"
         if debug is True:
             dict_debug = {"nina1": "(mod) nbr(" + str(len(ln_years_mod)) + "): " + str(ln_years_mod),
@@ -33105,13 +33659,13 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         # 3. Detect events, seasonal mean and change rate, create 2D array
         # ------------------------------------------------
         # 3.1 Detect ENSO events
-        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                     compute_season=True, duration=length_ev)
-        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                     compute_season=True, duration=length_ev)
-        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                     compute_season=True, duration=length_ev)
-        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                     compute_season=True, duration=length_ev)
         method_sst += ", detect ENSO events: NDJ average & seasonal mean removed (" + str(enso_method) + ")"
         if debug is True:
@@ -33784,13 +34338,13 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         # 3. Detect events, seasonal mean and anomalies, create 2D array
         # ------------------------------------------------
         # 3.1 Detect ENSO events
-        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                     compute_season=True, duration=length_ev)
-        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                     compute_season=True, duration=length_ev)
-        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                     compute_season=True, duration=length_ev)
-        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                     compute_season=True, duration=length_ev)
         method_sst += ", detect ENSO events: NDJ average & seasonal mean removed (" + str(enso_method) + ")"
         if debug is True:
@@ -34458,13 +35012,13 @@ def telecon_pr_sig_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         # 3. Detect events, seasonal mean and anomalies, create 2D array
         # ------------------------------------------------
         # 3.1 Detect ENSO events
-        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize, nino=True,
+        en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize, nino=True,
                                     compute_season=True, duration=length_ev)
-        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                     compute_season=True, duration=length_ev)
-        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize, nino=True,
+        en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize, nino=True,
                                     compute_season=True, duration=length_ev)
-        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize, nino=False,
+        ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize, nino=False,
                                     compute_season=True, duration=length_ev)
         method_sst += ", detect ENSO events: NDJ average & seasonal mean removed (" + str(enso_method) + ")"
         if debug is True:
@@ -35245,8 +35799,8 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
             # 1.2 SSTA > (<) 'threshold' during 'season' are considered as El Nino (La Nina) events
             # Lists event years
-            nino_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
-            nina_years = DetectEvents(sst, season_ev, -threshold, normalization=normalize, nino=False)
+            nino_years = DetectEvents(sst, season_ev, threshold, normalize=normalize, nino=True)
+            nina_years = DetectEvents(sst, season_ev, -threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {"nino1": "nbr(" + str(len(nino_years)) + "): " + str(nino_years),
                               "nina1": "nbr(" + str(len(nina_years)) + "): " + str(nina_years)}
@@ -35762,13 +36316,13 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                     "\033[92m", "divedown after LinearRegressionTsAgainstMap", 15, **dict_debug)
                             # ENSO events: SSTA > (<) "threshold" during "season" are considered as El Nino
                             # (La Nina) events
-                            en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                            en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                         nino=True, compute_season=True, duration=length_ev)
-                            ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                            ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                         nino=False, compute_season=True, duration=length_ev)
-                            en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                            en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                         nino=True, compute_season=True, duration=length_ev)
-                            ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                            ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                         nino=False, compute_season=True, duration=length_ev)
                             if debug is True:
                                 dict_debug = {
@@ -36292,13 +36846,13 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                             if keyerror is None:
                                 # Lists event years
-                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
-                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
                                 if debug is True:
                                     dict_debug = {
@@ -36825,13 +37379,13 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                             keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                             if keyerror is None:
                                 # Lists event years
-                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
-                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
                                 if debug is True:
                                     dict_debug = {
@@ -37184,10 +37738,10 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
             # 1.2 SSTA < 'threshold' (SSTA > 'threshold') during 'season' are considered as La Nina (El Nino) events
             # Lists event years
-            nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=normalize, nino=False)
-            nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=normalize, nino=False)
-            nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalize=normalize, nino=False)
+            nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalize=normalize, nino=False)
+            nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {"nina1": "(mod) " + str(nina_years_mod), "nina2": "(obs) " + str(nina_years_obs),
                               "nino1": "(mod) " + str(nino_years_mod), "nino2": "(obs) " + str(nino_years_obs)}
@@ -37558,10 +38112,10 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
             # 1.2 SSTA < 'threshold' (SSTA > 'threshold') during 'season' are considered as La Nina (El Nino) events
             # Lists event years
-            nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalization=normalize, nino=False)
-            nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalization=normalize, nino=False)
-            nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            nina_years_mod = DetectEvents(sst_mod, season_ev, -threshold, normalize=normalize, nino=False)
+            nino_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            nina_years_obs = DetectEvents(sst_obs, season_ev, -threshold, normalize=normalize, nino=False)
+            nino_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {"nina1": "(mod) " + str(nina_years_mod), "nina2": "(obs) " + str(nina_years_obs),
                               "nino1": "(mod) " + str(nino_years_mod), "nino2": "(obs) " + str(nino_years_obs)}
@@ -38103,13 +38657,13 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                     "\033[92m", "divedown after LinearRegressionTsAgainstMap", 15, **dict_debug)
                             # ENSO events: SSTA > (<) "threshold" during "season" are considered as El Nino
                             # (La Nina) events
-                            en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                            en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                         nino=True, compute_season=True, duration=length_ev)
-                            ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                            ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                         nino=False, compute_season=True, duration=length_ev)
-                            en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                            en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                         nino=True, compute_season=True, duration=length_ev)
-                            ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                            ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                         nino=False, compute_season=True, duration=length_ev)
                             if debug is True:
                                 dict_debug = {
@@ -38637,13 +39191,13 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                             if keyerror is None:
                                 # Lists event years
-                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
-                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
                                 if debug is True:
                                     dict_debug = {
@@ -39174,13 +39728,13 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                             if keyerror is None:
                                 # Lists event years
-                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
-                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
                                 if debug is True:
                                     dict_debug = {
@@ -39677,13 +40231,13 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                                     "\033[92m", "divedown after LinearRegressionTsAgainstMap", 15, **dict_debug)
                             # ENSO events: SSTA > (<) "threshold" during "season" are considered as El Nino
                             # (La Nina) events
-                            en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                            en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                         nino=True, compute_season=True, duration=length_ev)
-                            ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                            ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                         nino=False, compute_season=True, duration=length_ev)
-                            en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                            en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                         nino=True, compute_season=True, duration=length_ev)
-                            ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                            ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                         nino=False, compute_season=True, duration=length_ev)
                             if debug is True:
                                 dict_debug = {
@@ -40184,13 +40738,13 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                             if keyerror is None:
                                 # Lists event years
-                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
-                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
                                 if debug is True:
                                     dict_debug = {
@@ -40694,13 +41248,13 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                             if keyerror is None:
                                 # Lists event years
-                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalization=normalize,
+                                en_years_mod = DetectEvents(sst_mod, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_mod = DetectEvents(sst_mod, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
-                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalization=normalize,
+                                en_years_obs = DetectEvents(sst_obs, season_ev, thresh_ev, normalize=normalize,
                                                             nino=True, compute_season=True, duration=length_ev)
-                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalization=normalize,
+                                ln_years_obs = DetectEvents(sst_obs, season_ev, -thresh_ev, normalize=normalize,
                                                             nino=False, compute_season=True, duration=length_ev)
                                 if debug is True:
                                     dict_debug = {
@@ -41058,8 +41612,8 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=False)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': '(mod) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -41312,7 +41866,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=False)
+            event_years = DetectEvents(sst, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -41598,8 +42152,8 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=False)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': '(mod) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -41884,7 +42438,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=False)
+            event_years = DetectEvents(sst, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': str(event_years)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -42111,8 +42665,8 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=False)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': '(mod) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -42538,8 +43092,8 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=False)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': '(mod) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -42851,8 +43405,8 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=False)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': '(mod) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -43131,8 +43685,8 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
             # 1.2 SSTA < 'threshold' during 'season' are considered as La Nina events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=False)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=False)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=False)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=False)
             if debug is True:
                 dict_debug = {'nina1': '(mod) ' + str(event_years_mod), 'nina2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -43505,8 +44059,8 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': '(mod) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -43759,7 +44313,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
+            event_years = DetectEvents(sst, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -44045,8 +44599,8 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': '(mod) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -44331,7 +44885,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
+            event_years = DetectEvents(sst, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': str(event_years)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -44558,8 +45112,8 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': '(mod) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -44985,8 +45539,8 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': '(mod) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -45250,7 +45804,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years = DetectEvents(enso, season_ev, threshold, normalization=normalize, nino=True)
+            event_years = DetectEvents(enso, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': 'nbr(' + str(len(event_years)) + '): ' + str(event_years)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -45317,7 +45871,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
                 dive_down_diag = {'value': ArrayToList(lon_sstmax), 'axis': list(lon_sstmax.getAxis(0)[:])}
                 if netcdf is True:
                     # nina events
-                    nina_years = DetectEvents(enso, season_ev, -threshold, normalization=normalize, nino=False)
+                    nina_years = DetectEvents(enso, season_ev, -threshold, normalize=normalize, nino=False)
                     if len(event_years) > 0:
                         # samples
                         sample = Event_selection(sstlon, kwargs['frequency'], list_event_years=nina_years)
@@ -45595,8 +46149,8 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {'nino1': '(mod) ' + str(event_years_mod), 'nino2': '(obs) ' + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
@@ -45875,8 +46429,8 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
             # 1.2 SSTA > 'threshold' during 'season' are considered as El Nino events
             # Lists event years
-            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalization=normalize, nino=True)
-            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalization=normalize, nino=True)
+            event_years_mod = DetectEvents(sst_mod, season_ev, threshold, normalize=normalize, nino=True)
+            event_years_obs = DetectEvents(sst_obs, season_ev, threshold, normalize=normalize, nino=True)
             if debug is True:
                 dict_debug = {"nino1": "(mod) " + str(event_years_mod), "nino2": "(obs) " + str(event_years_obs)}
                 EnsoErrorsWarnings.debug_mode("\033[92m", "after DetectEvents", 15, **dict_debug)

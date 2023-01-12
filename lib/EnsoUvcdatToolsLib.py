@@ -152,21 +152,24 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
         if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(tab.getGrid().shape) +
                   " is not the same as areacell.grid " + str(areacell.getGrid().shape) + " \033[0m")
-        try: averaged_tab = cdutil.averager(tab, axis="xy", weights="weighted", action="average")
+        try:
+            averaged_tab = cdutil.averager(tab, axis="xy", weights="weighted", action="average")
         except:
-            try: averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
+            try:
+                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except:
                 if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                     kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                "newgrid_name": "generic_1x1deg"}
                 else:
                     kwargs2 = kwargs["regridding"]
-                kwargs2["newgrid_name"] =\
+                kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
                       " to perform average \033[0m")
                 tmp = Regrid(tab, None, region=region, **kwargs2)
-                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
+                try:
+                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
                 except:
                     keyerror = "cannot perform horizontal average"
                     averaged_tab = None
@@ -201,9 +204,11 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
         if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(tab.getGrid().shape) +
                   " is not the same as areacell.grid " + str(areacell.getGrid().shape) + " \033[0m")
-        try: averaged_tab = cdutil.averager(tab, axis="y", weights="weighted", action="average")
+        try:
+            averaged_tab = cdutil.averager(tab, axis="y", weights="weighted", action="average")
         except:
-            try: averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
+            try:
+                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except:
                 if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                     kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
@@ -216,7 +221,8 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
                       " to perform average \033[0m")
                 tmp = Regrid(tab, None, region=region, **kwargs2)
-                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
+                try:
+                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
                 except:
                     keyerror = "cannot perform meridional average"
                     averaged_tab = None
@@ -253,10 +259,12 @@ def AverageTemporal(tab, areacell=None, **kwargs):
     help(cdutil.averager)
     """
     keyerror = None
-    try: averaged_tab = cdutil.averager(tab, axis="t")
+    try:
+        averaged_tab = cdutil.averager(tab, axis="t")
     except:
         time_num = get_num_axis(tab, "time")
-        try: averaged_tab = cdutil.averager(tab, axis=str(time_num))
+        try:
+            averaged_tab = cdutil.averager(tab, axis=str(time_num))
         except:
             keyerror = "cannot perform temporal average"
             averaged_tab = None
@@ -285,9 +293,11 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
         if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(tab.getGrid().shape) +
                   " is not the same as areacell.grid " + str(areacell.getGrid().shape) + " \033[0m")
-        try: averaged_tab = cdutil.averager(tab, axis="x", weights="weighted", action="average")
+        try:
+            averaged_tab = cdutil.averager(tab, axis="x", weights="weighted", action="average")
         except:
-            try: averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
+            try:
+                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except:
                 if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
                     kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
@@ -300,7 +310,8 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
                       " to perform average \033[0m")
                 tmp = Regrid(tab, None, region=region, **kwargs2)
-                try: averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
+                try:
+                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
                 except:
                     keyerror = "cannot perform zonal average"
                     averaged_tab = None
@@ -697,7 +708,7 @@ def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
     try:
         rmse = GENUTILrms(tab, ref, weights=weights, axis=axis, centered=centered, biased=biased)
     except:
-        keyerror = "cannot perform RMS along given axis: tab (" + str(tab.shape) + ") and ref (" + str(ref.shape) +\
+        keyerror = "cannot perform RMS along given axis: tab (" + str(tab.shape) + ") and ref (" + str(ref.shape) + \
                    ") are not on the same grid"
         list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": RMS over axis " + str(axis),
                         str().ljust(5) + "cannot perform RMS along given axis",
@@ -742,10 +753,10 @@ def RmsHorizontal(tab, ref, centered=0, biased=1):
         lat_num = get_num_axis(tab, "latitude")
         lon_num = get_num_axis(tab, "longitude")
         try:
-            rmse = GENUTILrms(tab, ref, weights="weighted", axis=str(lat_num)+str(lon_num), centered=centered,
+            rmse = GENUTILrms(tab, ref, weights="weighted", axis=str(lat_num) + str(lon_num), centered=centered,
                               biased=biased)
         except:
-            keyerror = "cannot perform horizontal RMS (x=" + str(lon_num) + ", y=" + str(lat_num) + "): tab (" +\
+            keyerror = "cannot perform horizontal RMS (x=" + str(lon_num) + ", y=" + str(lat_num) + "): tab (" + \
                        str(tab.shape) + ") and ref (" + str(ref.shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": horizontal RMS",
@@ -793,7 +804,7 @@ def RmsMeridional(tab, ref, centered=0, biased=1):
         try:
             rmse = GENUTILrms(tab, ref, axis=str(lat_num), centered=centered, biased=biased)
         except:
-            keyerror = "cannot perform meridional RMS (y=" + str(lat_num) + "): tab (" + str(tab.shape) +\
+            keyerror = "cannot perform meridional RMS (y=" + str(lat_num) + "): tab (" + str(tab.shape) + \
                        ") and ref (" + str(ref.shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional RMS",
@@ -980,6 +991,8 @@ def TimeBounds(tab):
     """
     time = tab.getTime().asComponentTime()
     return str(time[0]), str(time[-1])
+
+
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -1043,7 +1056,7 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
     keyerror = None
     if maskland is True or maskocean is True:
         if tab.getGrid().shape != landmask.getGrid().shape:
-            keyerror = "tab (" + str(tab.getGrid().shape) + ") and landmask (" + str(landmask.getGrid().shape) +\
+            keyerror = "tab (" + str(tab.getGrid().shape) + ") and landmask (" + str(landmask.getGrid().shape) + \
                        ") are not on the same grid"
             list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": applying landmask",
                             str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask",
@@ -1060,7 +1073,7 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                     try:
                         landmask_nd[:, :] = landmask
                     except:
-                        keyerror = "ApplyLandmask: tab must be more than 4D and this is not taken into account yet (" +\
+                        keyerror = "ApplyLandmask: tab must be more than 4D and this is not taken into account yet (" + \
                                    str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
                         list_strings = [
                             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": landmask shape",
@@ -1103,7 +1116,7 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     keyerror = None
     if maskland is True or maskocean is True:
         if area.getGrid().shape != landmask.getGrid().shape:
-            keyerror = "ApplyLandmaskToArea: area (" + str(area.getGrid().shape) + ") and landmask (" +\
+            keyerror = "ApplyLandmaskToArea: area (" + str(area.getGrid().shape) + ") and landmask (" + \
                        str(landmask.getGrid().shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": applying landmask to areacell",
@@ -1329,7 +1342,7 @@ def CheckTime(tab1, tab2, frequency="monthly", min_time_steps=None, metric_name=
         if len(tab1_sliced) < min_time_steps or len(tab2_sliced) < min_time_steps:
             shortest = min(len(tab1_sliced), len(tab2_sliced))
             EnsoErrorsWarnings.too_short_time_period(metric_name, shortest, min_time_steps, INSPECTstack())
-            keyerror2 = "too short time period (variable1:" + str(len(tab1_sliced)) + " ; variable2:" +\
+            keyerror2 = "too short time period (variable1:" + str(len(tab1_sliced)) + " ; variable2:" + \
                         str(len(tab2_sliced)) + ")"
         else:
             keyerror2 = None
@@ -1498,7 +1511,7 @@ def compute_degrees_of_freedom(larr_i):
     lmonth = lk1 + 1
     # dimensionless factor by which the effective degrees of freedom are reduced relative to the number of data points
     # in each interval
-    ltau_d = 1 + sum(NParray(lautocorrelation[:lmonth])**2)
+    ltau_d = 1 + sum(NParray(lautocorrelation[:lmonth]) ** 2)
     # degrees of freedom
     ln_star = len(larr_i) / ltau_d
     return ln_star, lmonth
@@ -1513,6 +1526,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=None
         list_event_years = sorted(list(set([tax[ii].year for ii in range(len(tax))])))
     else:
         list_event_years = sorted(list_event_years)
+
     # function to fill array with masked value where the data is not available
     def fill_array(tab, units, freq):
         y1 = tab.getTime().asComponentTime()[0].year
@@ -1545,6 +1559,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=None
                     tab_out[ii:ii + len(tab)] = copy.copy(tab)
                     break
         return tab_out
+
     # compute composite
     if nbr_years_window is not None:
         composite = list()
@@ -1609,56 +1624,70 @@ def Composite(tab, list_event_years, frequency, nbr_years_window=None):
         Event_selection(tab, frequency, nbr_years_window=nbr_years_window, list_event_years=list_event_years), axis=0)
 
 
-def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute_season=True, duration=False):
+def DetectEvents(arr, season, threshold, compute_anom=True, compute_season=True, duration=1, nino=True,
+                 normalize=False):
     """
     #################################################################################
     Description:
     Detects Nina or Nino events
-    These events are detected when 'tab' anomalies during 'season' are above (less) then 'threshold'
+    Events detected when 'arr' (anomalies if compute_anom=True) during 'season' are above (below) 'threshold'
     The anomalies can be normalized
 
     Uses MV2 (uvcdat) to create an empty array, to create an array of indices, to define conditions, to select the
     indices depending on the conditions and to select the years of the events
     #################################################################################
 
-    :param tab: masked_array
+    :param arr: masked_array
         masked_array containing a variable from which the events are detected. Most likely SST
     :param season: string
         one month (e.g, 'DEC'), two months (e.g., 'DJ'), three months (e.g., 'NDJ'), four months (e.g., 'NDJF'), period
         when the events are detected
     :param threshold: float
         threshold to define the events (e.g., 0.75 for El Nino, -0.75 for La Nina)
-    :param normalization: boolean, optional
-        True if events are detected based on the standard deviation, if not pass anything but True
+    :param compute_anom: boolean, optional
+        True to detect events based on interannual anomalies
+        default is True
+    :param compute_season: boolean, optional
+        True to compute seasonal average to detect events
+        default is True
+    :param duration: int, optional
+        number of months (overlapping seasons) during which the threshold must be met to detect an event
+        default is 1
     :param nino: boolean, optional
-        True if events are detected if above threshold (El Nino like), if not pass anything but True (La Nina like)
+        True to detect events above threshold (El Nino like), else events detected below threshold (La Nina like)
+        default is True
+    :param normalize: boolean, optional
+        True to detect events based on the dataset's variability (standard deviation or arr)
+        default is False
+
     :return list_of_years: list
         list of years including a detected event
     """
     if duration is False or duration == 1:
         # Seasonal mean and anomalies
         if compute_season is True:
-            tab = SeasonalMean(tab, season, compute_anom=True)
+            arr = SeasonalMean(arr, season, compute_anom=compute_anom)
         # Normalization ?
-        if normalization is True:
-            threshold = threshold * float(GENUTILstd(tab, axis=0, centered=1, biased=1))
+        if normalize is True:
+            threshold = threshold * float(GENUTILstd(arr, axis=0, centered=1, biased=1))
         # Initialization
-        tab_threshold = MV2zeros(tab.shape)
-        tab_threshold.fill(threshold)
-        list_years = sorted(list(set([tab.getTime().asComponentTime()[yy].year for yy in range(len(tab))])))
+        arr_threshold = MV2zeros(arr.shape)
+        arr_threshold.fill(threshold)
+        list_years = sorted(list(set([arr.getTime().asComponentTime()[yy].year for yy in range(len(arr))])))
         indices = MV2arange(len(list_years))
         # Conditions
         if nino is True:
-            condition = MV2where(tab > tab_threshold, True, False)
+            condition = MV2where(arr > arr_threshold, True, False)
         else:
-            condition = MV2where(tab < tab_threshold, True, False)
+            condition = MV2where(arr < arr_threshold, True, False)
         # Indices of the events
         ids = MV2compress(condition, indices)
         # Events years
         events = list(MV2take(list_years, ids, axis=0))
     else:
+        lseasons = [season]
         if season == "DEC":
-            lseasons = ["NOV", season, "JAN"]
+            lseasons = ["NOV"] + lseasons + ["JAN"]
             if duration >= 3:
                 lseasons = ["OCT"] + lseasons + ["FEB"]
             if duration >= 4:
@@ -1668,7 +1697,7 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute
             if duration >= 6:
                 lseasons = ["JUL"] + lseasons + ["MAY"]
         elif season == "NDJ":
-            lseasons = ["OND", season, "DJF"]
+            lseasons = ["OND"] + lseasons + ["DJF"]
             if duration >= 3:
                 lseasons = ["SON"] + lseasons + ["JFM"]
             if duration >= 4:
@@ -1678,14 +1707,14 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute
             if duration >= 6:
                 lseasons = ["JJA"] + lseasons + ["AMJ"]
         # Main seasonal mean and anomalies
-        enso = SeasonalMean(tab, season, compute_anom=True)
+        enso = SeasonalMean(arr, season, compute_anom=compute_anom)
         list_years = [enso.getTime().asComponentTime()[yy].year for yy in range(len(enso))]
         indices = MV2arange(len(list_years))
         y0 = list_years[0]
         enso_by_sea = list()
         for sea in lseasons:
             # Seasonal mean and anomalies
-            tmp = SeasonalMean(tab, sea, compute_anom=True)
+            tmp = SeasonalMean(arr, sea, compute_anom=compute_anom)
             y1 = tmp.getTime().asComponentTime()[0].year
             if y1 == y0:
                 tmp = tmp[:len(enso)]
@@ -1697,27 +1726,27 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute
             del tmp, y1
         enso_by_sea = MV2array(enso_by_sea)
         # Normalization ?
-        if normalization is True:
+        if normalize is True:
             thr = threshold * float(GENUTILstd(enso, axis=0, centered=1, biased=1))
         else:
             thr = copy.deepcopy(threshold)
         # Initialization
-        tab_threshold = MV2zeros(enso_by_sea.shape)
-        tab_threshold.fill(thr)
+        arr_threshold = MV2zeros(enso_by_sea.shape)
+        arr_threshold.fill(thr)
         # Conditions
         if nino is True:
-            condition = MV2where(enso_by_sea > tab_threshold, 1, 0)
+            condition = MV2where(enso_by_sea > arr_threshold, 1, 0)
         else:
-            condition = MV2where(enso_by_sea < tab_threshold, 1, 0)
+            condition = MV2where(enso_by_sea < arr_threshold, 1, 0)
         # sum by duration window
         d_window = MV2zeros(enso_by_sea.shape)
         d_window = d_window[:len(lseasons) - duration + 1]
         for ii in range(len(d_window)):
             d_window[ii] = MV2sum(condition[ii: ii + duration], axis=0)
         # test if threshold met during at least duration
-        tab_threshold = MV2zeros(d_window.shape)
-        tab_threshold.fill(duration)
-        condition = MV2where(d_window >= tab_threshold, 1, 0)
+        arr_threshold = MV2zeros(d_window.shape)
+        arr_threshold.fill(duration)
+        condition = MV2where(d_window >= arr_threshold, 1, 0)
         condition = MV2sum(condition, axis=0)
         condition = MV2where(condition >= 1, True, False)
         # Indices of the events
@@ -1888,6 +1917,165 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
     return duration
 
 
+def enso_time_interval(arr, season, threshold, compute_anom=True, compute_season=True, method="simple",
+                       nina_events=None, nino_events=None, normalize=False):
+    """
+    #################################################################################
+    Description:
+    Count the number of time steps between given ENSO events
+
+    Uses MV2 (uvcdat) to create an empty array (array of zeros), to define conditions
+    #################################################################################
+
+    Inputs:
+    ------
+    :param arr: masked_array
+        masked_array containing a variable from which the events are detected. Most likely SST
+    :param season: string
+        one month (e.g, 'DEC'), two months (e.g., 'DJ'), three months (e.g., 'NDJ'), four months (e.g., 'NDJF'), period
+        when the events are detected
+    :param threshold: float
+        threshold to define the events (e.g., 0.75 for El Nino, -0.75 for La Nina)
+    :param compute_anom: boolean, optional
+        True to detect events based on interannual anomalies
+        default is True
+    :param compute_season: boolean, optional
+        True to compute seasonal average to detect events
+        default is True
+    :param method: string, optional
+        if method='simple', the number of months between ENSO peaks (assumed to always be in December) are counted;
+        e.g., [1991, 1994, 1995, 1997, 1998, 1999] gives intervals of [36, 12, 24, 12, 12] between events
+        else, a start and an end of each event is defined based on 'arr', 'season', 'threshold' and 'normalization';
+        e.g., according to https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php:
+        1991: from AMJ 1991 to MMJ 1992
+        1994: from ASO 1994 to FMA 1995
+        1995: from JAS 1994 to FMA 1996
+        1997: from AMJ 1997 to AMJ 1998
+        1998: from JAA 1998 to JFM 2001
+        1999: from JAA 1998 to JFM 2001
+        giving intervals of [26, 4, 13, 1, 0] between events
+        default is 'simple'
+    :param nina_events: list, optional
+        list of La Nina years as defined by DetectEvents (i.e., if 1998 it means that December 1998 is considered a LN)
+        default is None (La Nina events are not used)
+    :param nino_events: list, optional
+        list of El Nino years as defined by DetectEvents (i.e., if 1997 it means that December 1997 is considered an EN)
+        default is None (El Nino events are not used)
+    :param normalize: boolean, optional
+        True to detect events based on the standard deviation of 'season', else 'threshold' is in 'arr' units
+        default is False
+
+    Outputs:
+    -------
+    :return intervals: list
+        list of number of time steps between ENSO events
+    :return description: string
+        brief description of how the intervals are computed
+    :return keyerror: string or None
+        brief description of the encountered error (if applicable) else None
+    """
+    intervals = None
+    keyerror = None
+    description = None
+    # list ENSO events
+    event_yy = list()
+    if isinstance(nina_events, list) is True:
+        event_yy += copy.deepcopy(nina_events)
+    if isinstance(nino_events, list) is True:
+        event_yy += copy.deepcopy(nino_events)
+    if len(event_yy) == 0:
+        keyerror = "no ENSO event given"
+        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()), str().ljust(5) + str(keyerror)]
+        EnsoErrorsWarnings.my_warning(list_strings)
+    else:
+        event_yy = sorted(event_yy)
+        intervals = list()
+        if method == "simple":
+            description = "time interval defined as the number of months between two ENSO peak (" + str(season) + ")"
+            # time (number of month) between events
+            for y1, y2 in zip(event_yy[:-1], event_yy[1:]):
+                intervals.append((y2 - y1) * 12)
+        else:
+            description = "time interval defined as the number of months between the end of an event and the " + \
+                          "beginning of the next"
+            #
+            # -- 1) Create time series of interannual anomalies
+            #
+            # smooth time series
+            if season in ["NDJ", "ONDJF"] and compute_season is True:
+                enso_ts, _ = Smoothing(arr, "", axis=0, window=len(season), method="square")
+            else:
+                enso_ts = copy.copy(arr)
+            # removes annual cycle (anomalies with respect to the annual cycle)
+            if compute_anom is True:
+                enso_ts = ComputeInterannualAnomalies(enso_ts)
+            #
+            # -- 2) Compute the threshold to detect an event
+            #
+            if normalize is True:
+                if compute_season is True:
+                    enso = SeasonalMean(arr, season, compute_anom=compute_anom)
+                else:
+                    enso = copy.copy(arr)
+                thr = threshold * float(GENUTILstd(enso, axis=0, centered=1, biased=1))
+            else:
+                thr = copy.deepcopy(threshold)
+            arr_threshold = MV2zeros(enso_ts.shape)
+            arr_threshold.fill(thr)
+            #
+            # -- 3) Mark months that meet the threshold
+            #
+            condition = MV2zeros(enso_ts.shape)
+            if isinstance(nina_events, list) is True and len(nina_events) > 0:
+                condition = MV2where(enso_ts < -arr_threshold, 1, condition)
+            if isinstance(nino_events, list) is True and len(nino_events) > 0:
+                condition = MV2where(enso_ts > arr_threshold, 1, condition)
+            #
+            # -- 4) Mark months if they are really part of an event
+            #
+            # get time
+            tt = enso_ts.getTime().asComponentTime()
+            # get first year and december of first and last ENSO event
+            yy0 = tt[0].year
+            mm0 = 0
+            for ii, jj in enumerate(tt):
+                if jj.month == 12:
+                    break
+                mm0 += 1
+            # transform event year to month index in enso_ts array
+            event_yy = list((NParray(event_yy) - yy0) * 12 + mm0)
+            # mark enso events (0 for ENSO, 1 for non-ENSO)
+            enso_ts = MV2ones(enso_ts.shape)
+            for mm in event_yy:
+                # month on index mm is the center (Dec or NDJ) of an ENSO event
+                lk0, lk1 = 0, 0
+                # check values before event
+                for jj in list(range(0, 37, 1)):
+                    if mm - jj == 0 or condition[int(mm - jj)] == 0:
+                        break
+                    lk0 += 1
+                # check values after event
+                for jj in list(range(0, 37, 1)):
+                    if mm + jj == len(enso_ts) or condition[int(mm + jj)] == 0:
+                        break
+                    lk1 += 1
+                # values from mm - lk0 to mm + lk1 are considered part of the current event
+                enso_ts[int(mm - lk0): int(mm + lk1 + 1)] = 0
+            #
+            # -- 5) Count number of months between ENSO events
+            #
+            for m1, m2 in zip(event_yy[:-1], event_yy[1:]):
+                # non-ENSO events = 1, ENSO events = 0, so the sum of 'condition' between two ENSO event is the number
+                # of months between the end of event 'm1' and the beginning of event 'm2'
+                intervals.append(sum(enso_ts[int(m1): int(m2 + 1)]))
+    if intervals is not None:
+        name = "nina" if isinstance(nina_events, list) is True and isinstance(nina_events, list) is False else \
+            ("nino" if isinstance(nina_events, list) is False and isinstance(nina_events, list) is True else "enso")
+        axis = CDMS2createAxis(list(event_yy[:-1]), id=str(name) + "_years")
+        intervals = CDMS2createVariable(MV2array(intervals), axes=[axis], id="time_interval")
+    return intervals, description, keyerror
+
+
 def get_num_axis(tab, name_axis):
     """
     #################################################################################
@@ -1963,7 +2151,7 @@ def get_year_by_year(tab, frequency="monthly"):
     if frequency == "daily":
         days = MV2array(list(tt.day for tt in time_ax))
         months = MV2array(list(tt.month for tt in time_ax))
-        months = MV2array([(mm*100)+dd for dd, mm in zip(days, months)])
+        months = MV2array([(mm * 100) + dd for dd, mm in zip(days, months)])
         tmm = CDMS2createAxis(list(range(365)), id="days")
         m1 = time_ax[0].day
         m2 = time_ax[-1].day
@@ -2103,7 +2291,7 @@ def Normalize(tab, frequency):
     if time_steps_per_year is not None:
         if len(tab) % time_steps_per_year != 0:
             tab_out = None
-            keyerror = "cannot perform normalization: the function can only handle full years (len(tab) = " +\
+            keyerror = "cannot perform normalization: the function can only handle full years (len(tab) = " + \
                        str(len(tab)) + ")"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": data length",
@@ -2133,7 +2321,8 @@ def Normalize(tab, frequency):
             axes = axes + tab.getAxisList()[1:]
             grid = tab.getGrid()
             mask = tab.mask
-            tab_out = CDMS2createVariable(tab_out, axes=axes, grid=grid, mask=mask, attributes=tab.attributes, id=tab.id)
+            tab_out = CDMS2createVariable(tab_out, axes=axes, grid=grid, mask=mask, attributes=tab.attributes,
+                                          id=tab.id)
     return tab_out, keyerror
 
 
@@ -2197,9 +2386,9 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     except:
         att2 = ""
     reversed_sign = False
-    if "latent_heat" in att1 or "latent_heat" in att2 or "sensible_heat" in att1 or "sensible_heat" in att2 or\
+    if "latent_heat" in att1 or "latent_heat" in att2 or "sensible_heat" in att1 or "sensible_heat" in att2 or \
             (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"]):
-        if "upward" in att1 or "upward" in att2 or\
+        if "upward" in att1 or "upward" in att2 or \
                 (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"] and
                  ("in_air" in att1 or "in_air" in att2)):
             # I need to be in the ocean point of view so the heat fluxes must be downwards
@@ -2683,8 +2872,9 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name="", var1_ti
         if var12_time_name is not None:
             var12 = TimeButNotTime(var12, var12_time_name, frequency)
         o.write(var12, attributes=var12_attributes, dtype="float32", id=var12_name)
-    my_keys = sorted([key for key in list(kwargs.keys()) if "var" in key and str(key.replace("var", "")).isdigit() is True],
-                     key=lambda v: v.upper())
+    my_keys = sorted(
+        [key for key in list(kwargs.keys()) if "var" in key and str(key.replace("var", "")).isdigit() is True],
+        key=lambda v: v.upper())
     for key in my_keys:
         if kwargs[key] is not None:
             if key + "_name" not in list(kwargs.keys()) or (
@@ -2854,7 +3044,7 @@ def SmoothSquare(tab, axis=0, window=5):
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": smoothing window (running mean)",
             str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)]
         EnsoErrorsWarnings.my_error(list_strings)
-    if axis > len(tab.shape)-1:
+    if axis > len(tab.shape) - 1:
         list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": axis",
                         str().ljust(5) + "axis number too big: " + str(axis)]
         EnsoErrorsWarnings.my_error(list_strings)
@@ -2864,7 +3054,7 @@ def SmoothSquare(tab, axis=0, window=5):
     indices.remove(axis)
     newOrder = str(axis)
     for ii in indices:
-        newOrder = newOrder+str(ii)
+        newOrder = newOrder + str(ii)
     new_tab = tab.reorder(newOrder)
 
     # degree
@@ -2880,7 +3070,7 @@ def SmoothSquare(tab, axis=0, window=5):
         tmp1 = MV2array(new_tab[ii: ii + window])
         tmp2 = MV2masked_where(tmp1.mask, weight)
         tmp1 = MV2sum(tmp1, axis=0) / MV2sum(tmp2, axis=0)
-        tmp1 = MV2masked_where(MV2sum(tmp2.mask.astype("f"), axis=0)/window>0.5, tmp1)
+        tmp1 = MV2masked_where(MV2sum(tmp2.mask.astype("f"), axis=0) / window > 0.5, tmp1)
         smoothed_tab[ii] = tmp1
         del tmp1, tmp2
 
@@ -2926,7 +3116,7 @@ def SmoothTriangle(tab, axis=0, window=5):
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": smoothing window (running mean)",
             str().ljust(5) + "the window of smoothing must be an odd number: " + str(window)]
         EnsoErrorsWarnings.my_error(list_strings)
-    if axis > len(tab.shape)-1:
+    if axis > len(tab.shape) - 1:
         list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": axis",
                         str().ljust(5) + "axis number too big: " + str(axis)]
         EnsoErrorsWarnings.my_error(list_strings)
@@ -2936,7 +3126,7 @@ def SmoothTriangle(tab, axis=0, window=5):
     indices.remove(axis)
     newOrder = str(axis)
     for ii in indices:
-        newOrder = newOrder+str(ii)
+        newOrder = newOrder + str(ii)
     new_tab = tab.reorder(newOrder)
 
     # degree
@@ -2944,7 +3134,7 @@ def SmoothTriangle(tab, axis=0, window=5):
 
     # Create the weight array (triangle)
     weight = list()
-    for ii in range(0, (2 * degree)+1):
+    for ii in range(0, (2 * degree) + 1):
         ww = MV2zeros(new_tab.shape[1:])
         ww.fill(float(1 + degree - abs(degree - ii)))
         weight.append(ww)
@@ -2993,10 +3183,10 @@ sea_dict = dict(JAN=cdutil.JAN, FEB=cdutil.FEB, MAR=cdutil.MAR, APR=cdutil.APR, 
                 AMJ=cdutil.times.Seasons("AMJ"), MJJ=cdutil.times.Seasons("MJJ"), JJA=cdutil.JJA,
                 JAS=cdutil.times.Seasons("JAS"), ASO=cdutil.times.Seasons("ASO"), SON=cdutil.SON,
                 OND=cdutil.times.Seasons("OND"), NDJ=cdutil.times.Seasons("NDJ"), DJF=cdutil.DJF,
-                JFMA=cdutil.times.Seasons("JFMA"),FMAM=cdutil.times.Seasons("FMAM"),MAMJ=cdutil.times.Seasons("MAMJ"),
-                AMJJ=cdutil.times.Seasons("AMJJ"),MJJA=cdutil.times.Seasons("MJJA"),JJAS=cdutil.times.Seasons("JJAS"),
-                JASO=cdutil.times.Seasons("JASO"),ASON=cdutil.times.Seasons("ASON"),SOND=cdutil.times.Seasons("SOND"),
-                ONDJ=cdutil.times.Seasons("ONDJ"),NDJF=cdutil.times.Seasons("NDJF"),DJFM=cdutil.times.Seasons("DJFM"))
+                JFMA=cdutil.times.Seasons("JFMA"), FMAM=cdutil.times.Seasons("FMAM"), MAMJ=cdutil.times.Seasons("MAMJ"),
+                AMJJ=cdutil.times.Seasons("AMJJ"), MJJA=cdutil.times.Seasons("MJJA"), JJAS=cdutil.times.Seasons("JJAS"),
+                JASO=cdutil.times.Seasons("JASO"), ASON=cdutil.times.Seasons("ASON"), SOND=cdutil.times.Seasons("SOND"),
+                ONDJ=cdutil.times.Seasons("ONDJ"), NDJF=cdutil.times.Seasons("NDJF"), DJFM=cdutil.times.Seasons("DJFM"))
 
 
 def SeasonalMean(tab, season, compute_anom=False):
@@ -3108,12 +3298,14 @@ def Smoothing(tab, info, axis=0, window=5, method="triangle"):
     :return: smoothed_tab: masked_array
         smoothed data
     """
-    try: dict_smooth[method]
+    try:
+        dict_smooth[method]
     except:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": smoothing method (running mean)",
             str().ljust(5) + "unkwown smoothing method: " + str(method),
-            str().ljust(10) + "known smoothing method: " + str(sorted(list(dict_smooth.keys()), key=lambda v: v.upper()))]
+            str().ljust(10) + "known smoothing method: " + str(
+                sorted(list(dict_smooth.keys()), key=lambda v: v.upper()))]
         EnsoErrorsWarnings.my_error(list_strings)
     info = info + ', smoothing using a ' + str(method) + ' shaped window of ' + str(window) + ' points'
     return dict_smooth[method](tab, axis=axis, window=window), info
@@ -3198,6 +3390,8 @@ def TimeButNotTime(tab, new_time_name, frequency):
     axis.axis = freq
     tab_out.setAxis(time_num, axis)
     return tab_out
+
+
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -3462,7 +3656,8 @@ def MyDerive(project, internal_variable_name, dict_var):
             str().ljust(5) + "unknown 'project' (or observations dataset): " + str(project),
             str().ljust(10) + "it must be either a 'CMIP' project or an observations dataset defined in " +
             "EnsoCollectionsLib.ReferenceObservations",
-            str().ljust(10) + "known observations dataset: " + str(sorted(list(dict_obs.keys()), key=lambda v: v.upper()))]
+            str().ljust(10) + "known observations dataset: " + str(
+                sorted(list(dict_obs.keys()), key=lambda v: v.upper()))]
         EnsoErrorsWarnings.my_warning(list_strings)
 
     if (keyerror1 is not None or keyerror2 is not None or keyerror3 is not None or keyerror4 is not None):
@@ -3492,7 +3687,7 @@ def MyDerive(project, internal_variable_name, dict_var):
                     list_var, dict_var, dict_att=dict_obs_var, variable=internal_variable_name, isObs=True)
             else:
                 outvar = None
-                keyerror = "variable (" + str(internal_variable_name) + ") not defined in ReferenceObservations[" +\
+                keyerror = "variable (" + str(internal_variable_name) + ") not defined in ReferenceObservations[" + \
                            str(project) + "]"
     return outvar, keyerror
 
@@ -3802,7 +3997,7 @@ def preprocess_ts_polygon(tab, info, areacell=None, average="horizontal", comput
             if region in ["global", "global_no_poles", "tropic"]:
                 llon0, llon1 = "0E", "360E"
             info = str(info) + ", " + str(average) + " average in " + str(region) + " region [" + str(llat0) + " - " + \
-                str(llat1) + "; " + str(llon0) + " - " + str(llon1) + "]"
+                   str(llat1) + "; " + str(llon0) + " - " + str(llon1) + "]"
     # continue preprocessing if no error happened yet
     if keyerror is None:
         # removing linear trend
@@ -3960,7 +4155,7 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
             else:
                 ln1 = name_mask[ii]
             tab, areacell, keyerror = Read_data_mask_area(
-                ff1, nn1, type_data, metric, region, file_area=fa1, name_area=an1, file_mask=fl1,  name_mask=ln1,
+                ff1, nn1, type_data, metric, region, file_area=fa1, name_area=an1, file_mask=fl1, name_mask=ln1,
                 maskland=maskland, maskocean=maskocean, debug=debug, **kwargs)
             dict_area[nn1], dict_keye[nn1], dict_var[nn1] = areacell, keyerror, tab
     keyerror = add_up_errors([dict_keye[ii] for ii in list(dict_keye.keys())])
@@ -3969,7 +4164,7 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
         if len(list_var) > 1:
             for ii in range(2):
                 for var in list_var[1:]:
-                    dict_var[list_var[0]], dict_var[var], keyerror =\
+                    dict_var[list_var[0]], dict_var[var], keyerror = \
                         CheckTime(dict_var[list_var[0]], dict_var[var], metric_name=metric, **kwargs)
                     if keyerror is not None:
                         break
@@ -4007,8 +4202,8 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area="", n
         "net_surface_heatflux_downwards", "netflux", "sea_surface_height", "sea_surface_temperature", "sens_heat",
         "sensible_heatflux", "shf", "sla", "sohefldo", "solatent", "solongwa", "sometauy", "sosensib", "soshfldo",
         "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swflx", "swr", "tau_x", "tau_y", "tauuo", "tauvo",
-        "taux", "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"]\
-        and "_Amon_" not in file_data and "oisst" not in file_data.lower():
+        "taux", "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"] \
+            and "_Amon_" not in file_data and "oisst" not in file_data.lower():
         landmask = None
     elif name_data.lower() in ["pr", "slp"] and "_Omon_" in file_data:
         landmask = None
@@ -4153,9 +4348,9 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
             list_strings.append(str().ljust(5) + "unknown month2 : " + str(month2))
         EnsoErrorsWarnings.my_error(list_strings)
     # sea water constants
-    cp = 4000   # J/(kg * K) (specific heat capacity at constant pressure of sea water)
+    cp = 4000  # J/(kg * K) (specific heat capacity at constant pressure of sea water)
     rho = 1024  # kg/m3      (average density of sea water)
-    H = 50      # m          (depth of the slab ocean)
+    H = 50  # m          (depth of the slab ocean)
     fraction = 60 * 60 * 24 * 30.42 / (cp * rho * H)  # W/m2 to C
     # selecting events
     sstA = Event_selection(tab1, frequency, nbr_years_window=2, list_event_years=events)
@@ -4166,7 +4361,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
                       "shape1": "(sst) " + str(sstA.shape), "shape2": "(thf) " + str(thfA.shape)}
         EnsoErrorsWarnings.debug_mode("\033[93m", "after Event_selection", 25, **dict_debug)
     # cumulative anomalies
-    myshape = [len(events), mm2-mm1+1] + [ss for ss in tab1.shape[1:]]
+    myshape = [len(events), mm2 - mm1 + 1] + [ss for ss in tab1.shape[1:]]
     dSST = MV2zeros(myshape)
     dSSTthf = MV2zeros(myshape)
     for ii in range(mm1, mm2):
@@ -4191,7 +4386,7 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
     dSSTthf = MV2average(dSSTthf, axis=0)
     dSSToce = MV2average(dSSToce, axis=0)
     # axes
-    axes = [CDMS2createAxis(MV2array(list(range(12-len(dSST), 12))), id="months")]
+    axes = [CDMS2createAxis(MV2array(list(range(12 - len(dSST), 12))), id="months")]
     if debug is True:
         dict_debug = {"axes1": "axes " + str(axes[0]), "axes2": "axes[:] " + str(axes[0][:]),
                       "shape1": "(dSST) " + str(dSST.shape), "shape2": "(dSSTthf) " + str(dSSTthf.shape),
@@ -4268,7 +4463,7 @@ def telecon_agreement(larr_obs, lsig_obs, larr_mod, lsig_mod, luse_also_reg_sign
     larr_o = lm_or_p + lsignif
     larr_o = MV2where(larr_o == 2, 1, 0)
     larr_o = CDMS2createVariable(larr_o, axes=larr_obs.getAxisList(), grid=larr_obs.getGrid(), mask=larr_obs.mask,
-        id="sign_and_significance_agreement")
+                                 id="sign_and_significance_agreement")
     return larr_o
 
 
@@ -4404,7 +4599,7 @@ def telecon_same_sign(larr_ano_mod, larr_ano_obs, larr_sig_mod, larr_sig_obs):
         larr_o = MV2where(larr_ano_obs.mask, 0, larr_o)
     # create variable
     larr_o = CDMS2createVariable(larr_o, axes=larr_ano_mod.getAxisList(), grid=larr_ano_mod.getGrid(),
-        mask=larr_ano_mod.mask, id="significance_and_sign_agreement")
+                                 mask=larr_ano_mod.mask, id="significance_and_sign_agreement")
     return larr_o
 
 
@@ -4652,12 +4847,16 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
     elif model_orand_obs == 2:
         model = Regrid(model, newgrid, region=region, **keyarg)
         obs = Regrid(obs, newgrid, region=region, **keyarg)
-        try: grid_name = newgrid.id
+        try:
+            grid_name = newgrid.id
         except:
-            try: grid_name = newgrid.name
+            try:
+                grid_name = newgrid.name
             except:
-                try: grid_name = keyarg["newgrid_name"]
-                except: grid_name = "newgrid"
+                try:
+                    grid_name = keyarg["newgrid_name"]
+                except:
+                    grid_name = "newgrid"
         info = info + ", observations and model regridded to " + str(grid_name)
     else:
         info = info + ", observations and model NOT regridded"
@@ -4671,7 +4870,7 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
                 if obs.mask.shape != ():
                     mask = obs.mask
                 else:
-                    mask = MV2where(MV2zeros(model.shape)==0, False, True)
+                    mask = MV2where(MV2zeros(model.shape) == 0, False, True)
             model = MV2masked_where(mask, model)
             obs = MV2masked_where(mask, obs)
         else:
