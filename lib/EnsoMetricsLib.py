@@ -9,7 +9,7 @@ from numpy import square as NUMPYsquare
 from .EnsoCollectionsLib import ReferenceRegions, reference_variables
 from . import EnsoErrorsWarnings
 from .EnsoPlotLib import metric_variable_names
-from .EnsoToolsLib import add_up_errors, percentage_val_eastward, statistical_dispersion
+from .EnsoToolsLib import add_up_errors, percentage_val_eastward, simple_stats, statistical_dispersion
 from .EnsoUvcdatToolsLib import ArrayListAx, ArrayOnes, ArrayToList, AverageAxis, AverageHorizontal, \
     AverageMeridional, AverageTemporal, AverageZonal, BasinMask, CheckTime, Composite, compute_degrees_of_freedom, \
     ComputeInterannualAnomalies, compute_degrees_of_freedom, ComputePDF, Concatenate, Correlation, DetectEvents, \
@@ -28,7 +28,7 @@ from .KeyArgLib import default_arg_values
 # These functions have file names and variable names as inputs and metric as output
 #
 def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box, dataset="",
-             debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", statistic="mean state",
+             debug=False, internal_variable_name="ts", metname="", netcdf=False, netcdf_name="", statistic="average",
              **kwargs):
     """
     The stat_box() function computes the 'statistic' of 'var_box' averaged 'internal_variable_name' (lhf, lwr, pr, shf,
@@ -72,6 +72,12 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param internal_variable_name: string, optional
+        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
+        default value = 'ts' (surface temperature)
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'stat_box_2'
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
@@ -79,15 +85,9 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
         e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
-    :param metname: string, optional
-        default value = '' metric name is not changed
-        e.g., metname = 'stat_box_2'
-    :param internal_variable_name: string, optional
-        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
-        default value = 'ts' (surface temperature)
     :param statistic: string, optional
-        name of statistic to compute (mean state, skewness, standard deviation, variance)
-        default value = 'mean state' (time averaged value)
+        name of statistic to compute (average, skewness, standard deviation, variance)
+        default value = 'average' (time averaged value)
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -138,6 +138,10 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
     for arg in needed_kwarg:
         if arg not in list(kwargs.keys()):
             kwargs[arg] = default_arg_values(arg)
+    # reference variable
+    ref_var = deepcopy(reference_variables(internal_variable_name))
+    var_ln = ref_var["long_name"]
+    var_sn = ref_var["short_name"]
     # reference region
     reg_di = {var_box: deepcopy(ReferenceRegions(var_box))}
     reg_ln = reg_di[var_box]["long_name"]
@@ -157,16 +161,12 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         reg_di["global"] = deepcopy(ReferenceRegions("global"))
         reg_list += ["global"]
         reg_s2 += " GMSL removed"
-    # reference variable
-    ref_var = deepcopy(reference_variables(internal_variable_name))
-    var_ln = ref_var["long_name"]
-    var_sn = ref_var["short_name"]
     # reference statistic
-    if statistic in ["mean state", "skewness", "standard deviation", "variance"]:
-        sta_ano = "" if statistic == "mean state" else "A"
-        sta_sh2 = "mean" if statistic == "mean state" else ("SKE" if statistic == "skewness" else (
+    if statistic in ["average", "skewness", "standard deviation", "variance"]:
+        sta_ano = "" if statistic == "average" else "A"
+        sta_sh2 = "mean" if statistic == "average" else ("SKE" if statistic == "skewness" else (
                   "STD" if statistic == "standard deviation" else "VAR"))
-        sta_sh1 = "_ave" if statistic == "mean state" else "_" + str(sta_sh2).lower()
+        sta_sh1 = "ave" if statistic == "average" else str(sta_sh2).lower()
     else:
         sta_ano, sta_sh1, sta_sh2 = None, None, None
 
@@ -174,9 +174,11 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
     name = str(sta_sh2) + " of " + str(reg_sn) + " " + str(var_sn) + str(sta_ano)
     units1 = deepcopy(ref_var["units"])
     units2 = deepcopy(units1)
-    if statistic == "variance":
+    if statistic == "skewness":
+        units2 = ""
+    elif statistic == "variance":
         units2 = "degC2" if units2 == "degC" else ("cm2" if units2 == "cm" else ("m4" if units2 == "m2" else (
-                 "mm2/day2" if units2 == "mm/day" else ("1e-3 N2/m4" if units2 == "1e-3 N/m2" else (
+                 "mm2/day2" if units2 == "mm/day" else ("1e-6 N2/m4" if units2 == "1e-3 N/m2" else (
                  "Pa2" if units2 == "Pa" else ("W2/m4" if units2 == "W/m2" else deepcopy(units2)))))))
     method = str(statistic) + " of " + str(reg_ln) + " (" + str(reg_s2) + ") averaged " + str(var_ln) + " (" + \
              str(var_sn) + ")"
@@ -186,10 +188,9 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
     ref = "Using CDAT averaging"
     if sta_ano == "A":
         ref += " and computing interannual anomalies"
-    metric = "stat_box_" + str(sta_sh1) + "_" + str(var_sn).lower() + "_" + str(reg_sn).lower()
+    metric = "stat_box_" + str(sta_sh1) + "_" + str(var_sn).lower() + "_" + str(var_box)
     if metname == "":
         metname = deepcopy(metric)
-    ovar = metric_variable_names(metric)
 
     # Values in case of error (failure)
     mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
@@ -308,38 +309,25 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         # ------------------------------------------------
         # 3. Metric value
         # ------------------------------------------------
-        # 3.1 computes metric
-        ave, keyerror = AverageTemporal(arr)
-        if keyerror is not None:
-            break
-        ave = float(ave)
-        ske = float(SkewnessTemporal(arr))
-        std = float(Std(arr))
-        var = std**2
-        if statistic == "mean state":
-            mv = deepcopy(ave)
+        # 3.1 compute metric
+        ave, ske, std, var = simple_stats(arr, axis=0)
+        # 3.2 compute metric error
+        nn = len(arr)
+        if statistic == "average":
+            mv, mv_error = deepcopy(ave), std / nn ** (1 / 2)
         elif statistic == "skewness":
-            mv = deepcopy(ske)
+            mv, mv_error = deepcopy(ske), (6 * nn * (nn - 1) / ((nn - 2) * (nn + 1) * (nn + 3))) ** (1 / 2)
         elif statistic == "standard deviation":
-            mv = deepcopy(std)
+            mv, mv_error = deepcopy(std), std / (2 * (nn - 1)) ** (1 / 2)
         else:
-            mv = deepcopy(var)
+            mv, mv_error = deepcopy(var), var * (2 / (nn - 1)) ** (1 / 2)
         method_var += ";; " + str(counter) + ") compute " + str(statistic)
-        # 3.2 computes error
-        if statistic == "mean state":
-            mv_error = std / len(arr)**(1/2)
-        elif statistic == "skewness":
-            mv_error = (6 * len(arr) * (len(arr) - 1) / ((len(arr) - 2) * (len(arr) + 1) * (len(arr) + 3)))**(1/2)
-        elif statistic == "standard deviation":
-            mv_error = std / (2 * (len(arr) - 1))**(1/2)
-        else:
-            mv_error = var * (2 / (len(arr) - 1))**(1/2)
 
         # ------------------------------------------------
         # 4. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
-            # Supplementary metrics
+            # supplementary metrics
             dict_nc = {"var1": arr}
             dict_nc["var1_attributes"] = {
                 "arrayAVE": ave, "arraySKE": ske, "arraySTD": std, "arrayVAR": var,
@@ -347,7 +335,7 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
                 "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units1}
             dict_nc["var1_name"] = str(var_sn).lower() + str(sta_ano) + "_" + str(var_box) + "__" + str(dataset)
             dict_nc["var1_time_name"] = "months_" + str(dataset)
-            # Save netCDF
+            # save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
             else:
@@ -8891,7 +8879,7 @@ def BiasThfLonRmse(thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thfla
 
 
 def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box, dataset="",
-          debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", **kwargs):
+          debug=False, internal_variable_name="ts", metname="", netcdf=False, netcdf_name="", **kwargs):
     """
     The dcorr() function computes the number of time steps needed to reach the first two sign changes in the
     autocorrelation function of 'var_box' averaged 'internal_variable_name' anomalies (lhf, lwr, pr, shf, slp, ssh, sst,
@@ -8939,6 +8927,12 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param internal_variable_name: string, optional
+        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
+        default value = 'ts' (surface temperature)
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'dcorr_2'
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
@@ -8946,12 +8940,6 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
         e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
-    :param metname: string, optional
-        default value = '' metric name is not changed
-        e.g., metname = 'nstar_2'
-    :param internal_variable_name: string, optional
-        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
-        default value = 'ts' (surface temperature)
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -9008,6 +8996,10 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
             kwargs[arg] = default_arg_values(arg)
     dco_meth = kwargs["dcorr_method"] if "dcorr_method" in list(kwargs.keys()) else "anomalies"
     sta_ano = "A" if dco_meth in ["anomalies", "anomaly", "interannual_anomalies", "interannual_anomaly"] else ""
+    # reference variable
+    ref_var = deepcopy(reference_variables(internal_variable_name))
+    var_ln = ref_var["long_name"]
+    var_sn = ref_var["short_name"]
     # reference region
     reg_di = {var_box: deepcopy(ReferenceRegions(var_box))}
     reg_ln = reg_di[var_box]["long_name"]
@@ -9015,8 +9007,6 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
     reg_s2 = ""
     if "regions" in list(reg_di[var_box].keys()):
         reg_list = reg_di[var_box]["regions"]
-        for reg in reg_list:
-            reg_di[reg] = deepcopy(ReferenceRegions(reg))
         for reg in reg_list:
             reg_di[reg] = deepcopy(ReferenceRegions(reg))
             reg_s2 += reg_di[reg]["short_name"]
@@ -9029,14 +9019,10 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         reg_di["global"] = deepcopy(ReferenceRegions("global"))
         reg_list += ["global"]
         reg_s2 += " GMSL removed"
-    # reference variable
-    ref_var = deepcopy(reference_variables(internal_variable_name))
-    var_ln = ref_var["long_name"]
-    var_sn = ref_var["short_name"]
 
     # Define metric attributes
     name = "decorrelation time of " + str(reg_sn) + " " + str(var_sn) + str(sta_ano)
-    units = "month"
+    units = "months"
     method = "decorrelation time of " + str(reg_ln) + " (" + str(reg_s2) + ") averaged " + str(var_ln) + " (" + \
              str(var_sn) + ")"
     if sta_ano == "A":
@@ -9045,10 +9031,10 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
     ref = "Using CDAT averaging"
     if sta_ano == "A":
         ref += " and computing interannual anomalies"
-    metric = "dcorr_" + str(var_sn).lower() + "_" + str(reg_sn).lower()
+    metric = "dcorr_" + str(var_sn).lower() + "_" + str(var_box)
     if metname == "":
         metname = deepcopy(metric)
-    ovar = metric_variable_names(metric)
+    ovar = metric_variable_names("dcorr")
 
     # Values in case of error (failure)
     mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
@@ -9173,15 +9159,15 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         # 4. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
-            # Supplementary metrics
+            # supplementary metrics
             dict_nc = {"var1": arr}
             dict_nc["var1_attributes"] = {
                 "arraySTD": float(Std(arr)), "decorrelation_time": mv, "degrees_of_freedom": nstar,
                 "description": "time series of " + str(var_box) + " averaged " + str(var_sn) + str(sta_ano),
                 "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": deepcopy(ref_var["units"])}
             dict_nc["var1_name"] = str(var_sn).lower() + str(sta_ano) + "_" + str(var_box) + "__" + str(dataset)
-            dict_nc["var1_time_name"]= "months_" + str(dataset)
-            # Save netCDF
+            dict_nc["var1_time_name"] = "months_" + str(dataset)
+            # save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
             else:
@@ -9202,11 +9188,11 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
 
 
 def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box,
-                   event_definition, dataset="", debug=False, netcdf=False, netcdf_name="", metname="",
-                   internal_variable_name="ts", **kwargs):
+                   dataset="", debug=False, enso_definition=None, internal_variable_name="ts", metname="", netcdf=False,
+                   netcdf_name="", statistic="average", wait_definition=None, **kwargs):
     """
-    The enso_wait_time() function computes the average wait time between 2 ENSO events.
-    ENSO is defined according to 'event_definition' (usualy abs(nino3.4 SSTA) > 0.5 STD during at least 5 consecutive
+    The enso_wait_time() function computes the 'statistic' of wait times between ENSO events.
+    ENSO is defined according to 'enso_definition' (usualy abs(nino3.4 SSTA) > 0.5 STD during at least 5 consecutive
     overlapping 3-month seasons). The wait time is the number of months between 2 events.
 
     Author:	Yann Planton : yann.planton@locean-ipsl.upmc.fr
@@ -9242,15 +9228,23 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
         name of landmask variable (land, lsm, lsmask, landmask, mask, sftlf) in 'var_landmaskfile'
     :param var_box: string
         name of box (e.g. 'nino3.4') for the given variable
-    :param event_definition: dict
-        dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'NDJ', 'threshold': 0.5, 'normalization': True,
-            'smoothing': False, 'duration_min': 5}
     :param dataset: string, optional
         name of current dataset (e.g., 'model', 'obs', ...)
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param enso_definition: dict, optional
+        dictionary providing the necessary information to detect ENSO events (duration_min, normalization, region_ev,
+        season_ev, smoothing, threshold)
+        e.g., enso_definition = {'region_ev': 'nino3.4', 'season_ev': 'NDJ', 'threshold': 0.5, 'normalization': True,
+            'smoothing': False, 'duration_min': 5}
+        default is None (will use values defined in KeyArgLig.py)
+    :param internal_variable_name: string, optional
+        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
+        default value = 'ts' (surface temperature)
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'enso_wait_time_2'
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
@@ -9258,12 +9252,15 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
         default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
         e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
-    :param metname: string, optional
-        default value = '' metric name is not changed
-        e.g., metname = 'enso_wait_time_2'
-    :param internal_variable_name: string, optional
-        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
-        default value = 'ts' (surface temperature)
+    :param statistic: string, optional
+        name of statistic to compute (average, skewness, standard deviation, variance)
+        default value = 'average' (time averaged value)
+    :param wait_definition: dict, optional
+        dictionary providing the necessary information to compute the ENSO wait time (detect, method, smooth_method,
+        smooth_window)
+        e.g., wait_definition = {'detect': 'EN-to-EN', 'method': 'peaks',
+            'smoothing': {'method': 'triangle', 'window': 11}}
+        default is None (will use values defined in KeyArgLig.py)
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -9304,19 +9301,25 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
     for arg in needed_kwarg:
         if arg not in list(kwargs.keys()):
             kwargs[arg] = default_arg_values(arg)
-    int_meth = kwargs["enso_wait_time_method"] if "enso_wait_time_method" in list(kwargs.keys()) else "simple"
     # reference variable
     ref_var = deepcopy(reference_variables(internal_variable_name))
     var_ln = ref_var["long_name"]
     var_sn = ref_var["short_name"]
-    # Setting variables
-    anomal_ev = event_definition["interannual_anomalies"]
-    length_ev = event_definition["duration_min"]
-    normal_ev = event_definition["normalization"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
+    # ENSO definition
+    d_default = default_arg_values("enso_definition")
+    if isinstance(enso_definition, dict) is False:
+        enso_definition = deepcopy(d_default)
+    else:
+        for arg in list(d_default.keys()):
+            if arg not in list(enso_definition.keys()):
+                enso_definition[arg] = d_default[arg]
+    anomal_ev = enso_definition["interannual_anomalies"]
+    length_ev = enso_definition["duration_min"]
+    normal_ev = enso_definition["normalization"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
     units_ev = "std" if normal_ev is True else deepcopy(ref_var["units"])
     sta_ano = "A" if anomal_ev is True else ""
     # method for ENSO events detection
@@ -9331,6 +9334,17 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
     if isinstance(smooth_ev, dict) is True:
         enso_method = ", time series smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
                       " weighted running mean"
+    # wait time definition
+    d_default = default_arg_values("wait_definition")
+    if isinstance(wait_definition, dict) is False:
+        wait_definition = deepcopy(d_default)
+    else:
+        for arg in list(d_default.keys()):
+            if arg not in list(wait_definition.keys()):
+                wait_definition[arg] = d_default[arg]
+    wait_det = wait_definition["detect"]
+    wait_met = wait_definition["method"]
+    wait_smo = wait_definition["smoothing"]
     # reference region
     reg_di = {region_ev: deepcopy(ReferenceRegions(region_ev))}
     reg_ln = reg_di[region_ev]["long_name"]
@@ -9350,19 +9364,31 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
         reg_di["global"] = deepcopy(ReferenceRegions("global"))
         reg_list += ["global"]
         reg_s2 += " GMSL removed"
+    # reference statistic
+    if statistic in ["average", "skewness", "standard deviation", "variance"]:
+        sta_sh2 = "mean" if statistic == "average" else ("SKE" if statistic == "skewness" else (
+                  "STD" if statistic == "standard deviation" else "VAR"))
+        sta_sh1 = "_ave" if statistic == "average" else "_" + str(sta_sh2).lower()
+    else:
+        sta_sh1, sta_sh2 = None, None
 
     # Define metric attributes
-    name = "ENSO wait time"
-    units = "months"
-    method = "average time between ENSO events, with ENSO defined as " + str(enso_method)
+    name = str(sta_sh2) + " of ENSO wait time"
+    units1 = "months"
+    units2 = deepcopy(units1)
+    if statistic == "skewness":
+        units2 = ""
+    elif statistic == "variance":
+        units2 += "2"
+    method = str(statistic) + " of the wait times between ENSO events, with ENSO defined as " + str(enso_method)
     method_var = str(var_sn) + ": "
     ref = "Using CDAT averaging"
     if sta_ano == "A":
         ref += " and computing interannual anomalies"
-    metric = "enso_wait_time"
+    metric = "enso_wait_time_" + str(sta_sh1)
     if metname == "":
         metname = deepcopy(metric)
-    ovar = metric_variable_names(metric)
+    ovar = metric_variable_names("enso_wait_time")
 
     # Values in case of error (failure)
     mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
@@ -9486,13 +9512,8 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
         method_var += ";; " + str(counter) + ") ENSO events defined as " + str(enso_method)
         counter += 1
         # 3.2 compute intervals between events
-        if len(ln_years) + len(en_years) > 2:
-            ev_intervals, tmp, keyerror = enso_time_interval(
-                arr, season_ev, thresh_ev, compute_anom=compute_anom, compute_season=True, method=int_meth,
-                nina_events=ln_years, nino_events=en_years, normalize=normal_ev)
-        else:
-            ev_intervals = None
-            keyerror = "not enough ENSO events (EN=" + str(len(en_years)) + " ; LN=" + str(len(ln_years)) + ")"
+        ev_intervals, tmp, keyerror = enso_time_interval(arr, season_ev, detect=wait_det, method=wait_met,
+                                                         nina_events=ln_years, nino_events=en_years, smoothing=wait_smo)
         if keyerror is not None:
             break
         if debug is True:
@@ -9503,43 +9524,38 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
         # ------------------------------------------------
         # 4. Metric value
         # ------------------------------------------------
-        # 4.1 average interval time
-        mv = sum(ev_intervals) / len(ev_intervals)
-        # 4.2 error
-        mv_error = float(Std(ev_intervals)) / len(ev_intervals)**(1/2)
+        # 4.1 compute metric
+        ave, ske, std, var = simple_stats(ev_intervals, axis=0)
+        # 4.2 compute metric error
+        nn = len(ev_intervals)
+        if statistic == "average":
+            mv, mv_error = deepcopy(ave), std / nn ** (1 / 2)
+        elif statistic == "skewness":
+            mv, mv_error = deepcopy(ske), (6 * nn * (nn - 1) / ((nn - 2) * (nn + 1) * (nn + 3))) ** (1 / 2)
+        elif statistic == "standard deviation":
+            mv, mv_error = deepcopy(std), std / (2 * (nn - 1)) ** (1 / 2)
+        else:
+            mv, mv_error = deepcopy(var), var * (2 / (nn - 1)) ** (1 / 2)
+        method_var += ";; " + str(counter) + ") compute " + str(statistic)
 
         # ------------------------------------------------
         # 5. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
             # 5.1 save the list of interval time between ENSO events
-            dict_nc = {"var1": ev_intervals}
-            dict_nc["var1_attributes"] = {
-                "description": "interval between ENSO events", "nina_years": str(ln_years), "nino_years": str(en_years),
-                "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units}
-            dict_nc["var1_name"] = ovar[0] + str(dataset)
-            # 5.2 save the list of interval time between La Nina events
-            if len(ln_years) > 2:
-                ln_intervals, _, keyerror = enso_time_interval(
-                    arr, season_ev, thresh_ev, compute_anom=compute_anom, compute_season=True, method=int_meth,
-                    nina_events=ln_years, normalize=normal_ev)
+            dict_nc = dict()
+            for ii, ev in enumerate(ovar):
+                ev_intervals, _, keyerror = enso_time_interval(
+                    arr, season_ev, detect=ev.split("_interval__")[0], method=wait_met, nina_events=ln_years,
+                    nino_events=en_years, smoothing=wait_smo)
                 if keyerror is None:
-                    dict_nc["var2"] = ln_intervals
-                    dict_nc["var2_attributes"] = {
-                        "description": "interval between La Nina events", "nina_years": str(ln_years),
-                        "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units}
-                    dict_nc["var2_name"] = ovar[1] + str(dataset)
-            # 5.3 save the list of interval time between El Nino events
-            if len(en_years) > 2:
-                en_intervals, _, keyerror = enso_time_interval(
-                    arr, season_ev, thresh_ev, compute_anom=compute_anom, compute_season=True, method=int_meth,
-                    nino_events=en_years, normalize=normal_ev)
-                if keyerror is None:
-                    dict_nc["var3"] = en_intervals
-                    dict_nc["var3_attributes"] = {
-                        "description": "interval between El Nino events", "nino_years": str(en_years),
-                        "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": units}
-                    dict_nc["var3_name"] = ovar[2] + str(dataset)
+                    ave, ske, std, var = simple_stats(ev_intervals, axis=0)
+                    dict_nc = {"var" + str(ii + 1): ev_intervals}
+                    dict_nc["var" + str(ii + 1) + "_attributes"] = {
+                        "arrayAVE": ave, "arraySKE": ske, "arraySTD": std, "arrayVAR": var,
+                        "description": "interval between ENSO events", "nina_years": str(ln_years), "units": units1,
+                        "nino_years": str(en_years), "number_of_years_used": nbr_year, "time_period": str(timebounds)}
+                    dict_nc["var" + str(ii + 1) + "_name"] = str(ev) + str(dataset)
             # save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
@@ -9556,7 +9572,7 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
     metric_output = {
         "dive_down_diag": dive_down_diag, "keyerror": keyerror, "method": method, "method_detail": method_var,
         "name": name, "nyears": nbr_year, "ref": ref, "time_frequency": kwargs["frequency"], "time_period": timebounds,
-        "units": units, "value": mv, "value_error": mv_error}
+        "units": units2, "value": mv, "value_error": mv_error}
     return metric_output
 
 
@@ -10326,7 +10342,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
 
 
 def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box,
-                     event_definition, dataset="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+                     enso_definition, dataset="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSstDiversity() function computes a zonal composite of El Nino and La Nina events during the peak of the
     event.
@@ -10360,9 +10376,9 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box ('equatorial_pacific') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param dataset: string, optional
         name of current dataset (e.g., 'model', 'obs', ...)
     :param debug: bolean, optional
@@ -10418,12 +10434,12 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         enso_method = " ("
         if isinstance(smooth_ev, dict) is True:
@@ -10671,7 +10687,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     return metric_output
 
 
-def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, enso_definition,
                  nbr_years_window, dataset="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoDuration() function computes SSTA (sea surface temperature anomalies) life cycle associated with ENSO in a
@@ -10699,9 +10715,9 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box (e.g. 'nino3.4') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param dataset: string, optional
@@ -10758,12 +10774,12 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         enso_method = " ("
         if isinstance(smooth_ev, dict) is True:
@@ -10958,7 +10974,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox,
                 thffile, thfname, thfareafile, thfareaname, thflandmaskfile, thflandmaskname, thfbox,
-                event_definition, dataset="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
+                enso_definition, dataset="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsodSstOce() function computes an estimation of the SST (sea surface temperature) change caused by an anomalous
     ocean circulation (usually in nino3)
@@ -11013,9 +11029,9 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
         name of landmask variable (sftlf, lsmask, landmask) in 'thflandmaskfile'
     :param thfbox: string
         name of box (nino3') for THF
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param dataset: string, optional
         name of current dataset (e.g., 'model', 'obs', ...)
     :param debug: bolean, optional
@@ -11071,12 +11087,12 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         enso_method = " ("
         if isinstance(smooth_ev, dict) is True:
@@ -11342,7 +11358,7 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhflandmaskfilemod, lhflandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    lhffileobs, lhfnameobs, lhfareafileobs, lhfareanameobs, lhflandmaskfileobs, lhflandmasknameobs,
-                   sstbox, lhfbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   sstbox, lhfbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                    debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoLhfLonRmse() function computes LHFA (latent heat flux anomalies) pattern associated with ENSO in a 'lhfbox'
@@ -11409,9 +11425,9 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'equatorial_pacific') for SST
     :param lhfbox: string
         name of box (e.g. 'equatorial_pacific') for LHF
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -11479,12 +11495,12 @@ def EnsoLhfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -11850,7 +11866,7 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrlandmaskfilemod, lwrlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    lwrfileobs, lwrnameobs, lwrareafileobs, lwrareanameobs, lwrlandmaskfileobs, lwrlandmasknameobs,
-                   sstbox, lwrbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   sstbox, lwrbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                    debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoLwrLonRmse() function computes LWRA (net surface longwave radiation anomalies) pattern associated with ENSO
@@ -11921,9 +11937,9 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'equatorial_pacific') for SST
     :param lwrbox: string
         name of box (e.g. 'equatorial_pacific') for LWR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -11991,12 +12007,12 @@ def EnsoLwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -12366,7 +12382,7 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
-                  prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                  prbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                   netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoPrLonRmse() function computes PRA (precipitation anomalies) pattern associated with ENSO in a 'prbox'
@@ -12433,9 +12449,9 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'equatorial_pacific') for SST
     :param prbox: string
         name of box (e.g. 'equatorial_pacific') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -12503,12 +12519,12 @@ def EnsoPrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -12873,7 +12889,7 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shflandmaskfilemod, shflandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    shffileobs, shfnameobs, shfareafileobs, shfareanameobs, shflandmaskfileobs, shflandmasknameobs,
-                   sstbox, shfbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   sstbox, shfbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                    debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoShfLonRmse() function computes SHFA (sensible heat flux anomalies) pattern associated with ENSO in a
@@ -12940,9 +12956,9 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'equatorial_pacific') for SST
     :param shfbox: string
         name of box (e.g. 'equatorial_pacific') for SHF
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -13010,12 +13026,12 @@ def EnsoShfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -13381,7 +13397,7 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandmaskfilemod, sshlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    sshfileobs, sshnameobs, sshareafileobs, sshareanameobs, sshlandmaskfileobs, sshlandmasknameobs,
-                   sstbox, sshbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   sstbox, sshbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                    debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSshLonRmse() function computes dynamic SSHA (sea surface height anomalies) pattern associated with ENSO in a
@@ -13448,9 +13464,9 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'equatorial_pacific') for SST
     :param sshbox: string
         name of box (e.g. 'equatorial_pacific') for SSH
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -13518,12 +13534,12 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -13926,7 +13942,7 @@ def EnsoSshLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
 def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                   box, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                   box, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                    netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSstLonRmse() function computes SSTA (sea surface temperature anomalies) pattern associated with ENSO in a
@@ -13967,9 +13983,9 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
     :param box: string
         name of box (e.g. 'equatorial_pacific') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -14037,12 +14053,12 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -14400,7 +14416,7 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrlandmaskfilemod, swrlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    swrfileobs, swrnameobs, swrareafileobs, swrareanameobs, swrlandmaskfileobs, swrlandmasknameobs,
-                   sstbox, swrbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   sstbox, swrbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                    debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSwrLonRmse() function computes SWRA (net surface shortwave radiation anomalies) pattern associated with ENSO
@@ -14471,9 +14487,9 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'equatorial_pacific') for SST
     :param swrbox: string
         name of box (e.g. 'equatorial_pacific') for SWR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -14541,12 +14557,12 @@ def EnsoSwrLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -14916,7 +14932,7 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                     taufilemod, taunamemod, tauareafilemod, tauareanamemod, taulandmaskfilemod, taulandmasknamemod,
                     sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                     taufileobs, taunameobs, tauareafileobs, tauareanameobs, taulandmaskfileobs, taulandmasknameobs,
-                    sstbox, taubox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                    sstbox, taubox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                     debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoTauxLonRmse() function computes TauxA (zonal wind stress anomalies) pattern associated with ENSO in a
@@ -14983,9 +14999,9 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
         name of box (e.g. 'equatorial_pacific') for SST
     :param taubox: string
         name of box (e.g. 'equatorial_pacific') for Taux
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -15053,12 +15069,12 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -15423,7 +15439,7 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                     taufilemod, taunamemod, tauareafilemod, tauareanamemod, taulandmaskfilemod, taulandmasknamemod,
                     sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                     taufileobs, taunameobs, tauareafileobs, tauareanameobs, taulandmaskfileobs, taulandmasknameobs,
-                    sstbox, taubox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                    sstbox, taubox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                     debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoTauyLonRmse() function computes TauyA (meridional wind stress anomalies) pattern associated with ENSO in a
@@ -15490,9 +15506,9 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
         name of box (e.g. 'equatorial_pacific') for SST
     :param taubox: string
         name of box (e.g. 'equatorial_pacific') for Tauy
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -15560,12 +15576,12 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -15930,7 +15946,7 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thflandmaskfilemod, thflandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    thffileobs, thfnameobs, thfareafileobs, thfareanameobs, thflandmaskfileobs, thflandmasknameobs,
-                   sstbox, thfbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                   sstbox, thfbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                    debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoThfLonRmse() function computes THFA (net heat flux anomalies) pattern associated with ENSO in a 'thfbox'
@@ -16006,9 +16022,9 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'equatorial_pacific') for SST
     :param thfbox: string
         name of box (e.g. 'equatorial_pacific') for THF
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -16076,12 +16092,12 @@ def EnsoThfLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -16451,7 +16467,7 @@ def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   lhffilemod, lhfnamemod, lhfareafilemod, lhfareanamemod, lhflandmaskfilemod, lhflandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   lhffileobs, lhfnameobs, lhfareafileobs, lhfareanameobs, lhflandmaskfileobs, lhflandmasknameobs,
-                  sstbox, lhfbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  sstbox, lhfbox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                   dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoLhfTsRmse() function computes LHFA (latent heat flux anomalies) life cycle associated with ENSO in a
@@ -16519,9 +16535,9 @@ def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'nino3.4') for SST
     :param lhfbox: string
         name of box (e.g. 'nino3.4') for LHF
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -16591,12 +16607,12 @@ def EnsoLhfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -16938,7 +16954,7 @@ def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   lwrfilemod, lwrnamemod, lwrareafilemod, lwrareanamemod, lwrlandmaskfilemod, lwrlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   lwrfileobs, lwrnameobs, lwrareafileobs, lwrareanameobs, lwrlandmaskfileobs, lwrlandmasknameobs,
-                  sstbox, lwrbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  sstbox, lwrbox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                   dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoLwrTsRmse() function computes LWRA (net surface longwave radiation anomalies) life cycle associated with
@@ -17010,9 +17026,9 @@ def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'nino3.4') for SST
     :param lwrbox: string
         name of box (e.g. 'nino3.4') for LWR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -17082,12 +17098,12 @@ def EnsoLwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -17433,7 +17449,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                  sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                  prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
-                 prbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                 prbox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                  debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoPrTsRmse() function computes PRA (precipitation anomalies) life cycle associated with ENSO in a 'prbox'
@@ -17501,9 +17517,9 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         name of box (e.g. 'nino3.4') for SST
     :param prbox: string
         name of box (e.g. 'nino3') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -17573,12 +17589,12 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -17917,7 +17933,7 @@ def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   shffilemod, shfnamemod, shfareafilemod, shfareanamemod, shflandmaskfilemod, shflandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   shffileobs, shfnameobs, shfareafileobs, shfareanameobs, shflandmaskfileobs, shflandmasknameobs,
-                  sstbox, shfbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  sstbox, shfbox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                   dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoShfTsRmse() function computes SHFA (sensible heat flux anomalies) life cycle associated with ENSO in a
@@ -17985,9 +18001,9 @@ def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'nino3.4') for SST
     :param shfbox: string
         name of box (e.g. 'nino3.4') for SHF
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -18057,12 +18073,12 @@ def EnsoShfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -18404,7 +18420,7 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandmaskfilemod, sshlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   sshfileobs, sshnameobs, sshareafileobs, sshareanameobs, sshlandmaskfileobs, sshlandmasknameobs,
-                  sstbox, sshbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  sstbox, sshbox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                   dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSshTsRmse() function computes dynamic sea surface height anomalies life cycle associated with ENSO in a
@@ -18473,9 +18489,9 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'nino3.4') for SST
     :param sshbox: string
         name of box (e.g. 'nino3.4') for SSH
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -18545,12 +18561,12 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -18936,7 +18952,7 @@ def EnsoSshTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
 def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                  box, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSstTsRmse() function computes SSTA (sea surface temperature anomalies) life cycle associated with ENSO in a
@@ -18978,9 +18994,9 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
     :param box: string
         name of box (e.g. 'nino3.4') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -19050,12 +19066,12 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -19382,7 +19398,7 @@ def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   swrfilemod, swrnamemod, swrareafilemod, swrareanamemod, swrlandmaskfilemod, swrlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   swrfileobs, swrnameobs, swrareafileobs, swrareanameobs, swrlandmaskfileobs, swrlandmasknameobs,
-                  sstbox, swrbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  sstbox, swrbox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                   dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSwrTsRmse() function computes SWRA (net surface shortwave radiation anomalies) life cycle associated with
@@ -19454,9 +19470,9 @@ def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'nino3.4') for SST
     :param swrbox: string
         name of box (e.g. 'nino3.4') for SWR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -19526,12 +19542,12 @@ def EnsoSwrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -19877,7 +19893,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    taufilemod, taunamemod, tauareafilemod, tauareanamemod, taulandmaskfilemod, taulandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    taufileobs, taunameobs, tauareafileobs, tauareanameobs, taulandmaskfileobs, taulandmasknameobs,
-                   sstbox, taubox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                   sstbox, taubox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                    dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoTauxTsRmse() function computes TauxA (zonal wind stress anomalies) life cycle associated with ENSO in a
@@ -19945,9 +19961,9 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'nino3.4') for SST
     :param taubox: string
         name of box (e.g. 'nino4') for Taux
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -20017,12 +20033,12 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -20364,7 +20380,7 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    taufilemod, taunamemod, tauareafilemod, tauareanamemod, taulandmaskfilemod, taulandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    taufileobs, taunameobs, tauareafileobs, tauareanameobs, taulandmaskfileobs, taulandmasknameobs,
-                   sstbox, taubox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                   sstbox, taubox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                    dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoTauyTsRmse() function computes TauyA (meridional wind stress anomalies) life cycle associated with ENSO in a
@@ -20432,9 +20448,9 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'nino3.4') for SST
     :param taubox: string
         name of box (e.g. 'nino3.4') for Tauy
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -20504,12 +20520,12 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -20851,7 +20867,7 @@ def EnsoThfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   thffilemod, thfnamemod, thfareafilemod, thfareanamemod, thflandmaskfilemod, thflandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   thffileobs, thfnameobs, thfareafileobs, thfareanameobs, thflandmaskfileobs, thflandmasknameobs,
-                  sstbox, thfbox, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
+                  sstbox, thfbox, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="",
                   dataset2="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoThfTsRmse() function computes THFA (net heat flux anomalies) life cycle associated with ENSO in a 'thfbox'
@@ -20928,9 +20944,9 @@ def EnsoThfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'nino3.4') for SST
     :param thfbox: string
         name of box (e.g. 'nino3.4') for THF
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -21000,12 +21016,12 @@ def EnsoThfTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -25452,7 +25468,7 @@ def grad_lon_sst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
 
 def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box, dataset="",
-          debug=False, netcdf=False, netcdf_name="", metname="", internal_variable_name="ts", **kwargs):
+          debug=False, internal_variable_name="ts", metname="", netcdf=False, netcdf_name="", **kwargs):
     """
     The nstar() function computes the number of degrees of freedom of a time series based on the autocorrelation
     function of 'var_box' averaged 'internal_variable_name' anomalies (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux,
@@ -25500,6 +25516,12 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
     :param debug: bolean, optional
         default value = False debug mode not activated
         If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
+    :param internal_variable_name: string, optional
+        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
+        default value = 'ts' (surface temperature)
+    :param metname: string, optional
+        default value = '' metric name is not changed
+        e.g., metname = 'dcorr_2'
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
@@ -25507,12 +25529,6 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         default value = '' NetCDFs are saved where the program is ran without a root name
         the name of a metric will be append at the end of the root name
         e.g., netcdf_name='/path/to/directory/USER_DATE_METRICCOLLECTION_MODEL'
-    :param metname: string, optional
-        default value = '' metric name is not changed
-        e.g., metname = 'nstar_2'
-    :param internal_variable_name: string, optional
-        name of an internal variable name (lhf, lwr, pr, shf, slp, ssh, sst, swr, taux, tauy, thf, ts)
-        default value = 'ts' (surface temperature)
     usual kwargs:
     :param detrending: dict, optional
         see EnsoUvcdatToolsLib.Detrend for options
@@ -25569,6 +25585,10 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
             kwargs[arg] = default_arg_values(arg)
     nst_meth = kwargs["nstar_method"] if "nstar_method" in list(kwargs.keys()) else "anomalies"
     sta_ano = "A" if nst_meth in ["anomalies", "anomaly", "interannual_anomalies", "interannual_anomaly"] else ""
+    # reference variable
+    ref_var = deepcopy(reference_variables(internal_variable_name))
+    var_ln = ref_var["long_name"]
+    var_sn = ref_var["short_name"]
     # reference region
     reg_di = {var_box: deepcopy(ReferenceRegions(var_box))}
     reg_ln = reg_di[var_box]["long_name"]
@@ -25588,10 +25608,6 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         reg_di["global"] = deepcopy(ReferenceRegions("global"))
         reg_list += ["global"]
         reg_s2 += " GMSL removed"
-    # reference variable
-    ref_var = deepcopy(reference_variables(internal_variable_name))
-    var_ln = ref_var["long_name"]
-    var_sn = ref_var["short_name"]
 
     # Define metric attributes
     name = "n* of " + str(reg_sn) + " " + str(var_sn) + str(sta_ano)
@@ -25604,10 +25620,10 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
     ref = "Using CDAT averaging"
     if sta_ano == "A":
         ref += " and computing interannual anomalies"
-    metric = "nstar_" + str(var_sn).lower() + "_" + str(reg_sn).lower()
+    metric = "nstar_" + str(var_sn).lower() + "_" + str(var_box)
     if metname == "":
         metname = deepcopy(metric)
-    ovar = metric_variable_names(metric)
+    ovar = metric_variable_names("nstar")
 
     # Values in case of error (failure)
     mv, mv_error, dive_down_diag = None, None, {"value": None, "axis": None}
@@ -25725,14 +25741,14 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         # 3.1 computes the number of degrees of freedom
         mv, nbr_decorr = compute_degrees_of_freedom(arr)
         method_var += ";; " + str(counter) + ") compute number of degrees of freedom (as in Atwood et al. 2017; " + \
-            "https://doi.org/10.1007/s00382-016-3477-9)"
+                      "https://doi.org/10.1007/s00382-016-3477-9)"
         mv_error = None
 
         # ------------------------------------------------
         # 4. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
-            # Supplementary metrics
+            # supplementary metrics
             dict_nc = {"var1": arr}
             dict_nc["var1_attributes"] = {
                 "arraySTD": float(Std(arr)), "decorrelation_time": nbr_decorr, "degrees_of_freedom": mv,
@@ -25740,7 +25756,7 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
                 "number_of_years_used": nbr_year, "time_period": str(timebounds), "units": deepcopy(ref_var["units"])}
             dict_nc["var1_name"] = str(var_sn).lower() + str(sta_ano) + "_" + str(var_box) + "__" + str(dataset)
             dict_nc["var1_time_name"] = "months_" + str(dataset)
-            # Save netCDF
+            # save netCDF
             if ".nc" in netcdf_name:
                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + str(metname) + ".nc")
             else:
@@ -32694,7 +32710,7 @@ def telecon_pr_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                    prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                    prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
-                   prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                   prbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                    netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The telecon_pr_djf() function computes PRA (precipitation anomalies) averaged in multiple regions (usually the AR6
@@ -32769,9 +32785,9 @@ def telecon_pr_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of box (e.g. 'equatorial_pacific') for SST
     :param prbox: string
         name of box (e.g. 'equatorial_pacific') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -32839,12 +32855,12 @@ def telecon_pr_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method1, enso_method2, enso_method3 = "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -33326,7 +33342,7 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                        prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                        sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                        prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
-                       prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                       prbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                        netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The telecon_pr_amp_djf() function computes PRA (precipitation anomalies) averaged in multiple regions (usually the
@@ -33404,9 +33420,9 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         name of box (e.g. 'equatorial_pacific') for SST
     :param prbox: string
         name of box (e.g. 'equatorial_pacific') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -33474,12 +33490,12 @@ def telecon_pr_amp_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method1, enso_method2, enso_method3 = "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -34005,7 +34021,7 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                        prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                        sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                        prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
-                       prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                       prbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                        netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The telecon_pr_ano_djf() function computes PRA (precipitation anomalies) averaged in multiple regions (usually the
@@ -34082,9 +34098,9 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         name of box (e.g. 'equatorial_pacific') for SST
     :param prbox: string
         name of box (e.g. 'equatorial_pacific') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -34152,12 +34168,12 @@ def telecon_pr_ano_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method1, enso_method2, enso_method3 = "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -34684,7 +34700,7 @@ def telecon_pr_sig_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                        prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod,
                        sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                        prfileobs, prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox,
-                       prbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                       prbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                        netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The telecon_pr_sig_djf() function computes PRA (precipitation anomalies) averaged in multiple regions (usually the
@@ -34762,9 +34778,9 @@ def telecon_pr_sig_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
         name of box (e.g. 'equatorial_pacific') for SST
     :param prbox: string
         name of box (e.g. 'equatorial_pacific') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -34832,12 +34848,12 @@ def telecon_pr_sig_djf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     """
     # Setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method1, enso_method2, enso_method3 = "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -35651,7 +35667,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     return metric_output
 
 
-def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, enso_definition,
                   dataset="", debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoDiversity() function computes a zonal composite of El Nino and La Nina events during the peak of the event.
@@ -35680,9 +35696,9 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param dataset: string, optional
@@ -35744,10 +35760,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
     """
     # setting variables
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    threshold = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    threshold = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     # test given kwargs
     needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "treshold_ep_ev",
                     "time_bounds"]
@@ -35923,7 +35939,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod, prfilemod,
               prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs, sstnameobs,
               sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
-              prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
+              prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, enso_definition,
               centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False, netcdf_name="",
               metname="", **kwargs):
     """
@@ -35989,9 +36005,9 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         name of box (e.g. 'global') for SST
     :param prbox: string
         name of box (e.g. 'global') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -36060,12 +36076,12 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -36446,7 +36462,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs,
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
-                 event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                 enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
                  netcdf_name="", metname="", **kwargs):
     """
     The EnsoPrMapDjf() function computes precipitation anomalies pattern associated with ENSO on the globe.
@@ -36511,9 +36527,9 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         name of box (e.g. 'global') for SST
     :param prbox: string
         name of box (e.g. 'global') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -36582,12 +36598,12 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -36979,7 +36995,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs,
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
-                 event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                 enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
                  netcdf_name="", metname="", **kwargs):
     """
     The EnsoPrMapJja() function computes precipitation anomalies pattern associated with ENSO on the globe.
@@ -37044,9 +37060,9 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         name of box (e.g. 'global') for SST
     :param prbox: string
         name of box (e.g. 'global') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -37115,12 +37131,12 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -37514,7 +37530,7 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs,
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
-                 event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                 enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
                  netcdf_name="", metname="", **kwargs):
     """
     The EnsoPrDjfTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
@@ -37543,9 +37559,9 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         name of PR variable (pr, precip) in 'prfileobs'
     :param box: string
         name of box (e.g. 'nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param sstareafilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled SST areacell
     :param sstareanamemod: string, optional
@@ -37643,10 +37659,10 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     """
     # setting variables
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    threshold = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    threshold = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     # test given kwargs
     needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
                     "time_bounds_obs"]
@@ -37888,7 +37904,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
                  prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs,
                  sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs,
                  prnameobs, prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox,
-                 event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+                 enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
                  netcdf_name="", metname="", **kwargs):
     """
     The EnsoPrJjaTel() function computes precipitations anomalies associated with El Nino and La Nina events in many AR5
@@ -37917,9 +37933,9 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         name of PR variable (pr, precip) in 'prfileobs'
     :param box: string
         name of box (e.g. 'nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param sstareafilemod: string, optional
         path_to/filename of the file (NetCDF) of the modeled SST areacell
     :param sstareanamemod: string, optional
@@ -38017,10 +38033,10 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     """
     # setting variables
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    threshold = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    threshold = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     # test given kwargs
     needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
                     "time_bounds_obs"]
@@ -38262,7 +38278,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
-               slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+               slpbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSlpMap() function computes sea level pressure anomalies pattern associated with ENSO on the globe.
@@ -38327,9 +38343,9 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         name of box (e.g. 'global') for SST
     :param slpbox: string
         name of box (e.g. 'global') for SLP
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -38398,12 +38414,12 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -38787,7 +38803,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs,
-                  sstbox, slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                  sstbox, slpbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSlpMapDjf() function computes sea level pressure anomalies pattern associated with ENSO on the globe.
@@ -38852,9 +38868,9 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'global') for SST
     :param slpbox: string
         name of box (e.g. 'global') for SLP
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -38923,12 +38939,12 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -39324,7 +39340,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                   slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                   slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs,
-                  sstbox, slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                  sstbox, slpbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSlpMapJja() function computes sea level pressure anomalies pattern associated with ENSO on the globe.
@@ -39389,9 +39405,9 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of box (e.g. 'global') for SST
     :param slpbox: string
         name of box (e.g. 'global') for SLP
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -39460,12 +39476,12 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -39861,7 +39877,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
 def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tasbox,
-               event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
+               enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False, netcdf=False,
                netcdf_name="", metname="", **kwargs):
     """
     The EnsoSstMap() function computes surface temperature anomalies pattern associated with ENSO on the globe.
@@ -39900,9 +39916,9 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
     :param tasbox: string
         name of box (e.g. 'global') for TAS
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -39971,12 +39987,12 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -40359,7 +40375,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
 def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                  tasbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                  tasbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                   netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSstMapDjf() function computes surface temperature anomalies pattern associated with ENSO on the globe.
@@ -40398,9 +40414,9 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
     :param tasbox: string
         name of box (e.g. 'global') for TAS
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -40469,12 +40485,12 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -40869,7 +40885,7 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
 def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                  tasbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
+                  tasbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="", debug=False,
                   netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The EnsoSstMapJja() function computes surface temperature anomalies pattern associated with ENSO on the globe.
@@ -40908,9 +40924,9 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
     :param tasbox: string
         name of box (e.g. 'global') for TAS
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -40979,12 +40995,12 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # setting variables
-    length_ev = event_definition["duration_min"]
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    smooth_ev = event_definition["smoothing"]
-    thresh_ev = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    length_ev = enso_definition["duration_min"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    smooth_ev = enso_definition["smoothing"]
+    thresh_ev = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     enso_method, enso_method1, enso_method2, enso_method3 = "", "", "", ""
     if isinstance(smooth_ev, dict) is True or isinstance(length_ev, int) is True:
         if isinstance(smooth_ev, dict) is True:
@@ -41382,7 +41398,7 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod, prfilemod,
               prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs, sstnameobs,
               sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
-              prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
+              prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, enso_definition,
               centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
               metname='', **kwargs):
     """
@@ -41449,9 +41465,9 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         name of box (e.g. 'global') for SST
     :param prbox: string
         name of box (e.g. 'global') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -41517,10 +41533,10 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -41719,7 +41735,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     return NinaPrMapMetric
 
 
-def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, enso_definition,
                dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstDiv() function computes a zonal composite of La Nina events during the peak of the event.
@@ -41747,9 +41763,9 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param dataset: string, optional
@@ -41808,10 +41824,10 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
@@ -41977,7 +41993,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
                    netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstDivRmse() function computes a zonal minimum of La Nina events during the peak of the event.
@@ -42016,9 +42032,9 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -42079,10 +42095,10 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -42300,7 +42316,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     return NinaDivMetric
 
 
-def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, enso_definition,
                nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstDurRmse() function computes a duration of La Nina events.
@@ -42327,9 +42343,9 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param dataset: string, optional
@@ -42384,10 +42400,10 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
@@ -42494,7 +42510,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
                    netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstLonRmse() function computes a zonal composite of La Nina events during the peak of the event
@@ -42530,9 +42546,9 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
         name of box ('equatorial_pacific') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -42593,10 +42609,10 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -42863,7 +42879,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
-               slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+               slpbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
                netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSlpMap() function computes a sea level pressure anomalies composite of during the peak of La Nina events
@@ -42929,9 +42945,9 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         name of box (e.g. 'global') for SST
     :param slpbox: string
         name of box (e.g. 'global') for SLP
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -42997,10 +43013,10 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -43201,7 +43217,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
 def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
-               event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+               enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
                netcdf_name='', metname='', **kwargs):
     """
     The NinaSstMap() function computes a surface temperature anomalies composite of during the peak of La Nina events
@@ -43241,9 +43257,9 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
     :param sstbox: string
         name of box (e.g. 'global') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -43309,10 +43325,10 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -43516,7 +43532,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
 def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
+                  box, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='',
                   debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinaSstTsRmse() function computes a time composite of La Nina events
@@ -43552,9 +43568,9 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': -0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -43617,10 +43633,10 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -43829,7 +43845,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod, prfilemod,
               prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs, sstnameobs,
               sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
-              prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
+              prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, enso_definition,
               centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
               metname='', **kwargs):
     """
@@ -43896,9 +43912,9 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
         name of box (e.g. 'global') for SST
     :param prbox: string
         name of box (e.g. 'global') for PR
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -43964,10 +43980,10 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -44166,7 +44182,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     return NinoPrMapMetric
 
 
-def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, enso_definition,
                dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstDiv() function computes a zonal composite of El Nino events during the peak of the event.
@@ -44194,9 +44210,9 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param dataset: string, optional
@@ -44255,10 +44271,10 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
@@ -44424,7 +44440,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
                    netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstDivRmse() function computes a zonal maximum of El Nino events during the peak of the event.
@@ -44463,9 +44479,9 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -44526,10 +44542,10 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -44747,7 +44763,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     return NinoDivMetric
 
 
-def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, event_definition,
+def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box, enso_definition,
                nbr_years_window, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstDurRmse() function computes a duration of El Nino events.
@@ -44774,9 +44790,9 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param dataset: string, optional
@@ -44831,10 +44847,10 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
@@ -44941,7 +44957,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
 def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                    sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, box,
-                   event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+                   enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
                    netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstLonRmse() function computes a zonal composite of El Nino events during the peak of the event
@@ -44977,9 +44993,9 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
         name of box ('equatorial_pacific') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -45040,10 +45056,10 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -45310,7 +45326,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
                slpfilemod, slpnamemod, slpareafilemod, slpareanamemod, slplandmaskfilemod, slplandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
                slpfileobs, slpnameobs, slpareafileobs, slpareanameobs, slplandmaskfileobs, slplandmasknameobs, sstbox,
-               slpbox, event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
+               slpbox, enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False,
                netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSlpMap() function computes a sea level pressure anomalies composite of during the peak of El Nino events
@@ -45376,9 +45392,9 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         name of box (e.g. 'global') for SST
     :param slpbox: string
         name of box (e.g. 'global') for SLP
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -45444,10 +45460,10 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -45647,7 +45663,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
 
 def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, box,
-                     event_definition, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+                     enso_definition, dataset='', debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
     """
     The NinoSstDiversity() function computes a zonal composite of El Nino events during the peak of the event.
         1.) detect events
@@ -45674,9 +45690,9 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfile'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param dataset: string, optional
         name of current dataset (e.g., 'model', 'obs', ...)
     :param debug: bolean, optional
@@ -45733,10 +45749,10 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     my_thresh = 'std' if normalize is True else 'C'
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
@@ -45945,7 +45961,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
 
 def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, tsbox,
-               event_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
+               enso_definition, centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False,
                netcdf_name='', metname='', **kwargs):
     """
     The NinoSstMap() function computes a surface temperature anomalies composite of during the peak of El Nino events
@@ -45985,9 +46001,9 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
         name of landmask for the SST variable (sftlf,...) in 'sstlandmaskfileobs'
     :param sstbox: string
         name of box (e.g. 'global') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param centered_rmse: int, optional
         default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
         set to 1. NOTE: Most other statistic functions return a centered statistic by default
@@ -46053,10 +46069,10 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     """
     # setting variables
-    region_ev = event_definition['region_ev']
-    season_ev = event_definition['season_ev']
-    threshold = event_definition['threshold']
-    normalize = event_definition['normalization']
+    region_ev = enso_definition['region_ev']
+    season_ev = enso_definition['season_ev']
+    threshold = enso_definition['threshold']
+    normalize = enso_definition['normalization']
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
@@ -46260,7 +46276,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
 def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod,
                   sstfileobs, sstnameobs, sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs,
-                  box, event_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
+                  box, enso_definition, nbr_years_window, centered_rmse=0, biased_rmse=1, dataset1="", dataset2="",
                   debug=False, netcdf=False, netcdf_name="", metname="", **kwargs):
     """
     The NinoSstTsRmse() function computes a time composite of El Nino events
@@ -46296,9 +46312,9 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         name of landmask variable (sftlf, lsmask, landmask) in 'sstlandmaskfileobs'
     :param box: string
         name of box ('nino3') for SST
-    :param event_definition: dict
+    :param enso_definition: dict
         dictionary providing the necessary information to detect ENSO events (region_ev, season_ev, threshold)
-        e.g., event_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
+        e.g., enso_definition = {'region_ev': 'nino3', 'season_ev': 'DEC', 'threshold': 0.75}
     :param nbr_years_window: integer
         number of years used to compute the composite (e.g. 6)
     :param centered_rmse: int, optional
@@ -46361,10 +46377,10 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     """
     # setting variables
-    region_ev = event_definition["region_ev"]
-    season_ev = event_definition["season_ev"]
-    threshold = event_definition["threshold"]
-    normalize = event_definition["normalization"]
+    region_ev = enso_definition["region_ev"]
+    season_ev = enso_definition["season_ev"]
+    threshold = enso_definition["threshold"]
+    normalize = enso_definition["normalization"]
     # test given kwargs
     needed_kwarg = ["detrending", "frequency", "min_time_steps", "normalization", "smoothing", "time_bounds_mod",
                     "time_bounds_obs"]

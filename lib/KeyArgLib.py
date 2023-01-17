@@ -12,9 +12,12 @@ from .EnsoErrorsWarnings import unknown_key_arg
 #
 def default_arg_values(arg):
     default = {
-        'detrending': False, 'frequency': None, 'metric_computation': 'difference', 'min_time_steps': None,
-        'normalization': False, 'project_interpreter': 'CMIP', 'regridding': False, 'smoothing': False,
-        'treshold_ep_ev': -140, 'time_bounds': None, 'time_bounds_mod': None, 'time_bounds_obs': None,
+        "detrending": False, "frequency": None, "metric_computation": "difference", "min_time_steps": None,
+        "normalization": False, "project_interpreter": "CMIP", "regridding": False, "smoothing": False,
+        "threshold_ep_ev": -140, "time_bounds": None, "time_bounds_mod": None, "time_bounds_obs": None,
+        "enso_definition": {"duration_min": 5, "interannual_anomalies": True, "normalization": True,
+                             "region_ev": "nino3.4", "season_ev": "NDJ", "smoothing": False, "threshold": 0.5},
+        "wait_definition": {"detect": "en_to_en", "method": "peaks", "smoothing": {"method": "triangle", "window": 5}},
     }
     try:
         default[arg]

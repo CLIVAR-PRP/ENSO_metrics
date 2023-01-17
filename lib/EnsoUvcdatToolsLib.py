@@ -1917,8 +1917,8 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
     return duration
 
 
-def enso_time_interval(arr, season, threshold, compute_anom=True, compute_season=True, method="simple",
-                       nina_events=None, nino_events=None, normalize=False):
+def enso_time_interval(arr, season, detect="EN-to-EN", method="simple", nina_events=None, nino_events=None,
+                       smoothing=False):
     """
     #################################################################################
     Description:
@@ -1934,26 +1934,23 @@ def enso_time_interval(arr, season, threshold, compute_anom=True, compute_season
     :param season: string
         one month (e.g, 'DEC'), two months (e.g., 'DJ'), three months (e.g., 'NDJ'), four months (e.g., 'NDJF'), period
         when the events are detected
-    :param threshold: float
-        threshold to define the events (e.g., 0.75 for El Nino, -0.75 for La Nina)
-    :param compute_anom: boolean, optional
-        True to detect events based on interannual anomalies
-        default is True
-    :param compute_season: boolean, optional
-        True to compute seasonal average to detect events
-        default is True
+    :param detect: string, optional
+        which interval is computed:
+            "en_to_en": interval between an El Nino and the next
+            "en_to_ln": interval between an El Nino and the following La Nina
+            "ln_to_en": interval between a La Nina and the following El Nino
+            "ln_to_ln": interval between a La Nina and the next
+        default value is 'EN-to-EN'
     :param method: string, optional
-        if method='simple', the number of months between ENSO peaks (assumed to always be in December) are counted;
-        e.g., [1991, 1994, 1995, 1997, 1998, 1999] gives intervals of [36, 12, 24, 12, 12] between events
-        else, a start and an end of each event is defined based on 'arr', 'season', 'threshold' and 'normalization';
-        e.g., according to https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php:
-        1991: from AMJ 1991 to MMJ 1992
-        1994: from ASO 1994 to FMA 1995
-        1995: from JAS 1994 to FMA 1996
-        1997: from AMJ 1997 to AMJ 1998
-        1998: from JAA 1998 to JFM 2001
-        1999: from JAA 1998 to JFM 2001
-        giving intervals of [26, 4, 13, 1, 0] between events
+        if method='simple', count the number of months between Decembers of each event else, count the number of months
+        between the peaks of each event
+        e.g., using 00's Nino events https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php
+        if method='simple':
+            nino events = [2002, 2004, 2006, 2009]
+            intervals = [24, 24, 36]
+        else:
+            nino peaks = [OND 2002, ASO 2004, NDJ 2006, NDJ 2009]
+            intervals = [22, 28, 36] between events
         default is 'simple'
     :param nina_events: list, optional
         list of La Nina years as defined by DetectEvents (i.e., if 1998 it means that December 1998 is considered a LN)
@@ -1961,9 +1958,11 @@ def enso_time_interval(arr, season, threshold, compute_anom=True, compute_season
     :param nino_events: list, optional
         list of El Nino years as defined by DetectEvents (i.e., if 1997 it means that December 1997 is considered an EN)
         default is None (El Nino events are not used)
-    :param normalize: boolean, optional
-        True to detect events based on the standard deviation of 'season', else 'threshold' is in 'arr' units
-        default is False
+    :param smoothing: dict, optional
+        see EnsoUvcdatToolsLib.Smoothing for options
+        the aim if to specify if variables are smoothed (running mean)
+        smoothing axis, window and method can be specified
+        default value is False
 
     Outputs:
     -------
@@ -1974,105 +1973,81 @@ def enso_time_interval(arr, season, threshold, compute_anom=True, compute_season
     :return keyerror: string or None
         brief description of the encountered error (if applicable) else None
     """
-    intervals = None
-    keyerror = None
-    description = None
-    # list ENSO events
-    event_yy = list()
-    if isinstance(nina_events, list) is True:
-        event_yy += copy.deepcopy(nina_events)
-    if isinstance(nino_events, list) is True:
-        event_yy += copy.deepcopy(nino_events)
-    if len(event_yy) == 0:
-        keyerror = "no ENSO event given"
-        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()), str().ljust(5) + str(keyerror)]
-        EnsoErrorsWarnings.my_warning(list_strings)
-    else:
-        event_yy = sorted(event_yy)
-        intervals = list()
-        if method == "simple":
-            description = "time interval defined as the number of months between two ENSO peak (" + str(season) + ")"
-            # time (number of month) between events
-            for y1, y2 in zip(event_yy[:-1], event_yy[1:]):
-                intervals.append((y2 - y1) * 12)
+    intervals, description, keyerror = None, None, ""
+    # check given ENSO events
+    if "ln" in detect and (isinstance(nina_events, list) is False or
+                           (isinstance(nina_events, list) is True and len(nina_events) < 2)):
+        if isinstance(nina_events, list) is False:
+            keyerror += "no La Nina event given"
         else:
-            description = "time interval defined as the number of months between the end of an event and the " + \
-                          "beginning of the next"
-            #
-            # -- 1) Create time series of interannual anomalies
-            #
-            # smooth time series
-            if season in ["NDJ", "ONDJF"] and compute_season is True:
-                enso_ts, _ = Smoothing(arr, "", axis=0, window=len(season), method="square")
+            keyerror += "not enough La Nina event (" + str(len(nina_events)) + ")"
+    if "en" in detect and (isinstance(nino_events, list) is False or
+                           (isinstance(nino_events, list) is True and len(nino_events) < 2)):
+        if keyerror != "":
+            keyerror += " & "
+        if isinstance(nino_events, list) is False:
+            keyerror += "no El Nino event given"
+        else:
+            keyerror += "not enough El Nino event (" + str(len(nino_events)) + ")"
+    # pair one event and the following one
+    if keyerror == "":
+        # select first and second event type and their signs
+        ev1, si1 = (sorted(nino_events), 1) if "en_to_" in detect else (sorted(nina_events), -1)
+        ev2, si2 = (sorted(nino_events), 1) if "_to_en" in detect else (sorted(nina_events), -1)
+        # select the fist event after the given event 'ev1'
+        event = [[k1, next(k2 for k2 in ev2 if k2 > k1)] for k1 in ev1 if max(ev2) > k1]
+        signs = [si1, si2]
+        if len(event) < 2:
+            keyerror += "too few ENSO intervals"
+            if len(event) > 0:
+                keyerror += " ("
+                for i1, i2 in event:
+                    keyerror += str(i1) + " to " + str(i2)
+                    if i1 != ev1[-1]:
+                        keyerror += ", "
+                keyerror += ")"
+        if keyerror == "":
+            d1 = detect.replace("_to_", "-to-").replace("en", "EN").replace("ln", "LN")
+            description = "count months between " + str(d1) + " peaks"
+            keyerror = None
+            if method == "simple":
+                description += "(" + str(season) + ")"
+                # 1. count the number of time steps between events
+                intervals = [(e2 - e1) * 12 for e1, e2 in event]
             else:
-                enso_ts = copy.copy(arr)
-            # removes annual cycle (anomalies with respect to the annual cycle)
-            if compute_anom is True:
-                enso_ts = ComputeInterannualAnomalies(enso_ts)
-            #
-            # -- 2) Compute the threshold to detect an event
-            #
-            if normalize is True:
-                if compute_season is True:
-                    enso = SeasonalMean(arr, season, compute_anom=compute_anom)
+                description = "(peaks = maximum anomaly close to events"
+                # 1. smooth time series
+                if isinstance(smoothing, dict) is True:
+                    enso, tmp = Smoothing(arr, "", axis=0, **smoothing)
+                    description += " using time series smoothed with " + str(tmp.split(" of ")[-1].split(" ")[0]) + \
+                                   "mo " + str(tmp.split("using a ")[-1].split(" ")[0]) + " weighted running mean)"
                 else:
+                    description += ")"
                     enso = copy.copy(arr)
-                thr = threshold * float(GENUTILstd(enso, axis=0, centered=1, biased=1))
-            else:
-                thr = copy.deepcopy(threshold)
-            arr_threshold = MV2zeros(enso_ts.shape)
-            arr_threshold.fill(thr)
-            #
-            # -- 3) Mark months that meet the threshold
-            #
-            condition = MV2zeros(enso_ts.shape)
-            if isinstance(nina_events, list) is True and len(nina_events) > 0:
-                condition = MV2where(enso_ts < -arr_threshold, 1, condition)
-            if isinstance(nino_events, list) is True and len(nino_events) > 0:
-                condition = MV2where(enso_ts > arr_threshold, 1, condition)
-            #
-            # -- 4) Mark months if they are really part of an event
-            #
-            # get time
-            tt = enso_ts.getTime().asComponentTime()
-            # get first year and december of first and last ENSO event
-            yy0 = tt[0].year
-            mm0 = 0
-            for ii, jj in enumerate(tt):
-                if jj.month == 12:
-                    break
-                mm0 += 1
-            # transform event year to month index in enso_ts array
-            event_yy = list((NParray(event_yy) - yy0) * 12 + mm0)
-            # mark enso events (0 for ENSO, 1 for non-ENSO)
-            enso_ts = MV2ones(enso_ts.shape)
-            for mm in event_yy:
-                # month on index mm is the center (Dec or NDJ) of an ENSO event
-                lk0, lk1 = 0, 0
-                # check values before event
-                for jj in list(range(0, 37, 1)):
-                    if mm - jj == 0 or condition[int(mm - jj)] == 0:
-                        break
-                    lk0 += 1
-                # check values after event
-                for jj in list(range(0, 37, 1)):
-                    if mm + jj == len(enso_ts) or condition[int(mm + jj)] == 0:
-                        break
-                    lk1 += 1
-                # values from mm - lk0 to mm + lk1 are considered part of the current event
-                enso_ts[int(mm - lk0): int(mm + lk1 + 1)] = 0
-            #
-            # -- 5) Count number of months between ENSO events
-            #
-            for m1, m2 in zip(event_yy[:-1], event_yy[1:]):
-                # non-ENSO events = 1, ENSO events = 0, so the sum of 'condition' between two ENSO event is the number
-                # of months between the end of event 'm1' and the beginning of event 'm2'
-                intervals.append(sum(enso_ts[int(m1): int(m2 + 1)]))
-    if intervals is not None:
-        name = "nina" if isinstance(nina_events, list) is True and isinstance(nina_events, list) is False else \
-            ("nino" if isinstance(nina_events, list) is False and isinstance(nina_events, list) is True else "enso")
-        axis = CDMS2createAxis(list(event_yy[:-1]), id=str(name) + "_years")
-        intervals = CDMS2createVariable(MV2array(intervals), axes=[axis], id="time_interval")
+                # 2. find event index in the smoothed time series
+                # 2.1 get time of smoothed time series
+                tt = enso.getTime().asComponentTime()[:20]
+                # 2.2 get first year and first december
+                ye0 = tt[0].year
+                de0 = next(k1 for k1, k2 in enumerate(tt) if k2.month == 12)
+                # 2.3 transform list of events' year to list of indices in 'enso'
+                event = (NParray(event) - int(ye0)) * 12 + int(de0)
+                # 3. find indices of ENSO peaks around the ENSO december
+                # 3.1 list indices of the time series
+                ind = NParange(len(enso))
+                # 3.2 find each peak interval [Jul, May], this window is chosen to impose a separation between events if
+                # they are back to back
+                for k1, ev in enumerate(event):
+                    for k2, e1 in enumerate(ev):
+                        # replace index of 'e1', which is ENSO december, by the index of its peak
+                        # multiply the time series by the corresponding sign (1 for Nino, -1 for Nina) to always look
+                        # for the maximum anomaly
+                        l1, l2 = ind[e1-5: e1+6], enso[e1-5: e1+6] * signs[k2]
+                        event[k1, k2] = next(k1 for k1, k2 in zip(l1, l2) if k2 == max(l2))
+                # 4. count the number of time steps between events
+                intervals = [e2 - e1 for e1, e2 in event]
+            axis = CDMS2createAxis(ev1[: len(intervals)], id=str(detect) + "_years")
+            intervals = CDMS2createVariable(MV2array(intervals), axes=[axis], id=str(detect) + "_interval")
     return intervals, description, keyerror
 
 
@@ -2528,7 +2503,7 @@ def ReadAreaSelectRegion(filename, areaname="", box=None, **kwargs):
     return areacell
 
 
-def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs):
+def ReadLandmaskSelectRegion(tab, file_data, name_data, file_mask, landmaskname='', box=None, **kwargs):
     """
     #################################################################################
     Description:
@@ -2537,8 +2512,14 @@ def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs)
     Uses cdms2 (uvcdat) to read areacell from 'filename' and cdutil (uvcdat) to select the 'box'
     #################################################################################
 
-    :param filename: string
-        string of the path to the file and name of the file to read
+    :param tab: masked_array
+        masked_array containing a variable
+    :param file_data: string
+        string of the path to the file and name of the file that was used to read 'tab'
+    :param name_data: string
+        name of the variable, read from 'file_data', stored in 'tab'
+    :param file_mask: string
+        string of the path to the file and name of the file containing the landmask
     :param landmaskname: string, optional
         name of landmask (sftlf, lsmask, landmask,...) in 'filename'
     :param box: string, optional
@@ -2547,51 +2528,47 @@ def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs)
     :return area: masked_array
         masked_array containing landmask in 'box'
     """
-    # Temp corrections for cdms2 to find the right axis
+    landmask = None
+    # corrections for cdms2 to find the right axis
     CDMS2setAutoBounds("on")
-    # Get landmask
-    if OSpath__isfile(filename) is True:
+    # list files
+    list_files = [ff for ff in [file_mask, file_data] if ff is not None and OSpath__isfile(ff) is True]
+    # list variables
+    list_variables = [landmaskname, "landmask", "lsmask", "sftlf"]
+    for filename in list_files:
         # Open file and get time dimension
         fi = CDMS2open(filename)
-        if box is None:  # no box given
-            # read file
-            try:
-                landmask = fi(landmaskname)
-            except:
-                try:
-                    landmask = fi("landmask")
-                except:
-                    try:
-                        landmask = fi("lsmask")
-                    except:
-                        try:
-                            landmask = fi("sftlf")
-                        except:
-                            landmask = None
-        else:  # box given by the user
+        # dict region
+        dict_region = dict()
+        if box is not None:
             # define box
             region_ref = ReferenceRegions(box)
-            # read file
+            dict_region["latitude"] = region_ref["latitude"]
+            dict_region["longitude"] = region_ref["longitude"]
+        # read land mask
+        for var in list_variables:
             try:
-                landmask = fi(landmaskname, latitude=region_ref["latitude"], longitude=region_ref["longitude"])
+                landmask = fi(var, **dict_region)
             except:
-                try:
-                    landmask = fi("landmask", latitude=region_ref["latitude"], longitude=region_ref["longitude"])
-                except:
-                    try:
-                        landmask = fi("lsmask", latitude=region_ref["latitude"], longitude=region_ref["longitude"])
-                    except:
-                        try:
-                            landmask = fi("sftlf", latitude=region_ref["latitude"], longitude=region_ref["longitude"])
-                        except:
-                            landmask = None
+                pass
+            else:
+                break
         fi.close()
-    else:
-        landmask = None
-    if OSpath__isfile(filename) is False or landmask is None or tab.getGrid().shape != landmask.getGrid().shape:
+        if landmask is not None:
+            break
+    if landmask is None or tab.getGrid().shape != landmask.getGrid().shape:
         # Estimate landmask
-        landmask = EstimateLandmask(tab)
-        if box is not None:
+        try:
+            landmask = EstimateLandmask(tab)
+        except:
+            arr = ReadAndSelectRegion(file_data, name_data, box="global",  **kwargs)
+            try:
+                landmask = EstimateLandmask(arr)
+            except:
+                pass
+        if landmask is not None:
+            print("\033[93m" + str().ljust(25) + "NOTE: Estimated landmask applied" + "\033[0m")
+        if landmask is not None and box is not None:
             # define box
             region_ref = ReferenceRegions(box)
             # subset
@@ -2614,11 +2591,9 @@ def EstimateLandmask(d):
     :return landmask: masked_array
         masked_array containing landmask
     """
-    print("\033[93m" + str().ljust(25) + "NOTE: Estimated landmask applied" + "\033[0m")
     n = 1
-    sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n)) * 100.0
-    sft[:] = sft.filled(100.0)
-    lmsk = sft
+    lmsk = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n)) * 100.0
+    lmsk[:] = lmsk.filled(100.0)
     lmsk.setAxis(0, d.getAxis(1))
     lmsk.setAxis(1, d.getAxis(2))
     lmsk.id = "sftlf"
@@ -4193,7 +4168,7 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area="", n
                           "shape1": "(" + type_data + ") " + str(areacell.shape)}
             EnsoErrorsWarnings.debug_mode("\033[93m", "after ReadAreaSelectRegion", 20, **dict_debug)
         else:
-            dict_debug = {"line1": "areacell is None "}
+            dict_debug = {"line1": "areacell is None"}
             EnsoErrorsWarnings.debug_mode("\033[93m", "after ReadAreaSelectRegion", 20, **dict_debug)
     # Read landmask
     if name_data.lower() in [
@@ -4209,10 +4184,9 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area="", n
         landmask = None
     elif maskland is False and maskocean is False:
         landmask = None
-    elif file_mask:
-        landmask = ReadLandmaskSelectRegion(tab, file_mask, landmaskname=name_mask, box=region, **kwargs)
     else:
-        landmask = ReadLandmaskSelectRegion(tab, file_data, landmaskname=name_mask, box=region, **kwargs)
+        landmask = ReadLandmaskSelectRegion(tab, file_data, name_data, file_mask, landmaskname=name_mask, box=region,
+                                            **kwargs)
     if debug is True:
         if landmask is not None:
             dict_debug = {"axes1": "(" + type_data + ") " + str([ax.id for ax in landmask.getAxisList()]),

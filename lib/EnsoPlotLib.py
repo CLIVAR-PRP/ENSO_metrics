@@ -68,7 +68,7 @@ dict_label = {
 output_variables = {
     "stat_box": ["stat_box__"],
     "dcorr": ["dcorr__"],
-    "enso_wait_time": ["enso_interval__", "nina_interval__", "nino_interval__"],
+    "enso_wait_time": ["en_to_en_interval__", "en_to_ln_interval__", "ln_to_en_interval__", "ln_to_ln_interval__"],
     "BiasLhfLatRmse": ["lhf_lat__", "lhf_map__"],
     "BiasLhfLonRmse": ["lhf_lon__", "lhf_map__"],
     "BiasLhfMapRmse": ["lhf_map__"],

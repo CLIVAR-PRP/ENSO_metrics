@@ -1,8 +1,12 @@
 # -*- coding:UTF-8 -*-
 from inspect import stack as INSPECTstack
 from numpy import array as NUMPYarray
+from numpy import mean as NUMPYmean
 from numpy import square as NUMPYsquare
+from numpy import std as NUMPYstd
 from numpy import unravel_index as NUMPYunravel_index
+from numpy import var as NUMPYvar
+from scipy.stats import skew as SCIPYstats__skew
 from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # ENSO_metrics package functions:
 from . import EnsoErrorsWarnings
@@ -191,6 +195,14 @@ def percentage_val_eastward(val_longitude, metric_name, region, threshold=-140):
             ep_event = [1 for val in val_longitude if val > threshold]
         ep_event = sum(ep_event) * 100. / len(val_longitude)
     return ep_event, keyerror
+
+
+def simple_stats(arr, axis=0):
+    ave = NUMPYmean(arr, axis=axis)
+    ske = SCIPYstats__skew(arr, axis=axis)
+    std = NUMPYstd(arr, axis=axis)
+    var = NUMPYvar(arr, axis=axis)
+    return ave, ske, std, var
 
 
 def statistical_dispersion(tab, method="IQR"):

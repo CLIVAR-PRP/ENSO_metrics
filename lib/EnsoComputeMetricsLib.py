@@ -1153,10 +1153,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     tmp_metric = deepcopy(metric)
     metric = metric.replace("_1", "").replace("_2", "").replace("_3", "").replace("_4", "").replace("_5", "")
     # remove statistics, variables and regions from metric name
-    if "dcorr" in metric or "nstar" in metric or "stat_box" in metric:
+    if "dcorr" in metric or "enso_wait_time" in metric or "nstar" in metric or "stat_box" in metric:
         # remove statistics from name
         for k1 in ["ave", "ske", "std", "var"]:
-            if "_" + str(k1) + "_" in metric:
+            if "_" + str(k1) + "_" in metric or "_" + str(k1) == metric[-4:]:
                 metric = metric.replace("_" + str(k1), "")
         # remove variables from metric name
         for k1 in list(reference_variables().keys()):
