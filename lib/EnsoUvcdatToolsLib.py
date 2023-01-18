@@ -1917,8 +1917,8 @@ def DurationEvent(tab, threshold, nino=True, debug=False):
     return duration
 
 
-def enso_time_interval(arr, season, detect="EN-to-EN", method="simple", nina_events=None, nino_events=None,
-                       smoothing=False):
+def enso_time_interval(arr, season, compute_anom=True, detect="EN-to-EN", method="simple", nina_events=None,
+                       nino_events=None, smoothing=False):
     """
     #################################################################################
     Description:
@@ -1934,6 +1934,9 @@ def enso_time_interval(arr, season, detect="EN-to-EN", method="simple", nina_eve
     :param season: string
         one month (e.g, 'DEC'), two months (e.g., 'DJ'), three months (e.g., 'NDJ'), four months (e.g., 'NDJF'), period
         when the events are detected
+    :param compute_anom: boolean, optional
+        True to locate peaks based on interannual anomalies (should be the same as when ENSO events where detected)
+        default is True
     :param detect: string, optional
         which interval is computed:
             "en_to_en": interval between an El Nino and the next
@@ -2007,23 +2010,26 @@ def enso_time_interval(arr, season, detect="EN-to-EN", method="simple", nina_eve
                         keyerror += ", "
                 keyerror += ")"
         if keyerror == "":
-            d1 = detect.replace("_to_", "-to-").replace("en", "EN").replace("ln", "LN")
-            description = "count months between " + str(d1) + " peaks"
+            d1 = str(detect).upper().replace("_TO_", "-to-")
+            description = "count months between " + str(d1) + " peaks ("
             keyerror = None
             if method == "simple":
-                description += "(" + str(season) + ")"
+                description += str(season) + ")"
                 # 1. count the number of time steps between events
                 intervals = [(e2 - e1) * 12 for e1, e2 in event]
             else:
-                description = "(peaks = maximum anomaly close to events"
-                # 1. smooth time series
-                if isinstance(smoothing, dict) is True:
-                    enso, tmp = Smoothing(arr, "", axis=0, **smoothing)
-                    description += " using time series smoothed with " + str(tmp.split(" of ")[-1].split(" ")[0]) + \
-                                   "mo " + str(tmp.split("using a ")[-1].split(" ")[0]) + " weighted running mean)"
+                # 1. compute anomalies smooth time series
+                if compute_anom is True:
+                    enso = ComputeInterannualAnomalies(arr)
+                    description += "peaks = maximum interannual anomaly close to events"
                 else:
-                    description += ")"
                     enso = copy.copy(arr)
+                    description += "peaks = maximum value close to events"
+                if isinstance(smoothing, dict) is True:
+                    enso, tmp = Smoothing(enso, "", axis=0, **smoothing)
+                    description += " using time series smoothed with " + str(tmp.split(" of ")[-1].split(" ")[0]) + \
+                                   "mo " + str(tmp.split("using a ")[-1].split(" ")[0]) + " weighted running mean"
+                description += ")"
                 # 2. find event index in the smoothed time series
                 # 2.1 get time of smoothed time series
                 tt = enso.getTime().asComponentTime()[:20]

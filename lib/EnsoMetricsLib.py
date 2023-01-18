@@ -9324,15 +9324,15 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
     sta_ano = "A" if anomal_ev is True else ""
     # method for ENSO events detection
     enso_method = str(season_ev) + " " + str(region_ev) + " " + str(var_sn) + str(sta_ano) + " > " + str(thresh_ev) + \
-                  str(units_ev) + " (" + str(sta_ano) + str(sta_ano) + " < -" + str(thresh_ev) + str(units_ev) + ")"
+                  str(units_ev) + " (" + str(var_sn) + str(sta_ano) + " < -" + str(thresh_ev) + str(units_ev) + ")"
     if isinstance(length_ev, int) is True:
-        enso_method = " during at least " + str(length_ev) + " consecutive "
+        enso_method += " during at least " + str(length_ev) + " consecutive "
         if season_ev in ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]:
             enso_method += "months"
         else:
             enso_method += "overlapping seasons"
     if isinstance(smooth_ev, dict) is True:
-        enso_method = ", time series smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
+        enso_method += ", time series smoothed with " + smooth_ev["window"] + "mo " + smooth_ev["method"] + \
                       " weighted running mean"
     # wait time definition
     d_default = default_arg_values("wait_definition")
@@ -9373,14 +9373,15 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
         sta_sh1, sta_sh2 = None, None
 
     # Define metric attributes
-    name = str(sta_sh2) + " of ENSO wait time"
+    name = str(sta_sh2) + " of " + str(wait_det).upper().replace("_TO_", "-to-") + " wait times"
     units1 = "months"
     units2 = deepcopy(units1)
     if statistic == "skewness":
         units2 = ""
     elif statistic == "variance":
         units2 += "2"
-    method = str(statistic) + " of the wait times between ENSO events, with ENSO defined as " + str(enso_method)
+    method = str(statistic) + " of the " + str(wait_det).upper().replace("_TO_", "-to-") + " wait times, with ENSO " + \
+             "defined as " + str(enso_method)
     method_var = str(var_sn) + ": "
     ref = "Using CDAT averaging"
     if sta_ano == "A":
@@ -9512,8 +9513,9 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
         method_var += ";; " + str(counter) + ") ENSO events defined as " + str(enso_method)
         counter += 1
         # 3.2 compute intervals between events
-        ev_intervals, tmp, keyerror = enso_time_interval(arr, season_ev, detect=wait_det, method=wait_met,
-                                                         nina_events=ln_years, nino_events=en_years, smoothing=wait_smo)
+        ev_intervals, tmp, keyerror = enso_time_interval(arr, season_ev, compute_anom=compute_anom, detect=wait_det,
+                                                         method=wait_met, nina_events=ln_years, nino_events=en_years,
+                                                         smoothing=wait_smo)
         if keyerror is not None:
             break
         if debug is True:
@@ -9546,8 +9548,8 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
             dict_nc = dict()
             for ii, ev in enumerate(ovar):
                 ev_intervals, _, keyerror = enso_time_interval(
-                    arr, season_ev, detect=ev.split("_interval__")[0], method=wait_met, nina_events=ln_years,
-                    nino_events=en_years, smoothing=wait_smo)
+                    arr, season_ev, compute_anom=compute_anom, detect=ev.split("_interval__")[0], method=wait_met,
+                    nina_events=ln_years, nino_events=en_years, smoothing=wait_smo)
                 if keyerror is None:
                     ave, ske, std, var = simple_stats(ev_intervals, axis=0)
                     dict_nc = {"var" + str(ii + 1): ev_intervals}
