@@ -264,7 +264,7 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
                 maskocean=mask_o, debug=debug, **kwargs)
             if keyerror is not None:
                 break
-            method_var += str(counter) + ") read in " + str(r2)
+            method_var += ";; " + str(counter) + ") read in " + str(r2)
             if mask_l is True:
                 method_var += " & land masked"
             if mask_o is True:
@@ -9108,7 +9108,7 @@ def dcorr(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
                 maskocean=mask_o, debug=debug, **kwargs)
             if keyerror is not None:
                 break
-            method_var += str(counter) + ") read in " + str(r2)
+            method_var += ";; " + str(counter) + ") read in " + str(r2)
             if mask_l is True:
                 method_var += " & land masked"
             if mask_o is True:
@@ -9461,7 +9461,7 @@ def enso_wait_time(var_file, var_name, var_areafile, var_areaname, var_landmaskf
                 maskocean=mask_o, debug=debug, **kwargs)
             if keyerror is not None:
                 break
-            method_var += str(counter) + ") read in " + str(r2)
+            method_var += ";; " + str(counter) + ") read in " + str(r2)
             if mask_l is True:
                 method_var += " & land masked"
             if mask_o is True:
@@ -25523,7 +25523,7 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
         default value = 'ts' (surface temperature)
     :param metname: string, optional
         default value = '' metric name is not changed
-        e.g., metname = 'dcorr_2'
+        e.g., metname = 'nstar_2'
     :param netcdf: boolean, optional
         default value = False dive_down are not saved in NetCDFs
         If you want to save the dive down diagnostics set it to True
@@ -25699,7 +25699,7 @@ def nstar(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_
                 maskocean=mask_o, debug=debug, **kwargs)
             if keyerror is not None:
                 break
-            method_var += str(counter) + ") read in " + str(r2)
+            method_var += ";; " + str(counter) + ") read in " + str(r2)
             if mask_l is True:
                 method_var += " & land masked"
             if mask_o is True:

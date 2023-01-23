@@ -305,6 +305,14 @@ def defCollection(metric_collection=True):
                     "internal_variable_name": "ts",
                     "nstar_method": "anomalies",
                 },
+                "stat_box_ave_pr_global": {
+                    "variables": ["pr"],
+                    "regions": {"pr": "global"},
+                    "obs_name": {"pr": ["CMAP", "GPCPv2.3"]},
+                    "metric_computation": "abs_relative_difference",
+                    "internal_variable_name": "pr",
+                    "statistic": "average",
+                },
                 "stat_box_ave_pr_grad_i": {
                     "variables": ["pr"],
                     "regions": {"pr": "grad_i"},
