@@ -5,6 +5,8 @@ from copy import deepcopy
 from typing import Literal
 # numpy
 import numpy as np
+# regionmask
+import regionmask
 # xarray
 import xarray as xr
 # xCDAT
@@ -12,18 +14,99 @@ import xcdat as xc
 # ENSO_metrics
 from . enso_xcdat_base import fct_array_ones, fct_averager, fct_get_axis_key, fct_get_latitude, \
     fct_get_longitude, fct_numpy_to_xarray, fct_sum, fct_standard_deviation, fct_uniform_grid, \
-    fct_xarray_to_numpy
+    fct_where_xarray, fct_where_dataarray, fct_xarray_to_numpy, \
+    fct_horizontal_regrid, fct_attrs_update_global, fct_attrs_update_variable, fct_dataset_to_netcdf, \
+    fct_max, fct_min, fct_get_attributes_list, fct_get_attribute
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
 # xarray / xcdat data processing functions
 # ---------------------------------------------------------------------------------------------------------------------#
+def apply_landmask(ds: xr.Dataset, data_var: str, landmask: xr.DataArray, maskland : bool=True, maskocean: bool=False) -> xr.DataArray:
+    da = ds[data_var].copy()
+    # if land = 100 instead of 1, divides landmask by 100
+    if (fct_min(landmask) == 0 and fct_max(landmask) == 100) or \
+            ("units" in fct_get_attributes_list(landmask) and fct_get_attribute(landmask, "units") == "%"):
+        landmask = landmask / 100.
+    if maskland is True:
+        da = fct_where_dataarray(da, landmask <= 0.8)
+    if maskocean is True:
+        da = fct_where_dataarray(da, landmask >= 0.2)       
+    return da
+
+
 def average_horizontal(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None) -> xr.Dataset:
     if areacell is None:
         weights = "generate"
     else:
         weights = generate_weights(ds, data_var, areacell, axis=["X", "Y"])
-    return fct_averager(ds, data_var, weights=weights)
+    return fct_averager(ds, data_var, ["X", "Y"], weights=weights)
+
+
+def average_zonal(ds: xr.Dataset, data_var: str="ts", areacell: xr.DataArray=None) -> xr.Dataset:
+    if areacell is None:
+        weights = "generate"
+    else:
+        weights = generate_weights(ds, data_var, areacell, axis=["X"])
+    return fct_averager(ds, data_var, ["X"], weights=weights)
+
+
+def average_meridional(ds: xr.Dataset, data_var: str="ts", areacell: xr.DataArray=None) -> xr.Dataset:
+    if areacell is None:
+        weights = "generate"
+    else:
+        weights = generate_weights(ds, data_var, areacell, axis=["Y"])
+    return fct_averager(ds, data_var, ["Y"], weights=weights)
+
+
+def compute_standard_deviation(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None, ddof: int = 1,
+                               axis: list[Literal["X", "Y", "T", "Z"]] = None):
+    # get keys of each dimension
+    if axis is None:
+        # if axis is not given, compute the standard deviation on the time dimension
+        axis_keys = [fct_get_axis_key(ds, "T")]
+    else:
+        axis_keys = [fct_get_axis_key(ds, k) for k in axis]
+    # generate weights for given axes (dimensions)
+    weights = generate_weights(ds, data_var, areacell, axis_keys)
+    # multiply variable array with weights
+    da = ds[data_var] * weights
+    # compute the standard deviation along given axes
+    return fct_standard_deviation(da, axis_keys, ddof)
+
+
+def generate_land_sea_mask(ds: xr.Dataset, boolean: bool=False) -> xr.DataArray:
+    """
+    A function generates land sea mask (1: land, 0: sea) for given xarray Dataset,
+    assuming the given xarray dataset and has latitude and longitude coordinates. 
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        A Dataset object.
+    boolen : bool, optional
+        Set mask value to True (land) or False (sea), by default False
+        
+    Returns
+    -------
+    xr.DataArray
+        A DataArray of land sea mask (1: land, 0: sea)
+    """
+    # Create a land-sea mask using regionmask
+    land_mask = regionmask.defined_regions.natural_earth_v5_0_0.land_110
+
+    # Get the longitude and latitude from the xarray dataset  
+    lon = fct_get_longitude(ds)
+    lat = fct_get_latitude(ds)
+
+    # Mask the land-sea mask to match the dataset's coordinates
+    land_sea_mask = land_mask.mask(lon, lat)
+    
+    if not boolean:
+        # Convert the land-sea mask to a boolean mask
+        land_sea_mask = fct_where_xarray(land_sea_mask, 0, 1)  
+
+    return land_sea_mask
 
 
 def generate_uniform_grid(lat1: float, lat2: float, lon1: float, lon2: float,
@@ -77,20 +160,14 @@ def generate_weights(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = Non
     return weights
 
 
-def compute_standard_deviation(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None, ddof: int = 1,
-                               axis: list[Literal["X", "Y", "T", "Z"]] = None):
-    # get keys of each dimension
-    if axis is None:
-        # if axis is not given, compute the standard deviation on the time dimension
-        axis_keys = [fct_get_axis_key(ds, "T")]
-    else:
-        axis_keys = [fct_get_axis_key(ds, k) for k in axis]
-    # generate weights for given axes (dimensions)
-    weights = generate_weights(ds, data_var, areacell, axis_keys)
-    # multiply variable array with weights
-    da = ds[data_var] * weights
-    # compute the standard deviation along given axes
-    return fct_standard_deviation(da, axis_keys, ddof)
+def save_netcdf(ds, output_file, list_of_variables: list[str]=None, list_of_variable_attributes: list[dict]=None, global_attributes: dict=None):
+    if global_attributes is not None:
+        fct_attrs_update_global(ds, global_attributes)
+        
+    if list_of_variables is not None:
+        for (variable, variable_attributes) in zip(list_of_variables, list_of_variable_attributes):
+            fct_attrs_update_variable(ds, variable, variable_attributes)
+    fct_dataset_to_netcdf(ds, output_file, list_of_variables)
 
 
 
@@ -258,210 +335,6 @@ dict_operations = {"divide": operation_divide, "minus": operation_subtract, "mul
                    "plus": operation_add}
 
 
-def compute_annual_cycle(tab):
-    """
-    #################################################################################
-    Description:
-    Computes the annual cycle (climatological value of each calendar month) of tab
-    #################################################################################
-
-    :param tab: masked_array
-    :return: tab: array
-        array of the monthly annual cycle
-    """
-    initorder = tab.getOrder()
-    tab = tab.reorder("t...")
-    axes = tab.getAxisList()
-    time_ax = tab.getTime().asComponentTime()
-    months = MV2array(list(tt.month for tt in time_ax))
-    cyc = []
-    for ii in range(12):
-        ids = MV2compress(months == (ii + 1), list(range(len(tab))))
-        tmp = MV2take(tab, ids, axis=0)
-        # tmp = tab.compress(months == (ii + 1), axis=0)
-        tmp = MV2average(tmp, axis=0)
-        cyc.append(tmp)
-        del tmp
-    time = CDMS2createAxis(list(range(12)), id="time")
-    moy = CDMS2createVariable(MV2array(cyc), axes=[time] + axes[1:], grid=tab.getGrid(), attributes=tab.attributes)
-    moy = moy.reorder(initorder)
-    time = CDMS2createAxis(list(range(12)), id="months")
-    moy.setAxis(get_num_axis(moy, "time"), time)
-    return moy
-
-
-def compute_interannual_anomalies(tab):
-    """
-    #################################################################################
-    Description:
-    Computes interannual anomalies
-    #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.ANNUALCYCLE.departures)
-    """
-    return cdutil.ANNUALCYCLE.departures(tab)
-
-
-def apply_landmask(tab, landmask, maskland=True, maskocean=False):
-    """
-    #################################################################################
-    Description:
-    Applies the landmask on the given tab
-        if maskland is True, mask where landmask==100
-        if maskocean is True, mask where landmask==0
-    #################################################################################
-
-    :param tab: masked_array
-    :param landmask: masked_array
-    :param maskland: boolean, optional
-        masks land points
-        default value is True
-    :param maskocean: boolean, optional
-        masks ocean points
-        default value is False
-
-    :return: tab: masked_array
-        masked_array where land points and/or ocean points are masked
-    """
-    keyerror = None
-    if maskland is True or maskocean is True:
-        if tab.getGrid().shape != landmask.getGrid().shape:
-            keyerror = "tab (" + str(tab.getGrid().shape) + ") and landmask (" + str(landmask.getGrid().shape) + \
-                       ") are not on the same grid"
-            list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": applying landmask",
-                            str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask",
-                            str().ljust(5) + "this metric will be skipped"]
-            EnsoErrorsWarnings.my_warning(list_strings)
-        else:
-            landmask_nd = MV2zeros(tab.shape)
-            if landmask_nd.shape == landmask.shape:
-                landmask_nd = copy.copy(landmask)
-            else:
-                try:
-                    landmask_nd[:] = landmask
-                except:
-                    try:
-                        landmask_nd[:, :] = landmask
-                    except:
-                        keyerror = "ApplyLandmask: tab must be more than 4D and this is not taken into account yet (" + \
-                                   str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
-                        list_strings = [
-                            "ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": landmask shape",
-                            str().ljust(5) + keyerror, str().ljust(5) + "cannot reshape landmask"]
-                        EnsoErrorsWarnings.my_warning(list_strings)
-            if keyerror is None:
-                # if land = 100 instead of 1, divides landmask by 100
-                if (MV2min(landmask) == 0 and MV2max(landmask) == 100) or \
-                        ("units" in landmask.listattributes() and landmask.units == "%"):
-                    landmask_nd = landmask_nd / 100.
-                if maskland is True:
-                    tab = MV2masked_where(landmask_nd >= 0.2, tab)
-                if maskocean is True:
-                    tab = MV2masked_where(landmask_nd <= 0.8, tab)
-    return tab, keyerror
-
-
-def apply_landmask_to_area(area, landmask, maskland=True, maskocean=False):
-    """
-    #################################################################################
-    Description:
-    Applies the landmask on the given tab
-        if maskland is True, mask where landmask==1 and area=area*(1-landmask) (to weight island and coastal points)
-        if maskocean is True, mask where landmask==0 and area=area*landmask (to weight island and coastal points)
-    #################################################################################
-
-    :param area: masked_array
-        areacell
-    :param landmask: masked_array
-    :param maskland: boolean, optional
-        masks land points and weights island and coastal points
-        default value is True
-    :param maskocean: boolean, optional
-        masks ocean points and weights island and coastal points
-        default value is False
-
-    :return: tab: masked_array
-        masked_array where land points and/or ocean points are masked
-    """
-    keyerror = None
-    if maskland is True or maskocean is True:
-        if area.getGrid().shape != landmask.getGrid().shape:
-            keyerror = "ApplyLandmaskToArea: area (" + str(area.getGrid().shape) + ") and landmask (" + \
-                       str(landmask.getGrid().shape) + ") are not on the same grid"
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": applying landmask to areacell",
-                str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask to areacell"]
-            EnsoErrorsWarnings.my_warning(list_strings)
-        if keyerror is None:
-            # if land = 100 instead of 1, divides landmask by 100
-            if (MV2min(landmask) == 0 and MV2max(landmask) == 100) or \
-                    ("units" in landmask.listattributes() and landmask.units == "%"):
-                landmask = landmask / 100.
-            if maskland is True:
-                area = MV2masked_where(landmask >= 0.2, area)
-                area = MV2multiply(area, 1 - landmask)
-            if maskocean is True:
-                area = MV2masked_where(landmask <= 0.8, area)
-                area = MV2multiply(area, landmask)
-    return area, keyerror
-
-
-def average_horizontal(tab, areacell=None, region=None, **kwargs):
-    """
-    #################################################################################
-    Description:
-    Averages along 'xy' axis
-    #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.averager)
-    """
-    keyerror = None
-    lat_num = get_num_axis(tab, "latitude")
-    lon_num = get_num_axis(tab, "longitude")
-    tmp = sorted([lat_num, lon_num])
-    snum = str(tmp[0]) + str(tmp[1])
-    if areacell is None or tab.getGrid().shape != areacell.getGrid().shape:
-        print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib average_horizontal" + "\033[0m")
-        if areacell is not None and tab.getGrid().shape != areacell.getGrid().shape:
-            print("\033[93m" + str().ljust(25) + "tab.grid " + str(tab.getGrid().shape) +
-                  " is not the same as areacell.grid " + str(areacell.getGrid().shape) + " \033[0m")
-        try:
-            averaged_tab = cdutil.averager(tab, axis="xy", weights="weighted", action="average")
-        except:
-            try:
-                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
-            except:
-                if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                    kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                               "newgrid_name": "generic_1x1deg"}
-                else:
-                    kwargs2 = kwargs["regridding"]
-                kwargs2["newgrid_name"] = \
-                    find_closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
-                print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
-                      " to perform average \033[0m")
-                tmp = regridder(tab, None, region=region, **kwargs2)
-                try:
-                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
-                except:
-                    keyerror = "cannot perform horizontal average"
-                    averaged_tab = None
-                    list_strings = [
-                        "ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": horizontal average",
-                        str().ljust(5) + "cdutil.averager cannot perform horizontal average"]
-                    EnsoErrorsWarnings.my_warning(list_strings)
-    else:
-        averaged_tab = MV2multiply(tab, areacell)
-        for elt in snum[::-1]:
-            averaged_tab = MV2sum(averaged_tab, axis=int(elt))
-        averaged_tab = averaged_tab / float(MV2sum(areacell))
-    return averaged_tab, keyerror
-
-
 def averager_polygon(larray, larea, lregion, input_region="global2", **kwargs):
     """
     #################################################################################
@@ -624,33 +497,6 @@ def averager_polygon(larray, larea, lregion, input_region="global2", **kwargs):
     return larray_out, keyerror
 
 
-def average_temporal(tab, areacell=None, **kwargs):
-    """
-    #################################################################################
-    Description:
-    Averages along 't' axis
-    #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.averager)
-    """
-    keyerror = None
-    try:
-        averaged_tab = cdutil.averager(tab, axis="t")
-    except:
-        time_num = get_num_axis(tab, "time")
-        try:
-            averaged_tab = cdutil.averager(tab, axis=str(time_num))
-        except:
-            keyerror = "cannot perform temporal average"
-            averaged_tab = None
-            list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": temporal average",
-                            str().ljust(5) + "cannot perform temporal average"]
-            EnsoErrorsWarnings.my_warning(list_strings)
-    return averaged_tab, keyerror
-
-
 def check_units(tab, var_name, name_in_file, units, return_tab_only=True, **kwargs):
     """
     #################################################################################
@@ -789,20 +635,6 @@ def check_units(tab, var_name, name_in_file, units, return_tab_only=True, **kwar
         return tab, units, keyerror
 
 
-def create_array_ones(tab, mid="new_variable_ones"):
-    """
-    #################################################################################
-    Description:
-    Create a masked_array filled with ones with the same properties as tab (shape, axes, grid, mask)
-    #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.ones)
-    """
-    return CDMS2createVariable(MV2ones(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=mid)
-
-
 def detrendder(tab, info, axis=0, method="linear", bp=0):
     """
     #################################################################################
@@ -851,99 +683,6 @@ def detrendder(tab, info, axis=0, method="linear", bp=0):
         else:
             info = info + ", the mean value of the time series is subtracted"
     return new_tab, info, keyerror
-
-
-def estimate_landmask(d):
-    """
-    #################################################################################
-    Description:
-    Estimate landmask (when landmask was not given)
-    Uses cdutil (uvcdat) to create estimated landmask for model resolution
-    #################################################################################
-
-    :param d: array (CDMS)
-        model variable
-
-    :return landmask: masked_array
-        masked_array containing landmask
-    """
-    n = 1
-    lmsk = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n)) * 100.0
-    lmsk[:] = lmsk.filled(100.0)
-    lmsk.setAxis(0, d.getAxis(1))
-    lmsk.setAxis(1, d.getAxis(2))
-    lmsk.id = "sftlf"
-    return lmsk
-
-
-def get_min_and_max(tab):
-    return [float(MV2min(tab)), float(MV2max(tab))]
-
-
-def get_num_axis(tab, name_axis):
-    """
-    #################################################################################
-    Description:
-    Finds the number of the axis named "name_axis"
-    #################################################################################
-
-    :param tab: array
-        tab of data to normalize by the standard deviation
-    :param name_axis: string
-        name of an axis
-        e.g., name_axis="latitude"
-    :return number: int
-        position of the axis named "name_axis"
-    """
-    num = None
-    if name_axis == "depth":
-        axis_nick = "lev"
-        axis_nicks = ["Level", "st_ocean", "sw_ocean", "z", "Z"]
-    elif name_axis == "latitude":
-        axis_nick = "lat"
-        axis_nicks = ["j", "Latitude", "y", "Y", "yt_ocean", "yu_ocean"]
-    elif name_axis == "longitude":
-        axis_nick = "lon"
-        axis_nicks = ["i", "Longitude", "x", "X", "xt_ocean", "xu_ocean"]
-    elif name_axis == "time":
-        axis_nick = "time"
-        axis_nicks = ["t", "T", "Time"]
-    else:
-        axis_nick = None
-        axis_nicks = [None]
-        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": axis",
-                        str().ljust(5) + "unknown axis named: " + str(name_axis),
-                        str().ljust(5) + "known names: depth, latitude, longitude, time"]
-        EnsoErrorsWarnings.my_error(list_strings)
-    for nn in range(len(tab.shape)):
-        if axis_nick in str(tab.getAxisList()[nn].id).lower():
-            num = nn
-            break
-    if num is None:
-        for nn in range(len(tab.shape)):
-            for ax in axis_nicks:
-                if ax == str(tab.getAxisList()[nn].id).lower():
-                    num = nn
-                    break
-    if num is None:
-        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": axis",
-                        str().ljust(5) + "cannot find axis named: " + str(name_axis),
-                        str().ljust(5) + "axes: " + str(tab.getAxisList())]
-        EnsoErrorsWarnings.my_error(list_strings)
-    return num
-
-
-def get_time_bounds(tab):
-    """
-    #################################################################################
-    Description:
-    Finds first and last dates of tab's time axis, tab must be a uvcdat masked_array
-    #################################################################################
-
-    Returns a tuple of strings: e.g., ('1979-1-1 11:59:60.0', '2016-12-31 11:59:60.0')
-    """
-    time = tab.getTime().asComponentTime()
-    return str(time[0]), str(time[-1])
 
 
 def find_closest_grid(region, nlat, nlon):
@@ -1500,272 +1239,6 @@ def read_mask_area(tab, name_data, file_data, type_data, region, file_area="", n
     else:
         keyerror = None
     return tab_out, areacell, keyerror
-
-
-def save_netcdf(netcdf_name, var1=None, var1_attributes={}, var1_name="", var1_time_name=None, var2=None,
-               var2_attributes={}, var2_name="", var2_time_name=None, var3=None, var3_attributes={}, var3_name="",
-               var3_time_name=None, var4=None, var4_attributes={}, var4_name="", var4_time_name=None, var5=None,
-               var5_attributes={}, var5_name="", var5_time_name=None, var6=None, var6_attributes={}, var6_name="",
-               var6_time_name=None, var7=None, var7_attributes={}, var7_name="", var7_time_name=None, var8=None,
-               var8_attributes={}, var8_name="", var8_time_name=None, var9=None, var9_attributes={}, var9_name="",
-               var9_time_name=None, var10=None, var10_attributes={}, var10_name="", var10_time_name=None, var11=None,
-               var11_attributes={}, var11_name="", var11_time_name=None, var12=None, var12_attributes={}, var12_name="",
-               var12_time_name=None, frequency="monthly", global_attributes={}, **kwargs):
-    if os__path__isdir(ntpath.dirname(netcdf_name)) is not True:
-        list_strings = [
-            "ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": given path does not exist",
-            str().ljust(5) + "netcdf_name = " + str(netcdf_name)]
-        EnsoErrorsWarnings.my_error(list_strings)
-    if os__path__isfile(netcdf_name) is True:
-        o = CDMS2open(netcdf_name, "a")
-    else:
-        o = CDMS2open(netcdf_name, "w+")
-    if var1 is not None:
-        if var1_name == "":
-            var1_name = var1.id
-        if var1_time_name is not None:
-            var1 = time_but_not_time(var1, var1_time_name, frequency)
-        o.write(var1, attributes=var1_attributes, dtype="float32", id=var1_name)
-    if var2 is not None:
-        if var2_name == "":
-            var2_name = var2.id
-        if var2_time_name is not None:
-            var2 = time_but_not_time(var2, var2_time_name, frequency)
-        o.write(var2, attributes=var2_attributes, dtype="float32", id=var2_name)
-    if var3 is not None:
-        if var3_name == "":
-            var3_name = var3.id
-        if var3_time_name is not None:
-            var3 = time_but_not_time(var3, var3_time_name, frequency)
-        o.write(var3, attributes=var3_attributes, dtype="float32", id=var3_name)
-    if var4 is not None:
-        if var4_name == "":
-            var4_name = var4.id
-        if var4_time_name is not None:
-            var4 = time_but_not_time(var4, var4_time_name, frequency)
-        o.write(var4, attributes=var4_attributes, dtype="float32", id=var4_name)
-    if var5 is not None:
-        if var5_name == "":
-            var5_name = var5.id
-        if var5_time_name is not None:
-            var5 = time_but_not_time(var5, var5_time_name, frequency)
-        o.write(var5, attributes=var5_attributes, dtype="float32", id=var5_name)
-    if var6 is not None:
-        if var6_name == "":
-            var6_name = var6.id
-        if var6_time_name is not None:
-            var6 = time_but_not_time(var6, var6_time_name, frequency)
-        o.write(var6, attributes=var6_attributes, dtype="float32", id=var6_name)
-    if var7 is not None:
-        if var7_name == "":
-            var7_name = var7.id
-        if var7_time_name is not None:
-            var7 = time_but_not_time(var7, var7_time_name, frequency)
-        o.write(var7, attributes=var7_attributes, dtype="float32", id=var7_name)
-    if var8 is not None:
-        if var8_name == "":
-            var8_name = var8.id
-        if var8_time_name is not None:
-            var8 = time_but_not_time(var8, var8_time_name, frequency)
-        o.write(var8, attributes=var8_attributes, dtype="float32", id=var8_name)
-    if var9 is not None:
-        if var9_name == "":
-            var9_name = var9.id
-        if var9_time_name is not None:
-            var9 = time_but_not_time(var9, var9_time_name, frequency)
-        o.write(var9, attributes=var9_attributes, dtype="float32", id=var9_name)
-    if var10 is not None:
-        if var10_name == "":
-            var10_name = var10.id
-        if var10_time_name is not None:
-            var10 = time_but_not_time(var10, var10_time_name, frequency)
-        o.write(var10, attributes=var10_attributes, dtype="float32", id=var10_name)
-    if var11 is not None:
-        if var11_name == "":
-            var11_name = var11.id
-        if var11_time_name is not None:
-            var11 = time_but_not_time(var11, var11_time_name, frequency)
-        o.write(var11, attributes=var11_attributes, dtype="float32", id=var11_name)
-    if var12 is not None:
-        if var12_name == "":
-            var12_name = var12.id
-        if var12_time_name is not None:
-            var12 = time_but_not_time(var12, var12_time_name, frequency)
-        o.write(var12, attributes=var12_attributes, dtype="float32", id=var12_name)
-    my_keys = sorted(
-        [key for key in list(kwargs.keys()) if "var" in key and str(key.replace("var", "")).isdigit() is True],
-        key=lambda v: v.upper())
-    for key in my_keys:
-        if kwargs[key] is not None:
-            if key + "_name" not in list(kwargs.keys()) or (
-                    key + "_name" in list(kwargs.keys()) and kwargs[key + "_name"] == ""):
-                kwargs[key + "_name"] = kwargs[key].id
-            if key + "_time_name" in list(kwargs.keys()) and kwargs[key + "_time_name"] is not None:
-                kwargs[key] = time_but_not_time(kwargs[key], kwargs[key + "_time_name"], frequency)
-            if key + "_attributes" not in list(kwargs.keys()):
-                kwargs[key + "_attributes"] = {}
-            o.write(kwargs[key], attributes=kwargs[key + "_attributes"], dtype="float32", id=kwargs[key + "_name"])
-    for att in list(global_attributes.keys()):
-        o.__setattr__(att, global_attributes[att])
-    o.close()
-    return
-
-
-def regridder(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridder="cdms", regridTool="esmf",
-           regridMethod="linear", **kwargs):
-    """
-    #################################################################################
-    Description:
-    Regrids 'tab_to_regrid' to 'togrid'
-    #################################################################################
-
-    for more information:
-    import cdms2
-    help(cdms2.avariable)
-
-    :param tab_to_regrid: masked_array
-        masked_array to regrid (must include a CDMS grid!)
-    :param newgrid: CDMS grid
-        destination grid
-    :param missing: float, optional
-        missing values (missing data value, if any)
-    :param order: string, optional
-        axis order (form "tzyx", "tyx", etc.)
-    :param mask: array of booleans, optional
-        mask of the new grid (either 2-D or the same shape as togrid)
-    :param regridder: string, optional
-        regridders (either 'cdms', 'cdmsHorizontal')
-        default value is 'cdms'
-    :param regridTool: string, optional
-        only if regrider is set to 'cdms'
-        regridding tools (either 'regrid2', 'esmf', 'libcf')
-        default value is 'esmf'
-    :param regridMethod: string, optional
-        regridding methods depend on regridder and regridTool
-        'cdms'
-            regridTool='regrid2' -> "linear"
-            regridTool='esmf'    -> 'conserve', "linear", 'patch'
-            regridTool='libcf'   -> "linear"
-        'cdmsHorizontal' -> None
-        default value is "linear"
-
-    usual kwargs:
-    :param newgrid_name: string, optional
-        if "newgrid" is not defined (is string) this will be used to create a grid:
-            this string must contain two keywords: the grid type and the resolution (same resolution in lon and lat)
-            grid type  -> 'equalarea', "gaussian", 'generic', 'uniform'
-            resolution -> '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
-            e.g., newgrid_name='gaussian 1x1deg'
-        default value is 'generic 1x1deg'
-    :param region: string, optional
-        if "newgrid" is not defined (is string) this will be used to create a grid
-        name of a region, domain where the grid will be defined, must be defined in EnsoCollectionsLib.ReferenceRegions
-
-    :return new_tab: masked_array
-        tab_to_regrid regridded on newgrid
-    """
-    known_args = {"newgrid_name", "region"}
-    extra_args = set(kwargs) - known_args
-    if extra_args:
-        EnsoErrorsWarnings.unknown_key_arg(extra_args, inspect__stack())
-    # test given arguments
-    known_regridder = ["cdms", "cdmsHorizontal"]
-    if regridder not in known_regridder:
-        list_strings = [
-            "ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": regridder",
-            str().ljust(5) + "unknown regridder: " + str(regridder),
-            str().ljust(10) + "known regridder: " + str(known_regridder)]
-        EnsoErrorsWarnings.my_error(list_strings)
-    elif regridder == "cdms":
-        if regridTool in ["regrid2", "libcf"]:
-            list_method = [None, "linear"]
-        elif regridTool == "esmf":
-            list_method = [None, "conserve", "linear", "patch"]
-        if (regridTool is not None) and (regridTool not in ["regrid2", "esmf", "libcf"]):
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": regridTool",
-                str().ljust(5) + "unknown regridTool: " + str(regridTool),
-                str().ljust(10) + "known regridTool: " + str(["regrid2", "esmf", "libcf"])]
-            EnsoErrorsWarnings.my_error(list_strings)
-        elif regridMethod not in list_method:
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.message_formating(inspect__stack()) + ": regridMethod",
-                str().ljust(5) + "unknown regridMethod (" + str(regridMethod) + ") for this regridTool ("
-                + str(regridTool) + ")",
-                str().ljust(10) + "known regridMethod: " + str(list_method)]
-            EnsoErrorsWarnings.my_error(list_strings)
-    # test the given "newgrid"
-    if isinstance(newgrid, str) or newgrid is None:
-        #
-        # newgrid is not a grid, so a grid will be created
-        # to do this, kwargs["newgrid_name"] and kwargs['region'] must be defined
-        #
-        # define the grid type
-        GridType = "generic"
-        for gtype in ["equalarea", "gaussian", "generic", "uniform"]:
-            if gtype in kwargs["newgrid_name"]:
-                GridType = gtype
-                break
-        # define resolution (same resolution in lon and lat)
-        GridRes = 1.
-        for res in ["0.25x0.25deg", "0.5x0.5deg", "0.75x0.75deg", "1x1deg", "1.25x1.25deg", "1.5x1.5deg",
-                    "1.75x1.75deg", "2x2deg", "2.25x2.25deg", "2.5x2.5deg", "2.75x2.75deg"]:
-            if res in kwargs["newgrid_name"]:
-                if res == "0.25x0.25deg":
-                    GridRes = 0.25
-                elif res == "0.5x0.5deg":
-                    GridRes = 0.5
-                elif res == "0.75x0.75deg":
-                    GridRes = 0.75
-                elif res == "1x1deg":
-                    GridRes = 1.
-                elif res == "1.25x1.25deg":
-                    GridRes = 1.25
-                elif res == "1.5x1.5deg":
-                    GridRes = 1.5
-                elif res == "1.75x1.75deg":
-                    GridRes = 1.75
-                elif res == "2x2deg":
-                    GridRes = 2.
-                elif res == "2.25x2.25deg":
-                    GridRes = 2.25
-                elif res == "2.5x2.5deg":
-                    GridRes = 2.5
-                else:
-                    GridRes = 2.75
-                break
-        # define bounds of 'region'
-        region_ref = ReferenceRegions(kwargs["region"])
-        lat1, lat2 = region_ref["latitude"][0], region_ref["latitude"][1]
-        lon1, lon2 = region_ref["longitude"][0], region_ref["longitude"][1]
-        # create uniform axis
-        nlat = lat2 - lat1
-        lat = CDMS2createUniformLatitudeAxis(lat1 + (GridRes / 2.), nlat, GridRes)
-        nlon = lon2 - lon1
-        lon = CDMS2createUniformLongitudeAxis(lon1 + (GridRes / 2.), nlon, GridRes)
-        # create grid
-        newgrid = CDMS2createRectGrid(lat, lon, "yx", type=GridType, mask=None)
-        newgrid.id = kwargs["newgrid_name"]
-    #
-    # regrid
-    #
-    if regridder == "cdms":
-        axis = tab_to_regrid.getAxis(0)
-        idname = copy.copy(axis.id)
-        if len(tab_to_regrid.shape) == 3 and (axis.id == "months" or axis.id == "years"):
-            axis.id = "time"
-            tab_to_regrid.setAxis(0, axis)
-        new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
-                                       regridMethod=regridMethod)
-        axis = tab_to_regrid.getAxis(0)
-        axis.id = idname
-        tab_to_regrid.setAxis(0, axis)
-        if tab_to_regrid.getGrid().shape == newgrid.shape:
-            new_tab = MV2masked_where(tab_to_regrid.mask, new_tab)
-    else:
-        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid)
-        new_tab = regridFCT(tab_to_regrid)
-    return new_tab
 
 
 def smoother_gaussian(tab, axis=0, window=5):
