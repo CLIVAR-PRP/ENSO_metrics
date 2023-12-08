@@ -1,16 +1,107 @@
 # -*- coding:UTF-8 -*-
 
 # basic python
+from copy import deepcopy
+from typing import Literal
+# numpy
+import numpy as np
+# xarray
+import xarray as xr
+# xCDAT
+import xcdat as xc
+# ENSO_metrics
+from . enso_xcdat_base import fct_array_ones, fct_averager, fct_get_axis_key, fct_get_latitude, \
+    fct_get_longitude, fct_numpy_to_xarray, fct_sum, fct_standard_deviation, fct_uniform_grid, \
+    fct_xarray_to_numpy
+
+
+# ---------------------------------------------------------------------------------------------------------------------#
+# xarray / xcdat data processing functions
+# ---------------------------------------------------------------------------------------------------------------------#
+def average_horizontal(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None) -> xr.Dataset:
+    if areacell is None:
+        weights = "generate"
+    else:
+        weights = generate_weights(ds, data_var, areacell, axis=["X", "Y"])
+    return fct_averager(ds, data_var, weights=weights)
+
+
+def generate_uniform_grid(lat1: float, lat2: float, lon1: float, lon2: float,
+                          target_grid: str = "1x1deg") -> xr.Dataset:
+    # split resolution name
+    resolution = target_grid.split("x")
+    # remove 'deg'
+    resolution = [k.replace("deg", "") for k in resolution]
+    # str to float
+    resolution = [float(k) for k in resolution]
+    # get meridional and zonal resolutions
+    lat_res = resolution[0]
+    lon_res = resolution[1]
+    # calculate the center of the first meridional and zonal grid points
+    start_lat = lat1 + lat_res / 2.
+    start_lon = lon1 + lon_res / 2.
+    # generate uniform grid
+    return fct_uniform_grid(start_lat, lat2, lat_res, start_lon, lon1, lon_res)
+
+
+def generate_weights(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None,
+                     axis: list[str] = None) -> xr.DataArray:
+    if axis is None:
+        axis = ["X", "Y"]
+    if areacell is None or axis == ["T"]:
+        # areacell is not provided so weights cannot be computed
+        # or
+        # time axis is used and so weights are not needed (each time step has the same weight)
+        weights = fct_array_ones(ds[data_var])
+    else:
+        # get the name of the given axis (T, X, Y, Z)
+        lon_key = fct_get_axis_key(areacell, "X")
+        lat_key = fct_get_axis_key(areacell, "Y")
+        if axis == ["X"] or axis == ["Y"]:
+            # weights are generated for operations along a single axis
+            if axis == ["X"]:
+                # zonal operation: weights == 1 when summed along X axis
+                total_area = fct_sum(areacell, lon_key)
+                weights_numpy_2d = fct_xarray_to_numpy(areacell) / fct_xarray_to_numpy(total_area)[:, np.newaxis]
+            else:
+                # meridional operation: weights == 1 when summed along Y axis
+                total_area = fct_sum(areacell, lat_key)
+                weights_numpy_2d = areacell.to_numpy() / total_area.to_numpy()[np.newaxis, :]
+            # create DataArray from numpy array
+            weights = fct_numpy_to_xarray(weights_numpy_2d, (lat_key, lon_key),
+                                            {lat_key: fct_get_latitude(ds), lon_key: fct_get_longitude(ds)})
+        else:
+            # horizontal operation: weights == 1 when summed
+            total_area = fct_sum(areacell, (lat_key, lon_key))
+            weights = areacell / total_area
+    return weights
+
+
+def compute_standard_deviation(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None, ddof: int = 1,
+                               axis: list[Literal["X", "Y", "T", "Z"]] = None):
+    # get keys of each dimension
+    if axis is None:
+        # if axis is not given, compute the standard deviation on the time dimension
+        axis_keys = [fct_get_axis_key(ds, "T")]
+    else:
+        axis_keys = [fct_get_axis_key(ds, k) for k in axis]
+    # generate weights for given axes (dimensions)
+    weights = generate_weights(ds, data_var, areacell, axis_keys)
+    # multiply variable array with weights
+    da = ds[data_var] * weights
+    # compute the standard deviation along given axes
+    return fct_standard_deviation(da, axis_keys, ddof)
+
+
+
+# basic python
 import copy
 from inspect import stack as inspect__stack
 import ntpath
 from os.path import isdir as os__path__isdir
 from os.path import isfile as os__path__isfile
-
-
 # matplotlib
 from matplotlib.path import Path as matplotlib__path
-
 # numpy
 from numpy import arange as numpy__arange
 from numpy import exp as numpy__exp
@@ -81,6 +172,9 @@ def MV2zeros():
     return
 def REGRID2horizontal__Horizontal():
     return
+
+
+
 
 # math
 def operation_add(tab, number_or_tab):
