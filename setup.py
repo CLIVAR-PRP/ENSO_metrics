@@ -30,7 +30,7 @@ p = subprocess.Popen(
 try:
     commit = str(p.stdout.readlines()[0].split()[1])
 except:
-    commit = ""
+    commit = "unknown"
 f = open("lib/version.py", "w")
 print("__version__ = '%s'" % Version, file=f)
 print("__git_tag_describe__ = '%s'" % descr, file=f)
