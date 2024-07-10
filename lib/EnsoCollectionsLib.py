@@ -1041,30 +1041,29 @@ def defCollection(mc=True):
 # List of reference observations for each variables
 def ReferenceObservations(dataset=True):
     dict_ref_obs = {
-        '20CRv2': {
-            'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.20thC_ReanV2.monolevel.mm.html',
-            'file_name': '<var_name>' + '*.mon.mean.nc',
+        '20CRv2c': {
+            'website': 'https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22realm%22%3A%22atmos%22%2C%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%22reanalysis%22%2C%22source_id%22%3A%2220CRv2c%22%7D',
+            'file_name': '<var_name>' + '_Amon_reanalysis_20CRv2c_185101-201212.nc',
             'variable_name_in_file': {
-                'landmask': {'var_name': 'land'},
-                'lhf': {'var_name': 'lhtfl'},
-                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
-                # lwr = dlwrf - ulwrf
-                'lwr': {'var_name': ['dlwrf', 'ulwrf'], 'algebric_calculation': ['plus', 'minus']},
-                'pr': {'var_name': 'prate'},
-                'slp': {'var_name': 'press'},
-                'shf': {'var_name': 'shtfl'},
-                'sst': {'var_name': 'air'},
-                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
-                # swr = dswrf - uswrf
-                'swr': {'var_name': ['dswrf', 'uswrf'], 'algebric_calculation': ['plus', 'minus']},
-                'taux': {'var_name': 'uflx'},
-                'tauy': {'var_name': 'vflx'},
-                # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
-                # tfh = lhtfl + shtfl + dlwrf - ulwrf + dswrf - uswrf
+                'lhf': {'var_name': 'hfls'},
+                # longwave radiation computed from these variables IN THAT ORDER
+                # lwr = rlds - rlus
+                'lwr': {'var_name': ['rlds', 'rlus'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'pr'},
+                'shf': {'var_name': 'hfss'},
+                'sst': {'var_name': 'ts'},
+                # shortwave radiation computed from these variables IN THAT ORDER
+                # swr = rsds - rsus
+                'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': ['plus', 'minus']},
+                'taux': {'var_name': 'tauu'},
+                'tauy': {'var_name': 'tauv'},
+                # total heat flux computed from these variables IN THAT ORDER
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
                 'thf': {
-                    'var_name': ['lhtfl', 'shtfl', 'dlwrf', 'ulwrf', 'dswrf', 'uswrf'],
+                    'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
                     'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
                 },
+                'ts': {'var_name': 'ts'},
             },
         },
         '20CRv3': {
@@ -1073,17 +1072,17 @@ def ReferenceObservations(dataset=True):
             'variable_name_in_file': {
                 'landmask': {'var_name': 'land'},
                 'lhf': {'var_name': 'lhtfl'},
-                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # longwave radiation computed from these variables IN THAT ORDER
                 # lwr = dlwrf - ulwrf
                 'lwr': {'var_name': ['dlwrf', 'ulwrf'], 'algebric_calculation': ['plus', 'minus']},
                 'pr': {'var_name': 'prate'},
                 'slp': {'var_name': 'prmsl'},
                 'shf': {'var_name': 'shtfl'},
                 'sst': {'var_name': 'skt'},
-                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # shortwave radiation computed from these variables IN THAT ORDER
                 # swr = dswrf - uswrf
                 'swr': {'var_name': ['dswrf', 'uswrf'], 'algebric_calculation': ['plus', 'minus']},
-                # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # total heat flux computed from these variables IN THAT ORDER
                 # tfh = lhtfl + shtfl + dlwrf - ulwrf + dswrf - uswrf
                 'thf': {
                     'var_name': ['lhtfl', 'shtfl', 'dlwrf', 'ulwrf', 'dswrf', 'uswrf'],
@@ -1096,16 +1095,56 @@ def ReferenceObservations(dataset=True):
             'file_name': 'dt_global_allsat_msla_h_y????_m??.nc',
             'variable_name_in_file': {'ssh': {'var_name': 'sla'}, },
         },
-        'CFSR': {
-            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
-            'file_name': '<var_name>' + '_Omon_reanalysis_CFSR_*.nc',
+        'CERA-20C': {
+            'website': 'https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%5B%22ORAreanalysis%22%2C%22reanalysis%22%5D%2C%22realm%22%3A%5B%22ocean%22%2C%22atmos%22%5D%2C%22experiment%22%3A%22CERA-20C%22%7D',
+            'file_name': '<var_name>' + '_Amon_reanalysis_CERA-20C_190101-201012.nc',
             'variable_name_in_file': {
-                'ssh': {'var_name': 'zos'},
-                'so': {'var_name': 'so'},
-                'thetao': {'var_name': 'thetao'},
-                'thf': {'var_name': 'hfds'},  # I'm not sure yet if it is the total heat flux
-                'uo': {'var_name': 'uo'},
-                'vo': {'var_name': 'vo'},
+                'lhf': {'var_name': 'hfls'},
+                # longwave radiation computed from these variables IN THAT ORDER
+                # lwr = rlds - rlus
+                'lwr': {'var_name': ['rlds', 'rlus'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'pr'},
+                'shf': {'var_name': 'hfss'},
+                'sst': {'var_name': 'ts'},
+                # shortwave radiation computed from these variables IN THAT ORDER
+                # swr = rsds - rsus
+                'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': ['plus', 'minus']},
+                'taux': {'var_name': 'tauu'},
+                'tauy': {'var_name': 'tauv'},
+                # total heat flux computed from these variables IN THAT ORDER
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
+                'thf': {
+                    'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
+                'ts': {'var_name': 'ts'},
+            },
+        },
+        'CFSR': {
+            'website': 'see https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22experiment%22%3A%22CFSR%22%2C%22realm%22%3A%5B%22atmos%22%2C%22ocean%22%5D%2C%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%22reanalysis%22%7D',
+            'file_name': '<var_name>' + '_?mon_reanalysis_CFSR_197901-201912.nc',
+            'variable_name_in_file': {
+                "lhf": {"var_name": "hfls"},
+                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # lwr = rlds - rlus
+                "lwr": {"var_name": ["rlds", "rlus"], "algebric_calculation": ["plus", "minus"]},
+                "pr": {"var_name": "pr"},
+                "shf": {"var_name": "hfss"},
+                "slp": {"var_name": "psl"},
+                "ssh": {"var_name": "zos"},
+                "sst": {"var_name": "ts"},
+                # shortwave radiation computed from these variables IN THAT ORDER
+                # swr = rsds - rsus
+                "swr": {"var_name": ["rsds", "rsus"], "algebric_calculation": ["plus", "minus"]},
+                "taux": {"var_name": "tauu"},
+                "tauy": {"var_name": "tauv"},
+                # total heat flux computed from these variables IN THAT ORDER
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
+                "thf": {
+                    "var_name": ["hfls", "hfss", "rlds", "rlus", "rsds", "rsus"],
+                    "algebric_calculation": ["plus", "plus", "plus", "minus", "plus", "minus"],
+                },
+                "ts": {"var_name": "ts"},
             },
         },
         'CMAP': {
@@ -1116,84 +1155,170 @@ def ReferenceObservations(dataset=True):
             },
         },
         'ERA-Interim': {
-            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
-            'file_name': '<var_name>' + '_Amon_reanalysis_IFS-Cy31r2_*.nc',
+            'website': 'https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22source_id%22%3A%22ERA-Interim%22%2C%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%22reanalysis%22%7D',
+            'file_name': '<var_name>' + '_Amon_reanalysis_ERA-Interim_197901-201908.nc',
             'variable_name_in_file': {
-                'landmask': {'var_name': 'lsmask'},
                 'lhf': {'var_name': 'hfls'},
-                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # longwave radiation computed from these variables IN THAT ORDER
                 # lwr = rlds - rlus
-                # sometimes lwr is included in the datasets in a variable called 'rls'
                 'lwr': {'var_name': ['rlds', 'rlus'], 'algebric_calculation': ['plus', 'minus']},
                 'pr': {'var_name': 'pr'},
-                'slp': {'var_name': 'psl'},
                 'shf': {'var_name': 'hfss'},
                 'sst': {'var_name': 'ts'},
-                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # shortwave radiation computed from these variables IN THAT ORDER
                 # swr = rsds - rsus
-                # sometimes swr is included in the datasets in a variable called 'rss'
                 'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': ['plus', 'minus']},
                 'taux': {'var_name': 'tauu'},
                 'tauy': {'var_name': 'tauv'},
-                # total heat flux computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # total heat flux computed from these variables IN THAT ORDER
                 # tfh = hfls + hfss + rlds - rlus + rsds - rsus
-                # sometimes rls = rlds - rlus and rss = rsds - rsus
-                # sometimes thf is included in the datasets in a variable called 'hfds', 'netflux', 'thflx',...
                 'thf': {
                     'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
                     'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
                 },
-                'uas': {'var_name': 'uas'},
-                'vas': {'var_name': 'vas'},
+                'ts': {'var_name': 'ts'},
+            },
+        },
+        'ERA5': {
+            'website': 'https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22realm%22%3A%22atmos%22%2C%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%22reanalysis%22%2C%22experiment%22%3A%22ERA5%22%7D',
+            'file_name': '<var_name>' + '_Amon_reanalysis_ERA5_197901-202012.nc',
+            'variable_name_in_file': {
+                'lhf': {'var_name': 'hfls'},
+                # longwave radiation computed from these variables IN THAT ORDER
+                # lwr = rlds - rlus
+                'lwr': {'var_name': ['rlds', 'rlus'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'pr'},
+                'shf': {'var_name': 'hfss'},
+                'sst': {'var_name': 'ts'},
+                # shortwave radiation computed from these variables IN THAT ORDER
+                # swr = rsds - rsus
+                'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': ['plus', 'minus']},
+                'taux': {'var_name': 'tauu'},
+                'tauy': {'var_name': 'tauv'},
+                # total heat flux computed from these variables IN THAT ORDER
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
+                'thf': {
+                    'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
+                'ts': {'var_name': 'ts'},
             },
         },
         'ERSSTv5': {
-            'website': 'see https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/netcdf/',
+            'website': 'https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/netcdf/',
             'file_name': 'ersst.v5.' + '<YYYYMM>' + '.nc',
             'variable_name_in_file': {
                 'sst': {'var_name': 'sst'},
             },
         },
-        'GODAS': {
-            'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.godas.html',
-            'file_name': '<var_name>' + '_YYYY.nc',
+        'ESA-CCI-SST-v2-1': {
+            'website': 'https://aims2.llnl.gov/search?project=obs4MIPs&activeFacets=%7B%22variable%22%3A%5B%22pr%22%2C%22rlds%22%2C%22rlus%22%2C%22rsds%22%2C%22rsus%22%2C%22tos%22%5D%2C%22frequency%22%3A%22mon%22%2C%22source_id%22%3A%22ESA-CCI-SST-v2-1%22%7D',
+            'file_name': 'tos_mon_ESA-CCI-SST-v2-1_BE_gn_198109-201712.nc',
             'variable_name_in_file': {
-                'ssh': {'var_name': 'sshg'},
-                'taux': {'var_name': 'uflx'},
-                'tauy': {'var_name': 'vflx'},
-                'thf': {'var_name': 'thflx'},
+                'sst': {'var_name': 'tos'},
             },
         },
-        'GPCPv2.3': {
-            'website': 'see https://www.esrl.noaa.gov/psd/cgi-bin/db_search/DBSearch.pl?Dataset=GPCP+Version+2.3+' +
-                       'Combined+Precipitation+Dataset&group=0&submit=Search',
-            'file_name': 'precip.mon.mean.nc',
+        'GPCP-Monthly-3-2': {
+            'website': 'https://aims2.llnl.gov/search?project=obs4MIPs&activeFacets=%7B%22variable%22%3A%5B%22pr%22%2C%22rlds%22%2C%22rlus%22%2C%22rsds%22%2C%22rsus%22%2C%22tos%22%5D%2C%22frequency%22%3A%22mon%22%2C%22source_id%22%3A%22GPCP-Monthly-3-2%22%7D',
+            'file_name': 'pr_mon_GPCP-Monthly-3-2_RSS_gn_????01-????12.nc',
             'variable_name_in_file': {
-                'landmask': {'var_name': 'lsmask'},
-                'pr': {'var_name': 'precip'},
+                'pr': {'var_name': 'pr'},
             },
         },
         'HadISST': {
-            'website': 'see https://www.metoffice.gov.uk/hadobs/hadisst/data/download.html',
+            'website': 'https://www.metoffice.gov.uk/hadobs/hadisst/data/download.html',
             'file_name': 'HadISST_' + '<var_name>' + '.nc',
             'variable_name_in_file': {
                 'sst': {'var_name': 'sst'},
             },
         },
+        'JRA-55-mdl-iso': {
+            'website': 'https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22realm%22%3A%22atmos%22%2C%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%22reanalysis%22%2C%22source_id%22%3A%22JRA-55-mdl-iso%22%7D',
+            'file_name': '<var_name>' + '_Amon_reanalysis_JRA-55-mdl-iso_195801-201912.nc',
+            'variable_name_in_file': {
+                'lhf': {'var_name': 'hfls'},
+                # longwave radiation computed from these variables IN THAT ORDER
+                # lwr = rlds - rlus
+                'lwr': {'var_name': ['rlds', 'rlus'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'pr'},
+                'shf': {'var_name': 'hfss'},
+                'sst': {'var_name': 'ts'},
+                # shortwave radiation computed from these variables IN THAT ORDER
+                # swr = rsds - rsus
+                'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': ['plus', 'minus']},
+                # total heat flux computed from these variables IN THAT ORDER
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
+                'thf': {
+                    'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
+                'ts': {'var_name': 'ts'},
+            },
+        },
+        'MERRA': {
+            'website': 'https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22realm%22%3A%22atmos%22%2C%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%22reanalysis%22%2C%22experiment%22%3A%22MERRA%22%7D',
+            'file_name': '<var_name>' + '_Amon_reanalysis_MERRA_197901-201602.nc',
+            'variable_name_in_file': {
+                'lhf': {'var_name': 'hfls'},
+                # longwave radiation computed from these variables IN THAT ORDER
+                # lwr = rlds - rlus
+                'lwr': {'var_name': ['rlds', 'rlus'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'pr'},
+                'shf': {'var_name': 'hfss'},
+                'sst': {'var_name': 'ts'},
+                # shortwave radiation computed from these variables IN THAT ORDER
+                # swr = rsds - rsus
+                'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': ['plus', 'minus']},
+                'taux': {'var_name': 'tauu'},
+                'tauy': {'var_name': 'tauv'},
+                # total heat flux computed from these variables IN THAT ORDER
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
+                'thf': {
+                    'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
+                'ts': {'var_name': 'ts'},
+            },
+        },
+        'MERRA2': {
+            'website': 'https://aims2.llnl.gov/search?project=CREATE-IP&activeFacets=%7B%22realm%22%3A%22atmos%22%2C%22time_frequency%22%3A%22mon%22%2C%22product%22%3A%22reanalysis%22%2C%22experiment%22%3A%22MERRA-2%22%7D',
+            'file_name': '<var_name>' + '_Amon_reanalysis_MERRA2_198001-202012.nc',
+            'variable_name_in_file': {
+                'lhf': {'var_name': 'hfls'},
+                # longwave radiation computed from these variables IN THAT ORDER
+                # lwr = rlds - rlus
+                'lwr': {'var_name': ['rlds', 'rlus'], 'algebric_calculation': ['plus', 'minus']},
+                'pr': {'var_name': 'pr'},
+                'shf': {'var_name': 'hfss'},
+                'sst': {'var_name': 'ts'},
+                # shortwave radiation computed from these variables IN THAT ORDER
+                # swr = rsds - rsus
+                'swr': {'var_name': ['rsds', 'rsus'], 'algebric_calculation': ['plus', 'minus']},
+                'taux': {'var_name': 'tauu'},
+                'tauy': {'var_name': 'tauv'},
+                # total heat flux computed from these variables IN THAT ORDER
+                # tfh = hfls + hfss + rlds - rlus + rsds - rsus
+                'thf': {
+                    'var_name': ['hfls', 'hfss', 'rlds', 'rlus', 'rsds', 'rsus'],
+                    'algebric_calculation': ['plus', 'plus', 'plus', 'minus', 'plus', 'minus'],
+                },
+                'ts': {'var_name': 'ts'},
+            },
+        },
         'NCEP2': {
-            'website': 'see https://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis2.gaussian.html',
+            'website': 'https://www.esrl.noaa.gov/psd/data/gridded/data.ncep.reanalysis2.gaussian.html',
             'file_name': '<var_name>' + '.sfc.mon.mean.nc',
             'variable_name_in_file': {
                 'landmask': {'var_name': 'land'},
                 'lhf': {'var_name': 'lhtfl'},
-                # longwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # longwave radiation computed from these variables IN THAT ORDER
                 # lwr = rlds - rlus
                 'lwr': {'var_name': ['dlwrf', 'ulwrf'], 'algebric_calculation': ['plus', 'minus']},
                 'pr': {'var_name': 'prate'},
                 'shf': {'var_name': 'shtfl'},
                 'slp': {'var_name': 'pres'},
                 'sst': {'var_name': 'skt'},
-                # shortwave radiation computed from these variables IN THAT ORDER (on ocean grid or ocean points only)
+                # shortwave radiation computed from these variables IN THAT ORDER
                 # swr = rsds - rsus
                 'swr': {'var_name': ['dswrf', 'uswrf'], 'algebric_calculation': ['plus', 'minus']},
                 'taux': {'var_name': 'uflx'},
@@ -1204,48 +1329,8 @@ def ReferenceObservations(dataset=True):
                 },
             },
         },
-        'OAFlux': {
-            'website': 'see ftp://ftp.whoi.edu/pub/science/oaflux/data_v3/monthly/turbulence/',
-            'file_name': '<???>' + '_oaflux_*.nc',
-            'variable_name_in_file': {
-                'lhf': {'var_name': 'lhtfl'},
-                'shf': {'var_name': 'shtfl'},
-                'sst': {'var_name': 'tmpsf'},
-            },
-        },
-        'OISST': {
-            'website': 'see https://www.earthsystemcog.org/search/obs4mips/?template=obs4mips&limit=200',
-            'file_name': '<var_name>' + '_OISST_L4_AVHRR-only-v2_*-*.nc',
-            'variable_name_in_file': {
-                'sst': {'var_name': 'sst'},
-            },
-        },
-        'ORAS4': {
-            'website': 'see https://esgf.nccs.nasa.gov/search/create-ip/',
-            'file_name': '<var_name>' + '_Omon_ORAreanalysis_ORAS4_*.nc',
-            'variable_name_in_file': {
-                'so': {'var_name': 'so'},
-                'thetao': {'var_name': 'thetao'},
-                'uo': {'var_name': 'uo'},
-                'vo': {'var_name': 'vo'},
-            },
-        },
-        'SODA3.4.2': {
-            'website': 'see https://www.atmos.umd.edu/~ocean/index_files/soda3.4.2_mn_download_b.htm',
-            'file_name': 'soda3.4.2_mn_ocean_reg_????.nc',
-            'variable_name_in_file': {
-                'so': {'var_name': 'salt'},
-                'ssh': {'var_name': 'ssh'},
-                'taux': {'var_name': 'taux'},
-                'tauy': {'var_name': 'tauy'},
-                'thetao': {'var_name': 'temp'},
-                'thf': {'var_name': 'net_heating'},
-                'uo': {'var_name': 'u'},
-                'vo': {'var_name': 'v'},
-            },
-        },
         'Tropflux': {
-            'website': 'see https://incois.gov.in/tropflux/tf_products.jsp',
+            'website': 'https://incois.gov.in/tropflux/tf_products.jsp',
             'file_name': '<var_name>' + '_tropflux_1m_*.nc',
             'variable_name_in_file': {
                 'lhf': {'var_name': 'lhf'},
