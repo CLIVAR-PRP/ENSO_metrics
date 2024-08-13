@@ -6,7 +6,7 @@ import json
 # from os import remove as OSremove
 
 # ENSO_metrics package functions:
-from .EnsoCollectionsLib import defCollection, ReferenceObservations
+from .EnsoCollectionsLib import defCollection, ReferenceObservations, ReferenceRegions
 from . import EnsoErrorsWarnings
 from .EnsoMetricsLib import BiasPrLatRmse, BiasPrLonRmse, BiasPrRmse, BiasSshLatRmse, BiasSshLonRmse, BiasSshRmse,\
     BiasMldLatRmse, BiasMldLonRmse, BiasMldRmse,\
