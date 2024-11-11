@@ -3,7 +3,9 @@ from calendar import monthrange
 import copy
 from datetime import date
 from inspect import stack as INSPECTstack
+from packaging.version import Version
 import ntpath
+import numpy
 from numpy import array as NParray
 from numpy import exp as NPexp
 from numpy import histogram as NPhistogram
@@ -11,7 +13,12 @@ from numpy import isnan as NPisnan
 from numpy import nan as NPnan
 from numpy import nonzero as NPnonzero
 from numpy import ones as NPones
-from numpy import product as NPproduct
+
+if Version(numpy.__version__) < Version('1.25.0'):
+    from numpy import product as NPproduct
+else:
+    from numpy import prod as NPproduct
+
 from numpy import where as NPwhere
 from numpy.ma.core import MaskedArray as NPma__core__MaskedArray
 from os.path import isdir as OSpath_isdir
