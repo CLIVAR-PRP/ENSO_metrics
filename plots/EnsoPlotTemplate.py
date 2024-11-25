@@ -97,8 +97,8 @@ def cmip_boxplot(dict_param, dict_values, units, reference, val_type, my_text, f
         ax.set_yticks(tick_labels)
         ax.set_ylim(ymin=mini, ymax=maxi)
         ax.set_ylabel(yname, fontsize=15)
-        for tick in ax.yaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        for axis_tick_label in ax.get_yticklabels():
+            axis_tick_label.set_fontsize(12)
         # boxplots
         for ii, (cc, tab) in enumerate(zip(colors, vall)):
             boxproperties = {
@@ -282,8 +282,8 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         # title
         ax.set_title(title[ii], fontsize=15, y=1.01, loc="left")
         # x axis
-        for tick in ax.xaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        for axis_tick_label in ax.get_xticklabels():
+            axis_tick_label.set_fontsize(12)
         # y axis
         ax.set_yticks(tick_labels)
         if custom_label is not None:
@@ -294,8 +294,8 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             if units != "":
                 ylabel = ylabel + " (" + units + ")"
             ax.set_ylabel(ylabel, fontsize=15)
-        for tick in ax.yaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        for axis_tick_label in ax.get_yticklabels():
+            axis_tick_label.set_fontsize(12)
         # boxplots
         boxproperties = {
             "boxprops": dict(linestyle="-", linewidth=2, color=legco[0]),
@@ -565,15 +565,15 @@ def my_dotplot(model, filename_nc, dict_param, reference, metric_variables, figu
     label = [""] * len(label_ticks)
     plt.xticks(label_ticks, label)
     plt.xlim(min(label_ticks), max(label_ticks))
-    for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(12)
+    for axis_tick_label in ax.get_xticklabels():
+        axis_tick_label.set_fontsize(12)
     # y axis
     tick_labels = minmax_plot(tab, metric=plot_metric)
     plt.yticks(tick_labels, tick_labels)
     plt.ylim(min(tick_labels), max(tick_labels))
     ax.set_ylabel(yname, fontsize=15)
-    for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(12)
+    for axis_tick_label in ax.get_yticklabels():
+        axis_tick_label.set_fontsize(12)
     if min(tick_labels) < 0 and max(tick_labels) > 0:
         ax.axhline(0, color='k', linestyle='-', linewidth=2)
     # dots
@@ -651,8 +651,8 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
         tab = diag_mod
     lines = [Line2D([0], [0], marker="o", c="w", markerfacecolor=cc, markersize=12) for cc in mcolors]
     # x axis
-    for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(12)
+    for axis_tick_label in ax.get_xticklabels():
+        axis_tick_label.set_fontsize(12)
     # y axis
     tmp = [diag_obs] + [min(my_mask(tt, remove_masked=True)) for tt in tab] +\
           [max(my_mask(tt, remove_masked=True)) for tt in tab]
@@ -660,8 +660,8 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
     ax.set_yticks(tick_labels)
     ax.set_ylim(ymin=min(tick_labels), ymax=max(tick_labels))
     ax.set_ylabel(yname, fontsize=15)
-    for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(12)
+    for axis_tick_label in ax.get_yticklabels():
+        axis_tick_label.set_fontsize(12)
     # plot
     ax.axhline(diag_obs, color=mcolors[0], linestyle='-', linewidth=2)
     for ii in range(len(tab)):
@@ -844,16 +844,16 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
             ax.set_xticks(xlabel_ticks)
             ax.set_xticklabels(xlabel)
             ax.set_xlabel(xname, fontsize=15)
-        for tick in ax.xaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        for axis_tick_label in ax.get_xticklabels():
+            axis_tick_label.set_fontsize(12)
         # y axis
         ax.set_ylim(ymin=min(tim), ymax=max(tim))
         if ii % nbrc == 0:
             ax.set_yticks(ylabel_ticks)
             ax.set_yticklabels(ylabel)
             ax.set_ylabel(yname, fontsize=15)
-        for tick in ax.yaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        for axis_tick_label in ax.get_yticklabels():
+            axis_tick_label.set_fontsize(12)
         # hovmoeller
         levels = create_levels(labelbar)
         xx, yy = NUMPYmeshgrid(lon, tim)
@@ -1490,8 +1490,8 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             if units != "":
                 xlabel = xlabel + " (" + units + ")"
             ax.set_xlabel(xlabel, fontsize=15)
-        for tick in ax.xaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        for axis_tick_label in ax.get_xticklabels():
+            axis_tick_label.set_fontsize(12)
         # y axis
         if "EnsoFbSshSst" in figure_name and article_fig is True:
             ax.set_yticks([-6, -3, 0, 3, 6], minor=False)
@@ -1528,8 +1528,8 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             if units != "":
                 ylabel = ylabel + " (" + units + ")"
             ax.set_ylabel(ylabel, fontsize=15)
-        for tick in ax.yaxis.get_major_ticks():
-            tick.label.set_fontsize(12)
+        for axis_tick_label in ax.get_yticklabels():
+            axis_tick_label.set_fontsize(12)
         # scatterplots and slopes
         x1, x2 = ax.get_xlim()
         dx = (x2 - x1) / 100.
@@ -1682,8 +1682,8 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
     ax.set_xlim([min(axis), max(axis)])
     # ax.set_xlim([-13, 13])
     ax.set_xlabel(xname, fontsize=15)
-    for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(12)
+    for axis_tick_label in ax.get_xticklabels():
+        axis_tick_label.set_fontsize(12)
     # y axis
     ax.set_yticks(ytick_labels)
     ax.set_yticklabels(ytick_labels)
@@ -1702,8 +1702,8 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
     # ax.text(34, 0.1, "duration", fontsize=18, color="orange", horizontalalignment='center',
     #          verticalalignment='center')
     ax.set_ylabel(yname, fontsize=15)
-    for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(12)
+    for axis_tick_label in ax.get_yticklabels():
+        axis_tick_label.set_fontsize(12)
     if min(ytick_labels) < 0 and max(ytick_labels) > 0:
         ax.axhline(0, color='k', linestyle='-', linewidth=2)
     # plot curves
