@@ -1943,6 +1943,13 @@ def ReferenceObservations(dataset=True):
             "file_name": "jb_iby_srn_gtn_giy.nc",
             "variable_name_in_file": {"ssh": {"var_name": "height"}, },
         },
+        "DEEP-Cv5": {
+            "website": "https://researchdata.reading.ac.uk/347/",
+            "file_name": "DEEP-C_" + "<var_name>" + "_v5_*.nc",
+            "variable_name_in_file": {
+                "thf": {"var_name": "Fmass"},
+            },
+        },
         "EMOD_yyp": {
             "file_name": "<var_name>" + "_?mon_EMOD_yyp_1x1deg_198201-2010*.nc",
             "variable_name_in_file": {
@@ -2115,6 +2122,14 @@ def ReferenceObservations(dataset=True):
                 "sst": {"var_name": "sst"},
             },
         },
+        "ISCCP": {
+            "website": "ftp://ftp.whoi.edu/pub/science/oaflux/data_v3/monthly/radiation_1983-2009/",
+            "file_name": "<var_name>" + "_isccp_*.nc",
+            "variable_name_in_file": {
+                "lwr": {"var_name": "nlwrs"},
+                "swr": {"var_name": "nswrs"},
+            },
+        },
         "JPL_MEASURES": {
             "website": "https://podaac-opendap.jpl.nasa.gov/opendap/allData/merged_alt/L4/cdr_grid/",
             "file_name": "ssh_grids_v1812_????????12.nc",
@@ -2271,6 +2286,13 @@ def ReferenceObservations(dataset=True):
                 "lhf": {"var_name": "lhtfl"},
                 "shf": {"var_name": "shtfl"},
                 "sst": {"var_name": "tmpsf"},
+            },
+        },
+        "OAFlux-ISCCP": {
+            "website": "ftp://ftp.whoi.edu/pub/science/oaflux/data_v3/monthly/netheat_1983-2009/",
+            "file_name": "<var_name>" + "*.nc",
+            "variable_name_in_file": {
+                "thf": {"var_name": "qnet"},
             },
         },
         "OISSTv2": {
