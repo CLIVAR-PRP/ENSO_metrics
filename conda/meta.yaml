@@ -34,7 +34,7 @@ about:
     home:  http://github.com/eguil/Enso_metrics
     license: 'CCLRC'
     license_file: LICENSE
-    summary: "Library to compute ENSO metrics"
+    summary: "Library to compute ENSO recipes"
 
 extra:
   recipe-maintainers:

@@ -2,7 +2,7 @@
 # ---------------------------------------------------#
 # Aim of the program:
 #      Create plots to compare groups of models
-#      FIG. 3 in Planton et al. 2020: Evaluating climate models with the CLIVAR 2020 ENSO metrics package. BAMS
+#      FIG. 3 in Planton et al. 2020: Evaluating climate models with the CLIVAR 2020 ENSO recipes package. BAMS
 # It uses the first available member of each model or all members of each model and averages them
 # Updated json files (needed to create this plot) can be downloaded from the page "Summary statistics in Interactive
 # Portrait Plots" at https://cmec.llnl.gov/results/enso/
@@ -123,8 +123,8 @@ def common_save(dict_in, dict_out={}):
 # Main
 # ---------------------------------------------------#
 # get members by model by project from json file
-# only metrics from models/members chosen here will be used
-# all metrics from models/members chosen here will be used (ensures that if a model/member is not available for one or
+# only recipes from models/members chosen here will be used
+# all recipes from models/members chosen here will be used (ensures that if a model/member is not available for one or
 # several metric collections, the corresponding line will still be created in the portraitplot)
 model_by_proj = get_mod_mem_json(list_projects, list_metric_collections, dict_json, first_only=first_member)
 # read json file

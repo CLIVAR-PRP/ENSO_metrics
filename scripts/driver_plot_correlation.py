@@ -1,8 +1,8 @@
 # -*- coding:UTF-8 -*-
 # ---------------------------------------------------#
 # Aim of the program:
-#      Create plots of the correlation inter metrics or inter models
-#      FIG. 6 in Planton et al. 2020: Evaluating climate models with the CLIVAR 2020 ENSO metrics package. BAMS
+#      Create plots of the correlation inter recipes or inter models
+#      FIG. 6 in Planton et al. 2020: Evaluating climate models with the CLIVAR 2020 ENSO recipes package. BAMS
 # It uses the first available member of each model or all members of each model and averages them
 # Updated json files (needed to create this plot) can be downloaded from the page "Summary statistics in Interactive
 # Portrait Plots" at https://cmec.llnl.gov/results/enso/
@@ -122,8 +122,8 @@ def compute_correlation(tab_in):
 # Main
 # ---------------------------------------------------#
 # get members by model by project from json file
-# only metrics from models/members chosen here will be used
-# all metrics from models/members chosen here will be used (ensures that if a model/member is not available for one or
+# only recipes from models/members chosen here will be used
+# all recipes from models/members chosen here will be used (ensures that if a model/member is not available for one or
 # several metric collections, the corresponding line will still be created in the portraitplot)
 model_by_proj = get_mod_mem_json(list_projects, list_metric_collections, dict_json, first_only=first_member)
 # read json file
@@ -162,5 +162,5 @@ if ' ':
     tab = NUMPYmasked_where(tab == 1e20, tab)
     # compute inter model correlations
     rval, pval = compute_correlation(tab)
-    # plot metrics correlations
+    # plot recipes correlations
     plot_metrics_correlations(rval, figure_name, list_metrics, tab_pval=pval, cfram=True, chigh=True)

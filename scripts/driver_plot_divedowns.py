@@ -76,7 +76,7 @@ if reduced_set is True:
 # pattern of netCDF files
 pattern = project.lower() + "_" + experiment + "_" + metric_collection + "_" + version_mod + "_" + dataname
 #
-# Loop on metrics
+# Loop on recipes
 #
 for met in ["EnsoPrMapDjfRmse"]:#list_metrics:
     print(met)
@@ -87,7 +87,7 @@ for met in ["EnsoPrMapDjfRmse"]:#list_metrics:
     # get diagnostic values for the given model and observations
     dict_dia = data_json["value"][met]["diagnostic"]
     diagnostic_values = dict((key1, dict_dia[key1]["value"]) for key1 in list(dict_dia.keys()))
-    diagnostic_units = data_json["metadata"]["metrics"][met]["diagnostic"]["units"]
+    diagnostic_units = data_json["metadata"]["recipes"][met]["diagnostic"]["units"]
     # get metric values computed with the given model and observations
     if metric_collection in ["ENSO_tel"] and "Map" in met:
         list1, list2 = [met.replace("Rmse", "Corr"), met], ["metric", "metric"]
@@ -95,12 +95,12 @@ for met in ["EnsoPrMapDjfRmse"]:#list_metrics:
         metric_values = dict((key1, {model: [1-dict_met[su][ty][key1]["value"] if "Corr" in su else
                                              dict_met[su][ty][key1]["value"]for su, ty in zip(list1, list2)]})
                              for key1 in list(dict_met[list1[0]]["metric"].keys()))
-        metric_units = [data_json["metadata"]["metrics"][su]["metric"]["units"] for su in list1]
+        metric_units = [data_json["metadata"]["recipes"][su]["metric"]["units"] for su in list1]
         del list1, list2
     else:
         dict_met = data_json["value"][met]["metric"]
         metric_values = dict((key1, {model: dict_met[key1]["value"]}) for key1 in list(dict_met.keys()))
-        metric_units = data_json["metadata"]["metrics"][met]["metric"]["units"]
+        metric_units = data_json["metadata"]["recipes"][met]["metric"]["units"]
     # figure name
     name_png = figure_name + "_" + met
     # this function needs:

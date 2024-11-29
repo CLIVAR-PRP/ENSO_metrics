@@ -31,7 +31,7 @@ try:
     commit = str(p.stdout.readlines()[0].split()[1])
 except:
     commit = ""
-f = open("lib/version.py", "w")
+f = open("enso_metrics/version.py", "w")
 print("__version__ = '%s'" % Version, file=f)
 print("__git_tag_describe__ = '%s'" % descr, file=f)
 print("__git_sha1__ = %s" % commit, file=f)
@@ -64,6 +64,6 @@ setup(name="EnsoMetrics",
       description = "Library for ENSO Metrics",
       url="https://github.com/CLIVAR-PRP/ENSO_metrics",
       packages=['EnsoMetrics', 'EnsoPlots'],
-      package_dir={'EnsoMetrics': 'lib', 'EnsoPlots': 'plots'},
+      package_dir={'EnsoMetrics': 'enso_metrics', 'EnsoPlots': 'plots'},
       scripts=glob.glob("scripts/*.py"),
       data_files=data_files, requires=['numpy'])

@@ -288,25 +288,25 @@ def get_metric_values(project, metric_collection, dict_json, dict_mod_mem, reduc
     :param metric_collection: strings
         metric collection (e.g., "ENSO_perf", "ENSO_proc", "ENSO_tel")
     :param dict_json: dictionary
-        Dictionary with path and name of json files output of the CLIVAR PRP ENSO metrics package.
+        Dictionary with path and name of json files output of the CLIVAR PRP ENSO recipes package.
     :param dict_mod_mem: dictionary
         Dictionary with every models available and members in the given json files, for the given projects and metric
         collections.
     **Optional arguments:**
     :param reduced_set: boolean, optional
-        True to remove extra metrics that are not in the final set chosen by CLIVAR PRP.
-        If set to False it removes metrics that are in more than one metric collection.
+        True to remove extra recipes that are not in the final set chosen by CLIVAR PRP.
+        If set to False it removes recipes that are in more than one metric collection.
         Default value is True.
     :param portraitplot: boolean, optional
-        True to remove extra metrics that are not in the final set chosen by CLIVAR PRP but keep metrics that are in
+        True to remove extra recipes that are not in the final set chosen by CLIVAR PRP but keep recipes that are in
         more than one metric collection.
-        If set to False it removes metrics that are in more than one metric collection.
+        If set to False it removes recipes that are in more than one metric collection.
         Default value is False.
 
     Output:
     ------
     :return dict_out: dictionary
-        Dictionary with every models available and metrics, member values averaged
+        Dictionary with every models available and recipes, member values averaged
     """
 
     # open and read json file
@@ -331,7 +331,7 @@ def get_metric_values(project, metric_collection, dict_json, dict_mod_mem, reduc
                     dict3[met] = data_mod[met]["metric"][get_reference(metric_collection, met)]["value"]
                 dict2[mem] = dict3
             del data_mod, dict3, list_metrics
-        # models and metrics
+        # models and recipes
         list_metrics = list()
         for mem in list_members:
             try:    list(dict2[mem].keys())
@@ -357,11 +357,11 @@ def get_metric_values_observations(filename_json, obsvation_names, list_met, met
     Inputs:
     ------
     :param filename_json: string
-        Path and name of a json file output of the CLIVAR 2020 ENSO metrics package.
+        Path and name of a json file output of the CLIVAR 2020 ENSO recipes package.
     :param obsvation_names: list of string
         Names of wanted additional observations for the portrait plot.
     :param list_met: list of string
-        List of metrics.
+        List of recipes.
     :param metric_collection: string
         Name of a metric collection.
 
@@ -442,7 +442,7 @@ def get_mod_mem_json(projects, metric_collections, dict_json, first_only=False):
     :param metric_collections: list of strings
         list of metric collections (e.g., "ENSO_perf", "ENSO_proc", "ENSO_tel")
     :param dict_json: dictionary
-        Dictionary with path and name of json files output of the CLIVAR PRP ENSO metrics package.
+        Dictionary with path and name of json files output of the CLIVAR PRP ENSO recipes package.
     **Optional arguments:**
     :param first_only: boolean, optional
         True to return only the first member
@@ -455,8 +455,8 @@ def get_mod_mem_json(projects, metric_collections, dict_json, first_only=False):
         If first_only is True, provides only the first available member.
     """
     # get members by model by project from json file
-    # only metrics from models/members chosen here will be used
-    # all metrics from models/members chosen here will be used (ensures that if a model/member is not available for one
+    # only recipes from models/members chosen here will be used
+    # all recipes from models/members chosen here will be used (ensures that if a model/member is not available for one
     # or several metric collections, the corresponding line will still be created in the portraitplot)
     model_by_proj = dict()
     for proj in projects:
@@ -516,12 +516,12 @@ def read_json(filename_json):
     Input:
     -----
     :param filename_json: string
-        Path and name of a json file output of the CLIVAR PRP ENSO metrics package.
+        Path and name of a json file output of the CLIVAR PRP ENSO recipes package.
 
     Output:
     ------
     :return data: dictionary
-        Dictionary output of the CLIVAR PRP ENSO metrics package, first level is models, second is members.
+        Dictionary output of the CLIVAR PRP ENSO recipes package, first level is models, second is members.
     """
     with open(filename_json) as ff:
         data = json.load(ff)
@@ -557,15 +557,15 @@ def save_json(dict_in, json_name, metric_only=True):
         for ens in liste:
             # metadata (nyears)
             dict_meta = dict()
-            for key1 in list(dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys()):
+            for key1 in list(dict_in[ens]['metadata']['recipes'][met]['diagnostic'].keys()):
                 if key1 not in ['time_frequency', 'ref', 'method', 'method_nonlinearity', 'name']:
                     if key1 == "units":
-                        dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]
+                        dict_meta[key1] = dict_in[ens]['metadata']['recipes'][met]['diagnostic'][key1]
                     else:
-                        dict_meta[key1] = dict_in[ens]['metadata']['metrics'][met]['diagnostic'][key1]['nyears']
-            units = dict_in[ens]['metadata']['metrics'][met]['metric']['units']
+                        dict_meta[key1] = dict_in[ens]['metadata']['recipes'][met]['diagnostic'][key1]['nyears']
+            units = dict_in[ens]['metadata']['recipes'][met]['metric']['units']
             if metric_only is True:
-                # metrics
+                # recipes
                 dict2 = dict()
                 for key1 in list(dict_in[ens]['value'][met]['metric'].keys()):
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']
@@ -573,7 +573,7 @@ def save_json(dict_in, json_name, metric_only=True):
                     dict2[tmp_key] = {'metric': tmp, 'nyears_obs': dict_meta[tmp_key], 'units': units}
                     del tmp, tmp_key
             else:
-                # metrics
+                # recipes
                 dict2 = {'metric': {}, 'diagnostic': {}}
                 for key1 in list(dict_in[ens]['value'][met]['metric'].keys()):
                     tmp = dict_in[ens]['value'][met]['metric'][key1]['value']

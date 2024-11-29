@@ -1813,10 +1813,10 @@ def plot_metrics_correlations(tab_rval, figure_name, xy_names, tab_pval=None, wr
         Title of the plot.
         Default is "" (no title).
     :param chigh: boolean, optional
-        True to highlight labels in colors for each group of metrics.
+        True to highlight labels in colors for each group of recipes.
         Default is False (names written in black).
     :param cfram: boolean, optional
-        True to color the frame for each group of metrics.
+        True to color the frame for each group of recipes.
         Default is False (frame is black).
     :param bold_names: list, optional
         List of names to write in bold (must be in xy_names).
@@ -2025,10 +2025,10 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
         Levels of the colorbar, if None is given, colobar ranges from -1 to 1.
         Default is None ([-1.0, -0.5, 0.0, 0.5, 1.0] will be used).
     :param chigh: boolean, optional
-        True to highlight labels in colors for each group of metrics.
+        True to highlight labels in colors for each group of recipes.
         Default is False (names written in black).
     :param cfram: boolean, optional
-        True to color the frame for each group of metrics.
+        True to color the frame for each group of recipes.
         Default is False (frame is black).
     :param save_eps: boolean, optional
         True to save the plot in eps format instead of png.
@@ -2177,7 +2177,7 @@ def plot_projects_comparison(tab_val, figure_name, title="", x_name="", y_name="
     Inputs:
     ------
     :param tab_val: list
-        2D array with metric values averaged by projects, projects in the first axis, metrics in the second.
+        2D array with metric values averaged by projects, projects in the first axis, recipes in the second.
     :param figure_name: string
         Path to and name of the output plot.
     **Optional arguments:**
@@ -2200,17 +2200,17 @@ def plot_projects_comparison(tab_val, figure_name, title="", x_name="", y_name="
         List of colors (e.g., "k", "r") must be the size of the first dimension of tab_val.
         Default is None (every group will be plotted in black).
     :param tab_bst: list, optional
-        3D array with confidence interval on the metric values averaged by projects, projects in the first axis, metrics
+        3D array with confidence interval on the metric values averaged by projects, projects in the first axis, recipes
         in the second, confidence interval in the third.
         Default is None (no confidence interval plotted).
     :param legend: list of string, optional
         Name of the groups to plot the legend.
         Default is None (no legend plotted).
     :param chigh: boolean, optional
-        True to highlight labels in colors for each group of metrics.
+        True to highlight labels in colors for each group of recipes.
         Default is False (names written in black).
     :param cfram: boolean, optional
-        True to color the frame for each group of metrics.
+        True to color the frame for each group of recipes.
         Default is False (frame is black).
     :param bold_names: list, optional
         List of names to write in bold (must be in xy_names).

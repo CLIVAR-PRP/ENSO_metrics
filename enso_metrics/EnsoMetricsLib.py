@@ -14,7 +14,7 @@ from .KeyArgLib import default_arg_values
 
 # ---------------------------------------------------------------------------------------------------------------------#
 #
-# Library to compute ENSO metrics
+# Library to compute ENSO recipes
 # These functions have file names and variable names as inputs and metric as output
 #
 def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, var_landmaskname, var_box, dataset="",
@@ -317,7 +317,7 @@ def stat_box(var_file, var_name, var_areafile, var_areaname, var_landmaskfile, v
         # 4. Supplementary dive down diagnostics
         # ------------------------------------------------
         if netcdf is True:
-            # supplementary metrics
+            # supplementary recipes
             dict_nc = {"var1": arr}
             dict_nc["var1_attributes"] = {
                 "arrayAVE": ave, "arraySKE": ske, "arraySTD": std, "arrayVAR": var,

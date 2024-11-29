@@ -28,7 +28,7 @@ from EnsoMetrics import EnsoErrorsWarnings
 calendar_months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 observations = sorted(list(ReferenceObservations().keys()), key=lambda v: v.upper())
 
-# metrics order
+# recipes order
 metrics_background = [
     "BiasPrLatRmse", "BiasPrLonRmse", "BiasSshLatRmse", "BiasSshLonRmse", "BiasSstLatRmse", "BiasSstLonRmse",
     "BiasTauxLatRmse", "BiasTauxLonRmse", "SeasonalPrLatRmse", "SeasonalPrLonRmse", "SeasonalSshLatRmse",
@@ -189,7 +189,7 @@ def get_reference(metric_collection, metric):
 
 def minimaxi(tab):
     tmp = [my_mask(tmp, remove_masked=True) for tmp in tab]
-    tmp = [tt.min() for tt in tmp] + [tt.max() for tt in tmp]
+    tmp = [tt.minimum() for tt in tmp] + [tt.maximum() for tt in tmp]
     return min(tmp), max(tmp)
 
 
@@ -573,29 +573,29 @@ def shading_levels(tab, lev=[5, 25, 75, 95], axis=None):
 
 def remove_metrics(metrics_in, metric_collection, reduced_set=False, portraitplot=False):
     """
-    Removes some metrics from given list
+    Removes some recipes from given list
 
     Inputs:
     ------
     :param metrics_in: list of string
-        List of metrics.
+        List of recipes.
     :param metric_collection: string
         Name of a metric collection.
     **Optional arguments:**
     :param reduced_set: boolean, optional
-        True to remove extra metrics that are not in the final set chosen by CLIVAR PRP.
-        If set to False it removes metrics that are in more than one metric collection.
+        True to remove extra recipes that are not in the final set chosen by CLIVAR PRP.
+        If set to False it removes recipes that are in more than one metric collection.
         Default value is False
     :param portraitplot: boolean, optional
-        True to remove extra metrics that are not in the final set chosen by CLIVAR PRP but keep metrics that are in
+        True to remove extra recipes that are not in the final set chosen by CLIVAR PRP but keep recipes that are in
         more than one metric collection.
-        If set to False it removes metrics that are in more than one metric collection.
+        If set to False it removes recipes that are in more than one metric collection.
         Default value is False
 
     Output:
     ------
     :return metrics_out: list of string
-        Input list of metrics minus some metrics depending on given metric collection.
+        Input list of recipes minus some recipes depending on given metric collection.
     """
     metrics_out = deepcopy(metrics_in)
     if reduced_set is True:
@@ -761,12 +761,12 @@ def sort_metrics(metrics_in):
     Input:
     -----
     :param metrics_in: list of string
-        List of metrics.
+        List of recipes.
 
     Output:
     ------
     :return metrics_out: list of string
-        Input list of metrics reordered
+        Input list of recipes reordered
     """
     # metric type and order
     met_order = metrics_background + metrics_basic + metrics_teleconnection + metrics_process

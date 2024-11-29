@@ -1,6 +1,6 @@
 # -*- coding:UTF-8 -*-
 #
-# Define ENSO metrics plots
+# Define ENSO recipes plots
 #
 from copy import deepcopy
 from numpy import arange as NUMPYarange

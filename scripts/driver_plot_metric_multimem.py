@@ -59,7 +59,7 @@ json_pattern = str(metric_collection) + "_v20210611_allModels_allRuns.json"
 # netcdf pattern
 netcdf_pattern = str(metric_collection) + "_" + str(project) + "_" + str(model) + "_" + str(experiment) + "_MEM" + \
     "_METRIC.nc"
-# list metrics
+# list recipes
 list_metrics = ["telecon_pr_ano_djf", "telecon_pr_amp_djf"]
 # list observations
 list_observations = ["OISSTv2_GPCPv2.3", "OISSTv2_CMAP"]

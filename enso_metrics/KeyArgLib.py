@@ -7,7 +7,7 @@ from .EnsoErrorsWarnings import unknown_key_arg
 
 # ---------------------------------------------------------------------------------------------------------------------#
 #
-# Library to ENSO metrics arguments (arg parser)
+# Library to ENSO recipes arguments (arg parser)
 # These functions analyses given arguments and sets some arguments to their default value
 #
 def default_arg_values(arg):

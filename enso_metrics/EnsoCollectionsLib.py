@@ -1,13 +1,13 @@
 # -*- coding:UTF-8 -*-
 #
-# Define ENSO metrics collections as a function of science question/realm
+# Define ENSO recipes collections as a function of science question/realm
 #
 from copy import deepcopy
 
 
-# Define metrics collections
+# Define recipes collections
 def defCollection(metric_collection=True):
-    # Name, list of metrics
+    # Name, list of recipes
     dict_metric_collections = {
         "ENSO_IV": {
             "long_name": "Metrics Collection for ENSO internal variability",

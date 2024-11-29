@@ -202,7 +202,7 @@ def too_short_time_period(metric_name, length, minimum_length, inspect_stack):
     :param length: integer
         length of the time axis of the variable
     :param minimum_length: integer
-        minimum length of the time axis for the metric to make sens (defined in the metrics collection)
+        minimum length of the time axis for the metric to make sens (defined in the recipes collection)
     :param inspect_stack: array
         list of information about the program/module/line,... created using inspect.stack()
     :return:

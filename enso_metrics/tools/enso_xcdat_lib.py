@@ -2,80 +2,37 @@
 
 # basic python
 from copy import deepcopy
-from typing import Literal
+from dataclasses import dataclass
+from typing import Annotated, Literal
 # numpy
 import numpy as np
 # regionmask
 import regionmask
 # xarray
 import xarray as xr
-# xCDAT
-import xcdat as xc
 # ENSO_metrics
-from . enso_xcdat_base import fct_array_ones, fct_averager, fct_get_axis_key, fct_get_latitude, \
+from lib.wrapper.xcdat_functions import fct_array_ones, fct_array_zeros, fct_averager, fct_get_axis_key, fct_get_axis_array, \
+    fct_get_axis_list_ordered, fct_get_latitude, \
     fct_get_longitude, fct_numpy_to_xarray, fct_sum, fct_standard_deviation, fct_uniform_grid, \
     fct_where_xarray, fct_where_dataarray, fct_xarray_to_numpy, \
-    fct_horizontal_regrid, fct_attrs_update_global, fct_attrs_update_variable, fct_dataset_to_netcdf, \
-    fct_max, fct_min, fct_get_attributes_list, fct_get_attribute
+    fct_horizontal_regrid, fct_attrs_global_update, fct_attrs_variable_update, fct_dataset_to_netcdf, \
+    fct_max, fct_min, fct_get_attributes_list, fct_get_attribute, fct_transpose
+
+
+@dataclass
+class ValueRange:
+    min: float
+    max: float
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
 # xarray / xcdat data processing functions
 # ---------------------------------------------------------------------------------------------------------------------#
-def apply_landmask(ds: xr.Dataset, data_var: str, landmask: xr.DataArray, maskland : bool=True, maskocean: bool=False) -> xr.DataArray:
-    da = ds[data_var].copy()
-    # if land = 100 instead of 1, divides landmask by 100
-    if (fct_min(landmask) == 0 and fct_max(landmask) == 100) or \
-            ("units" in fct_get_attributes_list(landmask) and fct_get_attribute(landmask, "units") == "%"):
-        landmask = landmask / 100.
-    if maskland is True:
-        da = fct_where_dataarray(da, landmask <= 0.8)
-    if maskocean is True:
-        da = fct_where_dataarray(da, landmask >= 0.2)       
-    return da
 
 
-def average_horizontal(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None) -> xr.Dataset:
-    if areacell is None:
-        weights = "generate"
-    else:
-        weights = generate_weights(ds, data_var, areacell, axis=["X", "Y"])
-    return fct_averager(ds, data_var, ["X", "Y"], weights=weights)
 
 
-def average_zonal(ds: xr.Dataset, data_var: str="ts", areacell: xr.DataArray=None) -> xr.Dataset:
-    if areacell is None:
-        weights = "generate"
-    else:
-        weights = generate_weights(ds, data_var, areacell, axis=["X"])
-    return fct_averager(ds, data_var, ["X"], weights=weights)
-
-
-def average_meridional(ds: xr.Dataset, data_var: str="ts", areacell: xr.DataArray=None) -> xr.Dataset:
-    if areacell is None:
-        weights = "generate"
-    else:
-        weights = generate_weights(ds, data_var, areacell, axis=["Y"])
-    return fct_averager(ds, data_var, ["Y"], weights=weights)
-
-
-def compute_standard_deviation(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None, ddof: int = 1,
-                               axis: list[Literal["X", "Y", "T", "Z"]] = None):
-    # get keys of each dimension
-    if axis is None:
-        # if axis is not given, compute the standard deviation on the time dimension
-        axis_keys = [fct_get_axis_key(ds, "T")]
-    else:
-        axis_keys = [fct_get_axis_key(ds, k) for k in axis]
-    # generate weights for given axes (dimensions)
-    weights = generate_weights(ds, data_var, areacell, axis_keys)
-    # multiply variable array with weights
-    da = ds[data_var] * weights
-    # compute the standard deviation along given axes
-    return fct_standard_deviation(da, axis_keys, ddof)
-
-
-def generate_land_sea_mask(ds: xr.Dataset, boolean: bool=False) -> xr.DataArray:
+def generate_land_sea_mask(ds: xr.Dataset, boolean: bool = False) -> xr.DataArray:
     """
     A function generates land sea mask (1: land, 0: sea) for given xarray Dataset,
     assuming the given xarray dataset and has latitude and longitude coordinates. 
@@ -84,7 +41,7 @@ def generate_land_sea_mask(ds: xr.Dataset, boolean: bool=False) -> xr.DataArray:
     ----------
     ds : xr.Dataset
         A Dataset object.
-    boolen : bool, optional
+    boolean : bool, optional
         Set mask value to True (land) or False (sea), by default False
         
     Returns
@@ -94,18 +51,14 @@ def generate_land_sea_mask(ds: xr.Dataset, boolean: bool=False) -> xr.DataArray:
     """
     # Create a land-sea mask using regionmask
     land_mask = regionmask.defined_regions.natural_earth_v5_0_0.land_110
-
     # Get the longitude and latitude from the xarray dataset  
     lon = fct_get_longitude(ds)
     lat = fct_get_latitude(ds)
-
     # Mask the land-sea mask to match the dataset's coordinates
     land_sea_mask = land_mask.mask(lon, lat)
-    
     if not boolean:
         # Convert the land-sea mask to a boolean mask
-        land_sea_mask = fct_where_xarray(land_sea_mask, 0, 1)  
-
+        land_sea_mask = fct_where_xarray(land_sea_mask, 0, 1)
     return land_sea_mask
 
 
@@ -124,58 +77,114 @@ def generate_uniform_grid(lat1: float, lat2: float, lon1: float, lon2: float,
     start_lat = lat1 + lat_res / 2.
     start_lon = lon1 + lon_res / 2.
     # generate uniform grid
-    return fct_uniform_grid(start_lat, lat2, lat_res, start_lon, lon1, lon_res)
+    return fct_uniform_grid(start_lat, lat2, lat_res, start_lon, lon2, lon_res)
 
 
-def generate_weights(ds: xr.Dataset, data_var: str, areacell: xr.DataArray = None,
-                     axis: list[str] = None) -> xr.DataArray:
-    if axis is None:
-        axis = ["X", "Y"]
-    if areacell is None or axis == ["T"]:
-        # areacell is not provided so weights cannot be computed
-        # or
-        # time axis is used and so weights are not needed (each time step has the same weight)
-        weights = fct_array_ones(ds[data_var])
-    else:
-        # get the name of the given axis (T, X, Y, Z)
-        lon_key = fct_get_axis_key(areacell, "X")
-        lat_key = fct_get_axis_key(areacell, "Y")
-        if axis == ["X"] or axis == ["Y"]:
-            # weights are generated for operations along a single axis
-            if axis == ["X"]:
-                # zonal operation: weights == 1 when summed along X axis
-                total_area = fct_sum(areacell, lon_key)
-                weights_numpy_2d = fct_xarray_to_numpy(areacell) / fct_xarray_to_numpy(total_area)[:, np.newaxis]
-            else:
-                # meridional operation: weights == 1 when summed along Y axis
-                total_area = fct_sum(areacell, lat_key)
-                weights_numpy_2d = areacell.to_numpy() / total_area.to_numpy()[np.newaxis, :]
-            # create DataArray from numpy array
-            weights = fct_numpy_to_xarray(weights_numpy_2d, (lat_key, lon_key),
-                                            {lat_key: fct_get_latitude(ds), lon_key: fct_get_longitude(ds)})
-        else:
-            # horizontal operation: weights == 1 when summed
-            total_area = fct_sum(areacell, (lat_key, lon_key))
-            weights = areacell / total_area
-    return weights
-
-
-def save_netcdf(ds, output_file, list_of_variables: list[str]=None, list_of_variable_attributes: list[dict]=None, global_attributes: dict=None):
+def save_netcdf(ds, output_file, list_of_variables: list[str] = None, list_of_variable_attributes: list[dict] = None,
+                global_attributes: dict = None):
+    # add global attributes to dataset
     if global_attributes is not None:
-        fct_attrs_update_global(ds, global_attributes)
-        
+        fct_attrs_global_update(ds, global_attributes)
+    # add variables attributes to dataset
     if list_of_variables is not None:
         for (variable, variable_attributes) in zip(list_of_variables, list_of_variable_attributes):
-            fct_attrs_update_variable(ds, variable, variable_attributes)
+            fct_attrs_variable_update(ds, variable, variable_attributes)
+    # save netCDF
     fct_dataset_to_netcdf(ds, output_file, list_of_variables)
+
+
+def smoother(da: xr.DataArray, axis: Literal["X", "Y", "T", "Z"] = "T", window: int = 5,
+             method_smooth: Literal["gaussian", "square", "triangle"] = "triangle",
+             minimum_window_fraction: Annotated[float, ValueRange(0.0, 1.0)] = 0.5) -> xr.DataArray:
+    # Reorder tab in order to put 'axis' in first position
+    order_input = fct_get_axis_list_ordered(da)
+    order_new = deepcopy(order_input)
+    axis_key = fct_get_axis_key(da, axis)
+    order_new.remove(axis_key)
+    order_new = [axis_key] + order_new
+    da_new = fct_transpose(da, order_new)
+    
+    # degree
+    degree = window // 2
+
+    # Create the gaussian weight array
+    # xarray uses the common period between weights and da_window when they are multiplied
+    # to avoid that I am using numpy
+    weights = np.zeros(da_new[:window].shape)
+    for ii in range(window):
+        if method_smooth == "gaussian":
+            # gaussian
+            frac = (ii - degree) / float(window)
+            gauss = float(1. / np.exp((4 * frac) ** 2))
+            weights[ii].fill(gauss)
+        elif method_smooth == "square":
+            # uniform
+            weights[ii].fill(1)
+        else:
+            # triangle with values ranging from 1 to degree + 1
+            weights[ii].fill(float(1 + degree - abs(degree - ii)))
+    
+    # Smoothing
+    # create array of size len(array) - window (nbr steps used for averaging) + 1 (center point is where the averaged
+    # value is saved) but degree: len(da_new) - degree is of size len(array) - window + 1
+    da_smoothed = fct_array_zeros(da_new[degree: len(da_new) - degree])
+    for ii in range(len(da_smoothed)):
+        #
+        # -- select data in moving window -> da_window: DataArray[axis_key, axis 0...n]
+        #
+        # get window
+        da_window = da_new[ii: ii + window]
+        # DataArray to numpy.ndarray
+        np_window = fct_xarray_to_numpy(da_window)
+        # set nan to 0
+        window_zeroed = np.where(np.isnan(np_window), 0, np_window)
+        #
+        # -- adapt weights to given window -> weights_normalized[axis_key, axis 0...n]
+        #
+        # set weights to 0 where window is masked
+        weights_zeroed = np.where(np.isnan(np_window), 0, weights)
+        # sum weights (axis to smooth is the first dimension)
+        weights_sum = np.sum(weights_zeroed, axis=0)
+        # set 0 to 1 (to be able to do a division)
+        weights_sum[weights_sum == 0] = 1
+        # normalize weights so that the sum is equal to 1 (using numpy)
+        weights_normalized = weights_zeroed / weights_sum[np.newaxis, :]
+        #
+        # -- weighed average in given window -> da_averaged[axis 0...n]
+        #
+        np_averaged = np.sum(window_zeroed * weights_normalized, axis=0)
+        #
+        # -- fraction of window points really used -> mask_fraction[axis 0...n]
+        #
+        # put 1 where values are masked
+        mask_as_one = fct_where_xarray(np.isnan(np_window), 1, 0)
+        # sum over the window (axis to smooth is the first dimension)
+        mask_sum = np.sum(mask_as_one, axis=0)
+        # fraction of window points used
+        mask_fraction = mask_sum / window
+        #
+        # -- mask weighed average where more than half of the window is masked
+        #
+        np_averaged[mask_fraction > minimum_window_fraction] = np.nan
+        np_averaged[np.isnan(np_window[0])] = np.nan
+        # numpy to DataArray
+        axes = fct_get_axis_list_ordered(da_window[0])
+        coordinates = dict((k, fct_get_axis_array(da_window, k)) for k in axes)
+        da_averaged = fct_numpy_to_xarray(np_averaged, axes, coordinates)
+        # save value at the center of the window
+        da_smoothed[ii] = da_averaged
+
+    # set smoothed data to original order
+    da_smoothed = fct_transpose(da_smoothed, order_input)
+    return da_smoothed
+
+
 
 
 
 # basic python
 import copy
 from inspect import stack as inspect__stack
-import ntpath
-from os.path import isdir as os__path__isdir
 from os.path import isfile as os__path__isfile
 # matplotlib
 from matplotlib.path import Path as matplotlib__path
@@ -190,9 +199,9 @@ from numpy import where as numpy__where
 from scipy.signal import detrend as scipy__signal__detrend
 
 # ENSO_metrics package functions:
-from . import EnsoErrorsWarnings
-from .EnsoCollectionsLib import ReferenceRegions
-from .EnsoToolsLib import add_up_errors
+from enso_metrics import EnsoErrorsWarnings
+from enso_metrics.EnsoCollectionsLib import ReferenceRegions
+from enso_metrics.EnsoToolsLib import add_up_errors
 
 
 # I need to convert
@@ -387,10 +396,10 @@ def averager_polygon(larray, larea, lregion, input_region="global2", **kwargs):
             print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
                   " to perform average \033[0m")
             # regrid given array
-            larray_in = regridder(larray, None, region=input_region, **kwargs2)
+            larray_in = fct_horizontal_regrid(larray, None, region=input_region, **kwargs2)
             # if the given area does not correspond to the given array, create an area of ones, else, regrid given area
             if larea is None or larray.getGrid().shape != larea.getGrid().shape:
-                larea_in = create_array_ones(larray_in[0], mid="areacell")
+                larea_in = fct_array_ones(larray_in[0], data_var_o="areacell")
             else:
                 larea_in = regridder(larea, None, region=lregion, **kwargs2)
             del kwargs2, lat_num, lon_num
@@ -399,7 +408,7 @@ def averager_polygon(larray, larea, lregion, input_region="global2", **kwargs):
             larray_in = copy.copy(larray)
             # if the given area does not correspond to the given array, create an area of ones, else, regrid given area
             if larea is None or larray.getGrid().shape != larea.getGrid().shape:
-                larea_in = create_array_ones(larray_in[0], mid="areacell")
+                larea_in = fct_array_ones(larray_in[0], data_var_o="areacell")
             else:
                 larea_in = copy.copy(larea)
         # get lat and lon
@@ -1232,7 +1241,7 @@ def read_mask_area(tab, name_data, file_data, type_data, region, file_area="", n
         tab_out, keyerror1 = apply_landmask(tab_out, landmask, maskland=maskland, maskocean=maskocean)
         if keyerror1 is None:
             if areacell is None:
-                areacell = create_array_ones(landmask, mid="areacell")
+                areacell = fct_array_ones(landmask, data_var_o="areacell")
             areacell, keyerror2 = apply_landmask_to_area(areacell, landmask, maskland=maskland, maskocean=maskocean)
     if keyerror1 is not None or keyerror2 is not None:
         keyerror = add_up_errors([keyerror1, keyerror2])
