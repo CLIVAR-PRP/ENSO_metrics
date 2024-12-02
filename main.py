@@ -21,7 +21,8 @@ from enso_metrics import recipes
 available_recipe = dict((k[0], k[1]) for k in getmembers(recipes, isfunction))
 
 if __name__ == '__main__':
-    path = "/Users/ypla0001/Documents/Data/CMIP6/E3SM-Project/E3SM-2-0"
+    path = "/Users/yannplanton/Documents/Data/CMIP6/E3SM-Project/E3SM-2-0"
+    # path = "/Users/ypla0001/Documents/Data/CMIP6/E3SM-Project/E3SM-2-0"
     vari_file = path + "/ts_Amon_E3SM-2-0_historical_r1i1p1f1_gr_185001-201412.nc"
     vari_name = "ts"
     area_file = path + "/areacella_fx_E3SM-2-0_historical_r1i1p1f1_gr.nc"
@@ -43,7 +44,7 @@ if __name__ == '__main__':
             "variable_offset": None,
             "variable_scaling": 1e-2,
         },
-        "ts":{
+        "ts": {
             "area": "areacella",
             "mask": "landmask",
             "file_name": vari_file,

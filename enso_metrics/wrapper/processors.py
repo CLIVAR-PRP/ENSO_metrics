@@ -9,6 +9,7 @@
 # ---------------------------------------------------#
 # local functions
 from enso_metrics.tools.default import set_instance
+from enso_metrics.tools.metadata_tools import method_writer
 from . tool_base import *
 from enso_metrics.wrapper.xarray_base import array_wrapper, dataset_wrapper
 from enso_metrics.wrapper import xarray_base
@@ -50,15 +51,21 @@ def detrender(
 
 
 def masker(
-        input_dataset: dict,
-        input_param: dict[
-            str, dict[
-                str, Union[int, float, str, list[str], None, dict[
-                    str, Union[int, float, None]]]]] = None,
+        input_array: dict,
+        input_param: dict[str, Union[int, float, str, list[str], None, dict[str, Union[int, float, None]]]] = None,
         kwargs_masker: dict = None,
-        variable: str = None,
         variable_new: str = None,
         **kwargs) -> Union[dict, None]:
+    details = {}
+    l1 = ["input_array", "input_param", "kwargs_masker", "variable_new"]
+    l2 = [input_array, input_param, kwargs_masker, variable_new]
+    for k1, k2 in zip(l1, l2):
+        details[str(k1) + ".type"] = type(k2)
+        if isinstance(k2, dict) is True:
+            details[str(k1) + ".keys"] = sorted(list(k2.keys()), key=lambda v: v.lower())
+        elif isinstance(k2, dict) is str:
+            details[k1] = str(k2)
+    fill_log_debug(inspect__stack(), "input", adjust=10, details=details)
     # Several arguments can be specified to where (used to mask data): drop, other.
     # If desired they must be defined in a dictionary under the keyword 'kwargs_masker'.
     # Other arguments are used in this function to mask data:
@@ -74,26 +81,24 @@ def masker(
         mask_ocean = deepcopy(kwargs_masker["maskocean"])
     if "mask_tolerance" in list(kwargs_masker.keys()) and isinstance(kwargs_masker["mask_tolerance"], float) is True:
         tolerance = deepcopy(kwargs_masker["mask_tolerance"])
+    fill_log_debug(inspect__stack(), "param", adjust=10, details={
+        "maskland": str(mask_land), "maskocean": str(mask_ocean), "tolerance": str(tolerance)})
     # fake loop to be able to break out if an error occurs
     dict_o = None
     for _ in range(1):
-        # check if given variables is available
-        if variable is None or variable not in list(input_dataset.keys()) or isinstance(input_param, dict) is False or \
-                variable not in list(input_param.keys()):
-            # error: variable must be defined
-            break
         # get array and related input param
-        array = input_dataset[variable]["array"]
-        metadata = deepcopy(input_dataset[variable]["metadata"])
+        array = input_array["array"]
+        metadata = deepcopy(input_array["metadata"])
         # get mask array
-        mask = input_param[variable]["mask"]
-        if mask in list(input_dataset.keys()):
-            mask = input_dataset[mask]["array"]
+        mask = input_param["mask"]
+        if mask in list(input_array.keys()):
+            mask = input_array[mask]["array"]
         elif mask == "estimate":
             mask = create_land_sea_mask(array)
         # mask land or ocean
         if mask_land is True and mask_ocean is True:
-            # error: user asked to mask everything
+            # WARNING: user asked to mask everything
+            fill_log_debug(inspect__stack(), "WARNING: user asked to mask everything", adjust=10, details=details)
             break
         elif (mask_land is True or mask_ocean is True) and isinstance(array, (array_wrapper, dataset_wrapper)) is True \
                 and isinstance(mask, (array_wrapper, dataset_wrapper)) is True:
@@ -101,10 +106,65 @@ def masker(
                 array = xarray_base.where(array, mask < 1 - tolerance, **kwargs_masker)
             else:
                 array = xarray_base.where(array, mask > 0 + tolerance, **kwargs_masker)
+            fill_log_debug(inspect__stack(), "xarray_base.where", ds=array)
             # adapt metadata
-            # !!!! TO DO !!!!
+            method = deepcopy(metadata["method"]) if "method" in list(metadata.keys()) else ""
+            text = "land masked" if mask_land is True else "ocean masked"
+            metadata["method"] = method_writer(method, text, variable=variable_new)
         # prepare output
         dict_o = {"array": array, "metadata": metadata}
+    return dict_o
+
+
+list_processors = []
+for key in locals().keys():
+    if callable(locals()[key]) and locals()[key].__module__ == __name__:
+        list_processors.append(key)
+
+
+def loop(processors, input_dataset, input_param, **kwargs) -> Union[dict, None]:
+    print("processors", list(processors.keys()))
+    # list processors
+    # list_processors = [k for k in list(globals().keys()) if k[-2:] == "er"]
+    print(list_processors)
+    dict_o = {}
+    for k1 in list(processors.keys()):
+        print(k1)
+        # input and output variable names
+        variable_i = processors[k1]["variable"]
+        variable_o = deepcopy(k1)
+        # check if given variable is available
+        if variable_i not in list(input_dataset.keys()) or isinstance(input_param, dict) is False or \
+                variable_i not in list(input_param.keys()):
+            # WARNING: variable must be defined
+            details = {"variable": str(variable_i),
+                       "in input_dataset": str(variable_i in list(input_dataset.keys())),
+                       "input_param.type": type(input_param)}
+            if isinstance(input_param, dict) is True:
+                details["input_param.keys"] = list(input_param.keys())
+            fill_log_debug(inspect__stack(), "WARNING: variable must be defined", adjust=10, details=details)
+            break
+        print(variable_i, variable_o)
+        # get array and related metadata and param
+        dict_array = input_dataset[variable_i]
+        param = input_param[variable_i]
+        # loop on processors to apply to given variable
+        for k2 in list(processors[k1]["to_do"].keys()):
+            print(k2)
+            process = k2.split("__")[-1]
+            print(process, list(globals().keys()))
+            if process is list(locals().keys()):
+                # call processor
+                print(k2, "call processor")
+                dict_array = locals()[k2](
+                                  dict_array, param, variable_new=variable_o, **kwargs)
+                if dict_array is None:
+                    break
+        if dict_array is None:
+            break
+        dict_o[variable_o] = dict_array
+    if len(dict_o.keys()) != len(processors.keys()):
+        dict_o = None
     return dict_o
 
 
@@ -153,6 +213,8 @@ def reader(
                 if dt is True:
                     dt = False
             # try to open_dataset and save Dataset in a dictionary using netCDF variables (names) as keys
+            print(nn, ab, dt)
+            print(ff)
             try:
                 dict_t[nn] = xcdat_base.open_dataset(
                     ff, add_bounds=ab, data_var=nn, decode_times=dt, **kwargs_reader)
@@ -165,9 +227,6 @@ def reader(
             continue
         arr, metadata = compute_variable(
             dict_t, input_param[kk], input_param[kk]["variable"], kk, variables_param[kk], **kwargs)
-        import json
-        print(json.dumps(metadata, indent=4))
-        stop
         dict_output[kk] = {"array": arr, "metadata": metadata}
     if len([k for k in list(dict_output.keys()) if k in variables]) != len(variables):
         dict_output = None

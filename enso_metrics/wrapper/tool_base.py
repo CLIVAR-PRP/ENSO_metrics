@@ -245,7 +245,6 @@ def compute_variable(
             "REFERENCE": "CLIVAR ENSO metrics package (https://github.com/CLIVAR-PRP/ENSO_metrics)",
         }
         xarray_base.set_attributes_global(ds, **dict_t)
-        att = xarray_base.get_attributes(ds, data_var=variable)
     return ds, metadata
 
 

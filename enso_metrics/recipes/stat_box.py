@@ -17,7 +17,7 @@ from enso_metrics.wrapper import processors
 
 # ---------------------------------------------------------------------------------------------------------------------#
 def stat_box(
-        dict_input: dict[
+        input_param: dict[
             str, dict[
                 str, Union[int, float, str, list[str], None, dict[
                     str, Union[int, float, str, list[str], None]]]]],
@@ -43,31 +43,32 @@ def stat_box(
     statistic = set_default_str(statistic, list_statistics, "average")
     variable = set_default_str(variable, list(kwargs["variables_param"].keys()), "ts")
     # check / format dict_input
-    dict_input = input_dictionary_formater(dict_input)
+    input_param = input_dictionary_formater(input_param)
     # fake loop to be able to break out if an error occurs
     for _ in range(1):
         # ------------------------------------------------
         # 1. Read files
         # ------------------------------------------------
         # 1.1 Create a dictionary with variables and files
-        dict_data = processors.reader(dict_input, variable, **kwargs)
-        print(list(dict_data.keys()))
+        input_dataset = processors.reader(input_param, variable, **kwargs)
+        print(list(input_dataset.keys()))
         # processors
         dict_processors = {
-            "1__variable_name": {
-                "name_out": "new_name",
+            "ts_n30e": {
+                "variable": "ts",
                 "to_do": {
-                    "1__masker": "do",
-                    "2__selecter": "do",
-                    "3__averager": "do",
-                    "4__detrender": "do",
-                    "5__anomaler": "do",
-                    "6__seasonal_cycler": "do",
-                    "7__normalizer": "do",
-                    "8__smoother": "do",
+                    "1__masker": {"kwargs_masker": {"maskland": True}, **kwargs},
+                    # "2__selecter": "do",
+                    # "3__averager": "do",
+                    # "4__detrender": "do",
+                    # "5__anomaler": "do",
+                    # "6__seasonal_cycler": "do",
+                    # "7__normalizer": "do",
+                    # "8__smoother": "do",
                 },
             },
         }
+        processed_dataset_1 = processors.loop(dict_processors, input_dataset, input_param, **kwargs)
         stop
         if keyerror is not None:
             break
