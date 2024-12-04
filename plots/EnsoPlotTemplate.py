@@ -3,6 +3,9 @@ import cmocean
 from copy import deepcopy
 from math import ceil as MATHceil
 from math import floor as MATHfloor
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 from matplotlib.colors import BoundaryNorm, ListedColormap
 from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
@@ -10,16 +13,11 @@ from matplotlib.patches import Polygon
 from matplotlib.ticker import MaxNLocator
 import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
-# from mpl_toolkits.basemap import Basemap
 from numpy import arange as NUMPYarange
 from numpy import array as NUMPYarray
 from numpy import linspace as NUMPYlinspace
 from numpy import meshgrid as NUMPYmeshgrid
 from numpy.ma import masked_where as NUMPYmasked_where
-
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
 # ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
