@@ -19,3 +19,26 @@ Metrics and collections devised by CLIVAR ENSO group
 ### Reference
 
 Planton, Y., E. Guilyardi, A. T. Wittenberg, J. Lee, P. J. Gleckler, T. Bayr, S. McGregor, M. J. McPhaden, S. Power, R. Roehrig,  J. Vialard, A. Voldoire, 2021: A New Way of Evaluating ENSO in Climate Models: The CLIVAR ENSO Metrics Package. Bulletin of the American Meteorological Society, 102, 1073-1080, [doi: 10.1175/BAMS-D-19-0337.A](https://doi.org/10.1175/BAMS-D-19-0337.A)
+
+
+## Release Notes and History
+
+| <div style="width:300%">[Versions]</div> | Update summary   |
+| ------------| ------------------------------------- |
+| [v1.1.4]    | Technical update: map plotting library changed to cartopy to comply w/ newer numpy versions
+| [v1.1.3]    | Technical update: resolve conflict with newer matplotlib versions
+| [v1.1.2]    | Technical update: to comply w/ newer numpy versions
+| [v1.1.1]    | Technical update: license, copyright, and conda-forge distribution
+| [v1.1]      | Technical update: enable Python 3
+| [v1.0]      | Initial release that is used for [Planton et al. (2021)]
+
+
+[Versions]: https://github.com/PCMDI/pcmdi_metrics/releases
+[v1.1.4]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.4
+[v1.1.3]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.3
+[v1.1.2]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.2
+[v1.1.1]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.1
+[v1.1]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1
+[v1.0]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.0
+
+[Planton et al. (2021)]: https://doi.org/10.1175/BAMS-D-19-0337.A
