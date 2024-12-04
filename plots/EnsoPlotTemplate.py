@@ -8,13 +8,18 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
 from matplotlib.patches import Polygon
 from matplotlib.ticker import MaxNLocator
+import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+# from mpl_toolkits.basemap import Basemap
 from numpy import arange as NUMPYarange
 from numpy import array as NUMPYarray
 from numpy import linspace as NUMPYlinspace
 from numpy import meshgrid as NUMPYmeshgrid
 from numpy.ma import masked_where as NUMPYmasked_where
+
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
 # ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
@@ -1019,9 +1024,11 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or
             "reg_ts_over_sst_map" in variables or "djf_map__" in variables or "jja_map__" in variables)) or\
         (isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0])):
-        fig, axes = plt.subplots(nbrl, nbrc, figsize=(6 * nbrc, 6 * nbrl), sharex="col", sharey="row")
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(6 * nbrc, 6 * nbrl), sharex="col", sharey="row", 
+                                 subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
     else:
-        fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row", 
+                                 subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
     hspa1 = 0.1
     hspa2 = 0.01
     if ((nbrc == 2 and nbrl == 2) or (nbrc == 1 and plot_ref is True)) and isinstance(variables, list) is True and\
@@ -1143,26 +1150,33 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                                 transform=ax.transAxes)
         # map
         xx, yy = NUMPYmeshgrid(lon, lat)
+        # set extent
         if lat[-1] - lat[0] < 40:
-            locmap = Basemap(projection="cyl", llcrnrlat=lat[0] - 5, urcrnrlat=lat[-1] + 5, llcrnrlon=lon[0],
-                             urcrnrlon=lon[-1], ax=ax)
+            ax.set_extent([lon[0], lon[-1], lat[0] - 5, lat[-1] + 5], crs=ccrs.PlateCarree())
         else:
-            locmap = Basemap(projection="cyl", llcrnrlat=lat[0], urcrnrlat=lat[-1], llcrnrlon=lon[0], urcrnrlon=lon[-1],
-                             ax=ax)
+            ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())  
         # draw coastlines
-        locmap.drawcoastlines()
+        ax.coastlines()
         # fill continents
-        if maskland is True:
-            locmap.fillcontinents(color="gainsboro")
-        if maskocean is True:
-            locmap.drawmapboundary(fill_color="white")
-        # draw parallels
-        locmap.drawparallels(ylabel_ticks, labels=[1, 0, 0, 0], fontsize=12, dashes=[3, 1], linewidth=1)
-        # draw meridians
-        locmap.drawmeridians(xlabel_ticks, labels=[0, 0, 0, 1], fontsize=12, dashes=[3, 1], linewidth=1)
-        #cs = locmap.pcolormesh(xx, yy, tab[ii], vmin=min(labelbar), vmax=max(labelbar), cmap=colorbar)
+        if maskland:
+            ax.add_feature(cfeature.LAND, color="gainsboro")
+        if maskocean:
+            ax.add_feature(cfeature.OCEAN, color="white")
+        # adjust the yticks to convert longitude over 180 to negative to properly add gridlines
+        xlabel_ticks_adjusted = [i if i < 180 else i - 360 for i in xlabel_ticks]
+        # draw parallels and meridians by adding grid lines only at specified ticks
+        gl = ax.gridlines(draw_labels=True, crs=ccrs.PlateCarree(), linestyle='--', color='k')
+        gl.xlocator = mticker.FixedLocator(xlabel_ticks_adjusted)
+        gl.ylocator = mticker.FixedLocator(ylabel_ticks)
+        gl.xformatter = LongitudeFormatter()
+        gl.yformatter = LatitudeFormatter()        
+        gl.top_labels = False
+        gl.right_labels = False
+        gl.xlabel_style = {'size': 12}
+        gl.ylabel_style = {'size': 12}
+        # contour plot
         levels = create_levels(labelbar)
-        cs = locmap.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar)
+        cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar, transform=ccrs.PlateCarree())  
         # my text
         if (ii > 0 and plot_metric is True and isinstance(variables, list) is False) or\
                 (isinstance(variables, list) is True and "nina" in variables[0] and "nino" in variables[1] and
@@ -1219,7 +1233,8 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                     lreg = ReferenceRegions(regions[metric_variables[0]])
                 lons = [lreg["longitude"][0]] * 2 + [lreg["longitude"][1]] * 2
                 lats = list(lreg["latitude"]) + list(reversed(list(lreg["latitude"])))
-                x, y = locmap(lons, lats)
+                #x, y = locmap(lons, lats)
+                x, y = lons, lats
                 ax.add_patch(Polygon(list(zip(x, y)), edgecolor="k", linewidth=3, linestyle="-", facecolor="none"))
         # if ii == 0 and plot_metric is True:
         #     x1 = ax.get_position().x1

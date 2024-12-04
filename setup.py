@@ -2,7 +2,7 @@ from distutils.core import setup
 import subprocess
 import glob
 
-Version = "1.1.3"
+Version = "1.1.4"
 
 p = subprocess.Popen(
     ("git",
