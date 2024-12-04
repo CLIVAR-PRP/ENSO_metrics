@@ -1231,7 +1231,6 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                     lreg = ReferenceRegions(regions[metric_variables[0]])
                 lons = [lreg["longitude"][0]] * 2 + [lreg["longitude"][1]] * 2
                 lats = list(lreg["latitude"]) + list(reversed(list(lreg["latitude"])))
-                #x, y = locmap(lons, lats)
                 x, y = lons, lats
                 ax.add_patch(Polygon(list(zip(x, y)), edgecolor="k", linewidth=3, linestyle="-", facecolor="none"))
         # if ii == 0 and plot_metric is True:
