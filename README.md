@@ -37,6 +37,7 @@ Documentation for ENSO metrics: https://github.com/CLIVAR-PRP/ENSO_metrics/wiki
 
 
 [Versions]: https://github.com/PCMDI/pcmdi_metrics/releases
+[v1.1.5]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.5
 [v1.1.4]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.4
 [v1.1.3]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.3
 [v1.1.2]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.2
