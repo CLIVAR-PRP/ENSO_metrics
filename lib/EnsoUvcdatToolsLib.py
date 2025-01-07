@@ -3982,7 +3982,7 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
             for tt in list(range(len(tab))):
                 tab[tt] = MV2masked_where(obs[0].mask, tab[tt])
             model = MV2masked_where(tab.mask, model)
-        if model[0].mask != ():
+        if model[0].mask.shape != ():
             tab = MV2zeros(obs.shape)
             for tt in list(range(len(tab))):
                 tab[tt] = MV2masked_where(model[0].mask, tab[tt])
