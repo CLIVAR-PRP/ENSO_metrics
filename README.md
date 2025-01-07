@@ -27,6 +27,7 @@ Documentation for ENSO metrics: https://github.com/CLIVAR-PRP/ENSO_metrics/wiki
 
 | <div style="width:300%">[Versions]</div> | Update summary   |
 | ------------| ------------------------------------- |
+| [v1.1.5]    | Technical update: bug fix
 | [v1.1.4]    | Technical update: map plotting library changed to cartopy to comply w/ newer numpy versions
 | [v1.1.3]    | Technical update: resolve conflict with newer matplotlib versions
 | [v1.1.2]    | Technical update: to comply w/ newer numpy versions
