@@ -23,7 +23,7 @@ requirements:
     - cdms2
     - cdutil
     - genutil
-    - numpy
+    - numpy < 2.1.0
     - scipy
     - udunits2
     - matplotlib
