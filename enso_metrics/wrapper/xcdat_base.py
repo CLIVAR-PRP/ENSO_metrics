@@ -30,7 +30,8 @@ def annual_cycle(
         frequency: Literal["day", "month", "season"] = "month",
         keep_weights: bool = False,
         reference_period: Union[tuple[str, str], None] = None,
-        weighted: bool = True) -> xarray__Dataset:
+        weighted: bool = True,
+        **kwargs) -> xarray__Dataset:
     """
     Returns a Dataset with the climatology of a data variable.
     https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.temporal.climatology.html
@@ -53,7 +54,7 @@ def annual_cycle(
     :param keep_weights: bool, optional
         If calculating averages using weights, keep the weights in the final dataset output; e.g., keep_weights = False.
         Default is False
-    :param reference_period: Tuple[str, str], None, optional
+    :param reference_period: tuple[str, str], None, optional
         The climatological reference period, which is a subset of the entire time series. This parameter must be
         tuple of strings in the format ‘yyyy-mm-dd’; e.g., reference_period = ('1850-01-01', '1899-12-31').
         If no value is provided, the climatological reference period will be the full period covered by the dataset.
@@ -61,13 +62,14 @@ def annual_cycle(
     :param weighted: bool, optional
         Calculate averages using weights; e.g., weighted = True.
         Default is True
+    **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with the climatology of given data variable.
+        Input object with the climatology of given data variable.
     """
-    tmp_kwargs = {"keep_weights": keep_weights, "weighted": weighted}
+    tmp_kwargs: dict[str, Union[bool, tuple[str, str]]] = {"keep_weights": keep_weights, "weighted": weighted}
     if reference_period is not None:
         tmp_kwargs["reference_period"] = reference_period
     return ds.temporal.climatology(data_var, frequency, **tmp_kwargs)
@@ -78,7 +80,9 @@ def average_spatial(
         data_var: str,
         cf_dim: list[Literal["X", "Y"]] = None,
         keep_weights: bool = False,
-        weights: Union[str, xarray__DataArray] = "generate") -> xarray__Dataset:
+        skipna: Union[bool, None] = None,
+        weights: Union[str, xarray__DataArray] = "generate",
+        **kwargs) -> xarray__Dataset:
     """
     Return a Dataset with the average of a data variable and the given spatial dimension(s) removed.
     https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.spatial.average.html
@@ -96,27 +100,35 @@ def average_spatial(
     :param keep_weights: bool, optional
         If calculating averages using weights, keep the weights in the final dataset output; e.g., keep_weights = False.
         Default is False
+    :param skipna: bool or None, optional
+        If True, skip missing values (as marked by NaN); e.g., skipna = None.
+        Only skips missing values for float dtypes; other dtypes either do not have a sentinel missing value (int) or
+        skipna=True has not been implemented (object, datetime64 or timedelta64).
+        Default is None
     :param weights: Union["generate", xr.DataArray]
         If "generate", then weights are generated, otherwise, DataArray must contain the regional weights used for
         weighted averaging.
         Default is "generate"
+    **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with the average of a data variable and the given spatial dimension(s) removed.
+        Dataset with the spatially averaged variable.
     """
     if isinstance(cf_dim, list) is False:
         cf_dim = ["X", "Y"]
     # spatial average
-    return ds.spatial.average(data_var, axis=cf_dim, keep_weights=keep_weights, weights=weights)
+    return ds.spatial.average(data_var, axis=cf_dim, keep_weights=keep_weights, skipna=skipna, weights=weights)
 
 
 def average_temporal(
         ds: xarray__Dataset,
         data_var: str,
         keep_weights: bool = False,
-        weighted: bool = True) -> xarray__Dataset:
+        skipna: Union[bool, None] = None,
+        weighted: bool = True,
+        **kwargs) -> xarray__Dataset:
     """
     Return a Dataset with the average of a data variable and the time dimension removed.
     https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.temporal.average.html
@@ -131,21 +143,37 @@ def average_temporal(
     :param keep_weights: bool, optional
         If calculating averages using weights, keep the weights in the final dataset output; e.g., keep_weights = False.
         Default is False
+    :param skipna: bool or None, optional
+        If True, skip missing values (as marked by NaN); e.g., skipna = None.
+        Only skips missing values for float dtypes; other dtypes either do not have a sentinel missing value (int) or
+        skipna=True has not been implemented (object, datetime64 or timedelta64).
+        Default is None
     :param weighted: bool, optional
         Calculate averages using weights; e.g., weighted = True.
+        Weights are calculated by first determining the length of time for each coordinate point using the difference of
+        its upper and lower bounds. The time lengths are grouped, then each time length is divided by the total sum of
+        the time lengths to get the weight of each coordinate point. The weight of masked (missing) data is excluded
+        when averages are taken. This is the same as giving them a weight of 0.
         Default is True
+    **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with the average of a data variable and the time dimension removed.
+        Input object with the average of a data variable and the time dimension removed.
     """
     # temporal average
-    return ds.temporal.average(data_var, keep_weights=keep_weights, weighted=weighted)
+    return ds.temporal.average(data_var, keep_weights=keep_weights, skipna=skipna, weighted=weighted)
 
 
-def create_uniform_grid(lat_start: float, lat_stop: float, lat_delta: float, lon_start: float, lon_stop: float,
-                        lon_delta: float) -> xarray__Dataset:
+def create_uniform_grid(
+        lat_start: float,
+        lat_stop: float,
+        lat_delta: float,
+        lon_start: float,
+        lon_stop: float,
+        lon_delta: float,
+        **kwargs) -> xarray__Dataset:
     """
     Create a uniform rectilinear grid and sets appropriate the attributes for the lat/lon axis.
     https://xcdat.readthedocs.io/en/latest/generated/xcdat.create_uniform_grid.html
@@ -164,18 +192,20 @@ def create_uniform_grid(lat_start: float, lat_stop: float, lat_delta: float, lon
         Last longitude
     :param lon_delta: float
         Difference between two points of axis
-    
+    **kwargs - Discarded
+
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with uniform lat/lon grid.
+        New Dataset with uniform lat/lon grid.
     """
     return xcdat.create_uniform_grid(lat_start, lat_stop, lat_delta, lon_start, lon_stop, lon_delta)
 
 
 def get_axis_key(
         ds: Union[xarray__DataArray, xarray__Dataset],
-        cf_dim: Literal["X", "Y", "T", "Z"]) -> Union[str, list[str]]:
+        cf_dim: Literal["X", "Y", "T", "Z"],
+        **kwargs) -> Union[str, list[str]]:
     """
     Gets the dimension key(s) for an axis.
     https://xcdat.readthedocs.io/en/latest/generated/xcdat.get_dim_keys.html
@@ -186,6 +216,7 @@ def get_axis_key(
         DataArray or Dataset
     :param cf_dim: {"X", "Y", "T", "Z"}
         The CF axis (dimension) key
+    **kwargs - Discarded
     
     Output:
     -------
@@ -201,7 +232,8 @@ def interannual_anomalies(
         frequency: Literal["day", "month", "season"] = "month",
         keep_weights: bool = False,
         reference_period: Union[tuple[str, str], None] = None,
-        weighted: bool = True) -> xarray__Dataset:
+        weighted: bool = True,
+        **kwargs) -> xarray__Dataset:
     """
     Returns a Dataset with the climatological departures (anomalies) for a data variable.
     https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.temporal.departures.html
@@ -232,13 +264,14 @@ def interannual_anomalies(
     :param weighted: bool, optional
         Calculate averages using weights; e.g., weighted = True.
         Default is True
+    **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with the climatological departures (anomalies) for a data variable.
+        Input object with the climatological departures (anomalies) for a data variable.
     """
-    tmp_kwargs = {"keep_weights": keep_weights, "weighted": weighted}
+    tmp_kwargs: dict[str, Union[bool, tuple[str, str]]] = {"keep_weights": keep_weights, "weighted": weighted}
     if reference_period is not None:
         tmp_kwargs["reference_period"] = reference_period
     return ds.temporal.departures(data_var, frequency, **tmp_kwargs)
@@ -297,7 +330,7 @@ def open_dataset(
             - None: use the current orientation (if the longitude axis exists).
             - (-180, 180): represents [-180, 180] in math notation.
             - (0, 360): represents [0, 360] in math notation.
-        Default is None
+        Default is (0, 360)
     :param preprocess: Callable, optional
         If provided, call this function on each dataset prior to concatenation. You can find the file-name from which
         each dataset was loaded in ds.encoding["source"].
@@ -353,7 +386,7 @@ def regrid_horizontal(
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with the data_var transformed to the output_grid.
+        Input object with the data_var transformed to the output_grid.
     """
     tmp_kwargs = {"method": method, "tool": tool, "unmapped_to_nan": unmapped_to_nan, **kwargs}
     return ds.regridder.horizontal(data_var, output_grid, **tmp_kwargs)
@@ -390,12 +423,15 @@ def regrid_vertical(
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with the data_var transformed to the output_grid.
+        Input object with the data_var transformed to the output_grid.
     """
     return ds.regridder.horizontal(data_var, output_grid, method=method, tool=tool, **kwargs)
 
 
-def set_auto_bounds(ds: xarray__Dataset, cf_dim: list[Literal["T", "X", "Y", "Z"]] = None) -> xarray__Dataset:
+def set_auto_bounds(
+        ds: xarray__Dataset,
+        cf_dim: list[Literal["T", "X", "Y", "Z"]] = None,
+        **kwargs) -> xarray__Dataset:
     """
     Adds missing coordinate bounds for supported axes in the Dataset.
     https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.bounds.add_missing_bounds.html
@@ -408,18 +444,23 @@ def set_auto_bounds(ds: xarray__Dataset, cf_dim: list[Literal["T", "X", "Y", "Z"
     :param cf_dim: list[{"T", "X", "Y", "Z"}], optional
         List of CF axes that function should operate on. Supported CF axes include “X”, “Y”, “Z”, and “T”.
         Default is None (i.e., ["X", "Y", "Z"])
+    **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.Dataset
-        Dataset with new bounds where missing.
+        Input object with new bounds where missing.
     """
     if isinstance(cf_dim, list) is False:
         cf_dim = ["X", "Y", "Z"]
     return ds.bounds.add_missing_bounds(axes=cf_dim)
 
 
-def weights_spatial(ds: xarray__Dataset, data_var: str, cf_dim: list[Literal["X", "Y"]] = None) -> xarray__DataArray:
+def weights_spatial(
+        ds: xarray__Dataset,
+        data_var: str,
+        cf_dim: list[Literal["X", "Y"]] = None,
+        **kwargs) -> xarray__DataArray:
     """
     Return a DataArray with area weights for specified ‘cf_dim’.
     https://xcdat.readthedocs.io/en/latest/generated/xcdat.spatial.SpatialAccessor.html
@@ -434,11 +475,12 @@ def weights_spatial(ds: xarray__Dataset, data_var: str, cf_dim: list[Literal["X"
     :param cf_dim: list[{"X", "Y"}]
         List of axis dimensions to average over, valid axis keys include 'X' and 'Y'; e.g., cf_axis = ["X", "Y"].
         Default is None (i.e., ['X', 'Y'])
+    **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.DataArray
-        DataArray containing the area weights to use during averaging. Weights are per given dimension in ‘cf_dim’.
+        New DataArray containing the area weights to use during averaging. Weights are per given dimension in ‘cf_dim’.
     """
     if isinstance(cf_dim, list) is False:
         cf_dim = ["X", "Y"]
@@ -446,7 +488,10 @@ def weights_spatial(ds: xarray__Dataset, data_var: str, cf_dim: list[Literal["X"
     return ds.spatial.get_weights(axis=cf_dim, data_var=data_var)
 
 
-def weights_temporal(ds: xarray__Dataset, data_var: str) -> xarray__DataArray:
+def weights_temporal(
+        ds: xarray__Dataset,
+        data_var: str,
+        **kwargs) -> xarray__DataArray:
     """
     Return a DataArray with time weights based on a specified frequency.
     https://xcdat.readthedocs.io/en/latest/generated/xcdat.temporal.TemporalAccessor.html
@@ -458,11 +503,12 @@ def weights_temporal(ds: xarray__Dataset, data_var: str) -> xarray__DataArray:
         together form a self describing dataset
     :param data_var: str
         Data variable in ds; e.g., data_var = "ts"
+    **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.DataArray
-        DataArray containing the time weights to use during averaging.
+        New DataArray containing the time weights to use during averaging.
     """
     # get time axis name
     cf_time = xcdat.axis.get_dim_keys(ds, axis="T")

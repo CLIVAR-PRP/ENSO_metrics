@@ -79,7 +79,8 @@ def input_dictionary_formater(
         # fill dictionary
         dict_o[k1] = {"file_name": files, "variable": names}
         dict_o[k1]["area"] = dict_input[k1]["area"] if "area" in list(dict_input[k1].keys()) else None
-        dict_o[k1]["mask"] = dict_input[k1]["mask"] if "mask" in list(dict_input[k1].keys()) else "estimate"
+        dict_o[k1]["mask"] = None if k1 in ["areacella", "areacello", "landmask"] else (
+            dict_input[k1]["mask"] if "mask" in list(dict_input[k1].keys()) else "estimate")
         for k2 in ["variable_offset", "variable_scaling"]:
             dict_o[k1][k2] = {}
             for k3 in names:

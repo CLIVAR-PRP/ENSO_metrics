@@ -24,7 +24,7 @@ def combine_dict_levels(
         tuple_k: tuple = None,
         tuple_k_last: tuple = None,
         **kwargs) -> (dict, tuple, tuple):
-    # set None input to it's default value
+    # set None input to its default value
     dict_o = set_instance(dict_o, dict, False, {})
     tuple_k = set_instance(tuple_k, tuple, False, ())
     tuple_k_last = set_instance(tuple_k_last, tuple, False, ())
@@ -102,7 +102,7 @@ def sort_dict(
         List of the last key of each nested level, in order, to keep track of the position within the input nested
         dictionary
     """
-    # set None input to it's default value
+    # set None input to its default value
     dict_o = set_instance(dict_o, dict, False,{})
     tuple_k = set_instance(tuple_k, tuple, False, ())
     tuple_k_last = set_instance(tuple_k_last, tuple, False, ())

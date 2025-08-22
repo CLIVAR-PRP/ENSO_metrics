@@ -1,1 +1,1 @@
-from .stat_box import stat_box
+from enso_metrics.recipes import stat_box

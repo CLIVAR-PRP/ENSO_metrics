@@ -17,7 +17,7 @@
 # basic python package
 from copy import deepcopy as copy__deepcopy
 from inspect import stack as inspect__stack
-from typing import Any, Callable, Hashable, Literal, Union
+from typing import Any, Callable, Hashable, Literal, Mapping, Union
 
 # numpy
 from numpy import dtype as numpy__dtype
@@ -30,8 +30,86 @@ import xarray
 # ---------------------------------------------------------------------------------------------------------------------#
 # Functions
 # ---------------------------------------------------------------------------------------------------------------------#
+xarray.set_options(keep_attrs=True)
 array_wrapper = xarray.DataArray
 dataset_wrapper = xarray.Dataset
+
+
+def assign_coords(
+        ds: Union[array_wrapper, dataset_wrapper],
+        coords: Mapping = None,
+        coords_kwargs: dict = None,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Assign new coordinates to this object. Returns a new object with all the original data in addition to the new
+    coordinates.
+    https://docs.xarray.dev/en/stable/generated/xarray.Dataset.assign_coords.html
+    https://docs.xarray.dev/en/stable/generated/xarray.DataArray.assign_coords.html
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param coords: mapping of dim to coord, optional
+        A mapping whose keys are the names of the coordinates and values are the coordinates to assign. The mapping will
+        generally be a dict or Coordinates.
+            - If a value is a standard data value — for example, a DataArray, scalar, or array — the data is simply
+              assigned as a coordinate.
+            - If a value is callable, it is called with this object as the only parameter, and the return value is used
+              as new coordinate variables.
+            - A coordinate can also be defined and attached to an existing dimension using a tuple with the first
+              element the dimension name and the second element the values for this new coordinate.
+        One of ‘coords’ or ‘coords_kwargs’ must be provided.
+        Default is None
+    :param coords_kwargs: dict[str, DataArray], optional
+        The keyword arguments form of coords. One of ‘coords’ or ‘coords_kwargs’ must be provided.
+        Default is None
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        A new object (as input) with the new coordinates in addition to the existing data.
+    """
+    if isinstance(coords_kwargs, dict) is False:
+        coords_kwargs = {}
+    return ds.assign_coords(coords=coords, **coords_kwargs)
+
+
+def assign_to_dataset(
+        ds: dataset_wrapper,
+        variables: Mapping = None,
+        variables_kwargs: dict = None,
+        **kwargs) -> dataset_wrapper:
+    """
+    Assign new data variables to a Dataset, returning a new object with all the original variables in addition to the
+    new ones.
+    https://docs.xarray.dev/en/stable/generated/xarray.Dataset.assign.html
+
+    Input:
+    ------
+    :param ds: xarray.Dataset
+        An in-memory representation of a NetCDF file, and consists of variables, coordinates and attributes which
+        together form a self describing dataset
+    :param variables: mapping of hashable to Any, optional
+        Mapping from variables names to the new values.
+        If the new values are callable, they are computed on the Dataset and assigned to new data variables.
+        If the values are not callable, (e.g. a DataArray, scalar, or array), they are simply assigned.
+        One of ‘variables’ or ‘variables_kwargs’ must be provided.
+        Default is None
+    :param variables_kwargs: dict[str, DataArray], optional
+        The keyword arguments form of variables. One of ‘variables’ or ‘variables_kwargs’ must be provided.
+        Default is None
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.Dataset
+        A new Dataset with the new variables in addition to all the existing variables.
+    """
+    if isinstance(variables_kwargs, dict) is False:
+        variables_kwargs = {}
+    return ds.assign(variables=variables, **variables_kwargs)
 
 
 def change_type(
@@ -71,8 +149,8 @@ def change_type(
         If False and the dtype requirement is satisfied, the input array is returned.
         Default is None (True according to ndarray.astype)
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param keep_attrs: bool or None, optional
         Keep or not input attributes; e.g., keep_attrs = True.
@@ -87,15 +165,15 @@ def change_type(
             - ‘K’ means as close to the order the array elements appear in memory as possible.
         Default is None ("K" according to ndarray.astype)
     :param subok: bool, optional
-        Use sub-classes or base-class array; e.g., subok = True.
-        If True, then sub-classes will be passed-through, otherwise the returned array will be forced to be a
+        Use subclasses or base-class array; e.g., subok = True.
+        If True, then subclasses will be passed-through, otherwise the returned array will be forced to be a
         base-class array.
         Default is None (True according to ndarray.astype)
     **kwargs - Discarded
     
     Output:
     -------
-    :return: xarray__array or xarray.Dataset
+    :return: xarray.DataArray or xarray.Dataset
         New object with data cast to the specified type.
     """
     # read variable from xarray.Dataset if needed
@@ -123,7 +201,7 @@ def convert_cf_dim_key(ds: Union[array_wrapper, dataset_wrapper], cf_dim: Litera
         Name of given CF dimension in input xarray.DataArray or xarray.Dataset.
     """
     # list dimension
-    list_dim = list(ds.dims)
+    list_dim = list(ds.coords)
     # dimension to find
     dim_to_find = {
         "T": ["time"],
@@ -215,8 +293,8 @@ def copy(
         data variables, and only used for coords.
         Default is None
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param deep: bool, optional
         Whether the data array and its coordinates are loaded into memory and copied onto the new object.
@@ -253,12 +331,12 @@ def correlation(
     :param ds_b: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var_a: str, optional
-        Data variable in ‘ds_a‘ if it is xarray.Dataset; e.g., data_var_a = "ts".
-        If ‘ds_a‘ is xarray.Dataset, ‘data_var_a‘ must be provided.
+        Data variable in ‘ds_a’ if it is xarray.Dataset; e.g., data_var_a = "ts".
+        If ‘ds_a’ is xarray.Dataset, ‘data_var_a’ must be provided.
         Default is None
     :param data_var_b: str, optional
-        Data variable in ‘ds_b‘ if it is xarray.Dataset; e.g., data_var_b = "ts".
-        If ‘ds_b‘ is xarray.Dataset, ‘data_var_b‘ must be provided.
+        Data variable in ‘ds_b’ if it is xarray.Dataset; e.g., data_var_b = "ts".
+        If ‘ds_b’ is xarray.Dataset, ‘data_var_b’ must be provided.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Name of dimension[s] along which to apply var; e.g., dim="x" or dim=["x", "y"].
@@ -272,7 +350,7 @@ def correlation(
     Output:
     -------
     :return: xarray.DataArray
-        DataArray with the correlation and the indicated dimension(s) removed.
+        New DataArray with the correlation and the indicated dimension(s) removed.
     """
     # read variable from xarray.Dataset if needed
     ds_a = to_array(ds_a, data_var_a)
@@ -293,15 +371,15 @@ def create_array_zero(ds: Union[array_wrapper, dataset_wrapper], data_var: str =
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     **kwargs - Discarded
     
     Output:
     -------
     :return: xarray.DataArray or xarray.Dataset
-        New object of zeros with the same shape and type as ‘ds‘.
+        New object of zeros with the same shape and type as ‘ds’.
     """
     # read variable from xarray.Dataset if needed
     ds = to_array(ds, data_var)
@@ -324,10 +402,10 @@ def drop_dataset_keys(
         An in-memory representation of a NetCDF file, and consists of variables, coordinates and attributes which
         together form a self describing dataset
     :param names: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str]
-        Name(s) of variables to drop; e.g., "ts" or ["ts", "zos"]
+        Name(s) of variables to drop; e.g., names = "ts" or ["ts", "zos"]
     :param errors: {"raise", "ignore"}, optional
         Controls how to handle errors; e.g., errors = "raise".
-            - raise’, raises a ValueError error if any of the variable passed are not in the dataset.
+            - ‘raise’, raises a ValueError error if any of the variable passed are not in the dataset.
             - ‘ignore’, any given names that are in the dataset are dropped and no error is raised.
         Default is "raise"
     **kwargs - Discarded
@@ -335,9 +413,40 @@ def drop_dataset_keys(
     Output:
     -------
     :return: xarray.DataArray or xarray.Dataset
-        New object of zeros with the same shape and type as ‘ds‘.
+        New object of zeros with the same shape and type as ‘ds’.
     """
     return ds.drop_vars(names, errors=errors)
+
+
+def drop_given_attributes(ds, attrs: list[str], data_var: str = None, **kwargs):
+    """
+    Drop given list of attrs from variable attributes (if ‘ds’ is DataArray or ‘ds’ is Dataset and ‘data_var’ is a data
+    variable) of from global attributes (if ‘ds’ is Dataset and ‘data_var’ is not given).
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param attrs: list[str]
+        Name(s) of attributes to drop; e.g., attrs = ["units", "valid_range"]
+    :param data_var: str, optional
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ not in ‘ds’, global attributes are removed, else variable attributes.
+        Default is None
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        New object of zeros with the same shape and type as ‘ds’.
+    """
+    # read variable from xarray.Dataset if needed
+    ds = to_array(ds, data_var)
+    # drop given attributes
+    if isinstance(attrs, list) is True:
+        for k1 in attrs:
+            if k1 in list(ds.attrs.keys()):
+                del ds.attrs[k1]
 
 
 def expand_dim(
@@ -362,8 +471,8 @@ def expand_dim(
         If axis=None is passed, all the axes will be inserted to the start of the result array.
         Default is None
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: dict[str, int or numpy.ndarray or xarray.DataArray] or str or list[str] or tuple[str] or None, optional
         Dimensions to include on the new variable; e.g., dim = {"latitude": array_latitude}.
@@ -395,8 +504,8 @@ def get_array_name(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset, ‘data_var‘ must be provided.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
     **kwargs - Discarded
     
@@ -421,8 +530,8 @@ def get_array_shape(ds: Union[array_wrapper, dataset_wrapper], data_var: str = N
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset, ‘data_var‘ must be provided.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
     **kwargs - Discarded
     
@@ -447,8 +556,8 @@ def get_array_size(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset, ‘data_var‘ must be provided.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
     **kwargs - Discarded
     
@@ -480,9 +589,9 @@ def get_attribute(
     :param attribute_name: str
         Name of desired attribute; e.g., attribute_name = "units"
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, ‘attribute_name‘ must be a variable attribute.
-        Else, ‘attribute_name‘ must be a global attribute.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, ‘attribute_name’ must be a variable attribute.
+        Else, ‘attribute_name’ must be a global attribute.
         Default is None
     **kwargs - Discarded
     
@@ -508,8 +617,8 @@ def get_attributes(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, a dictionary of variable attributes is returned.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, a dictionary of variable attributes is returned.
         Else, a dictionary of global attributes is returned.
         Default is None
     **kwargs - Discarded
@@ -537,8 +646,8 @@ def get_attributes_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: str
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, a list of variable attribute names is returned.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, a list of variable attribute names is returned.
         Else, a list of global attribute names is returned.
         Default is None
     **kwargs - Discarded
@@ -602,7 +711,7 @@ def get_dim_array(
 def get_dim_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> list[Hashable]:
     """
     Return dimension name(s) from input xarray.DataArray xarray.Dataset.
-    If ‘ds‘ is xarray.DataArray (or xarray.Dataset and ‘data_var‘ in ‘ds‘), dimension names are ordered as in DataArray.
+    If ‘ds’ is xarray.DataArray (or xarray.Dataset and ‘data_var’ in ‘ds’), dimension names are ordered as in DataArray.
     https://docs.xarray.dev/en/latest/generated/xarray.Dataset.coords.html
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.dims.html
     
@@ -611,8 +720,8 @@ def get_dim_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset, ‘data_var‘ must be provided.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
     **kwargs - Discarded
     
@@ -669,8 +778,8 @@ def maximum(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Name of dimension(s) along which to apply max; e.g., dim = "X".
@@ -720,8 +829,8 @@ def mean(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Name of dimension(s) along which to apply mean; e.g., dim = "X".
@@ -737,7 +846,7 @@ def mean(
     :param weights: xarray.DataArray or None, optional
         An array of weights associated with the values in this Dataset. Each value in the data contributes to the
         reduction operation according to its associated weight.
-        If given and ‘ds‘ is xarray.DataArray (or ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘),
+        If given and ‘ds’ is xarray.DataArray (or ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’),
         ds.weighted(weights).mean() is computed.
         Else, ds.mean() is computed.
         Default is None
@@ -781,8 +890,8 @@ def median(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Name of dimension(s) along which to apply median; e.g., dim = "X".
@@ -798,7 +907,7 @@ def median(
     :param weights: xarray.DataArray or None, optional
         An array of weights associated with the values in this Dataset. Each value in the data contributes to the
         reduction operation according to its associated weight.
-        If given and ‘ds‘ is xarray.DataArray (or ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘),
+        If given and ‘ds’ is xarray.DataArray (or ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’),
         ds.weighted(weights).quantile(50) is computed.
         Else, ds.median() is computed.
         Default is None
@@ -839,8 +948,8 @@ def minimum(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Name of dimension(s) along which to apply min; e.g., dim = "X".
@@ -868,6 +977,45 @@ def minimum(
     dim_name = convert_dim_keys(ds, dim)
     # minimum value
     return ds.min(dim=dim_name, keep_attrs=keep_attrs, skipna=skipna, **kwargs)
+
+
+def notnull(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: str = None,
+        keep_attrs: bool = None,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Test each value in the array for whether it is not a missing value.
+    https://docs.xarray.dev/en/stable/generated/xarray.Dataset.notnull.html
+    https://docs.xarray.dev/en/stable/generated/xarray.DataArray.notnull.html
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param data_var: str, optional
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
+        Default is None
+    :param keep_attrs: bool
+        If True, the attributes (attrs) will be copied from the original object to the new one.
+        If False, the new object will be returned without attributes.
+        Default is None
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        Object (as input, unless given ‘data_var’ is in given is xarray.Dataset ‘ds’, in this case the output will be
+        xarray.DataArray) with shape as input, but the dtype of the data is bool.
+    """
+    tmp_kwargs = {}
+    if keep_attrs is not None:
+        tmp_kwargs["keep_attrs"] = keep_attrs
+    # read variable from xarray.Dataset if needed
+    ds = to_array(ds, data_var)
+    # where
+    return ds.notnull(**tmp_kwargs)
 
 
 def numpy_to_array(
@@ -1086,7 +1234,7 @@ def polyfit(
                                       full=True).
             - “polyfit_covariance”:   The covariance matrix of the polynomial coefficient estimates (only included if
                                       full=False and cov=True).
-        If ‘ds‘ is xarray.Dataset, “[var]_” is added at the beginning of “polyfit_coefficients”, “polyfit_residuals” and
+        If ‘ds’ is xarray.Dataset, “[var]_” is added at the beginning of “polyfit_coefficients”, “polyfit_residuals” and
         “polyfit_covariance” (for each “var” in the input dataset).
     """
     return ds.polyfit(dim, deg, cov=cov, full=full, rcond=rcond, skipna=skipna, w=w)
@@ -1146,8 +1294,8 @@ def quantile(
     :param q: float or int or list[float] or list[int] or tuple[float] or tuple[int]
         Quantile(s) to compute, which must be between 0 and 1 inclusive; e.g., q = 0.5 or q = [0.25, 0.75]
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Name of dimension(s) along which to apply quantile; e.g., dim="x" or dim=["x", "y"].
@@ -1169,7 +1317,7 @@ def quantile(
     :param weights: xarray.DataArray or None, optional
         An array of weights associated with the values in this Dataset. Each value in the data contributes to the
         reduction operation according to its associated weight.
-        If given and ‘ds‘ is xarray.DataArray (or ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘),
+        If given and ‘ds’ is xarray.DataArray (or ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’),
         ds.weighted(weights).quantile() is computed.
         Else, ds.quantile() is computed.
         Default is None
@@ -1210,7 +1358,7 @@ def rename(
     :param name_dict: str or dict[str, str]
         Dictionary whose keys are current variable, coordinate or dimension names and whose values are the desired
         names.
-        If ‘ds‘ is xarray.DataArray and ‘name_dict‘ is str, it as the new name for this array.
+        If ‘ds’ is xarray.DataArray and ‘name_dict‘ is str, it as the new name for this array.
     **kwargs - Discarded
     
     Output:
@@ -1219,6 +1367,48 @@ def rename(
         This object with renamed variables, coordinates and dimensions.
     """
     return ds.rename(name_dict)
+
+
+def roll(
+        ds: Union[array_wrapper, dataset_wrapper],
+        roll_coords: bool = False,
+        shifts: Mapping = None,
+        shifts_kwargs: dict = None,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Roll this DataArray or Dataset or Da by an offset along one or more dimensions.
+    Unlike shift, roll treats the given dimensions as periodic, so will not create any missing values to be filled.
+    Also unlike shift, roll may rotate all variables, including coordinates if specified. The direction of rotation is
+    consistent with numpy.roll().
+    https://docs.xarray.dev/en/stable/generated/xarray.Dataset.roll.html
+    https://docs.xarray.dev/en/stable/generated/xarray.DataArray.roll.html
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param roll_coords: bool, optional
+        Indicates whether to roll the coordinates by the offset too; e.g., roll_coords = False
+        Default is False
+    :param shifts: mapping of Hashable to int, optional
+        If DataArray: Integer offset to rotate each of the given dimensions.
+        If Dataset:   A dict with keys matching dimensions and values given by integers to rotate each of the given
+                      dimensions.
+        Positive offsets roll to the right; negative offsets roll to the left.
+        One of ‘shifts’ or ‘shifts_kwargs’ must be provided.
+        Default is None
+    :param shifts_kwargs: dict, optional
+        The keyword arguments form of shifts. One of ‘shifts’ or ‘shifts_kwargs’ must be provided.
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        Object (as input) with the same attributes but rolled data and coordinates.
+    """
+    if isinstance(shifts_kwargs, dict) is False:
+        shifts_kwargs = {}
+    return ds.roll(roll_coords=roll_coords, shifts=shifts, **shifts_kwargs)
 
 
 def select(
@@ -1261,9 +1451,9 @@ def select(
     Output:
     -------
     :return: xarray.DataArray or xarray.Dataset
-        New object with the same contents as ‘ds‘, except each variable and dimension is indexed by the appropriate
+        New object with the same contents as ‘ds’, except each variable and dimension is indexed by the appropriate
         indexers. If indexer DataArrays have coordinates that do not conflict with this object, then these coordinates
-        will be attached. In general, each array’s data will be a view of the array’s data in ‘ds‘, unless vectorized
+        will be attached. In general, each array’s data will be a view of the array’s data in ‘ds’, unless vectorized
         indexing was triggered by using an array indexer, in which case the data will be a copy.
     """
     return ds.sel(drop=drop, indexers=indexers, method=method, tolerance=tolerance)
@@ -1302,9 +1492,9 @@ def select_index(
     Output:
     -------
     :return: xarray.DataArray or xarray.Dataset
-        New object with the same contents as ‘ds‘, except each array and dimension is indexed by the appropriate
+        New object with the same contents as ‘ds’, except each array and dimension is indexed by the appropriate
         indexers. If indexer DataArrays have coordinates that do not conflict with this object, then these coordinates
-        will be attached. In general, each array’s data will be a view of the array’s data in ‘ds‘, unless vectorized
+        will be attached. In general, each array’s data will be a view of the array’s data in ‘ds’, unless vectorized
         indexing was triggered by using an array indexer, in which case the data will be a copy.
     """
     return ds.isel(drop=drop, indexers=indexers, missing_dims=missing_dims)
@@ -1362,8 +1552,8 @@ def set_attributes_variable(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset, ‘data_var‘ must be provided.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
     *args – positional arguments passed into attrs.update.
     **kwargs – keyword arguments passed into attrs.update.
@@ -1393,8 +1583,8 @@ def squeeze(
     :param axis: int or list[int] or tuple[int] or None, optional
         Like dim, but positional; e.g., axis = 0 or axis = [0, 1]
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Selects a subset of the length one dimensions; e.g., dim="x" or dim=["x", "y"].
@@ -1440,8 +1630,8 @@ def sum_along_axis(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None, optional
         Name of dimension(s) along which to apply sum; e.g., dim="x" or dim=["x", "y"].
@@ -1461,7 +1651,7 @@ def sum_along_axis(
     :param weights: xarray.DataArray or None, optional
         An array of weights associated with the values in this Dataset. Each value in the data contributes to the
         reduction operation according to its associated weight.
-        If given and ‘ds‘ is xarray.DataArray (or ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘),
+        If given and ‘ds’ is xarray.DataArray (or ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’),
         ds.weighted(weights).sum() is computed.
         Else, ds.sum() is computed.
         Default is None
@@ -1506,8 +1696,8 @@ def standard_deviation(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param ddof: int
         Delta Degrees of Freedom: the divisor used in the calculation is N - ddof, where N represents the number of
@@ -1527,7 +1717,7 @@ def standard_deviation(
     :param weights: xarray.DataArray or None, optional
         An array of weights associated with the values in this Dataset. Each value in the data contributes to the
         reduction operation according to its associated weight.
-        If given and ‘ds‘ is xarray.DataArray (or ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘),
+        If given and ‘ds’ is xarray.DataArray (or ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’),
         ds.weighted(weights).std() is computed.
         Else, ds.std() is computed.
         Default is None
@@ -1551,7 +1741,9 @@ def standard_deviation(
         return ds.std(dim=dim_name, ddof=ddof, keep_attrs=keep_attrs, skipna=skipna, **kwargs)
 
 
-def to_array(ds: Union[array_wrapper, dataset_wrapper], data_var: str, **kwargs) -> array_wrapper:
+def to_array(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str, None], **kwargs) -> array_wrapper:
     """
     Return xarray.DataArray from input ‘ds’, i.e., ‘ds’ if it is xarray.DataArray or ds[data_var] if it is
     xarray.Dataset.
@@ -1560,7 +1752,7 @@ def to_array(ds: Union[array_wrapper, dataset_wrapper], data_var: str, **kwargs)
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str
+    :param data_var: Hashable or str or None
         Data variable in ds if it is xarray.Dataset; e.g., data_var = "ts"
     **kwargs - Discarded
     
@@ -1630,9 +1822,9 @@ def to_netcdf(
     :param list_of_variables: list[str]
         List of data variable(s) in ds to save
     :param mode: {"w", "a"}, optional
-        Write (‘w’) or append (‘a’) mode.
-        If mode=’w’, any existing file at this location will be overwritten.
-        If mode=’a’, existing variables will be overwritten.
+        Write ("w") or append ("a") mode.
+        If mode="w", any existing file at this location will be overwritten.
+        If mode="a", existing variables will be overwritten.
         Default is "a"
     **kwargs - Discarded
     """
@@ -1654,8 +1846,8 @@ def to_numpy(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **
     :param ds: xarray.DataArray or xarray.Dataset
         xarray.DataArray or xarray.Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset, ‘data_var‘ must be provided.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
     **kwargs - Discarded
     
@@ -1689,8 +1881,8 @@ def transpose(
     :param dimensions: list[Hashable] or list[str] or tuple[Hashable] or tuple[str]
         List of dimension names with the desired order
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param missing_dims: {"raise", "warn", "ignore"}, optional
         What to do if dimensions that should be selected from are not present in the DataArray;
@@ -1701,7 +1893,7 @@ def transpose(
         Default is "raise"
     :param transpose_coords: bool, optional
         If True, also transpose the coordinates of this DataArray; transpose_coords = True.
-        Used only if ‘ds‘ is xarray.DataArray (or ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘).
+        Used only if ‘ds’ is xarray.DataArray (or ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’).
         Default is True
     **kwargs - Discarded
     
@@ -1716,7 +1908,7 @@ def transpose(
     # get dimension(s) as named in xarray.DataArray or xarray.Dataset
     dimensions_name = convert_dim_keys(ds, dimensions)
     # transpose
-    tmp_kwargs = {"missing_dims": missing_dims}
+    tmp_kwargs: dict[str, Union[Literal["raise", "warn", "ignore"], bool]] = {"missing_dims": missing_dims}
     if isinstance(ds, array_wrapper) is True:
         tmp_kwargs["transpose_coords"] = transpose_coords
     return ds.transpose(*dimensions_name, missing_dims=missing_dims, transpose_coords=transpose_coords)
@@ -1743,8 +1935,8 @@ def variance(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param ddof: int
         Delta Degrees of Freedom: the divisor used in the calculation is N - ddof, where N represents the number of
@@ -1764,7 +1956,7 @@ def variance(
     :param weights: xarray.DataArray or None, optional
         An array of weights associated with the values in this Dataset. Each value in the data contributes to the
         reduction operation according to its associated weight.
-        If given and ‘ds‘ is xarray.DataArray (or ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘),
+        If given and ‘ds’ is xarray.DataArray (or ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’),
         ds.weighted(weights).var() is computed.
         Else, ds.var() is computed.
         Default is None
@@ -1790,7 +1982,7 @@ def variance(
 
 def where(
         ds: Union[array_wrapper, dataset_wrapper],
-        cond: Union[numpy__ndarray, array_wrapper, dataset_wrapper],
+        cond: Union[numpy__ndarray, array_wrapper, dataset_wrapper, bool],
         data_var: str = None,
         drop: bool = False,
         other: Union[bool, float, int, numpy__ndarray, array_wrapper, dataset_wrapper, None] = None,
@@ -1807,8 +1999,8 @@ def where(
     :param cond: numpy.ndarray or xarray.DataArray or xarray.Dataset
         Locations at which to preserve this object's values. dtype must be bool
     :param data_var: str, optional
-        Data variable in ‘ds‘ if it is xarray.Dataset; e.g., data_var = "ts".
-        If ‘ds‘ is xarray.Dataset and ‘data_var‘ in ‘ds‘, output will be xarray.DataArray.
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
     :param drop: bool, optional
         If True, coordinate labels that only correspond to False values of the condition are dropped from the result.

@@ -6,17 +6,21 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy
+from inspect import stack as inspect__stack
+from json import dumps as json__dumps
 from typing import Union
 
 # local functions
 from enso_metrics.tools.default import default_arg_values, input_dictionary_formater, set_default_str
 from enso_metrics.tools import prints
-from enso_metrics.wrapper import processors
+from enso_metrics.wrapper import basics
+from enso_metrics.wrapper import processors as pr
+from enso_metrics.wrapper import wrapper_base as wb
 # ---------------------------------------------------#
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
-def stat_box(
+def diagnostic(
         input_param: dict[
             str, dict[
                 str, Union[int, float, str, list[str], None, dict[
@@ -31,6 +35,7 @@ def stat_box(
         statistic: str = None,
         variable: str = None,
         **kwargs):
+    basics.log_info(inspect__stack(), "# " + "-" * 30 + " > enter metric")
     # get default recipe, regions and variables parameters if they are not given
     # needed_kwarg = ["recipe_param", "regions_param", "variables_param"]
     needed_kwarg = ["regions_param", "variables_param"]
@@ -50,25 +55,46 @@ def stat_box(
         # 1. Read files
         # ------------------------------------------------
         # 1.1 Create a dictionary with variables and files
-        input_dataset = processors.reader(input_param, variable, **kwargs)
+        print(json__dumps(input_param, indent=4))
+        input_dataset = pr.reader(input_param, variable, **kwargs)
+        print("processors.reader")
+        print(json__dumps(input_param, indent=4))
+        print(type(input_dataset))
         print(list(input_dataset.keys()))
+        for k1, d1 in input_dataset.items():
+            print(str(k1).rjust(15), type(d1))
+            for k2, d2 in d1.items():
+                print(str(k2).rjust(20), type(d2))
+                if isinstance(d2, dict) is True:
+                    print(json__dumps(d2, indent=4))
+                    # for k3, d3 in d2.items():
+                    #     print(str(k3).rjust(25), type(d3))
+                    #     for k4, d4 in d3.items():
+                    #         print(str(k4).rjust(30), type(d4))
         # processors
         dict_processors = {
             "ts_n30e": {
-                "variable": "ts",
+                "region": region,
+                "variable": variable,
                 "to_do": {
-                    "1__masker": {"kwargs_masker": {"maskland": True}, **kwargs},
-                    # "2__selecter": "do",
-                    # "3__averager": "do",
+                    "1__masker": {"tolerance": 0, "kwargs_where": {}},
+                    "2__selector": {
+                        "depth_bounds": None,
+                        "time_bounds": None,
+                        "kwargs_select_depth": {"kwargs_sel": {}},
+                        "kwargs_select_horizontal": {"mask_only": True, "kwargs_sel": {}, "kwargs_where": {}},
+                        "kwargs_select_time": {"kwargs_sel": {}}},
+                    "3__averager": "do",
                     # "4__detrender": "do",
                     # "5__anomaler": "do",
                     # "6__seasonal_cycler": "do",
                     # "7__normalizer": "do",
                     # "8__smoother": "do",
+                    # "9__regridder": "do",
                 },
             },
         }
-        processed_dataset_1 = processors.loop(dict_processors, input_dataset, input_param, **kwargs)
+        processed_dataset_1 = pr.loop(dict_processors, input_dataset, input_param, **kwargs)
         stop
         if keyerror is not None:
             break

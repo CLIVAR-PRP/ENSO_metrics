@@ -1,0 +1,5 @@
+numpy~=2.2.6
+scipy~=1.15.2
+xcdat~=0.9.1
+xarray~=2025.7.1
+regionmask~=0.13.0
