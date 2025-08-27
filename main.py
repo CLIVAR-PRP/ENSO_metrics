@@ -27,7 +27,7 @@ if __name__ == '__main__':
     recipe = "stat_box"
     region = "nino3"
     statistic = "average"
-    variable = "nhf"
+    variable = "ts"
     # -- model data
     project = "cmip6"
     dataset = "CanESM5-1"
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     area1_name = "areacella"
     area1_file = path + "/%s_fx_%s_*_*_%s.nc" % (area1_name, dataset, grid)
     area2_name = "areacello"
-    area2_file = path + "/%s_fx_%s_*_*_%s.nc" % (area1_name, dataset, grid)
+    area2_file = path + "/%s_Ofx_%s_*_*_%s.nc" % (area2_name, dataset, grid)
     mask_name = "sftlf"
     mask_file = path + "/%s_fx_%s_*_*_%s.nc" % (mask_name, dataset, grid)
     vari_name_nhf = ["hfls", "hfss", "rlds", "rlus", "rsds", "rsus"]

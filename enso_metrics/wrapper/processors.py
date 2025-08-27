@@ -67,10 +67,7 @@ def averager(
         # get array and related input param
         ds_array = input_array["array"]
         metadata = copy__deepcopy(input_array["metadata"])
-        if isinstance(ds_array, (array_wrapper, dataset_wrapper)) is False:
-            # input is neither a dataset nor a dataarray
-            wb.log_debug(inspect__stack(), "WARNING cannot perform masker", details={
-                "ds": str(type(ds_array)) + " should be xarray.DataArray, xarray.Dataset"})
+        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform averager") is True:
             break
         ds_area, metadata_area = None, None
         if isinstance(input_area, dict) is True and "array" in list(input_area.keys()) and \
@@ -89,20 +86,12 @@ def averager(
             metadata["description"] = basics.description_writer(description, text)
         if "X" in cf_dims or "Y" in cf_dims:
             # cf dims
-            tmp_cf_dims = [k for k in cf_dims if k in ["X", "Y"]]
-            # TO DO: test xcdat ouput for weights
-            weights = xcb.weights_spatial(ds_array, data_var, cf_dim=tmp_cf_dims)
-            # generate areacell weights
-            weights = "generate"
-            if isinstance(ds_area, (array_wrapper, dataset_wrapper)) is True:
-                weights = wb.compute_weights(ds_array, cf_dim=tmp_cf_dims, data_var=data_var, ds_area=ds_area,
-                                                 data_var_area=data_var_area)
+            cf_dims_tmp = [k for k in cf_dims if k in ["X", "Y"]]
             # spatial average
-            try:
-                ds_array = xcb.average_spatial(ds_array, data_var, cf_dim=tmp_cf_dims, weights=weights,
-                                               **kwargs_average_spatial)
-            except Exception as err:
-                wb.log_debug(inspect__stack(), "WARNING cannot perform spatial average using xcdat\n" + str(err))
+            ds_array = wb.average_spatial(ds_array, cf_dim=cf_dims_tmp, data_var=data_var, data_var_area=data_var_area,
+                                          ds_area=ds_area)
+            if ds_array is None:
+                wb.log_debug(inspect__stack(), "WARNING cannot perform spatial average")
                 break
             # adapt metadata
             description = copy__deepcopy(metadata["description"]) if "description" in list(metadata.keys()) else ""
@@ -113,6 +102,7 @@ def averager(
         # prepare output
         if isinstance(ds_array, (array_wrapper, dataset_wrapper)) is True:
             output_array = {"array": ds_array, "metadata": metadata}
+        # TO DO: average area?
     return output_array, output_area
 
 
@@ -166,10 +156,7 @@ def masker(
         # -- get array and related input param
         ds_array = input_array["array"]
         metadata = copy__deepcopy(input_array["metadata"])
-        if isinstance(ds_array, (array_wrapper, dataset_wrapper)) is False:
-            # input is neither a dataset nor a dataarray
-            wb.log_debug(inspect__stack(), "WARNING cannot perform masker", details={
-                "ds": str(type(ds_array)) + " should be xarray.DataArray, xarray.Dataset"})
+        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform masker") is True:
             break
         ds_area, metadata_area = None, None
         if isinstance(input_area, dict) is True and "array" in list(input_area.keys()) and \
@@ -418,12 +405,7 @@ def loop(processors, input_dataset, input_param, **kwargs) -> Union[dict, None]:
             break
         print(variable_i, variable_o)
         # get param given variable as well as area and mask names related to given variable
-        from json import dumps
-        print("input_param")
-        print(dumps(input_param, indent=4))
         param = input_param[variable_i]
-        print("param")
-        print(dumps(param, indent=4))
         data_var_area = param["area"] if "area" in list(param.keys()) else None
         data_var_mask = param["mask"] if "mask" in list(param.keys()) else None
         print("area", data_var_area, "mask", data_var_mask)
@@ -441,26 +423,40 @@ def loop(processors, input_dataset, input_param, **kwargs) -> Union[dict, None]:
                 if isinstance(input_param, dict) is True:
                     details["input_param.keys"] = ", ".join(list(input_param.keys()))
                 message = "WARNING: variable " + str(n1) + " must be defined"
+                print(message)
                 wb.log_debug(inspect__stack(), message, adjust=5, details=details)
                 break
             else:
-                if n1 == "area":
+                if n1 == "area" and n2 is not None:
                     dict_area = input_dataset[n2]
-                else:
+                elif n1 == "mask" and n2 is not None:
                     dict_mask = input_dataset[n2]
+        if isinstance(dict_array, dict) and "array" in list(dict_array.keys()):
+            print("array", type(dict_array["array"]))
+        if isinstance(dict_area, dict) and "array" in list(dict_area.keys()):
+            print("area", type(dict_area["array"]))
         # loop on processors to apply to given variable
+        print("processors", list(processors[k1]["to_do"].keys()))
         for k2 in list(processors[k1]["to_do"].keys()):
             print(k2)
             process = k2.split("__")[-1]
             if process in list_processors:
                 # call processor
                 print(k2, "call processor")
+                if process == "masker" and dict_mask is None:
+                    wb.log_debug(inspect__stack(), "WARNING " + str(variable_i) + " not masked as mask not provided")
+                    continue
                 local_kwargs = processors[k1]["to_do"][k2]
+                if isinstance(dict_array, dict) and "array" in list(dict_array.keys()):
+                    print("array", type(dict_array["array"]))
+                if isinstance(dict_area, dict) and "array" in list(dict_area.keys()):
+                    print("area", type(dict_area["array"]))
                 print("local_kwargs", list(local_kwargs.keys()))
                 dict_array, dict_area = dict_processors[process](
                     dict_array, data_var=variable_i, data_var_area=data_var_area, data_var_mask=data_var_mask,
                     input_area=dict_area, input_mask=dict_mask, region=region_i, **local_kwargs, **kwargs)
                 if dict_array is None:
+                    print("dict_array is None -> must break")
                     break
         if dict_array is None:
             break

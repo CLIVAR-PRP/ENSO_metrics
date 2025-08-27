@@ -75,53 +75,6 @@ def annual_cycle(
     return ds.temporal.climatology(data_var, frequency, **tmp_kwargs)
 
 
-def average_spatial(
-        ds: xarray__Dataset,
-        data_var: str,
-        cf_dim: list[Literal["X", "Y"]] = None,
-        keep_weights: bool = False,
-        skipna: Union[bool, None] = None,
-        weights: Union[str, xarray__DataArray] = "generate",
-        **kwargs) -> xarray__Dataset:
-    """
-    Return a Dataset with the average of a data variable and the given spatial dimension(s) removed.
-    https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.spatial.average.html
-    
-    Inputs:
-    -------
-    :param ds: xarray.Dataset
-        An in-memory representation of a NetCDF file, and consists of variables, coordinates and attributes which
-        together form a self describing dataset
-    :param data_var: str
-        Data variable in ds; e.g., data_var = "ts"
-    :param cf_dim: list[{"X", "Y"}]
-        List of axis dimensions to average over, valid axis keys include 'X' and 'Y'; e.g., cf_axis = ["X", "Y"].
-        Default is None (i.e., ['X', 'Y'])
-    :param keep_weights: bool, optional
-        If calculating averages using weights, keep the weights in the final dataset output; e.g., keep_weights = False.
-        Default is False
-    :param skipna: bool or None, optional
-        If True, skip missing values (as marked by NaN); e.g., skipna = None.
-        Only skips missing values for float dtypes; other dtypes either do not have a sentinel missing value (int) or
-        skipna=True has not been implemented (object, datetime64 or timedelta64).
-        Default is None
-    :param weights: Union["generate", xr.DataArray]
-        If "generate", then weights are generated, otherwise, DataArray must contain the regional weights used for
-        weighted averaging.
-        Default is "generate"
-    **kwargs - Discarded
-    
-    Output:
-    -------
-    :return: xarray.Dataset
-        Dataset with the spatially averaged variable.
-    """
-    if isinstance(cf_dim, list) is False:
-        cf_dim = ["X", "Y"]
-    # spatial average
-    return ds.spatial.average(data_var, axis=cf_dim, keep_weights=keep_weights, skipna=skipna, weights=weights)
-
-
 def average_temporal(
         ds: xarray__Dataset,
         data_var: str,
@@ -200,30 +153,6 @@ def create_uniform_grid(
         New Dataset with uniform lat/lon grid.
     """
     return xcdat.create_uniform_grid(lat_start, lat_stop, lat_delta, lon_start, lon_stop, lon_delta)
-
-
-def get_axis_key(
-        ds: Union[xarray__DataArray, xarray__Dataset],
-        cf_dim: Literal["X", "Y", "T", "Z"],
-        **kwargs) -> Union[str, list[str]]:
-    """
-    Gets the dimension key(s) for an axis.
-    https://xcdat.readthedocs.io/en/latest/generated/xcdat.get_dim_keys.html
-    
-    Inputs:
-    -------
-    :param ds: xarray.DataArray or xarray.Dataset
-        DataArray or Dataset
-    :param cf_dim: {"X", "Y", "T", "Z"}
-        The CF axis (dimension) key
-    **kwargs - Discarded
-    
-    Output:
-    -------
-    :return: str or list[str]
-        The dimension string or a list of dimensions strings for an axis.
-    """
-    return xcdat.axis.get_dim_keys(ds, axis=cf_dim)
 
 
 def interannual_anomalies(

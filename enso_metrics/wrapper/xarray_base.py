@@ -117,7 +117,7 @@ def change_type(
         dtype: Union[str, numpy__dtype],
         casting: Union[Literal["no", "equiv", "safe", "same_kind", "unsafe"], None] = None,
         copy: Union[bool, None] = None,
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         keep_attrs: bool = True,
         order: Union[Literal["C", "F", "A", "K"], None] = None,
         subok: bool = None,
@@ -148,7 +148,7 @@ def change_type(
         If True, returns a newly allocated array.
         If False and the dtype requirement is satisfied, the input array is returned.
         Default is None (True according to ndarray.astype)
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -182,11 +182,14 @@ def change_type(
     return ds.astype(dtype, casting=casting, copy=copy, keep_attrs=keep_attrs, order=order, subok=subok)
 
 
-def convert_cf_dim_key(ds: Union[array_wrapper, dataset_wrapper], cf_dim: Literal["T", "X", "Y", "Z"], **kwargs) -> str:
+def convert_cf_dim_key(
+        ds: Union[array_wrapper, dataset_wrapper],
+        cf_dim: Literal["T", "X", "Y", "Z"],
+        **kwargs) -> Union[str, None]:
     """
     Return dimension name corresponding to CF dimension name (T is time, X is longitude, Y is latitude, Z is depth or
     level).
-    
+
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
@@ -194,7 +197,7 @@ def convert_cf_dim_key(ds: Union[array_wrapper, dataset_wrapper], cf_dim: Litera
     :param cf_dim: {"X", "Y", "T", "Z"}
         Name of a CF dimension
     **kwargs - Discarded
-    
+
     Output:
     -------
     :return: str
@@ -209,20 +212,14 @@ def convert_cf_dim_key(ds: Union[array_wrapper, dataset_wrapper], cf_dim: Litera
         "Y": ["lat"],
         "Z": ["depth", "height", "level", "pressure", "vertical", "lev"]}
     # find the name in the dataset
-    dim_o = ""
+    dim_o = None
     for k1 in dim_to_find[cf_dim]:
         for k2 in list_dim:
             if k1 in k2:
                 dim_o = copy__deepcopy(k2)
                 break
-        if dim_o != "":
+        if dim_o is not None:
             break
-    if dim_o == "":
-        stack = inspect__stack()
-        error = "ERROR: file " + str(stack[0][1]) + " ; fct " + str(stack[0][3]) + " ; line " + str(stack[0][2])
-        error += "\n" + str().ljust(5) + "cannot find " + str(cf_dim)
-        error += "\n" + str().ljust(5) + "dimension(s): " + ", ".join([repr(k) for k in list_dim])
-        raise ValueError(error)
     return dim_o
 
 
@@ -232,7 +229,7 @@ def convert_dim_keys(
         **kwargs) -> Union[str, list[str]]:
     """
     Return dimension name(s) from input xarray.DataArray or xarray.Dataset.
-    
+
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
@@ -240,7 +237,7 @@ def convert_dim_keys(
     :param dim: Hashable or str or list[Hashable] or list[str] or tuple[Hashable] or tuple[str] or None
         Name(s) of dimension or CF dimension
     **kwargs - Discarded
-    
+
     Output:
     -------
     :return: str
@@ -253,7 +250,7 @@ def convert_dim_keys(
         if isinstance(dim, (Hashable, str)) is True:
             dimensions_asked = [dim]
         # dimensions in input xarray.DataArray or xarray.Dataset
-        dimensions_available = list(ds.dims)
+        dimensions_available = list(ds.coords)
         # match asked and available dimensions
         dim_o = []
         for k in dimensions_asked:
@@ -276,7 +273,7 @@ def convert_dim_keys(
 def copy(
         ds: Union[array_wrapper, dataset_wrapper],
         data: Union[numpy__ndarray, array_wrapper, None] = None,
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         deep: bool = True,
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
     """
@@ -292,7 +289,7 @@ def copy(
         Data to use in the new object. Must have the same shape as original. When data is used, deep is ignored for all
         data variables, and only used for coords.
         Default is None
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -315,8 +312,8 @@ def copy(
 def correlation(
         ds_a: Union[array_wrapper, dataset_wrapper],
         ds_b: Union[array_wrapper, dataset_wrapper],
-        data_var_a: str = None,
-        data_var_b: str = None,
+        data_var_a: Union[Hashable, str] = None,
+        data_var_b: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         weights: Union[array_wrapper, None] = None,
         **kwargs) -> array_wrapper:
@@ -330,11 +327,11 @@ def correlation(
         DataArray or Dataset
     :param ds_b: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var_a: str, optional
+    :param data_var_a: Hashable or str, optional
         Data variable in ‘ds_a’ if it is xarray.Dataset; e.g., data_var_a = "ts".
         If ‘ds_a’ is xarray.Dataset, ‘data_var_a’ must be provided.
         Default is None
-    :param data_var_b: str, optional
+    :param data_var_b: Hashable or str, optional
         Data variable in ‘ds_b’ if it is xarray.Dataset; e.g., data_var_b = "ts".
         If ‘ds_b’ is xarray.Dataset, ‘data_var_b’ must be provided.
         Default is None
@@ -361,7 +358,10 @@ def correlation(
     return xarray.corr(ds_a, ds_b, dim=dim_name, weights=weights)
 
 
-def create_array_zero(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> array_wrapper:
+def create_array_zero(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> array_wrapper:
     """
     Return a new DataArray of zero with the same shape, axes, coordinates, attributes,... as input DataArray.
     https://docs.xarray.dev/en/latest/generated/xarray.zeros_like.html
@@ -370,7 +370,7 @@ def create_array_zero(ds: Union[array_wrapper, dataset_wrapper], data_var: str =
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -418,7 +418,7 @@ def drop_dataset_keys(
     return ds.drop_vars(names, errors=errors)
 
 
-def drop_given_attributes(ds, attrs: list[str], data_var: str = None, **kwargs):
+def drop_given_attributes(ds, attrs: list[str], data_var: Union[Hashable, str] = None, **kwargs):
     """
     Drop given list of attrs from variable attributes (if ‘ds’ is DataArray or ‘ds’ is Dataset and ‘data_var’ is a data
     variable) of from global attributes (if ‘ds’ is Dataset and ‘data_var’ is not given).
@@ -429,7 +429,7 @@ def drop_given_attributes(ds, attrs: list[str], data_var: str = None, **kwargs):
         DataArray or Dataset
     :param attrs: list[str]
         Name(s) of attributes to drop; e.g., attrs = ["units", "valid_range"]
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ not in ‘ds’, global attributes are removed, else variable attributes.
         Default is None
@@ -452,7 +452,7 @@ def drop_given_attributes(ds, attrs: list[str], data_var: str = None, **kwargs):
 def expand_dim(
         ds: Union[array_wrapper, dataset_wrapper],
         axis: Union[int, list[int], tuple[int], None] = None,
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[dict[str, Union[int, numpy__ndarray, array_wrapper]], str, list[str], tuple[str] or None] = None,
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
     """
@@ -470,7 +470,7 @@ def expand_dim(
         length list.
         If axis=None is passed, all the axes will be inserted to the start of the result array.
         Default is None
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -494,7 +494,31 @@ def expand_dim(
     return ds.expand_dims(axis=axis, dim=dim)
 
 
-def get_array_name(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> str:
+def fill_nan(
+        ds: Union[array_wrapper, dataset_wrapper],
+        value: Union[float, int, numpy__ndarray, array_wrapper],
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Fill missing values in this object.
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param value: scalar or ndarray or DataArray
+        Used to fill all matching missing values in this array. If the argument is a DataArray, it is first aligned with
+        (reindexed to) this array.
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        Object (as input) with NaNs filled with given value
+    """
+    return ds.fillna(value)
+
+
+def get_array_name(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> str:
     """
     Return name of given xarray.DataArray or xarray.Dataset[data_var].
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.name.html
@@ -503,7 +527,7 @@ def get_array_name(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
@@ -520,7 +544,10 @@ def get_array_name(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     return str(ds.name)
 
 
-def get_array_shape(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> tuple[int, ...]:
+def get_array_shape(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> tuple[int, ...]:
     """
     Return shape of given xarray.DataArray or xarray.Dataset[data_var].
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.shape.html
@@ -529,7 +556,7 @@ def get_array_shape(ds: Union[array_wrapper, dataset_wrapper], data_var: str = N
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
@@ -546,7 +573,7 @@ def get_array_shape(ds: Union[array_wrapper, dataset_wrapper], data_var: str = N
     return ds.shape
 
 
-def get_array_size(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> int:
+def get_array_size(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> int:
     """
     Return shape of given xarray.DataArray or xarray.Dataset[data_var].
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.size.html
@@ -555,7 +582,7 @@ def get_array_size(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
@@ -575,7 +602,7 @@ def get_array_size(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
 def get_attribute(
         ds: Union[array_wrapper, dataset_wrapper],
         attribute_name: str,
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         **kwargs) -> str:
     """
     Return the given global attribute of given xarray.Dataset or the given variable attribute of given xarray.DataArray.
@@ -588,7 +615,7 @@ def get_attribute(
         DataArray or Dataset
     :param attribute_name: str
         Name of desired attribute; e.g., attribute_name = "units"
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, ‘attribute_name’ must be a variable attribute.
         Else, ‘attribute_name’ must be a global attribute.
@@ -606,7 +633,7 @@ def get_attribute(
     return ds.attrs[attribute_name]
 
 
-def get_attributes(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> dict[str, str]:
+def get_attributes(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> dict[str, str]:
     """
     Return a dictionary of global attributes of given xarray.Dataset or variable attributes of given xarray.DataArray.
     https://docs.xarray.dev/en/latest/generated/xarray.Dataset.attrs.html
@@ -616,7 +643,7 @@ def get_attributes(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, a dictionary of variable attributes is returned.
         Else, a dictionary of global attributes is returned.
@@ -634,7 +661,7 @@ def get_attributes(ds: Union[array_wrapper, dataset_wrapper], data_var: str = No
     return ds.attrs
 
 
-def get_attributes_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> list[str]:
+def get_attributes_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> list[str]:
     """
     Return the list of global attribute names of given xarray.Dataset or the list of variable attribute names of given
     xarray.DataArray.
@@ -645,7 +672,7 @@ def get_attributes_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: str
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, a list of variable attribute names is returned.
         Else, a list of global attribute names is returned.
@@ -708,7 +735,7 @@ def get_dim_array(
     return ds[dim_name]
 
 
-def get_dim_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> list[Hashable]:
+def get_dim_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> list[Hashable]:
     """
     Return dimension name(s) from input xarray.DataArray xarray.Dataset.
     If ‘ds’ is xarray.DataArray (or xarray.Dataset and ‘data_var’ in ‘ds’), dimension names are ordered as in DataArray.
@@ -719,7 +746,7 @@ def get_dim_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
@@ -763,7 +790,7 @@ def get_time_bounds(ds: Union[array_wrapper, dataset_wrapper], **kwargs) -> list
 
 def maximum(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
         skipna: Union[bool, None] = None,
@@ -777,7 +804,7 @@ def maximum(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -811,7 +838,7 @@ def maximum(
 
 def mean(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
         skipna: Union[bool, None] = None,
@@ -819,16 +846,16 @@ def mean(
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
     """
     Reduce this object's data by applying mean or weighted mean along given dimension(s).
-    https://docs.xarray.dev/en/latest/generated/xarray.Dataset.mean.html
-    https://docs.xarray.dev/en/latest/generated/xarray.DataArray.mean.html
-    https://docs.xarray.dev/en/latest/generated/xarray.DataArray.weighted.html
-    https://docs.xarray.dev/en/latest/generated/xarray.core.weighted.DataArrayWeighted.mean.html
-    
+    https://docs.xarray.dev/en/stable/generated/xarray.Dataset.mean.html
+    https://docs.xarray.dev/en/stable/generated/xarray.DataArray.mean.html
+    https://docs.xarray.dev/en/stable/generated/xarray.DataArray.weighted.html
+    https://docs.xarray.dev/en/stable/generated/xarray.computation.weighted.DataArrayWeighted.mean.html
+
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -863,6 +890,7 @@ def mean(
     ds = to_array(ds, data_var)
     # get dimension(s) as named in xarray.DataArray or xarray.Dataset
     dim_name = convert_dim_keys(ds, dim)
+    print("xarray_base.mean", data_var, type(ds), ds.shape, dim_name)
     # mean value
     if isinstance(ds, array_wrapper) is True and isinstance(weights, array_wrapper) is True:
         return ds.weighted(weights).mean(dim=dim_name, keep_attrs=keep_attrs, skipna=skipna)
@@ -872,7 +900,7 @@ def mean(
 
 def median(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
         skipna: Union[bool, None] = None,
@@ -889,7 +917,7 @@ def median(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -933,7 +961,7 @@ def median(
 
 def minimum(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
         skipna: Union[bool, None] = None,
@@ -947,7 +975,7 @@ def minimum(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -981,7 +1009,7 @@ def minimum(
 
 def notnull(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         keep_attrs: bool = None,
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
     """
@@ -993,7 +1021,7 @@ def notnull(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -1271,7 +1299,7 @@ def polyval(
 def quantile(
         ds: Union[array_wrapper, dataset_wrapper],
         q: Union[float, int, list[float], list[int], tuple[float], tuple[int]],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
         method: Literal["inverted_cdf", "averaged_inverted_cdf", "closest_observation", "interpolated_inverted_cdf",
@@ -1293,7 +1321,7 @@ def quantile(
         DataArray or Dataset
     :param q: float or int or list[float] or list[int] or tuple[float] or tuple[int]
         Quantile(s) to compute, which must be between 0 and 1 inclusive; e.g., q = 0.5 or q = [0.25, 0.75]
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -1541,7 +1569,7 @@ def set_attributes_global(ds: dataset_wrapper, *args, **kwargs):
     
 def set_attributes_variable(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         *args, **kwargs):
     """
     Update variable attributes.
@@ -1551,7 +1579,7 @@ def set_attributes_variable(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
@@ -1567,7 +1595,7 @@ def set_attributes_variable(
 def squeeze(
         ds: Union[array_wrapper, dataset_wrapper],
         axis: Union[int, list[int], tuple[int], None] = None,
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         drop: bool = False,
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
@@ -1582,7 +1610,7 @@ def squeeze(
         DataArray or Dataset
     :param axis: int or list[int] or tuple[int] or None, optional
         Like dim, but positional; e.g., axis = 0 or axis = [0, 1]
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -1611,7 +1639,7 @@ def squeeze(
 
 def sum_along_axis(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
         min_count: Union[int, None] = None,
@@ -1629,7 +1657,7 @@ def sum_along_axis(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -1677,7 +1705,7 @@ def sum_along_axis(
 
 def standard_deviation(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         ddof: int = 0,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
@@ -1695,7 +1723,7 @@ def standard_deviation(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -1836,7 +1864,7 @@ def to_netcdf(
         ds.to_netcdf(filename, format=file_format, mode=mode)
 
 
-def to_numpy(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **kwargs) -> numpy__ndarray:
+def to_numpy(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> numpy__ndarray:
     """
     Coerces wrapped data to numpy and returns a numpy.ndarray.
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.to_numpy.html
@@ -1845,7 +1873,7 @@ def to_numpy(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         xarray.DataArray or xarray.Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset, ‘data_var’ must be provided.
         Default is None
@@ -1865,7 +1893,7 @@ def to_numpy(ds: Union[array_wrapper, dataset_wrapper], data_var: str = None, **
 def transpose(
         ds: Union[array_wrapper, dataset_wrapper],
         dimensions: Union[list[Hashable], list[str], tuple[Hashable], tuple[str]],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         missing_dims: Literal["raise", "warn", "ignore"] = "raise",
         transpose_coords: bool = True,
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
@@ -1880,7 +1908,7 @@ def transpose(
         DataArray or Dataset
     :param dimensions: list[Hashable] or list[str] or tuple[Hashable] or tuple[str]
         List of dimension names with the desired order
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -1916,7 +1944,7 @@ def transpose(
 
 def variance(
         ds: Union[array_wrapper, dataset_wrapper],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         ddof: int = 0,
         dim: Union[Hashable, str, list[Hashable], list[str], tuple[Hashable], tuple[str], None] = None,
         keep_attrs: Union[bool, None] = False,
@@ -1934,7 +1962,7 @@ def variance(
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None
@@ -1983,7 +2011,7 @@ def variance(
 def where(
         ds: Union[array_wrapper, dataset_wrapper],
         cond: Union[numpy__ndarray, array_wrapper, dataset_wrapper, bool],
-        data_var: str = None,
+        data_var: Union[Hashable, str] = None,
         drop: bool = False,
         other: Union[bool, float, int, numpy__ndarray, array_wrapper, dataset_wrapper, None] = None,
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
@@ -1998,7 +2026,7 @@ def where(
         DataArray or Dataset
     :param cond: numpy.ndarray or xarray.DataArray or xarray.Dataset
         Locations at which to preserve this object's values. dtype must be bool
-    :param data_var: str, optional
+    :param data_var: Hashable or str, optional
         Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
         If ‘ds’ is xarray.Dataset and ‘data_var’ in ‘ds’, output will be xarray.DataArray.
         Default is None

@@ -8,12 +8,14 @@
 # Import packages
 # ---------------------------------------------------#
 # basic python package
-from copy import deepcopy
+from copy import deepcopy as copy__deepcopy
 from dataclasses import dataclass
 from inspect import stack as inspect__stack
 from typing import Any, Hashable, Literal, Union
 # numpy
 from numpy import array as numpy__array
+from numpy import cos as numpy__cos
+from numpy import deg2rad as numpy__deg2rad
 from numpy import ndarray as numpy__ndarray
 # regionmask
 import regionmask
@@ -26,7 +28,6 @@ from enso_metrics.wrapper import xarray_base
 from enso_metrics.wrapper import xcdat_base
 from enso_metrics.wrapper.xarray_base import array_wrapper, dataset_wrapper
 # ---------------------------------------------------#
-ds_error = " should be xarray.DataArray, xarray.Dataset"
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -42,63 +43,106 @@ class ValueRange:
 # ---------------------------------------------------------------------------------------------------------------------#
 # Functions
 # ---------------------------------------------------------------------------------------------------------------------#
-def average_spatiotemporal(
-        ds: dataset_wrapper,
-        data_var: str,
-        cf_dim: list[Literal["T", "X", "Y"]],
+def average_spatial(
+        ds: Union[array_wrapper, dataset_wrapper],
+        cf_dim: Union[list[Literal["X", "Y"]], None] = None,
+        data_var: Union[Hashable, str, None] = None,
+        data_var_area: Union[Hashable, str, None] = None,
         ds_area: Union[array_wrapper, dataset_wrapper, None] = None,
-        data_var_area: str = None,
-        kwargs_average_spatial: dict = None,
-        kwargs_average_temporal: dict = None,
-        **kwargs) -> dataset_wrapper:
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
     """
-    Compute spatio-temporal average (as defined by ‘cf_dim’) using xcdat
-    WARNING: xcdat only works with datasets
+    Compute spatial average (as defined by ‘cf_dim’) using xarray (xcdat for weights if needed)
 
-    :param ds: xarray.Dataset
-    :param data_var: str
-        Data variable in ‘ds’ on which to calculate averages; e.g., data_var = "ts"
-    :param cf_dim: list[Literal["T", "X", "Y"]]
+    :param ds: xarray.DataArray or xarray.Dataset
+    :param cf_dim: list[Literal["X", "Y"]]
         List of cf_dim along which to calculate averages; e.g., cf_dim = ["X", "Y"]
-    :param ds_area: xarray.Dataset, optional
-        Area cell dataset
+    :param data_var: Hashable or str
+        Data variable in ‘ds’ on which to calculate averages; e.g., data_var = "ts"
     :param data_var_area: str, optional
         Data variable in ‘ds_area’
-    :param kwargs_average_spatial: dict, optional
-        Key arguments to compute spatial average (see xcdat_base.average_spatial); e.g., kwargs_average_spatial = {}
-        Default is None
-    :param kwargs_average_temporal: dict, optional
-        Key arguments to compute temporal average (see xcdat_base.average_temporal); e.g., kwargs_average_temporal = {}
-        Default is None
+    :param ds_area: xarray.DataArray or xarray.Dataset, optional
+        Area cell dataset
     **kwargs - Discarded
 
     Output:
     -------
-    :return: Dataset
-        Input dataset with the average of the data variable.
+    :return: xarray.DataArray or xarray.Dataset
+        Object (as input) with the average of the data variable.
     """
     basics.log_info(inspect__stack(), "")
     log_debug(inspect__stack(), "input", data_var=data_var, ds=ds,
                    details={"ds.type": type(ds), "dim": cf_dim, "ds_area.type": type(ds_area)})
+    # fake loop to be able to break out
     ds_o = None
-    # select case
-    if isinstance(cf_dim, list) is True and "T" in cf_dim:
-        # temporal average
-        ds_o = xcdat_base.average_temporal(ds, data_var, **kwargs_average_temporal)
-    if isinstance(cf_dim, list) is True and len(list(set(cf_dim) & {"X", "Y"})) > 0:
-        cf_dim: list[Literal["X", "Y"]] = ["X"]
-        if len(list({"X", "Y"} - set(cf_dim))) == 0:
-            cf_dim = ["X", "Y"]
-        elif len(list({"Y"} - set(cf_dim))) == 0:
-            cf_dim = ["Y"]
-        # generate areacell weights
-        if isinstance(ds_area, (array_wrapper, dataset_wrapper)) is True:
-            weights = compute_weights(
-                ds, cf_dim=cf_dim, data_var=data_var, ds_area=ds_area, data_var_area=data_var_area)
-        else:
-            weights = "generate"
+    for _ in [0]:
+        if cf_dim is None or (isinstance(cf_dim, (list, tuple)) is True and len(cf_dim) == 0):
+            ds_o = ds
+            # no depth bounds to select data
+            log_debug(inspect__stack(), "cf_dim is None: NO average", details={"cf_dim": str(cf_dim)})
+            break
+        elif error_ds(ds, inspect__stack(), message="cannot average spatially") is True:
+            break
+        # check given depth_bounds
+        elif not(isinstance(cf_dim, (list, tuple)) is True and
+                 3 > len(cf_dim) > 0 == len(list(set(cf_dim) - {"X", "Y"}))):
+            # cf_dim can be (list of tuple):
+            #    - list["X"]: array will be averaged along the longitude
+            #    - list["Y"]: array will be averaged along the latitude
+            #    - list["X", "Y"]: array will be averaged along the latitude & longitude
+            # given ‘depth_bounds’ format is wrong
+            log_debug(inspect__stack(), "WARNING cannot average spatially", details={
+                "cf_dim": str(cf_dim) + " should be list[Literal['X', 'Y']] or tuple[Literal['X', 'Y']]"})
+            break
+        # generate weights
+        weights = compute_weights(ds, cf_dim=cf_dim, data_var=data_var, ds_area=ds_area, data_var_area=data_var_area)
+        if weights is None:
+            log_debug(inspect__stack(), "WARNING cannot average spatially: cannot generate weights")
+            break
+        # from cf dims to array dims
+        dims = []
+        for k in cf_dim:
+            # find dim in array
+            da_dim = get_dim_latitude_array(ds) if k == "Y" else get_dim_longitude_array(ds)
+            if isinstance(da_dim, array_wrapper) is False:
+                log_debug(inspect__stack(), "WARNING cannot average spatially: cannot find cf dim " + str(k))
+                break
+            # are lat/lon multidimensional coordinates?
+            if len(xarray_base.get_array_shape(da_dim)) > 1:
+                dim_keys = xarray_base.get_dim_keys(da_dim)
+                dim = dim_keys[0] if k == "Y" else dim_keys[1]
+            else:
+                dim = get_dim_latitude(ds) if k == "Y" else get_dim_longitude(ds)
+            dims.append(dim)
         # spatial average
-        ds_o = xcdat_base.average_spatial(ds, data_var, cf_dim=cf_dim, weights=weights, **kwargs_average_spatial)
+        ds_o = xarray_base.mean(ds, data_var=data_var, dim=dims, keep_attrs=True, skipna=True, weights=weights)
+        # weighted mean returns a dataarray -> recreate dataset
+        if isinstance(ds, dataset_wrapper) is True and isinstance(ds_o, array_wrapper) is True:
+            # bounds are a pain, in the input ds they are fct of all coordinates (e.g., time_bnds[time, bnds, lat, lon])
+            # so they cannot be easily taken from input ds and must be averaged the same way as data_var
+            dict_bnds = {}
+            for k in xarray_base.get_dataset_keys(ds):
+                if k in [data_var] or ("_bnd" in k and str(k).split("_bnd")[0] in dims) or \
+                        ("_bound" in k and str(k).split("_bound")[0] in dims) or \
+                        ("vertice" in k and "lat" in k and "Y" in cf_dim) or \
+                        ("vertice" in k and "lon" in k and "X" in cf_dim):
+                    continue
+                dict_bnds[k] = xarray_base.mean(ds, data_var=k, dim=dims, keep_attrs=True, skipna=True, weights=weights)
+            # coordinates are a pain for curvilinear grids (e.g., variable = ssh[time, j, i], coordinates = j[j], i[i],
+            # latitude[j, i], longitude[j, i]) so they must be averaged the same way as data_var
+            dict_coords = {}
+            if check_multidimensional_coordinates(ds) is True and len(list({"X", "Y"} - set(cf_dim))) == 1:
+                for k in ["lat", "lon"]:
+                    if "Y" not in cf_dim and k == "lat":
+                        dim_name = get_dim_latitude(ds)
+                    elif "X" not in cf_dim and k == "lon":
+                        dim_name = get_dim_longitude(ds)
+                    else:
+                        continue
+                    dict_coords[dim_name] = xarray_base.mean(xarray_base.get_dim_array(ds, dim_name), dim=dims,
+                                                             keep_attrs=True, skipna=True, weights=weights)
+            # recreate dataset with data_var and associated bounds
+            ds_o = recreate_dataset(ds, ds_o, data_var, cf_dims_removed=cf_dim, dict_coords=dict_coords,
+                                    dict_da=dict_bnds)
     log_debug(inspect__stack(), "output", data_var=data_var, ds=ds_o)
     return ds_o
 
@@ -117,11 +161,13 @@ def check_multidimensional_coordinates(ds: Union[array_wrapper, dataset_wrapper]
     :return: bool
         True is input object uses multidimensional coordinates
     """
-    dim_lat = xarray_base.convert_cf_dim_key(ds, "Y")
-    dim_lon = xarray_base.convert_cf_dim_key(ds, "X")
+    # get latitude and longitude arrays
+    da_lat, da_lon = get_dim_latitude_array(ds), get_dim_longitude_array(ds)
+    # check if latitude and longitude arrays and 2D arrays
     bool_o = False
-    if (basics.is_dim(dim_lat) is True and len(ds[dim_lat].shape) > 1) or (
-            basics.is_dim(dim_lon) is True and len(ds[dim_lon].shape) > 1):
+    if (isinstance(da_lat, (array_wrapper, numpy__ndarray)) is True and len(xarray_base.get_array_shape(da_lat)) > 1) \
+            or (isinstance(da_lon, (array_wrapper, numpy__ndarray)) is True
+                and len(xarray_base.get_array_shape(da_lon)) > 1):
         bool_o = True
     return bool_o
 
@@ -301,10 +347,10 @@ def compute_variable(
                     # check if given metadata is the same for all variables
                     val = list(set(list(dict_a[k2].values())))
                     # keep only one value is possible
-                    val = val[0] if len(val) == 1 else deepcopy(dict_a[k2])
+                    val = val[0] if len(val) == 1 else copy__deepcopy(dict_a[k2])
                     put_in_dict(dict_t, val, k1, variable, k2)
                 put_in_dict(dict_t, dict_input["variable_computation"], k1, variable, "computation")
-                val = str(list_variables[0]) if len(list_variables) == 1 else deepcopy(list_variables)
+                val = str(list_variables[0]) if len(list_variables) == 1 else copy__deepcopy(list_variables)
                 put_in_dict(dict_t, val, k1, variable, "out_name")
             else:
                 # metadata 'variable'
@@ -313,7 +359,7 @@ def compute_variable(
         if "variable" in list(dict_t.keys()) and variable in list(dict_t["variable"].keys()):
             for k1 in ["description", "long_name", "short_name", "units"]:
                 if k1 in list(dict_t["variable"][variable].keys()):
-                    dict_t[k1] = deepcopy(dict_t["variable"][variable][k1])
+                    dict_t[k1] = copy__deepcopy(dict_t["variable"][variable][k1])
                     if k1 == "long_name":
                         txt = str(dict_t["variable"][variable][k1]) + " read"
                         dict_t["description"] = basics.description_writer("", txt)
@@ -339,10 +385,10 @@ def compute_variable(
         xarray_base.set_attributes_global(ds, **dict_t)
         # add bounds from first input variable
         ds_i = dict_ds[list_variables[0]]
-        for nn in list(ds_i.keys()):
+        for nn in xarray_base.get_dataset_keys(ds_i):
             if nn == list_variables[0]:
                 continue
-            ds = xarray_base.assign_to_dataset(ds, variables_kwargs={nn: ds_i[nn]})
+            ds = xarray_base.assign_to_dataset(ds, variables_kwargs={nn: xarray_base.to_array(ds_i, nn)})
     log_debug(inspect__stack(), "output", data_var=variable, ds=ds)
     return ds, metadata
 
@@ -384,45 +430,65 @@ def compute_weights(
     basics.log_info(inspect__stack(), "")
     log_debug(inspect__stack(), "input", data_var=data_var, ds=ds, details={
         "ds.type": type(ds), "dim": cf_dim, "ds_area.type": type(ds_area)})
-    if isinstance(cf_dim, list) is False:
-        cf_dim = ["X", "Y"]
-    # by defaults weights are equal to 1
-    weights = create_array(ds, data_var=data_var, data_var_o="weights", value=1)
-    # temporal or spatial weights?
-    if isinstance(cf_dim, list) is True and len(cf_dim) == 1 and cf_dim[0] == "T":
-        # try to generate time weights using xcdat
-        try:
-            weights = xcdat_base.weights_temporal(ds, data_var)
-        except Exception as err:
-            log_debug(inspect__stack(), "WARNING cannot generate time weights using xcdat\n" + str(err))
-    else:
-        # is area available?
-        da_area = xarray_base.copy(ds_area, data_var=data_var_area)
-        if isinstance(da_area, array_wrapper) is False:
-            # try to generate spatial weights using xcdat
+    # fake loop to be able to break out
+    weights = None
+    for _ in [0]:
+        if error_ds(ds, inspect__stack(), message="cannot compute weights") is True:
+            break
+        elif cf_dim is None or (isinstance(cf_dim, (list, tuple)) is True and len(cf_dim) == 0):
+            # no cf_dim given
+            log_debug(inspect__stack(), "cf_dim is None: NO weights", details={"cf_dim": str(cf_dim)})
+            break
+        elif not (isinstance(cf_dim, (list, tuple)) is True and 0 < len(cf_dim) < 3 and (
+                (len(cf_dim) == 1 and len(list(set(cf_dim) - {"T", "X", "Y"})) == 0) or
+                (len(cf_dim) == 2 and len(list(set(cf_dim) - {"X", "Y"})) == 0))):
+            # cf_dim can be (list of tuple):
+            #    - list["T"]: weights will be computed to average along the time
+            #    - list["X"]: weights will be computed to average along the longitude
+            #    - list["Y"]: weights will be computed to average along the latitude
+            #    - list["X", "Y"]: weights will be computed to average along latitude & longitude
+            # given ‘depth_bounds’ format is wrong
+            log_debug(inspect__stack(), "WARNING cannot compute weights", details={
+                "cf_dim": str(cf_dim) + " should be list[Literal['T', 'X', 'Y']] or tuple[Literal['T', 'X', 'Y']]"})
+            break
+        # get array without time
+        da = xarray_base.to_array(ds, data_var)
+        dim_time = get_dim_time(ds)
+        if basics.is_dim(dim_time) is True:
+            da = xarray_base.select_index(da, indexers={dim_time: 0}, drop=True)
+        # temporal or spatial weights?
+        if isinstance(cf_dim, (list, tuple)) is True and len(cf_dim) == 1 and cf_dim[0] == "T":
+            # try to generate time weights using xcdat
             try:
-                weights = xcdat_base.weights_spatial(ds, data_var, cf_dim=cf_dim)
+                weights = xcdat_base.weights_temporal(ds, data_var)
             except Exception as err:
-                log_debug(inspect__stack(), "WARNING cannot generate spatial weights using xcdat\n" + str(err))
+                log_debug(inspect__stack(), "WARNING cannot generate time weights using xcdat\n" + str(err))
+                weights = create_array(ds, data_var=data_var, data_var_o="weights", value=1)
         else:
-            # get the name of the given axis (X, Y, Z)
-            dim_lon = xarray_base.convert_cf_dim_key(ds_area, "X")
-            dim_lat = xarray_base.convert_cf_dim_key(ds_area, "Y")
-            if set(cf_dim) == {"X", "Y"}:
-                # compute area summed along given dimensions
-                total_area = xarray_base.sum_along_axis(da_area, dim=[dim_lat, dim_lon])
-            else:
-                # dimension to average
-                dim_name = deepcopy(dim_lon if set(cf_dim) == {"X"} else dim_lat)
-                # get dimension array and position in matrix (i.e., axis)
-                dim_array = da_area[dim_name]
-                dim_axis = xarray_base.get_dim_keys(da_area).index(dim_name)
-                # compute area summed along given dimension
-                total_area = xarray_base.sum_along_axis(da_area, dim=[dim_name])
-                # expand array (i.e., recreate initial array shape)
-                total_area = xarray_base.expand_dim(total_area, axis=dim_axis, dim={dim_name: dim_array})
-            # operation: weights == 1 when summed along given dimension(s)
-            weights = da_area / total_area
+            # is area available?
+            da_area = xarray_base.to_array(ds_area, data_var=data_var_area)
+            if isinstance(da_area, array_wrapper) is True:
+                # area is available so it will be used as weights but cannot contain NaNs
+                # set to 0 (i.e., weight of NaN cells is 0)
+                weights = xarray_base.fill_nan(da_area, 0)
+            elif isinstance(da_area, array_wrapper) is False and check_multidimensional_coordinates(ds) is False:
+                # try to generate spatial weights using xcdat
+                try:
+                    weights = xcdat_base.weights_spatial(ds, data_var, cf_dim=cf_dim)
+                except Exception as err:
+                    log_debug(inspect__stack(), "WARNING cannot generate spatial weights using xcdat\n" + str(err))
+            if isinstance(weights, array_wrapper) is False and "Y" in cf_dim:
+                # try to get latitude dimension
+                dim_lat = get_dim_latitude(ds)
+                if basics.is_dim(dim_lat) is False:
+                    break
+                else:
+                    # get latitude array
+                    da_lat = xarray_base.get_dim_array(ds, dim_lat)
+                    # compute weights using cos(latitude) only if 'Y' in cf_dim
+                    weights = numpy__cos(numpy__deg2rad(da_lat))
+            elif isinstance(weights, array_wrapper) is False:
+                weights = create_array(da, data_var_o="weights", value=1)
     return weights
 
 
@@ -475,7 +541,7 @@ def create_array(
 def create_land_sea_mask(
         ds: Union[array_wrapper, dataset_wrapper],
         mask_as_boolean: bool = False,
-        **kwargs) -> array_wrapper:
+        **kwargs) -> Union[array_wrapper, None]:
     """
     Create a land-sea mask (1: land, 0: sea) for given dataset, using regionmask.
     https://regionmask.readthedocs.io/en/stable/defined_landmask.html
@@ -496,25 +562,59 @@ def create_land_sea_mask(
     :return: xarray.DataArray
         New DataArray of land-sea mask (1: land, 0: sea) or (True: land, False: sea).
     """
-    # get latitude and longitude names from the input dataset or array
-    dim_lon = xarray_base.convert_cf_dim_key(ds, "X")
-    dim_lat = xarray_base.convert_cf_dim_key(ds, "Y")
-    # get latitude and longitude arrays
-    dim_lon_array = xarray_base.get_dim_array(ds, dim_lon)
-    dim_lat_array = xarray_base.get_dim_array(ds, dim_lat)
-    # create a land-sea mask using regionmask
-    land_sea_mask = regionmask.defined_regions.natural_earth_v5_0_0.land_110
-    # adapt land-sea mask to input dataset or array -> land-sea mask is 0 on land and NaN on ocean
-    land_sea_mask = land_sea_mask.mask(dim_lon_array, dim_lat_array)
-    # convert zeros to 1 (1: land) and NaN to 0 (0: sea)
-    land_sea_mask = xarray_base.where(land_sea_mask, land_sea_mask.isnull(), other=1)
-    land_sea_mask = xarray_base.where(land_sea_mask, land_sea_mask == 1, other=0)
-    if mask_as_boolean is True:
-        # convert the land-sea mask to a boolean mask
-        land_sea_mask = xarray_base.change_type(land_sea_mask, "bool")
-    # drop attributes
-    xarray_base.drop_given_attributes(land_sea_mask, xarray_base.get_attributes_keys(land_sea_mask))
+    # fake loop to be able to break out
+    land_sea_mask = None
+    for _ in [0]:
+        if error_ds(ds, inspect__stack(), message="cannot create land-sea mask") is True:
+            break
+        # get latitude and longitude arrays
+        da_lat, da_lon = get_dim_latitude_array(ds), get_dim_longitude_array(ds)
+        if isinstance(da_lat, array_wrapper) is False or isinstance(da_lon, array_wrapper) is False:
+            break
+        # create a land-sea mask using regionmask
+        land_sea_mask = regionmask.defined_regions.natural_earth_v5_0_0.land_110
+        # adapt land-sea mask to input dataset or array -> land-sea mask is 0 on land and NaN on ocean
+        land_sea_mask = land_sea_mask.mask(da_lon, da_lat)
+        # convert zeros to 1 (1: land) and NaN to 0 (0: sea)
+        land_sea_mask = xarray_base.where(land_sea_mask, land_sea_mask.isnull(), other=1)
+        land_sea_mask = xarray_base.where(land_sea_mask, land_sea_mask == 1, other=0)
+        if mask_as_boolean is True:
+            # convert the land-sea mask to a boolean mask
+            land_sea_mask = xarray_base.change_type(land_sea_mask, "bool")
+        # drop attributes
+        xarray_base.drop_given_attributes(land_sea_mask, xarray_base.get_attributes_keys(land_sea_mask))
     return land_sea_mask
+
+
+def error_ds(ds: Any, stack, is_error: bool = True, message: str = "", **kwargs) -> bool:
+    """
+    Test is given ‘ds’ is xarray.DataArray or xarray.Dataset
+
+    Input:
+    ------
+    :param ds: Any
+    :param stack:
+        Must be the result of the inspect.stack() function to log properly
+        https://docs.python.org/3/library/inspect.html#inspect.stack
+    :param is_error: bool
+        If ‘ds’ is neither xarray.DataArray nor xarray.Dataset, True to log as 'error' else log as warning
+        Default is True
+    :param message: str
+        Test for the error log
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: bool
+        True if ‘ds’ is neither xarray.DataArray nor xarray.Dataset, else False
+    """
+    error = False
+    if isinstance(ds, (array_wrapper, dataset_wrapper)) is False:
+        error = True
+        a1 = "ERROR " if is_error is True else "WARNING "
+        log_debug(stack, str(a1) + str(message),
+                  details={"ds": str(type(ds)) + " should be xarray.DataArray, xarray.Dataset"})
+    return error
 
 
 def log_debug(
@@ -549,7 +649,31 @@ def log_debug(
     basics.log_debug(stack, message)
 
 
-def get_dim_array_latitude(
+def get_dim_latitude(
+        ds: Union[array_wrapper, dataset_wrapper],
+        **kwargs) -> Union[Hashable, str, None]:
+    """
+    Return latitude dimension name of given xarray.DataArray or xarray.Dataset.
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: Hashable or str
+        Latitude dimension name.
+    """
+    # get latitude as named in xarray.DataArray or xarray.Dataset
+    dim_name = xarray_base.convert_cf_dim_key(ds, "Y")
+    if basics.is_dim(dim_name) is False:
+        log_debug(inspect__stack(), "WARNING cannot find latitude dimension")
+    return dim_name
+
+
+def get_dim_latitude_array(
         ds: Union[array_wrapper, dataset_wrapper],
         **kwargs) -> array_wrapper:
     """
@@ -567,12 +691,39 @@ def get_dim_array_latitude(
         Latitude DataArray.
     """
     # get latitude as named in xarray.DataArray or xarray.Dataset
-    dim_name = xarray_base.convert_cf_dim_key(ds, "Y")
+    dim = get_dim_latitude(ds)
     # get latitude array
-    return xarray_base.get_dim_array(ds, dim_name)
+    da = xarray_base.get_dim_array(ds, dim)
+    if isinstance(ds, (array_wrapper, numpy__ndarray)) is False:
+        log_debug(inspect__stack(), "WARNING cannot find latitude coordinates array")
+    return da
 
 
-def get_dim_array_longitude(
+def get_dim_longitude(
+        ds: Union[array_wrapper, dataset_wrapper],
+        **kwargs) -> Union[Hashable, str, None]:
+    """
+    Return longitude dimension name of given xarray.DataArray or xarray.Dataset.
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: Hashable or str
+        Longitude dimension name.
+    """
+    # get longitude as named in xarray.DataArray or xarray.Dataset
+    dim_name = xarray_base.convert_cf_dim_key(ds, "X")
+    if basics.is_dim(dim_name) is False:
+        log_debug(inspect__stack(), "WARNING cannot find longitude dimension")
+    return dim_name
+
+
+def get_dim_longitude_array(
         ds: Union[array_wrapper, dataset_wrapper],
         **kwargs) -> array_wrapper:
     """
@@ -590,12 +741,39 @@ def get_dim_array_longitude(
         Longitude DataArray.
     """
     # get longitude as named in xarray.DataArray or xarray.Dataset
-    dim_name = xarray_base.convert_cf_dim_key(ds, "X")
+    dim = get_dim_longitude(ds)
     # get longitude array
-    return xarray_base.get_dim_array(ds, dim_name)
+    da = xarray_base.get_dim_array(ds, dim)
+    if isinstance(ds, (array_wrapper, numpy__ndarray)) is False:
+        log_debug(inspect__stack(), "WARNING cannot find longitude coordinates array")
+    return da
 
 
-def get_dim_array_time(
+def get_dim_time(
+        ds: Union[array_wrapper, dataset_wrapper],
+        **kwargs) -> Union[Hashable, str, None]:
+    """
+    Return time dimension name of given xarray.DataArray or xarray.Dataset.
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: Hashable or str
+        Time dimension name.
+    """
+    # get time as named in xarray.DataArray or xarray.Dataset
+    dim_name = xarray_base.convert_cf_dim_key(ds, "T")
+    if basics.is_dim(dim_name) is False:
+        log_debug(inspect__stack(), "WARNING cannot find time dimension")
+    return dim_name
+
+
+def get_dim_time_array(
         ds: Union[array_wrapper, dataset_wrapper],
         **kwargs) -> array_wrapper:
     """
@@ -613,16 +791,43 @@ def get_dim_array_time(
         Time DataArray.
     """
     # get time as named in xarray.DataArray or xarray.Dataset
-    dim_name = xarray_base.convert_cf_dim_key(ds, "T")
+    dim = get_dim_time(ds)
     # get time array
-    return xarray_base.get_dim_array(ds, dim_name)
+    da = xarray_base.get_dim_array(ds, dim)
+    if isinstance(ds, (array_wrapper, numpy__ndarray)) is False:
+        log_debug(inspect__stack(), "WARNING cannot find time coordinates array")
+    return da
 
 
-def get_dim_array_vertical(
+def get_dim_vertical(
+        ds: Union[array_wrapper, dataset_wrapper],
+        **kwargs) -> Union[Hashable, str, None]:
+    """
+    Return vertical (depth, height, pressure) dimension name of given xarray.DataArray or xarray.Dataset.
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: Hashable or str
+        Vertical dimension name.
+    """
+    # get vertical as named in xarray.DataArray or xarray.Dataset
+    dim_name = xarray_base.convert_cf_dim_key(ds, "X")
+    if basics.is_dim(dim_name) is False:
+        log_debug(inspect__stack(), "WARNING cannot find vertical dimension")
+    return dim_name
+
+
+def get_dim_vertical_array(
         ds: Union[array_wrapper, dataset_wrapper],
         **kwargs) -> array_wrapper:
     """
-    Return vertical array of given xarray.DataArray or xarray.Dataset.
+    Return vertical (depth, height, pressure) array of given xarray.DataArray or xarray.Dataset.
 
     Input:
     ------
@@ -636,9 +841,12 @@ def get_dim_array_vertical(
         Vertical DataArray.
     """
     # get vertical as named in xarray.DataArray or xarray.Dataset
-    dim_name = xarray_base.convert_cf_dim_key(ds, "Z")
+    dim = get_dim_vertical(ds)
     # get vertical array
-    return xarray_base.get_dim_array(ds, dim_name)
+    da = xarray_base.get_dim_array(ds, dim)
+    if isinstance(ds, (array_wrapper, numpy__ndarray)) is False:
+        log_debug(inspect__stack(), "WARNING cannot find vertical coordinates array")
+    return da
 
 
 def recreate_array(
@@ -843,6 +1051,66 @@ def processing_description(
     return ds
 
 
+def recreate_dataset(
+        ds: dataset_wrapper,
+        da: array_wrapper,
+        data_var: Union[Hashable, str],
+        cf_dims_removed: list[Literal["T", "X", "Y", "Z"]] = None,
+        dict_coords: dict[Union[Hashable, str], Union[array_wrapper, numpy__ndarray]] = None,
+        dict_da: dict[Union[Hashable, str], array_wrapper] = None,
+        **kwargs) -> dataset_wrapper:
+    """
+    Use input ‘ds’ (which is supposed to be the original dataset) to recreate a dataset for ‘da’ (which is supposed to
+    be a dataarray from ‘ds’ on which an operation has been performed).
+
+    Input:
+    ------
+    :param ds: xarray.Dataset
+    :param da: xarray.DataArray
+    :param data_var: Hashable or str
+        Name of the variable in the dataset
+    :param cf_dims_removed: list[Literal["T", "X", "Y", "Z"]], optional
+        List of cf_dims removed
+    :param dict_coords: dict[Union[Hashable, str], Union[array_wrapper, numpy__ndarray]], optional
+        Array to add as coordinates
+    :param dict_da: dict[Union[Hashable, str], array_wrapper], optional
+        Other xarray.DataArray to add (usually bounds)
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.Dataset
+    """
+    cf_dims_removed = set_instance(cf_dims_removed, list, False, [])
+    dict_coords = set_instance(dict_coords, dict, False, {})
+    dict_da = set_instance(dict_da, dict, False, {})
+    # input DataArray to Dataset
+    ds_o = xarray_base.to_dataset(da, data_var)
+    # add other DataArray to new Dataset
+    if len(list(dict_da.keys())) > 0:
+        ds_o = xarray_base.assign_to_dataset(ds_o, variables_kwargs=dict_da)
+    # add coordinates
+    if len(list(dict_coords.keys())) > 0:
+        ds_o = xarray_base.assign_coords(ds_o, coords_kwargs=dict_coords)
+    # get input dimensions
+    dims = xarray_base.get_dim_keys(da)
+    # get data_vars and bounds
+    dict_var = {}
+    for k in xarray_base.get_dataset_keys(ds):
+        if k in [data_var] + list(dict_da.keys()) or ("_bnd" in k and str(k).split("_bnd")[0] not in dims) or \
+                ("_bound" in k and str(k).split("_bound")[0] not in dims) or \
+                    ("vertice" in k and "lat" in k and "Y" in cf_dims_removed) or \
+                    ("vertice" in k and "lon" in k and "X" in cf_dims_removed):
+            continue
+        dict_var[k] = xarray_base.to_array(ds, k)
+    # add them to output dataset
+    if len(list(dict_var.keys())) > 0:
+        ds_o = xarray_base.assign_to_dataset(ds_o, variables_kwargs=dict_var)
+    # set global attributes from input dataset to output dataset
+    xarray_base.set_attributes_global(ds_o, **xarray_base.get_attributes(ds))
+    return ds_o
+
+
 def roll_longitude(
         ds: Union[array_wrapper, dataset_wrapper],
         new_lon_min: Union[float, int, None] = None,
@@ -864,25 +1132,25 @@ def roll_longitude(
     :return: xarray.DataArray or xarray.Dataset
         New object (as input) with rolled longitude
     """
-    dim_lon = xarray_base.convert_cf_dim_key(ds, "X")
+    dim_lon = get_dim_longitude(ds)
     if basics.is_dim(dim_lon) is True:
         # update longitude
+        arr_lon = xarray_base.get_dim_array(ds, dim_lon)
         if isinstance(new_lon_min, (float, int)) is True:
             # add minimum value to dataset's longitude to shift the dimension
             # e.g., initial longitude = [0; 360], new_lon_min = -70, new longitude = [-70; 290]
-            coords_kwargs = {dim_lon: ds[dim_lon] + new_lon_min}
+            coords_kwargs = {dim_lon: arr_lon + new_lon_min}
         else:
             # ensure that longitude ranges from 0 to 360E
-            coords_kwargs = {dim_lon: (360 + (ds[dim_lon] % 360)) % 360}
+            coords_kwargs = {dim_lon: (360 + (arr_lon % 360)) % 360}
         ds = xarray_base.assign_coords(ds, coords_kwargs=coords_kwargs)
         # roll so that the first longitude of the dimension is the minimum longitude
         if check_multidimensional_coordinates(ds) is False:
             # normal roll method
-            shifts = {dim_lon: -ds[dim_lon].argmin().values}
+            shifts = {dim_lon: -xarray_base.to_numpy(arr_lon).argmin()}
         else:
             # for multidimensional coordinates (e.g., curvilinear grids)
             # average lon along Y
-            arr_lon = ds[dim_lon]
             lon_x = xarray_base.to_numpy(arr_lon).mean(axis=0)
             # find minimum value
             min_x = lon_x.argmin()
@@ -934,10 +1202,7 @@ def select_depth(
             log_debug(inspect__stack(), "depth_bounds is None: NOT selected",
                       details={"depth_bounds": str(depth_bounds)})
             break
-        elif isinstance(ds, (array_wrapper, dataset_wrapper)) is False:
-            # input is neither a dataset nor a dataarray
-            log_debug(inspect__stack(), "WARNING cannot select horizontal_bounds", details={
-                "ds": str(type(ds)) + " should be xarray.DataArray, xarray.Dataset"})
+        elif error_ds(ds, inspect__stack(), message="cannot select depth_bounds") is True:
             break
         # check given depth_bounds
         elif isinstance(depth_bounds, (list, tuple)) is False or (
@@ -950,19 +1215,14 @@ def select_depth(
             log_debug(inspect__stack(), "WARNING cannot select depth_bounds", details={
                 "depth_bounds": str(depth_bounds) + " should be tuple[float or int, float or int]"})
             break
-        # test if depth dimension is available
-        try:
-            xarray_base.convert_cf_dim_key(ds, "Z")
-        except Exception as err:
-            log_debug(inspect__stack(), "WARNING cannot select depth_bounds\n" + str(err), details={
-                "dim_name": "depth dimension not available", "dim_keys": xarray_base.get_dim_keys(ds)})
-            break
         # get dimension name
-        dim_name = xarray_base.convert_cf_dim_key(ds, "Z")
-        log_debug(inspect__stack(), "xarray_base.convert_cf_dim_key", data_var=data_var,
-                  details={"dim_name": dim_name}, ds=ds)
+        dim_vertical = get_dim_vertical(ds)
+        log_debug(inspect__stack(), "get_dim_vertical", data_var=data_var,
+                  details={"dim_vertical": dim_vertical}, ds=ds)
+        if basics.is_dim(dim_vertical) is False:
+            break
         # select using depth_bounds like (0, 300)
-        ds_o = xarray_base.select(ds, {dim_name: slice(*depth_bounds)}, **kwargs_sel)
+        ds_o = xarray_base.select(ds, {dim_vertical: slice(*depth_bounds)}, **kwargs_sel)
         log_debug(inspect__stack(), "xarray_base.select", data_var=data_var, ds=ds)
     log_debug(inspect__stack(), "output", data_var=data_var, ds=ds_o)
     return ds_o
@@ -990,10 +1250,7 @@ def select_horizontal(
             log_debug(inspect__stack(), "horizontal_bounds is None: NOT selected",
                       details={"horizontal_bounds": str(horizontal_bounds)})
             break
-        elif isinstance(ds, (array_wrapper, dataset_wrapper)) is False:
-            # input is neither a dataset nor a dataarray
-            log_debug(inspect__stack(), "WARNING cannot select horizontal_bounds", details={
-                "ds": str(type(ds)) + " should be xarray.DataArray, xarray.Dataset"})
+        elif error_ds(ds, inspect__stack(), message="cannot select horizontal_bounds") is True:
             break
         # get region
         lats = horizontal_bounds["Y"] if "Y" in list(horizontal_bounds.keys()) else None
@@ -1016,26 +1273,15 @@ def select_horizontal(
             log_debug(inspect__stack(), "WARNING cannot select horizontal_bounds", details=details)
             break
         # get latitude and longitude
-        dim_lat, dim_lon = None, None
-        try:
-            dim_lat = xarray_base.convert_cf_dim_key(ds, "Y")
-        except Exception as err:
-            log_debug(inspect__stack(), "WARNING input data doesn't have latitude\n" + str(err), details={
-                "dim_name": "latitude dimension not available", "dim_keys": xarray_base.get_dim_keys(ds)})
-        try:
-            dim_lon = xarray_base.convert_cf_dim_key(ds, "X")
-        except Exception as err:
-            log_debug(inspect__stack(), "WARNING input data doesn't have longitude\n" + str(err), details={
-                "dim_name": "longitude dimension not available", "dim_keys": xarray_base.get_dim_keys(ds)})
-        arr_lat = ds[dim_lat] if basics.is_dim(dim_lat) is True else None
-        arr_lon = ds[dim_lon] if basics.is_dim(dim_lon) is True else None
-        if (isinstance(lats, (list, tuple)) is True and arr_lat is None) or (
-                isinstance(lons, (list, tuple)) is True and arr_lon is None):
+        dim_lat, dim_lon = get_dim_latitude(ds), get_dim_longitude(ds)
+        da_lat, da_lon = get_dim_latitude_array(ds), get_dim_longitude_array(ds)
+        if (isinstance(lats, (list, tuple)) is True and isinstance(da_lat, array_wrapper) is False) or (
+                isinstance(lons, (list, tuple)) is True and isinstance(da_lon, array_wrapper) is False):
             # lat and/or lon required but corresponding dimension(s) is not available
             details = {}
-            if isinstance(lats, (list, tuple)) is True and arr_lat is None:
+            if isinstance(lats, (list, tuple)) is True and isinstance(da_lat, array_wrapper) is False:
                 details["lat_error"] = "latitude must be selected but latitude is not available"
-            if isinstance(lons, (list, tuple)) is True and arr_lon is None:
+            if isinstance(lons, (list, tuple)) is True and isinstance(da_lon, array_wrapper) is False:
                 details["lon_error"] = "longitude must be selected but latitude is not longitude"
             details["dim_keys"] = xarray_base.get_dim_keys(ds)
             details["horizontal_bounds"] = horizontal_bounds
@@ -1049,11 +1295,11 @@ def select_horizontal(
             # -- rectangular region
             # create condition
             if isinstance(lats, (list, tuple)) is True and isinstance(lons, (list, tuple)) is False:
-                cond = (min(lats) <= arr_lat) & (arr_lat <= max(lats))
+                cond = (min(lats) <= da_lat) & (da_lat <= max(lats))
             elif isinstance(lats, (list, tuple)) is False and isinstance(lons, (list, tuple)) is True:
-                cond = (min(lons) <= arr_lon) & (arr_lon <= max(lons))
+                cond = (min(lons) <= da_lon) & (da_lon <= max(lons))
             else:
-                cond = (min(lats) <= arr_lat) & (arr_lat <= max(lats)) & (min(lons) <= arr_lon) & (arr_lon <= max(lons))
+                cond = (min(lats) <= da_lat) & (da_lat <= max(lats)) & (min(lons) <= da_lon) & (da_lon <= max(lons))
             # mask data outside region
             ds_o = xarray_base.where(ds, cond, **kwargs_where)
         else:
@@ -1061,7 +1307,7 @@ def select_horizontal(
             # create region using regionmask
             region = numpy__array([[lo, la] for la, lo in zip(lats, lons)])
             region = regionmask.Regions([region])
-            mask = region.mask(arr_lon, arr_lat)
+            mask = region.mask(da_lon, da_lat)
             # mask data outside region
             ds_o = xarray_base.where(ds, xarray_base.notnull(mask), **kwargs_where)
         # -- select region
@@ -1070,7 +1316,7 @@ def select_horizontal(
             lon_min, lon_max = min(lons), max(lons)
             # desired longitudes are usually defined [0; 360], but the input may not be, roll longitude if needed
             # new minimum value for the longitude will be the minimum longitude of the given region
-            new_lon_min = deepcopy(lon_min)
+            new_lon_min = copy__deepcopy(lon_min)
             if lon_max - new_lon_min < 360:
                 # modify minimum to be slightly lower, a maximum of 10 degree lower
                 new_lon_min -= min(10., 360 - (lon_max - lon_min) / 2)
@@ -1080,7 +1326,7 @@ def select_horizontal(
             # -- select region (i.e., reduce the shape of the input data)
             # create indexers
             indexers = {}
-            if arr_lat.shape == 1 and arr_lon.shape == 1:
+            if xarray_base.get_array_shape(da_lat) == 1 and xarray_base.get_array_shape(da_lon) == 1:
                 # regular grid
                 if isinstance(lats, (list, tuple)) is True:
                     indexers[dim_lat] = slice(*(min(lats), max(lats)))
@@ -1090,15 +1336,15 @@ def select_horizontal(
                 # non-regular grid -> dataarray's lat/lon must be j/i or y/x or something like that
                 # create condition
                 if isinstance(lats, (list, tuple)) is True and isinstance(lons, (list, tuple)) is False:
-                    cond = (min(lats) <= arr_lat) & (arr_lat <= max(lats))
+                    cond = (min(lats) <= da_lat) & (da_lat <= max(lats))
                 elif isinstance(lats, (list, tuple)) is False and isinstance(lons, (list, tuple)) is True:
-                    cond = (min(lons) <= arr_lon) & (arr_lon <= max(lons))
+                    cond = (min(lons) <= da_lon) & (da_lon <= max(lons))
                 else:
-                    cond = (min(lats) <= arr_lat) & (arr_lat <= max(lats)) & (min(lons) <= arr_lon) & \
-                           (arr_lon <= max(lons))
+                    cond = (min(lats) <= da_lat) & (da_lat <= max(lats)) & (min(lons) <= da_lon) & \
+                           (da_lon <= max(lons))
                 # find lat/lon dimensions in dataarray's
-                dim_y, dim_x = xarray_base.get_dim_keys(arr_lon)
-                arr_y, arr_x = ds[dim_y], ds[dim_x]
+                dim_y, dim_x = xarray_base.get_dim_keys(da_lon)
+                arr_y, arr_x = xarray_base.get_dim_array(ds, dim_y), xarray_base.get_dim_array(ds, dim_x)
                 # change lat/lon condition to dataarray's dimensions condition
                 if isinstance(lats, (list, tuple)) is True:
                     reg_y = xarray_base.where(arr_y, cond)
@@ -1158,10 +1404,7 @@ def select_time(
             log_debug(inspect__stack(), "time_bounds is None: NOT selected",
                       details={"time_bounds": str(time_bounds)})
             break
-        elif isinstance(ds, (array_wrapper, dataset_wrapper)) is False:
-            # input is neither a dataset nor a dataarray
-            log_debug(inspect__stack(), "WARNING cannot select horizontal_bounds", details={
-                "ds": str(type(ds)) + " should be xarray.DataArray, xarray.Dataset"})
+        elif error_ds(ds, inspect__stack(), message="cannot select time_bounds") is True:
             break
         # check given time_bounds
         if isinstance(time_bounds, int) is True:
@@ -1179,35 +1422,30 @@ def select_time(
             log_debug(inspect__stack(), "WARNING cannot select time_bounds", details={
                 "time_bounds": str(time_bounds) + " should be int, tuple[str, str], tuple[int], tuple[int, int]"})
             break
-        # test if time dimension is available
-        try:
-            xarray_base.convert_cf_dim_key(ds, "T")
-        except Exception as err:
-            log_debug(inspect__stack(), "WARNING cannot select time_bounds\n" + str(err), details={
-                "dim_name": "time dimension not available", "dim_keys": xarray_base.get_dim_keys(ds)})
+        # get time dimension name
+        dim_time = get_dim_time(ds)
+        log_debug(inspect__stack(), "get_dim_time", data_var=data_var, details={"dim_time": dim_time}, ds=ds)
+        if basics.is_dim(dim_time) is False:
             break
-        # get dimension name
-        dim_name = xarray_base.convert_cf_dim_key(ds, "T")
-        log_debug(inspect__stack(), "xarray_base.convert_cf_dim_key", data_var=data_var,
-                  details={"dim_name": dim_name}, ds=ds)
         # check given time bounds type
-        if isinstance(time_bounds, (list, tuple)) is True and all([isinstance(k, str) for k in time_bounds]) is True:
+        if isinstance(time_bounds, (list, tuple)) is True and len(time_bounds) == 2 and \
+                all([isinstance(k, str) for k in time_bounds]) is True:
             # select using time_bounds like ("1980-01-01", "2014-12-31")
-            ds_o = xarray_base.select(ds, {dim_name: slice(*time_bounds)}, **kwargs_sel)
+            ds_o = xarray_base.select(ds, {dim_time: slice(*time_bounds)}, **kwargs_sel)
             log_debug(inspect__stack(), "xarray_base.select", data_var=data_var,
                       details={"available time_bounds": xarray_base.get_time_bounds(ds)}, ds=ds)
             # sometimes selecting time is slightly wrong
             # this section checks if one time step has not been included by error at the beginning or the end of the
             # time series
             # check lower time bound
-            ds_o = check_time_bounds(ds_o, dim_name, time_bounds, "lower")
+            ds_o = check_time_bounds(ds_o, dim_time, time_bounds, "lower")
             # check upper time bound
-            ds_o = check_time_bounds(ds_o, dim_name, time_bounds, "upper")
+            ds_o = check_time_bounds(ds_o, dim_time, time_bounds, "upper")
             log_debug(inspect__stack(), "check_time_bounds", data_var=data_var,
                       details={"available time_bounds": xarray_base.get_time_bounds(ds_o)}, ds=ds_o)
         else:
             # select using time_bounds like (12, 24)
-            ds_o = xarray_base.select_index(ds, {dim_name: slice(*time_bounds)}, **kwargs_sel)
+            ds_o = xarray_base.select_index(ds, {dim_time: slice(*time_bounds)}, **kwargs_sel)
             log_debug(inspect__stack(), "xarray_base.select_index", data_var=data_var, ds=ds_o)
     log_debug(inspect__stack(), "output", data_var=data_var, ds=ds_o)
     return ds_o
@@ -1237,9 +1475,7 @@ def squeeze_dimension(
     log_debug(inspect__stack(), "input", details={"ds.type": type(ds), "cf_dim": cf_dim})
     # fake loop to be able to break out
     for _ in [0]:
-        if isinstance(ds, (array_wrapper, dataset_wrapper)) is False:
-            # wrong input
-            log_debug(inspect__stack(), "WARNING cannot squeeze", details={"ds": str(type(ds)) + str(ds_error)})
+        if error_ds(ds, inspect__stack(), message="cannot squeeze") is True:
             break
         # test is given dimension is available
         try:
@@ -1265,3 +1501,4 @@ def squeeze_dimension(
     log_debug(inspect__stack(), "output", details={"dim_keys": xarray_base.get_dim_keys(ds)})
     return ds
 # ---------------------------------------------------------------------------------------------------------------------#
+
