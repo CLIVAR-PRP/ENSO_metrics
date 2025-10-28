@@ -84,13 +84,13 @@ def diagnostic(
                         "kwargs_select_depth": {"kwargs_sel": {}},
                         "kwargs_select_horizontal": {"mask_only": True, "kwargs_sel": {}, "kwargs_where": {}},
                         "kwargs_select_time": {"kwargs_sel": {}}},
-                    "3__averager": {"cf_dims": ["Y"]},
-                    # "4__detrender": "do",
-                    # "5__anomaler": "do",
-                    # "6__seasonal_cycler": "do",
-                    # "7__normalizer": "do",
-                    # "8__smoother": "do",
-                    # "9__regridder": "do",
+                    # "3__averager": {"cf_dims": ["X", "Y"]},
+                    "4__detrender": {"degree": 1, "kwargs_detrend": {}},
+                    "5__anomaler": {"kwargs_anomalies": {}},
+                    # "6__seasonal_cycler": "do",  # annual_cycle => xcat temporal.climatology
+                    # "7__normalizer": "do",  # ds / ds.std("time")
+                    # "8__smoother": "do",  # xarray rolling nbr_of_points
+                    # "9__regridder": "do",  # regrid_horizontal => xcat regridder.horizontal
                 },
             },
         }

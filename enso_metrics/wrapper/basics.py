@@ -82,7 +82,7 @@ def log_details(list_names: list[str], list_params: list[Any], dict_o: dict = No
         dict_o = {}
     for k1, k2 in zip(list_names, list_params):
         dict_o[str(k1) + ".type"] = str(type(k2))
-        if isinstance(k2, dict) is True:
+        if isinstance(k2, dict):
             dict_o[str(k1) + ".keys"] = ", ".join(sorted(list(k2.keys()), key=lambda v: v.lower()))
         elif isinstance(k2, str) is True or k2 is None:
             dict_o[k1] = str(k2)

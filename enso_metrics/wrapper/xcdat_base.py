@@ -380,7 +380,7 @@ def set_auto_bounds(
     :return: xarray.Dataset
         Input object with new bounds where missing.
     """
-    if isinstance(cf_dim, list) is False:
+    if not isinstance(cf_dim, list):
         cf_dim = ["X", "Y", "Z"]
     return ds.bounds.add_missing_bounds(axes=cf_dim)
 
@@ -411,7 +411,7 @@ def weights_spatial(
     :return: xarray.DataArray
         New DataArray containing the area weights to use during averaging. Weights are per given dimension in ‘cf_dim’.
     """
-    if isinstance(cf_dim, list) is False:
+    if not isinstance(cf_dim, list):
         cf_dim = ["X", "Y"]
     # area weights
     return ds.spatial.get_weights(axis=cf_dim, data_var=data_var)

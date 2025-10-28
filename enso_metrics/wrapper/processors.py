@@ -9,12 +9,13 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy as copy__deepcopy
+from dataclasses import dataclass as dataclasses__dataclass
 from glob import iglob as glob__iglob
 from inspect import stack as inspect__stack
 from json import dumps as json__dumps
 from os.path import isdir as os__path__isdir
 from os.path import isfile as os__path__isfile
-from typing import Literal, Union, Hashable
+from typing import Annotated, Literal, Union, Hashable
 
 # local functions
 from enso_metrics.tools.default import set_instance
@@ -27,8 +28,63 @@ from enso_metrics.wrapper.xarray_base import array_wrapper, dataset_wrapper
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
+# Classes: range
+# ---------------------------------------------------------------------------------------------------------------------#
+@dataclasses__dataclass
+class IntRange:
+    min: int
+    max: int
+# ---------------------------------------------------------------------------------------------------------------------#
+
+
+# ---------------------------------------------------------------------------------------------------------------------#
 # Functions: processors
 # ---------------------------------------------------------------------------------------------------------------------#
+def anomaler(
+        input_array: Union[dict[str, Union[dataset_wrapper, dict]], None],
+        data_var: Union[str, None] = None,
+        data_var_area: Union[str, None] = None,
+        input_area: Union[dict[str, Union[array_wrapper, dataset_wrapper, dict]], None] = None,
+        kwargs_anomalies: Union[dict, None] = None,
+        **kwargs) -> (Union[dict, None], None):
+    basics.log_info(inspect__stack(), "")
+    l1 = ["input_array", "input_area", "data_var", "data_var_area", "kwargs_anomalies"]
+    l2 = [input_array, input_area, data_var, data_var_area, kwargs_anomalies]
+    details = basics.log_details(l1, l2)
+    wb.log_debug(inspect__stack(), "input", adjust=5, details=details)
+    # fake loop to be able to break out if an error occurs
+    output_array, output_area = None, None
+    for _ in range(1):
+        # get array and related input param
+        ds_array = input_array["array"]
+        metadata = copy__deepcopy(input_array["metadata"])
+        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform detrender"):
+            break
+        ds_area, metadata_area = None, None
+        if isinstance(input_area, dict) is True and "array" in list(input_area.keys()) and \
+                "metadata" in list(input_area.keys()):
+            ds_area, metadata_area = input_area["array"], input_area["metadata"]
+        # perform interannual anomalies
+        try:
+            ds_array = xcb.interannual_anomalies(ds_array, data_var, **kwargs_anomalies)
+        except Exception as err:
+            wb.log_debug(inspect__stack(), "WARNING cannot perform interannual_anomalies using xcdat\n" + str(err))
+            break
+        print(list(ds_array.keys()))
+        print(list(ds_array.coords))
+        print(ds_array[data_var].shape, ds_array.dims)
+        stop
+        # adapt metadata
+        description = copy__deepcopy(metadata["description"]) if "description" in list(metadata.keys()) else ""
+        metadata["description"] = basics.description_writer(description, "seasonal cycle removed")
+        # prepare output
+        if isinstance(ds_array, (array_wrapper, dataset_wrapper)):
+            output_array = {"array": ds_array, "metadata": metadata}
+        if isinstance(ds_area, (array_wrapper, dataset_wrapper)):
+            output_area = {"array": ds_area, "metadata": metadata_area}
+    return output_array, output_area
+
+
 def averager(
         input_array: Union[dict[str, Union[dataset_wrapper, dict]], None],
         cf_dims: list[Literal["T", "X", "Y"]] = None,
@@ -67,7 +123,7 @@ def averager(
         # get array and related input param
         ds_array = input_array["array"]
         metadata = copy__deepcopy(input_array["metadata"])
-        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform averager") is True:
+        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform averager"):
             break
         ds_area, metadata_area = None, None
         if isinstance(input_area, dict) is True and "array" in list(input_area.keys()) and \
@@ -100,18 +156,61 @@ def averager(
             text += " average computed"
             metadata["description"] = basics.description_writer(description, text)
         # prepare output
-        if isinstance(ds_array, (array_wrapper, dataset_wrapper)) is True:
+        if isinstance(ds_array, (array_wrapper, dataset_wrapper)):
             output_array = {"array": ds_array, "metadata": metadata}
         # TO DO: average area?
     return output_array, output_area
 
 
 def detrender(
-        ds: dataset_wrapper,
-        degree: int,
-        **kwargs) -> dataset_wrapper:
+        input_array: Union[dict[str, Union[dataset_wrapper, dict]], None],
+        data_var: Union[str, None] = None,
+        data_var_area: Union[str, None] = None,
+        degree: Annotated[int, IntRange(0, 3)] = 1,
+        input_area: Union[dict[str, Union[array_wrapper, dataset_wrapper, dict]], None] = None,
+        kwargs_detrend: Union[dict, None] = None,
+        **kwargs) -> (Union[dict, None], None):
     basics.log_info(inspect__stack(), "")
-    return ds
+    l1 = ["input_array", "input_area", "data_var", "data_var_area", "degree", "kwargs_detrend"]
+    l2 = [input_array, input_area, data_var, data_var_area, degree, kwargs_detrend]
+    details = basics.log_details(l1, l2)
+    wb.log_debug(inspect__stack(), "input", adjust=5, details=details)
+    # fake loop to be able to break out if an error occurs
+    output_array, output_area = None, None
+    for _ in range(1):
+        # check polynomial degree
+        if not isinstance(degree, int) or not (0 <= degree <= 3):
+            # given ‘degree’ format is wrong
+            wb.log_debug(inspect__stack(), "WARNING cannot perform detrender", details={
+                "degree": str(degree) + " should be 0 <= degree <= 3"})
+            break
+        # get array and related input param
+        ds_array = input_array["array"]
+        metadata = copy__deepcopy(input_array["metadata"])
+        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform detrender"):
+            break
+        ds_area, metadata_area = None, None
+        if isinstance(input_area, dict) is True and "array" in list(input_area.keys()) and \
+                "metadata" in list(input_area.keys()):
+            ds_area, metadata_area = input_area["array"], input_area["metadata"]
+        # perform detrend
+        ds_array = wb.remove_fit(ds_array, data_var=data_var, deg=degree, dim="T", kwargs_polyfit=kwargs_detrend)
+        if ds_array is None:
+            wb.log_debug(inspect__stack(), "WARNING cannot perform detrender")
+            break
+        # adapt metadata
+        description = copy__deepcopy(metadata["description"]) if "description" in list(metadata.keys()) else ""
+        text = "time mean value removed"
+        if degree > 0:
+            text = "linearly" if degree == 1 else ("quadratically" if degree == 2 else "cubically")
+            text = "time series " + str(text) + " detrended"
+        metadata["description"] = basics.description_writer(description, text)
+        # prepare output
+        if isinstance(ds_array, (array_wrapper, dataset_wrapper)):
+            output_array = {"array": ds_array, "metadata": metadata}
+        if isinstance(ds_area, (array_wrapper, dataset_wrapper)):
+            output_area = {"array": ds_area, "metadata": metadata_area}
+    return output_array, output_area
 
 
 def masker(
@@ -156,7 +255,7 @@ def masker(
         # -- get array and related input param
         ds_array = input_array["array"]
         metadata = copy__deepcopy(input_array["metadata"])
-        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform masker") is True:
+        if wb.error_ds(ds_array, inspect__stack(), message="cannot perform masker"):
             break
         ds_area, metadata_area = None, None
         if isinstance(input_area, dict) is True and "array" in list(input_area.keys()) and \
@@ -177,14 +276,14 @@ def masker(
             break
         # get array
         da_mask = xab.to_array(ds_mask, data_var=data_var_mask)
-        if isinstance(da_mask, array_wrapper) is False:
+        if not isinstance(da_mask, array_wrapper):
             # mask DataArray must be available to mask data
             details = {
                 "da_mask": str(type(da_mask)) + " should be xarray.DataArray",
                 "ds_mask": str(type(ds_mask)),
                 "data_var_mask": str(data_var_mask)
             }
-            if isinstance(ds_mask, dataset_wrapper) is True:
+            if isinstance(ds_mask, dataset_wrapper):
                 details["ds_mask.keys"] = str(xab.get_dataset_keys(ds_mask))
             wb.log_debug(inspect__stack(), "WARNING cannot perform masker", details=details)
         # maximum value
@@ -237,9 +336,9 @@ def masker(
         wb.log_debug(inspect__stack(), "output array (xarray_base.where)", adjust=5, ds=ds_array,
                      data_var=data_var, details={"description": metadata["description"]})
         # prepare output
-        if isinstance(ds_array, (array_wrapper, dataset_wrapper)) is True:
+        if isinstance(ds_array, (array_wrapper, dataset_wrapper)):
             output_array = {"array": ds_array, "metadata": metadata}
-        if isinstance(ds_area, (array_wrapper, dataset_wrapper)) is True:
+        if isinstance(ds_area, (array_wrapper, dataset_wrapper)):
             output_area = {"array": ds_area, "metadata": metadata_area}
     return output_array, output_area
 
@@ -311,7 +410,7 @@ def selector(
                 "metadata" in list(input_area.keys()):
             ds_area, metadata_area = input_area["array"], input_area["metadata"]
         # select time
-        if do_t is True:
+        if do_t:
             ds_array = wb.select_time(ds_array, data_var=data_var, time_bounds=time_bounds, **kwargs_select_time)
             if ds_array is None:
                 break
@@ -320,7 +419,7 @@ def selector(
             text = "time selected (" + str(time_bounds) + ")"
             metadata["description"] = basics.description_writer(description, text)
         # select depth
-        if do_z is True:
+        if do_z:
             ds_array = wb.select_depth(ds_array, data_var=data_var, depth_bounds=time_bounds, **kwargs_select_depth)
             if ds_array is None:
                 break
@@ -329,7 +428,7 @@ def selector(
             text = "time selected (" + str(kwargs_select_time) + ")"
             metadata["description"] = basics.description_writer(description, text)
         # select region
-        if do_xy is True:
+        if do_xy:
             # region
             horizontal_bounds = {}
             if "latitude" in list(regions_param[region].keys()) and \
@@ -345,7 +444,7 @@ def selector(
                                             **kwargs_select_horizontal)
             if ds_array is None:
                 break
-            if isinstance(ds_area, (array_wrapper, dataset_wrapper)) is True:
+            if isinstance(ds_area, (array_wrapper, dataset_wrapper)):
                 ds_area = wb.select_horizontal(ds_area, data_var=data_var_area, horizontal_bounds=horizontal_bounds,
                                                **kwargs_select_horizontal)
             # adapt metadata
@@ -361,9 +460,9 @@ def selector(
                 text += " " + str(basics.write_coordinates(*horizontal_bounds["Y"], *horizontal_bounds["X"]))
             metadata["description"] = basics.description_writer(description, text)
         # prepare output
-        if isinstance(ds_array, (array_wrapper, dataset_wrapper)) is True:
+        if isinstance(ds_array, (array_wrapper, dataset_wrapper)):
             output_array = {"array": ds_array, "metadata": metadata}
-        if isinstance(ds_area, (array_wrapper, dataset_wrapper)) is True:
+        if isinstance(ds_area, (array_wrapper, dataset_wrapper)):
             output_area = {"array": ds_area, "metadata": metadata_area}
     return output_array, output_area
 
@@ -399,7 +498,7 @@ def loop(processors, input_dataset, input_param, **kwargs) -> Union[dict, None]:
             details = {"variable": str(variable_i),
                        "in input_dataset": str(variable_i in list(input_dataset.keys())),
                        "input_param.type": str(type(input_param))}
-            if isinstance(input_param, dict) is True:
+            if isinstance(input_param, dict):
                 details["input_param.keys"] = ", ".join(list(input_param.keys()))
             wb.log_debug(inspect__stack(), "WARNING: variable must be defined", adjust=5, details=details)
             break
@@ -420,7 +519,7 @@ def loop(processors, input_dataset, input_param, **kwargs) -> Union[dict, None]:
                 details = {"variable": str(n2),
                            "in input_dataset": str(n2 in list(input_dataset.keys())),
                            "input_param.type": str(type(input_param))}
-                if isinstance(input_param, dict) is True:
+                if isinstance(input_param, dict):
                     details["input_param.keys"] = ", ".join(list(input_param.keys()))
                 message = "WARNING: variable " + str(n1) + " must be defined"
                 print(message)
@@ -431,9 +530,9 @@ def loop(processors, input_dataset, input_param, **kwargs) -> Union[dict, None]:
                     dict_area = input_dataset[n2]
                 elif n1 == "mask" and n2 is not None:
                     dict_mask = input_dataset[n2]
-        if isinstance(dict_array, dict) and "array" in list(dict_array.keys()):
+        if isinstance(dict_array, dict) is True and "array" in list(dict_array.keys()):
             print("array", type(dict_array["array"]))
-        if isinstance(dict_area, dict) and "array" in list(dict_area.keys()):
+        if isinstance(dict_area, dict) is True and "array" in list(dict_area.keys()):
             print("area", type(dict_area["array"]))
         # loop on processors to apply to given variable
         print("processors", list(processors[k1]["to_do"].keys()))
@@ -497,7 +596,7 @@ def reader(
         add_bounds = copy__deepcopy(kwargs_reader["decode_times"])
         del kwargs_reader["decode_times"]
     # variables to list
-    if isinstance(variables, str) is True:
+    if isinstance(variables, str):
         variables = [variables]
     # read variable (as in file)
     dict_t = {}
@@ -512,7 +611,7 @@ def reader(
                 if "T" in ab:
                     while "T" in ab:
                         ab.remove("T")
-                if dt is True:
+                if dt:
                     dt = False
             # try to open_dataset and save Dataset in a dictionary using netCDF variables (names) as keys
             try:

@@ -71,7 +71,7 @@ def assign_coords(
     :return: xarray.DataArray or xarray.Dataset
         A new object (as input) with the new coordinates in addition to the existing data.
     """
-    if isinstance(coords_kwargs, dict) is False:
+    if not isinstance(coords_kwargs, dict):
         coords_kwargs = {}
     return ds.assign_coords(coords=coords, **coords_kwargs)
 
@@ -107,7 +107,7 @@ def assign_to_dataset(
     :return: xarray.Dataset
         A new Dataset with the new variables in addition to all the existing variables.
     """
-    if isinstance(variables_kwargs, dict) is False:
+    if not isinstance(variables_kwargs, dict):
         variables_kwargs = {}
     return ds.assign(variables=variables, **variables_kwargs)
 
@@ -247,7 +247,7 @@ def convert_dim_keys(
     if dim is not None:
         # input dimension to list
         dimensions_asked = copy__deepcopy(dim)
-        if isinstance(dim, (Hashable, str)) is True:
+        if isinstance(dim, (Hashable, str)):
             dimensions_asked = [dim]
         # dimensions in input xarray.DataArray or xarray.Dataset
         dimensions_available = list(ds.coords)
@@ -443,7 +443,7 @@ def drop_given_attributes(ds, attrs: list[str], data_var: Union[Hashable, str] =
     # read variable from xarray.Dataset if needed
     ds = to_array(ds, data_var)
     # drop given attributes
-    if isinstance(attrs, list) is True:
+    if isinstance(attrs, list):
         for k1 in attrs:
             if k1 in list(ds.attrs.keys()):
                 del ds.attrs[k1]
@@ -760,7 +760,7 @@ def get_dim_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hash
     # read variable from xarray.Dataset if needed
     ds = to_array(ds, data_var)
     # get dimension keys
-    if isinstance(ds, dataset_wrapper) is True:
+    if isinstance(ds, dataset_wrapper):
         dim_o = list(ds.coords.keys())
     else:
         dim_o = list(ds.dims)
@@ -1284,7 +1284,7 @@ def polyval(
     :param coeffs: xarray.DataArray or xarray.Dataset
         DataArray or Dataset of coefficients of the polynomial
     :param dim_degree: str, optional
-        Name of the polynomial degree dimension in ‘coeffs‘; e.g. dim_degree = "degree"
+        Name of the polynomial degree dimension in ‘coeffs’; e.g. dim_degree = "degree"
         Default is "degree"
     **kwargs - Discarded
     
@@ -1386,7 +1386,7 @@ def rename(
     :param name_dict: str or dict[str, str]
         Dictionary whose keys are current variable, coordinate or dimension names and whose values are the desired
         names.
-        If ‘ds’ is xarray.DataArray and ‘name_dict‘ is str, it as the new name for this array.
+        If ‘ds’ is xarray.DataArray and ‘name_dict’ is str, it as the new name for this array.
     **kwargs - Discarded
     
     Output:
@@ -1434,7 +1434,7 @@ def roll(
     :return: xarray.DataArray or xarray.Dataset
         Object (as input) with the same attributes but rolled data and coordinates.
     """
-    if isinstance(shifts_kwargs, dict) is False:
+    if not isinstance(shifts_kwargs, dict):
         shifts_kwargs = {}
     return ds.roll(roll_coords=roll_coords, shifts=shifts, **shifts_kwargs)
 
@@ -1815,7 +1815,7 @@ def to_dataset(ds: Union[array_wrapper, dataset_wrapper], data_var: str, **kwarg
         An in-memory representation of a NetCDF file, and consists of variables, coordinates and attributes which
         together form a self describing dataset
     """
-    if isinstance(ds, dataset_wrapper) is True:
+    if isinstance(ds, dataset_wrapper):
         return ds
     else:
         return ds.to_dataset(name=data_var)
@@ -1937,7 +1937,7 @@ def transpose(
     dimensions_name = convert_dim_keys(ds, dimensions)
     # transpose
     tmp_kwargs: dict[str, Union[Literal["raise", "warn", "ignore"], bool]] = {"missing_dims": missing_dims}
-    if isinstance(ds, array_wrapper) is True:
+    if isinstance(ds, array_wrapper):
         tmp_kwargs["transpose_coords"] = transpose_coords
     return ds.transpose(*dimensions_name, missing_dims=missing_dims, transpose_coords=transpose_coords)
 
