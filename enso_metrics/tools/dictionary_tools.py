@@ -107,7 +107,7 @@ def sort_dict(
     tuple_k = set_instance(tuple_k, tuple, False, ())
     tuple_k_last = set_instance(tuple_k_last, tuple, False, ())
     # loop through nested levels
-    if isinstance(dict_i, dict) is True:
+    if isinstance(dict_i, dict):
         list_keys = sorted(list(dict_i.keys()), key=lambda s: s.lower())
         for k in list_keys:
             dict_o, tuple_k, tuple_k_last = sort_dict(

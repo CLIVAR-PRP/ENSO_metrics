@@ -29,8 +29,10 @@ def default_arg_values(arg):
             "smoothing": False,
             "threshold": 0.5,
         },
-        "frequency": None,
+        "frequency": "month",
         "metric_computation": "difference",
+        "metric_param": ["difference", "difference_relative", "relative_difference_relative_absolute", "correlation",
+                         "rmse"],
         "min_time_steps": None,
         "normalization": False,
         "project_interpreter": "CMIP",
@@ -71,7 +73,7 @@ def input_dictionary_formater(
         files, names = dict_input[k1]["file_name"], dict_input[k1]["variable"]
         # if multiple netCDF variables (names) are required to compute given internal variable (k1), inputs are lists
         # if not, inputs are str. To facilitate the process, lists are create anyway
-        if isinstance(names, list) is False:
+        if not isinstance(names, list):
             files, names = [files], [names]
         # skip if at least one file or variable names is None
         if None in files or None in names:
@@ -128,6 +130,49 @@ def input_dictionary_formater(
             # computation description
             dict_o[k1]["variable_computation"] = str(a1) + str(a2) + str(a3)
     return dict_o
+
+
+def processors_dictionary_formater(
+        dict_input: dict[str, Any],
+        mapping: dict[str, str],
+        **kwargs) -> dict[str, Any]:
+    if not isinstance(dict_input, dict):
+        return dict_input
+    dict_o = {}
+    for key, value in dict_input.items():
+        new_key = key
+        # apply all substring replacements (in reverse order)
+        for old in sorted(mapping, key=len, reverse=True):
+            if old in new_key:
+                new_key = new_key.replace(old, mapping[old])
+        # recurse if needed
+        if isinstance(value, dict):
+            new_value = processors_dictionary_formater(value, mapping)
+        elif isinstance(value, str):
+            # if the value is equal to one of the mapping, change it
+            new_value = value
+            for old in sorted(mapping, key=len, reverse=True):
+                if new_value == old:
+                    new_value = mapping[old]
+        else:
+            new_value = value
+        dict_o[new_key] = new_value
+    return dict_o
+
+
+def set_default_epoch(
+        input_value: Union[tuple[str, str], slice],
+        optional_default: Union[tuple[str, str], slice],
+        **kwargs) ->  Union[tuple[str, str], slice]:
+    n = 0
+    while not isinstance(input_value, type(slice(0))) and \
+            not (isinstance(input_value, tuple) and len(input_value) == 2 and
+                 all(isinstance(k, str) for k in input_value)):
+        input_value = deepcopy(optional_default)
+        if n > 0:
+            input_value = slice(0, 480)
+        n += 1
+    return input_value
 
 
 def set_default_str(input_value: str, defined_values: list[str], optional_default: str, **kwargs) -> str:

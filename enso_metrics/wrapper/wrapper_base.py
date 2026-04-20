@@ -10,12 +10,18 @@
 # basic python package
 from copy import deepcopy as copy__deepcopy
 from dataclasses import dataclass
+from glob import iglob as glob__iglob
 from inspect import stack as inspect__stack
+from math import ceil as math__ceil
+from math import floor as math__floor
+from os.path import isdir as os__path__isdir
+from os.path import isfile as os__path__isfile
 from typing import Any, Hashable, Literal, Union
 # numpy
 from numpy import array as numpy__array
 from numpy import cos as numpy__cos
 from numpy import deg2rad as numpy__deg2rad
+from numpy import float64 as numpy__float64
 from numpy import ndarray as numpy__ndarray
 # regionmask
 import regionmask
@@ -116,17 +122,28 @@ def average_spatial(
         # spatial average
         ds_o = xarray_base.mean(ds, data_var=data_var, dim=dims, keep_attrs=True, skipna=True, weights=weights)
         # weighted mean returns a dataarray -> recreate dataset
-        if isinstance(ds, dataset_wrapper) is True and isinstance(ds_o, array_wrapper) is True:
+        if isinstance(ds, dataset_wrapper) and isinstance(ds_o, array_wrapper):
             # bounds are a pain, in the input ds they are fct of all coordinates (e.g., time_bnds[time, bnds, lat, lon])
             # so they cannot be easily taken from input ds and must be averaged the same way as data_var
             dict_bnds = {}
-            for k in xarray_base.get_dataset_keys(ds):
-                if k in [data_var] or ("_bnd" in k and str(k).split("_bnd")[0] in dims) or \
-                        ("_bound" in k and str(k).split("_bound")[0] in dims) or \
-                        ("vertice" in k and "lat" in k and "Y" in cf_dim) or \
-                        ("vertice" in k and "lon" in k and "X" in cf_dim):
+            for k1 in xarray_base.get_dataset_keys(ds):
+                if k1 in [data_var] or ("_bnd" in k1 and str(k1).split("_bnd")[0] in dims) or \
+                        ("_bound" in k1 and str(k1).split("_bound")[0] in dims) or \
+                        ("bnd_" in k1 and str(k1).split("bnd_")[-1] in dims) or \
+                        ("bnds_" in k1 and str(k1).split("bnds_")[-1] in dims) or \
+                        ("bound_" in k1 and str(k1).split("bound_")[-1] in dims) or \
+                        ("bounds_" in k1 and str(k1).split("bounds_")[-1] in dims) or \
+                        ("vertice" in k1 and "lat" in k1 and "Y" in cf_dim) or \
+                        ("vertice" in k1 and "lon" in k1 and "X" in cf_dim):
                     continue
-                dict_bnds[k] = xarray_base.mean(ds, data_var=k, dim=dims, keep_attrs=True, skipna=True, weights=weights)
+                # select averaged dimensions available in given bounds key
+                da_dims = xarray_base.get_dim_keys(ds, data_var=k1)
+                tmp_dims = [k2 for k2 in dims if k2 in da_dims]
+                if len(tmp_dims) == 0:
+                    dict_bnds[k1] = xarray_base.to_array(ds, data_var=k1)
+                    continue
+                dict_bnds[k1] = xarray_base.mean(
+                    ds, data_var=k1, dim=dims, keep_attrs=True, skipna=True, weights=weights)
             # coordinates are a pain for curvilinear grids (e.g., variable = ssh[time, j, i], coordinates = j[j], i[i],
             # latitude[j, i], longitude[j, i]) so they must be averaged the same way as data_var
             dict_coords = {}
@@ -165,9 +182,8 @@ def check_multidimensional_coordinates(ds: Union[array_wrapper, dataset_wrapper]
     da_lat, da_lon = get_dim_latitude_array(ds), get_dim_longitude_array(ds)
     # check if latitude and longitude arrays and 2D arrays
     bool_o = False
-    if (isinstance(da_lat, (array_wrapper, numpy__ndarray)) is True and len(xarray_base.get_array_shape(da_lat)) > 1) \
-            or (isinstance(da_lon, (array_wrapper, numpy__ndarray)) is True
-                and len(xarray_base.get_array_shape(da_lon)) > 1):
+    if (isinstance(da_lat, (array_wrapper, numpy__ndarray)) and len(xarray_base.get_array_shape(da_lat)) > 1) or (
+            isinstance(da_lon, (array_wrapper, numpy__ndarray)) and len(xarray_base.get_array_shape(da_lon)) > 1):
         bool_o = True
     return bool_o
 
@@ -261,7 +277,7 @@ def compute_mask(
     log_debug(inspect__stack(), "input", adjust=5, details=details)
     # generate mask based on input array
     ds_mask, metadata = None, None
-    if isinstance(input_array, dict) is True and "array" in list(input_array.keys()):
+    if isinstance(input_array, dict) and "array" in list(input_array.keys()):
         # get input array
         ds_array = input_array["array"]
         # create DataArray mask
@@ -389,6 +405,12 @@ def compute_variable(
             if nn == list_variables[0]:
                 continue
             ds = xarray_base.assign_to_dataset(ds, variables_kwargs={nn: xarray_base.to_array(ds_i, nn)})
+        # reindex (reverse) latitude dimension if needed
+        dim_y = xarray_base.convert_cf_dim_key(ds, "Y")
+        if basics.is_dim(dim_y):
+            da_y = ds[dim_y]
+            if not check_multidimensional_coordinates(ds) and da_y.values[0] > da_y.values[-1]:
+                ds = xarray_base.reindex(ds, {dim_y: da_y[::-1]})
     log_debug(inspect__stack(), "output", data_var=variable, ds=ds)
     return ds, metadata
 
@@ -466,18 +488,14 @@ def compute_weights(
                 weights = create_array(ds, data_var=data_var, data_var_o="weights", value=1)
         else:
             # is area available?
-            da_area = xarray_base.to_array(ds_area, data_var=data_var_area)
-            if isinstance(da_area, array_wrapper):
-                # area is available so it will be used as weights but cannot contain NaNs
-                # set to 0 (i.e., weight of NaN cells is 0)
-                weights = xarray_base.fill_nan(da_area, 0)
-            elif isinstance(da_area, array_wrapper) is False and check_multidimensional_coordinates(ds) is False:
+            weights = xarray_base.to_array(ds_area, data_var=data_var_area)
+            if not isinstance(weights, array_wrapper) and not check_multidimensional_coordinates(ds):
                 # try to generate spatial weights using xcdat
                 try:
                     weights = xcdat_base.weights_spatial(ds, data_var, cf_dim=cf_dim)
                 except Exception as err:
                     log_debug(inspect__stack(), "WARNING cannot generate spatial weights using xcdat\n" + str(err))
-            if isinstance(weights, array_wrapper) is False and "Y" in cf_dim:
+            if not isinstance(weights, array_wrapper) and "Y" in cf_dim:
                 # try to get latitude dimension
                 dim_lat = get_dim_latitude(ds)
                 if not basics.is_dim(dim_lat):
@@ -489,6 +507,9 @@ def compute_weights(
                     weights = numpy__cos(numpy__deg2rad(da_lat))
             elif not isinstance(weights, array_wrapper):
                 weights = create_array(da, data_var_o="weights", value=1)
+            if isinstance(weights, array_wrapper):
+                # set to 0 (i.e., weight of NaN cells is 0)
+                weights = xarray_base.fill_nan(weights, 0)
     return weights
 
 
@@ -611,7 +632,7 @@ def error_ds(ds: Any, stack, is_error: bool = True, message: str = "", **kwargs)
     error = False
     if not isinstance(ds, (array_wrapper, dataset_wrapper)):
         error = True
-        a1 = "ERROR " if is_error is True else "WARNING "
+        a1 = "ERROR " if isinstance(is_error, bool) and is_error else "WARNING "
         log_debug(stack, str(a1) + str(message),
                   details={"ds": str(type(ds)) + " should be xarray.DataArray, xarray.Dataset"})
     return error
@@ -693,7 +714,9 @@ def get_dim_latitude_array(
     # get latitude as named in xarray.DataArray or xarray.Dataset
     dim = get_dim_latitude(ds)
     # get latitude array
-    da = xarray_base.get_dim_array(ds, dim)
+    da = None
+    if basics.is_dim(dim):
+        da = xarray_base.get_dim_array(ds, dim)
     if not isinstance(ds, (array_wrapper, numpy__ndarray)):
         log_debug(inspect__stack(), "WARNING cannot find latitude coordinates array")
     return da
@@ -743,7 +766,9 @@ def get_dim_longitude_array(
     # get longitude as named in xarray.DataArray or xarray.Dataset
     dim = get_dim_longitude(ds)
     # get longitude array
-    da = xarray_base.get_dim_array(ds, dim)
+    da = None
+    if basics.is_dim(dim):
+        da = xarray_base.get_dim_array(ds, dim)
     if not isinstance(ds, (array_wrapper, numpy__ndarray)):
         log_debug(inspect__stack(), "WARNING cannot find longitude coordinates array")
     return da
@@ -793,7 +818,9 @@ def get_dim_time_array(
     # get time as named in xarray.DataArray or xarray.Dataset
     dim = get_dim_time(ds)
     # get time array
-    da = xarray_base.get_dim_array(ds, dim)
+    da = None
+    if basics.is_dim(dim):
+        da = xarray_base.get_dim_array(ds, dim)
     if not isinstance(ds, (array_wrapper, numpy__ndarray)):
         log_debug(inspect__stack(), "WARNING cannot find time coordinates array")
     return da
@@ -843,7 +870,9 @@ def get_dim_vertical_array(
     # get vertical as named in xarray.DataArray or xarray.Dataset
     dim = get_dim_vertical(ds)
     # get vertical array
-    da = xarray_base.get_dim_array(ds, dim)
+    da = None
+    if basics.is_dim(dim):
+        da = xarray_base.get_dim_array(ds, dim)
     if not isinstance(ds, (array_wrapper, numpy__ndarray)):
         log_debug(inspect__stack(), "WARNING cannot find vertical coordinates array")
     return da
@@ -911,7 +940,7 @@ def recreate_array(
     # delete removed dimension(s)
     for k in dim_removed:
         if isinstance(k, str) is True and k in dimensions:
-            dimensions.remove(dim_removed)
+            dimensions.remove(k)
     # get coordinates corresponding to dimensions
     coordinates: dict[Union[Hashable, str], Union[numpy__ndarray, array_wrapper]] = dict(
         (k, xarray_base.get_dim_array(ds, k)) for k in dimensions)
@@ -1051,6 +1080,49 @@ def processing_description(
     return ds
 
 
+def open_dataset(
+        filename: Union[str, list[str]],
+        data_var: str = None,
+        package: Literal["xarray", "xcdat"] = "xcdat",
+        kwargs_open_dataset: dict = None,
+        **kwargs) -> Union[dataset_wrapper, None]:
+    kwargs_open_dataset = set_instance(kwargs_open_dataset, dict, False, {})
+    ds = None
+    try:
+        if package == "xcdat":
+            ds = xcdat_base.open_dataset(filename, data_var=data_var, **kwargs_open_dataset)
+        else:
+            ds = xarray_base.open_dataset(filename, **kwargs_open_dataset)
+        # ds = dict_packages[package](filename, data_var=data_var, **kwargs_open_dataset)
+    except Exception as err:
+        message = "can't read (" + str(data_var) + ")" + "\n" + str(err)
+        basics.log_error(inspect__stack(), message)
+        # WARNING: cannot read variable or file
+        if isinstance(filename, str):
+            filename = [filename]
+        paths = ["/".join(k.split("/")[:-1]) for k in filename]
+        paths_test = [os__path__isdir(k) for k in paths]
+        files = []
+        for k in filename:
+            files += list(glob__iglob(k))
+        files = sorted(list(set(files)), key=lambda s: s.lower())
+        files_test = [os__path__isfile(k) for k in files]
+        files_string = ""
+        if len(files) > 0:
+            for k in files:
+                files_string += "\n" + str().ljust(5) + str(k)
+        else:
+            files_string = "no file matches this file pattern"
+        details = {
+            "directory": str(paths),
+            "isdir": str(paths_test),
+            "file": str(filename),
+            "isfile": str(files_test),
+            "list": str(files_string)}
+        log_debug(inspect__stack(), "WARNING: " + str(message), adjust=5, details=details)
+    return ds
+
+
 def recreate_dataset(
         ds: dataset_wrapper,
         da: array_wrapper,
@@ -1111,6 +1183,205 @@ def recreate_dataset(
     return ds_o
 
 
+def redo_bounds(ds: dataset_wrapper, cf_dims: list[Literal["T", "X", "Y", "Z"]]) -> dataset_wrapper:
+    # operations on ds changes bounds and xcdat doesn't like that: bounds must be deleted and recreated
+    for cf_dim in cf_dims:
+        if check_multidimensional_coordinates(ds) and cf_dim in ["X", "Y"]:
+            continue
+        # get dimension key
+        dim = xarray_base.convert_cf_dim_key(ds, cf_dim)
+        if not isinstance(dim, str):
+            continue
+        # get bounds key
+        try:
+            dim_bnds = xarray_base.get_attribute(ds, "bounds", data_var=dim)
+        except (Exception,):
+            # no log: sometimes bounds are not defined correctly
+            continue
+        if not isinstance(dim_bnds, str):
+            continue
+        # delete current time bounds
+        if dim_bnds in list(ds.keys()):
+            ds = xarray_base.drop_dataset_keys(ds, [dim_bnds])
+        # use xcdat to set bounds
+        ds = xcdat_base.set_auto_bounds(ds, [cf_dim])
+        try:
+            dim_bnds = xarray_base.get_attribute(ds, "bounds", data_var=dim)
+        except (Exception,):
+            # no log: sometimes bounds are not defined correctly
+            continue
+    return ds
+
+
+def regrid_horizontal(
+        ds: dataset_wrapper,
+        data_var: Union[Hashable, str, None] = None,
+        grid: Union[array_wrapper, dataset_wrapper, str, None] = None,
+        method: Literal[
+            "bilinear", "conservative", "conservative_normed", "patch", "nearest_s2d", "nearest_d2s"] = "conservative",
+        tool: Literal["regrid2", "xesmf"] = "regrid2",
+        kwargs_regridder_horizontal: dict = None,
+        **kwargs) -> dataset_wrapper:
+    kwargs_regridder_horizontal = set_instance(kwargs_regridder_horizontal, dict, False, {})
+    basics.log_info(inspect__stack(), "")
+    log_debug(inspect__stack(), "input", data_var=data_var, ds=ds,
+              details={"ds.type": type(ds), "grid.type": type(grid)})
+    ds_o = None
+    # fake loop to be able to break out when an error occurs
+    for _ in [0]:
+        if isinstance(grid, str) and "gaussian" in grid and "x" in grid:
+            # grid should be like 'gaussian_1x1', the number of latitudes is computed using the first integer
+            nlat = int(round(180. / int(grid.replace("gaussian_", "").split("x")[0]), 0))
+            output_grid = xcdat_base.create_gaussian_grid(nlat)
+        elif isinstance(grid, str) and "uniform" in grid and "x" in grid:
+            # grid should be like 'gaussian_1x1', the number of latitudes is computed using the first integer
+            lat_start, lat_stop, lon_start, lon_stop = -89.5, 89.5, 0.5, 359.5
+            lat_delta = float(grid.replace("uniform_", "").split("x")[0])
+            lon_delta = float(grid.replace("uniform_", "").split("x")[1])
+            # # adapt lat_start, lat_stop based on input data
+            # try:
+            #     bounds_lat = xcdat_base.get_bounds(ds, "Y", data_var=data_var)
+            # except (Exception,):
+            #     # no log: sometimes bounds are not defined correctly
+            #     # use latitudes to define lat_start and lat_stop
+            #     da_lat = get_dim_latitude_array(ds)
+            #     min_max = min_max_global(da_lat)
+            #     arr_lat = xarray_base.to_numpy(da_lat)
+            #     if check_multidimensional_coordinates(ds):
+            #         # for multidimensional coordinates (e.g., curvilinear grids) average lat along X
+            #         arr_lat = arr_lat.mean(axis=1)
+            #     dy1, dy0 = (arr_lat[-1] - arr_lat[-2]) / 2, (arr_lat[1] - arr_lat[0]) / 2
+            #     if min_max[1] + dy1 - min_max[0] - dy0 < 85:
+            #         # not the entire globe is available: find new lat_start and lat_stop
+            #         lat_start = max(-90, math__floor(min_max[0] - dy0))
+            #         lat_stop = min(90, math__ceil(min_max[1] + dy1))
+            # else:
+            #     # use latitude bounds to define lat_start and lat_stop
+            #     min_max = min_max_global(bounds_lat)
+            #     if min_max[1] - min_max[0] < 85:
+            #         # not the entire globe is available: find new lat_start and lat_stop
+            #         lat_start = max(-90, math__floor(min_max[0]))
+            #         lat_stop = min(90, math__ceil(min_max[1]))
+            # # adapt lon_start, lon_stop based on input data
+            # try:
+            #     bounds_lon = xcdat_base.get_bounds(ds, "X", data_var=data_var)
+            # except (Exception,):
+            #     # no log: sometimes bounds are not defined correctly
+            #     # use longitudes to define lon_start and lon_stop
+            #     da_lon = get_dim_longitude_array(ds)
+            #     min_max = min_max_global(da_lon)
+            #     arr_lon = xarray_base.to_numpy(da_lon)
+            #     if check_multidimensional_coordinates(ds):
+            #         # for multidimensional coordinates (e.g., curvilinear grids) average lon along Y
+            #         arr_lon = arr_lon.mean(axis=0)
+            #     dx1, dx0 = (arr_lon[-1] - arr_lon[-2]) / 2, (arr_lon[1] - arr_lon[0]) / 2
+            #     if min_max[1] + dx1 - min_max[0] - dx0 < 355:
+            #         # not the entire globe is available: find new lon_start and lon_stop
+            #         if (-360 <= min_max[0] <= 0 and -360 <= min_max[1] <= 0) or (
+            #                 0 <= min_max[0] <= 360 and 0 <= min_max[1] <= 360):
+            #             # lon_start and lon_stop can be defined between 0 and 360
+            #             lon_start = max(0, math__floor(min_max[0] - dx0) % 360)
+            #             lon_stop = min(360, math__ceil(min_max[1] + dx1) % 360)
+            #         else:
+            #             # lon_start and lon_stop cannot be defined between 0 and 360
+            #             lon_start, lon_stop = math__floor(min_max[0] - dx0), math__ceil(min_max[1] + dx1)
+            # else:
+            #     # use longitude bounds to define lon_start and lon_stop
+            #     min_max = min_max_global(bounds_lon)
+            #     if min_max[1] - min_max[0] < 355:
+            #         # not the entire globe is available: find new lon_start and lon_stop
+            #         if (-360 <= min_max[0] <= 0 and -360 <= min_max[1] <= 0) or (
+            #                 0 <= min_max[0] <= 360 and 0 <= min_max[1] <= 360):
+            #             # lon_start and lon_stop can be defined between 0 and 360
+            #             lon_start = max(0, math__floor(min_max[0]) % 360)
+            #             lon_stop = min(360, math__ceil(min_max[1]) % 360)
+            #         else:
+            #             # lon_start and lon_stop cannot be defined between 0 and 360
+            #             lon_start, lon_stop = math__floor(min_max[0]), math__ceil(min_max[1])
+            # generate uniform grid
+            output_grid = xcdat_base.create_uniform_grid(lat_start, lat_stop, lat_delta, lon_start, lon_stop, lon_delta)
+        elif isinstance(grid, (array_wrapper, dataset_wrapper)):
+            output_grid = grid
+        else:
+            # given ‘grid’ format is wrong
+            log_debug(inspect__stack(), "WARNING cannot regrid horizontally", details={
+                "grid": str(grid) + " should be string like 'gaussian_latxlon' or 'uniform_latxlon' or array"})
+            break
+        # check keywords
+        if check_multidimensional_coordinates(ds):
+            tool: Literal["xesmf"] = "xesmf"
+            method: Literal["bilinear"] = "bilinear"
+        # regrid
+        ds_o = xcdat_base.regridder_horizontal(ds, data_var, output_grid, tool=tool, method=method,
+                                               **kwargs_regridder_horizontal)
+    return ds_o
+
+
+def regrid_vertical(
+        ds: dataset_wrapper,
+        data_var: Union[Hashable, str, None] = None,
+        grid: Union[array_wrapper, dataset_wrapper, int, None] = None,
+        tool: Literal["xgcm"] = "xgcm",
+        kwargs_regridder_vertical: dict = None,
+        **kwargs) -> dataset_wrapper:
+    kwargs_regridder_vertical = set_instance(kwargs_regridder_vertical, dict, False, {})
+    basics.log_info(inspect__stack(), "")
+    log_debug(inspect__stack(), "input", data_var=data_var, ds=ds,
+              details={"ds.type": type(ds), "grid.type": type(grid)})
+    ds_o = None
+    # 50 and 60 levels grids are the same between 0 and 160m depth
+    levels = {
+        50: [5.00000000e+00, 1.50000000e+01, 2.50000000e+01, 3.50000000e+01, 4.50000000e+01, 5.50000000e+01,
+             6.50000000e+01, 7.50000000e+01, 8.50000000e+01, 9.50000000e+01, 1.05000000e+02, 1.15000000e+02,
+             1.25000000e+02, 1.35000000e+02, 1.45000000e+02, 1.55000000e+02, 1.65000000e+02, 1.75000000e+02,
+             1.85000000e+02, 1.95000000e+02, 2.05000000e+02, 2.16846756e+02, 2.41349014e+02, 2.80780731e+02,
+             3.43250458e+02, 4.27315552e+02, 5.36715637e+02, 6.65414124e+02, 8.12781616e+02, 9.69065125e+02,
+             1.13093494e+03, 1.28960461e+03, 1.45577014e+03, 1.62292566e+03, 1.80155811e+03, 1.98485461e+03,
+             2.18290479e+03, 2.38841748e+03, 2.61093506e+03, 2.84256445e+03, 3.09220483e+03, 3.35129468e+03,
+             3.62805762e+03, 3.91326440e+03, 4.21449512e+03, 4.52191797e+03, 4.84256592e+03, 5.16612988e+03,
+             5.49924512e+03, 5.83129443e+03],
+        60: [5.00000000e+00, 1.50000000e+01, 2.50000000e+01, 3.50000000e+01, 4.50000000e+01, 5.50000000e+01,
+             6.50000000e+01, 7.50000000e+01, 8.50000000e+01, 9.50000000e+01, 1.05000000e+02, 1.15000000e+02,
+             1.25000000e+02, 1.35000000e+02, 1.45000000e+02, 1.55000000e+02, 1.65098398e+02, 1.75479043e+02,
+             1.86291270e+02, 1.97660273e+02, 2.09711387e+02, 2.22578281e+02, 2.36408828e+02, 2.51370156e+02,
+             2.67654199e+02, 2.85483652e+02, 3.05119219e+02, 3.26867988e+02, 3.51093477e+02, 3.78227617e+02,
+             4.08784648e+02, 4.43377695e+02, 4.82736719e+02, 5.27728008e+02, 5.79372891e+02, 6.38862617e+02,
+             7.07563281e+02, 7.87002500e+02, 8.78825234e+02, 9.84705859e+02, 1.10620422e+03, 1.24456688e+03,
+             1.40049719e+03, 1.57394641e+03, 1.76400328e+03, 1.96894422e+03, 2.18645656e+03, 2.41397156e+03,
+             2.64900125e+03, 2.88938469e+03, 3.13340469e+03, 3.37979344e+03, 3.62767031e+03, 3.87645188e+03,
+             4.12576812e+03, 4.37539250e+03, 4.62519031e+03, 4.87508344e+03, 5.12502812e+03, 5.37500000e+03],
+        75: [5.05760017e-01, 1.55585530e+00, 2.66768175e+00, 3.85627974e+00, 5.14036125e+00, 6.54303362e+00,
+             8.09251839e+00, 9.82275043e+00, 1.17736795e+01, 1.39910380e+01, 1.65253215e+01, 1.94298028e+01,
+             2.27576162e+01, 2.65583009e+01, 3.08745618e+01, 3.57402047e+01, 4.11800247e+01, 4.72118941e+01,
+             5.38506372e+01, 6.11128402e+01, 6.90216839e+01, 7.76111618e+01, 8.69294254e+01, 9.70413126e+01,
+             1.08030281e+02, 1.20000001e+02, 1.33075822e+02, 1.47406245e+02, 1.63164456e+02, 1.80549922e+02,
+             1.99789960e+02, 2.21141180e+02, 2.44890622e+02, 2.71356387e+02, 3.00887515e+02, 3.33862834e+02,
+             3.70688484e+02, 4.11793845e+02, 4.57625617e+02, 5.08639904e+02, 5.65292274e+02, 6.28025970e+02,
+             6.97258648e+02, 7.73368259e+02, 8.56678942e+02, 9.47447897e+02, 1.04585430e+03, 1.15199125e+03,
+             1.26586142e+03, 1.38737698e+03, 1.51636363e+03, 1.65256845e+03, 1.79567082e+03, 1.94529547e+03,
+             2.10102652e+03, 2.26242161e+03, 2.42902521e+03, 2.60038049e+03, 2.77603935e+03, 2.95557038e+03,
+             3.13856486e+03, 3.32464083e+03, 3.51344558e+03, 3.70465666e+03, 3.89798194e+03, 4.09315874e+03,
+             4.28995243e+03, 4.48815461e+03, 4.68758110e+03, 4.88806979e+03, 5.08947856e+03, 5.29168316e+03,
+             5.49457529e+03, 5.69806076e+03, 5.90205781e+03],
+    }
+    # fake loop to be able to break out when an error occurs
+    for _ in [0]:
+        if isinstance(grid, int) and grid in list(levels.keys()):
+            output_grid = xcdat_base.create_grid(
+                z=xcdat_base.create_axis("depth", numpy__array(levels[grid], dtype=numpy__float64)),
+                attrs={"positive": "down", "units": "m"})
+        elif isinstance(grid, (array_wrapper, dataset_wrapper)):
+            output_grid = grid
+        else:
+            # given ‘grid’ format is wrong
+            log_debug(inspect__stack(), "WARNING cannot regrid vertically", details={
+                "grid": str(grid) + " should be integer " + str(list(levels.keys())) + " or array"})
+            break
+        # regrid
+        ds_o = xcdat_base.regridder_vertical(ds, data_var, output_grid, tool=tool, **kwargs_regridder_vertical)
+    return ds_o
+
+
 def remove_fit(
         ds: Union[array_wrapper, dataset_wrapper],
         data_var: Union[Hashable, str, None] = None,
@@ -1145,6 +1416,41 @@ def remove_fit(
     return ds_o
 
 
+def rename_variable(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var_i: Union[Hashable, str],
+        data_var_o: Union[Hashable, str],
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Rename data_var_i to data_var_o in input object.
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+    :param data_var_i: Hashable or str
+        Data variable ro rename
+    :param data_var_o: Hashable or str
+        New name of data variable
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        Object (as input) with renamed variable
+    """
+    # get array
+    da = xarray_base.to_array(ds, data_var_i)
+    # rename variable
+    if isinstance(da, array_wrapper):
+        da = xarray_base.rename(da, data_var_o)
+    if isinstance(da, dataset_wrapper):
+        da = xarray_base.rename(da, {data_var_i: data_var_o})
+    if isinstance(ds, dataset_wrapper):
+        ds = xarray_base.set_array_in_place(ds, da, data_var_i)
+        ds = xarray_base.rename_vars(ds, {data_var_i: data_var_o})
+    return ds
+
+
 def roll_longitude(
         ds: Union[array_wrapper, dataset_wrapper],
         new_lon_min: Union[float, int, None] = None,
@@ -1168,20 +1474,26 @@ def roll_longitude(
     """
     dim_lon = get_dim_longitude(ds)
     if basics.is_dim(dim_lon):
-        # update longitude
+        # --- Step 1: Update longitude
+        # get longitude
         arr_lon = xarray_base.get_dim_array(ds, dim_lon)
         if isinstance(new_lon_min, (float, int)):
             # add minimum value to dataset's longitude to shift the dimension
-            # e.g., initial longitude = [0; 360], new_lon_min = -70, new longitude = [-70; 290]
-            coords_kwargs = {dim_lon: arr_lon + new_lon_min}
+            # e.g., initial longitude = [0; 359], new_lon_min = -70, new longitude = [-70; 289]
+            if new_lon_min >= 0:
+                arr_lon = xarray_base.where(arr_lon, arr_lon >= new_lon_min, other=arr_lon + 360)
+            else:
+                arr_lon = xarray_base.where(arr_lon, arr_lon < 360 - new_lon_min, other=arr_lon - 360)
+            coords_kwargs = {dim_lon: arr_lon}
         else:
             # ensure that longitude ranges from 0 to 360E
             coords_kwargs = {dim_lon: (360 + (arr_lon % 360)) % 360}
+        # update longitude
         ds = xarray_base.assign_coords(ds, coords_kwargs=coords_kwargs)
-        # roll so that the first longitude of the dimension is the minimum longitude
+        # --- Step 2: Roll so that the first longitude of the dimension is the minimum longitude
         if not check_multidimensional_coordinates(ds):
             # normal roll method
-            shifts = {dim_lon: -xarray_base.to_numpy(arr_lon).argmin()}
+            shifts = {dim_lon: -int(xarray_base.to_numpy(arr_lon).argmin())}
         else:
             # for multidimensional coordinates (e.g., curvilinear grids)
             # average lon along Y
@@ -1191,7 +1503,34 @@ def roll_longitude(
             # shift the last dimension of longitude coordinate
             last_lon_dim = xarray_base.get_dim_keys(arr_lon)[-1]
             shifts = {last_lon_dim: -min_x}
+        # roll
         ds = xarray_base.roll(ds, roll_coords=True, shifts=shifts)
+        # --- Step 3: Update longitude bounds (if applicable)
+        arr_bnds, dim_bnds = None, None
+        # find bounds
+        attrs = xarray_base.get_attributes(arr_lon)
+        if "bounds" in list(attrs.keys()):
+            # bounds named in attributes
+            dim_bnds = attrs["bounds"]
+            # check if it exists
+            if dim_bnds in list(ds.keys()):
+                arr_bnds = ds[dim_bnds]
+        if isinstance(arr_bnds, array_wrapper):
+            # check if any variable looks like relevant bounds
+            for k in list(ds.keys()):
+                if str(dim_lon) + "_bnd" in k or str(dim_lon) + "_bound" in k:
+                    arr_bnds = ds[k]
+                    dim_bnds = copy__deepcopy(k)
+                    break
+        # update longitude bounds
+        if isinstance(arr_bnds, array_wrapper):
+            # remove mean bounds and add longitude
+            # e.g., initial longitude = [0; 359], new_lon_min = -70, new longitude = [-70; 289]
+            # rolled bounds are still bnds = [[289.5, 290.5] ... [288.5, 289.5]]
+            # remove mean: bnds = [[-0.5, 0.5] ... [-0.5, 0.5]]
+            # add longitude: bnds = [[-70.5, -69.5] ... [288.5, 289.5]]
+            arr_bnds = arr_bnds - xarray_base.mean(arr_bnds, dim="B") + ds[dim_lon]
+            ds = xarray_base.set_array_in_place(ds, arr_bnds, data_var=dim_bnds)
     return ds
 
 
@@ -1335,7 +1674,8 @@ def select_horizontal(
             else:
                 cond = (min(lats) <= da_lat) & (da_lat <= max(lats)) & (min(lons) <= da_lon) & (da_lon <= max(lons))
             # mask data outside region
-            ds_o = xarray_base.where(ds, cond, **kwargs_where)
+            da = xarray_base.where(ds, cond, data_var=data_var, **kwargs_where)
+            ds_o = xarray_base.set_array_in_place(ds, da, data_var=data_var)
         else:
             # -- polygonal region
             # create region using regionmask
@@ -1343,9 +1683,10 @@ def select_horizontal(
             region = regionmask.Regions([region])
             mask = region.mask(da_lon, da_lat)
             # mask data outside region
-            ds_o = xarray_base.where(ds, xarray_base.notnull(mask), **kwargs_where)
+            da = xarray_base.where(ds, xarray_base.notnull(mask), data_var=data_var, **kwargs_where)
+            ds_o = xarray_base.set_array_in_place(ds, da, data_var=data_var)
         # -- select region
-        if basics.is_dim(dim_lon) is True and mask_only is False and isinstance(lons, (list, tuple)) is True:
+        if basics.is_dim(dim_lon) and isinstance(mask_only, bool) and not mask_only and isinstance(lons, (list, tuple)):
             # -- roll longitude
             lon_min, lon_max = min(lons), max(lons)
             # desired longitudes are usually defined [0; 360], but the input may not be, roll longitude if needed
@@ -1360,7 +1701,7 @@ def select_horizontal(
             # -- select region (i.e., reduce the shape of the input data)
             # create indexers
             indexers = {}
-            if xarray_base.get_array_shape(da_lat) == 1 and xarray_base.get_array_shape(da_lon) == 1:
+            if len(xarray_base.get_array_shape(da_lat)) == 1 and len(xarray_base.get_array_shape(da_lon)) == 1:
                 # regular grid
                 if isinstance(lats, (list, tuple)):
                     indexers[dim_lat] = slice(*(min(lats), max(lats)))
@@ -1483,6 +1824,30 @@ def select_time(
             log_debug(inspect__stack(), "xarray_base.select_index", data_var=data_var, ds=ds_o)
     log_debug(inspect__stack(), "output", data_var=data_var, ds=ds_o)
     return ds_o
+
+
+def smooth_along_dimension(
+        ds: Union[array_wrapper, dataset_wrapper],
+        cf_dim: Literal["T", "X", "Y", "Z"],
+        method: Literal["triangular", "uniform"],
+        window: int,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    # here is an example of solution
+    # https://stackoverflow.com/questions/48510784/xarray-rolling-mean-with-weights
+    # https://docs.xarray.dev/en/stable/generated/xarray.computation.rolling.DataArrayRolling.construct.html
+    # step 1: compute weights
+    # triangle: 121
+    # uniform: 111
+    # get time / lat / lon weights
+    # combine dimension weights and window weights
+    # step 2: average
+    # ds2 = ds * weights
+    # https://docs.xarray.dev/en/stable/generated/xarray.DataArray.rolling.html
+    # ds2.rolling(dim={dim: window}, min_periods=min_periods, center=True).mean()
+    # weights.rolling(dim={dim: window}, min_periods=min_periods, center=True).mean()
+    # ds2 / weights
+    # da.rolling(dim_0=3, center=True).construct('window').dot(weight)
+    return ds
 
 
 def squeeze_dimension(

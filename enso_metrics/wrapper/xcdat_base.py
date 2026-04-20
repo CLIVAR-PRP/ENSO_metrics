@@ -13,6 +13,8 @@
 # ---------------------------------------------------#
 # basic python package
 from typing import Callable, Literal, Union
+# numpy
+from numpy import ndarray as numpy__ndarray
 # xarray
 from xarray import DataArray as xarray__DataArray
 from xarray import Dataset as xarray__Dataset
@@ -30,6 +32,8 @@ def annual_cycle(
         frequency: Literal["day", "month", "season"] = "month",
         keep_weights: bool = False,
         reference_period: Union[tuple[str, str], None] = None,
+        season_config: Union[dict[list, Union[bool, str]], None] = None,
+        skipna: Union[bool, None] = None,
         weighted: bool = True,
         **kwargs) -> xarray__Dataset:
     """
@@ -59,6 +63,24 @@ def annual_cycle(
         tuple of strings in the format ‘yyyy-mm-dd’; e.g., reference_period = ('1850-01-01', '1899-12-31').
         If no value is provided, the climatological reference period will be the full period covered by the dataset.
         Default is None
+    :param season_config: dict[list, Union[bool, str]], None, optional
+        A dictionary for “season” frequency configurations. If configs for predefined seasons are passed, configs for
+        custom seasons are ignored and vice versa.
+            - “drop_incomplete_seasons” (bool, by default False)
+              Seasons are considered incomplete if they do not have all the required months to form the season.
+            - “dec_mode” (Literal[“DJF”, “JFD”], by default “DJF”)
+              The mode for the season that includes December in the list of list of pre-defined seasons (“DJF”/“JFD”,
+              “MAM”, “JJA”, “SON”). This config is ignored if the custom_seasons config is set.
+            - “custom_seasons” ([list[list[str]]], by default None)
+              List of sublists containing month strings, with each sublist representing a custom season. Month strings
+              must be in the three letter format (e.g., ‘Jan’). Order of the months in each custom season does not
+              matter. Custom seasons can vary in length.
+        Default is None
+    :param skipna: bool, None, optional
+        If True, skip missing values (as marked by NaN). By default, only skips missing values for float dtypes; other
+        dtypes either do not have a sentinel missing value (int) or skipna=True has not been implemented
+        (object, datetime64 or timedelta64).
+        Default is None
     :param weighted: bool, optional
         Calculate averages using weights; e.g., weighted = True.
         Default is True
@@ -70,8 +92,18 @@ def annual_cycle(
         Input object with the climatology of given data variable.
     """
     tmp_kwargs: dict[str, Union[bool, tuple[str, str]]] = {"keep_weights": keep_weights, "weighted": weighted}
-    if reference_period is not None:
-        tmp_kwargs["reference_period"] = reference_period
+    for k1, k2 in zip(["reference_period", "season_config", "skipna"], [reference_period, season_config, skipna]):
+        if k2 is not None:
+            tmp_kwargs[k1] = k2
+    # operations on ds changes bounds and xcdat doesn't like that: time bounds must be deleted and recreated
+    # get time dimension key
+    dim_time = xcdat.get_dim_keys(ds, "T")
+    # get time bounds key
+    dim_time_bnds = ds[dim_time].attrs["bounds"]
+    # delete current time bounds
+    ds = ds.drop_vars([dim_time_bnds])
+    # use xcdat to set bounds
+    ds = ds.bounds.add_missing_bounds(axes=("T",))
     return ds.temporal.climatology(data_var, frequency, **tmp_kwargs)
 
 
@@ -119,6 +151,92 @@ def average_temporal(
     return ds.temporal.average(data_var, keep_weights=keep_weights, skipna=skipna, weighted=weighted)
 
 
+def create_axis(
+        name: str,
+        data: Union[list[Union[int, float]], numpy__ndarray],
+        bounds: Union[list[Union[int, float]], numpy__ndarray, None] = None,
+        generate_bounds: bool = True,
+        attrs: Union[dict[str, str], None] = None,
+        **kwargs) -> xarray__DataArray:
+    """
+    Creates an axis and optional bounds.
+    https://xcdat.readthedocs.io/en/latest/generated/xcdat.create_axis.html
+
+    Inputs:
+    -------
+    :param name: str
+        The CF standard name for the axis (e.g., “longitude”, “latitude”, “height”). xCDAT also accepts additional names
+        such as “lon”, “lat”, and “lev”. Refer to xcdat.axis.VAR_NAME_MAP for accepted names.
+    :param data:
+        1-D axis data consisting of integers or floats.
+    :param bounds: list[int | float] or numpy__ndarray
+        2-D axis bounds data consisting of integers or floats, defaults to None. Must have a shape of n x 2, where n is the length of data.
+    :param generate_bounds: list[int | float] or numpy__ndarray or None, optional
+        Generate bounds for the axis if bounds is None, by default True.
+    :param attrs: dict[str, str] or None, optional
+        Custom attributes to be added to the generated xr.DataArray axis, by default None.
+        User provided attrs will be merged with a set of default attributes.
+        Default attributes (“axis”, “coordinate”, “bnds”) cannot be overwritten. The default “units” attribute is the
+        only default that can be overwritten.
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.Dataset
+        New DataArray containing the axis data and optional bounds.
+    """
+    return xcdat.create_axis(name, data, bounds=bounds, generate_bounds=generate_bounds, attrs=attrs)
+
+
+def create_gaussian_grid(nlats: int, **kwargs) -> xarray__Dataset:
+    """
+    Create a grid with Gaussian latitudes and uniform longitudes.
+    https://xcdat.readthedocs.io/en/latest/generated/xcdat.create_gaussian_grid.html
+
+    Input:
+    ------
+    :param nlats: int
+        Number of latitudes.
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.Dataset
+        New Dataset with new grid, containing Gaussian latitudes.
+    """
+    return xcdat.create_gaussian_grid(nlats)
+
+
+def create_grid(
+        x: Union[xarray__DataArray, tuple[xarray__DataArray, xarray__DataArray, None], None] = None,
+        y: Union[xarray__DataArray, tuple[xarray__DataArray, xarray__DataArray, None], None] = None,
+        z: Union[xarray__DataArray, tuple[xarray__DataArray, xarray__DataArray, None], None] = None,
+        attrs: Union[dict[str, str], None] = None,
+        **kwargs) -> xarray__Dataset:
+    """
+    Creates a grid dataset using the specified axes.
+    https://xcdat.readthedocs.io/en/latest/generated/xcdat.create_grid.html
+
+    Inputs:
+    -------
+    :param x: xarray.DataArray or tuple[xarray.DataArray, xarray.DataArray, None] or None, optional
+        An optional dataarray or tuple of a datarray with optional bounds to use for the “X” axis, by default None.
+    :param y: xarray.DataArray or tuple[xarray.DataArray, xarray.DataArray, None] or None, optional
+        An optional dataarray or tuple of a datarray with optional bounds to use for the “Y” axis, by default None.
+    :param z: xarray.DataArray or tuple[xarray.DataArray, xarray.DataArray, None] or None, optional
+        An optional dataarray or tuple of a datarray with optional bounds to use for the “Z” axis, by default None.
+    :param attrs: dict[str, str] or None, optional
+        Custom attributes to be added to the generated xarray.Dataset.
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.Dataset
+        New Dataset with grid axes
+    """
+    return xcdat.create_grid(x=x, y=y, z=z, attrs=attrs)
+
+
 def create_uniform_grid(
         lat_start: float,
         lat_stop: float,
@@ -155,12 +273,44 @@ def create_uniform_grid(
     return xcdat.create_uniform_grid(lat_start, lat_stop, lat_delta, lon_start, lon_stop, lon_delta)
 
 
+def get_bounds(
+        ds: xarray__Dataset,
+        cf_dim: Literal["T", "X", "Y", "Z"],
+        data_var: str = None,
+        **kwargs) -> Union[xarray__DataArray, xarray__Dataset]:
+    """
+    Gets coordinate bounds.
+    https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.bounds.get_bounds.html
+
+    Inputs:
+    -------
+    :param ds: xarray.Dataset
+        An in-memory representation of a NetCDF file, and consists of variables, coordinates and attributes which
+        together form a self describing dataset
+    :param cf_dim: {"T", "X", "Y", "Z"}
+        CF axis that function should operate on. Supported CF axes include “X”, “Y”, “Z”, and “T”.
+    :param data_var: str, optional
+        Data variable in ds; e.g., data_var = "ts"
+        The data variable to get axis bounds for. This parameter is useful if you only want the single bounds DataArray
+        related to the axis on the variable (e.g., “ts” has a “lat” dimension, and you want “lat_bnds”).
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        A Dataset of N bounds variables, or a single bounds variable DataArray.
+    """
+    return ds.bounds.get_bounds(cf_dim, var_key=data_var)
+
+
 def interannual_anomalies(
         ds: xarray__Dataset,
         data_var: str,
         frequency: Literal["day", "month", "season"] = "month",
         keep_weights: bool = False,
         reference_period: Union[tuple[str, str], None] = None,
+        season_config: Union[dict[list, Union[bool, str]], None] = None,
+        skipna: Union[bool, None] = None,
         weighted: bool = True,
         **kwargs) -> xarray__Dataset:
     """
@@ -190,6 +340,24 @@ def interannual_anomalies(
         tuple of strings in the format ‘yyyy-mm-dd’; e.g., reference_period = ('1850-01-01', '1899-12-31').
         If no value is provided, the climatological reference period will be the full period covered by the dataset.
         Default is None
+    :param season_config: dict[list, Union[bool, str]], None, optional
+        A dictionary for “season” frequency configurations. If configs for predefined seasons are passed, configs for
+        custom seasons are ignored and vice versa.
+            - “drop_incomplete_seasons” (bool, by default False)
+              Seasons are considered incomplete if they do not have all the required months to form the season.
+            - “dec_mode” (Literal[“DJF”, “JFD”], by default “DJF”)
+              The mode for the season that includes December in the list of list of pre-defined seasons (“DJF”/“JFD”,
+              “MAM”, “JJA”, “SON”). This config is ignored if the custom_seasons config is set.
+            - “custom_seasons” ([list[list[str]]], by default None)
+              List of sublists containing month strings, with each sublist representing a custom season. Month strings
+              must be in the three letter format (e.g., ‘Jan’). Order of the months in each custom season does not
+              matter. Custom seasons can vary in length.
+        Default is None
+    :param skipna: bool, None, optional
+        If True, skip missing values (as marked by NaN). By default, only skips missing values for float dtypes; other
+        dtypes either do not have a sentinel missing value (int) or skipna=True has not been implemented
+        (object, datetime64 or timedelta64).
+        Default is None
     :param weighted: bool, optional
         Calculate averages using weights; e.g., weighted = True.
         Default is True
@@ -201,8 +369,18 @@ def interannual_anomalies(
         Input object with the climatological departures (anomalies) for a data variable.
     """
     tmp_kwargs: dict[str, Union[bool, tuple[str, str]]] = {"keep_weights": keep_weights, "weighted": weighted}
-    if reference_period is not None:
-        tmp_kwargs["reference_period"] = reference_period
+    for k1, k2 in zip(["reference_period", "season_config", "skipna"], [reference_period, season_config, skipna]):
+        if k2 is not None:
+            tmp_kwargs[k1] = k2
+    # operations on ds changes bounds and xcdat doesn't like that: time bounds must be deleted and recreated
+    # get time dimension key
+    dim_time = xcdat.get_dim_keys(ds, "T")
+    # get time bounds key
+    dim_time_bnds = ds[dim_time].attrs["bounds"]
+    # delete current time bounds
+    ds = ds.drop_vars([dim_time_bnds])
+    # use xcdat to set bounds
+    ds = ds.bounds.add_missing_bounds(axes=("T",))
     return ds.temporal.departures(data_var, frequency, **tmp_kwargs)
 
 
@@ -278,14 +456,13 @@ def open_dataset(
     return xcdat.open_mfdataset(paths, **tmp_kwargs)
 
 
-def regrid_horizontal(
+def regridder_horizontal(
         ds: xarray__Dataset,
         data_var: str,
         output_grid: Union[xarray__DataArray, xarray__Dataset],
         method: Literal[
             "bilinear", "conservative", "conservative_normed", "patch", "nearest_s2d", "nearest_d2s"] = "conservative",
-        tool: Literal["regrid2", "xesmf"] = "xesmf",
-        unmapped_to_nan: bool = True,
+        tool: Literal["regrid2", "xesmf"] = "regrid2",
         **kwargs) -> xarray__Dataset:
     """
     Regrid data_var to output_grid.
@@ -307,9 +484,6 @@ def regrid_horizontal(
         If tool is "regrid2": "conservative".
         If tool is "xesmf": "bilinear", "conservative", "conservative_normed", "patch", "nearest_s2d", "nearest_d2s".
         Default is "conservative"
-    :param unmapped_to_nan: bool, optional
-        Sets values of unmapped points to numpy.nan instead of 0; e.g., unmapped_to_nan = True.
-        Default is True
     **kwargs – Additional keyword arguments passed on to the regridder.
     
     Output:
@@ -317,21 +491,20 @@ def regrid_horizontal(
     :return: xarray.Dataset
         Input object with the data_var transformed to the output_grid.
     """
-    tmp_kwargs = {"method": method, "tool": tool, "unmapped_to_nan": unmapped_to_nan, **kwargs}
+    tmp_kwargs = {"method": method, "tool": tool, **kwargs}
     return ds.regridder.horizontal(data_var, output_grid, **tmp_kwargs)
 
 
-def regrid_vertical(
+def regridder_vertical(
         ds: xarray__Dataset,
         data_var: str,
         output_grid: Union[xarray__DataArray, xarray__Dataset],
-        method: Literal["linear", "conservative", "log"] = "linear",
         tool: Literal["xgcm"] = "xgcm",
         **kwargs) -> xarray__Dataset:
     """
     Regrid data_var to output_grid.
-    https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.regridder.horizontal.html
-    
+    https://xcdat.readthedocs.io/en/latest/generated/xarray.Dataset.regridder.vertical.html
+
     Inputs:
     -------
     :param ds: xarray.Dataset
@@ -341,10 +514,6 @@ def regrid_vertical(
         Data variable in ds; e.g., data_var = "ts"
     :param output_grid: xarray.DataArray or xarray.Dataset
         Grid to transform data_var to
-    :param method: {"linear", "conservative", "log"}, optional
-        Regridding method to apply; e.g., method = "conservative".
-        If tool is "xgcm": "linear", "conservative", "log".
-        Default is "linear"
     :param tool: {"xgcm"}, optional
         Name of the tool to use; e.g., tool = "xgcm"
     **kwargs – Additional keyword arguments passed on to the regridder.
@@ -354,7 +523,7 @@ def regrid_vertical(
     :return: xarray.Dataset
         Input object with the data_var transformed to the output_grid.
     """
-    return ds.regridder.horizontal(data_var, output_grid, method=method, tool=tool, **kwargs)
+    return ds.regridder.vertical(data_var, output_grid, tool=tool, **kwargs)
 
 
 def set_auto_bounds(

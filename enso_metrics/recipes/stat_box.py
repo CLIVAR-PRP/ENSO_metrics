@@ -26,6 +26,7 @@ def diagnostic(
                 str, Union[int, float, str, list[str], None, dict[
                     str, Union[int, float, str, list[str], None]]]]],
         dataset: str = "unknown",
+        epoch: Union[list[int], tuple[int]] = None,
         experiment: str = "unknown",
         member: str = "unknown",
         netcdf: bool = False,
@@ -82,12 +83,13 @@ def diagnostic(
                         "depth_bounds": None,
                         "time_bounds": None,
                         "kwargs_select_depth": {"kwargs_sel": {}},
-                        "kwargs_select_horizontal": {"mask_only": True, "kwargs_sel": {}, "kwargs_where": {}},
+                        "kwargs_select_horizontal": {"mask_only": False, "kwargs_sel": {}, "kwargs_where": {}},
                         "kwargs_select_time": {"kwargs_sel": {}}},
                     # "3__averager": {"cf_dims": ["X", "Y"]},
-                    "4__detrender": {"degree": 1, "kwargs_detrend": {}},
-                    "5__anomaler": {"kwargs_anomalies": {}},
-                    # "6__seasonal_cycler": "do",  # annual_cycle => xcat temporal.climatology
+                    # "4__detrender": {"degree": 1, "kwargs_detrend": {}},
+                    # "5__anomaler": {"kwargs_anomalies": {"frequency": "month", "skipna": True, "weighted": True}},
+                    # "6__seasonal_cycler": {
+                    #     "kwargs_annual_cycle": {"frequency": "month", "skipna": True, "weighted": True}},
                     # "7__normalizer": "do",  # ds / ds.std("time")
                     # "8__smoother": "do",  # xarray rolling nbr_of_points
                     # "9__regridder": "do",  # regrid_horizontal => xcat regridder.horizontal

@@ -24,10 +24,12 @@ available_recipe = dict((k[0], k[1]) for k in getmembers(recipes, ismodule) if "
 
 if __name__ == '__main__':
     # -- metric arguments
-    recipe = "stat_box"
-    region = "nino3"
+    recipe = "bias_sst_lon"  # "stat_box"
+    region1_main = "equatorial_pacific"  # "nino3"
     statistic = "average"
-    variable = "ts"
+    variable1 = "ts"
+    path_output = "/Users/yplanton-admin/Documents/Data/Test"
+    kwargs = {}
     # -- model data
     project = "cmip6"
     dataset = "CanESM5-1"
@@ -48,7 +50,7 @@ if __name__ == '__main__':
     vari_name_ts = "ts"
     vari_file_ts = path + "/%s_?mon_%s_%s_%s_%s_*.nc" % (vari_name_ts, dataset, experiment, member, grid)
     # model data input dictionary
-    dict_model = {
+    dict_data = {
         "areacella": {
             "file_name": area1_file,
             "variable": area1_name,
@@ -98,14 +100,57 @@ if __name__ == '__main__':
             "variable_scaling": None,
         },
     }
-    kwargs = {}
-    print(variable)
-    print(json__dumps(dict_model, indent=4))
+    # -- Observations data
+    project_r = "observations"
+    dataset_r = "HadISST" # "ERSSTv5"  # "COBE2"
+    experiment_r = "historical"
+    member_r = "r1i1p1f1"
+    path_r = "/Users/yplanton-admin/Documents/Data/%s/%s" % (str(project_r.upper()[0]) + str(project_r[1:]), dataset_r)
+    vari_name_ts = "sst"
+    vari_file_ts = path_r + "/*%s*.nc" % vari_name_ts
+    # observations data input dictionary
+    dict_reference = {
+        "ts": {
+            "area": None,
+            "mask": None,
+            "file_name": vari_file_ts,
+            "variable": vari_name_ts,
+            "variable_computation": "ts",
+            "variable_offset": None,
+            "variable_scaling": None,
+        },
+    }
+    # -- Compute diagnostic
+    print(variable1)
+    # print(json__dumps(dict_model, indent=4))
     print(list(available_recipe.keys()))
     if recipe in list(available_recipe.keys()):
+        print(str().ljust(5), "diagnostic", recipe)
+        # available_recipe[recipe].diagnostic(
+        #     dict_data, dataset=dataset, experiment=experiment, project=project, member=member,
+        #     supplementary=True, variable1=variable1, kwargs_saver={"path": path_output}, **kwargs)
         available_recipe[recipe].diagnostic(
-            dict_model, dataset=dataset, experiment=experiment, project=project, member=member, region=region,
-            statistic=statistic, variable=variable, **kwargs)
+            dict_reference, dataset=dataset_r, experiment=experiment_r, project=project_r, member=member_r,
+            supplementary=True, variable1=variable1, kwargs_saver={"path": path_output}, **kwargs)
         print("computed")
+    stop
+    # -- Compute metric
+    if recipe in list(available_recipe.keys()):
+        print(str().ljust(5), "metric", recipe)
+        # model to evaluate
+        input_dataset = path_output + "/%s_%s_%s_%s_%s.nc" % (project, dataset, experiment, member, recipe)
+        # reference(s) to use
+        input_reference = {
+            "COBE2": path_output + "/%s_%s_%s_%s_%s.nc" % (project_r, "COBE2", experiment_r, member_r, recipe),
+            "ERSSTv5": path_output + "/%s_%s_%s_%s_%s.nc" % (project_r, "ERSSTv5", experiment_r, member_r, recipe),
+        }
+        # dictionary to save the metric values
+        metric_dict = {}
+        # keys to store the metric values
+        keys = (recipe, project, dataset, experiment, member)
+        # compute
+        metric_dict = available_recipe[recipe].metric(
+            input_dataset, input_reference, metric_dictionary=metric_dict, metric_dictionary_keys=keys)
+        print(json__dumps(metric_dict, indent=4))
     print("done")
 # ---------------------------------------------------------------------------------------------------------------------#

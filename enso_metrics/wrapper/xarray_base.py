@@ -184,17 +184,17 @@ def change_type(
 
 def convert_cf_dim_key(
         ds: Union[array_wrapper, dataset_wrapper],
-        cf_dim: Literal["T", "X", "Y", "Z"],
+        cf_dim: Literal["B", "T", "X", "Y", "Z"],
         **kwargs) -> Union[str, None]:
     """
-    Return dimension name corresponding to CF dimension name (T is time, X is longitude, Y is latitude, Z is depth or
-    level).
+    Return dimension name corresponding to CF dimension name (B is bound, T is time, X is longitude, Y is latitude, Z is
+    depth or level).
 
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
-    :param cf_dim: {"X", "Y", "T", "Z"}
+    :param cf_dim: {"B", "X", "Y", "T", "Z"}
         Name of a CF dimension
     **kwargs - Discarded
 
@@ -207,6 +207,7 @@ def convert_cf_dim_key(
     list_dim = list(ds.coords)
     # dimension to find
     dim_to_find = {
+        "B": ["bound", "bnd"],
         "T": ["time"],
         "X": ["lon"],
         "Y": ["lat"],
@@ -251,12 +252,14 @@ def convert_dim_keys(
             dimensions_asked = [dim]
         # dimensions in input xarray.DataArray or xarray.Dataset
         dimensions_available = list(ds.coords)
+        if isinstance(ds, array_wrapper):
+            dimensions_available += list(ds.dims)
         # match asked and available dimensions
         dim_o = []
         for k in dimensions_asked:
             if k in dimensions_available:
                 dim_o.append(k)
-            elif isinstance(k, (Hashable, str)) is True and k in ["T", "X", "Y", "Z"]:
+            elif isinstance(k, (Hashable, str)) is True and k in ["B", "T", "X", "Y", "Z"]:
                 dim_o.append(convert_cf_dim_key(ds, k))
             else:
                 stack = inspect__stack()
@@ -385,6 +388,33 @@ def create_array_zero(
     ds = to_array(ds, data_var)
     # create an array of zeros with the same shape, axes, coordinates, attributes,... as input DataArray
     return xarray.zeros_like(ds)
+
+
+def drop_attrs(
+        ds: Union[array_wrapper, dataset_wrapper],
+        deep: bool = False,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Removes all attributes from the Dataset (and its variables) if ds is Dataset, or from the DataArray (and its
+    coordinates) if ds is DataArray.
+    https://docs.xarray.dev/en/latest/generated/xarray.Dataset.drop_attrs.html
+    https://docs.xarray.dev/en/stable/generated/xarray.DataArray.drop_attrs.html
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param deep: bool, optional
+        Removes attributes from all variables if ds is Dataset, or from coordinates if ds is DataArray.
+        Default is False
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        Object (as input) without attributes.
+    """
+    return ds.drop_attrs(deep=deep)
 
 
 def drop_dataset_keys(
@@ -518,7 +548,10 @@ def fill_nan(
     return ds.fillna(value)
 
 
-def get_array_name(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> str:
+def get_array_name(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> str:
     """
     Return name of given xarray.DataArray or xarray.Dataset[data_var].
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.name.html
@@ -573,7 +606,10 @@ def get_array_shape(
     return ds.shape
 
 
-def get_array_size(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> int:
+def get_array_size(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> int:
     """
     Return shape of given xarray.DataArray or xarray.Dataset[data_var].
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.size.html
@@ -633,7 +669,10 @@ def get_attribute(
     return ds.attrs[attribute_name]
 
 
-def get_attributes(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> dict[str, str]:
+def get_attributes(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> dict[str, str]:
     """
     Return a dictionary of global attributes of given xarray.Dataset or variable attributes of given xarray.DataArray.
     https://docs.xarray.dev/en/latest/generated/xarray.Dataset.attrs.html
@@ -661,7 +700,10 @@ def get_attributes(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Ha
     return ds.attrs
 
 
-def get_attributes_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> list[str]:
+def get_attributes_keys(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> list[str]:
     """
     Return the list of global attribute names of given xarray.Dataset or the list of variable attribute names of given
     xarray.DataArray.
@@ -735,7 +777,10 @@ def get_dim_array(
     return ds[dim_name]
 
 
-def get_dim_keys(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> list[Hashable]:
+def get_dim_keys(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> list[Hashable]:
     """
     Return dimension name(s) from input xarray.DataArray xarray.Dataset.
     If ‘ds’ is xarray.DataArray (or xarray.Dataset and ‘data_var’ in ‘ds’), dimension names are ordered as in DataArray.
@@ -890,9 +935,8 @@ def mean(
     ds = to_array(ds, data_var)
     # get dimension(s) as named in xarray.DataArray or xarray.Dataset
     dim_name = convert_dim_keys(ds, dim)
-    print("xarray_base.mean", data_var, type(ds), ds.shape, dim_name)
     # mean value
-    if isinstance(ds, array_wrapper) is True and isinstance(weights, array_wrapper) is True:
+    if isinstance(ds, array_wrapper) and isinstance(weights, array_wrapper):
         return ds.weighted(weights).mean(dim=dim_name, keep_attrs=keep_attrs, skipna=skipna)
     else:
         return ds.mean(dim=dim_name, keep_attrs=keep_attrs, skipna=skipna, **kwargs)
@@ -957,6 +1001,68 @@ def median(
         return ds.weighted(weights).quantile(50, dim=dim_name, keep_attrs=keep_attrs, skipna=skipna)
     else:
         return ds.median(dim=dim_name, keep_attrs=keep_attrs, skipna=skipna, **kwargs)
+
+
+def merge(
+        objects: Union[list[Union[array_wrapper, dataset_wrapper]], tuple[Union[array_wrapper, dataset_wrapper]]],
+        combine_attrs: Literal["drop", "drop_conflicts", "identical", "no_conflicts", "override"] = "override",
+        compat: Literal["broadcast_equals", "equals", "identical", "minimal", "no_conflicts", "override"] = "equals",
+        fill_value: Union[float, int, dict[str, Union[float, int]], None] = None,
+        join: Literal["exact", "inner", "left", "outer", "override", "right"] = "outer",
+        **kwargs):
+    """
+    Merge any number of xarray objects into a single Dataset as variables.
+    https://docs.xarray.dev/en/stable/generated/xarray.merge.html
+
+    Input:
+    ------
+    :param objects: list[Union[array_wrapper, dataset_wrapper]] or tuple[Union[array_wrapper, dataset_wrapper]]
+        Merge together all variables from these objects. If any of them are DataArray objects, they must have a name.
+    :param combine_attrs: {"drop", "drop_conflicts", "identical", "no_conflicts", "override"}, optional
+        A string indicating how to combine attrs of the objects being merged:
+            - “drop”: empty attrs on returned Dataset.
+            - “drop_conflicts”: attrs from all objects are combined, any that have the same name but different values
+                                are dropped.
+            - “identical”: all attrs must be the same on every object.
+            - “no_conflicts”: attrs from all objects are combined, any that have the same name must also have the same
+                              value.
+            - “override”: skip comparing and copy attrs from the first dataset to the result.
+        Default is "override"
+    :param compat: {"broadcast_equals", "equals", "identical", "minimal", "no_conflicts", "override"}, optional
+        String indicating how to compare variables of the same name for potential conflicts:
+            - “broadcast_equals”: all values must be equal when variables are broadcast against each other to ensure
+                                  common dimensions.
+            - “equals”: all values and dimensions must be the same.
+            - “identical”: all values, dimensions and attributes must be the same.
+            - “minimal”: drop conflicting coordinates
+            - “no_conflicts”: only values which are not null in both datasets must be equal. The returned dataset then
+                              contains the combination of all non-null values.
+            - “override”: skip comparing and pick variable from first dataset
+         Default is "equals"
+    :param fill_value: float or int or dict[str, float or int] or None, optional
+        Value to use for newly missing values. If a dictionary, maps variable names to fill values. Use a data array’s
+        name to refer to its values.
+        Default is None (i.e., values set to NaN)
+    :param join: {"exact", "inner", "left", "outer", "override", "right"}, optional
+        String indicating how to combine differing indexes in objects.
+            - “exact”: instead of aligning, raise ValueError when indexes to be aligned are not equal
+            - “inner”: use the intersection of object indexes
+            - “left”: use indexes from the first object with each dimension
+            - “outer”: use the union of object indexes
+            - “override”: if indexes are of same size, rewrite indexes to be those of the first object with that
+                          dimension. Indexes for the same dimension must have the same size in all objects.
+            - “right”: use indexes from the last object with each dimension
+        Default is "outer"
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.Dataset
+        Objects with combined variables from the inputs.
+    """
+    l1, l2 = ["combine_attrs", "compat", "fill_value", "join"], [combine_attrs, compat, fill_value, join]
+    tmp_kwargs = {k: v for k, v in zip(l1, l2) if v is not None}
+    return xarray.merge(objects, **tmp_kwargs)
 
 
 def minimum(
@@ -1372,7 +1478,7 @@ def quantile(
 
 def rename(
         ds: Union[array_wrapper, dataset_wrapper],
-        name_dict: Union[dict[str, str], str],
+        name_dict: Union[str, dict[str, str]],
         **kwargs) -> Union[array_wrapper, dataset_wrapper]:
     """
     Returns a new object with renamed variables, coordinates and dimensions.
@@ -1384,9 +1490,12 @@ def rename(
     :param ds: xarray.DataArray or xarray.Dataset
         DataArray or Dataset
     :param name_dict: str or dict[str, str]
-        Dictionary whose keys are current variable, coordinate or dimension names and whose values are the desired
-        names.
-        If ‘ds’ is xarray.DataArray and ‘name_dict’ is str, it as the new name for this array.
+        if ds is DataArray:
+            - str: New name for this array.
+            - dict[str, str]: Mapping from old names to new names for coordinates or dimensions.
+        else:
+            - dict[str, str]: Dictionary whose keys are current variable, coordinate or dimension names and whose values
+              are the desired names.
     **kwargs - Discarded
     
     Output:
@@ -1396,6 +1505,82 @@ def rename(
     """
     return ds.rename(name_dict)
 
+
+def rename_vars(ds: dataset_wrapper, name_dict: dict, **kwargs) -> dataset_wrapper:
+    """
+    Returns a new object with renamed variables including coordinates.
+    https://docs.xarray.dev/en/stable/generated/xarray.Dataset.rename_vars.html
+
+    Input:
+    ------
+    :param ds: xarray.Dataset
+        An in-memory representation of a NetCDF file, and consists of variables, coordinates and attributes which
+        together form a self describing dataset
+    :param name_dict: dict
+        Dictionary whose keys are current variable or coordinate names and whose values are the desired names.
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.Dataset
+        New Dataset with renamed variables including coordinates
+    """
+    return ds.rename_vars(name_dict=name_dict)
+
+
+def reindex(
+        ds: Union[array_wrapper, dataset_wrapper],
+        indexers: dict,
+        copy: bool = True,
+        fill_value: Union[float, int, dict] = None,
+        method: Union[None, Literal["backfill", "bfill", "ffill", "nearest", "pad"]] = None,
+        tolerance: Union[float, list[float], tuple[float], str, None] = None,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Conform this object onto a new set of indexes, filling in missing values with fill_value. The default fill value is
+    NaN.
+    https://docs.xarray.dev/en/stable/generated/xarray.Dataset.reindex.html
+    https://docs.xarray.dev/en/stable/generated/xarray.DataArray.reindex.html
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param indexers: dict
+        Dictionary with keys given by dimension names and values given by arrays of coordinates tick labels. Any
+        mismatched coordinate values will be filled in with NaN, and any mismatched dimension names will simply be
+        ignored. One of indexers or indexers_kwargs must be provided.
+    :param copy: bool, optional
+        If copy=True, data in the return value is always copied. If copy=False and reindexing is unnecessary, or can be
+        performed with only slice operations, then the output may share memory with the input. In either case, a new
+        xarray object is always returned.
+        Default is True
+    :param fill_value: scalar or dict-like, optional
+        Value to use for newly missing values. If a dict-like, maps variable names (including coordinates) to fill
+        values. Use this data array’s name to refer to the data array’s values.
+        Default is NaN
+    :param method: {None, "nearest", "pad", "ffill", "backfill", "bfill"}, optional
+        Method to use for filling index values in indexers not found in this Dataset or Dataset:
+            - None: don’t fill gaps
+            - “backfill” / “bfill”: propagate next valid index value backward
+            - “nearest”: use nearest valid index value
+            - “pad” / “ffill”: propagate last valid index value forward
+        Default is None
+    :param tolerance: float or Iterable[float] or str or None, optional
+        Maximum distance between original and new labels for inexact matches. The values of the index at the matching
+        locations must satisfy the equation abs(index[indexer] - target) <= tolerance. Tolerance may be a scalar value,
+        which applies the same tolerance to all values, or list-like, which applies variable tolerance per element.
+        List-like must be the same size as the index and its dtype must exactly match the index’s type.
+        Default is None
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        Another object (as input), with this input data but replaced coordinates.
+    """
+    tmp_kwargs = {k: v for k, v in zip(["fill_value", "tolerance"], [fill_value, tolerance]) if v is not None}
+    return ds.reindex(indexers=indexers, copy=copy, method=method, **tmp_kwargs)
 
 def roll(
         ds: Union[array_wrapper, dataset_wrapper],
@@ -1590,6 +1775,60 @@ def set_attributes_variable(
     ds = to_array(ds, data_var)
     # update attributes
     ds.attrs.update(*args, **kwargs)
+
+
+def set_array_in_place(
+        ds: Union[array_wrapper, dataset_wrapper],
+        da: array_wrapper,
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper, None]:
+    """
+    Return input xarray.DataArray in xarray.Dataset
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+        DataArray or Dataset
+    :param da: xarray.DataArray
+        A DataArray to put in the input Dataset in place of ‘data_var’
+    :param data_var: Hashable or str, optional
+        Data variable in ‘ds’ if it is xarray.Dataset; e.g., data_var = "ts".
+        Default is None
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset or None
+        This object, but with given DataArray.
+    """
+    # check input
+    error = ""
+    if not isinstance(da, array_wrapper):
+        stack = inspect__stack()
+        error = "ERROR: file " + str(stack[0][1]) + " ; fct " + str(stack[0][3]) + " ; line " + str(stack[0][2])
+        error += "\n" + str().ljust(5) + "input da (da.type = " + str(type(ds)) + "): should be instance of " + \
+                 "xarray.DataArray"
+    if not (isinstance(ds, (array_wrapper, dataset_wrapper)) or (
+            isinstance(ds, dataset_wrapper) and isinstance(data_var, (Hashable, str)) and data_var in list(ds.keys()))):
+        if isinstance(error, str) and len(error) == 0:
+            stack = inspect__stack()
+            error = "ERROR: file " + str(stack[0][1]) + " ; fct " + str(stack[0][3]) + " ; line " + str(stack[0][2])
+        error += "\n" + str().ljust(5) + "input ds (ds.type = " + str(type(ds)) + "): "
+        if not isinstance(ds, (array_wrapper, dataset_wrapper)):
+            error += "unknown type"
+        else:
+            error += "xarray.Dataset should include given data_var (" + str(data_var) + ")"
+            error += "\n" + str().ljust(5) + "ds.keys = " + ", ".join([repr(k) for k in list(ds.keys())])
+    if isinstance(error, str) and len(error) > 0:
+        raise ValueError(error)
+    # replace ds by da or put da in place in da
+    if isinstance(ds, array_wrapper):
+        # replace original da by given da
+        ds = da
+    else:
+        # put input da in dataset in given data variable
+        ds[data_var] = da
+    return ds
 
 
 def squeeze(
@@ -1795,7 +2034,10 @@ def to_array(
         return ds
 
 
-def to_dataset(ds: Union[array_wrapper, dataset_wrapper], data_var: str, **kwargs) -> dataset_wrapper:
+def to_dataset(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: str,
+        **kwargs) -> dataset_wrapper:
     """
     Return xarray.Dataset from input ‘ds’, i.e., ‘ds’ if it is xarray.Dataset or ds.to_dataset() if it is
     xarray.DataArray.
@@ -1864,7 +2106,10 @@ def to_netcdf(
         ds.to_netcdf(filename, format=file_format, mode=mode)
 
 
-def to_numpy(ds: Union[array_wrapper, dataset_wrapper], data_var: Union[Hashable, str] = None, **kwargs) -> numpy__ndarray:
+def to_numpy(
+        ds: Union[array_wrapper, dataset_wrapper],
+        data_var: Union[Hashable, str] = None,
+        **kwargs) -> numpy__ndarray:
     """
     Coerces wrapped data to numpy and returns a numpy.ndarray.
     https://docs.xarray.dev/en/latest/generated/xarray.DataArray.to_numpy.html
