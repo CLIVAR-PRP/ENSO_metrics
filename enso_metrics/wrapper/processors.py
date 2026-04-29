@@ -463,7 +463,7 @@ def remover(
     output_array, output_area = None, None
     for _ in range(1):
         # get array and related input param
-        ds_array = input_array["array"]
+        ds_array = xab.copy(input_array["array"])
         metadata = copy__deepcopy(input_array["metadata"])
         if wb.error_ds(ds_array, inspect__stack(), message="cannot perform remover"):
             break
@@ -745,7 +745,7 @@ def loop(processors, input_dataset, input_param, **kwargs) -> Union[dict, None]:
         # loop on processors to apply to given variable
         # print("processors", list(processors[k1]["to_do"].keys()))
         for k2 in list(processors[k1]["to_do"].keys()):
-            # print(k2)
+            # print(k1, k2)
             process = k2.split("__")[-1]
             if process in list_processors:
                 # call processor
@@ -829,36 +829,36 @@ def reader(
             ds = wb.open_dataset(ff, data_var=nn, package="xcdat", kwargs_open_dataset=kwargs_open_dataset)
             if isinstance(ds, dataset_wrapper):
                 dict_t[nn] = ds
-            # try:
-            #     dict_t[nn] = xcb.open_dataset(
-            #         ff, add_bounds=ab, data_var=nn, decode_times=dt, **kwargs_reader)
-            # except Exception as err:
-            #     message = "can't read (" + str(nn) + ") " + str(ff) + "\n" + str(err)
-            #     basics.log_error(inspect__stack(), message)
-            #     # WARNING: cannot read variable or file
-            #     path = "/".join(ff.split("/")[:-1])
-            #     files = sorted(list(glob__iglob(ff)), key=lambda s: s.lower())
-            #     files_string = ""
-            #     if len(files) > 0:
-            #         for k in files:
-            #             files_string += "\n" + str().ljust(5) + str(k)
-            #     else:
-            #         files_string = "no file matches this file pattern"
-            #     details = {
-            #         "directory": str(path),
-            #         "isdir": str(os__path__isdir(path)),
-            #         "file": str(ff),
-            #         "isfile": str(os__path__isfile(ff)),
-            #         "list": str(files_string)}
-            #     wb.log_debug(inspect__stack(), "WARNING: " + str(message), adjust=5, details=details)
     # compute variables
     dict_output = {}
     for kk in variables + ["areacella", "areacello", "landmask"]:
         if kk not in list(input_param.keys()) or kk not in list(variables_param.keys()):
             continue
-        arr, metadata = wb.compute_variable(
+        ds, metadata = wb.compute_variable(
             dict_t, input_param[kk], input_param[kk]["variable"], kk, variables_param[kk], **kwargs)
-        dict_output[kk] = {"array": arr, "metadata": metadata}
+        # change time / lat / lon names
+        if not wb.check_multidimensional_coordinates(ds):
+            l1: list[Literal["T", "X", "Y", "Z"]] = ["T", "X", "Y", "Z"]
+            for k1, k2 in zip(l1, ["time", "lon", "lat", "unknown"]):
+                # dimension
+                dim = xab.convert_cf_dim_key(ds, k1)
+                if not basics.is_dim(dim):
+                    continue
+                if k2 is None:
+                    k2 = copy__deepcopy(dim)
+                if dim != k2:
+                    ds = ds.rename(name_dict={dim: k2})
+                # bounds
+                da_dim = xab.get_dim_array(ds, k2)
+                attrs = xab.get_attributes(da_dim)
+                if "bounds" not in list(attrs.keys()):
+                    continue
+                dim_bnds = attrs["bounds"]
+                if dim_bnds in list(ds.keys()) and dim_bnds not in [str(k2) + "_bnds", str(k2) + "_vertices"]:
+                    k3 = str(k2) + "_vertices" if "vertice" in dim_bnds else str(k2) + "_bnds"
+                    ds = xab.rename(ds, name_dict={dim_bnds: k3})
+                    xab.set_attributes_variable(ds, data_var=k2, **{"bounds": k3})
+        dict_output[kk] = {"array": ds, "metadata": metadata}
     # check if landmask must be estimated
     for k1 in variables:
         if k1 not in list(dict_output.keys()) or k1 not in list(input_param.keys()) or \
@@ -907,7 +907,7 @@ def saver(
     # If desired they must be defined in a dictionary under the keyword 'kwargs_generate_filename'.
     kwargs_generate_filename = set_instance(kwargs_generate_filename, dict, False, {})
     # --- Step 1: check dataset and assign variable attributes
-    dict_dataset, dict_dim = {}, {}
+    dict_dataset = {}
     for k1, d1 in processed_data.items():
         # k1 should be the name of the new output variable and d1 is a dictionary
         ds_array, metadata = None, None
@@ -921,16 +921,28 @@ def saver(
             metadata = basics.flatten_dict(d1["metadata"])
             xab.drop_given_attributes(ds_array, xab.get_attributes_keys(ds_array, data_var=k1), data_var=k1)
             xab.set_attributes_variable(ds_array, k1, **metadata)
+        # --- Step 2: remove bounds (not easy to merge)
+        # list bounds
+        # YYP: I keep these lines in case it is needed later. Bounds used to have different names and were quite hard to
+        # handle. I have added a renaming piece in the reader to avoid this. So now all bounds should be '<dim>_bnds'
+        # bounds = [k2 for k2 in list(ds_array.keys()) if "bound_" in k2 or "bounds_" in k2 or "bnd_" in k2 or
+        #           "bnds_" in k2 or "_bound" in k2 or "_bnd" in k2]
+        bounds = [k2 for k2 in list(ds_array.keys()) if str(k2).split("_")[-1] == "bnds"]
+        # drop bounds
+        ds_array = xab.drop_dataset_keys(ds_array, bounds)
+        # remove unused coordinates
+        # coordinates_ds = list(ds_array.coords)
+        # coordinates_da = []
+        # for k2, d2 in ds_array.items():
+        #     coordinates_da += list(d2.dims)
+        # unused_coordinates = list(set(coordinates_ds) - set(coordinates_da))
+        # if len(unused_coordinates) > 0:
+        #     ds_array = xab.drop_dataset_keys(ds_array, unused_coordinates)
         # put ds_array in temporary dictionary
         dict_dataset[k1] = ds_array
-    # --- Step 2: merge
-    # remove bounds (not easy to merge them)
-    list_dat = [xab.drop_dataset_keys(d1, [k2 for k2 in list(d1.keys()) if "bound_" in k2 or "bounds_" in k2 or
-                                           "bnd_" in k2 or "bnds_" in k2 or "_bound" in k2 or "_bnd" in k2])
-                for k1, d1 in dict_dataset.items()]
+    # --- Step 3: merge
     # merge datasets
-    ds_o = xab.merge(list_dat, **kwargs_merge)
-    # ds_o = xab.merge([k for k in dict_dataset.values() if not("_bnd" in k or "_bound" in k)], **kwargs_merge)
+    ds_o = xab.merge([v for v in dict_dataset.values()], **kwargs_merge)
     # merge global attributes
     metadata = basics.merge_metadata({k: xab.get_attributes(v) for k, v in dict_dataset.items()})
     xab.drop_given_attributes(ds_o, xab.get_attributes_keys(ds_o))

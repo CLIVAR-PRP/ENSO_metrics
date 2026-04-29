@@ -119,7 +119,6 @@ processors_supp = {
                 "grid_xy": "uniform_1x1",
                 "grid_z": None,
                 "kwargs_regrid_xy": {"method": "conservative", "tool": "regrid2"},
-                # "kwargs_regrid_xy": {"method": "bilinear", "tool": "xesmf"},
                 "kwargs_regrid_z": {"tool": "xgcm", "kwargs_regridder_vertical": {}}},
             "5__selector": {
                 "cf_dims": ["XY"],

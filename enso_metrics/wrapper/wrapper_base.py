@@ -127,14 +127,24 @@ def average_spatial(
             # so they cannot be easily taken from input ds and must be averaged the same way as data_var
             dict_bnds = {}
             for k1 in xarray_base.get_dataset_keys(ds):
-                if k1 in [data_var] or ("_bnd" in k1 and str(k1).split("_bnd")[0] in dims) or \
-                        ("_bound" in k1 and str(k1).split("_bound")[0] in dims) or \
-                        ("bnd_" in k1 and str(k1).split("bnd_")[-1] in dims) or \
-                        ("bnds_" in k1 and str(k1).split("bnds_")[-1] in dims) or \
-                        ("bound_" in k1 and str(k1).split("bound_")[-1] in dims) or \
-                        ("bounds_" in k1 and str(k1).split("bounds_")[-1] in dims) or \
-                        ("vertice" in k1 and "lat" in k1 and "Y" in cf_dim) or \
-                        ("vertice" in k1 and "lon" in k1 and "X" in cf_dim):
+                # YYP: I keep these lines in case it is needed later. Bounds used to have different names and were quite
+                # hard to handle. I have added a renaming piece in the reader to avoid this. So now all bounds should be
+                # '<dim>_bnds'
+                # if k1 in [data_var] or ("_bnd" in k1 and str(k1).split("_bnd")[0] in dims) or \
+                #         ("_bound" in k1 and str(k1).split("_bound")[0] in dims) or \
+                #         ("bnd_" in k1 and str(k1).split("bnd_")[-1] in dims) or \
+                #         ("bnds_" in k1 and str(k1).split("bnds_")[-1] in dims) or \
+                #         ("bound_" in k1 and str(k1).split("bound_")[-1] in dims) or \
+                #         ("bounds_" in k1 and str(k1).split("bounds_")[-1] in dims) or \
+                #         ("vertice" in k1 and "lat" in k1 and "Y" in cf_dim) or \
+                #         ("vertice" in k1 and "lon" in k1 and "X" in cf_dim):
+                #     continue
+                if k1 in [data_var] or (
+                        str(k1).split("_")[-1] == "bnds" and str(k1).replace("_bnds", "") in dims) or (
+                        str(k1).split("_")[-1] == "vertices" and
+                        (str(k1).replace("_vertices", "") in dims or
+                         (str(k1).replace("_vertices", "") == "lat" and "Y" in cf_dim) or
+                         (str(k1).replace("_vertices", "") == "lon" and "X" in cf_dim))):
                     continue
                 # select averaged dimensions available in given bounds key
                 da_dims = xarray_base.get_dim_keys(ds, data_var=k1)

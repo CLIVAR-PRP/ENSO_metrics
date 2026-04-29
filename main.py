@@ -102,7 +102,7 @@ if __name__ == '__main__':
     }
     # -- Observations data
     project_r = "observations"
-    dataset_r = "HadISST" # "ERSSTv5"  # "COBE2"
+    dataset_r = "COBE2"  # "ERSSTv5"  # "HadISST"  #
     experiment_r = "historical"
     member_r = "r1i1p1f1"
     path_r = "/Users/yplanton-admin/Documents/Data/%s/%s" % (str(project_r.upper()[0]) + str(project_r[1:]), dataset_r)
@@ -126,14 +126,14 @@ if __name__ == '__main__':
     print(list(available_recipe.keys()))
     if recipe in list(available_recipe.keys()):
         print(str().ljust(5), "diagnostic", recipe)
-        # available_recipe[recipe].diagnostic(
-        #     dict_data, dataset=dataset, experiment=experiment, project=project, member=member,
-        #     supplementary=True, variable1=variable1, kwargs_saver={"path": path_output}, **kwargs)
         available_recipe[recipe].diagnostic(
-            dict_reference, dataset=dataset_r, experiment=experiment_r, project=project_r, member=member_r,
+            dict_data, dataset=dataset, experiment=experiment, project=project, member=member,
             supplementary=True, variable1=variable1, kwargs_saver={"path": path_output}, **kwargs)
+        # available_recipe[recipe].diagnostic(
+        #     dict_reference, dataset=dataset_r, experiment=experiment_r, project=project_r, member=member_r,
+        #     supplementary=True, variable1=variable1, kwargs_saver={"path": path_output}, **kwargs)
         print("computed")
-    stop
+    # stop
     # -- Compute metric
     if recipe in list(available_recipe.keys()):
         print(str().ljust(5), "metric", recipe)
@@ -143,6 +143,7 @@ if __name__ == '__main__':
         input_reference = {
             "COBE2": path_output + "/%s_%s_%s_%s_%s.nc" % (project_r, "COBE2", experiment_r, member_r, recipe),
             "ERSSTv5": path_output + "/%s_%s_%s_%s_%s.nc" % (project_r, "ERSSTv5", experiment_r, member_r, recipe),
+            "HadISST": path_output + "/%s_%s_%s_%s_%s.nc" % (project_r, "HadISST", experiment_r, member_r, recipe),
         }
         # dictionary to save the metric values
         metric_dict = {}

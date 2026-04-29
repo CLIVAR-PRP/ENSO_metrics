@@ -424,7 +424,7 @@ def drop_dataset_keys(
         **kwargs) -> dataset_wrapper:
     """
     Drop variables from this dataset.
-    https://docs.xarray.dev/en/latest/generated/xarray.Dataset.drop_vars.html#xarray.Dataset.drop_vars
+    https://docs.xarray.dev/en/latest/generated/xarray.Dataset.drop_vars.html
     
     Input:
     ------
