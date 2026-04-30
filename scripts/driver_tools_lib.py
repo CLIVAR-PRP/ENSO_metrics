@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 from getpass import getuser as GETPASSgetuser
-from cdms2 import open as CDMS2open
+from EnsoMetrics.EnsoUvcdatToolsLib import open_file
 from inspect import stack as INSPECTstack
 import json
 from numpy import array as NUMPYarray
@@ -119,9 +119,9 @@ def find_fx(model, experiment='', project='', realm='', ensemble=''):
         file_area = OSpath__join(farea1, farea2[0])
     else:
         file_area, file_land = find_xml_fx(model, project=project, experiment=experiment, realm=realm)
-    try: CDMS2open(file_area)
+    try: open_file(file_area)
     except: file_area = None
-    try: CDMS2open(file_land)
+    try: open_file(file_land)
     except: file_land = None
     return file_area, file_land
 
@@ -209,7 +209,7 @@ def find_xml_obs(dataset, variable):
         Set to None if the file cannot be found
     """
     file_name = OSpath__join(xmldir, "obs_ENSO_metrics_" + str(dataset) + ".xml")
-    xml = CDMS2open(file_name)
+    xml = open_file(file_name)
     listvar1 = sorted(xml.listvariables())
     if variable not in listvar1:
         print(bcolors.FAIL + "%%%%%     -----     %%%%%")

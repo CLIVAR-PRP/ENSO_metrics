@@ -1,5 +1,5 @@
 {% set name = "enso_metrics" %}
-{% set version = "1.1.5" %}
+{% set version = "1.2.0" %}
 
 package:
     name: {{ name|lower }}
@@ -10,7 +10,7 @@ source:
     sha256: abc17f7f48669becc7ae38aed056fbf1f9d5b92fa2788c2d772c485eaca9297e    
 
 build:
-  number: 1
+  number: 0
   skip: True  # [win]
   script: {{ PYTHON }} -m pip install . -vv
 
@@ -20,13 +20,16 @@ requirements:
     - pip
   run:
     - python
-    - cdms2
-    - cdutil
-    - genutil
     - numpy
     - scipy
-    - udunits2
+    - packaging
+    - xarray
+    - xcdat
+    - cftime
     - matplotlib
+    # Optional — enhanced land-sea mask and regridding
+    # - regionmask
+    # - xesmf
 
 test:
   imports:

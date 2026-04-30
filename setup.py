@@ -2,7 +2,7 @@ from setuptools import setup
 import subprocess
 import glob
 
-Version = "1.1.5"
+Version = "1.2.0"
 
 p = subprocess.Popen(
     ("git",
@@ -67,4 +67,11 @@ setup(name="EnsoMetrics",
       package_dir={'EnsoMetrics': 'lib', 'EnsoPlots': 'plots'},
       scripts=glob.glob("scripts/*.py"),
       data_files=data_files,
-      install_requires=['numpy', 'scipy', 'packaging'])
+      install_requires=[
+          'numpy',
+          'scipy',
+          'packaging',
+          'xarray',
+          'xcdat',
+          'cftime',
+      ])
