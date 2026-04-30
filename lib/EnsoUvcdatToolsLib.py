@@ -436,28 +436,65 @@ def _add_cf_units_to_ds(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-def _clamp_leap_seconds(ds: xr.Dataset) -> xr.Dataset:
+def _fix_leap_seconds_in_raw(ds: xr.Dataset) -> xr.Dataset:
     """
-    Some NetCDF files encode timestamps with second=60 (leap-second notation).
-    cftime raises ValueError for these; clamp them to second=59 so decoding
-    succeeds without silently dropping time steps.
+    Given a dataset opened with ``decode_times=False``, find any time
+    coordinate or time_bnds values that encode a leap second (would decode
+    to second=60 in cftime) and subtract 1/86400 day so they decode cleanly
+    to second=59.  Must be called *before* any cftime decoding step.
     """
     if "time" not in ds.coords:
         return ds
-    try:
-        vals = ds["time"].values
-        if len(vals) == 0 or not hasattr(vals[0], "second"):
-            return ds
-        needs_fix = any(getattr(v, "second", 0) == 60 for v in vals)
-        if not needs_fix:
-            return ds
-        new_vals = np.array(
-            [v.replace(second=59) if getattr(v, "second", 0) == 60 else v
-             for v in vals],
-            dtype=object)
-        ds = ds.assign_coords(time=("time", new_vals, ds["time"].attrs))
-    except Exception:
-        pass
+    time_coord = ds.coords["time"]
+    units = time_coord.attrs.get("units", "")
+    calendar = time_coord.attrs.get("calendar", "standard") or "standard"
+    if not units or "since" not in units:
+        return ds
+
+    # Fix the time coordinate and any associated bounds variable
+    candidates = ["time"]
+    bounds_name = time_coord.attrs.get("bounds", "")
+    if bounds_name and bounds_name in ds:
+        candidates.append(bounds_name)
+    for alt in ("time_bnds", "time_bounds"):
+        if alt in ds and alt not in candidates:
+            candidates.append(alt)
+
+    updated = {}
+    for vname in candidates:
+        da = ds[vname] if vname in ds else ds.coords.get(vname)
+        if da is None:
+            continue
+        raw = np.asarray(da.values, dtype=float)
+        flat = raw.ravel()
+        fixed = flat.copy()
+        changed = False
+        for i, v in enumerate(flat):
+            try:
+                dt = cftime.num2date(v, units, calendar)
+                if getattr(dt, "second", 0) == 60:
+                    fixed[i] = v - 1.0 / 86400
+                    changed = True
+            except ValueError:
+                # cftime raises ValueError for second=60
+                fixed[i] = v - 1.0 / 86400
+                changed = True
+        if changed:
+            updated[vname] = fixed.reshape(raw.shape)
+
+    if not updated:
+        return ds
+
+    ds = ds.copy()
+    for vname, vals in updated.items():
+        if vname in ds.coords:
+            ds = ds.assign_coords(
+                {vname: xr.DataArray(vals, dims=ds[vname].dims,
+                                     attrs=ds[vname].attrs)}
+            )
+        else:
+            ds[vname] = xr.DataArray(vals, dims=ds[vname].dims,
+                                     attrs=ds[vname].attrs)
     return ds
 
 
@@ -477,19 +514,25 @@ class _XcDatasetHandle:
         self._global_attrs = {}
         if mode in ("r", "", "a"):
             try:
-                # Open with xarray first so units can be patched before any
-                # xcdat bounds operations run (xc.open_dataset auto-adds bounds
-                # and warns on missing units; xr.open_dataset does not).
-                # Force cftime decoding (matches xcdat behaviour) using the
-                # current API; fall back to the deprecated kwarg for older xarray.
+                # Step 1: open with decode_times=False so we can safely inspect
+                # raw numeric time values and fix any leap-second encodings
+                # (second=60) BEFORE cftime decoding is triggered.  If we let
+                # cftime decode first it raises ValueError and the fix can never
+                # be applied.
+                ds_raw = xr.open_dataset(path, decode_times=False)
+                ds_raw = _add_cf_units_to_ds(ds_raw)
+                ds_raw = _fix_leap_seconds_in_raw(ds_raw)
+                # Step 2: full CF decoding with cftime datetime objects.
                 try:
                     _coder = xr.coders.CFDatetimeCoder(use_cftime=True)
-                    self._ds = xr.open_dataset(path, decode_times=_coder)
+                    try:
+                        self._ds = xr.decode_cf(ds_raw, decode_times=_coder)
+                    except TypeError:
+                        # Older xarray: decode_times doesn't accept coder objects
+                        self._ds = xr.decode_cf(ds_raw, use_cftime=True)
                 except AttributeError:
-                    self._ds = xr.open_dataset(path, decode_times=True,
-                                               use_cftime=True)
-                self._ds = _add_cf_units_to_ds(self._ds)
-                self._ds = _clamp_leap_seconds(self._ds)
+                    # xr.coders not available in this xarray version
+                    self._ds = xr.decode_cf(ds_raw, use_cftime=True)
             except Exception:
                 self._ds = None  # file may not exist yet in append mode
 
