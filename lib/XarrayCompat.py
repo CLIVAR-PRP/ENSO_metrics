@@ -151,18 +151,34 @@ class _Axis:
         if len(vals) == 0:
             return []
         if isinstance(vals[0], (cftime.datetime,)):
-            return list(vals)
-        # Try to decode numeric values using units
+            # Already decoded — clamp any second=60 that somehow slipped through
+            result = []
+            for dt in vals:
+                if hasattr(dt, 'second') and dt.second == 60:
+                    dt = dt.replace(second=59)
+                result.append(dt)
+            return result
+        # Decode numeric values element-by-element so that a single leap-second
+        # (second=60) does not abort the entire array.  cftime raises ValueError
+        # when constructing e.g. DatetimeNoLeap(... second=60); we catch it
+        # per-element and subtract 1 second from the raw numeric value so the
+        # re-decode produces second=59.  This handles every calendar type
+        # (noleap, gregorian, proleptic_gregorian, …).
         if self.units:
             try:
                 cal = self.calendar or "standard"
-                decoded = list(cftime.num2date(vals, self.units, calendar=cal))
-                # Clamp leap-second (second=60) which some files encode but
-                # cftime rejects when constructing certain calendar types.
+                arr = np.asarray(vals, dtype=float)
                 result = []
-                for dt in decoded:
-                    if hasattr(dt, 'second') and dt.second == 60:
-                        dt = dt.replace(second=59)
+                for v in arr:
+                    try:
+                        dt = cftime.num2date(v, self.units, calendar=cal)
+                        if getattr(dt, 'second', 0) == 60:
+                            dt = cftime.num2date(
+                                v - 1.0 / 86400, self.units, calendar=cal)
+                    except ValueError:
+                        # second=60: subtract 1 s and re-decode
+                        dt = cftime.num2date(
+                            v - 1.0 / 86400, self.units, calendar=cal)
                     result.append(dt)
                 return result
             except Exception:
