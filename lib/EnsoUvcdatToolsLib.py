@@ -39,7 +39,6 @@ from .EnsoToolsLib import add_up_errors, find_xy_min_max, string_in_dict
 # ---------------------------------------------------------------------------
 # New-stack imports  (replaces retired CDAT/UV-CDAT packages)
 # ---------------------------------------------------------------------------
-import cftime                                      # replaces cdtime
 import numpy as np                                 # replaces MV2 numeric ops
 import numpy.ma as ma                              # replaces MV2 masked ops
 import xarray as xr                                # replaces cdms2 variable/axis
@@ -77,9 +76,10 @@ def open_file(path, mode="r"):
 def CDTIMEcomptime(year, month=1, day=1, hour=0, minute=0, second=0.0,
                    calendar="standard"):
     """Replacement for cdtime.comptime()."""
+    import cftime as _cft  # lazy — avoids module-level dependency
     # Clamp leap-second (second=60) to 59 — cftime rejects second=60
-    return cftime.datetime(year, month, day, hour, minute,
-                           min(int(second), 59), calendar=calendar)
+    return _cft.datetime(year, month, day, hour, minute,
+                         min(int(second), 59), calendar=calendar)
 
 # ---------------------------------------------------------------------------
 # MV2 aliases  → numpy.ma equivalents
@@ -469,9 +469,10 @@ def _fix_leap_seconds_in_raw(ds: xr.Dataset) -> xr.Dataset:
         flat = raw.ravel()
         fixed = flat.copy()
         changed = False
+        import cftime as _cft  # lazy — avoids module-level dependency
         for i, v in enumerate(flat):
             try:
-                dt = cftime.num2date(v, units, calendar)
+                dt = _cft.num2date(v, units, calendar)
                 if getattr(dt, "second", 0) == 60:
                     fixed[i] = v - 1.0 / 86400
                     changed = True

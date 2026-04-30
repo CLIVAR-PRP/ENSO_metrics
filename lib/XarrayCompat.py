@@ -5,43 +5,53 @@ XarrayCompat.py
 Backward-compatible drop-in replacements for the retired CDAT/UV-CDAT
 ``cdms2.TransientVariable`` and associated axis/grid objects.
 
-All computation is done with ``numpy.ma``; coordinate metadata is stored
-alongside the data so callers that use CDAT-style introspection
-(``.getAxisList()``, ``.getGrid()``, ``.getTime().asComponentTime()``, …)
+This module is intended as a compatibility shim for CDAT-style diagnostic code.
+It is most reliable for decoded, rectilinear gridded fields such as common
+CMIP/ERA5/GPCP/E3SM post-processed data with dimensions like
+``(time, lat, lon)`` or ``(time, lev, lat, lon)``.
+
+Important scope note
+--------------------
+This is not a full replacement for xarray/xESMF/ESMPy for native unstructured
+or curvilinear grids. E3SM native ``ncol``/MPAS/ocean grids should usually be
+regridded or handled with grid-aware tools before conversion to this CDAT-style
+object.
+
+All internal computation is done with ``numpy.ma``; coordinate metadata is
+stored alongside the data so callers that use CDAT-style introspection
+(``.getAxisList()``, ``.getGrid()``, ``.getTime().asComponentTime()``, ...)
 continue to work without modification.
 
 Exported public API
 -------------------
-CDATVariable   – replaces cdms2.TransientVariable
-_Axis          – replaces cdms2.Axis
-_TimeAxis      – replaces cdms2.Axis (time-specific)
-_Grid          – replaces cdms2.RectGrid
+CDATVariable   - replaces cdms2.TransientVariable
+_Axis          - replaces cdms2.Axis
+_TimeAxis      - replaces cdms2.Axis (time-specific)
+_Grid          - replaces cdms2.RectGrid
 
-Factory helpers (replacements for cdms2 creation functions)
------------------------------------------------------------
+Factory helpers
+---------------
 create_axis(id, values, units='', attributes=None)
 create_uniform_lat_axis(start, n, delta)
 create_uniform_lon_axis(start, n, delta)
 create_rect_grid(lat_axis, lon_axis, order='yx', grid_type='generic')
-create_variable(data, axes=None, grid=None, mask=None, id='',
-                attributes=None)
+create_variable(data, axes=None, grid=None, mask=None, id='', attributes=None)
 
 Conversion helpers
 ------------------
-da_to_cdat(da, varname=None)   – xr.DataArray  → CDATVariable
-cdat_to_da(var)                – CDATVariable  → xr.DataArray
+da_to_cdat(da, varname=None)   - xr.DataArray  -> CDATVariable
+cdat_to_da(var)                - CDATVariable  -> xr.DataArray
 """
 
 from __future__ import annotations
 
-import copy
-import re
-from typing import List, Optional, Sequence, Union
+import datetime as _datetime
+from typing import List, Optional
 
-import cftime
 import numpy as np
 import numpy.ma as ma
 import xarray as xr
+
 
 __all__ = [
     "CDATVariable",
@@ -57,27 +67,324 @@ __all__ = [
     "cdat_to_da",
 ]
 
+
 # ---------------------------------------------------------------------------
-# Axis
+# Axis identification
 # ---------------------------------------------------------------------------
 
-_LAT_IDS  = {"lat", "latitude", "j", "y", "Y", "yt_ocean", "yu_ocean"}
-_LON_IDS  = {"lon", "longitude", "i", "x", "X", "xt_ocean", "xu_ocean"}
+_LAT_IDS = {"lat", "latitude", "j", "y", "Y", "yt_ocean", "yu_ocean"}
+_LON_IDS = {"lon", "longitude", "i", "x", "X", "xt_ocean", "xu_ocean"}
 _TIME_IDS = {"time", "t", "T"}
-_LEV_IDS  = {"lev", "level", "depth", "plev", "z", "Z", "st_ocean",
-             "sw_ocean"}
+_LEV_IDS = {"lev", "level", "depth", "plev", "z", "Z", "st_ocean", "sw_ocean"}
 
 
 def _detect_axis_type(ax_id: str) -> str:
-    if ax_id in _TIME_IDS or "time" in ax_id.lower():
+    """Infer a CDAT-style axis code from a coordinate/dimension name."""
+    ax_id = str(ax_id)
+    low = ax_id.lower()
+    if ax_id in _TIME_IDS or "time" in low:
         return "T"
-    if ax_id in _LAT_IDS or "lat" in ax_id.lower():
+    if ax_id in _LAT_IDS or "lat" in low:
         return "Y"
-    if ax_id in _LON_IDS or "lon" in ax_id.lower():
+    if ax_id in _LON_IDS or "lon" in low:
         return "X"
-    if ax_id in _LEV_IDS or "lev" in ax_id.lower() or "depth" in ax_id.lower():
+    if ax_id in _LEV_IDS or "lev" in low or "depth" in low:
         return "Z"
     return "-"
+
+
+def _dim_to_axis_type(dim_name: str, coord) -> str:
+    """Infer axis type using both the dimension name and CF coordinate attrs."""
+    typ = _detect_axis_type(dim_name)
+    if typ != "-":
+        return typ
+
+    if coord is not None:
+        cf_axis = str(coord.attrs.get("axis", "")).upper()
+        if cf_axis in {"T", "Y", "X", "Z"}:
+            return cf_axis
+
+        standard_name = str(coord.attrs.get("standard_name", "")).lower()
+        units = str(coord.attrs.get("units", "")).lower()
+        if standard_name == "latitude" or units in {"degrees_north", "degree_north"}:
+            return "Y"
+        if standard_name == "longitude" or units in {"degrees_east", "degree_east"}:
+            return "X"
+        if "since" in units:
+            return "T"
+
+    return "-"
+
+
+# ---------------------------------------------------------------------------
+# Private time-handling helpers
+# ---------------------------------------------------------------------------
+
+
+def _is_datetime_like(obj) -> bool:
+    """Duck-type check for datetime-like objects: cftime, datetime, Timestamp."""
+    return (
+        hasattr(obj, "year")
+        and hasattr(obj, "month")
+        and hasattr(obj, "day")
+        and not isinstance(obj, (int, float, np.integer, np.floating))
+    )
+
+
+def _get_time_coder():
+    """Return xarray's CFDatetimeCoder, handling API changes across versions."""
+    try:
+        return xr.coders.CFDatetimeCoder(use_cftime=True)
+    except AttributeError:
+        return xr.coding.times.CFDatetimeCoder(use_cftime=True)
+
+
+def _decode_times_safe(arr: np.ndarray, units: str, calendar: str) -> list:
+    """
+    Decode numeric times to datetime-like objects through xarray's CF coder.
+
+    If a decoder hits a leap-second-like value, retry by subtracting one second
+    from the raw numeric offset. This keeps the behavior robust across common
+    CF calendars used by CMIP, E3SM, ERA5-derived products, and observations.
+    """
+    coder = _get_time_coder()
+
+    try:
+        var = xr.Variable("time", arr, {"units": units, "calendar": calendar})
+        decoded = coder.decode(var, name="time").values
+        result = []
+        for dt in decoded:
+            if getattr(dt, "second", 0) == 60:
+                try:
+                    dt = dt.replace(second=59)
+                except Exception:
+                    pass
+            result.append(dt)
+        return result
+    except Exception:
+        pass
+
+    result = []
+    for v in np.asarray(arr, dtype=float):
+        v_adj = float(v)
+        dt = None
+        for _ in range(2):
+            try:
+                var = xr.Variable(
+                    "time",
+                    np.array([v_adj], dtype=float),
+                    {"units": units, "calendar": calendar},
+                )
+                decoded_v = coder.decode(var, name="time").values[0]
+                if getattr(decoded_v, "second", 0) == 60:
+                    v_adj -= 1.0 / 86400.0
+                    continue
+                dt = decoded_v
+                break
+            except ValueError:
+                v_adj -= 1.0 / 86400.0
+            except Exception:
+                break
+
+        if dt is None:
+            # Last-resort stable fallback. Avoid crashing axis introspection.
+            dt = _datetime.datetime(2000, 1, 1)
+        result.append(dt)
+    return result
+
+
+def _encode_times(comp, units: str, calendar: str) -> np.ndarray:
+    """Encode datetime-like values to numeric time using cftime lazily."""
+    import cftime as _cft
+
+    return np.asarray(_cft.date2num(comp, units, calendar=calendar), dtype=float)
+
+
+def _parse_datetime_string(value: str):
+    """Parse common ISO-like datetime/date strings to Python datetime."""
+    text = value.strip().replace("T", " ")
+    if text.endswith("Z"):
+        text = text[:-1]
+    text = text.split(".")[0]
+
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d",
+        "%Y/%m/%d %H:%M:%S",
+        "%Y/%m/%d",
+        "%Y-%m",
+        "%Y",
+    ):
+        try:
+            dt = _datetime.datetime.strptime(text, fmt)
+            if fmt == "%Y-%m":
+                dt = dt.replace(day=1)
+            return dt
+        except ValueError:
+            continue
+
+    # pandas/xarray environments often parse more formats, but keep pandas
+    # optional by not importing it directly.
+    try:
+        return np.datetime64(text).astype("datetime64[us]").astype(_datetime.datetime)
+    except Exception as exc:
+        raise ValueError(f"Could not parse time bound {value!r}") from exc
+
+
+def _coerce_time_bound(bound, ref):
+    """Convert a time-selection bound to a comparable object using ref type."""
+    if _is_datetime_like(bound):
+        return bound
+
+    if isinstance(bound, np.datetime64):
+        bound = bound.astype("datetime64[us]").astype(_datetime.datetime)
+        return bound
+
+    if isinstance(bound, str):
+        py_dt = _parse_datetime_string(bound)
+        if _is_datetime_like(ref) and type(ref).__module__.startswith("cftime"):
+            # Construct the same cftime calendar class as the axis values.
+            try:
+                return type(ref)(
+                    py_dt.year,
+                    py_dt.month,
+                    py_dt.day,
+                    py_dt.hour,
+                    py_dt.minute,
+                    py_dt.second,
+                )
+            except Exception:
+                return py_dt
+        return py_dt
+
+    return bound
+
+
+def _time_in_range(t, lo, hi) -> bool:
+    """Robust inclusive datetime comparison with string fallback."""
+    try:
+        return lo <= t <= hi
+    except TypeError:
+        # Cross-calendar cftime comparisons may fail. ISO-style strings are a
+        # fallback only after true datetime comparison has failed.
+        return str(lo) <= str(t) <= str(hi)
+
+
+# ---------------------------------------------------------------------------
+# Metadata validation and array helpers
+# ---------------------------------------------------------------------------
+
+
+def _coerce_axes(axes, ndim: int) -> list:
+    """
+    Ensure every element in an axes list is an _Axis or None.
+
+    Raw numpy arrays, such as from ``axis[:]``, are wrapped in a generic _Axis.
+    """
+    if axes is None:
+        return []
+
+    result = []
+    for i, a in enumerate(axes):
+        if a is None or isinstance(a, _Axis):
+            result.append(a)
+        elif isinstance(a, np.ndarray):
+            result.append(_Axis(f"dim_{i}", a))
+        else:
+            try:
+                result.append(_Axis(f"dim_{i}", np.asarray(a)))
+            except Exception:
+                result.append(None)
+    return result
+
+
+def _validate_axes_shape(data, axes, context: str = "CDATVariable"):
+    """
+    Minimal metadata safety check.
+
+    It catches the most dangerous silent failure mode: data shape and coordinate
+    axis metadata no longer match.
+    """
+    if axes is None or len(axes) == 0:
+        return
+
+    if len(axes) != data.ndim:
+        raise ValueError(
+            f"{context}: number of axes ({len(axes)}) does not match "
+            f"data ndim ({data.ndim})"
+        )
+
+    for i, ax in enumerate(axes):
+        if ax is None:
+            continue
+        if len(ax) != data.shape[i]:
+            raise ValueError(
+                f"{context}: axis {i} ({ax.id}) length {len(ax)} does not "
+                f"match data shape {data.shape[i]}"
+            )
+
+
+def _maybe_mask_invalid_numeric(arr: ma.MaskedArray) -> ma.MaskedArray:
+    """Mask NaN/Inf for numeric arrays while preserving existing masks."""
+    if np.issubdtype(arr.dtype, np.number):
+        with np.errstate(invalid="ignore"):
+            invalid = ~np.isfinite(arr.filled(np.nan).astype(float))
+        if invalid.shape == arr.shape:
+            arr = ma.array(arr.data, mask=ma.getmaskarray(arr) | invalid, fill_value=arr.fill_value)
+    return arr
+
+
+def _make_masked_array(data, mask=None, fill_value=1e20, attributes: Optional[dict] = None):
+    """Create a float masked array while respecting common missing metadata."""
+    attributes = attributes or {}
+
+    if isinstance(data, CDATVariable):
+        raw = data._data.copy()
+    elif isinstance(data, ma.MaskedArray):
+        raw = data.copy()
+    else:
+        raw = ma.array(np.asarray(data, dtype=float), fill_value=fill_value)
+
+    combined_mask = ma.getmaskarray(raw)
+
+    for key in ("_FillValue", "missing_value"):
+        if key in attributes:
+            mv = attributes[key]
+            try:
+                if np.ndim(mv) == 0:
+                    combined_mask |= np.asarray(raw.data == mv)
+                else:
+                    for one_mv in np.ravel(mv):
+                        combined_mask |= np.asarray(raw.data == one_mv)
+            except Exception:
+                pass
+
+    if mask is not None:
+        combined_mask |= np.asarray(mask, dtype=bool)
+
+    raw = ma.array(raw.data, mask=combined_mask, fill_value=fill_value)
+    raw = _maybe_mask_invalid_numeric(raw)
+    return raw
+
+
+def _validate_grid(grid, axes, context: str = "CDATVariable"):
+    """Light check that a rectilinear grid is compatible with available axes."""
+    if grid is None or not axes:
+        return
+    lat = grid.getLatitude()
+    lon = grid.getLongitude()
+    lat_axes = [ax for ax in axes if ax is not None and ax.isLatitude()]
+    lon_axes = [ax for ax in axes if ax is not None and ax.isLongitude()]
+    if lat_axes and lat is not None and len(lat) != len(lat_axes[0]):
+        raise ValueError(f"{context}: grid latitude length does not match latitude axis")
+    if lon_axes and lon is not None and len(lon) != len(lon_axes[0]):
+        raise ValueError(f"{context}: grid longitude length does not match longitude axis")
+
+
+# ---------------------------------------------------------------------------
+# Axis
+# ---------------------------------------------------------------------------
 
 
 class _Axis:
@@ -93,7 +400,6 @@ class _Axis:
         axis_type: Optional[str] = None,
     ):
         self.id = id
-        # Store raw values; may be cftime objects for time axes
         if values is None:
             self._values = np.array([])
         elif isinstance(values, np.ndarray):
@@ -103,26 +409,27 @@ class _Axis:
                 self._values = np.asarray(values)
             except Exception:
                 self._values = np.array(list(values), dtype=object)
+
         self.units = units
         self._attributes = dict(attributes or {})
         self.axis = axis_type or _detect_axis_type(id)
         self.long_name = self._attributes.get("long_name", id)
-        # Optional CDAT-style extra attributes (set by callers)
         self.regions: Optional[str] = None
         self.reference: Optional[str] = None
         self.calendar: Optional[str] = self._attributes.get("calendar", None)
 
-    # ------------------------------------------------------------------
-    # Type predicates
-    # ------------------------------------------------------------------
-    def isTime(self) -> bool:      return self.axis == "T"
-    def isLatitude(self) -> bool:  return self.axis == "Y"
-    def isLongitude(self) -> bool: return self.axis == "X"
-    def isLevel(self) -> bool:     return self.axis == "Z"
+    def isTime(self) -> bool:
+        return self.axis == "T"
 
-    # ------------------------------------------------------------------
-    # Array-like protocol
-    # ------------------------------------------------------------------
+    def isLatitude(self) -> bool:
+        return self.axis == "Y"
+
+    def isLongitude(self) -> bool:
+        return self.axis == "X"
+
+    def isLevel(self) -> bool:
+        return self.axis == "Z"
+
     @property
     def shape(self):
         return self._values.shape
@@ -142,72 +449,59 @@ class _Axis:
     def __repr__(self):
         return f"_Axis(id={self.id!r}, axis={self.axis!r}, len={len(self._values)})"
 
-    # ------------------------------------------------------------------
-    # cdms2-compatible methods
-    # ------------------------------------------------------------------
     def asComponentTime(self) -> list:
-        """Return list of cftime datetime objects (mirrors cdtime behaviour)."""
+        """Return list of datetime-like objects, mirroring cdtime behavior."""
         vals = self._values
         if len(vals) == 0:
             return []
-        if isinstance(vals[0], (cftime.datetime,)):
-            # Already decoded — clamp any second=60 that somehow slipped through
+
+        if _is_datetime_like(vals[0]):
             result = []
             for dt in vals:
-                if hasattr(dt, 'second') and dt.second == 60:
-                    dt = dt.replace(second=59)
+                if getattr(dt, "second", 0) == 60:
+                    try:
+                        dt = dt.replace(second=59)
+                    except Exception:
+                        pass
                 result.append(dt)
             return result
-        # Decode numeric values element-by-element so that a single leap-second
-        # (second=60) does not abort the entire array.  cftime raises ValueError
-        # when constructing e.g. DatetimeNoLeap(... second=60); we catch it
-        # per-element and subtract 1 second from the raw numeric value so the
-        # re-decode produces second=59.  This handles every calendar type
-        # (noleap, gregorian, proleptic_gregorian, …).
+
         if self.units:
             try:
                 cal = self.calendar or "standard"
                 arr = np.asarray(vals, dtype=float)
-                result = []
-                for v in arr:
-                    try:
-                        dt = cftime.num2date(v, self.units, calendar=cal)
-                        if getattr(dt, 'second', 0) == 60:
-                            dt = cftime.num2date(
-                                v - 1.0 / 86400, self.units, calendar=cal)
-                    except ValueError:
-                        # second=60: subtract 1 s and re-decode
-                        dt = cftime.num2date(
-                            v - 1.0 / 86400, self.units, calendar=cal)
-                    result.append(dt)
-                return result
+                return _decode_times_safe(arr, self.units, cal)
             except Exception:
                 pass
-        # Fallback: wrap floats as years
-        return [cftime.datetime(int(v), 1, 1) for v in vals]
+
+        return [_datetime.datetime(int(v), 1, 1) for v in vals]
 
     def toRelativeTime(self, units: str):
-        """Convert cftime values to numeric relative time in-place."""
+        """Convert datetime-like values to numeric relative time in-place."""
         try:
             cal = self.calendar or "standard"
             comp = self.asComponentTime()
-            self._values = cftime.date2num(comp, units, calendar=cal)
+            self._values = _encode_times(comp, units, cal)
             self.units = units
         except Exception:
             pass
 
     def copy(self) -> "_Axis":
-        return _Axis(
+        new = _Axis(
             self.id,
             self._values.copy(),
             units=self.units,
             attributes=dict(self._attributes),
             axis_type=self.axis,
         )
+        new.regions = self.regions
+        new.reference = self.reference
+        new.calendar = self.calendar
+        return new
 
 
 class _TimeAxis(_Axis):
-    """Time-specific axis – identical to _Axis but always typed 'T'."""
+    """Time-specific axis, always typed 'T'."""
 
     def __init__(self, id: str = "time", values=None, **kwargs):
         kwargs.setdefault("axis_type", "T")
@@ -217,6 +511,7 @@ class _TimeAxis(_Axis):
 # ---------------------------------------------------------------------------
 # Grid
 # ---------------------------------------------------------------------------
+
 
 class _Grid:
     """Lightweight replacement for cdms2.RectGrid."""
@@ -245,13 +540,13 @@ class _Grid:
 # CDATVariable
 # ---------------------------------------------------------------------------
 
+
 class CDATVariable:
     """
     Drop-in replacement for ``cdms2.TransientVariable``.
 
-    Stores data as a ``numpy.ma.MaskedArray`` and carries coordinate
-    metadata (list of ``_Axis`` objects + optional ``_Grid``) so that
-    all CDAT-style introspection methods continue to work.
+    Data are stored as ``numpy.ma.MaskedArray`` and metadata are carried as a
+    list of ``_Axis`` objects plus an optional rectilinear ``_Grid``.
     """
 
     def __init__(
@@ -264,27 +559,22 @@ class CDATVariable:
         attributes: Optional[dict] = None,
         fill_value=1e20,
     ):
-        # ---- data --------------------------------------------------------
-        if isinstance(data, CDATVariable):
-            raw = data._data.copy()
-        elif isinstance(data, ma.MaskedArray):
-            raw = data.copy()
-        else:
-            raw = ma.array(np.asarray(data, dtype=float), fill_value=fill_value)
-        if mask is not None:
-            raw = ma.array(raw.data, mask=mask, fill_value=fill_value)
-        self._data: ma.MaskedArray = raw
+        self._attributes: dict = dict(attributes or {})
+        self._data: ma.MaskedArray = _make_masked_array(
+            data,
+            mask=mask,
+            fill_value=fill_value,
+            attributes=self._attributes,
+        )
 
-        # ---- metadata ----------------------------------------------------
-        self._axes: List[_Axis] = _coerce_axes(axes, raw.ndim)
+        self._axes: List[_Axis] = _coerce_axes(axes, self._data.ndim)
+        _validate_axes_shape(self._data, self._axes, context=f"CDATVariable({id})")
+        _validate_grid(grid, self._axes, context=f"CDATVariable({id})")
+
         self._grid: Optional[_Grid] = grid
         self.id: str = id
         self.name: str = id
-        self._attributes: dict = dict(attributes or {})
 
-    # ------------------------------------------------------------------
-    # Properties
-    # ------------------------------------------------------------------
     @property
     def shape(self):
         return self._data.shape
@@ -321,9 +611,6 @@ class CDATVariable:
     def attributes(self, value: dict):
         self._attributes = dict(value)
 
-    # ------------------------------------------------------------------
-    # Numpy / masked-array protocol
-    # ------------------------------------------------------------------
     def __array__(self, dtype=None):
         return np.array(self._data, dtype=dtype)
 
@@ -338,13 +625,10 @@ class CDATVariable:
 
     def __iter__(self):
         for i in range(len(self._data)):
-            yield self._wrap(self._data[i])
+            yield self._wrap(self._data[i], axes=self._axes[1:])
 
     def __repr__(self):
-        return (
-            f"CDATVariable(id={self.id!r}, shape={self.shape}, "
-            f"dtype={self.dtype})"
-        )
+        return f"CDATVariable(id={self.id!r}, shape={self.shape}, dtype={self.dtype})"
 
     def __str__(self):
         return str(self._data)
@@ -354,8 +638,8 @@ class CDATVariable:
     # ------------------------------------------------------------------
     def __getitem__(self, key):
         result = self._data[key]
-        if not isinstance(result, np.ndarray) and not isinstance(result, ma.MaskedArray):
-            return result  # scalar
+        if not isinstance(result, (np.ndarray, ma.MaskedArray)):
+            return result
         new_axes = self._sliced_axes(key, result.shape)
         return CDATVariable(
             result,
@@ -372,82 +656,118 @@ class CDATVariable:
             self._data[key] = value
 
     def _sliced_axes(self, key, new_shape):
-        """Best-effort: return axes for a sliced result."""
+        """Best-effort axis update for NumPy-style slicing."""
         if not self._axes:
             return []
-        if isinstance(key, tuple):
-            new_axes = []
-            ax_idx = 0
-            for k in key:
-                if ax_idx >= len(self._axes):
-                    break
-                ax = self._axes[ax_idx]
-                if isinstance(k, int):
-                    ax_idx += 1
-                    continue  # dimension collapsed
-                elif isinstance(k, slice):
-                    new_vals = ax._values[k]
-                    new_axes.append(
-                        _Axis(ax.id, new_vals, units=ax.units,
-                              attributes=ax._attributes, axis_type=ax.axis)
-                    )
-                    ax_idx += 1
-                elif isinstance(k, (list, np.ndarray)):
-                    new_vals = ax._values[k]
-                    new_axes.append(
-                        _Axis(ax.id, new_vals, units=ax.units,
-                              attributes=ax._attributes, axis_type=ax.axis)
-                    )
-                    ax_idx += 1
-            return new_axes
-        # Single index/slice
-        if isinstance(key, int):
-            return self._axes[1:] if len(self._axes) > 1 else []
-        if isinstance(key, (slice, list, np.ndarray)):
-            ax = self._axes[0]
-            new_vals = ax._values[key]
-            new_ax = _Axis(ax.id, new_vals, units=ax.units,
-                           attributes=ax._attributes, axis_type=ax.axis)
-            return [new_ax] + self._axes[1:]
-        return self._axes
+
+        if not isinstance(key, tuple):
+            key = (key,)
+
+        # Expand ellipsis and append missing full slices.
+        key_list = list(key)
+        if Ellipsis in key_list:
+            ell_idx = key_list.index(Ellipsis)
+            n_missing = self._data.ndim - (len(key_list) - 1)
+            key_list = key_list[:ell_idx] + [slice(None)] * n_missing + key_list[ell_idx + 1:]
+        if len(key_list) < self._data.ndim:
+            key_list += [slice(None)] * (self._data.ndim - len(key_list))
+
+        new_axes = []
+        ax_idx = 0
+        for k in key_list:
+            if k is None:
+                # np.newaxis has no original coordinate axis.
+                new_axes.append(None)
+                continue
+            if ax_idx >= len(self._axes):
+                break
+
+            ax = self._axes[ax_idx]
+            ax_idx += 1
+
+            if isinstance(k, (int, np.integer)):
+                continue
+
+            if ax is None:
+                new_axes.append(None)
+                continue
+
+            try:
+                new_vals = ax._values[k]
+            except Exception:
+                # Advanced indexing can be complicated; preserve the axis only
+                # if the length still matches after the resulting data check.
+                new_vals = ax._values
+
+            new_axes.append(
+                _Axis(
+                    ax.id,
+                    new_vals,
+                    units=ax.units,
+                    attributes=dict(ax._attributes),
+                    axis_type=ax.axis,
+                )
+            )
+
+        # If advanced indexing created a shape not representable by this simple
+        # CDAT axis model, avoid returning wrong metadata.
+        if len(new_axes) != len(new_shape):
+            return []
+        for ax, n in zip(new_axes, new_shape):
+            if ax is not None and len(ax) != n:
+                return []
+        return new_axes
 
     # ------------------------------------------------------------------
-    # Arithmetic operators (all return CDATVariable)
+    # Arithmetic operators
     # ------------------------------------------------------------------
     def _unpack(self, other):
         if isinstance(other, CDATVariable):
             return other._data
         return other
 
-    def _wrap(self, data) -> "CDATVariable":
+    def _binary_axes(self, result, other):
+        """
+        Preserve axes only when the result shape is identical to this variable.
+        If NumPy broadcasting changed shape, drop axes rather than lying.
+        """
+        if isinstance(result, (np.ndarray, ma.MaskedArray)) and tuple(result.shape) == tuple(self.shape):
+            return [ax.copy() if ax is not None else None for ax in self._axes]
+        return []
+
+    def _wrap(self, data, axes=None) -> "CDATVariable":
         if not isinstance(data, (np.ndarray, ma.MaskedArray)):
             return data
+        axes = self._axes if axes is None else axes
         return CDATVariable(
             data,
-            axes=list(self._axes),
+            axes=[ax.copy() if ax is not None else None for ax in axes],
             grid=self._grid,
             id=self.id,
             attributes=dict(self._attributes),
         )
 
-    def __add__(self, other):       return self._wrap(self._data + self._unpack(other))
-    def __radd__(self, other):      return self._wrap(self._unpack(other) + self._data)
-    def __sub__(self, other):       return self._wrap(self._data - self._unpack(other))
-    def __rsub__(self, other):      return self._wrap(self._unpack(other) - self._data)
-    def __mul__(self, other):       return self._wrap(self._data * self._unpack(other))
-    def __rmul__(self, other):      return self._wrap(self._unpack(other) * self._data)
-    def __truediv__(self, other):   return self._wrap(self._data / self._unpack(other))
-    def __rtruediv__(self, other):  return self._wrap(self._unpack(other) / self._data)
+    def _wrap_binary(self, result, other):
+        return self._wrap(result, axes=self._binary_axes(result, other))
+
+    def __add__(self, other):       return self._wrap_binary(self._data + self._unpack(other), other)
+    def __radd__(self, other):      return self._wrap_binary(self._unpack(other) + self._data, other)
+    def __sub__(self, other):       return self._wrap_binary(self._data - self._unpack(other), other)
+    def __rsub__(self, other):      return self._wrap_binary(self._unpack(other) - self._data, other)
+    def __mul__(self, other):       return self._wrap_binary(self._data * self._unpack(other), other)
+    def __rmul__(self, other):      return self._wrap_binary(self._unpack(other) * self._data, other)
+    def __truediv__(self, other):   return self._wrap_binary(self._data / self._unpack(other), other)
+    def __rtruediv__(self, other):  return self._wrap_binary(self._unpack(other) / self._data, other)
     def __neg__(self):              return self._wrap(-self._data)
     def __abs__(self):              return self._wrap(abs(self._data))
     def __pow__(self, exp):         return self._wrap(self._data ** exp)
 
-    def __gt__(self, other):  return self._data > self._unpack(other)
-    def __lt__(self, other):  return self._data < self._unpack(other)
-    def __ge__(self, other):  return self._data >= self._unpack(other)
-    def __le__(self, other):  return self._data <= self._unpack(other)
-    def __eq__(self, other):  return self._data == self._unpack(other)
-    def __ne__(self, other):  return self._data != self._unpack(other)
+    def __gt__(self, other): return self._data > self._unpack(other)
+    def __lt__(self, other): return self._data < self._unpack(other)
+    def __ge__(self, other): return self._data >= self._unpack(other)
+    def __le__(self, other): return self._data <= self._unpack(other)
+    def __eq__(self, other): return self._data == self._unpack(other)
+    def __ne__(self, other): return self._data != self._unpack(other)
 
     # ------------------------------------------------------------------
     # numpy.ma delegation
@@ -463,26 +783,28 @@ class CDATVariable:
 
     def squeeze(self, axis=None) -> "CDATVariable":
         result = self._data.squeeze(axis=axis)
-        new_axes = [ax for ax in self._axes if len(ax) > 1]
-        return CDATVariable(result, axes=new_axes, grid=self._grid,
-                            id=self.id, attributes=dict(self._attributes))
+        if axis is None:
+            new_axes = [ax for ax in self._axes if ax is not None and len(ax) > 1]
+        else:
+            axes_to_drop = {axis} if isinstance(axis, int) else set(axis)
+            axes_to_drop = {a if a >= 0 else self.ndim + a for a in axes_to_drop}
+            new_axes = [ax for i, ax in enumerate(self._axes) if i not in axes_to_drop]
+        return CDATVariable(result, axes=new_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
 
     def compress(self, condition, axis: int = 0) -> "CDATVariable":
         result = self._data.compress(condition, axis=axis)
-        new_axes = list(self._axes)
-        if self._axes and axis < len(self._axes):
+        new_axes = [ax.copy() if ax is not None else None for ax in self._axes]
+        axis = axis if axis >= 0 else self.ndim + axis
+        if self._axes and axis < len(self._axes) and self._axes[axis] is not None:
             old_ax = self._axes[axis]
             new_vals = old_ax._values[np.asarray(condition, dtype=bool)]
-            new_axes[axis] = _Axis(old_ax.id, new_vals, units=old_ax.units,
-                                   attributes=old_ax._attributes,
-                                   axis_type=old_ax.axis)
-        return CDATVariable(result, axes=new_axes, grid=self._grid,
-                            id=self.id, attributes=dict(self._attributes))
+            new_axes[axis] = _Axis(old_ax.id, new_vals, units=old_ax.units, attributes=dict(old_ax._attributes), axis_type=old_ax.axis)
+        return CDATVariable(result, axes=new_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
 
     def copy(self) -> "CDATVariable":
         return CDATVariable(
             self._data.copy(),
-            axes=[ax.copy() for ax in self._axes],
+            axes=[ax.copy() if ax is not None else None for ax in self._axes],
             grid=self._grid,
             id=self.id,
             attributes=dict(self._attributes),
@@ -503,39 +825,31 @@ class CDATVariable:
         while len(self._axes) <= n:
             self._axes.append(None)
         self._axes[n] = ax
+        _validate_axes_shape(self._data, self._axes, context=f"CDATVariable({self.id}).setAxis")
 
     def setAxisList(self, axes: list):
-        self._axes = list(axes)
+        axes = _coerce_axes(axes, self._data.ndim)
+        _validate_axes_shape(self._data, axes, context=f"CDATVariable({self.id}).setAxisList")
+        self._axes = axes
 
     def getGrid(self) -> Optional[_Grid]:
         return self._grid
 
     def setGrid(self, grid: Optional[_Grid]):
+        _validate_grid(grid, self._axes, context=f"CDATVariable({self.id}).setGrid")
         self._grid = grid
 
     def getTime(self) -> Optional[_Axis]:
-        for ax in self._axes:
-            if ax is not None and ax.isTime():
-                return ax
-        return None
+        return next((ax for ax in self._axes if ax is not None and ax.isTime()), None)
 
     def getLatitude(self) -> Optional[_Axis]:
-        for ax in self._axes:
-            if ax is not None and ax.isLatitude():
-                return ax
-        return None
+        return next((ax for ax in self._axes if ax is not None and ax.isLatitude()), None)
 
     def getLongitude(self) -> Optional[_Axis]:
-        for ax in self._axes:
-            if ax is not None and ax.isLongitude():
-                return ax
-        return None
+        return next((ax for ax in self._axes if ax is not None and ax.isLongitude()), None)
 
     def getLevel(self) -> Optional[_Axis]:
-        for ax in self._axes:
-            if ax is not None and ax.isLevel():
-                return ax
-        return None
+        return next((ax for ax in self._axes if ax is not None and ax.isLevel()), None)
 
     def getOrder(self) -> str:
         order = ""
@@ -556,27 +870,26 @@ class CDATVariable:
 
     def reorder(self, order: str) -> "CDATVariable":
         """
-        Reorder axes.  Accepts:
-        * full permutation string: 'tyx', 'txy', '10', '210', …
-        * 't...'  – move time to first position
-        * '...t'  – move time to last position
-        * '10'    – numeric index permutation
+        Reorder axes.
+
+        Accepts examples like 'tyx', 'txy', '10', '210', 't...', and '...t'.
+        Invalid permutations raise ValueError instead of silently returning an
+        unchanged variable.
         """
         ndim = self._data.ndim
         if ndim == 0:
             return self.copy()
 
-        # ---- resolve permutation ----------------------------------------
         if order in ("t...", "T..."):
             t_n = next((i for i, ax in enumerate(self._axes) if ax is not None and ax.isTime()), 0)
             perm = [t_n] + [i for i in range(ndim) if i != t_n]
         elif order in ("...t", "...T"):
             t_n = next((i for i, ax in enumerate(self._axes) if ax is not None and ax.isTime()), ndim - 1)
             perm = [i for i in range(ndim) if i != t_n] + [t_n]
-        elif all(c.isdigit() for c in order):
+        elif order and all(c.isdigit() for c in order):
             perm = [int(c) for c in order]
         else:
-            char_map: dict = {}
+            char_map = {}
             for i, ax in enumerate(self._axes):
                 if ax is None:
                     continue
@@ -588,41 +901,36 @@ class CDATVariable:
                     char_map["x"] = i
                 elif ax.isLevel():
                     char_map["z"] = i
+
             perm = []
             used = set()
-            remaining = list(range(ndim))
             for c in order.lower():
                 if c == ".":
                     continue
                 if c in char_map and char_map[c] not in used:
                     perm.append(char_map[c])
                     used.add(char_map[c])
-            # Fill in remaining dims for '...' parts
-            for i in remaining:
+            for i in range(ndim):
                 if i not in used:
                     perm.append(i)
                     used.add(i)
-            if len(perm) != ndim:
-                return self.copy()
+
+        if len(perm) != ndim or sorted(perm) != list(range(ndim)):
+            raise ValueError(
+                f"Invalid reorder specification {order!r}: resolved permutation "
+                f"{perm!r} is not valid for {ndim} dimensions"
+            )
 
         new_data = np.transpose(self._data, perm)
-        new_axes = [self._axes[i] if i < len(self._axes) else None for i in perm]
-
-        # Rebuild grid if lat/lon moved
+        new_axes = [self._axes[i].copy() if self._axes[i] is not None else None for i in perm]
         lat_ax = next((ax for ax in new_axes if ax is not None and ax.isLatitude()), None)
         lon_ax = next((ax for ax in new_axes if ax is not None and ax.isLongitude()), None)
-        new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else self._grid
+        new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else None
 
-        return CDATVariable(
-            new_data,
-            axes=new_axes,
-            grid=new_grid,
-            id=self.id,
-            attributes=dict(self._attributes),
-        )
+        return CDATVariable(new_data, axes=new_axes, grid=new_grid, id=self.id, attributes=dict(self._attributes))
 
     # ------------------------------------------------------------------
-    # CDAT-style callable selection  var(time=..., latitude=..., longitude=...)
+    # CDAT-style callable selection: var(time=..., latitude=..., longitude=...)
     # ------------------------------------------------------------------
     def __call__(self, *args, **kwargs) -> "CDATVariable":
         if not kwargs:
@@ -634,71 +942,76 @@ class CDATVariable:
         if "squeeze" in kwargs and kwargs["squeeze"]:
             result_data = result_data.squeeze()
             result_axes = [ax for ax in result_axes if ax is not None and len(ax) > 1]
-            return CDATVariable(result_data, axes=result_axes, grid=self._grid,
-                                id=self.id, attributes=dict(self._attributes))
+            return CDATVariable(result_data, axes=result_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
 
         def _sel_axis(ax_idx, bounds):
             nonlocal result_data, result_axes
             ax = result_axes[ax_idx]
             if ax is None:
                 return
+
+            if not isinstance(bounds, (tuple, list)) or len(bounds) != 2:
+                raise ValueError("Selection bounds must be a 2-element tuple/list")
+
             if ax.isTime():
                 t_vals = ax.asComponentTime()
-                t0_str = str(bounds[0]).split(".")[0]
-                t1_str = str(bounds[1]).split(".")[0]
-                indices = [i for i, t in enumerate(t_vals)
-                           if t0_str <= str(t).split(".")[0] <= t1_str]
+                if not t_vals:
+                    indices = []
+                else:
+                    t0 = _coerce_time_bound(bounds[0], t_vals[0])
+                    t1 = _coerce_time_bound(bounds[1], t_vals[0])
+                    try:
+                        lo, hi = (t0, t1) if t0 <= t1 else (t1, t0)
+                    except TypeError:
+                        lo, hi = (t0, t1) if str(t0) <= str(t1) else (t1, t0)
+                    indices = [i for i, t in enumerate(t_vals) if _time_in_range(t, lo, hi)]
             else:
                 raw = ax._values.astype(float)
                 lo, hi = min(float(bounds[0]), float(bounds[1])), max(float(bounds[0]), float(bounds[1]))
                 indices = list(np.where((raw >= lo) & (raw <= hi))[0])
-            if not indices:
-                return
+
             slices = [slice(None)] * result_data.ndim
             slices[ax_idx] = indices
             result_data = result_data[tuple(slices)]
+
             old_ax = ax
             new_vals = old_ax._values[indices]
-            result_axes[ax_idx] = _Axis(old_ax.id, new_vals, units=old_ax.units,
-                                        attributes=old_ax._attributes,
-                                        axis_type=old_ax.axis)
+            result_axes[ax_idx] = _Axis(
+                old_ax.id,
+                new_vals,
+                units=old_ax.units,
+                attributes=dict(old_ax._attributes),
+                axis_type=old_ax.axis,
+            )
 
         if "time" in kwargs:
-            t_idx = next((i for i, ax in enumerate(result_axes)
-                          if ax is not None and ax.isTime()), None)
+            t_idx = next((i for i, ax in enumerate(result_axes) if ax is not None and ax.isTime()), None)
             if t_idx is not None:
                 _sel_axis(t_idx, kwargs["time"])
 
         if "latitude" in kwargs:
-            lat_idx = next((i for i, ax in enumerate(result_axes)
-                            if ax is not None and ax.isLatitude()), None)
+            lat_idx = next((i for i, ax in enumerate(result_axes) if ax is not None and ax.isLatitude()), None)
             if lat_idx is not None:
                 _sel_axis(lat_idx, kwargs["latitude"])
 
         if "longitude" in kwargs:
-            lon_idx = next((i for i, ax in enumerate(result_axes)
-                            if ax is not None and ax.isLongitude()), None)
+            lon_idx = next((i for i, ax in enumerate(result_axes) if ax is not None and ax.isLongitude()), None)
             if lon_idx is not None:
                 _sel_axis(lon_idx, kwargs["longitude"])
 
         lat_ax = next((ax for ax in result_axes if ax is not None and ax.isLatitude()), None)
         lon_ax = next((ax for ax in result_axes if ax is not None and ax.isLongitude()), None)
-        new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else self._grid
+        new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else None
 
-        return CDATVariable(result_data, axes=result_axes, grid=new_grid,
-                            id=self.id, attributes=dict(self._attributes))
+        return CDATVariable(result_data, axes=result_axes, grid=new_grid, id=self.id, attributes=dict(self._attributes))
 
 
 # ---------------------------------------------------------------------------
-# Factory helpers  (replacements for cdms2 factory functions)
+# Factory helpers
 # ---------------------------------------------------------------------------
 
-def create_axis(
-    id: str,
-    values,
-    units: str = "",
-    attributes: Optional[dict] = None,
-) -> _Axis:
+
+def create_axis(id: str, values, units: str = "", attributes: Optional[dict] = None) -> _Axis:
     """Replacement for ``cdms2.createAxis``."""
     return _Axis(id, values, units=units, attributes=attributes)
 
@@ -715,62 +1028,54 @@ def create_uniform_lon_axis(start: float, n: int, delta: float) -> _Axis:
     return _Axis("lon", vals, units="degrees_east", axis_type="X")
 
 
-def create_rect_grid(
-    lat_axis: _Axis,
-    lon_axis: _Axis,
-    order: str = "yx",
-    grid_type: str = "generic",
-    mask=None,
-) -> _Grid:
+def create_rect_grid(lat_axis: _Axis, lon_axis: _Axis, order: str = "yx", grid_type: str = "generic", mask=None) -> _Grid:
     """Replacement for ``cdms2.createRectGrid``."""
     g = _Grid(lat_axis, lon_axis)
     g.type = grid_type
     return g
 
 
-def create_variable(
-    data,
-    axes: Optional[list] = None,
-    grid: Optional[_Grid] = None,
-    mask=None,
-    id: str = "",
-    attributes: Optional[dict] = None,
-) -> CDATVariable:
+def create_variable(data, axes: Optional[list] = None, grid: Optional[_Grid] = None, mask=None, id: str = "", attributes: Optional[dict] = None) -> CDATVariable:
     """Replacement for ``cdms2.createVariable``."""
-    return CDATVariable(data, axes=axes, grid=grid, mask=mask,
-                        id=id, attributes=attributes)
+    return CDATVariable(data, axes=axes, grid=grid, mask=mask, id=id, attributes=attributes)
 
 
 # ---------------------------------------------------------------------------
 # Conversion helpers
 # ---------------------------------------------------------------------------
 
-def _dim_to_axis_type(dim_name: str, coord) -> str:
-    typ = _detect_axis_type(dim_name)
-    if typ != "-":
-        return typ
-    if coord is not None:
-        cf_axis = coord.attrs.get("axis", "")
-        if cf_axis.upper() == "T":
-            return "T"
-        if cf_axis.upper() == "Y":
-            return "Y"
-        if cf_axis.upper() == "X":
-            return "X"
-        if cf_axis.upper() == "Z":
-            return "Z"
-    return "-"
+
+def _extract_aux_lat_lon_axes(da: xr.DataArray):
+    """
+    Best-effort support for auxiliary 1D lat/lon coordinates.
+
+    This helps with some post-processed products, but does not make native
+    unstructured grids equivalent to rectilinear CDAT grids.
+    """
+    lat_ax = None
+    lon_ax = None
+    for cname, coord in da.coords.items():
+        if coord.ndim != 1:
+            continue
+        ax_type = _dim_to_axis_type(cname, coord)
+        attrs = dict(coord.attrs)
+        if ax_type == "Y" and lat_ax is None:
+            lat_ax = _Axis(cname, coord.values, units=attrs.get("units", ""), attributes=attrs, axis_type="Y")
+        elif ax_type == "X" and lon_ax is None:
+            lon_ax = _Axis(cname, coord.values, units=attrs.get("units", ""), attributes=attrs, axis_type="X")
+    return lat_ax, lon_ax
 
 
 def da_to_cdat(da: xr.DataArray, varname: Optional[str] = None) -> CDATVariable:
     """
     Convert an ``xarray.DataArray`` to a ``CDATVariable``.
 
-    Time coordinates containing ``cftime`` objects are preserved as-is.
+    For best results, pass decoded xarray objects with CF-compliant dimensions
+    and coordinates. Dask-backed arrays will be materialized because CDAT-style
+    ``numpy.ma`` storage is eager by design.
     """
     name = varname or da.name or ""
 
-    # ---- build axes ---------------------------------------------------
     axes = []
     for dim in da.dims:
         coord = da.coords.get(dim)
@@ -780,95 +1085,80 @@ def da_to_cdat(da: xr.DataArray, varname: Optional[str] = None) -> CDATVariable:
         else:
             vals = coord.values
             units = coord.attrs.get("units", "")
-            cal = coord.attrs.get("calendar", None)
             attrs = dict(coord.attrs)
-            ax = _Axis(dim, vals, units=units,
-                       attributes=attrs, axis_type=ax_type)
-            if cal:
-                ax.calendar = cal
+            ax = _Axis(dim, vals, units=units, attributes=attrs, axis_type=ax_type)
+            if "calendar" in attrs:
+                ax.calendar = attrs["calendar"]
         axes.append(ax)
 
-    # ---- build grid ---------------------------------------------------
-    lat_ax = next((ax for ax in axes if ax.isLatitude()), None)
-    lon_ax = next((ax for ax in axes if ax.isLongitude()), None)
-    grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else None
+    lat_ax = next((ax for ax in axes if ax is not None and ax.isLatitude()), None)
+    lon_ax = next((ax for ax in axes if ax is not None and ax.isLongitude()), None)
 
-    # ---- build data ---------------------------------------------------
-    raw = da.values
-    if hasattr(raw, "mask"):
-        data = ma.array(raw.data, mask=raw.mask, fill_value=1e20)
-    else:
-        data = ma.array(np.asarray(raw, dtype=float),
-                        mask=np.isnan(raw.astype(float)),
-                        fill_value=1e20)
+    # Best-effort fallback for simple 1D auxiliary lat/lon coordinates.
+    if lat_ax is None or lon_ax is None:
+        aux_lat, aux_lon = _extract_aux_lat_lon_axes(da)
+        lat_ax = lat_ax or aux_lat
+        lon_ax = lon_ax or aux_lon
 
-    var = CDATVariable(data, axes=axes, grid=grid,
-                       id=name, attributes=dict(da.attrs))
-    var.units = da.attrs.get("units", "")
+    grid = _Grid(lat_ax, lon_ax) if (lat_ax is not None and lon_ax is not None) else None
+
+    attrs = dict(da.attrs)
+    fill_value = attrs.get("_FillValue", attrs.get("missing_value", 1e20))
+    try:
+        fill_value = float(np.ravel(fill_value)[0])
+    except Exception:
+        fill_value = 1e20
+
+    try:
+        data = da.to_masked_array(copy=False)
+    except Exception:
+        raw = da.values
+        data = ma.array(raw, mask=np.isnan(np.asarray(raw, dtype=float)), fill_value=fill_value)
+
+    var = CDATVariable(data, axes=axes, grid=grid, id=name, attributes=attrs, fill_value=fill_value)
+    var.units = attrs.get("units", "")
     return var
-
-
-def _coerce_axes(axes, ndim: int) -> list:
-    """
-    Ensure every element in an axes list is an _Axis (or None).
-    Raw numpy arrays (e.g. from ``axis[:]``) are wrapped in a generic _Axis.
-    """
-    if axes is None:
-        return []
-    result = []
-    for i, a in enumerate(axes):
-        if a is None or isinstance(a, _Axis):
-            result.append(a)
-        elif isinstance(a, np.ndarray):
-            result.append(_Axis(f"dim_{i}", a))
-        else:
-            try:
-                result.append(_Axis(f"dim_{i}", np.asarray(a)))
-            except Exception:
-                result.append(None)
-    return result
 
 
 def cdat_to_da(var: CDATVariable, name: Optional[str] = None) -> xr.DataArray:
     """
     Convert a ``CDATVariable`` to an ``xarray.DataArray``.
 
-    Numeric time axes are left as-is; cftime-valued time axes are placed
-    into the DataArray coords directly so xarray can handle them.
+    Numeric time axes are left as-is; datetime/cftime-valued axes are placed
+    directly into the DataArray coordinates.
     """
     name = name or var.id or "var"
-    # Ensure axes are proper _Axis objects (guard against any raw arrays that
-    # slipped through before _coerce_axes was introduced)
     axes = _coerce_axes(var._axes, var._data.ndim)
-    dims = [ax.id if ax is not None else f"dim_{i}"
-            for i, ax in enumerate(axes)]
+    _validate_axes_shape(var._data, axes, context=f"cdat_to_da({name})")
+
+    dims = [ax.id if ax is not None else f"dim_{i}" for i, ax in enumerate(axes)]
     coords = {}
-    for i, (dim, ax) in enumerate(zip(dims, axes)):
+    for dim, ax in zip(dims, axes):
         if ax is None:
             continue
         vals = ax._values
         attrs = dict(ax._attributes)
         if "units" not in attrs and ax.units:
             attrs["units"] = ax.units
-        # Fill in canonical CF units when still missing, verified by value range
+
         if "units" not in attrs and ax.axis in ("Y", "X"):
             try:
                 _v = np.asarray(vals, dtype=float)
-                _lo, _hi = float(_v.min()), float(_v.max())
+                _lo, _hi = float(np.nanmin(_v)), float(np.nanmax(_v))
                 if ax.axis == "Y" and -90.0 <= _lo and _hi <= 90.0:
                     attrs["units"] = "degrees_north"
                 elif ax.axis == "X" and -180.0 <= _lo and _hi <= 360.0:
                     attrs["units"] = "degrees_east"
             except Exception:
                 pass
+
         if ax.axis in ("T", "Y", "X", "Z"):
             attrs["axis"] = ax.axis
+
         try:
             coords[dim] = xr.Variable(dim, vals, attrs=attrs)
         except Exception:
             coords[dim] = xr.Variable(dim, np.arange(len(vals)), attrs=attrs)
 
     raw = np.ma.filled(var._data, fill_value=np.nan)
-    da = xr.DataArray(raw, dims=dims, coords=coords,
-                      name=name, attrs=dict(var._attributes))
-    return da
+    return xr.DataArray(raw, dims=dims, coords=coords, name=name, attrs=dict(var._attributes))

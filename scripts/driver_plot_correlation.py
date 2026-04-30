@@ -87,15 +87,15 @@ def compute_correlation(tab_in):
 
     Input:
     -----
-    :param tab_in: `cdms2` variable
-        A `cdms2` variable containing the data to be analysed.
+    :param tab_in: CDATVariable
+        A CDATVariable (masked array) containing the data to be analysed.
 
     Outputs:
     -------
-    :return rval: `cdms2` variable
-        A `cdms2` variable containing the correlation coefficients between the values along the first axis.
-    :return pval: `cdms2` variable
-        A `cdms2` variable containing the two-sided p-value for a hypothesis test whose null hypothesis is that the
+    :return rval: CDATVariable
+        A CDATVariable containing the correlation coefficients between the values along the first axis.
+    :return pval: CDATVariable
+        A CDATVariable containing the two-sided p-value for a hypothesis test whose null hypothesis is that the
         slope is zero, using Wald Test with t-distribution of the test statistic. I.e., if the absolute value of the
         correlation is smaller than the p-value, it means that the correlation is not significant.
     """
