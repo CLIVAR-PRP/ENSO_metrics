@@ -156,7 +156,15 @@ class _Axis:
         if self.units:
             try:
                 cal = self.calendar or "standard"
-                return list(cftime.num2date(vals, self.units, calendar=cal))
+                decoded = list(cftime.num2date(vals, self.units, calendar=cal))
+                # Clamp leap-second (second=60) which some files encode but
+                # cftime rejects when constructing certain calendar types.
+                result = []
+                for dt in decoded:
+                    if hasattr(dt, 'second') and dt.second == 60:
+                        dt = dt.replace(second=59)
+                    result.append(dt)
+                return result
             except Exception:
                 pass
         # Fallback: wrap floats as years

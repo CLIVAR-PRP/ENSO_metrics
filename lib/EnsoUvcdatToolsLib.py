@@ -77,8 +77,9 @@ def open_file(path, mode="r"):
 def CDTIMEcomptime(year, month=1, day=1, hour=0, minute=0, second=0.0,
                    calendar="standard"):
     """Replacement for cdtime.comptime()."""
+    # Clamp leap-second (second=60) to 59 — cftime rejects second=60
     return cftime.datetime(year, month, day, hour, minute,
-                           int(second), calendar=calendar)
+                           min(int(second), 59), calendar=calendar)
 
 # ---------------------------------------------------------------------------
 # MV2 aliases  → numpy.ma equivalents
@@ -435,6 +436,31 @@ def _add_cf_units_to_ds(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
+def _clamp_leap_seconds(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Some NetCDF files encode timestamps with second=60 (leap-second notation).
+    cftime raises ValueError for these; clamp them to second=59 so decoding
+    succeeds without silently dropping time steps.
+    """
+    if "time" not in ds.coords:
+        return ds
+    try:
+        vals = ds["time"].values
+        if len(vals) == 0 or not hasattr(vals[0], "second"):
+            return ds
+        needs_fix = any(getattr(v, "second", 0) == 60 for v in vals)
+        if not needs_fix:
+            return ds
+        new_vals = np.array(
+            [v.replace(second=59) if getattr(v, "second", 0) == 60 else v
+             for v in vals],
+            dtype=object)
+        ds = ds.assign_coords(time=("time", new_vals, ds["time"].attrs))
+    except Exception:
+        pass
+    return ds
+
+
 # ---------------------------------------------------------------------------
 # Thin _XcDatasetHandle  (replaces cdms2 file handle)
 # ---------------------------------------------------------------------------
@@ -463,6 +489,7 @@ class _XcDatasetHandle:
                     self._ds = xr.open_dataset(path, decode_times=True,
                                                use_cftime=True)
                 self._ds = _add_cf_units_to_ds(self._ds)
+                self._ds = _clamp_leap_seconds(self._ds)
             except Exception:
                 self._ds = None  # file may not exist yet in append mode
 
