@@ -217,11 +217,11 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
     else:
         one_yaxis = False
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
@@ -416,11 +416,11 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     xname = dict_param["xname"]
     yname = dict_param["yname"]
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if units != "":
         yname = yname + " (" + units + ")"
     if "colors" in list(dict_param.keys()):
@@ -749,11 +749,11 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     yname = dict_param["yname"]
     zname = dict_param["zname"]
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if units != "":
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
@@ -988,11 +988,11 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         if nbr_val > 1:
             title = title * nbr_val
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if units != "":
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
@@ -1498,7 +1498,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             for kk in list(regions.keys()):
                 if kk in xlabel.lower():
                     xlabel = regions[kk] + " " + xlabel
-            units = tab_obs[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+            units = tab_obs[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
             if units != "":
                 xlabel = xlabel + " (" + units + ")"
             ax.set_xlabel(xlabel, fontsize=15)
@@ -1536,7 +1536,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             for kk in list(regions.keys()):
                 if kk in ylabel.lower():
                     ylabel = regions[kk] + " " + ylabel
-            units = tab_obs[1].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+            units = tab_obs[1].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
             if units != "":
                 ylabel = ylabel + " (" + units + ")"
             ax.set_ylabel(ylabel, fontsize=15)
@@ -2163,7 +2163,7 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
     # color bar
     cax = plt.axes([x2 + 0.03, y1, 0.02, y2 - y1])
     cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend="both", aspect=40)
-    cbar.ax.set_yticklabels(["-2 $\sigma$", "-1", "MMV", "1", "2 $\sigma$"], fontdict=fontdict)
+    cbar.ax.set_yticklabels([r"-2 $\sigma$", "-1", "MMV", "1", r"2 $\sigma$"], fontdict=fontdict)
     dict_arrow = dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0)
     dict_txt = dict(fontsize=40, rotation="vertical", ha="center", weight="bold")
     cax.annotate("", xy=(3.7, 0.06), xycoords="axes fraction", xytext=(3.7, 0.45), arrowprops=dict_arrow)

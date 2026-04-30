@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 import subprocess
 import glob
 
@@ -66,4 +66,5 @@ setup(name="EnsoMetrics",
       packages=['EnsoMetrics', 'EnsoPlots'],
       package_dir={'EnsoMetrics': 'lib', 'EnsoPlots': 'plots'},
       scripts=glob.glob("scripts/*.py"),
-      data_files=data_files, requires=['numpy'])
+      data_files=data_files,
+      install_requires=['numpy', 'scipy', 'packaging'])

@@ -1,9 +1,9 @@
 # -*- coding:UTF-8 -*-
 from inspect import stack as INSPECTstack
 from numpy import array as NUMPYarray
+from numpy import percentile as NUMPYpercentile
 from numpy import square as NUMPYsquare
 from numpy import unravel_index as NUMPYunravel_index
-from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # ENSO_metrics package functions:
 from . import EnsoErrorsWarnings
 
@@ -221,10 +221,10 @@ def statistical_dispersion(tab, method='IQR'):
         ]
         EnsoErrorsWarnings.my_error(list_strings)
     if method == 'IQR':
-        stat_disp = abs(float(SCIPYstats__scoreatpercentile(tab, 75) - SCIPYstats__scoreatpercentile(tab, 25)))
+        stat_disp = abs(float(NUMPYpercentile(tab, 75) - NUMPYpercentile(tab, 25)))
     else:
-        med = float(SCIPYstats__scoreatpercentile(tab, 50))
-        stat_disp = float(SCIPYstats__scoreatpercentile([abs(ii - med) for ii in tab], 50))
+        med = float(NUMPYpercentile(tab, 50))
+        stat_disp = float(NUMPYpercentile([abs(ii - med) for ii in tab], 50))
     return stat_disp
 
 

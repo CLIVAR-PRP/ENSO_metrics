@@ -10,10 +10,10 @@ from numpy import isnan as NUMPYisnan
 from numpy import mean as NUMPYmean
 from numpy import nan as NUMPYnan
 from numpy import sort as NUMPYsort
+from numpy import percentile as NUMPYpercentile
 from numpy import where as NUMPYwhere
 from numpy.ma import masked_invalid as NUMPYma__masked_invalid
 from numpy.random import randint as NUMPYrandom__randint
-from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 
 # xarray based functions
 from xarray import open_dataset
@@ -93,7 +93,7 @@ def create_labels(label_name, label_ticks):
             label_ticks = NUMPYarray(label_ticks)
             while 0 not in label_ticks:
                 label_ticks = label_ticks + 1
-        label = [str(abs(int(ii))) + '$^\circ$S' if ii < 0 else (str(abs(int(ii))) + '$^\circ$N' if ii > 0 else 'eq')
+        label = [str(abs(int(ii))) + r'$^\circ$S' if ii < 0 else (str(abs(int(ii))) + r'$^\circ$N' if ii > 0 else 'eq')
                  for ii in label_ticks]
     elif label_name == "longitude":
         if len(label_ticks) < 200:
@@ -105,8 +105,8 @@ def create_labels(label_name, label_ticks):
             label_ticks = NUMPYarray(label_ticks)
             while 180 not in label_ticks:
                 label_ticks = label_ticks + 10
-        label = [str(int(ii)) + "$^\circ$E" if ii < 180 else (
-            str(abs(int(ii) - 360)) + "$^\circ$W" if ii > 180 else "180$^\circ$") for ii in label_ticks]
+        label = [str(int(ii)) + r"$^\circ$E" if ii < 180 else (
+            str(abs(int(ii) - 360)) + r"$^\circ$W" if ii > 180 else r"180$^\circ$") for ii in label_ticks]
     return label_ticks, label
 
 
@@ -296,7 +296,7 @@ def my_legend(modname, obsname, filename_nc, models2=None, member=None, plot_met
 
 def my_mask(tab, remove_masked=False):
     tmp = NUMPYarray(tab, dtype=float)
-    tmp = NUMPYwhere(tmp == None, NUMPYnan, tmp)
+    # None entries are cast to nan by dtype=float; masked_invalid catches both nan and inf
     tmp = NUMPYma__masked_invalid(tmp)
     if remove_masked is True:
         # tmp = tmp[~tmp.mask]
@@ -531,7 +531,7 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
 
 
 def shading_levels(tab, lev=[5, 25, 75, 95], axis=None):
-    return [SCIPYstats__scoreatpercentile(tab, ll, axis=axis) for ll in lev] + [my_average(tab, axis=axis)]
+    return [NUMPYpercentile(tab, ll, axis=axis) for ll in lev] + [my_average(tab, axis=axis)]
 
 
 def remove_metrics(metrics_in, metric_collection, reduced_set=False, portraitplot=False):

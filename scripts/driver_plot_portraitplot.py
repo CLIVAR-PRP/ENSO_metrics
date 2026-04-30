@@ -130,8 +130,13 @@ for mc in list_metric_collections:
     # add values to the array (CMIP mean, reference, other observational datasets,...)
     for jj, met in enumerate(my_metrics):
         tmp = tab[plus:, jj].compressed()
-        mea = float(NUMPYmean(tmp))
-        std = float(NUMPYstd(tmp))
+        if len(tmp) == 0:
+            mea, std = float('nan'), float('nan')
+        else:
+            mea = float(NUMPYmean(tmp))
+            std = float(NUMPYstd(tmp))
+            if std == 0.0:
+                std = float('nan')
         del tmp
         for ii, dd in enumerate(list_observations + ["reference"] + list_projects):
             if dd in list_observations:
@@ -140,7 +145,7 @@ for mc in list_metric_collections:
                 tmp = [tab[kk + plus, jj] for kk, mod in enumerate(my_models) if mod in list(model_by_proj[dd].keys())]
                 tmp = NUMPYma__masked_invalid(NUMPYma__array(tmp))
                 tmp = NUMPYmasked_where(tmp == 1e20, tmp).compressed()
-                val = float(NUMPYmean(tmp))
+                val = float(NUMPYmean(tmp)) if len(tmp) > 0 else float('nan')
                 del tmp
             else:
                 val = 0

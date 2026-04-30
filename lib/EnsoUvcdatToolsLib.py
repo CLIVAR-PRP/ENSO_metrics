@@ -2473,7 +2473,7 @@ def SkewnessTemporal(tab):
             # Find the indices of values that are not missing in one row. All the rows will have missing values in the
             # same places provided the array was centered. If it wasn't then it is possible that some missing values
             # will be missed and the singular value decomposition will produce not a number for everything.
-            nonMissingIndex = NPwhere(NPisnan(dataset[0]) == False)[0]
+            nonMissingIndex = NPwhere(~NPisnan(dataset[0]))[0]
             # Remove missing values from the design matrix.
             dataNoMissing = dataset[:, nonMissingIndex]
             new_dataset = SCIPYstats__skew(dataNoMissing, axis=0)
