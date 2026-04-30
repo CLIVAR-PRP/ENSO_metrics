@@ -1,4 +1,4 @@
-from .version import __version__, __git_tag_describe__, __git_sha1__
+from .version import __version__
 from .EnsoCollectionsLib import *
 from .EnsoComputeMetricsLib import *
 from .EnsoErrorsWarnings import *
