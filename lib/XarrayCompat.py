@@ -77,6 +77,7 @@ __all__ = [
     "create_variable",
     "da_to_cdat",
     "cdat_to_da",
+    "validate_cdat_variable",
 ]
 
 
@@ -463,6 +464,54 @@ def _validate_grid(grid, axes, context: str = "CDATVariable"):
                 warnings.warn(msg, stacklevel=2)
         except StopIteration:
             pass  # axis not found in list (e.g. grid built from external axes)
+
+
+def _build_grid_from_axes(axes) -> Optional["_Grid"]:
+    """Build a rectilinear grid from available latitude/longitude axes."""
+    if not axes:
+        return None
+    lat_ax = next((ax for ax in axes if ax is not None and ax.isLatitude()), None)
+    lon_ax = next((ax for ax in axes if ax is not None and ax.isLongitude()), None)
+    if lat_ax is None:
+        lat_ax = next((ax for ax in axes if ax is not None and _detect_axis_type(ax.id) == "Y"), None)
+    if lon_ax is None:
+        lon_ax = next((ax for ax in axes if ax is not None and _detect_axis_type(ax.id) == "X"), None)
+    return _Grid(lat_ax, lon_ax) if (lat_ax is not None and lon_ax is not None) else None
+
+
+def validate_cdat_variable(var, context: str = "CDATVariable"):
+    """
+    Validate that a CDATVariable carries axis metadata consistent with data shape.
+
+    This catches the common failure mode that caused downstream ENSO metric
+    crashes: data have been reduced/sliced while stale or missing axis metadata
+    were propagated.
+    """
+    if not isinstance(var, CDATVariable):
+        raise TypeError(f"{context}: expected CDATVariable, got {type(var)!r}")
+    axes = var.getAxisList()
+    _validate_axes_shape(var._data, axes, context=context)
+    _validate_grid(var.getGrid(), axes, context=context)
+    return var
+
+
+def _coord_attrs_with_axis(coord, axis_type: str) -> dict:
+    """Return coordinate attrs with CF axis metadata strengthened."""
+    attrs = dict(getattr(coord, "attrs", {}) or {})
+    if axis_type in {"T", "Y", "X", "Z"}:
+        attrs.setdefault("axis", axis_type)
+    if axis_type == "Y":
+        attrs.setdefault("standard_name", "latitude")
+        attrs.setdefault("units", "degrees_north")
+    elif axis_type == "X":
+        attrs.setdefault("standard_name", "longitude")
+        attrs.setdefault("units", "degrees_east")
+    elif axis_type == "T":
+        attrs.setdefault("standard_name", "time")
+        cal = attrs.get("calendar") or getattr(coord, "encoding", {}).get("calendar", None)
+        if cal is not None:
+            attrs.setdefault("calendar", cal)
+    return attrs
 
 
 # ---------------------------------------------------------------------------
@@ -909,13 +958,11 @@ class CDATVariable:
         if not isinstance(data, (np.ndarray, ma.MaskedArray)):
             return data
         axes = self._axes if axes is None else axes
-        # Don't propagate a now-stale grid when axes were dropped (e.g. after
-        # shape-changing binary ops where _binary_axes returned []).
-        grid = self._grid if axes else None
+        axes = [ax.copy() if ax is not None else None for ax in axes]
         return CDATVariable(
             data,
-            axes=[ax.copy() if ax is not None else None for ax in axes],
-            grid=grid,
+            axes=axes,
+            grid=_build_grid_from_axes(axes),
             id=self.id,
             attributes=dict(self._attributes),
         )
@@ -957,13 +1004,29 @@ class CDATVariable:
     def squeeze(self, axis=None) -> "CDATVariable":
         result = self._data.squeeze(axis=axis)
         if axis is None:
-            new_axes = [ax for ax in self._axes if ax is not None and len(ax) > 1]
+            # Drop exactly the singleton dimensions removed by numpy.squeeze.
+            new_axes = [
+                ax.copy() if ax is not None else None
+                for i, ax in enumerate(self._axes)
+                if self._data.shape[i] != 1
+            ]
         else:
-            # Accept both int and numpy.integer
+            # Accept int, numpy.integer, or tuple/list of ints. numpy.squeeze
+            # already raises if a requested axis is not singleton.
             axes_to_drop = {int(axis)} if isinstance(axis, (int, np.integer)) else {int(a) for a in axis}
             axes_to_drop = {a if a >= 0 else self.ndim + a for a in axes_to_drop}
-            new_axes = [ax for i, ax in enumerate(self._axes) if i not in axes_to_drop]
-        return CDATVariable(result, axes=new_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
+            new_axes = [
+                ax.copy() if ax is not None else None
+                for i, ax in enumerate(self._axes)
+                if i not in axes_to_drop
+            ]
+        return CDATVariable(
+            result,
+            axes=new_axes,
+            grid=_build_grid_from_axes(new_axes),
+            id=self.id,
+            attributes=dict(self._attributes),
+        )
 
     def compress(self, condition, axis: int = 0) -> "CDATVariable":
         result = self._data.compress(condition, axis=axis)
@@ -973,7 +1036,7 @@ class CDATVariable:
             old_ax = self._axes[axis]
             new_vals = old_ax._values[np.asarray(condition, dtype=bool)]
             new_axes[axis] = _Axis(old_ax.id, new_vals, units=old_ax.units, attributes=dict(old_ax._attributes), axis_type=old_ax.axis)
-        return CDATVariable(result, axes=new_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
+        return CDATVariable(result, axes=new_axes, grid=_build_grid_from_axes(new_axes), id=self.id, attributes=dict(self._attributes))
 
     def copy(self) -> "CDATVariable":
         return CDATVariable(
@@ -1283,11 +1346,13 @@ def _extract_aux_lat_lon_axes(da: xr.DataArray):
 
 def da_to_cdat(da: xr.DataArray, varname: Optional[str] = None) -> CDATVariable:
     """
-    Convert an ``xarray.DataArray`` to a ``CDATVariable``.
+    Convert an ``xarray.DataArray`` to a ``CDATVariable`` with strengthened
+    axis metadata.
 
-    For best results, pass decoded xarray objects with CF-compliant dimensions
-    and coordinates. Dask-backed arrays will be materialized because CDAT-style
-    ``numpy.ma`` storage is eager by design.
+    This routine is the main boundary between xarray and legacy CDAT-style
+    code. It makes the axis structure explicit and validates it before
+    returning. Dask-backed arrays are materialized because the shim uses eager
+    ``numpy.ma`` storage by design.
     """
     name = varname or da.name or ""
 
@@ -1296,14 +1361,18 @@ def da_to_cdat(da: xr.DataArray, varname: Optional[str] = None) -> CDATVariable:
         coord = da.coords.get(dim)
         ax_type = _dim_to_axis_type(dim, coord)
         if coord is None:
-            ax = _Axis(dim, np.arange(da.sizes[dim]), axis_type=ax_type)
+            vals = np.arange(da.sizes[dim])
+            attrs = {"axis": ax_type} if ax_type in {"T", "Y", "X", "Z"} else {}
+            units = attrs.get("units", "")
         else:
             vals = coord.values
-            units = coord.attrs.get("units", "")
-            attrs = dict(coord.attrs)
-            ax = _Axis(dim, vals, units=units, attributes=attrs, axis_type=ax_type)
-            if "calendar" in attrs:
-                ax.calendar = attrs["calendar"]
+            attrs = _coord_attrs_with_axis(coord, ax_type)
+            units = attrs.get("units", "")
+        ax = _Axis(dim, vals, units=units, attributes=attrs, axis_type=ax_type)
+        if coord is not None:
+            cal = attrs.get("calendar") or getattr(coord, "encoding", {}).get("calendar", None)
+            if cal is not None:
+                ax.calendar = cal
         axes.append(ax)
 
     lat_ax = next((ax for ax in axes if ax is not None and ax.isLatitude()), None)
@@ -1328,21 +1397,28 @@ def da_to_cdat(da: xr.DataArray, varname: Optional[str] = None) -> CDATVariable:
         data = da.to_masked_array(copy=False)
     except Exception:
         raw = da.values
-        data = ma.array(raw, mask=np.isnan(np.asarray(raw, dtype=float)), fill_value=fill_value)
+        if np.issubdtype(np.asarray(raw).dtype, np.number):
+            data = ma.masked_invalid(raw)
+        else:
+            data = ma.array(raw)
 
     var = CDATVariable(data, axes=axes, grid=grid, id=name, attributes=attrs, fill_value=fill_value)
-    var.units = attrs.get("units", "")
-    return var
+    if "units" in attrs:
+        var.units = attrs.get("units", "")
+    return validate_cdat_variable(var, context=f"da_to_cdat({name})")
 
 
 def cdat_to_da(var: CDATVariable, name: Optional[str] = None) -> xr.DataArray:
     """
-    Convert a ``CDATVariable`` to an ``xarray.DataArray``.
+    Convert a ``CDATVariable`` to an ``xarray.DataArray`` while preserving CF
+    axis metadata on coordinates.
 
-    Numeric time axes are left as-is; datetime/cftime-valued axes are placed
-    directly into the DataArray coordinates.
+    Masked floating data are represented with NaN. Masked non-floating numeric
+    data are promoted to float only when a mask is present, avoiding invalid
+    integer fill values while keeping unmasked integer arrays integer.
     """
     name = name or var.id or "var"
+    validate_cdat_variable(var, context=f"cdat_to_da({name}) input")
     axes = _coerce_axes(var._axes, var._data.ndim)
     _validate_axes_shape(var._data, axes, context=f"cdat_to_da({name})")
 
@@ -1356,26 +1432,38 @@ def cdat_to_da(var: CDATVariable, name: Optional[str] = None) -> xr.DataArray:
         if "units" not in attrs and ax.units:
             attrs["units"] = ax.units
 
-        if "units" not in attrs and ax.axis in ("Y", "X"):
-            try:
-                _v = np.asarray(vals, dtype=float)
-                _lo, _hi = float(np.nanmin(_v)), float(np.nanmax(_v))
-                if ax.axis == "Y" and -90.0 <= _lo and _hi <= 90.0:
-                    attrs["units"] = "degrees_north"
-                elif ax.axis == "X" and -180.0 <= _lo and _hi <= 360.0:
-                    attrs["units"] = "degrees_east"
-            except Exception:
-                pass
-
         if ax.axis in ("T", "Y", "X", "Z"):
             attrs["axis"] = ax.axis
-        elif _detect_axis_type(ax.id) in ("T", "Y", "X", "Z"):
-            attrs["axis"] = _detect_axis_type(ax.id)
+        else:
+            detected = _detect_axis_type(ax.id)
+            if detected in ("T", "Y", "X", "Z"):
+                attrs["axis"] = detected
+
+        if attrs.get("axis") == "Y":
+            attrs.setdefault("standard_name", "latitude")
+            attrs.setdefault("units", "degrees_north")
+        elif attrs.get("axis") == "X":
+            attrs.setdefault("standard_name", "longitude")
+            attrs.setdefault("units", "degrees_east")
+        elif attrs.get("axis") == "T":
+            attrs.setdefault("standard_name", "time")
+            if ax.calendar is not None:
+                attrs.setdefault("calendar", ax.calendar)
 
         try:
             coords[dim] = xr.Variable(dim, vals, attrs=attrs)
         except Exception:
             coords[dim] = xr.Variable(dim, np.arange(len(vals)), attrs=attrs)
 
-    raw = np.ma.filled(var._data, fill_value=np.nan)
+    data = var._data
+    if ma.isMaskedArray(data) and np.any(ma.getmaskarray(data)):
+        if np.issubdtype(data.dtype, np.floating):
+            raw = data.filled(np.nan)
+        elif np.issubdtype(data.dtype, np.number):
+            raw = data.astype(float).filled(np.nan)
+        else:
+            raw = data.filled(None)
+    else:
+        raw = np.asarray(data)
+
     return xr.DataArray(raw, dims=dims, coords=coords, name=name, attrs=dict(var._attributes))

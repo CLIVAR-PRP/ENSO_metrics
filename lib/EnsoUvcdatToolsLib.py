@@ -120,9 +120,16 @@ def MV2average(a, axis=None, weights=None):
                 for i, old_ax in enumerate(a._axes)
                 if i not in drop
             ]
-        # Post-check: catch accidental time-axis loss early
-        if (a.getTime() is not None and result.ndim >= 1
-                and not any(ax is not None and ax.axis == "T" for ax in new_axes)):
+        # Post-check: catch accidental time-axis loss only when time was
+        # not in the set of axes that were explicitly reduced.
+        _t_ax = a.getTime()
+        _t_idx = next(
+            (i for i, ax in enumerate(a._axes) if ax is not None and ax is _t_ax), None
+        ) if _t_ax is not None else None
+        _time_explicitly_dropped = (_t_idx is not None and _t_idx in drop)
+        if (_t_ax is not None and result.ndim >= 1
+                and not any(ax is not None and ax.axis == "T" for ax in new_axes)
+                and not _time_explicitly_dropped):
             raise RuntimeError(
                 f"Time axis unexpectedly dropped in MV2average: "
                 f"id={a.id!r}, original_axes={[ax.id if ax else None for ax in a._axes]}, "
@@ -188,9 +195,16 @@ def MV2sum(a, axis=None, fill_value=0, dtype=None):
                 for i, old_ax in enumerate(a._axes)
                 if i not in drop
             ]
-        # Post-check: catch accidental time-axis loss early
-        if (a.getTime() is not None and result.ndim >= 1
-                and not any(ax is not None and ax.axis == "T" for ax in new_axes)):
+        # Post-check: catch accidental time-axis loss only when time was
+        # not in the set of axes that were explicitly reduced.
+        _t_ax = a.getTime()
+        _t_idx = next(
+            (i for i, ax in enumerate(a._axes) if ax is not None and ax is _t_ax), None
+        ) if _t_ax is not None else None
+        _time_explicitly_dropped = (_t_idx is not None and _t_idx in drop)
+        if (_t_ax is not None and result.ndim >= 1
+                and not any(ax is not None and ax.axis == "T" for ax in new_axes)
+                and not _time_explicitly_dropped):
             raise RuntimeError(
                 f"Time axis unexpectedly dropped in MV2sum: "
                 f"id={a.id!r}, original_axes={[ax.id if ax else None for ax in a._axes]}, "
@@ -392,6 +406,10 @@ def _axis_to_int(arr, axis):
     """
     if axis is None or isinstance(axis, (int, np.integer)):
         return axis
+    # Coerce plain Python float or numpy floating to int to avoid
+    # "'float' object cannot be interpreted as an integer" from numpy.
+    if isinstance(axis, (float, np.floating)):
+        return int(round(float(axis)))
     if isinstance(axis, (tuple, list)):
         return tuple(int(a) for a in axis)
     axis_s = str(axis).strip()
@@ -637,7 +655,8 @@ def _seasonal_mean(tab, month_list, compute_anom=False):
                 weighted=True,
                 season_config=season_cfg,
             )
-        return da_to_cdat(result_ds[varname], varname=tab.id)
+        return _finalize_cdat(result_ds[varname], varname=tab.id,
+                              context="_seasonal_mean", require_time=True)
 
     except Exception:
         comp = _get_component_time(tab, "_seasonal_mean fallback")
@@ -684,12 +703,16 @@ def _seasonal_mean(tab, month_list, compute_anom=False):
             tab.getAxisList()[1:] if len(tab.shape) > 1 else []
         )
 
-        return CDATVariable(
-            result_raw,
-            axes=new_axes,
-            grid=tab.getGrid(),
-            id=tab.id,
-            attributes=dict(tab.attributes),
+        return _finalize_existing_cdat(
+            CDATVariable(
+                result_raw,
+                axes=new_axes,
+                grid=tab.getGrid(),
+                id=tab.id,
+                attributes=dict(tab.attributes),
+            ),
+            context="_seasonal_mean:fallback",
+            require_time=True,
         )
 
 
@@ -945,6 +968,109 @@ def _sanitize_time_bound(t) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Data-construction / metadata finalization helpers
+# ---------------------------------------------------------------------------
+def _coord_is_datetime_like(da: xr.DataArray, dim: str) -> bool:
+    """True if *dim* has a datetime-like coordinate on *da*."""
+    if dim not in da.coords:
+        return False
+    return _is_datetime_like_time(da.coords[dim])
+
+
+def _safe_guess_dim(da: xr.DataArray, axis_type: str) -> str:
+    """Best-effort axis lookup used only for metadata finalization."""
+    try:
+        return _guess_dim(da, axis_type, strict=False)
+    except Exception:
+        return ""
+
+
+def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray:
+    """
+    Attach CF-style axis metadata before converting to CDATVariable.
+
+    This is the central normalization step: downstream code should not have to
+    infer time/lat/lon repeatedly from fragile dimension names.
+    """
+    da = da.copy()
+    axis_dims = {}
+    for axis_type in ("T", "Y", "X", "Z"):
+        dim = _safe_guess_dim(da, axis_type)
+        if dim and dim in da.dims:
+            axis_dims[axis_type] = dim
+
+    # Conservative time fallback: any datetime-like dim coordinate is time.
+    if "T" not in axis_dims:
+        for dim in da.dims:
+            if _coord_is_datetime_like(da, dim):
+                axis_dims["T"] = dim
+                break
+
+    for axis_type, dim in axis_dims.items():
+        if dim not in da.coords:
+            continue
+        coord = da.coords[dim]
+        attrs = dict(coord.attrs)
+        attrs["axis"] = axis_type
+        if axis_type == "T":
+            attrs.setdefault("standard_name", "time")
+            attrs.setdefault("long_name", "time")
+            cal = coord.attrs.get("calendar") or coord.encoding.get("calendar") or "standard"
+            attrs.setdefault("calendar", cal)
+        elif axis_type == "Y":
+            attrs.setdefault("standard_name", "latitude")
+            attrs.setdefault("units", "degrees_north")
+        elif axis_type == "X":
+            attrs.setdefault("standard_name", "longitude")
+            attrs.setdefault("units", "degrees_east")
+        elif axis_type == "Z":
+            attrs.setdefault("positive", coord.attrs.get("positive", "up"))
+        da = da.assign_coords({dim: xr.DataArray(coord.values, dims=coord.dims, attrs=attrs)})
+
+    if da.name is None:
+        da.name = "var"
+    return da
+
+
+def _validate_cdat_axes(var: CDATVariable, *, context: str = "", require_time: bool = False) -> CDATVariable:
+    """Fail early when data shape and CDAT-like axes diverge."""
+    axes = var.getAxisList()
+    if var.ndim != len(axes):
+        raise ValueError(
+            f"Axis/data mismatch after {context or 'conversion'}: "
+            f"id={getattr(var, 'id', '')!r}, shape={var.shape}, axes={axes}"
+        )
+    if require_time and var.getTime() is None:
+        raise ValueError(
+            f"No time axis after {context or 'conversion'}: "
+            f"id={getattr(var, 'id', '')!r}, shape={var.shape}, "
+            f"axes={[getattr(ax, 'id', None) for ax in axes]}"
+        )
+    return var
+
+
+def _finalize_cdat(da: xr.DataArray, varname: str | None = None, *,
+                   context: str = "", require_time: bool = False) -> CDATVariable:
+    """
+    Convert a DataArray to CDATVariable after normalizing axis metadata.
+
+    Use this at file-read boundaries and after xarray/xcdat/xesmf operations.
+    It prevents later failures such as "no time axis", empty axis lists, and
+    ambiguous dimension handling.
+    """
+    name = varname or da.name or "var"
+    da = _standardize_da_axes(da.rename(name), context=context)
+    out = da_to_cdat(da, varname=name)
+    return _validate_cdat_axes(out, context=context, require_time=require_time)
+
+
+def _finalize_existing_cdat(var, *, context: str = "", require_time: bool = False):
+    """Validate an existing CDATVariable or wrap ndarray-like output."""
+    out = _to_cdat(var)
+    return _validate_cdat_axes(out, context=context, require_time=require_time)
+
+
+# ---------------------------------------------------------------------------
 # Revised file handle
 # ---------------------------------------------------------------------------
 class _XcDatasetHandle:
@@ -1026,7 +1152,12 @@ class _XcDatasetHandle:
         if kwargs.get("squeeze"):
             da = da.squeeze()
 
-        return da_to_cdat(da, varname=varname)
+        # Build a robust CDAT-like object at the read boundary.  This keeps
+        # T/Y/X/Z metadata attached before downstream PCMDI code sees it.
+        require_time = any(_coord_is_datetime_like(da, dim) for dim in da.dims)
+        return _finalize_cdat(da, varname=varname,
+                              context=f"read:{self._path}:{varname}",
+                              require_time=require_time)
 
     def write(self, var, attributes=None, dtype="float32", id=None):
         """Buffer a variable for writing."""
@@ -1063,6 +1194,39 @@ class _XcDatasetHandle:
             self._ds.close()
             self._ds = None
 
+# ---------------------------------------------------------------------------
+# Module-level lookup tables for _guess_dim — defined once, not per-call.
+# ---------------------------------------------------------------------------
+_AXIS_STANDARD_NAMES: dict[str, set[str]] = {
+    "Y": {"latitude", "grid_latitude", "projection_y_coordinate",
+          "rotated_latitude"},
+    "X": {"longitude", "grid_longitude", "projection_x_coordinate",
+          "rotated_longitude"},
+    "T": {"time"},
+    "Z": {"air_pressure", "altitude", "depth", "height",
+          "ocean_sigma_coordinate", "sigma", "eta",
+          "height_above_geopotential_datum",
+          "height_above_mean_sea_level"},
+}
+_AXIS_UNITS_PATTERNS: dict[str, tuple[str, ...]] = {
+    "Y": ("degrees_north", "degree_north", "degrees_n", "degree_n",
+          "degreesnorth", "degreen"),
+    "X": ("degrees_east", "degree_east", "degrees_e", "degree_e",
+          "degreeseast", "degreee"),
+    "T": ("since",),   # matches "days since …", "hours since …", etc.
+    "Z": ("pa", "hpa", "mb", "mbar", "meter", "m", "sigma", "hybrid"),
+}
+_AXIS_NAME_HINTS: dict[str, tuple[str, ...]] = {
+    "Y": ("lat", "latitude", "nav_lat", "rlat", "y", "j", "nlat",
+          "y_1", "y_2"),
+    "X": ("lon", "longitude", "nav_lon", "rlon", "x", "i", "nlon",
+          "x_1", "x_2"),
+    "T": ("time", "t"),
+    "Z": ("lev", "level", "plev", "depth", "sigma", "eta", "z", "k",
+          "nlev"),
+}
+
+
 def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) -> str:
     """Return the dimension name for a given axis type (T/Y/X/Z).
 
@@ -1076,39 +1240,10 @@ def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) 
         score 1 — token/endswith name heuristic  (weak hint)
         score 0 — coordinate value-range         (last resort)
     """
-    _STANDARD_NAMES: dict[str, set[str]] = {
-        "Y": {"latitude", "grid_latitude", "projection_y_coordinate",
-              "rotated_latitude"},
-        "X": {"longitude", "grid_longitude", "projection_x_coordinate",
-              "rotated_longitude"},
-        "T": {"time"},
-        "Z": {"air_pressure", "altitude", "depth", "height",
-              "ocean_sigma_coordinate", "sigma", "eta",
-              "height_above_geopotential_datum",
-              "height_above_mean_sea_level"},
-    }
-    _UNITS_PATTERNS: dict[str, tuple[str, ...]] = {
-        "Y": ("degrees_north", "degree_north", "degrees_n", "degree_n",
-              "degreesnorth", "degreen"),
-        "X": ("degrees_east", "degree_east", "degrees_e", "degree_e",
-              "degreeseast", "degreee"),
-        "T": ("since",),   # matches "days since …", "hours since …", etc.
-        "Z": ("pa", "hpa", "mb", "mbar", "meter", "m", "sigma", "hybrid"),
-    }
-    _NAME_HINTS: dict[str, tuple[str, ...]] = {
-        "Y": ("lat", "latitude", "nav_lat", "rlat", "y", "j", "nlat",
-              "y_1", "y_2"),
-        "X": ("lon", "longitude", "nav_lon", "rlon", "x", "i", "nlon",
-              "x_1", "x_2"),
-        "T": ("time", "t"),
-        "Z": ("lev", "level", "plev", "depth", "sigma", "eta", "z", "k",
-              "nlev"),
-    }
-
     at = axis_type.upper()
-    sn_set   = _STANDARD_NAMES.get(at, set())
-    u_pats   = _UNITS_PATTERNS.get(at, ())
-    hints    = _NAME_HINTS.get(at, ())
+    sn_set   = _AXIS_STANDARD_NAMES.get(at, set())
+    u_pats   = _AXIS_UNITS_PATTERNS.get(at, ())
+    hints    = _AXIS_NAME_HINTS.get(at, ())
 
     scores: list[tuple[int, str]] = []
 
@@ -1274,7 +1409,8 @@ class _CdutilAverager:
                         do_time = True
         if do_time and not xcdat_axes:
             t_dim = _guess_dim(da, "T") or "time"
-            return da_to_cdat(ds[varname].mean(dim=t_dim), varname=varname)
+            return _finalize_cdat(ds[varname].mean(dim=t_dim), varname=varname,
+                                  context="cdutil.averager:time")
         if xcdat_axes:
             # Cosine-latitude weighted average — deterministic: always use manual
             # implementation when weights="weighted" and Y is in the reduction
@@ -1292,14 +1428,20 @@ class _CdutilAverager:
                             for ax in tab._axes
                             if ax is None or ax.axis not in reduce_types
                         ]
-                        return CDATVariable(
-                            result_raw,
-                            axes=surviving,
-                            grid=None,
-                            id=varname,
-                            attributes=dict(tab._attributes),
+                        return _finalize_existing_cdat(
+                            CDATVariable(
+                                result_raw,
+                                axes=surviving,
+                                grid=None,
+                                id=varname,
+                                attributes=dict(tab._attributes),
+                            ),
+                            context="cdutil.averager:weighted",
                         )
-                    return CDATVariable(result_raw, id=varname)
+                    return _finalize_existing_cdat(
+                        CDATVariable(result_raw, id=varname),
+                        context="cdutil.averager:weighted",
+                    )
                 except Exception as _e:
                     raise RuntimeError(
                         "_weighted_spatial_average failed — cannot guarantee "
@@ -1311,7 +1453,9 @@ class _CdutilAverager:
                 t_dim = _guess_dim(result, "T") or "time"
                 if t_dim in result.dims:
                     result = result.mean(dim=t_dim)
-            return da_to_cdat(result, varname=varname)
+            return _finalize_cdat(result, varname=varname,
+                                  context="cdutil.averager:spatial",
+                                  require_time=("T" not in set(xcdat_axes) and _has_time_axis(tab)))
         return tab.copy()
 
     @staticmethod
@@ -1333,7 +1477,8 @@ class _CdutilAverager:
             except (KeyError, Exception):
                 pass  # proceed without time bounds
             result = ds.temporal.departures(varname, freq="month", weighted=True)
-            return da_to_cdat(result[varname], varname=varname)
+            return _finalize_cdat(result[varname], varname=varname,
+                                  context="ANNUALCYCLE.departures", require_time=True)
 
     @staticmethod
     def generateLandSeaMask(d):
@@ -1345,7 +1490,7 @@ class _CdutilAverager:
             try:
                 lsm = land.mask(da, lon_name=lon_dim, lat_name=lat_dim)
                 lsm_01 = xr.where(lsm == 0, 1.0, 0.0).rename("sftlf")
-                return da_to_cdat(lsm_01, varname="sftlf")
+                return _finalize_cdat(lsm_01, varname="sftlf", context="generateLandSeaMask")
             except Exception:
                 pass
         # Land-sea mask generation failed — raise rather than silently biasing
@@ -1394,7 +1539,6 @@ class REGRID2horizontal__Horizontal:
                 "xesmf is required for regrid2-style horizontal regridding. "
                 "Install with:  conda install -c conda-forge xesmf"
             )
-        from .XarrayCompat import cdat_to_da, da_to_cdat
         da = cdat_to_da(tab, name=getattr(tab, 'id', 'var'))
         if _is_unstructured_grid(da):
             raise NotImplementedError(
@@ -1426,10 +1570,14 @@ class REGRID2horizontal__Horizontal:
         if data_flat.ndim >= 2:
             spatial = data_flat.reshape(data_flat.shape[:-2] + (-1,))
             if np.allclose(spatial, spatial[..., :1], atol=1e-8):
-                result_cdat = da_to_cdat(result, varname=getattr(tab, 'id', 'var'))
+                result_cdat = _finalize_cdat(result, varname=getattr(tab, 'id', 'var'),
+                                             context="REGRID2horizontal:constant",
+                                             require_time=_has_time_axis(tab))
                 result_cdat._data[:] = data_flat.flat[0]
                 return result_cdat
-        return da_to_cdat(result, varname=getattr(tab, 'id', 'var'))
+        return _finalize_cdat(result, varname=getattr(tab, 'id', 'var'),
+                              context="REGRID2horizontal",
+                              require_time=_has_time_axis(tab))
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -1499,7 +1647,7 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
                     kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                "newgrid_name": "generic_1x1deg"}
                 else:
-                    kwargs2 = kwargs["regridding"]
+                    kwargs2 = dict(kwargs["regridding"])  # shallow copy — do not mutate caller's dict
                 kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
@@ -1521,6 +1669,11 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
         for ax in sorted([int(lat_num), int(lon_num)], reverse=True):
             averaged_tab = MV2sum(averaged_tab, axis=ax)
         averaged_tab = averaged_tab / float(MV2sum(areacell))
+    if averaged_tab is not None:
+        averaged_tab = _finalize_existing_cdat(
+            averaged_tab, context="AverageHorizontal",
+            require_time=_has_time_axis(tab),
+        )
     return averaged_tab, keyerror
 
 
@@ -1557,7 +1710,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
                     kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                "newgrid_name": "generic_1x1deg"}
                 else:
-                    kwargs2 = kwargs["regridding"]
+                    kwargs2 = dict(kwargs["regridding"])  # shallow copy — do not mutate caller's dict
                 kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
@@ -1586,6 +1739,11 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
                 averaged_tab.setAxis(lon_num, lonn)
             except Exception:
                 averaged_tab.setAxis(lon_num - 1, lonn)
+    if averaged_tab is not None:
+        averaged_tab = _finalize_existing_cdat(
+            averaged_tab, context="AverageMeridional",
+            require_time=_has_time_axis(tab),
+        )
     return averaged_tab, keyerror
 
 
@@ -1621,6 +1779,9 @@ def AverageTemporal(tab, areacell=None, **kwargs):
             ]
             EnsoErrorsWarnings.my_warning(list_strings)
 
+    if averaged_tab is not None:
+        # Temporal averaging intentionally removes time, so do not require T.
+        averaged_tab = _finalize_existing_cdat(averaged_tab, context="AverageTemporal")
     return averaged_tab, keyerror
 
 
@@ -1657,7 +1818,7 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
                     kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
                                "newgrid_name": "generic_1x1deg"}
                 else:
-                    kwargs2 = kwargs["regridding"]
+                    kwargs2 = dict(kwargs["regridding"])  # shallow copy — do not mutate caller's dict
                 kwargs2["newgrid_name"] = \
                     closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
                 print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
@@ -1685,6 +1846,11 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
                 averaged_tab.setAxis(lat_num, latn)
             except Exception:
                 averaged_tab.setAxis(lat_num - 1, latn)
+    if averaged_tab is not None:
+        averaged_tab = _finalize_existing_cdat(
+            averaged_tab, context="AverageZonal",
+            require_time=_has_time_axis(tab),
+        )
     return averaged_tab, keyerror
 
 
@@ -3097,14 +3263,31 @@ def get_num_axis(tab, name_axis):
     elif name_axis == "time":
         axis_nick = "time"
         axis_nicks = ["t", "T"]
+    # Fast path: use CF axis type metadata when available — also avoids
+    # IndexError when tab._axes is shorter than tab.shape (empty axes list).
+    # Only activated when the target axis type is actually present in _axes;
+    # pure-heuristic lookups can return wrong indices for 1-D time series.
+    _ax_type_map = {"latitude": "y", "longitude": "x", "time": "t", "depth": "z"}
+    _ax_cf_map   = {"latitude": "Y", "longitude": "X", "time": "T", "depth": "Z"}
+    if name_axis in _ax_type_map and isinstance(tab, CDATVariable):
+        if any(ax is not None and ax.axis == _ax_cf_map[name_axis] for ax in tab._axes):
+            idx = _axis_to_int(tab, _ax_type_map[name_axis])
+            if isinstance(idx, (int, np.integer)):
+                return int(idx)
+    # String-matching fallback — guard against _axes being shorter than shape.
+    axlist = tab.getAxisList()
     for nn in list(range(len(tab.shape))):
-        if axis_nick in tab.getAxisList()[nn].id:
+        if nn >= len(axlist):
+            break
+        if axis_nick in axlist[nn].id:
             num = nn
             break
     if num is None:
         for nn in list(range(len(tab.shape))):
+            if nn >= len(axlist):
+                break
             for ax in axis_nicks:
-                if ax == tab.getAxisList()[nn].id:
+                if ax == axlist[nn].id:
                     num = nn
                     break
     if num is None:
@@ -3683,7 +3866,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         nlon = int(round((lon2 - lon1) / GridRes))
         lon = create_uniform_lon_axis(lon1 + (GridRes / 2.), nlon, GridRes)
         # create grid
-        newgrid = create_rect_grid(lat, lon, "yx", type=GridType, mask=None)
+        newgrid = create_rect_grid(lat, lon, "yx", grid_type=GridType, mask=None)
         newgrid.id = kwargs["newgrid_name"]
     #
     # regrid
@@ -4098,20 +4281,8 @@ def SmoothTriangle(tab, axis=0, window=5):
 
 
 # Dictionary of seasons
-sea_dict = dict(JAN=cdutil.JAN, FEB=cdutil.FEB, MAR=cdutil.MAR, APR=cdutil.APR, MAY=cdutil.MAY, JUN=cdutil.JUN,
-                JUL=cdutil.JUL, AUG=cdutil.AUG, SEP=cdutil.SEP, OCT=cdutil.OCT, NOV=cdutil.NOV, DEC=cdutil.DEC,
-                JF=cdutil.times.Seasons("JF"), FM=cdutil.times.Seasons("FM"), MA=cdutil.times.Seasons("MA"),
-                AM=cdutil.times.Seasons("AM"), MJ=cdutil.times.Seasons("MJ"), JJ=cdutil.times.Seasons("JJ"),
-                JA=cdutil.times.Seasons("JA"), AS=cdutil.times.Seasons("AS"), SO=cdutil.times.Seasons("SO"),
-                ON=cdutil.times.Seasons("ON"), ND=cdutil.times.Seasons("ND"), DJ=cdutil.times.Seasons("DJ"),
-                JFM=cdutil.times.Seasons("JFM"), FMA=cdutil.times.Seasons("FMA"), MAM=cdutil.MAM,
-                AMJ=cdutil.times.Seasons("AMJ"), MJJ=cdutil.times.Seasons("MJJ"), JJA=cdutil.JJA,
-                JAS=cdutil.times.Seasons("JAS"), ASO=cdutil.times.Seasons("ASO"), SON=cdutil.SON,
-                OND=cdutil.times.Seasons("OND"), NDJ=cdutil.times.Seasons("NDJ"), DJF=cdutil.DJF,
-                JFMA=cdutil.times.Seasons("JFMA"),FMAM=cdutil.times.Seasons("FMAM"),MAMJ=cdutil.times.Seasons("MAMJ"),
-                AMJJ=cdutil.times.Seasons("AMJJ"),MJJA=cdutil.times.Seasons("MJJA"),JJAS=cdutil.times.Seasons("JJAS"),
-                JASO=cdutil.times.Seasons("JASO"),ASON=cdutil.times.Seasons("ASON"),SOND=cdutil.times.Seasons("SOND"),
-                ONDJ=cdutil.times.Seasons("ONDJ"),NDJF=cdutil.times.Seasons("NDJF"),DJFM=cdutil.times.Seasons("DJFM"))
+# NOTE: sea_dict is already built from _MONTH_MAP above; this block
+# is intentionally removed to avoid shadowing that definition.
 
 
 def SeasonalMean(tab, season, compute_anom=False):
