@@ -1140,7 +1140,7 @@ class CDATVariable:
             return CDATVariable(result_data, axes=result_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
 
         def _sel_axis(ax_idx, bounds):
-            nonlocal result_data, result_axes
+            nonlocal result_data
             ax = result_axes[ax_idx]
             if ax is None:
                 return
@@ -1222,13 +1222,13 @@ def create_axis(values, id: str = "", units: str = "", attributes: Optional[dict
 
 def create_uniform_lat_axis(start: float, n: int, delta: float) -> _Axis:
     """Replacement for ``cdms2.createUniformLatitudeAxis``."""
-    vals = np.array([start + i * delta for i in range(n)])
+    vals = np.array([start + i * delta for i in range(int(n))])
     return _Axis("lat", vals, units="degrees_north", axis_type="Y")
 
 
 def create_uniform_lon_axis(start: float, n: int, delta: float) -> _Axis:
     """Replacement for ``cdms2.createUniformLongitudeAxis``."""
-    vals = np.array([start + i * delta for i in range(n)])
+    vals = np.array([start + i * delta for i in range(int(n))])
     return _Axis("lon", vals, units="degrees_east", axis_type="X")
 
 

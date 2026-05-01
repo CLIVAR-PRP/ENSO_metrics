@@ -108,8 +108,33 @@ def MV2array(data, **kw):    return CDATVariable(ma.array(data, **kw), id="")
 def MV2average(a, axis=None, weights=None):
     result = ma.average(_mv(a), axis=axis,
                         weights=_mv(weights) if weights is not None else None)
-    if isinstance(a, CDATVariable) and isinstance(result, np.ndarray):
-        return CDATVariable(result, id=a.id, attributes=dict(a._attributes))
+    if isinstance(a, CDATVariable) and isinstance(result, (np.ndarray, ma.MaskedArray)):
+        if axis is None:
+            new_axes = []
+        else:
+            ax = _axis_to_int(a, axis)
+            drop = {int(i) for i in ax} if isinstance(ax, tuple) else {int(ax)}
+            drop = {i if i >= 0 else a.ndim + i for i in drop}
+            new_axes = [
+                old_ax.copy() if old_ax is not None else None
+                for i, old_ax in enumerate(a._axes)
+                if i not in drop
+            ]
+        # Post-check: catch accidental time-axis loss early
+        if (a.getTime() is not None and result.ndim >= 1
+                and not any(ax is not None and ax.axis == "T" for ax in new_axes)):
+            raise RuntimeError(
+                f"Time axis unexpectedly dropped in MV2average: "
+                f"id={a.id!r}, original_axes={[ax.id if ax else None for ax in a._axes]}, "
+                f"axis={axis!r}, drop={drop}, result_shape={result.shape}"
+            )
+        return CDATVariable(
+            result,
+            axes=new_axes,
+            grid=None if len(new_axes) < 2 else a._grid,
+            id=a.id,
+            attributes=dict(a._attributes),
+        )
     return result
 def MV2compress(condition, a, axis=0):
     if isinstance(a, CDATVariable):
@@ -151,8 +176,33 @@ def MV2ones(shape):          return CDATVariable(ma.ones(shape), id="")
 def MV2subtract(a, b):       return _mv_wrap(ma.subtract(_mv(a), _mv(b)), a)
 def MV2sum(a, axis=None, fill_value=0, dtype=None):
     result = ma.sum(_mv(a), axis=axis, dtype=dtype)
-    if isinstance(a, CDATVariable) and isinstance(result, np.ndarray):
-        return CDATVariable(result, id=a.id, attributes=dict(a._attributes))
+    if isinstance(a, CDATVariable) and isinstance(result, (np.ndarray, ma.MaskedArray)):
+        if axis is None:
+            new_axes = []
+        else:
+            ax = _axis_to_int(a, axis)
+            drop = {int(i) for i in ax} if isinstance(ax, tuple) else {int(ax)}
+            drop = {i if i >= 0 else a.ndim + i for i in drop}
+            new_axes = [
+                old_ax.copy() if old_ax is not None else None
+                for i, old_ax in enumerate(a._axes)
+                if i not in drop
+            ]
+        # Post-check: catch accidental time-axis loss early
+        if (a.getTime() is not None and result.ndim >= 1
+                and not any(ax is not None and ax.axis == "T" for ax in new_axes)):
+            raise RuntimeError(
+                f"Time axis unexpectedly dropped in MV2sum: "
+                f"id={a.id!r}, original_axes={[ax.id if ax else None for ax in a._axes]}, "
+                f"axis={axis!r}, drop={drop}, result_shape={result.shape}"
+            )
+        return CDATVariable(
+            result,
+            axes=new_axes,
+            grid=None if len(new_axes) < 2 else a._grid,
+            id=a.id,
+            attributes=dict(a._attributes),
+        )
     return result
 def MV2take(a, indices, axis=0):
     raw = _mv(a)
@@ -1235,6 +1285,20 @@ class _CdutilAverager:
                     result_raw = _weighted_spatial_average(tab, axes=tuple(xcdat_axes))
                     if do_time:
                         result_raw = ma.mean(result_raw, axis=0)
+                    if isinstance(tab, CDATVariable) and isinstance(result_raw, (np.ndarray, ma.MaskedArray)):
+                        reduce_types = set(xcdat_axes) | ({"T"} if do_time else set())
+                        surviving = [
+                            ax.copy() if ax is not None else None
+                            for ax in tab._axes
+                            if ax is None or ax.axis not in reduce_types
+                        ]
+                        return CDATVariable(
+                            result_raw,
+                            axes=surviving,
+                            grid=None,
+                            id=varname,
+                            attributes=dict(tab._attributes),
+                        )
                     return CDATVariable(result_raw, id=varname)
                 except Exception as _e:
                     raise RuntimeError(
@@ -1414,7 +1478,9 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     keyerror = None
     lat_num = get_num_axis(tab, "latitude")
     lon_num = get_num_axis(tab, "longitude")
-    snum = str(lat_num) + str(lon_num)
+    # Guard: int() ensures str() never produces float repr (e.g. "1.02.0")
+    # if a numpy scalar ever leaks through get_num_axis.
+    snum = str(int(lat_num)) + str(int(lon_num))
     _tab_grid = tab.getGrid()
     _area_grid = areacell.getGrid() if areacell is not None else None
     if areacell is None or _tab_grid is None or _area_grid is None or _tab_grid.shape != _area_grid.shape:
@@ -1450,8 +1516,10 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
                     EnsoErrorsWarnings.my_warning(list_strings)
     else:
         averaged_tab = MV2multiply(tab, areacell)
-        for elt in snum[::-1]:
-            averaged_tab = MV2sum(averaged_tab, axis=int(elt))
+        # Sum in reverse index order so removing a higher-indexed axis first
+        # does not shift the remaining lower index before it is used.
+        for ax in sorted([int(lat_num), int(lon_num)], reverse=True):
+            averaged_tab = MV2sum(averaged_tab, axis=ax)
         averaged_tab = averaged_tab / float(MV2sum(areacell))
     return averaged_tab, keyerror
 
@@ -1470,7 +1538,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     keyerror = None
     lat_num = get_num_axis(tab, "latitude")
     lon_num = get_num_axis(tab, "longitude")
-    snum = str(lat_num)
+    snum = str(int(lat_num))
     _tab_grid = tab.getGrid()
     _area_grid = areacell.getGrid() if areacell is not None else None
     if areacell is None or _tab_grid is None or _area_grid is None or _tab_grid.shape != _area_grid.shape:
@@ -1507,7 +1575,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     else:
         lat_num_area = get_num_axis(areacell, "latitude")
         averaged_tab = MV2multiply(tab, areacell)
-        averaged_tab = MV2sum(averaged_tab, axis=lat_num) / MV2sum(areacell, axis=lat_num_area)
+        averaged_tab = MV2sum(averaged_tab, axis=int(lat_num)) / MV2sum(areacell, axis=int(lat_num_area))
     if averaged_tab is not None:
         lon = tab.getLongitude()
         if lon is not None and len(lon.shape) > 1:
@@ -1570,7 +1638,7 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
     keyerror = None
     lat_num = get_num_axis(tab, "latitude")
     lon_num = get_num_axis(tab, "longitude")
-    snum = str(lon_num)
+    snum = str(int(lon_num))
     _tab_grid = tab.getGrid()
     _area_grid = areacell.getGrid() if areacell is not None else None
     if areacell is None or _tab_grid is None or _area_grid is None or _tab_grid.shape != _area_grid.shape:
@@ -1606,7 +1674,7 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
     else:
         lon_num_area = get_num_axis(areacell, "longitude")
         averaged_tab = MV2multiply(tab, areacell)
-        averaged_tab = MV2sum(averaged_tab, axis=lon_num) / MV2sum(areacell, axis=lon_num_area)
+        averaged_tab = MV2sum(averaged_tab, axis=int(lon_num)) / MV2sum(areacell, axis=int(lon_num_area))
     if averaged_tab is not None:
         lat = tab.getLatitude()
         if lat is not None and len(lat.shape) > 1:
@@ -1762,7 +1830,6 @@ def OperationMultiply(tab, number_or_tab):
     axes = tab.getAxisList()
     att = tab.attributes
     if len(tab.shape) > 1:
-        mask = tab.mask
         dictvar = {"axes": axes, "mask": tab.mask, "grid": tab.getGrid(), "attributes": att}
     else:
         dictvar = {"axes": axes, "attributes": att}
@@ -3611,9 +3678,9 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
         lat1, lat2 = region_ref["latitude"][0], region_ref["latitude"][1]
         lon1, lon2 = region_ref["longitude"][0], region_ref["longitude"][1]
         # create uniform axis
-        nlat = lat2 - lat1
+        nlat = int(round((lat2 - lat1) / GridRes))
         lat = create_uniform_lat_axis(lat1 + (GridRes / 2.), nlat, GridRes)
-        nlon = lon2 - lon1
+        nlon = int(round((lon2 - lon1) / GridRes))
         lon = create_uniform_lon_axis(lon1 + (GridRes / 2.), nlon, GridRes)
         # create grid
         newgrid = create_rect_grid(lat, lon, "yx", type=GridType, mask=None)
