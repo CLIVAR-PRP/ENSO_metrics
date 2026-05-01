@@ -474,7 +474,15 @@ class _Axis:
             except Exception:
                 pass
 
-        return [_datetime.datetime(int(v), 1, 1) for v in vals]
+        # Year 0 is invalid in Python's datetime; clamp to 1.
+        result = []
+        for v in vals:
+            yr = max(1, int(v))
+            try:
+                result.append(_datetime.datetime(yr, 1, 1))
+            except Exception:
+                result.append(_datetime.datetime(1, 1, 1))
+        return result
 
     def toRelativeTime(self, units: str):
         """Convert datetime-like values to numeric relative time in-place."""
@@ -1011,8 +1019,12 @@ class CDATVariable:
 # ---------------------------------------------------------------------------
 
 
-def create_axis(id: str, values, units: str = "", attributes: Optional[dict] = None) -> _Axis:
-    """Replacement for ``cdms2.createAxis``."""
+def create_axis(values, id: str = "", units: str = "", attributes: Optional[dict] = None) -> _Axis:
+    """Replacement for ``cdms2.createAxis``.
+
+    Matches the CDAT ``cdms2.createAxis(data, id='')`` calling convention:
+    values is the first positional argument and id is a keyword.
+    """
     return _Axis(id, values, units=units, attributes=attributes)
 
 

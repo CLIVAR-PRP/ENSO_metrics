@@ -172,6 +172,20 @@ def _mv_wrap(result, template):
                             attributes=dict(template._attributes))
     return result
 
+def _to_cdat(x):
+    """
+    Ensure *x* is a CDATVariable.
+
+    If it is already a CDATVariable it is returned unchanged.
+    If it is a plain numpy.ma.MaskedArray (or any ndarray) it is wrapped in a
+    CDATVariable so that CDAT-style methods like .getTime() work on it.
+    Any existing axes/metadata on a CDATVariable are preserved.
+    """
+    if isinstance(x, CDATVariable):
+        return x
+    raw = _mv(x)
+    return CDATVariable(raw, id="")
+
 
 def _axis_to_int(arr, axis):
     """
@@ -1535,6 +1549,7 @@ def TimeBounds(tab):
 
     Returns a tuple of strings: e.g., ('1979-1-1 11:59:60.0', '2016-12-31 11:59:60.0')
     """
+    tab = _to_cdat(tab)
     time = tab.getTime().asComponentTime()
     return str(time[0]), str(time[-1])
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -1555,6 +1570,7 @@ def annualcycle(tab):
     :return: tab: array
         array of the monthly annual cycle
     """
+    tab = _to_cdat(tab)
     initorder = tab.getOrder()
     tab = tab.reorder("t...")
     axes = tab.getAxisList()
@@ -1810,6 +1826,8 @@ def CheckTime(tab1, tab2, frequency="monthly", min_time_steps=None, metric_name=
         #               "time2": "tab2.time = " + str(TimeBounds(tab2))}
         dict_debug = {"shape1": "tab1.shape = " + str(tab1.shape), "shape2": "tab2.shape = " + str(tab2.shape)}
         EnsoErrorsWarnings.debug_mode("\033[93m", "in CheckTime (input)", 20, **dict_debug)
+    tab1 = _to_cdat(tab1)
+    tab2 = _to_cdat(tab2)
     # gets dates of the first and last the time steps of tab1
     stime1 = tab1.getTime().asComponentTime()[0]
     etime1 = tab1.getTime().asComponentTime()[-1]
@@ -2028,6 +2046,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
 
 
 def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
+    tab = _to_cdat(tab)
     if frequency not in ["daily", "monthly", "yearly"]:
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
     if len(list_event_years) == 0:
@@ -2166,6 +2185,7 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute
         # Seasonal mean and anomalies
         if compute_season is True:
             tab = SeasonalMean(tab, season, compute_anom=True)
+        tab = _to_cdat(tab)
         # Normalization ?
         if normalization is True:
             threshold = threshold * float(GENUTILstd(tab, axis=0, centered=1, biased=1))
@@ -2478,6 +2498,7 @@ def get_year_by_year(tab, frequency="monthly"):
     :return: tab: array
         array of the year by year values
     """
+    tab = _to_cdat(tab)
     tab = tab.reorder("t...")
     time_ax = tab.getTime().asComponentTime()
     myshape = [1] + [ss for ss in tab.shape[1:]]
@@ -2676,6 +2697,7 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
                   "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
             reversed_sign = True
+    tab = _to_cdat(tab)
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
         # this section checks if one time step has not been included by error at the beginning or the end of the time
@@ -3480,6 +3502,7 @@ def SeasonalMean(tab, season, compute_anom=False):
     :return tab: masked_array
         time series of the seasonal mean ('season') anomalies (if applicable)
     """
+    tab = _to_cdat(tab)
     # Checks if the season has been defined
     try:
         sea_dict[season]
@@ -3589,6 +3612,7 @@ def SkewMonthly(tab):
     :return: tab: array
         array of the monthly standard deviation
     """
+    tab = _to_cdat(tab)
     initorder = tab.getOrder()
     tab = tab.reorder('t...')
     axes = tab.getAxisList()
@@ -3619,6 +3643,7 @@ def StdMonthly(tab):
     :return: tab: array
         array of the monthly standard deviation
     """
+    tab = _to_cdat(tab)
     initorder = tab.getOrder()
     tab = tab.reorder('t...')
     axes = tab.getAxisList()
