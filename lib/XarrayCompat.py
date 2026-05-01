@@ -326,7 +326,13 @@ def _validate_axes_shape(data, axes, context: str = "CDATVariable"):
 
 
 def _maybe_mask_invalid_numeric(arr: ma.MaskedArray) -> ma.MaskedArray:
-    """Mask NaN/Inf for numeric arrays while preserving existing masks."""
+    """Mask NaN/Inf for floating-point arrays while preserving existing masks.
+
+    Integer arrays are returned unchanged — NaN/Inf cannot appear in them and
+    ``arr.filled(np.nan)`` raises a TypeError on integer dtypes.
+    """
+    if np.issubdtype(arr.dtype, np.integer):
+        return arr
     if np.issubdtype(arr.dtype, np.number):
         with np.errstate(invalid="ignore"):
             invalid = ~np.isfinite(arr.filled(np.nan).astype(float))
@@ -336,7 +342,12 @@ def _maybe_mask_invalid_numeric(arr: ma.MaskedArray) -> ma.MaskedArray:
 
 
 def _make_masked_array(data, mask=None, fill_value=1e20, attributes: Optional[dict] = None):
-    """Create a float masked array while respecting common missing metadata."""
+    """Create a masked array while respecting common missing metadata.
+
+    Integer-typed data is kept as integer; float fill_value (1e20) is only
+    applied to floating-point arrays to avoid the OverflowError that numpy
+    raises when trying to store 1e20 into an int64 fill_value slot.
+    """
     attributes = attributes or {}
 
     if isinstance(data, CDATVariable):
@@ -344,7 +355,17 @@ def _make_masked_array(data, mask=None, fill_value=1e20, attributes: Optional[di
     elif isinstance(data, ma.MaskedArray):
         raw = data.copy()
     else:
-        raw = ma.array(np.asarray(data, dtype=float), fill_value=fill_value)
+        arr = np.asarray(data)
+        if np.issubdtype(arr.dtype, np.integer):
+            raw = ma.array(arr)           # keep dtype; no float fill_value
+        else:
+            raw = ma.array(arr.astype(float), fill_value=fill_value)
+
+    # Resolve an appropriate fill_value for the actual dtype of raw.
+    if np.issubdtype(raw.dtype, np.integer):
+        _fv = int(np.iinfo(raw.dtype).max)
+    else:
+        _fv = fill_value
 
     combined_mask = ma.getmaskarray(raw)
 
@@ -363,7 +384,7 @@ def _make_masked_array(data, mask=None, fill_value=1e20, attributes: Optional[di
     if mask is not None:
         combined_mask |= np.asarray(mask, dtype=bool)
 
-    raw = ma.array(raw.data, mask=combined_mask, fill_value=fill_value)
+    raw = ma.array(raw.data, mask=combined_mask, fill_value=_fv)
     raw = _maybe_mask_invalid_numeric(raw)
     return raw
 
