@@ -649,10 +649,13 @@ class CDATVariable:
         if not isinstance(result, (np.ndarray, ma.MaskedArray)):
             return result
         new_axes = self._sliced_axes(key, result.shape)
+        # Don't propagate a stale grid when axes were dropped (advanced indexing
+        # fallback returns [] when axis mapping cannot be determined).
+        grid = self._grid if new_axes else None
         return CDATVariable(
             result,
             axes=new_axes,
-            grid=self._grid,
+            grid=grid,
             id=self.id,
             attributes=dict(self._attributes),
         )
@@ -954,8 +957,10 @@ class CDATVariable:
 
         new_data = np.transpose(self._data, perm)
         new_axes = [self._axes[i].copy() if self._axes[i] is not None else None for i in perm]
-        lat_ax = next((ax for ax in new_axes if ax is not None and ax.isLatitude()), None)
-        lon_ax = next((ax for ax in new_axes if ax is not None and ax.isLongitude()), None)
+        lat_ax = next((ax for ax in new_axes if ax is not None
+                       and (ax.isLatitude() or _detect_axis_type(ax.id) == "Y")), None)
+        lon_ax = next((ax for ax in new_axes if ax is not None
+                       and (ax.isLongitude() or _detect_axis_type(ax.id) == "X")), None)
         new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else None
 
         return CDATVariable(new_data, axes=new_axes, grid=new_grid, id=self.id, attributes=dict(self._attributes))
@@ -1033,8 +1038,10 @@ class CDATVariable:
             if lon_idx is not None:
                 _sel_axis(lon_idx, kwargs["longitude"])
 
-        lat_ax = next((ax for ax in result_axes if ax is not None and ax.isLatitude()), None)
-        lon_ax = next((ax for ax in result_axes if ax is not None and ax.isLongitude()), None)
+        lat_ax = next((ax for ax in result_axes if ax is not None
+                        and (ax.isLatitude() or _detect_axis_type(ax.id) == "Y")), None)
+        lon_ax = next((ax for ax in result_axes if ax is not None
+                        and (ax.isLongitude() or _detect_axis_type(ax.id) == "X")), None)
         new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else None
 
         return CDATVariable(result_data, axes=result_axes, grid=new_grid, id=self.id, attributes=dict(self._attributes))
@@ -1192,6 +1199,8 @@ def cdat_to_da(var: CDATVariable, name: Optional[str] = None) -> xr.DataArray:
 
         if ax.axis in ("T", "Y", "X", "Z"):
             attrs["axis"] = ax.axis
+        elif _detect_axis_type(ax.id) in ("T", "Y", "X", "Z"):
+            attrs["axis"] = _detect_axis_type(ax.id)
 
         try:
             coords[dim] = xr.Variable(dim, vals, attrs=attrs)

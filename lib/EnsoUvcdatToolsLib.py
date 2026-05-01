@@ -91,10 +91,16 @@ def CDTIMEcomptime(year, month=1, day=1, hour=0, minute=0, second=0.0,
 # ---------------------------------------------------------------------------
 def MV2add(a, b):            return _mv_wrap(ma.add(_mv(a), _mv(b)), a)
 def MV2arange(*args):        return ma.array(np.arange(*args))
-def MV2array(data, **kw):    return ma.array(data, **kw)
+def MV2array(data, **kw):    return CDATVariable(ma.array(data, **kw), id="")
 def MV2average(a, axis=None, weights=None):
-    return ma.average(_mv(a), axis=axis, weights=_mv(weights) if weights is not None else None)
+    result = ma.average(_mv(a), axis=axis,
+                        weights=_mv(weights) if weights is not None else None)
+    if isinstance(a, CDATVariable) and isinstance(result, np.ndarray):
+        return CDATVariable(result, id=a.id, attributes=dict(a._attributes))
+    return result
 def MV2compress(condition, a, axis=0):
+    if isinstance(a, CDATVariable):
+        return a.compress(condition, axis=axis)
     cond = np.asarray(condition, dtype=bool)
     raw = _mv(a)
     return ma.array(np.compress(cond, raw, axis=axis),
@@ -128,10 +134,13 @@ def MV2masked_where(cond, a):return _mv_wrap(ma.masked_where(np.asarray(cond, dt
 def MV2maximum(a):           return float(ma.max(_mv(a)))
 def MV2minimum(a):           return float(ma.min(_mv(a)))
 def MV2multiply(a, b):       return _mv_wrap(ma.multiply(_mv(a), _mv(b)), a)
-def MV2ones(shape):          return ma.ones(shape)
+def MV2ones(shape):          return CDATVariable(ma.ones(shape), id="")
 def MV2subtract(a, b):       return _mv_wrap(ma.subtract(_mv(a), _mv(b)), a)
 def MV2sum(a, axis=None, fill_value=0, dtype=None):
-    return ma.sum(_mv(a), axis=axis, dtype=dtype)
+    result = ma.sum(_mv(a), axis=axis, dtype=dtype)
+    if isinstance(a, CDATVariable) and isinstance(result, np.ndarray):
+        return CDATVariable(result, id=a.id, attributes=dict(a._attributes))
+    return result
 def MV2take(a, indices, axis=0):
     raw = _mv(a)
     result = ma.array(np.take(raw, indices, axis=axis),
@@ -152,8 +161,8 @@ def MV2take(a, indices, axis=0):
                             id=a.id, attributes=dict(a._attributes))
     return result
 def MV2where(condition, x, y):
-    return ma.where(np.asarray(condition, dtype=bool), _mv(x), _mv(y))
-def MV2zeros(shape):         return ma.zeros(shape)
+    return _mv_wrap(ma.where(np.asarray(condition, dtype=bool), _mv(x), _mv(y)), x)
+def MV2zeros(shape):         return CDATVariable(ma.zeros(shape), id="")
 
 # Internal helpers for MV2 aliases
 def _mv(x):
@@ -2628,13 +2637,12 @@ def Normalize(tab, frequency):
         for dd in list(range(time_steps_per_year)):
             std[dd] = float(GENUTILstd(new_tab[:,dd], weights=None, axis=0, centered=1, biased=1))
         tab_out = copy.copy(tab)
-        for yy in list(range(len(tab) / time_steps_per_year)):
+        for yy in list(range(len(tab) // time_steps_per_year)):
             tab_out[yy * time_steps_per_year:(yy + 1) * time_steps_per_year] = \
                 tab_out[yy * time_steps_per_year:(yy + 1) * time_steps_per_year] / std
         if len(tab.shape) == 1:
             tab_out = create_variable(tab_out, axes=axes, attributes=tab.attributes, id=tab.id)
         else:
-            axes = axes + tab.getAxisList()[1:]
             grid = tab.getGrid()
             mask = tab.mask
             tab_out = create_variable(tab_out, axes=axes, grid=grid, mask=mask, attributes=tab.attributes, id=tab.id)
