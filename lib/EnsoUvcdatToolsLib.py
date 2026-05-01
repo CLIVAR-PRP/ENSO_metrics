@@ -187,6 +187,18 @@ def _to_cdat(x):
     return CDATVariable(raw, id="")
 
 
+def _require_time_axis(var, context=''):
+    """Return the time axis of *var*, raising ValueError with a clear message if absent."""
+    ax = var.getTime()
+    if ax is None:
+        label = getattr(var, 'id', '') or context or 'variable'
+        raise ValueError(
+            f"No time axis found on '{label}'. "
+            "Ensure the input data has a recognised time dimension."
+        )
+    return ax
+
+
 def _axis_to_int(arr, axis):
     """
     Convert a CDAT-style axis spec to an integer or tuple of integers
@@ -1550,7 +1562,7 @@ def TimeBounds(tab):
     Returns a tuple of strings: e.g., ('1979-1-1 11:59:60.0', '2016-12-31 11:59:60.0')
     """
     tab = _to_cdat(tab)
-    time = tab.getTime().asComponentTime()
+    time = _require_time_axis(tab, 'TimeBounds').asComponentTime()
     return str(time[0]), str(time[-1])
 # ---------------------------------------------------------------------------------------------------------------------#
 
@@ -1574,7 +1586,7 @@ def annualcycle(tab):
     initorder = tab.getOrder()
     tab = tab.reorder("t...")
     axes = tab.getAxisList()
-    time_ax = tab.getTime().asComponentTime()
+    time_ax = _require_time_axis(tab, 'annualcycle').asComponentTime()
     months = MV2array(list(tt.month for tt in time_ax))
     cyc = []
     for ii in list(range(12)):
@@ -1829,12 +1841,12 @@ def CheckTime(tab1, tab2, frequency="monthly", min_time_steps=None, metric_name=
     tab1 = _to_cdat(tab1)
     tab2 = _to_cdat(tab2)
     # gets dates of the first and last the time steps of tab1
-    stime1 = tab1.getTime().asComponentTime()[0]
-    etime1 = tab1.getTime().asComponentTime()[-1]
+    stime1 = _require_time_axis(tab1, 'CheckTime').asComponentTime()[0]
+    etime1 = _require_time_axis(tab1, 'CheckTime').asComponentTime()[-1]
 
     # gets dates of the first and last the time steps of tab2
-    stime2 = tab2.getTime().asComponentTime()[0]
-    etime2 = tab2.getTime().asComponentTime()[-1]
+    stime2 = _require_time_axis(tab2, 'CheckTime').asComponentTime()[0]
+    etime2 = _require_time_axis(tab2, 'CheckTime').asComponentTime()[-1]
 
     # retains only the latest start date and the earliest end date
     if stime1.year > stime2.year:
@@ -2050,15 +2062,15 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
     if frequency not in ["daily", "monthly", "yearly"]:
         EnsoErrorsWarnings.unknown_frequency(frequency, INSPECTstack())
     if len(list_event_years) == 0:
-        tax = tab.getTime().asComponentTime()
+        tax = _require_time_axis(tab, 'Event_selection').asComponentTime()
         list_event_years = sorted(list(set([tax[ii].year for ii in list(range(len(tax)))])))
     else:
         list_event_years = sorted(list_event_years)
     # function to fill array with masked value where the data is not available
     def fill_array(tab, units, freq):
-        y1 = tab.getTime().asComponentTime()[0].year
-        m1 = tab.getTime().asComponentTime()[0].month
-        d1 = tab.getTime().asComponentTime()[0].day
+        y1 = _require_time_axis(tab, 'fill_array').asComponentTime()[0].year
+        m1 = _require_time_axis(tab, 'fill_array').asComponentTime()[0].month
+        d1 = _require_time_axis(tab, 'fill_array').asComponentTime()[0].day
         if len(tab.shape) == 1:
             raw_out = MV2zeros(nbr_years_window * 12)
         elif len(tab.shape) == 2:
@@ -2073,9 +2085,9 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
                                   grid=tab.getGrid() if isinstance(tab, CDATVariable) else None,
                                   id=getattr(tab, 'id', ''))
         for ii in list(range(len(tab))):
-            y2 = tab_out.getTime().asComponentTime()[ii].year
-            m2 = tab_out.getTime().asComponentTime()[ii].month
-            d2 = tab_out.getTime().asComponentTime()[ii].day
+            y2 = _require_time_axis(tab_out, 'fill_array').asComponentTime()[ii].year
+            m2 = _require_time_axis(tab_out, 'fill_array').asComponentTime()[ii].month
+            d2 = _require_time_axis(tab_out, 'fill_array').asComponentTime()[ii].day
             if freq == "yearly":
                 if y2 == y1:
                     tab_out[ii:ii + len(tab)] = copy.copy(tab)
@@ -2132,7 +2144,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
             axes = axes + tab.getAxisList()[1:]
         composite.setAxisList(axes)
     else:
-        time_ax = tab.getTime().asComponentTime()  # gets component time of tab
+        time_ax = _require_time_axis(tab, 'Event_selection').asComponentTime()  # gets component time of tab
         list_years = [yy.year for yy in time_ax[:]]  # listing years in tab (from component time)
         indices = MV2arange(tab.size)
         # creates a tab of "condition" where True is set when the event is found, False otherwise
@@ -2192,7 +2204,7 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute
         # Initialization
         tab_threshold = MV2zeros(tab.shape)
         tab_threshold.fill(threshold)
-        list_years = sorted(list(set([tab.getTime().asComponentTime()[yy].year for yy in range(len(tab))])))
+        list_years = sorted(list(set([_require_time_axis(tab, 'DetectEvents').asComponentTime()[yy].year for yy in range(len(tab))])))
         indices = MV2arange(len(list_years))
         # Conditions
         if nino is True:
@@ -2231,14 +2243,14 @@ def DetectEvents(tab, season, threshold, normalization=False, nino=True, compute
             EnsoErrorsWarnings.my_error(list_strings)
         # Main seasonal mean and anomalies
         enso = SeasonalMean(tab, season, compute_anom=True)
-        list_years = [enso.getTime().asComponentTime()[yy].year for yy in range(len(enso))]
+        list_years = [_require_time_axis(enso, 'DetectEvents').asComponentTime()[yy].year for yy in range(len(enso))]
         indices = MV2arange(len(list_years))
         y0 = list_years[0]
         enso_by_sea = list()
         for sea in lseasons:
             # Seasonal mean and anomalies
             tmp = SeasonalMean(tab, sea, compute_anom=True)
-            y1 = tmp.getTime().asComponentTime()[0].year
+            y1 = _require_time_axis(tmp, 'DetectEvents').asComponentTime()[0].year
             if y1 == y0:
                 tmp = tmp[:len(enso)]
             elif y1+1 == y0:
@@ -2500,7 +2512,7 @@ def get_year_by_year(tab, frequency="monthly"):
     """
     tab = _to_cdat(tab)
     tab = tab.reorder("t...")
-    time_ax = tab.getTime().asComponentTime()
+    time_ax = _require_time_axis(tab, 'Reshape').asComponentTime()
     myshape = [1] + [ss for ss in tab.shape[1:]]
     zeros = MV2zeros(myshape)
     zeros = MV2masked_where(zeros == 0, zeros)
@@ -2703,11 +2715,11 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         # this section checks if one time step has not been included by error at the beginning or the end of the time
         # series
         if isinstance(time_bounds[0], str):
-            if str(tab.getTime().asComponentTime()[0]) < time_bounds[0]:
+            if str(_require_time_axis(tab, 'ReadAndSelectRegion').asComponentTime()[0]) < time_bounds[0]:
                 tab = tab[1:]
-            if str(tab.getTime().asComponentTime()[-1]) > time_bounds[1]:
+            if str(_require_time_axis(tab, 'ReadAndSelectRegion').asComponentTime()[-1]) > time_bounds[1]:
                 tab = tab[:-1]
-    time_ax = tab.getTime()
+    time_ax = _require_time_axis(tab, 'ReadAndSelectRegion')
     time_units = "days since " + str(time_ax.asComponentTime()[0].year) + "-01-01 12:00:00"
     time_ax.id = "time"
     time_ax.toRelativeTime(time_units)
@@ -3515,7 +3527,7 @@ def SeasonalMean(tab, season, compute_anom=False):
             # these 'seasons' are between two years
             # if I don't custom 'tab' cdutil will compute half season mean
             # (i.e., for NDJ the first element would be for J only and the last for ND only)
-            time_ax_comp = tab.getTime().asComponentTime()
+            time_ax_comp = _require_time_axis(tab, 'SeasonalMean').asComponentTime()
             ntime = len(time_ax_comp)
             ii, jj = 0, 0
             if season == 'DJ':
@@ -3616,7 +3628,7 @@ def SkewMonthly(tab):
     initorder = tab.getOrder()
     tab = tab.reorder('t...')
     axes = tab.getAxisList()
-    time_ax = tab.getTime().asComponentTime()
+    time_ax = _require_time_axis(tab, 'SkewMonthly').asComponentTime()
     months = MV2array(list(tt.month for tt in time_ax))
     cyc = []
     for ii in list(range(12)):
@@ -3647,7 +3659,7 @@ def StdMonthly(tab):
     initorder = tab.getOrder()
     tab = tab.reorder('t...')
     axes = tab.getAxisList()
-    time_ax = tab.getTime().asComponentTime()
+    time_ax = _require_time_axis(tab, 'StdMonthly').asComponentTime()
     months = MV2array(list(tt.month for tt in time_ax))
     cyc = []
     for ii in list(range(12)):
@@ -4134,7 +4146,7 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
         tmp1 = tab_yy_mm[:, ii]
         tmp2 = copy.copy(x)
         yy1 = tab_yy_mm.getAxis(0)[0]
-        yy2 = tmp2.getTime().asComponentTime()[0].year
+        yy2 = _require_time_axis(tmp2, 'LinearRegressionAndNonlinearity').asComponentTime()[0].year
         if yy1 == yy2:
             tmp1 = tmp1[:len(tmp2)]
         elif yy1 < yy2:

@@ -412,7 +412,7 @@ class _Axis:
 
         self.units = units
         self._attributes = dict(attributes or {})
-        self.axis = axis_type or _detect_axis_type(id)
+        self.axis = (axis_type if axis_type and axis_type != "-" else None) or _detect_axis_type(id)
         self.long_name = self._attributes.get("long_name", id)
         self.regions: Optional[str] = None
         self.reference: Optional[str] = None
@@ -848,16 +848,28 @@ class CDATVariable:
         self._grid = grid
 
     def getTime(self) -> Optional[_Axis]:
-        return next((ax for ax in self._axes if ax is not None and ax.isTime()), None)
+        ax = next((ax for ax in self._axes if ax is not None and ax.isTime()), None)
+        if ax is None:
+            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "T"), None)
+        return ax
 
     def getLatitude(self) -> Optional[_Axis]:
-        return next((ax for ax in self._axes if ax is not None and ax.isLatitude()), None)
+        ax = next((ax for ax in self._axes if ax is not None and ax.isLatitude()), None)
+        if ax is None:
+            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "Y"), None)
+        return ax
 
     def getLongitude(self) -> Optional[_Axis]:
-        return next((ax for ax in self._axes if ax is not None and ax.isLongitude()), None)
+        ax = next((ax for ax in self._axes if ax is not None and ax.isLongitude()), None)
+        if ax is None:
+            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "X"), None)
+        return ax
 
     def getLevel(self) -> Optional[_Axis]:
-        return next((ax for ax in self._axes if ax is not None and ax.isLevel()), None)
+        ax = next((ax for ax in self._axes if ax is not None and ax.isLevel()), None)
+        if ax is None:
+            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "Z"), None)
+        return ax
 
     def getOrder(self) -> str:
         order = ""
