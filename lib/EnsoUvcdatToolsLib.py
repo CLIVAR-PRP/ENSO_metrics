@@ -60,6 +60,15 @@ except (ImportError, OSError):
     # OSError can occur when esmpy's libesmf_fullylinked.so is missing/mislinked
     _HAS_XESMF = False
 
+# When True (default), _guess_dim raises ValueError for dimensions whose axis
+# type cannot be determined with any confidence (score <= 0).  Set to False to
+# demote the error to a warning and return the best-guess dim — useful for
+# legacy observational datasets that lack CF axis/standard_name/units metadata.
+#
+#   import lib.EnsoUvcdatToolsLib as E; E.STRICT_DIM_GUESS = False
+#
+STRICT_DIM_GUESS: bool = True
+
 # Compatibility shim: provides CDATVariable (drop-in for cdms2.TransientVariable)
 # and factory helpers that keep callers (EnsoMetricsLib.py, …) unchanged.
 from .XarrayCompat import (
@@ -200,6 +209,119 @@ def _to_cdat(x):
     return CDATVariable(raw, id="")
 
 
+def _get_lat_weights(var, axis=None):
+    """Return area weights broadcast to *var*'s shape, or None.
+
+    Priority:
+    1. ``cell_area`` attribute on *var* — exact area weights for stretched /
+       regionally-refined (RRM) grids (E3SM, MPAS-A regular outputs).
+    2. Cosine of latitude — standard approximation for regular grids.
+    """
+    var = _to_cdat(var)
+    # Priority 1: explicit cell_area (exact for stretched / RRM grids)
+    cell_area = getattr(var, 'cell_area', None)
+    if cell_area is not None:
+        try:
+            data = _mv(var)
+            w = ma.masked_invalid(np.asarray(cell_area, dtype=float))
+            if w.ndim > data.ndim:
+                raise ValueError(
+                    f"cell_area has {w.ndim} dims but data has only {data.ndim}; "
+                    "cannot broadcast."
+                )
+            # Broadcast to data shape (handles time-invariant (y,x) areas)
+            wbc = ma.array(np.broadcast_to(w, data.shape), copy=False)
+            # Combine weight mask with data mask so excluded data points
+            # are also excluded from the weight denominator.
+            combined_mask = ma.getmaskarray(wbc) | ma.getmaskarray(data)
+            wbc = ma.array(wbc, mask=combined_mask)
+            return wbc
+        except Exception as _cell_area_exc:
+            import warnings
+            warnings.warn(
+                f"cell_area weight computation failed ({_cell_area_exc}); "
+                "falling back to cosine-latitude weights. "
+                "Results may be incorrect for stretched/RRM grids.",
+                stacklevel=2,
+            )
+    # Priority 2: cos(lat) — standard approximation
+    lat = var.getLatitude()
+    if lat is None:
+        return None
+    lat_vals = np.asarray(lat[:], dtype=float)
+    w = np.cos(np.deg2rad(lat_vals))
+    w = ma.masked_invalid(w)
+    lat_axis = _axis_to_int(var, "y")
+    if lat_axis is None:
+        return None
+    shape = [1] * var.ndim
+    shape[lat_axis] = len(w)
+    return w.reshape(shape)
+
+
+def _weighted_spatial_average(tab, axes=("Y", "X")):
+    """
+    Cosine-latitude-weighted spatial average matching cdutil.averager behaviour.
+
+    *axes* is a tuple of CDAT axis-type strings to reduce over (e.g. ("Y","X"),
+    ("Y",), ("X",)).  Returns a numpy.ma array with those dimensions collapsed.
+    """
+    tab = _to_cdat(tab)
+    data = _mv(tab)
+    do_y = "Y" in axes
+    do_x = "X" in axes
+    lat_w = _get_lat_weights(tab)
+    if lat_w is None or not do_y:
+        # No latitude axis found or not averaging meridionally — use equal weights.
+        # Mirror the do_x/do_y branching used in the weighted path below.
+        if do_x and do_y:
+            ax_int = _axis_to_int(tab, "xy")
+        elif do_y:
+            ax_int = _axis_to_int(tab, "y")
+        elif do_x:
+            ax_int = _axis_to_int(tab, "x")
+        else:
+            return data  # nothing to reduce
+        if ax_int is None:
+            raise ValueError(
+                f"_weighted_spatial_average: cannot determine averaging axis "
+                f"for axes={axes!r}; attach CF axis metadata or pass an explicit integer."
+            )
+        return ma.mean(data, axis=ax_int)
+    mask = ma.getmaskarray(data)
+    wm = ma.array(np.broadcast_to(lat_w, data.shape), mask=mask)
+    # Re-apply the same mask to data so that data*wm uses identical masking
+    weighted = ma.array(data, mask=mask) * wm
+    if do_x and do_y:
+        ax_int = _axis_to_int(tab, "xy")
+    elif do_y:
+        ax_int = _axis_to_int(tab, "y")
+    else:  # do_x only
+        ax_int = _axis_to_int(tab, "x")
+    if ax_int is None:
+        raise ValueError(
+            f"_weighted_spatial_average: cannot determine averaging axis "
+            f"for axes={axes!r}; attach CF axis metadata or pass an explicit integer."
+        )
+    num = ma.sum(weighted, axis=ax_int)
+    den = ma.sum(wm, axis=ax_int)
+    # Guard against fully-masked latitude bands: use clean masked division
+    den_safe = ma.where(den == 0, ma.masked, den)
+    return num / den_safe
+
+
+def _is_unstructured_grid(da):
+    """Return True when *da* looks like an unstructured (MPAS/ICON/SE) grid."""
+    _unstructured_dims = {"ncol", "ncell", "ncells", "nvertices", "nedges"}
+    if hasattr(da, 'dims'):             # xarray DataArray / Dataset
+        dims = {str(d).lower() for d in da.dims}
+    elif isinstance(da, CDATVariable):
+        dims = {ax.id.lower() for ax in da._axes if ax is not None}
+    else:
+        return False
+    return bool(dims & _unstructured_dims)
+
+
 def _axis_to_int(arr, axis):
     """
     Convert a CDAT-style axis spec to an integer or tuple of integers
@@ -238,12 +360,26 @@ def _axis_to_int(arr, axis):
     # Heuristic fallbacks
     # NOTE: fallback assumes (t, y, x) ordering; may not hold for staggered
     # grids or unconventional axis layouts (e.g. some E3SM diagnostics).
-    if "T" not in ax_map and ndim >= 3:
-        ax_map["T"] = 0
-    if "Y" not in ax_map:
-        ax_map["Y"] = ndim - 2 if ndim >= 2 else 0
-    if "X" not in ax_map:
-        ax_map["X"] = ndim - 1
+    # For arrays with more than 3 dims and no CF metadata we cannot safely
+    # infer axis positions — raise rather than silently reduce the wrong dim.
+    if src is None and ndim > 3 and not ax_map:
+        raise ValueError(
+            f"Cannot infer axes for {ndim}-D array without CF axis metadata; "
+            "attach axis types or pass an explicit integer axis."
+        )
+    # Positional heuristics: only applied when *no* CF axis metadata was found
+    # at all (ax_map is empty after the loop above).  Mixing positional guesses
+    # with partial real metadata can silently reduce the wrong dimension on
+    # non-standard layouts (CMIP ensemble dim, E3SM extra dims, etc.).
+    if not ax_map:
+        # Classic 3-D (time, lat, lon) or 2-D (lat, lon) layout only.
+        if ndim == 3:
+            ax_map.setdefault("T", 0)
+        if ndim >= 2:
+            ax_map.setdefault("Y", ndim - 2)
+            ax_map.setdefault("X", ndim - 1)
+        elif ndim == 1:
+            ax_map.setdefault("X", 0)
     axis_l = axis_s.lower()
     if axis_l in ("t", "time"):
         return ax_map.get("T", 0)
@@ -347,9 +483,9 @@ def _ensure_time_encoding(ds: xr.Dataset, path: str = "") -> xr.Dataset:
         units = tc.attrs.get("units") or tc.encoding.get("units") or ""
 
         if "since" not in units:
-            raise ValueError(
-                f"Invalid time units: {units!r}; file={path}"
-            )
+            # Non-standard or missing units string — skip decoding and
+            # return the dataset as-is (matches CDAT's lenient behaviour).
+            return ds
 
         try:
             from .XarrayCompat import _get_time_coder
@@ -471,7 +607,11 @@ def _seasonal_mean(tab, month_list, compute_anom=False):
 
         for yr in unique_years:
             yr_mask = years_sel == yr
-            if sorted(months_sel[yr_mask].tolist()) == sorted(month_list):
+            present = sorted(months_sel[yr_mask].tolist())
+            # Strict match: require all season months to be present.
+            # Partial seasons (e.g. DJF with only JF) are dropped rather
+            # than included as biased means — consistent with CDAT behavior.
+            if present == sorted(month_list):
                 season_data.append(ma.mean(raw[yr_mask], axis=0))
                 season_years.append(yr)
 
@@ -524,18 +664,29 @@ sea_dict = {k: _SeasonHelper(v) for k, v in _MONTH_MAP.items()}
 # genutil.statistics replacements
 # ---------------------------------------------------------------------------
 def GENUTILcorrelation(a, b, weights=None, axis=0, centered=1, biased=1):
-    x = _mv(a)
-    y = _mv(b)
+    x = ma.masked_invalid(_mv(a))
+    y = ma.masked_invalid(_mv(b))
     axis = _axis_to_int(a, axis)
     if centered:
         x = x - ma.mean(x, axis=axis, keepdims=True)
         y = y - ma.mean(y, axis=axis, keepdims=True)
-    # Ignore string weights (e.g. "weighted") — equal weighting applied instead
-    w = _mv(weights) if (weights is not None and not isinstance(weights, str)) else None
+    if isinstance(weights, str) and weights.lower() == "weighted":
+        w = _get_lat_weights(a, axis=axis)
+    elif weights is not None:
+        w = _mv(weights)
+    else:
+        w = None
     if w is not None:
-        cov  = ma.average(x * y,  axis=axis, weights=w)
-        varx = ma.average(x ** 2, axis=axis, weights=w)
-        vary = ma.average(y ** 2, axis=axis, weights=w)
+        # Broadcast weights to data shape; use manual sum/sum for multi-axis support
+        wbc = np.broadcast_to(np.asarray(w), x.shape)
+        # Single unified mask: exclude points where *either* x or y is missing
+        # so that cov, varx, and vary all share the same effective sample.
+        wm   = ma.array(wbc, mask=ma.getmaskarray(x) | ma.getmaskarray(y))
+        den  = ma.sum(wm, axis=axis)
+        den_safe = ma.where(den == 0, ma.masked, den)
+        cov  = ma.sum(x * y * wm, axis=axis) / den_safe
+        varx = ma.sum(x ** 2 * wm, axis=axis) / den_safe
+        vary = ma.sum(y ** 2 * wm, axis=axis) / den_safe
     else:
         n   = x.count(axis=axis) if biased else (x.count(axis=axis) - 1)
         if np.any(np.asarray(n) == 0):
@@ -546,30 +697,50 @@ def GENUTILcorrelation(a, b, weights=None, axis=0, centered=1, biased=1):
     return cov / ma.sqrt(varx * vary)
 
 def GENUTILrms(a, b, weights=None, axis=0, centered=0, biased=1):
-    x = _mv(a)
-    y = _mv(b)
+    x = ma.masked_invalid(_mv(a))
+    y = ma.masked_invalid(_mv(b))
     axis = _axis_to_int(a, axis)
     diff = x - y
     if centered:
         diff = diff - ma.mean(diff, axis=axis, keepdims=True)
-    # Ignore string weights (e.g. "weighted") — equal weighting applied instead
-    w = _mv(weights) if (weights is not None and not isinstance(weights, str)) else None
+    if isinstance(weights, str) and weights.lower() == "weighted":
+        w = _get_lat_weights(a, axis=axis)
+    elif weights is not None:
+        w = _mv(weights)
+    else:
+        w = None
     if w is not None:
-        return ma.sqrt(ma.average(diff ** 2, axis=axis, weights=w))
+        # Broadcast weights to data shape; use manual sum/sum for multi-axis support
+        wbc = np.broadcast_to(np.asarray(w), diff.shape)
+        # Use union mask of x and y so the effective sample size matches
+        # GENUTILcorrelation — avoids inconsistency when masking is asymmetric.
+        wm  = ma.array(wbc, mask=ma.getmaskarray(x) | ma.getmaskarray(y))
+        den = ma.sum(wm, axis=axis)
+        den_safe = ma.where(den == 0, ma.masked, den)
+        return ma.sqrt(ma.sum(diff ** 2 * wm, axis=axis) / den_safe)
     n = diff.count(axis=axis) if biased else (diff.count(axis=axis) - 1)
     if np.any(np.asarray(n) == 0):
         return ma.masked
     return ma.sqrt(ma.sum(diff ** 2, axis=axis) / n)
 
 def GENUTILstd(a, weights=None, axis=0, centered=1, biased=1):
-    x = _mv(a)
+    x = ma.masked_invalid(_mv(a))
     axis = _axis_to_int(a, axis)
     if centered:
         x = x - ma.mean(x, axis=axis, keepdims=True)
-    # Ignore string weights (e.g. "weighted") — equal weighting applied instead
-    w = _mv(weights) if (weights is not None and not isinstance(weights, str)) else None
+    if isinstance(weights, str) and weights.lower() == "weighted":
+        w = _get_lat_weights(a, axis=axis)
+    elif weights is not None:
+        w = _mv(weights)
+    else:
+        w = None
     if w is not None:
-        result = ma.sqrt(ma.average(x ** 2, axis=axis, weights=w))
+        # Broadcast weights to data shape; use manual sum/sum for multi-axis support
+        wbc = np.broadcast_to(np.asarray(w), x.shape)
+        wm  = ma.array(wbc, mask=ma.getmaskarray(x))
+        den = ma.sum(wm, axis=axis)
+        den_safe = ma.where(den == 0, ma.masked, den)
+        result = ma.sqrt(ma.sum(x ** 2 * wm, axis=axis) / den_safe)
     else:
         ddof = 0 if biased else 1
         result = ma.std(x, axis=axis, ddof=ddof)
@@ -617,6 +788,10 @@ def _add_cf_units_to_ds(ds: xr.Dataset) -> xr.Dataset:
     """
     for name, coord in ds.coords.items():
         if "units" in coord.attrs:
+            continue
+        # Only infer units for 1-D coordinates with numeric values;
+        # skip 2-D bounds, projected coords, and rotated-grid auxiliaries.
+        if coord.ndim != 1:
             continue
         try:
             vals = coord.values.astype(float)
@@ -838,38 +1013,172 @@ class _XcDatasetHandle:
             self._ds.close()
             self._ds = None
 
-def _guess_dim(da: xr.DataArray, axis_type: str) -> str:
+def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) -> str:
     """Return the dimension name for a given axis type (T/Y/X/Z).
 
-    Checks CF 'axis' attribute first (reliable for CMIP/ERA5/E3SM).
-    Falls back to name heuristics only when CF metadata is absent.
-    """
-    # Pass 1: authoritative CF 'axis' attribute
-    for dim in da.dims:
-        if dim in da.coords:
-            cf = da.coords[dim].attrs.get("axis", "")
-            if cf.upper() == axis_type:
-                return dim
+    Scoring lookup — every candidate dimension is scored across all signals;
+    the highest-scoring dim wins, resolving ambiguity (e.g. both ``lat`` and
+    ``y`` passing the value-range check):
 
-    # Pass 2: name heuristics (may fail for MPAS or unconventional grids)
+        score 4 — CF ``axis`` attribute          (definitive)
+        score 3 — CF ``standard_name`` attribute (reliable)
+        score 2 — CF ``units`` pattern           (strong hint)
+        score 1 — token/endswith name heuristic  (weak hint)
+        score 0 — coordinate value-range         (last resort)
+    """
+    _STANDARD_NAMES: dict[str, set[str]] = {
+        "Y": {"latitude", "grid_latitude", "projection_y_coordinate",
+              "rotated_latitude"},
+        "X": {"longitude", "grid_longitude", "projection_x_coordinate",
+              "rotated_longitude"},
+        "T": {"time"},
+        "Z": {"air_pressure", "altitude", "depth", "height",
+              "ocean_sigma_coordinate", "sigma", "eta",
+              "height_above_geopotential_datum",
+              "height_above_mean_sea_level"},
+    }
+    _UNITS_PATTERNS: dict[str, tuple[str, ...]] = {
+        "Y": ("degrees_north", "degree_north", "degrees_n", "degree_n",
+              "degreesnorth", "degreen"),
+        "X": ("degrees_east", "degree_east", "degrees_e", "degree_e",
+              "degreeseast", "degreee"),
+        "T": ("since",),   # matches "days since …", "hours since …", etc.
+        "Z": ("pa", "hpa", "mb", "mbar", "meter", "m", "sigma", "hybrid"),
+    }
+    _NAME_HINTS: dict[str, tuple[str, ...]] = {
+        "Y": ("lat", "latitude", "nav_lat", "rlat", "y", "j", "nlat",
+              "y_1", "y_2"),
+        "X": ("lon", "longitude", "nav_lon", "rlon", "x", "i", "nlon",
+              "x_1", "x_2"),
+        "T": ("time", "t"),
+        "Z": ("lev", "level", "plev", "depth", "sigma", "eta", "z", "k",
+              "nlev"),
+    }
+
+    at = axis_type.upper()
+    sn_set   = _STANDARD_NAMES.get(at, set())
+    u_pats   = _UNITS_PATTERNS.get(at, ())
+    hints    = _NAME_HINTS.get(at, ())
+
+    scores: list[tuple[int, str]] = []
+
     for dim in da.dims:
-        if axis_type == "T" and "time" in dim.lower():
-            return dim
-        if axis_type == "Y" and ("lat" in dim.lower() or dim in ("j", "y")):
-            return dim
-        if axis_type == "X" and ("lon" in dim.lower() or dim in ("i", "x")):
-            return dim
-        if axis_type == "Z" and ("lev" in dim.lower() or "depth" in dim.lower()):
-            return dim
-    return ""
+        score = -1  # not matched yet
+
+        if dim in da.coords:
+            coord = da.coords[dim]
+            attrs = coord.attrs
+
+            # score 4: CF axis attribute
+            if attrs.get("axis", "").upper() == at:
+                score = max(score, 4)
+
+            # score 3: CF standard_name
+            if attrs.get("standard_name", "").lower() in sn_set:
+                score = max(score, 3)
+
+            # score 2: CF units pattern
+            u = attrs.get("units", "").lower()
+            if any(p in u for p in u_pats):
+                score = max(score, 2)
+
+            # score 0: coordinate value-range (lat/lon only; deferred to last)
+            if score < 0 and at in ("Y", "X"):
+                try:
+                    raw = np.asarray(coord.values)
+                    # Skip obvious 0-based integer index arrays
+                    if not (np.issubdtype(raw.dtype, np.integer)
+                            and raw.size >= 1
+                            and int(raw.min()) == 0
+                            and int(raw.max()) == raw.size - 1):
+                        vals = raw.astype(float)
+                        vals = vals[np.isfinite(vals)]
+                        if vals.size > 0:
+                            vmin, vmax = float(vals.min()), float(vals.max())
+                            if at == "Y" and -90.0 <= vmin <= vmax <= 90.0:
+                                score = max(score, 0)
+                            if at == "X" and (
+                                (-180.0 <= vmin <= vmax <= 180.0)
+                                or (0.0 <= vmin <= vmax <= 360.0)
+                            ):
+                                score = max(score, 0)
+                except Exception:
+                    pass
+
+        # score 1: token/endswith name heuristics (no coord required)
+        if score < 0:
+            dl = dim.lower()
+            tokens = set(dl.replace("-", "_").split("_"))
+            if (dl in hints
+                    or any(h in tokens for h in hints)
+                    or any(dl.endswith(h) for h in hints)):
+                score = max(score, 1)
+
+        if score >= 0:
+            scores.append((score, dim))
+
+    if not scores:
+        # No dim matched at any score level — treat as score = -1.
+        _strict = STRICT_DIM_GUESS if strict is None else strict
+        msg = (
+            f"_guess_dim cannot determine axis {axis_type!r} from dims "
+            f"{list(da.dims)}: no candidate matched. "
+            "Add CF axis/standard_name/units metadata."
+        )
+        if _strict:
+            raise ValueError(msg)
+        import warnings
+        warnings.warn(msg, stacklevel=2)
+        return ""
+    # Return the dim with the highest confidence score.
+    # Ties are broken by document order: earlier dims in da.dims win.
+    dim_order = {d: i for i, d in enumerate(da.dims)}
+    best_score, best_dim = max(
+        scores,
+        key=lambda t: (t[0], -dim_order.get(t[1], 0)),
+    )
+    if best_score <= 0:
+        _strict = STRICT_DIM_GUESS if strict is None else strict
+        msg = (
+            f"_guess_dim cannot confidently determine axis {axis_type!r} "
+            f"from dims {list(da.dims)} (best score={best_score}, "
+            f"chosen={best_dim!r}). Add CF axis/standard_name/units metadata."
+        )
+        if _strict:
+            raise ValueError(msg)
+        import warnings
+        warnings.warn(msg, stacklevel=2)
+        return best_dim
+    if best_score == 1:
+        import warnings
+        warnings.warn(
+            f"_guess_dim fallback: axis={axis_type!r}, chosen={best_dim!r}, "
+            f"score={best_score}, dims={list(da.dims)}",
+            stacklevel=2,
+        )
+    return best_dim
 
 # cdutil averager stub (used inside this module)
 class _CdutilAverager:
     """Wraps xcdat spatial/temporal averaging to mimic cdutil.averager()."""
     @staticmethod
     def averager(tab, axis="xy", weights="weighted", action="average"):
+        if weights is None:
+            import warnings
+            warnings.warn(
+                "cdutil.averager called with weights=None (equal weights); "
+                "CDAT default is cosine-latitude weighting (weights='weighted'). "
+                "Results may differ from CDAT.",
+                stacklevel=2,
+            )
         da = cdat_to_da(tab)
         varname = getattr(tab, 'id', None) or "var"
+        # Reject unstructured grids early — they need a different code path
+        if _is_unstructured_grid(da):
+            raise NotImplementedError(
+                "Native unstructured/MPAS grids are not supported by this CDAT replacement path. "
+                "Please remap to regular lat-lon first."
+            )
         ds = da.to_dataset(name=varname)
         # add_missing_bounds can fail when time encoding lacks 'calendar';
         # fall back to spatial-only bounds in that case
@@ -917,6 +1226,21 @@ class _CdutilAverager:
             t_dim = _guess_dim(da, "T") or "time"
             return da_to_cdat(ds[varname].mean(dim=t_dim), varname=varname)
         if xcdat_axes:
+            # Cosine-latitude weighted average — deterministic: always use manual
+            # implementation when weights="weighted" and Y is in the reduction
+            # axes.  Only fall through to xcdat when lat weighting is explicitly
+            # not requested or latitude axis is unavailable.
+            if weights == "weighted" and "Y" in xcdat_axes:
+                try:
+                    result_raw = _weighted_spatial_average(tab, axes=tuple(xcdat_axes))
+                    if do_time:
+                        result_raw = ma.mean(result_raw, axis=0)
+                    return CDATVariable(result_raw, id=varname)
+                except Exception as _e:
+                    raise RuntimeError(
+                        "_weighted_spatial_average failed — cannot guarantee "
+                        "correctness: " + str(_e)
+                    ) from _e
             result_ds = ds.spatial.average(varname, axis=xcdat_axes)
             result = result_ds[varname]
             if do_time:
@@ -960,12 +1284,13 @@ class _CdutilAverager:
                 return da_to_cdat(lsm_01, varname="sftlf")
             except Exception:
                 pass
-        # Fallback: all zeros (ocean everywhere)
-        raw = _mv(d)
-        result = ma.zeros(raw.shape[-2:] if raw.ndim >= 2 else raw.shape)
-        axes = (d.getAxisList()[-2:] if isinstance(d, CDATVariable)
-                and len(d._axes) >= 2 else [])
-        return CDATVariable(result, axes=axes, id="sftlf")
+        # Land-sea mask generation failed — raise rather than silently biasing
+        # all downstream land/ocean metrics with an all-ocean mask.
+        raise RuntimeError(
+            "Land-sea mask generation failed. "
+            "Install regionmask (conda install -c conda-forge regionmask) "
+            "or provide an explicit sftlf file."
+        )
 
     class times:
         @staticmethod
@@ -980,11 +1305,24 @@ for _s in ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DE
 cdutil = _CdutilAverager()
 
 
+# Map CDAT/cdms2 regridding method names → xESMF method names
+_REGRID_METHOD_MAP = {
+    "linear":       "bilinear",
+    "bilinear":     "bilinear",
+    "conserve":     "conservative",
+    "conservative": "conservative",
+    "nearest":      "nearest_s2d",
+    "nearest_s2d":  "nearest_s2d",
+    "patch":        "patch",
+}
+
+
 class REGRID2horizontal__Horizontal:
     """Replacement for regrid2.horizontal.Horizontal using xesmf (optional) or scipy."""
-    def __init__(self, src_grid, dst_grid):
+    def __init__(self, src_grid, dst_grid, method="bilinear"):
         self._src = src_grid
         self._dst = dst_grid
+        self._method = _REGRID_METHOD_MAP.get(str(method).lower(), "bilinear")
 
     def __call__(self, tab):
         if not _HAS_XESMF:
@@ -994,16 +1332,39 @@ class REGRID2horizontal__Horizontal:
             )
         from .XarrayCompat import cdat_to_da, da_to_cdat
         da = cdat_to_da(tab, name=getattr(tab, 'id', 'var'))
+        if _is_unstructured_grid(da):
+            raise NotImplementedError(
+                "REGRID2horizontal: native unstructured/MPAS grids are not supported. "
+                "Remap to a regular lat-lon grid first."
+            )
         dst_lat = np.asarray(self._dst.getLatitude()[:])
         dst_lon = np.asarray(self._dst.getLongitude()[:])
+        # Identity check — skip regridding if source and target grids are identical
+        src_lat_dim = _guess_dim(da, 'Y')
+        src_lon_dim = _guess_dim(da, 'X')
+        if (src_lat_dim and src_lon_dim
+                and np.array_equal(np.asarray(da[src_lat_dim]), dst_lat)
+                and np.array_equal(np.asarray(da[src_lon_dim]), dst_lon)):
+            return tab
         target_ds = xr.Dataset(coords={"lat": dst_lat, "lon": dst_lon})
+        src_da = da.rename({src_lat_dim: 'lat', src_lon_dim: 'lon'}) if src_lat_dim and src_lon_dim else da
         regridder = _xesmf.Regridder(
-            da.rename({_guess_dim(da, 'Y'): 'lat', _guess_dim(da, 'X'): 'lon'}).to_dataset(name='var'),
+            src_da.to_dataset(name='var'),
             target_ds,
-            method="bilinear",
+            method=self._method,
             extrap_method="nearest_s2d",
+            reuse_weights=True,
         )
         result = regridder(da)
+        # Constant-field preservation: if source is spatially uniform, fill result to
+        # that constant to avoid interpolation artefacts / numerical drift
+        data_flat = _mv(tab)
+        if data_flat.ndim >= 2:
+            spatial = data_flat.reshape(data_flat.shape[:-2] + (-1,))
+            if np.allclose(spatial, spatial[..., :1], atol=1e-8):
+                result_cdat = da_to_cdat(result, varname=getattr(tab, 'id', 'var'))
+                result_cdat._data[:] = data_flat.flat[0]
+                return result_cdat
         return da_to_cdat(result, varname=getattr(tab, 'id', 'var'))
 
 
@@ -3260,21 +3621,24 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     #
     # regrid
     #
+    # Map regridMethod to the xESMF equivalent once, reused by both paths
+    xesmf_method = _REGRID_METHOD_MAP.get(str(regridMethod).lower(), "bilinear") if regridMethod else "bilinear"
     if regridder == "cdms":
         axis = tab_to_regrid.getAxis(0)
         idname = copy.copy(axis.id)
         if len(tab_to_regrid.shape) == 3 and (axis.id == "months" or axis.id == "years"):
             axis.id = "time"
             tab_to_regrid.setAxis(0, axis)
-        new_tab = tab_to_regrid.regrid(newgrid, missing=missing, order=order, mask=mask, regridTool=regridTool,
-                                       regridMethod=regridMethod)
+        # CDATVariable has no native .regrid() — route through REGRID2horizontal__Horizontal
+        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid, method=xesmf_method)
+        new_tab = regridFCT(tab_to_regrid)
         axis = tab_to_regrid.getAxis(0)
         axis.id = idname
         tab_to_regrid.setAxis(0, axis)
         if tab_to_regrid.getGrid().shape == newgrid.shape:
             new_tab = MV2masked_where(tab_to_regrid.mask, new_tab)
     else:
-        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid)
+        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid, method=xesmf_method)
         new_tab = regridFCT(tab_to_regrid)
     return new_tab
 
@@ -4846,7 +5210,7 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
             try: grid_name = newgrid.name
             except Exception:
                 try: grid_name = keyarg['newgrid_name']
-                except: grid_name = 'newgrid'
+                except Exception: grid_name = 'newgrid'
         info = info + ', observations and model regridded to ' + str(grid_name)
     else:
         info = info + ', observations and model NOT regridded'

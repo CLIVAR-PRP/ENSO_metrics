@@ -18,7 +18,7 @@ def default_arg_values(arg):
     }
     try:
         default[arg]
-    except:
+    except Exception:
         unknown_key_arg(arg, INSPECTstack())
     return default[arg]
 # ---------------------------------------------------------------------------------------------------------------------#

@@ -53,6 +53,18 @@ import numpy.ma as ma
 import xarray as xr
 
 
+# ---------------------------------------------------------------------------
+# Module-level behaviour flags
+# ---------------------------------------------------------------------------
+
+# When True, _validate_grid raises ValueError instead of warning when lon
+# precedes lat in the axis list (non-standard xy ordering).
+#
+#   import lib.XarrayCompat as XC; XC.STRICT_GRID = True
+#
+STRICT_GRID: bool = False
+
+
 __all__ = [
     "CDATVariable",
     "_Axis",
@@ -94,26 +106,42 @@ def _detect_axis_type(ax_id: str) -> str:
 
 
 def _dim_to_axis_type(dim_name: str, coord) -> str:
-    """Infer axis type using both the dimension name and CF coordinate attrs."""
-    typ = _detect_axis_type(dim_name)
-    if typ != "-":
-        return typ
-
+    """Infer axis type, prioritising CF metadata over name heuristics."""
+    # CF axis/standard_name/units are checked first so that dimensions like
+    # "dim_0" or "y" with explicit metadata are classified correctly even when
+    # the name alone would be ambiguous or unrecognised.
     if coord is not None:
         cf_axis = str(coord.attrs.get("axis", "")).upper()
         if cf_axis in {"T", "Y", "X", "Z"}:
             return cf_axis
 
         standard_name = str(coord.attrs.get("standard_name", "")).lower()
-        units = str(coord.attrs.get("units", "")).lower()
-        if standard_name == "latitude" or units in {"degrees_north", "degree_north"}:
+        if standard_name in {"latitude", "grid_latitude",
+                             "projection_y_coordinate", "rotated_latitude"}:
             return "Y"
-        if standard_name == "longitude" or units in {"degrees_east", "degree_east"}:
+        if standard_name in {"longitude", "grid_longitude",
+                             "projection_x_coordinate", "rotated_longitude"}:
+            return "X"
+        if standard_name == "time":
+            return "T"
+        if standard_name in {"air_pressure", "altitude", "depth", "height",
+                             "ocean_sigma_coordinate", "sigma",
+                             "height_above_geopotential_datum",
+                             "height_above_mean_sea_level"}:
+            return "Z"
+
+        units = str(coord.attrs.get("units", "")).lower()
+        if units in {"degrees_north", "degree_north", "degrees_n", "degree_n"}:
+            return "Y"
+        if units in {"degrees_east", "degree_east", "degrees_e", "degree_e"}:
             return "X"
         if "since" in units:
             return "T"
+        if units in {"pa", "hpa", "mb", "mbar"}:
+            return "Z"
 
-    return "-"
+    # Last resort: name-based heuristic
+    return _detect_axis_type(dim_name)
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +215,15 @@ def _decode_times_safe(arr: np.ndarray, units: str, calendar: str) -> list:
                 break
 
         if dt is None:
-            # Last-resort stable fallback. Avoid crashing axis introspection.
+            # Last-resort stable fallback.  Log so that decoding failures
+            # are not silently buried in downstream analyses.
+            import warnings
+            warnings.warn(
+                f"Time decoding failed for numeric value {float(v)!r} "
+                f"(units={units!r}, calendar={calendar!r}); "
+                "substituting 2000-01-01. Check for bad time coordinate values.",
+                stacklevel=3,
+            )
             dt = _datetime.datetime(2000, 1, 1)
         result.append(dt)
     return result
@@ -401,6 +437,32 @@ def _validate_grid(grid, axes, context: str = "CDATVariable"):
         raise ValueError(f"{context}: grid latitude length does not match latitude axis")
     if lon_axes and lon is not None and len(lon) != len(lon_axes[0]):
         raise ValueError(f"{context}: grid longitude length does not match longitude axis")
+    # Guard against the degenerate case where the same axis object was used for
+    # both lat and lon (e.g. a typo in the calling code).
+    if lat_axes and lon_axes and lat_axes[0].id == lon_axes[0].id:
+        raise ValueError(
+            f"{context}: latitude and longitude axes have the same id "
+            f"{lat_axes[0].id!r} — likely a metadata error."
+        )
+    # Warn when axes appear in (lon, lat) order rather than the standard CDAT
+    # (lat, lon) / yx convention.  This does not raise because xy ordering is
+    # valid in some downstream tools, but it is a common source of silent bugs.
+    if lat_axes and lon_axes and axes:
+        try:
+            lat_idx = next(i for i, ax in enumerate(axes) if ax is lat_axes[0])
+            lon_idx = next(i for i, ax in enumerate(axes) if ax is lon_axes[0])
+            if lon_idx < lat_idx:
+                import warnings
+                msg = (
+                    f"{context}: longitude axis ({lon_axes[0].id!r}, dim {lon_idx}) "
+                    f"precedes latitude axis ({lat_axes[0].id!r}, dim {lat_idx}). "
+                    "Standard CDAT convention is (lat, lon) / yx order."
+                )
+                if STRICT_GRID:
+                    raise ValueError(msg)
+                warnings.warn(msg, stacklevel=2)
+        except StopIteration:
+            pass  # axis not found in list (e.g. grid built from external axes)
 
 
 # ---------------------------------------------------------------------------
@@ -433,7 +495,39 @@ class _Axis:
 
         self.units = units
         self._attributes = dict(attributes or {})
-        self.axis = (axis_type if axis_type and axis_type != "-" else None) or _detect_axis_type(id)
+        # Priority: explicit arg > CF attrs in _attributes > name heuristic.
+        # This ensures _Axis objects built from xarray coords with standard CF
+        # metadata (e.g. axis='Y', standard_name='latitude', units='degrees_north')
+        # are typed correctly even when the dimension name is opaque (e.g. 'dim_0').
+        if axis_type and axis_type != "-":
+            self.axis = axis_type
+        else:
+            _cf = str(self._attributes.get("axis", "")).upper()
+            if _cf in {"T", "Y", "X", "Z"}:
+                self.axis = _cf
+            else:
+                _sn = str(self._attributes.get("standard_name", "")).lower()
+                _u  = str(self._attributes.get("units", "")).lower()
+                if _sn in {"latitude", "grid_latitude",
+                           "projection_y_coordinate", "rotated_latitude"} \
+                        or _u in {"degrees_north", "degree_north",
+                                  "degrees_n", "degree_n"}:
+                    self.axis = "Y"
+                elif _sn in {"longitude", "grid_longitude",
+                             "projection_x_coordinate", "rotated_longitude"} \
+                        or _u in {"degrees_east", "degree_east",
+                                  "degrees_e", "degree_e"}:
+                    self.axis = "X"
+                elif _sn == "time" or "since" in _u:
+                    self.axis = "T"
+                elif _sn in {"air_pressure", "altitude", "depth", "height",
+                             "ocean_sigma_coordinate", "sigma",
+                             "height_above_geopotential_datum",
+                             "height_above_mean_sea_level"} \
+                        or _u in {"pa", "hpa", "mb", "mbar"}:
+                    self.axis = "Z"
+                else:
+                    self.axis = _detect_axis_type(id)
         self.long_name = self._attributes.get("long_name", id)
         self.regions: Optional[str] = None
         self.reference: Optional[str] = None
@@ -696,9 +790,11 @@ class CDATVariable:
             key = (key,)
 
         # Expand ellipsis and append missing full slices.
+        # Use `any(k is Ellipsis ...)` to avoid the ambiguous truth value of
+        # numpy arrays that may appear as advanced-indexing keys.
         key_list = list(key)
-        if Ellipsis in key_list:
-            ell_idx = key_list.index(Ellipsis)
+        if any(k is Ellipsis for k in key_list):
+            ell_idx = next(i for i, k in enumerate(key_list) if k is Ellipsis)
             n_missing = self._data.ndim - (len(key_list) - 1)
             key_list = key_list[:ell_idx] + [slice(None)] * n_missing + key_list[ell_idx + 1:]
         if len(key_list) < self._data.ndim:
@@ -741,13 +837,28 @@ class CDATVariable:
                 )
             )
 
-        # If advanced indexing created a shape not representable by this simple
-        # CDAT axis model, avoid returning wrong metadata.
+        # If advanced indexing changed the number of dimensions we cannot
+        # reliably map old axes to new ones — drop all metadata.
         if len(new_axes) != len(new_shape):
+            import warnings
+            warnings.warn(
+                f"CDATVariable[{self.id!r}]: advanced indexing changed number of "
+                f"dimensions; axis metadata dropped to avoid mis-labelling.",
+                stacklevel=3,
+            )
             return []
-        for ax, n in zip(new_axes, new_shape):
+        # Per-axis length mismatch: replace only the broken axis with None so
+        # that the remaining (still-valid) coordinate axes are preserved.
+        for i, (ax, n) in enumerate(zip(new_axes, new_shape)):
             if ax is not None and len(ax) != n:
-                return []
+                import warnings
+                warnings.warn(
+                    f"CDATVariable[{self.id!r}]: advanced indexing broke axis "
+                    f"length for {ax.id!r} (expected {n}, got {len(ax)}); "
+                    "axis metadata for that dimension dropped.",
+                    stacklevel=3,
+                )
+                new_axes[i] = None
         return new_axes
 
     # ------------------------------------------------------------------
@@ -760,12 +871,39 @@ class CDATVariable:
 
     def _binary_axes(self, result, other):
         """
-        Preserve axes only when the result shape is identical to this variable.
-        If NumPy broadcasting changed shape, drop axes rather than lying.
+        Preserve axes when the result has the same number of dimensions as self.
+
+        * Exact shape match (common case, including scalar ops) → copy axes as-is.
+        * Same ndim but a dimension was broadcast-expanded → keep axis metadata
+          where the length still matches; replace broadcast-expanded dims with None
+          rather than propagating wrong coordinate values.
+        * ndim changed (e.g. outer product) → drop all axes.
         """
-        if isinstance(result, (np.ndarray, ma.MaskedArray)) and tuple(result.shape) == tuple(self.shape):
+        if not isinstance(result, (np.ndarray, ma.MaskedArray)):
+            return []
+        if result.ndim != self.ndim:
+            return []
+        if tuple(result.shape) == tuple(self.shape):
             return [ax.copy() if ax is not None else None for ax in self._axes]
-        return []
+        # Same ndim, different shape: some dimension was broadcast-expanded.
+        import warnings
+        new_axes = []
+        for ax, n in zip(self._axes, result.shape):
+            if ax is None:
+                new_axes.append(None)
+            elif len(ax) == n:
+                new_axes.append(ax.copy())
+            else:
+                # Broadcast expanded this dim — coordinate values no longer
+                # correspond to the result shape; drop axis and warn.
+                warnings.warn(
+                    f"CDATVariable[{self.id!r}]: dimension {ax.id!r} was "
+                    f"broadcast-expanded ({len(ax)} → {n}); "
+                    "axis metadata dropped for that dimension.",
+                    stacklevel=3,
+                )
+                new_axes.append(None)
+        return new_axes
 
     def _wrap(self, data, axes=None) -> "CDATVariable":
         if not isinstance(data, (np.ndarray, ma.MaskedArray)):
@@ -1122,6 +1260,17 @@ def _extract_aux_lat_lon_axes(da: xr.DataArray):
     lon_ax = None
     for cname, coord in da.coords.items():
         if coord.ndim != 1:
+            # Non-1D coords indicate a curvilinear or unstructured grid.
+            # This shim only supports 1D (rectilinear) auxiliary coordinates;
+            # 2D+ coordinates are silently skipped here but the caller should
+            # use grid-aware tools (xESMF, xarray sel/isel) for such data.
+            import warnings
+            warnings.warn(
+                f"Skipping non-1D coordinate {cname!r} (shape {coord.shape}): "
+                "curvilinear/unstructured grids are not supported by this CDAT "
+                "compatibility shim. Use grid-aware tools instead.",
+                stacklevel=3,
+            )
             continue
         ax_type = _dim_to_axis_type(cname, coord)
         attrs = dict(coord.attrs)

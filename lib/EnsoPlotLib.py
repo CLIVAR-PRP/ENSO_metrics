@@ -3348,10 +3348,10 @@ def plot_param(metric_collection, metric):
     else:
         try:
             computation = dict_MCm["metric_computation"]
-        except:
+        except Exception:
             try:
                 computation = dict_MC["common_collection_parameters"]["metric_computation"]
-            except:
+            except Exception:
                 computation = default_arg_values("metric_computation")
     dict_out["metric_computation"] = computation
     # get metric variables

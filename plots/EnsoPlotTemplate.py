@@ -2075,7 +2075,7 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
         yy1, yy2 = ax.get_ylim()
         dy = 0.5 / (yy2 - yy1)
         try: ax.set_title(title[kk], fontdict=fontdict, y=1+dy, loc="center")
-        except: pass
+        except Exception: pass
         # x axis
         ticks = [ii + 0.5 for ii in range(len(tmp[0]))]
         ax.set_xticks(ticks)

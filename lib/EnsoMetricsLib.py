@@ -137,8 +137,7 @@ def BiasMldRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandm
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'mld RMSE'
@@ -359,8 +358,7 @@ def BiasMldLatRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'mld Meridional RMSE'
@@ -635,8 +633,7 @@ def BiasMldLonRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'mld Zonal RMSE'
@@ -909,8 +906,7 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr RMSE'
@@ -1129,8 +1125,7 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr Meridional RMSE'
@@ -1407,8 +1402,7 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr Zonal RMSE'
@@ -1685,8 +1679,7 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh RMSE'
@@ -1911,8 +1904,7 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh Meridional RMSE'
@@ -2195,8 +2187,7 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh Zonal RMSE'
@@ -2476,8 +2467,7 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst RMSE'
@@ -2698,8 +2688,7 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst Meridional RMSE'
@@ -2974,8 +2963,7 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst Zonal RMSE'
@@ -3248,8 +3236,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sstA Skewness Zonal RMSE'
@@ -3558,8 +3545,7 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux RMSE'
@@ -3783,8 +3769,7 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux Meridional RMSE'
@@ -4062,8 +4047,7 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux Zonal RMSE'
@@ -4341,8 +4325,7 @@ def BiasTauyRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tau
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'tauy RMSE'
@@ -4566,8 +4549,7 @@ def BiasTauyLatRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'tauy Meridional RMSE'
@@ -4845,8 +4827,7 @@ def BiasTauyLonRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'tauy Zonal RMSE'
@@ -5105,9 +5086,7 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -5438,9 +5417,7 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -5772,9 +5749,7 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6101,9 +6076,7 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6440,9 +6413,7 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6756,9 +6727,7 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6982,9 +6951,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -7253,9 +7220,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -7560,9 +7525,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -7883,9 +7846,7 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -8191,9 +8152,7 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -8523,9 +8482,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -8882,9 +8839,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -9332,9 +9287,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -9889,9 +9842,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -10441,9 +10392,7 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -10814,9 +10763,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -11122,9 +11069,7 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -11411,9 +11356,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -11753,9 +11696,7 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -12022,9 +11963,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -12468,9 +12407,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -13024,9 +12961,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -13570,9 +13505,7 @@ def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -14066,9 +13999,7 @@ def EnsoMldTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -14508,9 +14439,7 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -14973,9 +14902,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -15381,9 +15308,7 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -15890,9 +15815,7 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -16426,9 +16349,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -16861,9 +16782,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -17314,9 +17233,7 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -17817,9 +17734,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -18294,9 +18209,7 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -18797,9 +18710,7 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -19281,9 +19192,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -19574,9 +19483,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -19847,9 +19754,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -20153,9 +20058,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -20365,9 +20268,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -20771,9 +20672,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -21085,9 +20984,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -21395,9 +21292,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -21746,9 +21641,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22039,9 +21932,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22312,9 +22203,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22618,9 +22507,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22830,9 +22717,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -23236,9 +23121,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -23528,9 +23411,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -23849,9 +23730,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -24159,9 +24038,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -24477,8 +24354,7 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr meridional seasonality RMSE'
@@ -24804,9 +24680,7 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -25135,8 +25009,7 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh meridional seasonality RMSE'
@@ -25468,9 +25341,7 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -25805,8 +25676,7 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst meridional seasonality RMSE'
@@ -26132,9 +26002,7 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -26463,8 +26331,7 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux meridional seasonality RMSE'
@@ -26798,9 +26665,7 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes

@@ -328,6 +328,7 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shadin
     if reference in my_ref:
         obs = deepcopy(reference)
     else:
+        obs = None
         if len(metric_variables) == 1:
             for obs1 in observations:
                 if obs1 in my_ref:
@@ -340,8 +341,8 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shadin
                     if obs3 in my_ref:
                         obs = deepcopy(obs3)
                         break
-        try: obs
-        except: obs = sorted(my_ref)[0]
+        if obs is None:
+            obs = sorted(my_ref)[0]
     if shading is True:
         diag_obs = dict_diag["obs"][obs]
     else:
@@ -439,21 +440,19 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
     if isinstance(var_to_read, list) is True and len(var_to_read) == 1:
         if met_in_file is True:
             if isinstance(met_type, str):
+                val = None
                 for key in list(ff.attrs.keys()):
                     if met_type + "_" + obs + "_" + met_pattern == key:
                         val = ff.attrs[key]
-                try: val
-                except: val = None
                 metval = deepcopy(val)
                 del val
             elif isinstance(met_type, list):
                 metval = list()
                 for mety in met_type:
+                    val = None
                     for key in list(ff.attrs.keys()):
                         if mety + "_" + obs + "_" + met_pattern == key or (met_pattern == "" and mety + "_" + obs == key):
                             val = ff.attrs[key]
-                    try: val
-                    except: val = None
                     metval.append(val)
                     del val
     elif isinstance(var_to_read, list) is True and len(var_to_read) == 2 and\
@@ -463,22 +462,20 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
             add = "nina" if "nina" in var else "nino"
             if met_in_file is True:
                 if isinstance(met_type, str):
+                    val = None
                     for key in list(ff.attrs.keys()):
                         if met_type + "_" + obs + "_" + add + "_" + met_pattern == key:
                             val = ff.attrs[key]
-                    try:    val
-                    except: val = None
                     metval.append(val)
                     del val
                 elif isinstance(met_type, list):
                     tmpval = list()
                     for mety in met_type:
+                        val = None
                         for key in list(ff.attrs.keys()):
                             if mety + "_" + obs + "_" + add + "_" + met_pattern == key or (
                                     met_pattern == "" and mety + "_" + obs + "_" + add == key):
                                 val = ff.attrs[key]
-                        try: val
-                        except: val = None
                         tmpval.append(val)
                         del val
                     metval.append(tmpval)
