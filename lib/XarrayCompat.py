@@ -747,10 +747,13 @@ class CDATVariable:
         if not isinstance(data, (np.ndarray, ma.MaskedArray)):
             return data
         axes = self._axes if axes is None else axes
+        # Don't propagate a now-stale grid when axes were dropped (e.g. after
+        # shape-changing binary ops where _binary_axes returned []).
+        grid = self._grid if axes else None
         return CDATVariable(
             data,
             axes=[ax.copy() if ax is not None else None for ax in axes],
-            grid=self._grid,
+            grid=grid,
             id=self.id,
             attributes=dict(self._attributes),
         )
@@ -794,7 +797,8 @@ class CDATVariable:
         if axis is None:
             new_axes = [ax for ax in self._axes if ax is not None and len(ax) > 1]
         else:
-            axes_to_drop = {axis} if isinstance(axis, int) else set(axis)
+            # Accept both int and numpy.integer
+            axes_to_drop = {int(axis)} if isinstance(axis, (int, np.integer)) else {int(a) for a in axis}
             axes_to_drop = {a if a >= 0 else self.ndim + a for a in axes_to_drop}
             new_axes = [ax for i, ax in enumerate(self._axes) if i not in axes_to_drop]
         return CDATVariable(result, axes=new_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
@@ -876,13 +880,13 @@ class CDATVariable:
         for ax in self._axes:
             if ax is None:
                 order += "-"
-            elif ax.isTime():
+            elif ax.isTime() or _detect_axis_type(ax.id) == "T":
                 order += "t"
-            elif ax.isLatitude():
+            elif ax.isLatitude() or _detect_axis_type(ax.id) == "Y":
                 order += "y"
-            elif ax.isLongitude():
+            elif ax.isLongitude() or _detect_axis_type(ax.id) == "X":
                 order += "x"
-            elif ax.isLevel():
+            elif ax.isLevel() or _detect_axis_type(ax.id) == "Z":
                 order += "z"
             else:
                 order += "-"
@@ -900,11 +904,17 @@ class CDATVariable:
         if ndim == 0:
             return self.copy()
 
+        def _ax_type(ax):
+            """Return the single-letter axis type, falling back to name detection."""
+            if ax.axis != "-":
+                return ax.axis
+            return _detect_axis_type(ax.id)
+
         if order in ("t...", "T..."):
-            t_n = next((i for i, ax in enumerate(self._axes) if ax is not None and ax.isTime()), 0)
+            t_n = next((i for i, ax in enumerate(self._axes) if ax is not None and _ax_type(ax) == "T"), 0)
             perm = [t_n] + [i for i in range(ndim) if i != t_n]
         elif order in ("...t", "...T"):
-            t_n = next((i for i, ax in enumerate(self._axes) if ax is not None and ax.isTime()), ndim - 1)
+            t_n = next((i for i, ax in enumerate(self._axes) if ax is not None and _ax_type(ax) == "T"), ndim - 1)
             perm = [i for i in range(ndim) if i != t_n] + [t_n]
         elif order and all(c.isdigit() for c in order):
             perm = [int(c) for c in order]
@@ -913,13 +923,14 @@ class CDATVariable:
             for i, ax in enumerate(self._axes):
                 if ax is None:
                     continue
-                if ax.isTime():
+                t = _ax_type(ax)
+                if t == "T":
                     char_map["t"] = i
-                elif ax.isLatitude():
+                elif t == "Y":
                     char_map["y"] = i
-                elif ax.isLongitude():
+                elif t == "X":
                     char_map["x"] = i
-                elif ax.isLevel():
+                elif t == "Z":
                     char_map["z"] = i
 
             perm = []
@@ -973,7 +984,7 @@ class CDATVariable:
             if not isinstance(bounds, (tuple, list)) or len(bounds) != 2:
                 raise ValueError("Selection bounds must be a 2-element tuple/list")
 
-            if ax.isTime():
+            if ax.isTime() or _detect_axis_type(ax.id) == "T":
                 t_vals = ax.asComponentTime()
                 if not t_vals:
                     indices = []
@@ -1005,17 +1016,20 @@ class CDATVariable:
             )
 
         if "time" in kwargs:
-            t_idx = next((i for i, ax in enumerate(result_axes) if ax is not None and ax.isTime()), None)
+            t_idx = next((i for i, ax in enumerate(result_axes)
+                          if ax is not None and (ax.isTime() or _detect_axis_type(ax.id) == "T")), None)
             if t_idx is not None:
                 _sel_axis(t_idx, kwargs["time"])
 
         if "latitude" in kwargs:
-            lat_idx = next((i for i, ax in enumerate(result_axes) if ax is not None and ax.isLatitude()), None)
+            lat_idx = next((i for i, ax in enumerate(result_axes)
+                            if ax is not None and (ax.isLatitude() or _detect_axis_type(ax.id) == "Y")), None)
             if lat_idx is not None:
                 _sel_axis(lat_idx, kwargs["latitude"])
 
         if "longitude" in kwargs:
-            lon_idx = next((i for i, ax in enumerate(result_axes) if ax is not None and ax.isLongitude()), None)
+            lon_idx = next((i for i, ax in enumerate(result_axes)
+                            if ax is not None and (ax.isLongitude() or _detect_axis_type(ax.id) == "X")), None)
             if lon_idx is not None:
                 _sel_axis(lon_idx, kwargs["longitude"])
 

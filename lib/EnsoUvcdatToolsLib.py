@@ -124,7 +124,7 @@ def MV2concatenate(seq, axis=0):
                             id=tmpl.id, attributes=dict(tmpl._attributes))
     return result
 def MV2divide(a, b):         return _mv_wrap(ma.divide(_mv(a), _mv(b)), a)
-def MV2masked_where(cond, a):return ma.masked_where(np.asarray(cond, dtype=bool), _mv(a))
+def MV2masked_where(cond, a):return _mv_wrap(ma.masked_where(np.asarray(cond, dtype=bool), _mv(a)), a)
 def MV2maximum(a):           return float(ma.max(_mv(a)))
 def MV2minimum(a):           return float(ma.min(_mv(a)))
 def MV2multiply(a, b):       return _mv_wrap(ma.multiply(_mv(a), _mv(b)), a)
