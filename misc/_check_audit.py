@@ -72,13 +72,24 @@ for rel in ACTIVE_PY:
 # -----------------------------------------------------------------------
 # 2. Live (non-docstring) retired CDAT imports
 # -----------------------------------------------------------------------
+def _in_docstring_context(lines, i):
+    """Heuristic: line i (1-based) is likely inside a docstring/comment block."""
+    stripped = lines[i - 1].strip()
+    if stripped.startswith("#"):
+        return True
+    # Inside a triple-quoted string: scan backwards for unmatched '''  or \"\"\"
+    count = 0
+    for prev in lines[:i]:
+        count += prev.count('"""') + prev.count("'''")
+    return (count % 2) == 1  # odd count means we're inside a docstring
+
 for rel in ACTIVE_PY:
     src, lines = check(rel)
     if src is None or lines is None:
         continue
     for i, raw in enumerate(lines, 1):
         stripped = raw.strip()
-        if stripped.startswith("#"):
+        if _in_docstring_context(lines, i):
             continue
         prev = lines[i - 2].strip() if i >= 2 else ""
         if "for more information" in prev or ">>>" in prev:
@@ -159,6 +170,20 @@ elif ver_lib and ver_conda:
     ok.append(f"Version consistent: {ver_lib}")
 
 # -----------------------------------------------------------------------
+# 8a. No hardcoded second=60 time bounds in live code
+# -----------------------------------------------------------------------
+for rel in ACTIVE_PY:
+    src, lines = check(rel)
+    if src is None or lines is None:
+        continue
+    for i, raw in enumerate(lines, 1):
+        if _in_docstring_context(lines, i):
+            continue
+        if raw.strip().startswith("#"):
+            continue
+        if "23:59:60" in raw:
+            issues.append(f"HARDCODED second=60 bound {rel}:{i}: {raw.strip()}")
+
 # 8. scripts: open_file used (not old CDMS2open)
 # -----------------------------------------------------------------------
 for rel in ["scripts/driver_tools_lib.py"]:

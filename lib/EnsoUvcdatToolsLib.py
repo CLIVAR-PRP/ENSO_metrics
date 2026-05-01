@@ -52,7 +52,8 @@ except ImportError:
 try:
     import xesmf as _xesmf                         # replaces regrid2 / cdms2.regrid
     _HAS_XESMF = True
-except ImportError:
+except (ImportError, OSError):
+    # OSError can occur when esmpy's libesmf_fullylinked.so is missing/mislinked
     _HAS_XESMF = False
 
 # Compatibility shim: provides CDATVariable (drop-in for cdms2.TransientVariable)
@@ -499,6 +500,23 @@ def _fix_leap_seconds_in_raw(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
+def _sanitize_time_bound(t) -> str:
+    """
+    Convert a CDAT-style time bound string that may contain second=60
+    (e.g. '2015-12-31 23:59:60.0') to a cftime/xarray-valid string
+    ('2015-12-31 23:59:59').
+
+    This is needed because downstream PCMDI code constructs string time
+    bounds with second=60, and xarray's .sel() passes them directly to
+    cftime which rejects second=60 with ValueError.
+    """
+    s = str(t).strip().replace("  ", " ")
+    s = s.split(".")[0]        # drop sub-second part
+    if s.endswith(":60"):
+        s = s[:-3] + ":59"
+    return s
+
+
 # ---------------------------------------------------------------------------
 # Thin _XcDatasetHandle  (replaces cdms2 file handle)
 # ---------------------------------------------------------------------------
@@ -559,8 +577,10 @@ class _XcDatasetHandle:
             t_bnds = kwargs["time"]
             t_dim = _guess_dim(da, "T")
             if t_dim:
-                da = da.sel({t_dim: slice(str(t_bnds[0]).split(".")[0],
-                                          str(t_bnds[1]).split(".")[0])})
+                da = da.sel({t_dim: slice(
+                    _sanitize_time_bound(t_bnds[0]),
+                    _sanitize_time_bound(t_bnds[1]),
+                )})
         if kwargs.get("squeeze"):
             da = da.squeeze()
         return da_to_cdat(da, varname=varname)
@@ -2020,7 +2040,7 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
             # first and last years of the window
             yy1, yy2 = yy + 1 - nbr_years_window // 2, yy + nbr_years_window // 2
             # create time bounds from "first and last years of the window"
-            timebnds = (str(yy1) + "-01-01 00:00:00.0", str(yy2) + "-12-31  23:59:60.0")
+            timebnds = (str(yy1) + "-01-01 00:00:00.0", str(yy2) + "-12-31 23:59:59.0")
             # select the right time period in the given tab
             tmp1 = tab(time=timebnds)
             # sometimes there is some errors with "time=timebnds"

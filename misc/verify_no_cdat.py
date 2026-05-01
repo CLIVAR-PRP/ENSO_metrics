@@ -28,8 +28,8 @@ except ImportError:
     print("WARN regionmask not installed (land mask fallback active)")
 try:
     import xesmf; ok(f"xesmf {xesmf.__version__}")
-except ImportError:
-    print("WARN xesmf not installed (REGRID2 will raise ImportError on use)")
+except (ImportError, OSError) as _e:
+    print(f"WARN xesmf unavailable ({_e.__class__.__name__}: {_e}) — REGRID2 will raise on use")
 
 # ── 2. Package imports ────────────────────────────────────────────────────
 print("\n=== 2. Package imports ===")
