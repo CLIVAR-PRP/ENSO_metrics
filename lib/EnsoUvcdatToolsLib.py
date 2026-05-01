@@ -308,7 +308,18 @@ def _get_lat_weights(var, axis=None):
                 "Results may be incorrect for stretched/RRM grids.",
                 stacklevel=2,
             )
-    # Priority 2: cos(lat) — standard approximation
+    # Priority 2: cos(lat) — standard approximation for regular rectilinear
+    # grids.  This is accurate only when grid cells have uniform zonal width;
+    # for stretched, RRM, or curvilinear grids the caller should attach
+    # cell_area to avoid biased spatial averages.
+    import warnings
+    warnings.warn(
+        f"_get_lat_weights: no cell_area found on variable {getattr(var, 'id', '?')!r}; "
+        "falling back to cosine-latitude weights. "
+        "Attach var.cell_area (sftlf or areacella) for accurate spatial averages "
+        "on non-uniform grids (E3SM-RRM, MPAS, stretched CMIP grids).",
+        stacklevel=3,
+    )
     lat = var.getLatitude()
     if lat is None:
         return None
@@ -551,9 +562,14 @@ def _ensure_time_encoding(ds: xr.Dataset, path: str = "") -> xr.Dataset:
         units = tc.attrs.get("units") or tc.encoding.get("units") or ""
 
         if "since" not in units:
-            # Non-standard or missing units string — skip decoding and
-            # return the dataset as-is (matches CDAT's lenient behaviour).
-            return ds
+            # Non-standard or missing time units — cannot decode; fail early
+            # so the caller gets a clear diagnostic rather than a silent
+            # mis-identification later in the pipeline.
+            raise RuntimeError(
+                f"Time coordinate has numeric dtype but unrecognisable units "
+                f"{units!r} (expected CF 'X since Y' format). "
+                f"File: {path!r}. Fix the source file's time:units attribute."
+            )
 
         try:
             from .XarrayCompat import _get_time_coder
@@ -734,9 +750,69 @@ _MONTH_MAP = {
 sea_dict = {k: _SeasonHelper(v) for k, v in _MONTH_MAP.items()}
 
 # ---------------------------------------------------------------------------
+# Grid consistency guard
+# ---------------------------------------------------------------------------
+def check_grid_consistency(a, b, context: str = "", regrid_to: str = "b") -> tuple:
+    """Raise ValueError if *a* and *b* have incompatible spatial shapes.
+
+    Parameters
+    ----------
+    a, b        : CDATVariable or array-like — the two fields to compare.
+    context     : string used in error/warning messages (e.g. function name).
+    regrid_to   : ``"a"`` or ``"b"`` — which grid to regrid *to* when an
+                  automatic regrid is attempted.  Currently this function only
+                  raises; callers that want auto-regridding should pass the
+                  fields through ``Regrid()`` first.
+
+    Returns
+    -------
+    (a, b) unchanged — so callers can write ``a, b = check_grid_consistency(a, b, ...)``.
+
+    Raises
+    ------
+    ValueError  if the spatial grids differ.
+    """
+    import warnings
+    a_cdat = _to_cdat(a) if not isinstance(a, CDATVariable) else a
+    b_cdat = _to_cdat(b) if not isinstance(b, CDATVariable) else b
+    a_lat = a_cdat.getLatitude()
+    b_lat = b_cdat.getLatitude()
+    a_lon = a_cdat.getLongitude()
+    b_lon = b_cdat.getLongitude()
+
+    # Shape mismatch check (lat/lon sizes must match)
+    a_lat_n = len(a_lat) if a_lat is not None else None
+    a_lon_n = len(a_lon) if a_lon is not None else None
+    b_lat_n = len(b_lat) if b_lat is not None else None
+    b_lon_n = len(b_lon) if b_lon is not None else None
+
+    if (a_lat_n is not None and b_lat_n is not None and a_lat_n != b_lat_n) or \
+       (a_lon_n is not None and b_lon_n is not None and a_lon_n != b_lon_n):
+        raise ValueError(
+            f"{context}: spatial grid mismatch — "
+            f"a has ({a_lat_n}, {a_lon_n}) lat/lon points, "
+            f"b has ({b_lat_n}, {b_lon_n}). "
+            "Regrid both fields to a common grid before computing metrics "
+            "(use Regrid() with a target grid or set newgrid_name='generic_1x1deg')."
+        )
+
+    # Value-level mismatch: same size but different coordinate values
+    if (a_lat is not None and b_lat is not None and a_lat_n == b_lat_n):
+        if not np.allclose(np.asarray(a_lat[:], dtype=float),
+                           np.asarray(b_lat[:], dtype=float), atol=1e-4):
+            warnings.warn(
+                f"{context}: latitude coordinate values differ between a and b "
+                "despite matching sizes — verify both are on the same grid.",
+                stacklevel=3,
+            )
+    return a, b
+
+
+# ---------------------------------------------------------------------------
 # genutil.statistics replacements
 # ---------------------------------------------------------------------------
 def GENUTILcorrelation(a, b, weights=None, axis=0, centered=1, biased=1):
+    a, b = check_grid_consistency(a, b, context="GENUTILcorrelation")
     x = ma.masked_invalid(_mv(a))
     y = ma.masked_invalid(_mv(b))
     axis = _axis_to_int(a, axis)
@@ -770,6 +846,7 @@ def GENUTILcorrelation(a, b, weights=None, axis=0, centered=1, biased=1):
     return cov / ma.sqrt(varx * vary)
 
 def GENUTILrms(a, b, weights=None, axis=0, centered=0, biased=1):
+    a, b = check_grid_consistency(a, b, context="GENUTILrms")
     x = ma.masked_invalid(_mv(a))
     y = ma.masked_invalid(_mv(b))
     axis = _axis_to_int(a, axis)
@@ -1322,6 +1399,7 @@ def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) 
         scores,
         key=lambda t: (t[0], -dim_order.get(t[1], 0)),
     )
+    # score ≤ 0: value-range fallback — only allowed for lat/lon, never for time.
     if best_score <= 0:
         _strict = STRICT_DIM_GUESS if strict is None else strict
         msg = (
@@ -1334,13 +1412,32 @@ def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) 
         import warnings
         warnings.warn(msg, stacklevel=2)
         return best_dim
+
+    # score == 1: name-heuristic only — too weak to trust for axis type T.
+    # Dimension names like 'lat' can falsely score 1 for axis='T' when
+    # no CF metadata is present (root cause of the reported silent error
+    # "_guess_dim fallback: axis='T', chosen='lat'").
+    #
+    # Policy:
+    #   T axis, score=1  → always warn; always return "" (unsafe to guess)
+    #   Y/X/Z, score=1, strict=True → raise (caller opted into strict checks)
+    #   Y/X/Z, score=1, strict=False → warn but return the best guess
     if best_score == 1:
         import warnings
-        warnings.warn(
-            f"_guess_dim fallback: axis={axis_type!r}, chosen={best_dim!r}, "
-            f"score={best_score}, dims={list(da.dims)}",
-            stacklevel=2,
+        _strict = STRICT_DIM_GUESS if strict is None else strict
+        msg = (
+            f"_guess_dim low-confidence fallback: axis={axis_type!r}, "
+            f"chosen={best_dim!r}, score={best_score}, dims={list(da.dims)}. "
+            "Add CF axis/standard_name/units metadata to avoid incorrect axis mapping."
         )
+        if at == "T":
+            # Never trust a score-1 hit for the time axis — return empty
+            # string so callers can detect the failure without crashing.
+            warnings.warn(msg, stacklevel=2)
+            return ""
+        if _strict:
+            raise ValueError(msg)
+        warnings.warn(msg, stacklevel=2)
     return best_dim
 
 # cdutil averager stub (used inside this module)
@@ -1556,12 +1653,16 @@ class REGRID2horizontal__Horizontal:
             return tab
         target_ds = xr.Dataset(coords={"lat": dst_lat, "lon": dst_lon})
         src_da = da.rename({src_lat_dim: 'lat', src_lon_dim: 'lon'}) if src_lat_dim and src_lon_dim else da
+        # reuse_weights requires a pre-computed weight file; without one
+        # xesmf raises "To reuse weights, you need to provide either filename
+        # or weights".  Always recompute weights — they are fast for the small
+        # output grids used in ENSO metrics.
         regridder = _xesmf.Regridder(
             src_da.to_dataset(name='var'),
             target_ds,
             method=self._method,
             extrap_method="nearest_s2d",
-            reuse_weights=True,
+            reuse_weights=False,
         )
         result = regridder(da)
         # Constant-field preservation: if source is spatially uniform, fill result to

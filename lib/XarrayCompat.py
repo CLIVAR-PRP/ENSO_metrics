@@ -64,6 +64,14 @@ import xarray as xr
 #
 STRICT_GRID: bool = False
 
+# When True, _detect_axis_type refuses to return a type for the time axis
+# based on name heuristics alone (requires CF axis/standard_name/units).
+# This prevents silent misclassification of e.g. latitude → T.
+#
+#   import lib.XarrayCompat as XC; XC.STRICT_AXIS_DETECTION = False
+#
+STRICT_AXIS_DETECTION: bool = True
+
 
 __all__ = [
     "CDATVariable",
@@ -92,17 +100,40 @@ _LEV_IDS = {"lev", "level", "depth", "plev", "z", "Z", "st_ocean", "sw_ocean"}
 
 
 def _detect_axis_type(ax_id: str) -> str:
-    """Infer a CDAT-style axis code from a coordinate/dimension name."""
+    """
+    Infer a CDAT-style axis code from a coordinate/dimension name alone.
+
+    **Only used as a last resort by _dim_to_axis_type when CF metadata are
+    absent.**  When ``STRICT_AXIS_DETECTION`` is True (the default) this
+    function never returns ``"T"`` — time detection from names alone is too
+    unreliable and has historically caused lat→T misclassification.
+    """
     ax_id = str(ax_id)
     low = ax_id.lower()
-    if ax_id in _TIME_IDS or "time" in low:
-        return "T"
+    # Time: only returned when STRICT_AXIS_DETECTION is off, because
+    # dimension names like 'lat_bnds', 'time_of_day', or single-letter
+    # aliases can falsely match the 'time' substring check.
+    if not STRICT_AXIS_DETECTION:
+        if ax_id in _TIME_IDS or "time" in low:
+            return "T"
     if ax_id in _LAT_IDS or "lat" in low:
         return "Y"
     if ax_id in _LON_IDS or "lon" in low:
         return "X"
     if ax_id in _LEV_IDS or "lev" in low or "depth" in low:
         return "Z"
+    # Strict: time names require CF metadata; fall through to "-"
+    if STRICT_AXIS_DETECTION:
+        if ax_id in _TIME_IDS or "time" in low:
+            import warnings
+            warnings.warn(
+                f"_detect_axis_type: dimension {ax_id!r} looks like a time axis "
+                "by name but has no CF axis/standard_name/units metadata. "
+                "Returning '-' to avoid silent misclassification. "
+                "Add 'axis: T' or 'standard_name: time' metadata to the coordinate.",
+                stacklevel=3,
+            )
+            return "-"
     return "-"
 
 
@@ -216,16 +247,21 @@ def _decode_times_safe(arr: np.ndarray, units: str, calendar: str) -> list:
                 break
 
         if dt is None:
-            # Last-resort stable fallback.  Log so that decoding failures
-            # are not silently buried in downstream analyses.
-            import warnings
-            warnings.warn(
+            # Time decoding failed for this value.  The 2000-01-01 sentinel
+            # was removed because silently substituting a fake date causes
+            # downstream seasonal averages, time-slicing, and climatologies to
+            # produce wrong results without any visible error.
+            #
+            # We raise to surface the problem immediately so it can be fixed at
+            # the source (bad time:units, unsupported calendar, leap-second
+            # artefact, etc.).
+            raise RuntimeError(
                 f"Time decoding failed for numeric value {float(v)!r} "
-                f"(units={units!r}, calendar={calendar!r}); "
-                "substituting 2000-01-01. Check for bad time coordinate values.",
-                stacklevel=3,
+                f"(units={units!r}, calendar={calendar!r}). "
+                "Check for bad time coordinate values in the source file. "
+                "Possible causes: unsupported calendar, invalid leap-second "
+                "offset, or missing/incorrect time:units attribute."
             )
-            dt = _datetime.datetime(2000, 1, 1)
         result.append(dt)
     return result
 
@@ -890,23 +926,37 @@ class CDATVariable:
         # reliably map old axes to new ones — drop all metadata.
         if len(new_axes) != len(new_shape):
             import warnings
+            # Identify which CF axis types were lost so the warning is actionable.
+            lost = [ax.axis for ax in self._axes if ax is not None and ax.axis in ("T", "Y", "X", "Z")]
             warnings.warn(
                 f"CDATVariable[{self.id!r}]: advanced indexing changed number of "
-                f"dimensions; axis metadata dropped to avoid mis-labelling.",
+                f"dimensions; axis metadata dropped to avoid mis-labelling. "
+                f"Axes that were present before slicing: {lost}.",
                 stacklevel=3,
             )
             return []
         # Per-axis length mismatch: replace only the broken axis with None so
         # that the remaining (still-valid) coordinate axes are preserved.
+        _important_axes = {"T", "Y", "X"}
         for i, (ax, n) in enumerate(zip(new_axes, new_shape)):
             if ax is not None and len(ax) != n:
                 import warnings
-                warnings.warn(
-                    f"CDATVariable[{self.id!r}]: advanced indexing broke axis "
-                    f"length for {ax.id!r} (expected {n}, got {len(ax)}); "
-                    "axis metadata for that dimension dropped.",
-                    stacklevel=3,
-                )
+                if ax.axis in _important_axes:
+                    warnings.warn(
+                        f"CDATVariable[{self.id!r}]: slicing broke axis "
+                        f"{ax.id!r} (type {ax.axis!r}, expected {n} values, "
+                        f"got {len(ax)}); axis metadata dropped for that dimension. "
+                        "Downstream calls to getTime()/getLatitude()/getLongitude() "
+                        "may fail.",
+                        stacklevel=3,
+                    )
+                else:
+                    warnings.warn(
+                        f"CDATVariable[{self.id!r}]: advanced indexing broke axis "
+                        f"length for {ax.id!r} (expected {n}, got {len(ax)}); "
+                        "axis metadata for that dimension dropped.",
+                        stacklevel=3,
+                    )
                 new_axes[i] = None
         return new_axes
 
@@ -1318,22 +1368,27 @@ def _extract_aux_lat_lon_axes(da: xr.DataArray):
 
     This helps with some post-processed products, but does not make native
     unstructured grids equivalent to rectilinear CDAT grids.
+
+    **Raises** ``NotImplementedError`` if any auxiliary coordinate has >1
+    dimension, because 2D lat/lon arrays indicate a curvilinear or unstructured
+    grid that is not supported by this shim.  The caller should regrid the data
+    to a regular lat-lon grid before converting via da_to_cdat.
     """
     lat_ax = None
     lon_ax = None
     for cname, coord in da.coords.items():
-        if coord.ndim != 1:
-            # Non-1D coords indicate a curvilinear or unstructured grid.
-            # This shim only supports 1D (rectilinear) auxiliary coordinates;
-            # 2D+ coordinates are silently skipped here but the caller should
-            # use grid-aware tools (xESMF, xarray sel/isel) for such data.
-            import warnings
-            warnings.warn(
-                f"Skipping non-1D coordinate {cname!r} (shape {coord.shape}): "
-                "curvilinear/unstructured grids are not supported by this CDAT "
-                "compatibility shim. Use grid-aware tools instead.",
-                stacklevel=3,
-            )
+        if coord.ndim > 1:
+            ax_type = _dim_to_axis_type(cname, coord)
+            if ax_type in ("Y", "X"):
+                raise NotImplementedError(
+                    f"da_to_cdat: coordinate {cname!r} has {coord.ndim} dimensions "
+                    f"(shape {coord.shape}), indicating a curvilinear or unstructured "
+                    "grid that is not supported by this CDAT compatibility shim. "
+                    "Regrid to a regular rectilinear lat-lon grid first "
+                    "(e.g. using xESMF or Regrid())."
+                )
+            # Non-lat/lon 2-D coordinates (e.g. time_bnds, vertices) are fine;
+            # skip them silently.
             continue
         ax_type = _dim_to_axis_type(cname, coord)
         attrs = dict(coord.attrs)
@@ -1355,6 +1410,22 @@ def da_to_cdat(da: xr.DataArray, varname: Optional[str] = None) -> CDATVariable:
     ``numpy.ma`` storage by design.
     """
     name = varname or da.name or ""
+
+    # Reject curvilinear/unstructured grids eagerly: if any coordinate that
+    # looks like latitude or longitude has more than one dimension, the data
+    # are on a non-rectilinear grid that this shim cannot represent correctly.
+    # Dim-coordinates (1D) are fine; only non-dim 2D+ coordinates trigger this.
+    for cname, coord in da.coords.items():
+        if coord.ndim > 1:
+            ax_type = _dim_to_axis_type(cname, coord)
+            if ax_type in ("Y", "X"):
+                raise NotImplementedError(
+                    f"da_to_cdat({name!r}): coordinate {cname!r} has "
+                    f"{coord.ndim} dimensions (shape {coord.shape}), indicating "
+                    "a curvilinear or unstructured grid that is not supported by "
+                    "this CDAT compatibility shim. Regrid to a regular "
+                    "rectilinear lat-lon grid first (e.g. using xESMF or Regrid())."
+                )
 
     axes = []
     for dim in da.dims:
