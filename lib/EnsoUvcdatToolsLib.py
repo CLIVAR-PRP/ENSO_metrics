@@ -74,6 +74,7 @@ STRICT_DIM_GUESS: bool = True
 from .XarrayCompat import (
     CDATVariable,
     _Axis,
+    _build_grid_from_axes,
     create_axis,
     create_uniform_lat_axis,
     create_uniform_lon_axis,
@@ -81,6 +82,7 @@ from .XarrayCompat import (
     create_variable,
     da_to_cdat,
     cdat_to_da,
+    validate_cdat_variable,
 )
 
 def open_file(path, mode="r"):
@@ -322,13 +324,20 @@ def _get_lat_weights(var, axis=None):
     )
     lat = var.getLatitude()
     if lat is None:
-        return None
+        raise ValueError(
+            f"_get_lat_weights: latitude axis not found for variable "
+            f"{getattr(var, 'id', '?')!r}. Cannot compute spatial weights. "
+            "Ensure the CDATVariable has a latitude axis with CF axis='Y' metadata."
+        )
     lat_vals = np.asarray(lat[:], dtype=float)
     w = np.cos(np.deg2rad(lat_vals))
     w = ma.masked_invalid(w)
     lat_axis = _axis_to_int(var, "y")
     if lat_axis is None:
-        return None
+        raise ValueError(
+            f"_get_lat_weights: latitude axis index cannot be determined for variable "
+            f"{getattr(var, 'id', '?')!r}. Attach CF axis/standard_name metadata."
+        )
     shape = [1] * var.ndim
     shape[lat_axis] = len(w)
     return w.reshape(shape)
@@ -345,24 +354,27 @@ def _weighted_spatial_average(tab, axes=("Y", "X")):
     data = _mv(tab)
     do_y = "Y" in axes
     do_x = "X" in axes
-    lat_w = _get_lat_weights(tab)
-    if lat_w is None or not do_y:
-        # No latitude axis found or not averaging meridionally — use equal weights.
-        # Mirror the do_x/do_y branching used in the weighted path below.
-        if do_x and do_y:
-            ax_int = _axis_to_int(tab, "xy")
-        elif do_y:
-            ax_int = _axis_to_int(tab, "y")
-        elif do_x:
+    lat_w = _get_lat_weights(tab) if do_y else None
+    # When latitude weighting is needed but weights are unavailable, raise
+    # immediately — a silent unweighted fallback produces scientifically
+    # incorrect ENSO metrics.
+    if lat_w is None and do_y:
+        raise RuntimeError(
+            "_weighted_spatial_average: latitude weights missing — cannot perform "
+            f"weighted meridional average for variable {getattr(tab, 'id', '?')!r}. "
+            "Ensure the CDATVariable has a latitude axis with CF metadata."
+        )
+    if not do_y:
+        # Zonal-only average: no latitude weighting needed, unweighted is correct.
+        if do_x:
             ax_int = _axis_to_int(tab, "x")
-        else:
-            return data  # nothing to reduce
-        if ax_int is None:
-            raise ValueError(
-                f"_weighted_spatial_average: cannot determine averaging axis "
-                f"for axes={axes!r}; attach CF axis metadata or pass an explicit integer."
-            )
-        return ma.mean(data, axis=ax_int)
+            if ax_int is None:
+                raise ValueError(
+                    f"_weighted_spatial_average: cannot determine X averaging axis "
+                    f"for axes={axes!r}; attach CF axis metadata."
+                )
+            return ma.mean(data, axis=ax_int)
+        return data  # nothing to reduce
     mask = ma.getmaskarray(data)
     wm = ma.array(np.broadcast_to(lat_w, data.shape), mask=mask)
     # Re-apply the same mask to data so that data*wm uses identical masking
@@ -1142,8 +1154,18 @@ def _finalize_cdat(da: xr.DataArray, varname: str | None = None, *,
 
 
 def _finalize_existing_cdat(var, *, context: str = "", require_time: bool = False):
-    """Validate an existing CDATVariable or wrap ndarray-like output."""
+    """Validate an existing CDATVariable and refresh its internal grid.
+
+    Must be called after any operation that can mutate or replace the
+    CDATVariable without rebuilding the grid (squeeze, setAxis, MV2masked_where,
+    arithmetic sign flip, slicing).  Rebuilding from the current axes ensures
+    getGrid().shape always matches getLatitude()/getLongitude() axis lengths.
+    """
     out = _to_cdat(var)
+    # Rebuild the grid from whatever axes are currently attached so that
+    # getGrid() is never stale after squeeze / setAxis / masking mutations.
+    if isinstance(out, CDATVariable):
+        out._grid = _build_grid_from_axes(out._axes)
     return _validate_cdat_axes(out, context=context, require_time=require_time)
 
 
@@ -1422,7 +1444,7 @@ def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) 
     #   T axis, score=1  → always warn; always return "" (unsafe to guess)
     #   Y/X/Z, score=1, strict=True → raise (caller opted into strict checks)
     #   Y/X/Z, score=1, strict=False → warn but return the best guess
-    if best_score == 1:
+    if best_score <= 1:
         import warnings
         _strict = STRICT_DIM_GUESS if strict is None else strict
         msg = (
@@ -1431,8 +1453,8 @@ def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) 
             "Add CF axis/standard_name/units metadata to avoid incorrect axis mapping."
         )
         if at == "T":
-            # Never trust a score-1 hit for the time axis — return empty
-            # string so callers can detect the failure without crashing.
+            # Never trust a score-1 (or weaker) hit for the time axis — return
+            # empty string so callers can detect the failure without crashing.
             warnings.warn(msg, stacklevel=2)
             return ""
         if _strict:
@@ -1556,11 +1578,18 @@ class _CdutilAverager:
         return tab.copy()
 
     @staticmethod
-    def setTimeBoundsMonthly(tab):  pass
+    def setTimeBoundsMonthly(tab):
+        # Intentional no-op: xcdat adds its own time bounds internally via
+        # ds.bounds.add_missing_bounds(axes=["T"]) before every temporal
+        # average.  Storing explicit bounds on the _Axis object is not
+        # required by the xcdat-based pipeline.
+        pass
     @staticmethod
-    def setTimeBoundsDaily(tab):    pass
+    def setTimeBoundsDaily(tab):
+        pass  # see setTimeBoundsMonthly
     @staticmethod
-    def setTimeBoundsYearly(tab):   pass
+    def setTimeBoundsYearly(tab):
+        pass  # see setTimeBoundsMonthly
 
     class ANNUALCYCLE:
         @staticmethod
@@ -1713,6 +1742,46 @@ def ArrayZeros(tab, id='new_variable_zeros'):
     return create_variable(MV2zeros(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=id)
 
 
+def _make_coslat_areacell(tab):
+    """Build a cosine-latitude area-weight CDATVariable matching *tab*'s grid.
+
+    Used as a guaranteed fallback when the caller did not supply an explicit
+    areacell (e.g. observation files without areacella).  This is more robust
+    than passing areacell=None to cdutil.averager, which can silently return
+    None for certain grid configurations.
+
+    Returns a CDATVariable with the same lat/lon axes as *tab* and values
+    proportional to cos(lat), broadcast to match the full spatial shape.
+    Returns None if *tab* has no latitude axis.
+    """
+    tab = _to_cdat(tab)
+    lat_ax = tab.getLatitude()
+    if lat_ax is None:
+        return None
+    lon_ax = tab.getLongitude()
+    lat_vals = np.asarray(lat_ax[:], dtype=float)
+    w_lat = ma.masked_invalid(np.cos(np.deg2rad(lat_vals)))  # (nlat,)
+    if lon_ax is not None:
+        # broadcast (nlat,) -> (nlat, nlon)
+        w_2d = np.tile(w_lat[:, np.newaxis], (1, len(lon_ax)))
+        axes = [lat_ax, lon_ax]
+    else:
+        w_2d = w_lat
+        axes = [lat_ax]
+    import warnings
+    warnings.warn(
+        f"areacell is None for variable {getattr(tab, 'id', '?')!r}; "
+        "synthesising cosine-latitude weights. "
+        "Provide areacella/sftlf for accurate spatial averages.",
+        stacklevel=3,
+    )
+    return create_variable(
+        ma.masked_invalid(w_2d.astype(float)),
+        axes=axes,
+        id="areacell_coslat",
+    )
+
+
 def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     """
     #################################################################################
@@ -1732,44 +1801,44 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     snum = str(int(lat_num)) + str(int(lon_num))
     _tab_grid = tab.getGrid()
     _area_grid = areacell.getGrid() if areacell is not None else None
+    # Synthesise cosine-latitude weights when areacell is absent or on a
+    # different grid — this guarantees we always have area weights and
+    # prevents the silent None return that occurs when cdutil.averager fails.
     if areacell is None or _tab_grid is None or _area_grid is None or _tab_grid.shape != _area_grid.shape:
-        print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
-        if (areacell is not None and _tab_grid is not None and _area_grid is not None
-                and _tab_grid.shape != _area_grid.shape):
+        if areacell is not None and _tab_grid is not None and _area_grid is not None \
+                and _tab_grid.shape != _area_grid.shape:
+            print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
                   " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m")
-        try:
-            averaged_tab = cdutil.averager(tab, axis="xy", weights="weighted", action="average")
-        except Exception:
-            try:
-                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
-            except Exception:
-                if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                    kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                               "newgrid_name": "generic_1x1deg"}
-                else:
-                    kwargs2 = dict(kwargs["regridding"])  # shallow copy — do not mutate caller's dict
-                kwargs2["newgrid_name"] = \
-                    closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
-                print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
-                      " to perform average \033[0m")
-                tmp = Regrid(tab, None, region=region, **kwargs2)
-                try:
-                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
-                except Exception:
-                    keyerror = "cannot perform horizontal average"
-                    averaged_tab = None
-                    list_strings = [
-                        "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": horizontal average",
-                        str().ljust(5) + "cdutil.averager cannot perform horizontal average"]
-                    EnsoErrorsWarnings.my_warning(list_strings)
-    else:
+        areacell = _make_coslat_areacell(tab)
+    if areacell is not None:
         averaged_tab = MV2multiply(tab, areacell)
         # Sum in reverse index order so removing a higher-indexed axis first
         # does not shift the remaining lower index before it is used.
         for ax in sorted([int(lat_num), int(lon_num)], reverse=True):
             averaged_tab = MV2sum(averaged_tab, axis=ax)
         averaged_tab = averaged_tab / float(MV2sum(areacell))
+    else:
+        # No latitude axis at all — last resort fallback
+        try:
+            averaged_tab = cdutil.averager(tab, axis="xy", weights="weighted", action="average")
+        except Exception:
+            try:
+                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
+            except Exception:
+                keyerror = "cannot perform horizontal average: no latitude axis and cdutil fallback failed"
+                averaged_tab = None
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": horizontal average",
+                    str().ljust(5) + keyerror]
+                EnsoErrorsWarnings.my_warning(list_strings)
+    # Fail-fast: if result is still None, set a keyerror so the caller knows
+    if averaged_tab is None and keyerror is None:
+        keyerror = "AverageHorizontal returned None — check grid, weights, and axis metadata"
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": horizontal average",
+            str().ljust(5) + keyerror]
+        EnsoErrorsWarnings.my_warning(list_strings)
     if averaged_tab is not None:
         averaged_tab = _finalize_existing_cdat(
             averaged_tab, context="AverageHorizontal",
@@ -1795,41 +1864,39 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     snum = str(int(lat_num))
     _tab_grid = tab.getGrid()
     _area_grid = areacell.getGrid() if areacell is not None else None
+    # Synthesise cosine-latitude weights when areacell is absent or on a
+    # different grid — prevents the silent None return from cdutil.averager.
     if areacell is None or _tab_grid is None or _area_grid is None or _tab_grid.shape != _area_grid.shape:
-        print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageMeridional" + "\033[0m")
-        if (areacell is not None and _tab_grid is not None and _area_grid is not None
-                and _tab_grid.shape != _area_grid.shape):
+        if areacell is not None and _tab_grid is not None and _area_grid is not None \
+                and _tab_grid.shape != _area_grid.shape:
+            print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageMeridional" + "\033[0m")
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
                   " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m")
+        areacell = _make_coslat_areacell(tab)
+    if areacell is not None:
+        lat_num_area = get_num_axis(areacell, "latitude")
+        averaged_tab = MV2multiply(tab, areacell)
+        averaged_tab = MV2sum(averaged_tab, axis=int(lat_num)) / MV2sum(areacell, axis=int(lat_num_area))
+    else:
         try:
             averaged_tab = cdutil.averager(tab, axis="y", weights="weighted", action="average")
         except Exception:
             try:
                 averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except Exception:
-                if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                    kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                               "newgrid_name": "generic_1x1deg"}
-                else:
-                    kwargs2 = dict(kwargs["regridding"])  # shallow copy — do not mutate caller's dict
-                kwargs2["newgrid_name"] = \
-                    closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
-                print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
-                      " to perform average \033[0m")
-                tmp = Regrid(tab, None, region=region, **kwargs2)
-                try:
-                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
-                except Exception:
-                    keyerror = "cannot perform meridional average"
-                    averaged_tab = None
-                    list_strings = [
-                        "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional average",
-                        str().ljust(5) + "cdutil.averager cannot perform meridional average"]
-                    EnsoErrorsWarnings.my_warning(list_strings)
-    else:
-        lat_num_area = get_num_axis(areacell, "latitude")
-        averaged_tab = MV2multiply(tab, areacell)
-        averaged_tab = MV2sum(averaged_tab, axis=int(lat_num)) / MV2sum(areacell, axis=int(lat_num_area))
+                keyerror = "cannot perform meridional average: no latitude axis and cdutil fallback failed"
+                averaged_tab = None
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional average",
+                    str().ljust(5) + keyerror]
+                EnsoErrorsWarnings.my_warning(list_strings)
+    # Fail-fast: if result is still None, set a keyerror
+    if averaged_tab is None and keyerror is None:
+        keyerror = "AverageMeridional returned None — check grid, weights, and axis metadata"
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional average",
+            str().ljust(5) + keyerror]
+        EnsoErrorsWarnings.my_warning(list_strings)
     if averaged_tab is not None:
         lon = tab.getLongitude()
         if lon is not None and len(lon.shape) > 1:
@@ -1903,40 +1970,37 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
     snum = str(int(lon_num))
     _tab_grid = tab.getGrid()
     _area_grid = areacell.getGrid() if areacell is not None else None
+    # Synthesise cosine-latitude weights when areacell is absent or on a
+    # different grid — prevents the silent None return from cdutil.averager.
     if areacell is None or _tab_grid is None or _area_grid is None or _tab_grid.shape != _area_grid.shape:
-        print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageZonal" + "\033[0m")
-        if (areacell is not None and _tab_grid is not None and _area_grid is not None
-                and _tab_grid.shape != _area_grid.shape):
+        if areacell is not None and _tab_grid is not None and _area_grid is not None \
+                and _tab_grid.shape != _area_grid.shape:
+            print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageZonal" + "\033[0m")
             print("\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
                   " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m")
+        areacell = _make_coslat_areacell(tab)
+    if areacell is not None:
+        lon_num_area = get_num_axis(areacell, "longitude")
+        averaged_tab = MV2multiply(tab, areacell)
+        averaged_tab = MV2sum(averaged_tab, axis=int(lon_num)) / MV2sum(areacell, axis=int(lon_num_area))
+    else:
         try:
             averaged_tab = cdutil.averager(tab, axis="x", weights="weighted", action="average")
         except Exception:
             try:
                 averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
             except Exception:
-                if "regridding" not in list(kwargs.keys()) or isinstance(kwargs["regridding"], dict) is False:
-                    kwargs2 = {"regridder": "cdms", "regridTool": "esmf", "regridMethod": "linear",
-                               "newgrid_name": "generic_1x1deg"}
-                else:
-                    kwargs2 = dict(kwargs["regridding"])  # shallow copy — do not mutate caller's dict
-                kwargs2["newgrid_name"] = \
-                    closest_grid(region, len(tab.getAxis(lat_num)[:]), len(tab.getAxis(lon_num)[:]))
-                print("\033[93m" + str().ljust(25) + "need to regrid to = " + str(kwargs2["newgrid_name"]) +
-                      " to perform average \033[0m")
-                tmp = Regrid(tab, None, region=region, **kwargs2)
-                try:
-                    averaged_tab = cdutil.averager(tmp, axis=snum, weights="weighted", action="average")
-                except Exception:
-                    keyerror = "cannot perform zonal average"
-                    averaged_tab = None
-                    list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": zonal average",
-                                    str().ljust(5) + "cdutil.averager cannot perform zonal average"]
-                    EnsoErrorsWarnings.my_warning(list_strings)
-    else:
-        lon_num_area = get_num_axis(areacell, "longitude")
-        averaged_tab = MV2multiply(tab, areacell)
-        averaged_tab = MV2sum(averaged_tab, axis=int(lon_num)) / MV2sum(areacell, axis=int(lon_num_area))
+                keyerror = "cannot perform zonal average: no latitude axis and cdutil fallback failed"
+                averaged_tab = None
+                list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": zonal average",
+                                 str().ljust(5) + keyerror]
+                EnsoErrorsWarnings.my_warning(list_strings)
+    # Fail-fast: if result is still None, set a keyerror
+    if averaged_tab is None and keyerror is None:
+        keyerror = "AverageZonal returned None — check grid, weights, and axis metadata"
+        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": zonal average",
+                        str().ljust(5) + keyerror]
+        EnsoErrorsWarnings.my_warning(list_strings)
     if averaged_tab is not None:
         lat = tab.getLatitude()
         if lat is not None and len(lat.shape) > 1:
@@ -3613,6 +3677,9 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
                   "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
             reversed_sign = True
+    # CDATVariable arithmetic (-1 * tab) preserves axes via __rmul__/_wrap_binary.
+    # _to_cdat is a no-op here but kept as a safety net for any branch that
+    # didn't go through _finalize_cdat (e.g. a future fallback read path).
     tab = _to_cdat(tab)
     if time_bounds is not None:
         # sometimes the time boundaries are wrong, even with 'time=time_bounds'
@@ -3645,18 +3712,17 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     # HadISST has -1000 values... mask them
     if "HadISST" in filename or "hadisst" in filename:
         tab = MV2masked_where(tab == -1000, tab)
-    # check if the mask is constant through time
-    if len(NPwhere(tab[0].mask != tab[1:].mask)[0]) > 0:
-        # the mask is not constant -> make it constant
-        # sum mask through time
-        mask = MV2sum(tab.mask.astype("f"), axis=0)
-        # mask where at least one time step is masked
-        mask = MV2where(mask > 0, True, False)
-        # create a mask the same size as the original data
-        mask_nd = MV2zeros(tab.shape)
-        mask_nd[:] = mask
-        # apply mask to original data
-        tab = MV2masked_where(mask_nd, tab)
+    # Force the spatial mask to be constant through time (original CDAT invariant):
+    # any grid point that is masked at ANY time step is masked for ALL time steps.
+    # Using pure numpy operations here avoids fragile CDATVariable intermediate
+    # steps on the mask array (ma.getmaskarray always returns a full-shape bool
+    # array, never a scalar False, so edge cases are handled cleanly).
+    _raw_mask = ma.getmaskarray(tab._data)  # always (T, Y, X), dtype bool
+    if _raw_mask.ndim >= 3 and _raw_mask.shape[0] > 1:
+        _spatial_mask = np.any(_raw_mask, axis=0)   # (Y, X): True = masked at >= 1 t
+        if np.any(_spatial_mask != _raw_mask[0]):   # check if mask is not yet constant
+            _full_mask = np.broadcast_to(_spatial_mask, _raw_mask.shape).copy()
+            tab = MV2masked_where(_full_mask, tab)
     # check taux sign
     if varname in ["taux", "tauu", "tauuo", "uflx"] and reversed_sign is False:
         # define box
@@ -3676,6 +3742,10 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
                       str(float(taux)) + ")" + "\033[0m")
                 tab = -1 * tab
     fi.close()
+    # Re-run finalization after all in-place mutations (sign flip, slicing,
+    # setAxis, toRelativeTime, squeeze, masking) to guarantee the returned
+    # CDATVariable has valid, CF-typed axes.
+    tab = _finalize_existing_cdat(tab, context=f"ReadAndSelectRegion:{varname}", require_time=True)
     return tab
 
 
@@ -3732,6 +3802,9 @@ def ReadAreaSelectRegion(filename, areaname='', box=None, **kwargs):
                     except Exception:
                         areacell = None
     fi.close()
+    # Ensure areacell has valid spatial axes after read (no time axis expected).
+    if areacell is not None:
+        areacell = _finalize_existing_cdat(areacell, context=f"ReadAreaSelectRegion:{areaname}")
     return areacell
 
 
@@ -3804,6 +3877,9 @@ def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs)
             # subset
             landmask = landmask(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
     # Return
+    # Ensure landmask has valid spatial axes (no time axis expected).
+    if landmask is not None:
+        landmask = _finalize_existing_cdat(landmask, context="ReadLandmaskSelectRegion")
     return landmask
 
 
@@ -5141,6 +5217,10 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
     tab, units, keyerror = CheckUnits(tab, varfamily, varname, tab.units, return_tab_only=False)
     tab.name = varname
     tab.units = units
+    # Final gate: validate the CDATVariable structure before returning to metric
+    # computation.  Catches axis/shape mismatches introduced by CheckUnits or
+    # any upstream mutation and gives a clear error rather than a silent None.
+    validate_cdat_variable(tab, context=f"ReadSelectRegionCheckUnits:{varname}")
     return tab, keyerror
 
 
@@ -5261,6 +5341,14 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
             if areacell is None:
                 areacell = ArrayOnes(landmask, id='areacell')
             areacell, keyerror2 = ApplyLandmaskToArea(areacell, landmask, maskland=maskland, maskocean=maskocean)
+    # When neither file_area nor landmask provided a valid areacell, synthesise
+    # cosine-latitude weights so downstream Average* functions never receive
+    # areacell=None (which would trigger silent None returns).
+    if areacell is None:
+        areacell = _make_coslat_areacell(tab_out)
+        if debug is True:
+            dict_debug = {'line1': 'areacell synthesised from cosine-latitude (no areacella/landmask available)'}
+            EnsoErrorsWarnings.debug_mode('\033[93m', 'after areacell fallback', 20, **dict_debug)
     if keyerror1 is not None or keyerror2 is not None:
         keyerror = add_up_errors([keyerror1, keyerror2])
     else:
@@ -5553,6 +5641,19 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
         info = info + ', observations and model regridded to ' + str(grid_name)
     else:
         info = info + ', observations and model NOT regridded'
+    # Validate that regridding produced consistent spatial shapes.
+    # model_orand_obs==3 skips regridding intentionally, so we only enforce
+    # when regridding was actually requested (0, 1, or 2).
+    if model_orand_obs in (0, 1, 2):
+        m_spatial = model.shape[-2:] if model.ndim >= 2 else model.shape
+        o_spatial = obs.shape[-2:] if obs.ndim >= 2 else obs.shape
+        if m_spatial != o_spatial:
+            raise ValueError(
+                f"TwoVarRegrid: spatial shape mismatch after regridding "
+                f"(model_orand_obs={model_orand_obs}): "
+                f"model {model.shape} vs obs {obs.shape}. "
+                "Check newgrid or regridding parameters."
+            )
     if model.shape == obs.shape:
         if model.mask.shape != ():
             mask = model.mask

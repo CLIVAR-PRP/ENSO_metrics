@@ -1089,10 +1089,13 @@ class CDATVariable:
         return CDATVariable(result, axes=new_axes, grid=_build_grid_from_axes(new_axes), id=self.id, attributes=dict(self._attributes))
 
     def copy(self) -> "CDATVariable":
+        new_axes = [ax.copy() if ax is not None else None for ax in self._axes]
         return CDATVariable(
             self._data.copy(),
-            axes=[ax.copy() if ax is not None else None for ax in self._axes],
-            grid=self._grid,
+            axes=new_axes,
+            # Rebuild the grid from the *copied* axes rather than carrying a
+            # reference to the original grid (which points to old axis objects).
+            grid=_build_grid_from_axes(new_axes),
             id=self.id,
             attributes=dict(self._attributes),
         )
@@ -1113,6 +1116,9 @@ class CDATVariable:
             self._axes.append(None)
         self._axes[n] = ax
         _validate_axes_shape(self._data, self._axes, context=f"CDATVariable({self.id}).setAxis")
+        # Rebuild the rectilinear grid so getGrid() is never stale after a
+        # setAxis call (e.g. after toRelativeTime modifies the time axis).
+        self._grid = _build_grid_from_axes(self._axes)
 
     def setAxisList(self, axes: list):
         axes = _coerce_axes(axes, self._data.ndim)
@@ -1247,10 +1253,15 @@ class CDATVariable:
         result_data = self._data.copy()
         result_axes = [ax.copy() if ax is not None else None for ax in self._axes]
 
-        if "squeeze" in kwargs and kwargs["squeeze"]:
+        if kwargs.get("squeeze"):
             result_data = result_data.squeeze()
             result_axes = [ax for ax in result_axes if ax is not None and len(ax) > 1]
-            return CDATVariable(result_data, axes=result_axes, grid=self._grid, id=self.id, attributes=dict(self._attributes))
+            return CDATVariable(
+                result_data, axes=result_axes,
+                # Rebuild grid from remaining axes; self._grid may reference a
+                # level axis that was just squeezed out.
+                grid=_build_grid_from_axes(result_axes),
+                id=self.id, attributes=dict(self._attributes))
 
         def _sel_axis(ax_idx, bounds):
             nonlocal result_data
