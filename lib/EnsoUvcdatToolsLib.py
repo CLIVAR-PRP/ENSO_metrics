@@ -100,10 +100,29 @@ def MV2compress(condition, a, axis=0):
     return ma.array(np.compress(cond, raw, axis=axis),
                     mask=np.compress(cond, ma.getmaskarray(raw), axis=axis))
 def MV2concatenate(seq, axis=0):
+    seq = list(seq)
     arrs  = [_mv(x) for x in seq]
     masks = [ma.getmaskarray(x) for x in arrs]
-    return ma.array(np.concatenate(arrs, axis=axis),
-                    mask=np.concatenate(masks, axis=axis))
+    result = ma.array(np.concatenate(arrs, axis=axis),
+                      mask=np.concatenate(masks, axis=axis))
+    if seq and all(isinstance(x, CDATVariable) for x in seq):
+        tmpl = seq[0]
+        new_axes = list(tmpl._axes)
+        ax_int = axis if isinstance(axis, (int, np.integer)) else 0
+        if (0 <= ax_int < len(new_axes) and
+                all(ax_int < len(x._axes) and x._axes[ax_int] is not None
+                    for x in seq)):
+            old_ax = tmpl._axes[ax_int]
+            cat_vals = np.concatenate([x._axes[ax_int]._values for x in seq])
+            new_ax = _Axis(old_ax.id, cat_vals,
+                           units=old_ax.units,
+                           attributes=dict(old_ax._attributes),
+                           axis_type=old_ax.axis)
+            new_ax.calendar = old_ax.calendar
+            new_axes[ax_int] = new_ax
+        return CDATVariable(result, axes=new_axes, grid=tmpl._grid,
+                            id=tmpl.id, attributes=dict(tmpl._attributes))
+    return result
 def MV2divide(a, b):         return _mv_wrap(ma.divide(_mv(a), _mv(b)), a)
 def MV2masked_where(cond, a):return ma.masked_where(np.asarray(cond, dtype=bool), _mv(a))
 def MV2maximum(a):           return float(ma.max(_mv(a)))
@@ -115,8 +134,23 @@ def MV2sum(a, axis=None, fill_value=0, dtype=None):
     return ma.sum(_mv(a), axis=axis, dtype=dtype)
 def MV2take(a, indices, axis=0):
     raw = _mv(a)
-    return ma.array(np.take(raw, indices, axis=axis),
-                    mask=np.take(ma.getmaskarray(raw), indices, axis=axis))
+    result = ma.array(np.take(raw, indices, axis=axis),
+                      mask=np.take(ma.getmaskarray(raw), indices, axis=axis))
+    if isinstance(a, CDATVariable):
+        new_axes = list(a._axes)
+        ax_int = axis if isinstance(axis, (int, np.integer)) else 0
+        if 0 <= ax_int < len(new_axes) and new_axes[ax_int] is not None:
+            old_ax = new_axes[ax_int]
+            idx = np.asarray(indices)
+            new_ax = _Axis(old_ax.id, old_ax._values[idx],
+                           units=old_ax.units,
+                           attributes=dict(old_ax._attributes),
+                           axis_type=old_ax.axis)
+            new_ax.calendar = old_ax.calendar
+            new_axes[ax_int] = new_ax
+        return CDATVariable(result, axes=new_axes, grid=a._grid,
+                            id=a.id, attributes=dict(a._attributes))
+    return result
 def MV2where(condition, x, y):
     return ma.where(np.asarray(condition, dtype=bool), _mv(x), _mv(y))
 def MV2zeros(shape):         return ma.zeros(shape)
@@ -2007,15 +2041,18 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         m1 = tab.getTime().asComponentTime()[0].month
         d1 = tab.getTime().asComponentTime()[0].day
         if len(tab.shape) == 1:
-            tab_out = MV2zeros(nbr_years_window * 12)
+            raw_out = MV2zeros(nbr_years_window * 12)
         elif len(tab.shape) == 2:
-            tab_out = MV2zeros((nbr_years_window * 12, tab.shape[1]))
+            raw_out = MV2zeros((nbr_years_window * 12, tab.shape[1]))
         else:
-            tab_out = MV2zeros((nbr_years_window * 12, tab.shape[1], tab.shape[2]))
-        tab_out = MV2masked_where(tab_out == 0, tab_out)
-        axis = create_axis(list(range(len(tab_out))), id="time")
-        axis.units = units
-        tab_out.setAxis(0, axis)
+            raw_out = MV2zeros((nbr_years_window * 12, tab.shape[1], tab.shape[2]))
+        raw_out = MV2masked_where(raw_out == 0, raw_out)
+        time_axis = create_axis(list(range(len(raw_out))), id="time")
+        time_axis.units = units
+        other_axes = tab.getAxisList()[1:] if isinstance(tab, CDATVariable) and len(tab.shape) > 1 else []
+        tab_out = create_variable(raw_out, axes=[time_axis] + other_axes,
+                                  grid=tab.getGrid() if isinstance(tab, CDATVariable) else None,
+                                  id=getattr(tab, 'id', ''))
         for ii in list(range(len(tab))):
             y2 = tab_out.getTime().asComponentTime()[ii].year
             m2 = tab_out.getTime().asComponentTime()[ii].month
