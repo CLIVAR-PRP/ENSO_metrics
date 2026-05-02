@@ -398,7 +398,8 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                     dict_col_valu[metric], dict_col_meta["metrics"][metric] = valu, vame
                     dict_col_dd_valu[metric], dict_col_dd_meta["metrics"][metric] = dive, dime
         except Exception as e:
-            print(e)
+            import traceback
+            traceback.print_exc()
             pass
     if dive_down is True:
         return {"value": dict_col_valu, "metadata": dict_col_meta}, \

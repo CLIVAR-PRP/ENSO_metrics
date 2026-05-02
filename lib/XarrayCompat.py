@@ -78,6 +78,7 @@ __all__ = [
     "_Axis",
     "_TimeAxis",
     "_Grid",
+    "_clean_attrs",
     "create_axis",
     "create_uniform_lat_axis",
     "create_uniform_lon_axis",
@@ -462,6 +463,18 @@ def _make_masked_array(data, mask=None, fill_value=1e20, attributes: Optional[di
     return raw
 
 
+def _clean_attrs(attrs: dict) -> dict:
+    """
+    Remove attributes whose values are None or otherwise not serialisable to
+    netCDF (xarray rejects None, and also non-scalar non-array objects).
+
+    Valid netCDF attribute types: str, Number, ndarray, list, tuple, bytes.
+    """
+    import numbers
+    keep = (str, numbers.Number, np.ndarray, list, tuple, bytes)
+    return {k: v for k, v in attrs.items() if v is not None and isinstance(v, keep)}
+
+
 def _validate_grid(grid, axes, context: str = "CDATVariable"):
     """Light check that a rectilinear grid is compatible with available axes."""
     if grid is None or not axes:
@@ -592,7 +605,7 @@ class _Axis:
                 self.axis = _cf
             else:
                 _sn = str(self._attributes.get("standard_name", "")).lower()
-                _u  = str(self._attributes.get("units", "")).lower()
+                _u  = str(self._attributes.get("units", self.units or "")).lower()
                 if _sn in {"latitude", "grid_latitude",
                            "projection_y_coordinate", "rotated_latitude"} \
                         or _u in {"degrees_north", "degree_north",
@@ -654,6 +667,32 @@ class _Axis:
         vals = self._values
         if len(vals) == 0:
             return []
+
+        # Handle numpy.datetime64 (from xarray-decoded time axes without cftime).
+        # These fail _is_datetime_like (no .year attr) and cannot be cast to float
+        # meaningfully, so they must be converted before the generic path.
+        if isinstance(vals[0], np.datetime64):
+            result = []
+            for v in vals:
+                try:
+                    # .item() returns datetime.datetime for sub-day precision,
+                    # datetime.date for day-only — both satisfy downstream year/month.
+                    dt = v.item()
+                    if not isinstance(dt, _datetime.datetime):
+                        dt = _datetime.datetime(dt.year, dt.month, dt.day)
+                except Exception:
+                    try:
+                        secs = int(v.astype("datetime64[s]").astype(np.int64))
+                        dt = _datetime.datetime(1970, 1, 1) + _datetime.timedelta(seconds=secs)
+                    except Exception:
+                        dt = _datetime.datetime(2000, 1, 1)
+                if getattr(dt, "second", 0) == 60:
+                    try:
+                        dt = dt.replace(second=59)
+                    except Exception:
+                        pass
+                result.append(dt)
+            return result
 
         if _is_datetime_like(vals[0]):
             result = []
@@ -1290,6 +1329,20 @@ class CDATVariable:
         if "time" in kwargs:
             t_idx = next((i for i, ax in enumerate(result_axes)
                           if ax is not None and ax.axis == "T"), None)
+            # Fallback: if no axis is typed "T", look for any axis whose values
+            # look like datetime objects (handles axes with axis=="-" when CF
+            # metadata was absent during construction).
+            if t_idx is None:
+                for i, ax in enumerate(result_axes):
+                    if ax is None:
+                        continue
+                    vals = ax._values
+                    if len(vals) > 0 and (_is_datetime_like(vals[0])
+                                          or isinstance(vals[0], np.datetime64)
+                                          or "since" in str(ax.units).lower()):
+                        t_idx = i
+                        ax.axis = "T"  # re-tag so getTime() works afterwards
+                        break
             if t_idx is not None:
                 _sel_axis(t_idx, kwargs["time"])
 
@@ -1317,13 +1370,22 @@ class CDATVariable:
 # ---------------------------------------------------------------------------
 
 
-def create_axis(values, id: str = "", units: str = "", attributes: Optional[dict] = None) -> _Axis:
+def create_axis(values, id: str = "", units: str = "", attributes: Optional[dict] = None,
+                axis_type: Optional[str] = None) -> _Axis:
     """Replacement for ``cdms2.createAxis``.
 
     Matches the CDAT ``cdms2.createAxis(data, id='')`` calling convention:
     values is the first positional argument and id is a keyword.
+
+    Parameters
+    ----------
+    axis_type : str, optional
+        Explicit CF axis code ("T", "Y", "X", "Z").  Pass this when the axis
+        id or units alone would not be enough to detect the type under
+        ``STRICT_AXIS_DETECTION=True`` (e.g. a synthetic integer time axis
+        created with ``id="time"`` but no CF units yet).
     """
-    return _Axis(id, values, units=units, attributes=attributes)
+    return _Axis(id, values, units=units, attributes=attributes, axis_type=axis_type)
 
 
 def create_uniform_lat_axis(start: float, n: int, delta: float) -> _Axis:
@@ -1514,10 +1576,11 @@ def cdat_to_da(var: CDATVariable, name: Optional[str] = None) -> xr.DataArray:
             if ax.calendar is not None:
                 attrs.setdefault("calendar", ax.calendar)
 
+        clean = _clean_attrs(attrs)
         try:
-            coords[dim] = xr.Variable(dim, vals, attrs=attrs)
+            coords[dim] = xr.Variable(dim, vals, attrs=clean)
         except Exception:
-            coords[dim] = xr.Variable(dim, np.arange(len(vals)), attrs=attrs)
+            coords[dim] = xr.Variable(dim, np.arange(len(vals)), attrs=clean)
 
     data = var._data
     if ma.isMaskedArray(data) and np.any(ma.getmaskarray(data)):
@@ -1530,4 +1593,4 @@ def cdat_to_da(var: CDATVariable, name: Optional[str] = None) -> xr.DataArray:
     else:
         raw = np.asarray(data)
 
-    return xr.DataArray(raw, dims=dims, coords=coords, name=name, attrs=dict(var._attributes))
+    return xr.DataArray(raw, dims=dims, coords=coords, name=name, attrs=_clean_attrs(var._attributes))
