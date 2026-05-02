@@ -506,12 +506,12 @@ def _build_grid_from_axes(axes) -> Optional["_Grid"]:
     """Build a rectilinear grid from available latitude/longitude axes."""
     if not axes:
         return None
-    lat_ax = next((ax for ax in axes if ax is not None and ax.isLatitude()), None)
-    lon_ax = next((ax for ax in axes if ax is not None and ax.isLongitude()), None)
-    if lat_ax is None:
-        lat_ax = next((ax for ax in axes if ax is not None and _detect_axis_type(ax.id) == "Y"), None)
-    if lon_ax is None:
-        lon_ax = next((ax for ax in axes if ax is not None and _detect_axis_type(ax.id) == "X"), None)
+    # Use ax.axis directly — _Axis.__init__ already resolves it from CF
+    # metadata (axis attr, standard_name, units) and name heuristics.  Calling
+    # _detect_axis_type(ax.id) again is redundant and emits spurious warnings
+    # under STRICT_AXIS_DETECTION=True when the name looks like 'time'.
+    lat_ax = next((ax for ax in axes if ax is not None and ax.axis == "Y"), None)
+    lon_ax = next((ax for ax in axes if ax is not None and ax.axis == "X"), None)
     return _Grid(lat_ax, lon_ax) if (lat_ax is not None and lon_ax is not None) else None
 
 
@@ -1124,6 +1124,9 @@ class CDATVariable:
         axes = _coerce_axes(axes, self._data.ndim)
         _validate_axes_shape(self._data, axes, context=f"CDATVariable({self.id}).setAxisList")
         self._axes = axes
+        # Rebuild the rectilinear grid so getGrid() stays in sync after a
+        # bulk axis replacement (mirrors the grid-rebuild in setAxis).
+        self._grid = _build_grid_from_axes(self._axes)
 
     def getGrid(self) -> Optional[_Grid]:
         return self._grid
@@ -1133,41 +1136,30 @@ class CDATVariable:
         self._grid = grid
 
     def getTime(self) -> Optional[_Axis]:
-        ax = next((ax for ax in self._axes if ax is not None and ax.isTime()), None)
-        if ax is None:
-            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "T"), None)
-        return ax
+        # ax.axis is resolved by _Axis.__init__ — no name-heuristic fallback needed.
+        return next((ax for ax in self._axes if ax is not None and ax.axis == "T"), None)
 
     def getLatitude(self) -> Optional[_Axis]:
-        ax = next((ax for ax in self._axes if ax is not None and ax.isLatitude()), None)
-        if ax is None:
-            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "Y"), None)
-        return ax
+        return next((ax for ax in self._axes if ax is not None and ax.axis == "Y"), None)
 
     def getLongitude(self) -> Optional[_Axis]:
-        ax = next((ax for ax in self._axes if ax is not None and ax.isLongitude()), None)
-        if ax is None:
-            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "X"), None)
-        return ax
+        return next((ax for ax in self._axes if ax is not None and ax.axis == "X"), None)
 
     def getLevel(self) -> Optional[_Axis]:
-        ax = next((ax for ax in self._axes if ax is not None and ax.isLevel()), None)
-        if ax is None:
-            ax = next((ax for ax in self._axes if ax is not None and _detect_axis_type(ax.id) == "Z"), None)
-        return ax
+        return next((ax for ax in self._axes if ax is not None and ax.axis == "Z"), None)
 
     def getOrder(self) -> str:
         order = ""
         for ax in self._axes:
             if ax is None:
                 order += "-"
-            elif ax.isTime() or _detect_axis_type(ax.id) == "T":
+            elif ax.axis == "T":
                 order += "t"
-            elif ax.isLatitude() or _detect_axis_type(ax.id) == "Y":
+            elif ax.axis == "Y":
                 order += "y"
-            elif ax.isLongitude() or _detect_axis_type(ax.id) == "X":
+            elif ax.axis == "X":
                 order += "x"
-            elif ax.isLevel() or _detect_axis_type(ax.id) == "Z":
+            elif ax.axis == "Z":
                 order += "z"
             else:
                 order += "-"
@@ -1186,10 +1178,8 @@ class CDATVariable:
             return self.copy()
 
         def _ax_type(ax):
-            """Return the single-letter axis type, falling back to name detection."""
-            if ax.axis != "-":
-                return ax.axis
-            return _detect_axis_type(ax.id)
+            """Return the single-letter axis type; ax.axis is already resolved by __init__."""
+            return ax.axis
 
         if order in ("t...", "T..."):
             t_n = next((i for i, ax in enumerate(self._axes) if ax is not None and _ax_type(ax) == "T"), 0)
@@ -1235,13 +1225,7 @@ class CDATVariable:
 
         new_data = np.transpose(self._data, perm)
         new_axes = [self._axes[i].copy() if self._axes[i] is not None else None for i in perm]
-        lat_ax = next((ax for ax in new_axes if ax is not None
-                       and (ax.isLatitude() or _detect_axis_type(ax.id) == "Y")), None)
-        lon_ax = next((ax for ax in new_axes if ax is not None
-                       and (ax.isLongitude() or _detect_axis_type(ax.id) == "X")), None)
-        new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else None
-
-        return CDATVariable(new_data, axes=new_axes, grid=new_grid, id=self.id, attributes=dict(self._attributes))
+        return CDATVariable(new_data, axes=new_axes, grid=_build_grid_from_axes(new_axes), id=self.id, attributes=dict(self._attributes))
 
     # ------------------------------------------------------------------
     # CDAT-style callable selection: var(time=..., latitude=..., longitude=...)
@@ -1272,7 +1256,7 @@ class CDATVariable:
             if not isinstance(bounds, (tuple, list)) or len(bounds) != 2:
                 raise ValueError("Selection bounds must be a 2-element tuple/list")
 
-            if ax.isTime() or _detect_axis_type(ax.id) == "T":
+            if ax.axis == "T":
                 t_vals = ax.asComponentTime()
                 if not t_vals:
                     indices = []
@@ -1305,26 +1289,24 @@ class CDATVariable:
 
         if "time" in kwargs:
             t_idx = next((i for i, ax in enumerate(result_axes)
-                          if ax is not None and (ax.isTime() or _detect_axis_type(ax.id) == "T")), None)
+                          if ax is not None and ax.axis == "T"), None)
             if t_idx is not None:
                 _sel_axis(t_idx, kwargs["time"])
 
         if "latitude" in kwargs:
             lat_idx = next((i for i, ax in enumerate(result_axes)
-                            if ax is not None and (ax.isLatitude() or _detect_axis_type(ax.id) == "Y")), None)
+                            if ax is not None and ax.axis == "Y"), None)
             if lat_idx is not None:
                 _sel_axis(lat_idx, kwargs["latitude"])
 
         if "longitude" in kwargs:
             lon_idx = next((i for i, ax in enumerate(result_axes)
-                            if ax is not None and (ax.isLongitude() or _detect_axis_type(ax.id) == "X")), None)
+                            if ax is not None and ax.axis == "X"), None)
             if lon_idx is not None:
                 _sel_axis(lon_idx, kwargs["longitude"])
 
-        lat_ax = next((ax for ax in result_axes if ax is not None
-                        and (ax.isLatitude() or _detect_axis_type(ax.id) == "Y")), None)
-        lon_ax = next((ax for ax in result_axes if ax is not None
-                        and (ax.isLongitude() or _detect_axis_type(ax.id) == "X")), None)
+        lat_ax = next((ax for ax in result_axes if ax is not None and ax.axis == "Y"), None)
+        lon_ax = next((ax for ax in result_axes if ax is not None and ax.axis == "X"), None)
         new_grid = _Grid(lat_ax, lon_ax) if (lat_ax and lon_ax) else None
 
         return CDATVariable(result_data, axes=result_axes, grid=new_grid, id=self.id, attributes=dict(self._attributes))

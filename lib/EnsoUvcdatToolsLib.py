@@ -1076,45 +1076,99 @@ def _safe_guess_dim(da: xr.DataArray, axis_type: str) -> str:
 
 def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray:
     """
-    Attach CF-style axis metadata before converting to CDATVariable.
+    Attach CF-style axis metadata to every dimension before conversion to CDATVariable.
 
-    This is the central normalization step: downstream code should not have to
-    infer time/lat/lon repeatedly from fragile dimension names.
+    Iterates each dimension directly using _dim_to_axis_type (CF attrs →
+    standard_name → units → name heuristic) rather than calling _guess_dim
+    (which searches for a dim given an axis type and emits "low-confidence
+    fallback" warnings even when detection is successful).  This eliminates
+    spurious warnings at the read boundary while still stamping axis='T/Y/X/Z'
+    before da_to_cdat sees the coordinate.
+
+    Additional fallbacks handled here (not in _dim_to_axis_type):
+    - Datetime-like coord values → axis='T' (covers xcdat-decoded time coords
+      that lack CF attrs).
+    - Numeric coord with units="… since …" → axis='T' (unencoded numeric time).
+    - Dim without a coordinate: creates a minimal arange coord with CF attrs so
+      da_to_cdat can attach the correct axis type to the resulting _Axis object.
     """
+    from .XarrayCompat import _dim_to_axis_type as _xc_dim_to_axis_type
     da = da.copy()
-    axis_dims = {}
-    for axis_type in ("T", "Y", "X", "Z"):
-        dim = _safe_guess_dim(da, axis_type)
-        if dim and dim in da.dims:
-            axis_dims[axis_type] = dim
 
-    # Conservative time fallback: any datetime-like dim coordinate is time.
-    if "T" not in axis_dims:
-        for dim in da.dims:
-            if _coord_is_datetime_like(da, dim):
-                axis_dims["T"] = dim
-                break
+    for dim in da.dims:
+        coord = da.coords.get(dim)
 
-    for axis_type, dim in axis_dims.items():
-        if dim not in da.coords:
+        # --- Pre-classify before calling _xc_dim_to_axis_type ---
+        # Check CF attrs and value-based signals first so that we never reach
+        # _detect_axis_type (which warns for time-named dims under
+        # STRICT_AXIS_DETECTION=True) when the axis type is unambiguous.
+        ax_type = "-"
+        if coord is not None:
+            cf_axis = str(coord.attrs.get("axis", "")).upper()
+            if cf_axis in {"T", "Y", "X", "Z"}:
+                ax_type = cf_axis
+            else:
+                sn = str(coord.attrs.get("standard_name", "")).lower()
+                units_str = str(coord.attrs.get("units", "")).lower()
+                if (sn == "time"
+                        or _is_datetime_like_time(coord)
+                        or "since" in units_str):
+                    ax_type = "T"
+        # Fall through to _xc_dim_to_axis_type for standard_name/units of
+        # Y/X/Z and name heuristics that don't risk a spurious warning.
+        if ax_type == "-":
+            ax_type = _xc_dim_to_axis_type(dim, coord)
+
+        # Extra fallbacks when _dim_to_axis_type returns "-" (no CF metadata,
+        # name heuristic also failed — e.g. STRICT_AXIS_DETECTION=True blocks
+        # time-by-name detection in _detect_axis_type).
+        if ax_type == "-":
+            if coord is not None:
+                if _is_datetime_like_time(coord):
+                    ax_type = "T"
+                elif "since" in str(coord.attrs.get("units", "")).lower():
+                    ax_type = "T"
+
+        if ax_type not in ("T", "Y", "X", "Z"):
             continue
-        coord = da.coords[dim]
-        attrs = dict(coord.attrs)
-        attrs["axis"] = axis_type
-        if axis_type == "T":
+
+        # Build the updated attrs dict — setdefault preserves existing values.
+        attrs = dict(coord.attrs) if coord is not None else {}
+        attrs["axis"] = ax_type
+        if ax_type == "T":
             attrs.setdefault("standard_name", "time")
             attrs.setdefault("long_name", "time")
-            cal = coord.attrs.get("calendar") or coord.encoding.get("calendar") or "standard"
-            attrs.setdefault("calendar", cal)
-        elif axis_type == "Y":
+            if coord is not None:
+                cal = (coord.attrs.get("calendar")
+                       or coord.encoding.get("calendar", None)
+                       or "standard")
+                attrs.setdefault("calendar", cal)
+        elif ax_type == "Y":
             attrs.setdefault("standard_name", "latitude")
             attrs.setdefault("units", "degrees_north")
-        elif axis_type == "X":
+        elif ax_type == "X":
             attrs.setdefault("standard_name", "longitude")
             attrs.setdefault("units", "degrees_east")
-        elif axis_type == "Z":
-            attrs.setdefault("positive", coord.attrs.get("positive", "up"))
-        da = da.assign_coords({dim: xr.DataArray(coord.values, dims=coord.dims, attrs=attrs)})
+        elif ax_type == "Z":
+            if coord is not None:
+                attrs.setdefault("positive", coord.attrs.get("positive", "up"))
+
+        if coord is not None:
+            da = da.assign_coords(
+                {dim: xr.DataArray(coord.values, dims=coord.dims, attrs=attrs)}
+            )
+        else:
+            # Pure dimension (no coordinate) — create a minimal index so
+            # da_to_cdat can attach the axis type to the _Axis object.
+            # Use NaN-filled float for T (we do not invent time values) and
+            # arange for spatial/vertical dims.
+            if ax_type == "T":
+                vals = np.full(da.sizes[dim], np.nan)
+            else:
+                vals = np.arange(da.sizes[dim], dtype=float)
+            da = da.assign_coords(
+                {dim: xr.DataArray(vals, dims=dim, attrs=attrs)}
+            )
 
     if da.name is None:
         da.name = "var"
@@ -3691,10 +3745,17 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             if str(_require_time_axis(tab, 'ReadAndSelectRegion').asComponentTime()[-1]) > time_bounds[1]:
                 tab = tab[:-1]
     time_ax = _require_time_axis(tab, 'ReadAndSelectRegion')
+    # Find the actual position of the time axis rather than assuming index 0.
+    # CMIP6 files are always (time, lat, lon) but defensive coding ensures
+    # non-standard dim orders do not corrupt the axis metadata.
+    _t_ax_idx = next(
+        (i for i, ax in enumerate(tab.getAxisList()) if ax is not None and ax.axis == "T"),
+        0,  # safe fallback: CMIP6/ERA5 files always have T at 0
+    )
     time_units = "days since " + str(time_ax.asComponentTime()[0].year) + "-01-01 12:00:00"
     time_ax.id = "time"
     time_ax.toRelativeTime(time_units)
-    tab.setAxis(0, time_ax)
+    tab.setAxis(_t_ax_idx, time_ax)
     if frequency is None:  # no frequency given
         pass
     elif frequency == "daily":
@@ -3717,11 +3778,22 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     # Using pure numpy operations here avoids fragile CDATVariable intermediate
     # steps on the mask array (ma.getmaskarray always returns a full-shape bool
     # array, never a scalar False, so edge cases are handled cleanly).
-    _raw_mask = ma.getmaskarray(tab._data)  # always (T, Y, X), dtype bool
-    if _raw_mask.ndim >= 3 and _raw_mask.shape[0] > 1:
-        _spatial_mask = np.any(_raw_mask, axis=0)   # (Y, X): True = masked at >= 1 t
-        if np.any(_spatial_mask != _raw_mask[0]):   # check if mask is not yet constant
-            _full_mask = np.broadcast_to(_spatial_mask, _raw_mask.shape).copy()
+    _raw_mask = ma.getmaskarray(tab._data)  # full-shape bool array, dtype bool
+    # Use the actual T-axis index so non-standard dim orders (unlikely but
+    # possible for observational files) are handled correctly.
+    _t_mask_idx = next(
+        (i for i, ax in enumerate(tab.getAxisList()) if ax is not None and ax.axis == "T"),
+        0,
+    )
+    if _raw_mask.ndim >= 2 and _raw_mask.shape[_t_mask_idx] > 1:
+        _spatial_mask = np.any(_raw_mask, axis=_t_mask_idx)   # True = masked at >= 1 t
+        # np.any collapses the T dimension; take a T=0 slice for comparison
+        _t0_mask = np.take(_raw_mask, 0, axis=_t_mask_idx)
+        if np.any(_spatial_mask != _t0_mask):   # mask not yet constant through time
+            _full_mask = np.broadcast_to(
+                np.expand_dims(_spatial_mask, axis=_t_mask_idx),
+                _raw_mask.shape,
+            ).copy()
             tab = MV2masked_where(_full_mask, tab)
     # check taux sign
     if varname in ["taux", "tauu", "tauuo", "uflx"] and reversed_sign is False:
