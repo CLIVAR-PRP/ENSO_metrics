@@ -173,6 +173,19 @@ def _dim_to_axis_type(dim_name: str, coord) -> str:
         if units in {"pa", "hpa", "mb", "mbar"}:
             return "Z"
 
+        # Detect decoded datetime-like coordinates by value type —
+        # cftime.datetime and np.datetime64 are unambiguously time axes even
+        # when CF units/axis/standard_name metadata are absent (e.g. after
+        # xESMF regridding strips coordinate attributes).
+        try:
+            first = coord.values.flat[0] if coord.size > 0 else None
+            if first is not None and _is_datetime_like(first):
+                return "T"
+            if first is not None and np.issubdtype(type(first), np.datetime64):
+                return "T"
+        except Exception:
+            pass
+
     # Last resort: name-based heuristic
     return _detect_axis_type(dim_name)
 
@@ -1263,7 +1276,10 @@ class CDATVariable:
             )
 
         new_data = np.transpose(self._data, perm)
-        new_axes = [self._axes[i].copy() if self._axes[i] is not None else None for i in perm]
+        # Guard: _axes may be empty (e.g. from MV2zeros) — build stub axes in
+        # that case so reorder doesn't raise IndexError.
+        safe_axes = self._axes if len(self._axes) == self._data.ndim else [None] * self._data.ndim
+        new_axes = [safe_axes[i].copy() if safe_axes[i] is not None else None for i in perm]
         return CDATVariable(new_data, axes=new_axes, grid=_build_grid_from_axes(new_axes), id=self.id, attributes=dict(self._attributes))
 
     # ------------------------------------------------------------------
@@ -1575,6 +1591,26 @@ def cdat_to_da(var: CDATVariable, name: Optional[str] = None) -> xr.DataArray:
             attrs.setdefault("standard_name", "time")
             if ax.calendar is not None:
                 attrs.setdefault("calendar", ax.calendar)
+            # Decode numeric time values to cftime objects so that xcdat's
+            # add_missing_bounds (and other tools) see proper datetime-like
+            # coordinates.  After toRelativeTime() the axis holds float64
+            # "days since ..." values; we decode them here at the xarray
+            # boundary so callers never receive a raw-numeric time coord.
+            try:
+                if np.issubdtype(np.asarray(vals).dtype, np.number):
+                    units_t = attrs.get("units", ax.units or "")
+                    cal_t = ax.calendar or attrs.get("calendar", "standard")
+                    if units_t and "since" in units_t:
+                        decoded = _decode_times_safe(
+                            np.asarray(vals, dtype=float), units_t, cal_t
+                        )
+                        if decoded:
+                            vals = np.array(decoded, dtype=object)
+                            # Keep units/calendar in encoding, not attrs,
+                            # so xarray does not try to re-encode them.
+                            attrs.pop("units", None)
+            except Exception:
+                pass  # fallback: leave vals as-is (float), emit no warning
 
         clean = _clean_attrs(attrs)
         try:

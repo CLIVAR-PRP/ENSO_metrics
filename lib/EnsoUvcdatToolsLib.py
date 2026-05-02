@@ -223,8 +223,9 @@ def MV2sum(a, axis=None, fill_value=0, dtype=None):
     return result
 def MV2take(a, indices, axis=0):
     raw = _mv(a)
-    result = ma.array(np.take(raw, indices, axis=axis),
-                      mask=np.take(ma.getmaskarray(raw), indices, axis=axis))
+    taken_data = np.take(np.asarray(raw), indices, axis=axis)
+    taken_mask = np.take(ma.getmaskarray(raw), indices, axis=axis)
+    result = ma.array(taken_data, mask=taken_mask)
     if isinstance(a, CDATVariable):
         new_axes = list(a._axes)
         ax_int = axis if isinstance(axis, (int, np.integer)) else 0
@@ -1381,8 +1382,38 @@ class _XcDatasetHandle:
 
     def close(self):
         if self._mode in ("w", "w+", "a") and self._write_vars:
-            ds_out = xr.Dataset(self._write_vars, attrs=_clean_attrs(self._global_attrs))
-            ds_out.to_netcdf(self._path, format="NETCDF4")
+            import os as _os
+            _os.makedirs(_os.path.dirname(self._path) or ".", exist_ok=True)
+            ds_new = xr.Dataset(self._write_vars, attrs=_clean_attrs(self._global_attrs))
+            ds_new = ds_new.load()
+
+            # Merge with any existing file so that variables written by previous
+            # SaveNetcdf calls to the same file are preserved.  New variables
+            # silently overwrite same-named old ones.  The write goes to a
+            # temporary file first, then is atomically renamed so a crash or
+            # PermissionError never leaves a half-written output file.
+            if _os.path.exists(self._path):
+                try:
+                    with xr.open_dataset(self._path, engine="netcdf4") as ds_old:
+                        ds_old = ds_old.load()
+                    ds_merged = xr.merge(
+                        [ds_old.drop_vars(
+                             [v for v in ds_new.data_vars if v in ds_old],
+                             errors="ignore",
+                         ),
+                         ds_new],
+                        compat="override",
+                    )
+                except Exception:
+                    # Existing file is corrupt or unreadable — overwrite cleanly.
+                    ds_merged = ds_new
+            else:
+                ds_merged = ds_new
+
+            tmpfile = self._path + ".tmp"
+            ds_merged.to_netcdf(tmpfile, mode="w", format="NETCDF4")
+            _os.replace(tmpfile, self._path)
+            ds_merged.close()
 
         if self._ds is not None:
             self._ds.close()
@@ -1579,11 +1610,14 @@ class _CdutilAverager:
                 "Please remap to regular lat-lon first."
             )
         ds = da.to_dataset(name=varname)
-        # add_missing_bounds can fail when time encoding lacks 'calendar';
-        # fall back to spatial-only bounds in that case
+        # add_missing_bounds: only include "T" when time is actually decoded so
+        # xcdat does not emit "Bounds cannot be created for 'time'" warnings.
+        _amb_axes = ["X", "Y"]
+        if "time" in ds.coords and _is_datetime_like_time(ds["time"]):
+            _amb_axes.append("T")
         try:
-            ds = ds.bounds.add_missing_bounds()
-        except (KeyError, Exception):
+            ds = ds.bounds.add_missing_bounds(axes=_amb_axes)
+        except Exception:
             try:
                 ds = ds.bounds.add_missing_bounds(axes=["X", "Y"])
             except Exception:
@@ -3414,7 +3448,11 @@ def Detrend(tab, info, axis=0, method="linear", bp=0):
         grid = tab.getGrid()
         mask = tab.mask
         mean, keyerror = AverageTemporal(tab)
-        new_tab = MV2array(SCIPYsignal_detrend(tab, axis=axis, type=method, bp=bp))
+        # Fill masked values before passing to scipy.signal.detrend so the
+        # computation does not receive NaN/inf (masked positions are restored
+        # afterwards via MV2masked_where).
+        _raw_for_detrend = _mv(tab).filled(0.0) if ma.isMaskedArray(_mv(tab)) else np.asarray(tab)
+        new_tab = MV2array(SCIPYsignal_detrend(_raw_for_detrend, axis=axis, type=method, bp=bp))
         new_tab = new_tab + mean
         new_tab = MV2masked_where(mask, new_tab)
         new_tab.setAxisList(axes)
@@ -4241,15 +4279,13 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
                var9_time_name=None, var10=None, var10_attributes={}, var10_name='', var10_time_name=None, var11=None,
                var11_attributes={}, var11_name='', var11_time_name=None, var12=None, var12_attributes={}, var12_name='',
                var12_time_name=None, frequency="monthly", global_attributes={}, **kwargs):
-    if OSpath_isdir(ntpath.dirname(netcdf_name)) is not True:
-        list_strings = [
-            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": given path does not exist",
-            str().ljust(5) + "netcdf_name = " + str(netcdf_name)]
-        EnsoErrorsWarnings.my_error(list_strings)
-    if OSpath__isfile(netcdf_name) is True:
-        o = open_file(netcdf_name, "a")
-    else:
-        o = open_file(netcdf_name, "w+")
+    import os as _os_sn, ntpath as _ntp_sn
+    _out_dir = _ntp_sn.dirname(netcdf_name) or "."
+    _os_sn.makedirs(_out_dir, exist_ok=True)
+    # Always open in write mode — all variables are buffered in _write_vars
+    # and flushed atomically at close(), so append mode ('a') is never needed
+    # and causes xarray's LRU cache to raise KeyError on stale file handles.
+    o = open_file(netcdf_name, "w+")
     if var1 is not None:
         if var1_name == '':
             var1_name = var1.id
@@ -4906,7 +4942,9 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
 
     else:
         results = GENUTILlinearregression(y, x=x, error=1, nointercept=None)
-        slope, intercept, stderr = results[0][0], results[0][1], results[1][0]
+        # results = (slope_int, stderr) where slope_int = [[slope, intercept]]
+        # and stderr = [[se_slope, se_intercept]]  (shape (1,2) each)
+        slope, intercept, stderr = results[0][0][0], results[0][0][1], results[1][0][0]
         try:
             slope[0]
         except Exception:
