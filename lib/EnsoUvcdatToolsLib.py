@@ -1824,6 +1824,18 @@ class REGRID2horizontal__Horizontal:
             reuse_weights=False,
         )
         result = regridder(da)
+        # xESMF strips coordinate attributes from non-spatial dimensions (time, lev,
+        # etc.).  Restore them from the source DataArray so that _finalize_cdat /
+        # da_to_cdat can still detect axis types.
+        for _dim in list(src_da.dims):
+            if _dim in ("lat", "lon"):
+                continue  # spatial dims were replaced by target grid — skip
+            if _dim in result.coords and _dim in src_da.coords:
+                _orig_attrs = src_da.coords[_dim].attrs
+                if _orig_attrs and not result.coords[_dim].attrs:
+                    result = result.assign_coords(
+                        {_dim: result.coords[_dim].assign_attrs(_orig_attrs)}
+                    )
         # Constant-field preservation: if source is spatially uniform, fill result to
         # that constant to avoid interpolation artefacts / numerical drift
         data_flat = _mv(tab)
@@ -4984,7 +4996,7 @@ def CustomLinearRegression1d(y, x, sign_x=1):
         slope, intercept, stderr = 0, 0, 0
     else:
         results = GENUTILlinearregression(y[idx], x=x[idx], error=1, nointercept=None)
-        slope, intercept, stderr = float(results[0][0]), float(results[0][1]), float(results[1][0])
+        slope, intercept, stderr = float(results[0][0][0]), float(results[0][0][1]), float(results[1][0][0])
     return slope, intercept, stderr
 
 
