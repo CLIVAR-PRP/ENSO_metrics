@@ -1390,14 +1390,24 @@ class CDATVariable:
         if "latitude" in kwargs:
             lat_idx = next((i for i, ax in enumerate(result_axes)
                             if ax is not None and ax.axis == "Y"), None)
-            if lat_idx is not None:
-                _sel_axis(lat_idx, kwargs["latitude"])
+            if lat_idx is None:
+                raise ValueError(
+                    f"CDATVariable.__call__: latitude= selection requested but no axis "
+                    f"tagged as 'Y' was found in variable '{self.id}'. "
+                    f"Axes: {[ax.id if ax is not None else None for ax in self._axes]}"
+                )
+            _sel_axis(lat_idx, kwargs["latitude"])
 
         if "longitude" in kwargs:
             lon_idx = next((i for i, ax in enumerate(result_axes)
                             if ax is not None and ax.axis == "X"), None)
-            if lon_idx is not None:
-                _sel_axis(lon_idx, kwargs["longitude"])
+            if lon_idx is None:
+                raise ValueError(
+                    f"CDATVariable.__call__: longitude= selection requested but no axis "
+                    f"tagged as 'X' was found in variable '{self.id}'. "
+                    f"Axes: {[ax.id if ax is not None else None for ax in self._axes]}"
+                )
+            _sel_axis(lon_idx, kwargs["longitude"])
 
         lat_ax = next((ax for ax in result_axes if ax is not None and ax.axis == "Y"), None)
         lon_ax = next((ax for ax in result_axes if ax is not None and ax.axis == "X"), None)

@@ -1149,10 +1149,20 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         # map
         xx, yy = NUMPYmeshgrid(lon, lat)
         # set extent
-        if lat[-1] - lat[0] < 40:
+        if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
+            reg_bounds = ReferenceRegions(my_reg)
+            reg_lon0 = reg_bounds['longitude'][0]
+            reg_lon1 = reg_bounds['longitude'][1]
+            reg_lat0 = reg_bounds['latitude'][0]
+            reg_lat1 = reg_bounds['latitude'][1]
+            # convert 0-360 longitudes to -180-180 for PlateCarree() set_extent
+            reg_lon0 = reg_lon0 if reg_lon0 <= 180 else reg_lon0 - 360
+            reg_lon1 = reg_lon1 if reg_lon1 <= 180 else reg_lon1 - 360
+            ax.set_extent([reg_lon0, reg_lon1, reg_lat0, reg_lat1], crs=ccrs.PlateCarree())
+        elif lat[-1] - lat[0] < 40:
             ax.set_extent([lon[0], lon[-1], lat[0] - 5, lat[-1] + 5], crs=ccrs.PlateCarree())
         else:
-            ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())  
+            ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
         # draw coastlines
         ax.coastlines()
         # fill continents

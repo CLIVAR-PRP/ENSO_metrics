@@ -328,48 +328,85 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 arg_var2["obsFileLandmask2"] = obsFileLandmask2
                 arg_var2["obsLandmaskName2"] = obsLandmaskName2
                 arg_var2["obsInterpreter2"] = obsInterpreter2
+            # Determine data availability
+            _model_var1_missing = (
+                modelFile1 is None or len(modelFile1) == 0
+                or (isinstance(modelFile1, list) and None in modelFile1)
+            )
+            _model_var2_missing = (
+                len(list_variables) > 1
+                and (
+                    arg_var2.get("modelFile2") is None
+                    or len(arg_var2.get("modelFile2", "")) == 0
+                    or (isinstance(arg_var2.get("modelFile2"), list) and None in arg_var2["modelFile2"])
+                )
+            )
+            _obs_var1_missing = (
+                obsFile1 is None or len(obsFile1) == 0
+                or (isinstance(obsFile1, list) and None in obsFile1)
+            )
+            _obs_var2_missing = (
+                len(list_variables) > 1
+                and (
+                    arg_var2.get("obsFile2") is None
+                    or len(arg_var2.get("obsFile2", [])) == 0
+                    or (isinstance(arg_var2.get("obsFile2"), list) and None in arg_var2["obsFile2"])
+                )
+            )
+            # For _modelAndObs metrics, obs is required inside the computation function itself.
+            # For dict_oneVar / dict_twoVar metrics, the model diagnostic is computed independently
+            # from obs, so we can proceed with empty obs lists and still get model diagnostic values.
+            _metric_clean = (
+                metric.replace("_1", "").replace("_2", "").replace("_3", "").replace("_4", "").replace("_5", "")
+            )
+            if _metric_clean.split("_")[-1] in list(ReferenceRegions().keys()):
+                _metric_clean = _metric_clean.replace("_" + _metric_clean.split("_")[-1], "")
+            _needs_obs = (
+                _metric_clean in dict_oneVar_modelAndObs or _metric_clean in dict_twoVar_modelAndObs
+            )
+
+            def _store_fill_value(keyerror_msg):
+                """Store fill-value entries when a metric cannot be computed."""
+                dict_col_valu[metric] = {
+                    "metric": {},
+                    "diagnostic": {modelName: {"value": None, "value_error": None, "keyerror": keyerror_msg}},
+                }
+                dict_col_meta["metrics"][metric] = {
+                    "metric": {"name": metric, "method": None, "datasets": modelName, "units": None},
+                    "diagnostic": {modelName: {"name": modelName, "keyerror": keyerror_msg}},
+                }
+                dict_col_dd_valu[metric] = {}
+                dict_col_dd_meta["metrics"][metric] = {}
+
             # computes the metric
-            if modelFile1 is None or len(modelFile1) == 0 or (isinstance(modelFile1, list) and None in modelFile1) or \
-                    (len(list_variables) > 1 and
-                     (arg_var2["modelFile2"] is None or len(arg_var2["modelFile2"]) == 0 or
-                      (isinstance(arg_var2["modelFile2"], list) and None in arg_var2["modelFile2"]))):
+            if _model_var1_missing or _model_var2_missing:
+                # Cannot compute at all — missing required model variable(s)
+                missing = []
+                if _model_var1_missing:
+                    missing.append(list_variables[0])
+                if _model_var2_missing:
+                    missing.append(list_variables[1])
+                keyerror_msg = "no model data for: " + ", ".join(missing)
                 print("\033[94m" + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric "
-                      + str(metric) + " not computed" + "\033[0m")
-                print("\033[94m" + str().ljust(10) + "reason(s):" + "\033[0m")
-                if modelFile1 is None or len(modelFile1) == 0:
-                    print("\033[94m" + str().ljust(11) + "no modeled " + list_variables[0] + " given" + "\033[0m")
-                if isinstance(modelFile1, list) and None in modelFile1:
-                    for ff, vv in zip(modelFile1, modelVarName1):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no modeled " + str(vv) + " given" + "\033[0m")
-                if (len(list_variables) > 1 and arg_var2["modelFile2"] is None) or \
-                        (len(list_variables) > 1 and len(arg_var2["modelFile2"]) == 0):
-                    print("\033[94m" + str().ljust(11) + "no modeled " + list_variables[1] + " given" + "\033[0m")
-                if isinstance(arg_var2["modelFile2"], list) and None in arg_var2["modelFile2"]:
-                    for ff, vv in zip(arg_var2["modelFile2"], arg_var2["modelVarName2"]):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no modeled " + str(vv) + " given" + "\033[0m")
-            elif obsFile1 is None or len(obsFile1) == 0 or (isinstance(obsFile1, list) and None in obsFile1) or \
-                    (len(list_variables) > 1 and
-                     (arg_var2["obsFile2"] is None or len(arg_var2["obsFile2"]) == 0 or
-                      (isinstance(arg_var2["obsFile2"], list) and None in arg_var2["obsFile2"]))):
+                      + str(metric) + " not computed (" + keyerror_msg + ")" + "\033[0m")
+                _store_fill_value(keyerror_msg)
+            elif _needs_obs and (_obs_var1_missing or _obs_var2_missing):
+                # Metric requires obs inside the computation function but obs variable(s) are missing.
+                # Store fill values so the metric still appears in the output with a keyerror note.
+                missing = []
+                if _obs_var1_missing:
+                    missing.append(list_variables[0])
+                if _obs_var2_missing:
+                    missing.append(list_variables[1])
+                keyerror_msg = "no obs data for: " + ", ".join(missing)
                 print("\033[94m" + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric "
-                      + str(metric) + " not computed" + "\033[0m")
-                print("\033[94m" + str().ljust(10) + "reason(s):" + "\033[0m")
-                if obsFile1 is None or len(obsFile1) == 0:
-                    print("\033[94m" + str().ljust(11) + "no observed " + list_variables[0] + " given" + "\033[0m")
-                if isinstance(obsFile1, list) and None in obsFile1:
-                    for ff, vv in zip(obsFile1, obsVarName1):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no observed " + str(vv) + " given" + "\033[0m")
-                if (len(list_variables) > 1 and arg_var2["obsFile2"] is None) or \
-                        (len(list_variables) > 1 and len(arg_var2["obsFile2"]) == 0):
-                    print("\033[94m" + str().ljust(11) + "no observed " + list_variables[1] + " given" + "\033[0m")
-                if isinstance(arg_var2["obsFile2"], list) and None in arg_var2["obsFile2"]:
-                    for ff, vv in zip(arg_var2["obsFile2"], arg_var2["obsVarName2"]):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no observed " + str(vv) + " given" + "\033[0m")
+                      + str(metric) + " not computed (" + keyerror_msg + ")" + "\033[0m")
+                _store_fill_value(keyerror_msg)
             else:
+                # Either obs is fully available, or this is a dict_oneVar/dict_twoVar metric whose
+                # model diagnostic can be computed independently of obs.  For the latter case the obs
+                # loop inside ComputeMetric will simply be empty, leaving metric comparison values
+                # absent but preserving the model diagnostic value.
                 valu, vame, dive, dime = ComputeMetric(
                     metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                     dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
