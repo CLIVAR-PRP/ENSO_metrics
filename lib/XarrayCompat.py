@@ -1097,6 +1097,12 @@ class CDATVariable:
     def filled(self, fill_value=1e20):
         return self._data.filled(fill_value)
 
+    def argmin(self, axis=None, fill_value=None, out=None):
+        return self._data.argmin(axis=axis)
+
+    def argmax(self, axis=None, fill_value=None, out=None):
+        return self._data.argmax(axis=axis)
+
     def fill(self, value):
         self._data.fill(value)
 
@@ -1241,6 +1247,10 @@ class CDATVariable:
             perm = [i for i in range(ndim) if i != t_n] + [t_n]
         elif order and all(c.isdigit() for c in order):
             perm = [int(c) for c in order]
+            # Pad with any axes not yet listed, preserving their original order.
+            # This matches CDAT behaviour: reorder("10") on a 4-D array → [1,0,2,3].
+            used = set(perm)
+            perm = perm + [i for i in range(ndim) if i not in used]
         else:
             char_map = {}
             for i, ax in enumerate(self._axes):

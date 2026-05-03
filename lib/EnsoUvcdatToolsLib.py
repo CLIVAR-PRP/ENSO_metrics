@@ -5352,8 +5352,8 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
                 tmp3[jj].fill(tmp2[jj])
         tmp3 = create_variable(tmp3, mask=tmp1.mask, grid=tmp1.getGrid(), axes=tmp1.getAxisList(), id=x.id)
         slope, stderr = GENUTILlinearregression(tmp1, x=tmp3, error=1, nointercept=1)
-        slope_out[ii] = slope
-        stderr_out[ii] = stderr
+        slope_out[ii] = float(slope.flat[0])
+        stderr_out[ii] = float(stderr.flat[0])
         del slope, stderr, tmp1, tmp2, tmp3, yy1, yy2
     if return_stderr:
         return slope_out, stderr_out
