@@ -1103,6 +1103,21 @@ class CDATVariable:
     def argmax(self, axis=None, fill_value=None, out=None):
         return self._data.argmax(axis=axis)
 
+    def mean(self, axis=None):
+        return self._data.mean(axis=axis)
+
+    def sum(self, axis=None):
+        return self._data.sum(axis=axis)
+
+    def std(self, axis=None, ddof=0):
+        return self._data.std(axis=axis, ddof=ddof)
+
+    def min(self, axis=None):
+        return self._data.min(axis=axis)
+
+    def max(self, axis=None):
+        return self._data.max(axis=axis)
+
     def fill(self, value):
         self._data.fill(value)
 

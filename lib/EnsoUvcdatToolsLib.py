@@ -1357,7 +1357,13 @@ class _XcDatasetHandle:
     def write(self, var, attributes=None, dtype="float32", id=None):
         """Buffer a variable for writing."""
         name = id or (var.id if isinstance(var, CDATVariable) else "var")
-        da = cdat_to_da(var, name=name) if isinstance(var, CDATVariable) else var
+        if isinstance(var, CDATVariable):
+            da = cdat_to_da(var, name=name)
+        elif isinstance(var, xr.DataArray):
+            da = var
+        else:
+            # Scalar float/int or plain numpy array — wrap in a DataArray.
+            da = xr.DataArray(np.asarray(var), name=name)
 
         if attributes:
             da.attrs.update(_clean_attrs(attributes))
