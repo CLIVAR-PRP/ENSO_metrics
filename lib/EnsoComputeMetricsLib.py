@@ -317,7 +317,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                                 dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
                         try:
                             obsInterpreter2.append(
-                                dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                                dictDatasets["observations"][obs][list_variables[1]]["obs_interpreter"])
                         except Exception:
                             obsInterpreter2.append(obs)
                 arg_var2["obsNameVar2"] = obsNameVar2
@@ -370,6 +370,7 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 dict_col_valu[metric] = {
                     "metric": {},
                     "diagnostic": {modelName: {"value": None, "value_error": None, "keyerror": keyerror_msg}},
+                    "keyerror": keyerror_msg,
                 }
                 dict_col_meta["metrics"][metric] = {
                     "metric": {"name": metric, "method": None, "datasets": modelName, "units": None},
@@ -567,12 +568,10 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                             dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
                     try:
                         obsInterpreter2.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                            dictDatasets["observations"][obs][list_variables[1]]["obs_interpreter"])
                     except Exception:
                         obsInterpreter2.append(obs)
         # observations as model
-        print(obsNameVar1)
-        print(obsNameVar2)
         for ii in range(len(obsFileArea1)):
             modelName = obsNameVar1[ii]
             modelFile1 = obsFile1[ii]

@@ -1018,15 +1018,28 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         if "EnsoPrMap" not in figure_name:
             nbrc = 1
             nbrl = 3
+    # Regional maps need central_longitude=0 so cartopy can place meridian labels correctly.
+    # With central_longitude=180 the label-placement algorithm fails for western-hemisphere extents.
+    _regional_regs = ["africaSE", "americaN", "americaS", "asiaS", "oceania"]
+    _map_proj = ccrs.PlateCarree(central_longitude=0) \
+        if my_reg in _regional_regs else ccrs.PlateCarree(central_longitude=180)
     if (isinstance(variables, str) is True and (
             "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or
             "reg_ts_over_sst_map" in variables or "djf_map__" in variables or "jja_map__" in variables)) or\
         (isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0])):
-        fig, axes = plt.subplots(nbrl, nbrc, figsize=(6 * nbrc, 6 * nbrl), sharex="col", sharey="row", 
-                                 subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+        if my_reg in _regional_regs:
+            # Fit the figure width to the region's geographic aspect so maps fill the subplots
+            _reg_b = ReferenceRegions(my_reg)
+            _lon_sp = _reg_b['longitude'][1] - _reg_b['longitude'][0]
+            _lat_sp = _reg_b['latitude'][1] - _reg_b['latitude'][0]
+            _fw = min(6 * nbrc, max(3 * nbrc, int(round(6 * nbrc * _lon_sp / _lat_sp))))
+        else:
+            _fw = 6 * nbrc
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(_fw, 6 * nbrl), sharex="col", sharey="row",
+                                 subplot_kw={'projection': _map_proj})
     else:
-        fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row", 
-                                 subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row",
+                                 subplot_kw={'projection': _map_proj})
     hspa1 = 0.1
     hspa2 = 0.01
     if ((nbrc == 2 and nbrl == 2) or (nbrc == 1 and plot_ref is True)) and isinstance(variables, list) is True and\
@@ -1036,7 +1049,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         elif my_reg == "americaN":
             hspace = 0.1
         elif my_reg == "americaS":
-            hspace = 0.4
+            hspace = 0.2
         elif my_reg == "asiaS":
             hspace = 0.1
         else:
@@ -1177,9 +1190,13 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         gl.xlocator = mticker.FixedLocator(xlabel_ticks_adjusted)
         gl.ylocator = mticker.FixedLocator(ylabel_ticks)
         gl.xformatter = LongitudeFormatter()
-        gl.yformatter = LatitudeFormatter()        
+        gl.yformatter = LatitudeFormatter()
         gl.top_labels = False
         gl.right_labels = False
+        # Only draw bottom longitude labels on the bottom row and left latitude labels on the left column.
+        # This prevents duplicate/overlapping labels when sharex/sharey is active.
+        gl.bottom_labels = (ii // nbrc == nbrl - 1)
+        gl.left_labels = (ii % nbrc == 0)
         gl.xlabel_style = {'size': 12}
         gl.ylabel_style = {'size': 12}
         # contour plot

@@ -555,6 +555,10 @@ def save_json(dict_in, json_name, metric_only=True):
     for met in listm:
         dict1 = dict()
         for ens in liste:
+            # Skip fill-value entries so missing metrics are simply absent from the
+            # output JSON — identical to original behaviour; no structure change.
+            if dict_in[ens]['value'][met].get('keyerror') is not None:
+                continue
             # metadata (nyears)
             dict_meta = dict()
             for key1 in list(dict_in[ens]['metadata']['metrics'][met]['diagnostic'].keys()):
@@ -592,7 +596,8 @@ def save_json(dict_in, json_name, metric_only=True):
                     del tmp
             dict1[ens] = dict2
             del dict_meta, dict2
-        dict_out[met] = dict1
+        if dict1:
+            dict_out[met] = dict1
         del dict1
     # save as json file
     if ".json" not in json_name:

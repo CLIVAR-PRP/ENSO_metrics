@@ -1409,6 +1409,7 @@ class _XcDatasetHandle:
                          ),
                          ds_new],
                         compat="override",
+                        join="outer",
                     )
                 except Exception:
                     # Existing file is corrupt or unreadable — overwrite cleanly.
@@ -1919,8 +1920,11 @@ def _make_coslat_areacell(tab):
         w_2d = w_lat
         axes = [lat_ax]
     import warnings
+    _var_name = (
+        getattr(tab, 'name', None) or getattr(tab, 'id', None) or '?'
+    )
     warnings.warn(
-        f"areacell is None for variable {getattr(tab, 'id', '?')!r}; "
+        f"areacell is None for variable {_var_name!r}; "
         "synthesising cosine-latitude weights. "
         "Provide areacella/sftlf for accurate spatial averages.",
         stacklevel=3,
