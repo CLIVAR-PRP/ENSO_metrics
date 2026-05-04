@@ -44,7 +44,7 @@ def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagn
     ------
     :return:
     """
-    lmet = metric.replace("Cor", "").replace("Rmse", "").replace("Std", "") if "Map" in metric else deepcopy(metric)
+    lmet = metric.replace("Corr", "").replace("Rmse", "").replace("Std", "") if "Map" in metric else deepcopy(metric)
     dict_param = plot_param(metric_collection, lmet)
     my_param = dict_param["diagnostic"]
     reference = dict_param["metric_reference"]

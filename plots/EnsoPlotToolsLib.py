@@ -571,7 +571,8 @@ def remove_metrics(metrics_in, metric_collection, reduced_set=False, portraitplo
                     "SeasonalSshLatRmse", "SeasonalSshLonRmse", "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
             elif metric_collection == "ENSO_proc":
                 to_remove = [
-                    'BiasSshLonRmse', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf', 'EnsoFbSstSwr']
+                    'BiasSshLonRmse', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
+                    'EnsoFbSstSwr']
             else:
                 to_remove = [
                     'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd',

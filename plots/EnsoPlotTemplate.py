@@ -46,10 +46,12 @@ met_names = {
     "EnsoPrMapDjfCorr": "DJF_PR_teleconnection_CORR", "EnsoPrMapDjfRmse": "DJF_PR_teleconnection",
     "EnsoPrMapDjfStd": "DJF_PR_teleconnection_STD", "EnsoPrMapJjaCorr": "JJA_PR_teleconnection_CORR",
     "EnsoPrMapJjaRmse": "JJA_PR_teleconnection", "EnsoPrMapJjaStd": "JJA_PR_teleconnection_STD",
+    "EnsoSlpMapCorr": "Dec_SLP_teleconnection_CORR",
     "EnsoSlpMapRmse": "Dec_SLP_teleconnection", "EnsoSlpMapStd": "Dec_SLP_teleconnection_STD",
     "EnsoSlpMapDjfCorr": "DJF_SLP_teleconnection_CORR", "EnsoSlpMapDjfRmse": "DJF_SLP_teleconnection",
     "EnsoSlpMapDjfStd": "DJF_SLP_teleconnection_STD", "EnsoSlpMapJjaCorr": "JJA_SLP_teleconnection_CORR",
     "EnsoSlpMapJjaRmse": "JJA_SLP_teleconnection", "EnsoSlpMapJjaStd": "JJA_SLP_teleconnection_STD",
+    "EnsoSstMapCorr": "Dec_TS_teleconnection_CORR",
     "EnsoSstMapRmse": "Dec_TS_teleconnection", "EnsoSstMapStd": "Dec_TS_teleconnection_STD",
     "EnsoSstMapDjfCorr": "DJF_TS_teleconnection_CORR", "EnsoSstMapDjfRmse": "DJF_TS_teleconnection",
     "EnsoSstMapDjfStd": "DJF_TS_teleconnection_STD", "EnsoSstMapJjaCorr": "JJA_TS_teleconnection_CORR",
@@ -1183,8 +1185,32 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             ax.add_feature(cfeature.LAND, color="gainsboro")
         if maskocean:
             ax.add_feature(cfeature.OCEAN, color="white")
-        # adjust the yticks to convert longitude over 180 to negative to properly add gridlines
-        xlabel_ticks_adjusted = [i if i < 180 else i - 360 for i in xlabel_ticks]
+        # For regional maps compute gridline ticks from region bounds to give appropriate density.
+        # For global maps convert 0-360 longitudes to -180..180 for PlateCarree gridlines.
+        if my_reg in _regional_regs:
+            _reg_b = ReferenceRegions(my_reg)
+            _lon0_r = _reg_b['longitude'][0]
+            _lon1_r = _reg_b['longitude'][1]
+            _lat0_r = _reg_b['latitude'][0]
+            _lat1_r = _reg_b['latitude'][1]
+            _lon_sp = _lon1_r - _lon0_r
+            _lat_sp = _lat1_r - _lat0_r
+            _lon_step = 10 if _lon_sp <= 30 else (20 if _lon_sp <= 60 else (30 if _lon_sp <= 120 else 40))
+            _lat_step = 10 if _lat_sp <= 30 else (20 if _lat_sp <= 60 else 30)
+            _lon0_adj = _lon0_r if _lon0_r <= 180 else _lon0_r - 360
+            _lon1_adj = _lon1_r if _lon1_r <= 180 else _lon1_r - 360
+            xlabel_ticks_adjusted = list(range(
+                int(MATHceil(_lon0_adj / _lon_step)) * _lon_step,
+                int(MATHfloor(_lon1_adj / _lon_step)) * _lon_step + 1,
+                _lon_step
+            ))
+            ylabel_ticks = list(range(
+                int(MATHceil(_lat0_r / _lat_step)) * _lat_step,
+                int(MATHfloor(_lat1_r / _lat_step)) * _lat_step + 1,
+                _lat_step
+            ))
+        else:
+            xlabel_ticks_adjusted = [i if i < 180 else i - 360 for i in xlabel_ticks]
         # draw parallels and meridians by adding grid lines only at specified ticks
         gl = ax.gridlines(draw_labels=True, crs=ccrs.PlateCarree(), linestyle='--', color='k')
         gl.xlocator = mticker.FixedLocator(xlabel_ticks_adjusted)
@@ -1222,16 +1248,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                             tmp = metval[jj]
                     txt = format_metric(metric_type[jj], tmp, metric_units[jj])
                     if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
-                        if my_reg in ["africaSE"]:
-                            xxx, yyy = 0.00, -0.05 - jj * 0.07
-                        elif my_reg in ["americaN"]:
-                            xxx, yyy = 0.00, -0.14 - jj * 0.10
-                        elif my_reg in ["americaS"]:
-                            xxx, yyy = 0.00, -0.12 - jj * 0.06
-                        elif my_reg in ["asiaS"]:
-                            xxx, yyy = 0.00, -0.13 - jj * 0.09
-                        else:
-                            xxx, yyy = 0.00, -0.15 - jj * 0.10
+                        # Place metric text inside the lower-left corner of the panel to avoid
+                        # overlapping cartopy x-axis tick labels and adjacent subplot titles.
+                        xxx = 0.02
+                        yyy = 0.03 + (len(metric_type) - 1 - jj) * 0.09
                     elif "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or\
                             "reg_ts_over_sst_map" in variables or "reg_pr_over_sst_djf_map" in variables or\
                             "reg_slp_over_sst_djf_map" in variables or "reg_ts_over_sst_djf_map" in variables or\
@@ -1241,8 +1261,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                         xxx, yyy = 0.00, -0.30 - jj * 0.18
                     else:
                         xxx, yyy = -0.12, 1.26 - jj * 0.16
+                    _bbox = dict(facecolor="white", alpha=0.7, edgecolor="none", pad=1) \
+                        if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"] else None
                     ax.text(xxx, yyy, txt, fontsize=11, color="k", horizontalalignment="left",
-                            verticalalignment="center", transform=ax.transAxes)
+                            verticalalignment="bottom", transform=ax.transAxes, bbox=_bbox)
         if ii == 0 and plot_ref is True:
             tx1, tx2 = ax.get_xlim()
             dx = (tx2 - tx1) / 100.
@@ -1278,31 +1300,11 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             y1 = ax.get_position().y0
     # add colorbar
     if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
-        if my_reg in ["africaSE"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.08, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.15, x2 - x1, 0.04])
-        elif my_reg in ["americaN"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.22, x2 - x1, 0.05])
-        elif my_reg in ["americaS"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.025])
-            else:
-                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.035])
-        elif my_reg in ["asiaS"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
+        # composite (list variables) = 4-panel; single = 2-panel regression map
+        if isinstance(variables, list) is True:
+            cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
         else:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
+            cax = plt.axes([x1, y1 - 0.12, x2 - x1, 0.04])
     elif nbrl == 2:
         if isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0]):
             cax = plt.axes([x1, y1 - 0.09, x2 - x1, 0.018])

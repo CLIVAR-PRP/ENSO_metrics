@@ -13828,8 +13828,8 @@ def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                      'description':
                                          "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
                                          " during " + season_ev + ", this is the composite of MldA during El Nino events"}
-                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
-                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: mldRmse,
+                                     'metric_value_error_' + dataset2: mldRmseErr, 'metric_method': Method,
                                      'metric_reference': Ref, 'frequency': kwargs['frequency']}
                             SaveNetcdf(
                                 file_name, var1=mld_mod_slope, var1_attributes=dict1,
@@ -17563,8 +17563,8 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                                      'description':
                                          "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
                                          " during " + season_ev + ", this is the composite of TauxA during El Nino events"}
-                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
-                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: tauxRmse,
+                                     'metric_value_error_' + dataset2: tauxRmseErr, 'metric_method': Method,
                                      'metric_reference': Ref, 'frequency': kwargs['frequency']}
                             SaveNetcdf(
                                 file_name, var1=taux_mod_slope, var1_attributes=dict1,
@@ -18539,8 +18539,8 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                                      'description':
                                          "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
                                          " during " + season_ev + ", this is the composite of TauyA during El Nino events"}
-                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
-                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: tauyRmse,
+                                     'metric_value_error_' + dataset2: tauyRmseErr, 'metric_method': Method,
                                      'metric_reference': Ref, 'frequency': kwargs['frequency']}
                             SaveNetcdf(
                                 file_name, var1=tauy_mod_slope, var1_attributes=dict1,
