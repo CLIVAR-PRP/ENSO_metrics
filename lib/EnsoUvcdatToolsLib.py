@@ -1858,7 +1858,7 @@ class _CdutilAverager:
 
 
     @staticmethod
-    def generateLandSeaMask(d):
+    def generateLandSeaMask(d, debug=False):
         """
         Robust CDAT replacement for cdutil.generateLandSeaMask.
 
@@ -1909,8 +1909,14 @@ class _CdutilAverager:
                         stacklevel=2,
                     )
 
+
             lat = da[lat_name]
             lon = da[lon_name]
+
+            if debug:
+                print("[DEBUG] generateLandSeaMask: lat shape:", lat.shape, "lon shape:", lon.shape)
+                print("[DEBUG] generateLandSeaMask: lat min/max:", np.nanmin(lat.values), np.nanmax(lat.values))
+                print("[DEBUG] generateLandSeaMask: lon min/max:", np.nanmin(lon.values), np.nanmax(lon.values))
 
             if np.all(~np.isfinite(lat.values)):
                 raise ValueError(
@@ -1930,6 +1936,8 @@ class _CdutilAverager:
                     lon_vals - 360,
                     lon_vals,
                 )
+                if debug:
+                    print("[DEBUG] generateLandSeaMask: converted lon to -180/180")
 
             lon_for_mask = xr.DataArray(
                 lon_vals,
@@ -1938,13 +1946,20 @@ class _CdutilAverager:
                 attrs=lon.attrs,
             )
 
-            land = _regionmask.defined_regions.natural_earth_v5_0_0.land_110
+            try:
+                land = _regionmask.defined_regions.natural_earth.land_110
+            except AttributeError:
+                land = _regionmask.defined_regions.natural_earth_v5_0_0.land_110
 
             if lat.ndim == 1 and lon.ndim == 1:
+                if debug:
+                    print("[DEBUG] generateLandSeaMask: applying regionmask (1D)")
                 raw_mask = land.mask(lon_for_mask, lat)
                 expected_shape = (lat.size, lon.size)
 
             elif lat.ndim == 2 and lon.ndim == 2:
+                if debug:
+                    print("[DEBUG] generateLandSeaMask: applying regionmask (2D)")
                 raw_mask = land.mask(lon_for_mask, lat)
                 expected_shape = lat.shape
 
@@ -1954,6 +1969,9 @@ class _CdutilAverager:
                     f"{lat_name}.ndim={lat.ndim}, "
                     f"{lon_name}.ndim={lon.ndim}"
                 )
+
+            if debug:
+                print("[DEBUG] generateLandSeaMask: raw_mask shape:", raw_mask.shape, "min:", np.nanmin(raw_mask.values), "max:", np.nanmax(raw_mask.values))
 
             # Convert regionmask convention:
             #   finite value = land
@@ -1969,20 +1987,29 @@ class _CdutilAverager:
             land01 = xr.where(lsm == 0, 1.0, 0.0).rename("sftlf")
 
             vals = np.asarray(land01.values)
+            if debug:
+                print("[DEBUG] generateLandSeaMask: land01 shape:", land01.shape, "min:", np.nanmin(vals), "max:", np.nanmax(vals))
 
             if np.nanmax(vals) <= 0:
-                raise RuntimeError(
-                    "Generated land mask is entirely ocean. "
-                    "Likely lat/lon detection or regionmask failure."
+                if debug:
+                    print("[DEBUG] generateLandSeaMask: WARNING - all ocean mask")
+                warnings.warn(
+                    "Generated land mask is entirely ocean for this region. "
+                    "This may be expected if the region is all ocean.",
+                    stacklevel=2
                 )
 
             if np.nanmin(vals) >= 1:
+                if debug:
+                    print("[DEBUG] generateLandSeaMask: ERROR - all land mask")
                 raise RuntimeError(
                     "Generated land mask is entirely land. "
                     "Likely lat/lon detection or regionmask failure."
                 )
 
             if land01.shape != expected_shape:
+                if debug:
+                    print("[DEBUG] generateLandSeaMask: ERROR - mask shape mismatch")
                 raise RuntimeError(
                     f"Generated mask shape mismatch: "
                     f"mask={land01.shape}, "
@@ -4374,7 +4401,7 @@ def EstimateLandmask(d):
     """
     print('\033[93m' + str().ljust(25) + 'NOTE: Estimated landmask applied' + '\033[0m')
     n = 1
-    sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n)) * 100.0
+    sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n),debug=True) * 100.0
     sft[:] = sft.filled(100.0)
     lmsk = sft
     lmsk.setAxis(0, d.getAxis(1))
