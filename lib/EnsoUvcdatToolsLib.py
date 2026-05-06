@@ -1,6 +1,7 @@
 # -*- coding:UTF-8 -*-
 from calendar import monthrange
 import copy
+import warnings
 from datetime import date
 from inspect import stack as INSPECTstack
 from packaging.version import Version
@@ -60,13 +61,18 @@ except (ImportError, OSError):
     # OSError can occur when esmpy's libesmf_fullylinked.so is missing/mislinked
     _HAS_XESMF = False
 
+
 # When True (default), _guess_dim raises ValueError for dimensions whose axis
-# type cannot be determined with any confidence (score <= 0).  Set to False to
+# type cannot be determined with any confidence (score <= 0). Set to False to
 # demote the error to a warning and return the best-guess dim — useful for
 # legacy observational datasets that lack CF axis/standard_name/units metadata.
 #
 #   import lib.EnsoUvcdatToolsLib as E; E.STRICT_DIM_GUESS = False
 #
+# **User Note:**
+# If you work with legacy or poorly-annotated datasets, set STRICT_DIM_GUESS = False
+# to avoid errors when axis metadata is missing. This will emit warnings instead.
+# For best results, add CF-compliant axis/standard_name/units metadata to your data.
 STRICT_DIM_GUESS: bool = True
 
 # Compatibility shim: provides CDATVariable (drop-in for cdms2.TransientVariable)
@@ -97,6 +103,96 @@ def CDTIMEcomptime(year, month=1, day=1, hour=0, minute=0, second=0.0,
     # Clamp leap-second (second=60) to 59 — cftime rejects second=60
     return _cft.datetime(year, month, day, hour, minute,
                          min(int(second), 59), calendar=calendar)
+
+def _coord_attrs_lower(coord):
+    return {
+        k.lower(): str(v).lower()
+        for k, v in coord.attrs.items()
+    }
+
+def _detect_axis(da: xr.DataArray, axis_type: str) -> str:
+    """
+    Best-effort axis detection.
+
+    Returns dim name or "".
+    Never raises or warns.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            return _guess_dim(da, axis_type, strict=False)
+        except Exception:
+            return ""
+
+def _validate_axis(da: xr.DataArray, axis_type: str, *, context: str = "") -> str:
+    """
+    Scientific validation layer.
+
+    Requires at least heuristic confidence, i.e. score >= 1.
+    Rejects value-range-only detection.
+    """
+    dim, score = _guess_dim(
+        da,
+        axis_type,
+        strict=False,
+        return_score=True,
+    )
+
+    if not dim or score <= 0:
+        raise ValueError(
+            f"{context}: Could not safely validate axis {axis_type!r}. "
+            f"Detected dim={dim!r}, score={score}, "
+            f"dims={list(da.dims)}, coords={list(da.coords)}. "
+            "Add CF axis/standard_name/units metadata."
+        )
+
+    if axis_type.upper() == "T":
+        coord = da.coords.get(dim)
+
+        if coord is None:
+            raise ValueError(
+                f"{context}: Unsafe time-axis detection for dim {dim!r}. "
+                "Time axis must have datetime-like values or CF time metadata."
+            )
+
+        attrs = _coord_attrs_lower(coord)
+
+        if not (
+            _is_datetime_like_time(coord)
+            or "since" in attrs.get("units", "")
+            or attrs.get("axis", "").upper() == "T"
+            or attrs.get("standard_name", "") == "time"
+        ):
+            raise ValueError(
+                f"{context}: Unsafe time-axis detection for dim {dim!r}. "
+                "Time axis must have datetime-like values or CF time metadata."
+            )
+
+    return dim
+
+def _require_axis(da: xr.DataArray, axis_type: str, *, context: str = "") -> str:
+    """
+    Hard enforcement layer.
+
+    Requires metadata-supported detection, i.e. score >= 2.
+    Use for time selection, regridding, EOFs, and strict reductions.
+    """
+    dim, score = _guess_dim(
+        da,
+        axis_type,
+        strict=True,
+        return_score=True,
+    )
+
+    if not dim or score < 2:
+        raise ValueError(
+            f"{context}: Required metadata-supported axis {axis_type!r} "
+            f"not found. Detected dim={dim!r}, score={score}, "
+            f"dims={list(da.dims)}, coords={list(da.coords)}. "
+            "Add CF axis/standard_name/units metadata."
+        )
+
+    return dim
 
 # ---------------------------------------------------------------------------
 # MV2 aliases  → numpy.ma equivalents
@@ -305,7 +401,6 @@ def _get_lat_weights(var, axis=None):
             wbc = ma.array(wbc, mask=combined_mask)
             return wbc
         except Exception as _cell_area_exc:
-            import warnings
             warnings.warn(
                 f"cell_area weight computation failed ({_cell_area_exc}); "
                 "falling back to cosine-latitude weights. "
@@ -316,7 +411,6 @@ def _get_lat_weights(var, axis=None):
     # grids.  This is accurate only when grid cells have uniform zonal width;
     # for stretched, RRM, or curvilinear grids the caller should attach
     # cell_area to avoid biased spatial averages.
-    import warnings
     warnings.warn(
         f"_get_lat_weights: no cell_area found on variable {getattr(var, 'id', '?')!r}; "
         "falling back to cosine-latitude weights. "
@@ -450,11 +544,17 @@ def _axis_to_int(arr, axis):
         for i, ax in enumerate(src._axes):
             if ax is not None and ax.axis in ("T", "Y", "X", "Z"):
                 ax_map[ax.axis] = i
-    # Heuristic fallbacks
-    # NOTE: fallback assumes (t, y, x) ordering; may not hold for staggered
-    # grids or unconventional axis layouts (e.g. some E3SM diagnostics).
-    # For arrays with more than 3 dims and no CF metadata we cannot safely
-    # infer axis positions — raise rather than silently reduce the wrong dim.
+    # Limited positional fallback heuristics.
+    #
+    # Applied only when:
+    #   - no CF axis metadata exists at all, and
+    #   - ndim <= 2.
+    #
+    # This supports simple legacy arrays while avoiding dangerous silent
+    # axis inference for higher-dimensional CMIP/E3SM datasets.
+    #
+    # High-dimensional arrays without CF metadata must provide explicit
+    # axis/standard_name/units metadata.
     if src is None and ndim > 3 and not ax_map:
         raise ValueError(
             f"Cannot infer axes for {ndim}-D array without CF axis metadata; "
@@ -464,24 +564,37 @@ def _axis_to_int(arr, axis):
     # at all (ax_map is empty after the loop above).  Mixing positional guesses
     # with partial real metadata can silently reduce the wrong dimension on
     # non-standard layouts (CMIP ensemble dim, E3SM extra dims, etc.).
-    if not ax_map:
-        # Classic 3-D (time, lat, lon) or 2-D (lat, lon) layout only.
-        if ndim == 3:
-            ax_map.setdefault("T", 0)
-        if ndim >= 2:
-            ax_map.setdefault("Y", ndim - 2)
-            ax_map.setdefault("X", ndim - 1)
+    if not ax_map and ndim <= 2:
+        if ndim == 2:
+            ax_map.setdefault("Y", 0)
+            ax_map.setdefault("X", 1)
         elif ndim == 1:
             ax_map.setdefault("X", 0)
+
     axis_l = axis_s.lower()
     if axis_l in ("t", "time"):
-        return ax_map.get("T", 0)
+        if "T" not in ax_map:
+            raise ValueError(
+                "Cannot determine time axis from metadata. "
+                "Attach CF axis='T' or standard_name='time'."
+            )
+        return ax_map["T"]
     if axis_l in ("y", "lat", "latitude"):
-        return ax_map.get("Y", ndim - 2 if ndim >= 2 else 0)
+        if "Y" not in ax_map:
+            raise ValueError(
+                "Cannot determine latitude axis from metadata."
+            )
+        return ax_map["Y"]
     if axis_l in ("x", "lon", "longitude"):
-        return ax_map.get("X", ndim - 1)
+        if "X" not in ax_map:
+            raise ValueError(
+                "Cannot determine longitude axis from metadata."
+            )
+        return ax_map["X"]
     if axis_l in ("z", "lev", "level", "depth"):
-        return ax_map.get("Z", 1)
+        if "Z" not in ax_map:
+            raise ValueError("Cannot determine vertical axis from metadata.")
+        return ax_map["Z"]
     if axis_l in ("xy", "yx"):
         if "Y" not in ax_map or "X" not in ax_map:
             raise ValueError(
@@ -494,13 +607,13 @@ def _axis_to_int(arr, axis):
     for c in axis_l:
         idx = None
         if c == "t":
-            idx = ax_map.get("T", 0)
+            idx = ax_map.get("T")
         elif c == "y":
-            idx = ax_map.get("Y", ndim - 2 if ndim >= 2 else 0)
+            idx = ax_map.get("Y")
         elif c == "x":
-            idx = ax_map.get("X", ndim - 1)
+            idx = ax_map.get("X")
         elif c == "z":
-            idx = ax_map.get("Z", 1)
+            idx = ax_map.get("Z")
         if idx is not None and idx not in seen:
             indices.append(idx)
             seen.add(idx)
@@ -787,7 +900,6 @@ def check_grid_consistency(a, b, context: str = "", regrid_to: str = "b") -> tup
     ------
     ValueError  if the spatial grids differ.
     """
-    import warnings
     a_cdat = _to_cdat(a) if not isinstance(a, CDATVariable) else a
     b_cdat = _to_cdat(b) if not isinstance(b, CDATVariable) else b
     a_lat = a_cdat.getLatitude()
@@ -1107,15 +1219,6 @@ def _coord_is_datetime_like(da: xr.DataArray, dim: str) -> bool:
         return False
     return _is_datetime_like_time(da.coords[dim])
 
-
-def _safe_guess_dim(da: xr.DataArray, axis_type: str) -> str:
-    """Best-effort axis lookup used only for metadata finalization."""
-    try:
-        return _guess_dim(da, axis_type, strict=False)
-    except Exception:
-        return ""
-
-
 def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray:
     """
     Attach CF-style axis metadata to every dimension before conversion to CDATVariable.
@@ -1146,12 +1249,13 @@ def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray
         # STRICT_AXIS_DETECTION=True) when the axis type is unambiguous.
         ax_type = "-"
         if coord is not None:
-            cf_axis = str(coord.attrs.get("axis", "")).upper()
+            attrs = _coord_attrs_lower(coord)
+            cf_axis = attrs.get("axis", "").upper()
             if cf_axis in {"T", "Y", "X", "Z"}:
                 ax_type = cf_axis
             else:
-                sn = str(coord.attrs.get("standard_name", "")).lower()
-                units_str = str(coord.attrs.get("units", "")).lower()
+                sn = attrs.get("standard_name", "")
+                units_str = attrs.get("units", "")
                 if (sn == "time"
                         or _is_datetime_like_time(coord)
                         or "since" in units_str):
@@ -1166,9 +1270,10 @@ def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray
         # time-by-name detection in _detect_axis_type).
         if ax_type == "-":
             if coord is not None:
+                attrs = _coord_attrs_lower(coord) 
                 if _is_datetime_like_time(coord):
                     ax_type = "T"
-                elif "since" in str(coord.attrs.get("units", "")).lower():
+                elif "since" in attrs.get("units", ""):
                     ax_type = "T"
 
         if ax_type not in ("T", "Y", "X", "Z"):
@@ -1316,20 +1421,20 @@ class _XcDatasetHandle:
         if "latitude" in kwargs:
             lat_bnds = kwargs["latitude"]
             lo, hi = min(lat_bnds), max(lat_bnds)
-            lat_dim = _guess_dim(da, "Y")
+            lat_dim = _validate_axis(da, "Y", context="latitude selection")
             if lat_dim:
                 da = da.sel({lat_dim: slice(lo, hi)})
 
         if "longitude" in kwargs:
             lon_bnds = kwargs["longitude"]
             lo, hi = min(lon_bnds), max(lon_bnds)
-            lon_dim = _guess_dim(da, "X")
+            lon_dim = _validate_axis(da, "X", context="longitude selection")
             if lon_dim:
                 da = da.sel({lon_dim: slice(lo, hi)})
 
         if "time" in kwargs:
             t_bnds = kwargs["time"]
-            t_dim = _guess_dim(da, "T")
+            t_dim = _require_axis(da, "T", context="time selection")
             if t_dim:
                 if not _is_datetime_like_time(da[t_dim] if t_dim in da.coords else self._ds[t_dim]):
                     raise RuntimeError(
@@ -1458,142 +1563,151 @@ _AXIS_NAME_HINTS: dict[str, tuple[str, ...]] = {
           "nlev"),
 }
 
+def _safe_guess_dim(da: xr.DataArray, axis_type: str) -> str:
+    """Best-effort axis lookup used only for metadata finalization."""
+    return _detect_axis(da, axis_type)
 
-def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) -> str:
+
+def _guess_dim(
+    da: xr.DataArray,
+    axis_type: str,
+    *,
+    strict: bool | None = None,
+    return_score: bool = False,
+) -> str | tuple[str, int]:
     """Return the dimension name for a given axis type (T/Y/X/Z).
 
-    Scoring lookup — every candidate dimension is scored across all signals;
-    the highest-scoring dim wins, resolving ambiguity (e.g. both ``lat`` and
-    ``y`` passing the value-range check):
-
-        score 4 — CF ``axis`` attribute          (definitive)
-        score 3 — CF ``standard_name`` attribute (reliable)
-        score 2 — CF ``units`` pattern           (strong hint)
-        score 1 — token/endswith name heuristic  (weak hint)
-        score 0 — coordinate value-range         (last resort)
+    Scoring lookup:
+        score 4 — CF axis attribute
+        score 3 — CF standard_name attribute
+        score 2 — CF units pattern
+        score 1 — token/endswith name heuristic
+        score 0 — coordinate value-range
     """
     at = axis_type.upper()
-    sn_set   = _AXIS_STANDARD_NAMES.get(at, set())
-    u_pats   = _AXIS_UNITS_PATTERNS.get(at, ())
-    hints    = _AXIS_NAME_HINTS.get(at, ())
+    sn_set = _AXIS_STANDARD_NAMES.get(at, set())
+    u_pats = _AXIS_UNITS_PATTERNS.get(at, ())
+    hints = _AXIS_NAME_HINTS.get(at, ())
 
     scores: list[tuple[int, str]] = []
 
     for dim in da.dims:
-        score = -1  # not matched yet
+        score = -1
 
         if dim in da.coords:
             coord = da.coords[dim]
-            attrs = coord.attrs
+            attrs = _coord_attrs_lower(coord)
 
-            # score 4: CF axis attribute
             if attrs.get("axis", "").upper() == at:
                 score = max(score, 4)
 
-            # score 3: CF standard_name
-            if attrs.get("standard_name", "").lower() in sn_set:
+            if attrs.get("standard_name", "") in sn_set:
                 score = max(score, 3)
 
-            # score 2: CF units pattern
-            u = attrs.get("units", "").lower()
+            u = attrs.get("units", "")
             if any(p in u for p in u_pats):
                 score = max(score, 2)
 
-            # score 0: coordinate value-range (lat/lon only; deferred to last)
             if score < 0 and at in ("Y", "X"):
                 try:
                     raw = np.asarray(coord.values)
-                    # Skip obvious 0-based integer index arrays
-                    if not (np.issubdtype(raw.dtype, np.integer)
-                            and raw.size >= 1
-                            and int(raw.min()) == 0
-                            and int(raw.max()) == raw.size - 1):
+
+                    if not (
+                        np.issubdtype(raw.dtype, np.integer)
+                        and raw.size >= 1
+                        and int(raw.min()) == 0
+                        and int(raw.max()) == raw.size - 1
+                    ):
                         vals = raw.astype(float)
                         vals = vals[np.isfinite(vals)]
-                        if vals.size > 0:
-                            vmin, vmax = float(vals.min()), float(vals.max())
-                            if at == "Y" and -90.0 <= vmin <= vmax <= 90.0:
-                                score = max(score, 0)
-                            if at == "X" and (
-                                (-180.0 <= vmin <= vmax <= 180.0)
-                                or (0.0 <= vmin <= vmax <= 360.0)
-                            ):
-                                score = max(score, 0)
+
+                        if vals.size == 0:
+                            continue
+
+                        vmin = float(vals.min())
+                        vmax = float(vals.max())
+
+                        if at == "Y" and -90.0 <= vmin <= vmax <= 90.0:
+                            score = max(score, 0)
+
+                        if at == "X" and (
+                            (-180.0 <= vmin <= vmax <= 180.0)
+                            or (0.0 <= vmin <= vmax <= 360.0)
+                        ):
+                            score = max(score, 0)
+
                 except Exception:
                     pass
 
-        # score 1: token/endswith name heuristics (no coord required)
         if score < 0:
             dl = dim.lower()
             tokens = set(dl.replace("-", "_").split("_"))
-            if (dl in hints
-                    or any(h in tokens for h in hints)
-                    or any(dl.endswith(h) for h in hints)):
+
+            if (
+                dl in hints
+                or any(h in tokens for h in hints)
+                or any(dl.endswith(h) for h in hints)
+            ):
                 score = max(score, 1)
 
         if score >= 0:
             scores.append((score, dim))
 
     if not scores:
-        # No dim matched at any score level — treat as score = -1.
         _strict = STRICT_DIM_GUESS if strict is None else strict
         msg = (
             f"_guess_dim cannot determine axis {axis_type!r} from dims "
             f"{list(da.dims)}: no candidate matched. "
-            "Add CF axis/standard_name/units metadata."
+            "Add CF axis/standard_name/units metadata (e.g., 'axis', 'standard_name', or 'units' attributes) to your coordinates. "
+            "If working with legacy data, set STRICT_DIM_GUESS = False to allow fallback heuristics."
         )
+
         if _strict:
             raise ValueError(msg)
-        import warnings
+
         warnings.warn(msg, stacklevel=2)
-        return ""
-    # Return the dim with the highest confidence score.
-    # Ties are broken by document order: earlier dims in da.dims win.
+        return ("", -1) if return_score else ""
+
     dim_order = {d: i for i, d in enumerate(da.dims)}
     best_score, best_dim = max(
         scores,
         key=lambda t: (t[0], -dim_order.get(t[1], 0)),
     )
-    # score ≤ 0: value-range fallback — only allowed for lat/lon, never for time.
+
     if best_score <= 0:
         _strict = STRICT_DIM_GUESS if strict is None else strict
         msg = (
-            f"_guess_dim cannot confidently determine axis {axis_type!r} "
-            f"from dims {list(da.dims)} (best score={best_score}, "
-            f"chosen={best_dim!r}). Add CF axis/standard_name/units metadata."
+            f"_guess_dim low-confidence value-range fallback for axis "
+            f"{axis_type!r}: chosen={best_dim!r}, score={best_score}. "
+            "Only coordinate-value heuristics matched; results may be "
+            "scientifically unreliable. Add CF metadata."
         )
+
         if _strict:
             raise ValueError(msg)
-        import warnings
-        warnings.warn(msg, stacklevel=2)
-        return best_dim
 
-    # score == 1: name-heuristic only — too weak to trust for axis type T.
-    # Dimension names like 'lat' can falsely score 1 for axis='T' when
-    # no CF metadata is present (root cause of the reported silent error
-    # "_guess_dim fallback: axis='T', chosen='lat'").
-    #
-    # Policy:
-    #   T axis, score=1  → always warn; always return "" (unsafe to guess)
-    #   Y/X/Z, score=1, strict=True → raise (caller opted into strict checks)
-    #   Y/X/Z, score=1, strict=False → warn but return the best guess
-    if best_score <= 1:
-        import warnings
-        _strict = STRICT_DIM_GUESS if strict is None else strict
+        warnings.warn(msg, stacklevel=2)
+        return (best_dim, best_score) if return_score else best_dim
+
+    if best_score == 1:
         msg = (
-            f"_guess_dim low-confidence fallback: axis={axis_type!r}, "
+            f"_guess_dim name-heuristic fallback: axis={axis_type!r}, "
             f"chosen={best_dim!r}, score={best_score}, dims={list(da.dims)}. "
             "Add CF axis/standard_name/units metadata to avoid incorrect axis mapping."
         )
+
         if at == "T":
-            # Never trust a score-1 (or weaker) hit for the time axis — return
-            # empty string so callers can detect the failure without crashing.
             warnings.warn(msg, stacklevel=2)
-            return ""
+            return ("", best_score) if return_score else ""
+
+        _strict = STRICT_DIM_GUESS if strict is None else strict
         if _strict:
             raise ValueError(msg)
+
         warnings.warn(msg, stacklevel=2)
-    return best_dim
+        return (best_dim, best_score) if return_score else best_dim
+
+    return (best_dim, best_score) if return_score else best_dim
 
 # cdutil averager stub (used inside this module)
 class _CdutilAverager:
@@ -1601,7 +1715,6 @@ class _CdutilAverager:
     @staticmethod
     def averager(tab, axis="xy", weights="weighted", action="average"):
         if weights is None:
-            import warnings
             warnings.warn(
                 "cdutil.averager called with weights=None (equal weights); "
                 "CDAT default is cosine-latitude weighting (weights='weighted'). "
@@ -1663,7 +1776,7 @@ class _CdutilAverager:
                     elif idx == 0 and ndim >= 3:
                         do_time = True
         if do_time and not xcdat_axes:
-            t_dim = _guess_dim(da, "T") or "time"
+            t_dim = _require_axis(da, "T", context="time selection") or "time"
             return _finalize_cdat(ds[varname].mean(dim=t_dim), varname=varname,
                                   context="cdutil.averager:time")
         if xcdat_axes:
@@ -1705,7 +1818,7 @@ class _CdutilAverager:
             result_ds = ds.spatial.average(varname, axis=xcdat_axes)
             result = result_ds[varname]
             if do_time:
-                t_dim = _guess_dim(result, "T") or "time"
+                t_dim = _require_axis(da, "T", context="time selection") or "time"
                 if t_dim in result.dims:
                     result = result.mean(dim=t_dim)
             return _finalize_cdat(result, varname=varname,
@@ -1743,6 +1856,7 @@ class _CdutilAverager:
             return _finalize_cdat(result[varname], varname=varname,
                                   context="ANNUALCYCLE.departures", require_time=True)
 
+
     @staticmethod
     def generateLandSeaMask(d):
         """
@@ -1755,8 +1869,8 @@ class _CdutilAverager:
         if not _HAS_REGIONMASK:
             raise RuntimeError(
                 "Land-sea mask generation failed because regionmask is not available. "
-                "Install regionmask with: conda install -c conda-forge regionmask "
-                "or provide an explicit sftlf file."
+                "Install regionmask with: conda install -c conda-forge regionmask. "
+                "Alternatively, provide an explicit sftlf file."
             )
 
         da = cdat_to_da(d) if isinstance(d, CDATVariable) else d
@@ -1769,60 +1883,53 @@ class _CdutilAverager:
             if ax == "T" and da.sizes.get(dim, 1) == 1:
                 da = da.isel({dim: 0}, drop=True)
 
-        def _find_coord(axis_type):
-            try:
-                name = _guess_dim(da, axis_type, strict=True)
-                if name and (name in da.coords or name in da.dims):
-                    return name
-            except Exception:
-                pass
-
-            candidates = []
-            for name, coord in da.coords.items():
-                lname = name.lower()
-                attrs = {k.lower(): str(v).lower() for k, v in coord.attrs.items()}
-                units = attrs.get("units", "")
-                std = attrs.get("standard_name", "")
-                axis = attrs.get("axis", "").upper()
-
-                if axis_type == "Y":
-                    if (
-                        axis == "Y"
-                        or std == "latitude"
-                        or "degrees_north" in units
-                        or lname in ("lat", "latitude", "nav_lat", "yt", "y")
-                    ):
-                        candidates.append(name)
-
-                elif axis_type == "X":
-                    if (
-                        axis == "X"
-                        or std == "longitude"
-                        or "degrees_east" in units
-                        or lname in ("lon", "longitude", "nav_lon", "xt", "x")
-                    ):
-                        candidates.append(name)
-
-            if candidates:
-                return candidates[0]
-
-            raise ValueError(
-                f"Could not identify {'latitude' if axis_type == 'Y' else 'longitude'} "
-                f"coordinate from dims={da.dims}, coords={list(da.coords)}"
-            )
-
         try:
-            lat_name = _find_coord("Y")
-            lon_name = _find_coord("X")
+            lat_name = _validate_axis(da, "Y", context="generateLandSeaMask")
+            lon_name = _validate_axis(da, "X", context="generateLandSeaMask")
+
+            for nm, atype in [(lat_name, "Y"), (lon_name, "X")]:
+                coord = da[nm]
+                attrs = _coord_attrs_lower(coord) 
+
+                has_cf = (
+                    attrs.get("axis", "").upper() == atype
+                    or attrs.get("standard_name", "")
+                    in _AXIS_STANDARD_NAMES[atype]
+                )
+
+                has_units = any(
+                    p in attrs.get("units", "")
+                    for p in _AXIS_UNITS_PATTERNS[atype]
+                )
+
+                if not (has_cf or has_units):
+                    warnings.warn(
+                        f"Low-confidence {atype} axis detection for {nm!r}; "
+                        "mask generation may be unreliable.",
+                        stacklevel=2,
+                    )
 
             lat = da[lat_name]
             lon = da[lon_name]
 
-            # Normalize longitude to [-180, 180] for Natural Earth polygons.
+            if np.all(~np.isfinite(lat.values)):
+                raise ValueError(
+                    "Latitude coordinate contains no finite values"
+                )
+
+            if np.all(~np.isfinite(lon.values)):
+                raise ValueError(
+                    "Longitude coordinate contains no finite values"
+                )
+
             lon_vals = lon.values.astype(float)
 
             if np.nanmax(lon_vals) > 180:
-                lon_vals = np.where(lon_vals > 180, lon_vals - 360, lon_vals)
+                lon_vals = np.where(
+                    lon_vals > 180,
+                    lon_vals - 360,
+                    lon_vals,
+                )
 
             lon_for_mask = xr.DataArray(
                 lon_vals,
@@ -1833,21 +1940,19 @@ class _CdutilAverager:
 
             land = _regionmask.defined_regions.natural_earth_v5_0_0.land_110
 
-            # Check for finite latitude and longitude values
-            if np.all(~np.isfinite(lat.values)):
-                raise ValueError("Latitude coordinate contains no finite values")
-
-            if np.all(~np.isfinite(lon.values)):
-                raise ValueError("Longitude coordinate contains no finite values")
-
             if lat.ndim == 1 and lon.ndim == 1:
                 raw_mask = land.mask(lon_for_mask, lat)
+                expected_shape = (lat.size, lon.size)
+
             elif lat.ndim == 2 and lon.ndim == 2:
                 raw_mask = land.mask(lon_for_mask, lat)
+                expected_shape = lat.shape
+
             else:
                 raise ValueError(
                     f"Unsupported lat/lon dimensionality: "
-                    f"{lat_name}.ndim={lat.ndim}, {lon_name}.ndim={lon.ndim}"
+                    f"{lat_name}.ndim={lat.ndim}, "
+                    f"{lon_name}.ndim={lon.ndim}"
                 )
 
             # Convert regionmask convention:
@@ -1863,25 +1968,41 @@ class _CdutilAverager:
             #   otherwise -> ocean = 0
             land01 = xr.where(lsm == 0, 1.0, 0.0).rename("sftlf")
 
+            vals = np.asarray(land01.values)
+
+            if np.nanmax(vals) <= 0:
+                raise RuntimeError(
+                    "Generated land mask is entirely ocean. "
+                    "Likely lat/lon detection or regionmask failure."
+                )
+
+            if np.nanmin(vals) >= 1:
+                raise RuntimeError(
+                    "Generated land mask is entirely land. "
+                    "Likely lat/lon detection or regionmask failure."
+                )
+
+            if land01.shape != expected_shape:
+                raise RuntimeError(
+                    f"Generated mask shape mismatch: "
+                    f"mask={land01.shape}, "
+                    f"expected={expected_shape}, "
+                    f"data={da.shape}"
+                )
+
             land01.attrs.update(
                 {
                     "long_name": "estimated land fraction",
                     "standard_name": "land_area_fraction",
                     "units": "1",
                     "comment": (
-                        "Estimated from Natural Earth land polygons using regionmask; "
-                        "1=land, 0=ocean. Prefer native sftlf when available."
+                        "Estimated from Natural Earth land polygons "
+                        "using regionmask; "
+                        "1=land, 0=ocean. "
+                        "Prefer native sftlf when available."
                     ),
                 }
             )
-
-
-            # Check that the mask shape matches the expected spatial shape
-            if land01.shape != da.squeeze().shape[-land01.ndim:]:
-                raise RuntimeError(
-                    f"Generated mask shape mismatch: "
-                    f"mask={land01.shape}, data={da.shape}"
-                )
 
             return _finalize_cdat(
                 land01,
@@ -1944,8 +2065,8 @@ class REGRID2horizontal__Horizontal:
         dst_lat = np.asarray(self._dst.getLatitude()[:])
         dst_lon = np.asarray(self._dst.getLongitude()[:])
         # Identity check — skip regridding if source and target grids are identical
-        src_lat_dim = _guess_dim(da, 'Y')
-        src_lon_dim = _guess_dim(da, 'X')
+        src_lat_dim = _validate_axis(da, "Y", context="latitude selection")
+        src_lon_dim = _validate_axis(da, "X", context="longitude selection")
         if (src_lat_dim and src_lon_dim
                 and np.array_equal(np.asarray(da[src_lat_dim]), dst_lat)
                 and np.array_equal(np.asarray(da[src_lon_dim]), dst_lon)):
@@ -2052,7 +2173,6 @@ def _make_coslat_areacell(tab):
     else:
         w_2d = w_lat
         axes = [lat_ax]
-    import warnings
     _var_name = (
         getattr(tab, 'name', None) or getattr(tab, 'id', None) or '?'
     )
