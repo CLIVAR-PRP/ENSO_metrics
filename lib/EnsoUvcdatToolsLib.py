@@ -5792,6 +5792,11 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
                                   file_mask='', name_mask='', maskland=False, maskocean=False, debug=False,
                                   interpreter='', **kwargs):
     dict_area, dict_keye, dict_var = dict(), dict(), dict()
+    def safe_get(seq, idx):
+        try:
+            return seq[idx]
+        except Exception:
+            return ''
     if isinstance(file_data, str):
         tab, areacell, keyerror = \
             Read_data_mask_area(file_data, name_data, type_data, metric, region, file_area=file_area,
@@ -5799,16 +5804,18 @@ def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, met
                                 maskocean=maskocean, debug=debug, **kwargs)
         dict_area[name_data], dict_keye[name_data], dict_var[name_data] = areacell, keyerror, tab
     else:
-        for ii in list(range(len(file_data))):
-            ff1 = file_data[ii] if ii < len(file_data) else ''
-            nn1 = name_data[ii] if ii < len(name_data) else ''
-            fa1 = file_area[ii] if ii < len(file_area) else ''
-            an1 = name_area[ii] if ii < len(name_area) else ''
-            fl1 = file_mask[ii] if ii < len(file_mask) else ''
-            ln1 = name_mask[ii] if ii < len(name_mask) else ''
-            tab, areacell, keyerror = \
-                Read_data_mask_area(ff1, nn1, type_data, metric, region, file_area=fa1, name_area=an1, file_mask=fl1,
-                                    name_mask=ln1, maskland=maskland, maskocean=maskocean, debug=debug, **kwargs)
+        for ii in range(len(file_data)):
+            ff1 = safe_get(file_data, ii)
+            nn1 = safe_get(name_data, ii)
+            fa1 = safe_get(file_area, ii)
+            an1 = safe_get(name_area, ii)
+            fl1 = safe_get(file_mask, ii)
+            ln1 = safe_get(name_mask, ii)
+            tab, areacell, keyerror = Read_data_mask_area(
+                ff1, nn1, type_data, metric, region,
+                file_area=fa1, name_area=an1, file_mask=fl1,
+                name_mask=ln1, maskland=maskland, maskocean=maskocean, debug=debug, **kwargs
+            )
             dict_area[nn1], dict_keye[nn1], dict_var[nn1] = areacell, keyerror, tab
     keyerror = add_up_errors([dict_keye[ii] for ii in list(dict_keye.keys())])
     if keyerror is None:
