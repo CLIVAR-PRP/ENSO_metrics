@@ -1597,6 +1597,42 @@ def _guess_dim(da: xr.DataArray, axis_type: str, *, strict: bool | None = None) 
 
 # cdutil averager stub (used inside this module)
 class _CdutilAverager:
+        @staticmethod
+        def generateLandSeaMask(var):
+            """
+            Replacement for cdutil.generateLandSeaMask using regionmask.
+            Accepts a variable (xarray or CDAT-like) and returns a land-sea mask array.
+            """
+            # Extract lat/lon
+            try:
+                lat = var["lat"].values if hasattr(var, "coords") and "lat" in var.coords else var.getAxis(1)[:]
+                lon = var["lon"].values if hasattr(var, "coords") and "lon" in var.coords else var.getAxis(2)[:]
+            except Exception:
+                lat = var.getAxis(1)[:]
+                lon = var.getAxis(2)[:]
+
+            if not _HAS_REGIONMASK:
+                raise ImportError("regionmask is required for landmask estimation but is not installed.")
+            land_mask = _regionmask.defined_regions.natural_earth_v5_0_0.land_110.mask(lon, lat)
+            # regionmask returns 1 for land, np.nan for ocean; convert to 1 (land), 0 (ocean)
+            lmsk = np.where(np.isnan(land_mask), 0, 1)
+            # Expand to match input shape if needed
+            if hasattr(var, "shape") and var.shape[-2:] == lmsk.shape:
+                pass
+            else:
+                lmsk = np.broadcast_to(lmsk, var.shape[-2:])
+            # Convert to masked array
+            lmsk = ma.masked_array(lmsk, mask=(lmsk == 0))
+            # Set attributes for compatibility
+            if hasattr(var, "getAxis"):
+                try:
+                    lmsk.setAxis(0, var.getAxis(1))
+                    lmsk.setAxis(1, var.getAxis(2))
+                except Exception:
+                    pass
+            if hasattr(lmsk, "id"):
+                lmsk.id = "sftlf"
+            return lmsk
     """Wraps xcdat spatial/temporal averaging to mimic cdutil.averager()."""
     @staticmethod
     def averager(tab, axis="xy", weights="weighted", action="average"):
@@ -1745,157 +1781,24 @@ class _CdutilAverager:
 
     @staticmethod
     def generateLandSeaMask(d):
-        """
-        Robust CDAT replacement for cdutil.generateLandSeaMask.
-
-        Returns:
-            CDATVariable with 1.0 over land and 0.0 over ocean.
-            Caller may multiply by 100 if it expects sftlf percent units.
-        """
-        if not _HAS_REGIONMASK:
-            raise RuntimeError(
-                "Land-sea mask generation failed because regionmask is not available. "
-                "Install regionmask with: conda install -c conda-forge regionmask "
-                "or provide an explicit sftlf file."
-            )
-
-        da = cdat_to_da(d) if isinstance(d, CDATVariable) else d
-
-        # Drop non-spatial singleton dimensions, e.g. time=1.
-        for dim in list(da.dims):
-            if dim not in da.coords:
-                continue
-            ax = str(da[dim].attrs.get("axis", "")).upper()
-            if ax == "T" and da.sizes.get(dim, 1) == 1:
-                da = da.isel({dim: 0}, drop=True)
-
-        def _find_coord(axis_type):
+        if _HAS_REGIONMASK:
+            land = _regionmask.defined_regions.natural_earth_v5_0_0.land_110
+            da = cdat_to_da(d) if isinstance(d, CDATVariable) else d
+            lat_dim = _guess_dim(da, "Y") or "lat"
+            lon_dim = _guess_dim(da, "X") or "lon"
             try:
-                name = _guess_dim(da, axis_type, strict=True)
-                if name and (name in da.coords or name in da.dims):
-                    return name
+                lsm = land.mask(da, lon_name=lon_dim, lat_name=lat_dim)
+                lsm_01 = xr.where(lsm == 0, 1.0, 0.0).rename("sftlf")
+                return _finalize_cdat(lsm_01, varname="sftlf", context="generateLandSeaMask")
             except Exception:
                 pass
-
-            candidates = []
-            for name, coord in da.coords.items():
-                lname = name.lower()
-                attrs = {k.lower(): str(v).lower() for k, v in coord.attrs.items()}
-                units = attrs.get("units", "")
-                std = attrs.get("standard_name", "")
-                axis = attrs.get("axis", "").upper()
-
-                if axis_type == "Y":
-                    if (
-                        axis == "Y"
-                        or std == "latitude"
-                        or "degrees_north" in units
-                        or lname in ("lat", "latitude", "nav_lat", "yt", "y")
-                    ):
-                        candidates.append(name)
-
-                elif axis_type == "X":
-                    if (
-                        axis == "X"
-                        or std == "longitude"
-                        or "degrees_east" in units
-                        or lname in ("lon", "longitude", "nav_lon", "xt", "x")
-                    ):
-                        candidates.append(name)
-
-            if candidates:
-                return candidates[0]
-
-            raise ValueError(
-                f"Could not identify {'latitude' if axis_type == 'Y' else 'longitude'} "
-                f"coordinate from dims={da.dims}, coords={list(da.coords)}"
-            )
-
-        try:
-            lat_name = _find_coord("Y")
-            lon_name = _find_coord("X")
-
-            lat = da[lat_name]
-            lon = da[lon_name]
-
-            # Normalize longitude to [-180, 180] for Natural Earth polygons.
-            lon_vals = lon.values.astype(float)
-
-            if np.nanmax(lon_vals) > 180:
-                lon_vals = np.where(lon_vals > 180, lon_vals - 360, lon_vals)
-
-            lon_for_mask = xr.DataArray(
-                lon_vals,
-                dims=lon.dims,
-                coords=lon.coords,
-                attrs=lon.attrs,
-            )
-
-            land = _regionmask.defined_regions.natural_earth_v5_0_0.land_110
-
-            # Check for finite latitude and longitude values
-            if np.all(~np.isfinite(lat.values)):
-                raise ValueError("Latitude coordinate contains no finite values")
-
-            if np.all(~np.isfinite(lon.values)):
-                raise ValueError("Longitude coordinate contains no finite values")
-
-            if lat.ndim == 1 and lon.ndim == 1:
-                raw_mask = land.mask(lon_for_mask, lat)
-            elif lat.ndim == 2 and lon.ndim == 2:
-                raw_mask = land.mask(lon_for_mask, lat)
-            else:
-                raise ValueError(
-                    f"Unsupported lat/lon dimensionality: "
-                    f"{lat_name}.ndim={lat.ndim}, {lon_name}.ndim={lon.ndim}"
-                )
-
-            # Convert regionmask convention:
-            #   finite value = land
-            #   NaN          = ocean
-            # to legacy cdutil-style convention:
-            #   0 = land
-            #   1 = ocean
-            lsm = xr.where(np.isfinite(raw_mask), 0.0, 1.0)
-
-            # Keep legacy logic:
-            #   lsm == 0 -> land fraction = 1
-            #   otherwise -> ocean = 0
-            land01 = xr.where(lsm == 0, 1.0, 0.0).rename("sftlf")
-
-            land01.attrs.update(
-                {
-                    "long_name": "estimated land fraction",
-                    "standard_name": "land_area_fraction",
-                    "units": "1",
-                    "comment": (
-                        "Estimated from Natural Earth land polygons using regionmask; "
-                        "1=land, 0=ocean. Prefer native sftlf when available."
-                    ),
-                }
-            )
-
-
-            # Check that the mask shape matches the expected spatial shape
-            if land01.shape != da.squeeze().shape[-land01.ndim:]:
-                raise RuntimeError(
-                    f"Generated mask shape mismatch: "
-                    f"mask={land01.shape}, data={da.shape}"
-                )
-
-            return _finalize_cdat(
-                land01,
-                varname="sftlf",
-                context="generateLandSeaMask",
-            )
-
-        except Exception as e:
-            raise RuntimeError(
-                "Land-sea mask generation failed inside regionmask. "
-                f"Original error: {type(e).__name__}: {e}. "
-                f"dims={getattr(da, 'dims', None)}, "
-                f"coords={list(getattr(da, 'coords', []))}."
-            ) from e
+        # Land-sea mask generation failed — raise rather than silently biasing
+        # all downstream land/ocean metrics with an all-ocean mask.
+        raise RuntimeError(
+            "Land-sea mask generation failed. "
+            "Install regionmask (conda install -c conda-forge regionmask) "
+            "or provide an explicit sftlf file."
+        )
 
     class times:
         @staticmethod
@@ -4252,14 +4155,43 @@ def EstimateLandmask(d):
     :return landmask: masked_array
         masked_array containing landmask
     """
-    print('\033[93m' + str().ljust(25) + 'NOTE: Estimated landmask applied' + '\033[0m')
-    n = 1
-    sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n)) * 100.0
-    sft[:] = sft.filled(100.0)
-    lmsk = sft
-    lmsk.setAxis(0, d.getAxis(1))
-    lmsk.setAxis(1, d.getAxis(2))
-    lmsk.id = 'sftlf'
+    print('\033[93m' + str().ljust(25) + 'NOTE: Estimated landmask applied using regionmask' + '\033[0m')
+    # Extract lat/lon from input (d should be a CDAT/xarray variable)
+    # Try to support both xarray and CDAT-like objects
+    try:
+        # xarray DataArray
+        lat = d["lat"].values if hasattr(d, "coords") and "lat" in d.coords else d.getAxis(1)[:]
+        lon = d["lon"].values if hasattr(d, "coords") and "lon" in d.coords else d.getAxis(2)[:]
+    except Exception:
+        lat = d.getAxis(1)[:]
+        lon = d.getAxis(2)[:]
+
+    # Use regionmask's built-in land mask
+    if not _HAS_REGIONMASK:
+        raise ImportError("regionmask is required for landmask estimation but is not installed.")
+    land_mask = _regionmask.defined_regions.natural_earth_v5_0_0.land_110.mask(
+        lon, lat
+    )
+    # regionmask returns 1 for land, np.nan for ocean; convert to 1 (land), 0 (ocean)
+    lmsk = np.where(np.isnan(land_mask), 0, 1)
+    # Expand to match input shape if needed
+    if hasattr(d, "shape") and d.shape[-2:] == lmsk.shape:
+        pass  # shape matches
+    else:
+        # Try to broadcast to match input shape
+        lmsk = np.broadcast_to(lmsk, d.shape[-2:])
+    # Convert to masked array
+    lmsk = ma.masked_array(lmsk, mask=(lmsk == 0))
+    # Set attributes for compatibility
+    if hasattr(d, "getAxis"):
+        lmsk = ma.masked_array(lmsk, mask=(lmsk == 0))
+        try:
+            lmsk.setAxis(0, d.getAxis(1))
+            lmsk.setAxis(1, d.getAxis(2))
+        except Exception:
+            pass
+    if hasattr(lmsk, "id"):
+        lmsk.id = "sftlf"
     return lmsk
 
 

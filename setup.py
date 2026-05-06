@@ -45,4 +45,6 @@ setup(name="EnsoMetrics",
           'xarray',
           'xcdat',
           'cftime',
+          'regionmask',
+          'xesmf',
       ])

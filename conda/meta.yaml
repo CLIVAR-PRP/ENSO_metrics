@@ -27,9 +27,8 @@ requirements:
     - xcdat
     - cftime
     - matplotlib
-    # Optional — enhanced land-sea mask and regridding
-    # - regionmask
-    # - xesmf
+    - regionmask
+    - xesmf
 
 test:
   imports:
