@@ -4401,7 +4401,7 @@ def EstimateLandmask(d):
     """
     print('\033[93m' + str().ljust(25) + 'NOTE: Estimated landmask applied' + '\033[0m')
     n = 1
-    sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n),debug=True) * 100.0
+    sft = cdutil.generateLandSeaMask(d(*(slice(0, 1),) * n),debug=False) * 100.0
     sft[:] = sft.filled(100.0)
     lmsk = sft
     lmsk.setAxis(0, d.getAxis(1))
