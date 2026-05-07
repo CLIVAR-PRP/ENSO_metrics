@@ -121,7 +121,7 @@ def defCollection(mc=True):
                 'SeasonalTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
@@ -261,7 +261,7 @@ def defCollection(mc=True):
             'plot_order': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse',
                            'SeasonalPrLatRmse', 'SeasonalPrLonRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLonRmse',
                            'EnsoSstLonRmse', 'EnsoSstTsRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew',
-                           'EnsodDuration', 'EnsoSstDiversity_2'],
+                           'EnsoDuration', 'EnsoSstDiversity_2'],
             'description': 'Describe which science question this collection is about',
         },
         'ENSO_tel': {
@@ -495,7 +495,7 @@ def defCollection(mc=True):
                 'EnsoFbTauxSsh': {
                     'variables': ['taux', 'ssh'],
                     'regions': {'ssh': 'nino3', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'ssh': ['AVISO']},
+                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux'], 'ssh': ['AVISO']},
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'abs_relative_difference',
@@ -675,7 +675,7 @@ def defCollection(mc=True):
                 'EnsoFbTauxSsh': {
                     'variables': ['taux', 'ssh'],
                     'regions': {'ssh': 'nino3', 'taux': 'nino4'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'ssh': ['AVISO']},
+                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux'], 'ssh': ['AVISO']},
                     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
                                    'newgrid_name': 'generic_1x1deg'},
                     'metric_computation': 'abs_relative_difference',
@@ -851,7 +851,7 @@ def defCollection(mc=True):
                 'SeasonalTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
-                    'obs_name': {'sst': ['ERA-Interim', 'Tropflux']},
+                    'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
                     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
                                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
                 },
@@ -868,7 +868,7 @@ def defCollection(mc=True):
             'plot_order': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse',
                            'SeasonalPrLatRmse', 'SeasonalPrLonRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLonRmse',
                            'EnsoSstLonRmse', 'EnsoSstTsRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew',
-                           'EnsodDuration', 'EnsoSstDiversity_2'],
+                           'EnsoDuration', 'EnsoSstDiversity_2'],
             'description': 'Describe which science question this collection is about',
         },
         'ENSO_THF': {

@@ -6,6 +6,9 @@ from datetime import date
 from inspect import stack as INSPECTstack
 from packaging.version import Version
 import ntpath
+import os as _os_sn
+import tempfile as _tmp_sn
+import shutil as _shutil_sn
 import numpy
 from numpy import array as NParray
 from numpy import exp as NPexp
@@ -61,6 +64,7 @@ except (ImportError, OSError):
     # OSError can occur when esmpy's libesmf_fullylinked.so is missing/mislinked
     _HAS_XESMF = False
 
+import cftime as _cft  # avoids module-level dependency
 
 # When True (default), _guess_dim raises ValueError for dimensions whose axis
 # type cannot be determined with any confidence (score <= 0). Set to False to
@@ -82,6 +86,8 @@ from .XarrayCompat import (
     _Axis,
     _build_grid_from_axes,
     _clean_attrs,
+    _get_time_coder,
+    _dim_to_axis_type,
     create_axis,
     create_uniform_lat_axis,
     create_uniform_lon_axis,
@@ -89,7 +95,7 @@ from .XarrayCompat import (
     create_variable,
     da_to_cdat,
     cdat_to_da,
-    validate_cdat_variable,
+    validate_cdat_variable,    
 )
 
 def open_file(path, mode="r"):
@@ -99,7 +105,6 @@ def open_file(path, mode="r"):
 def CDTIMEcomptime(year, month=1, day=1, hour=0, minute=0, second=0.0,
                    calendar="standard"):
     """Replacement for cdtime.comptime()."""
-    import cftime as _cft  # lazy — avoids module-level dependency
     # Clamp leap-second (second=60) to 59 — cftime rejects second=60
     return _cft.datetime(year, month, day, hour, minute,
                          min(int(second), 59), calendar=calendar)
@@ -553,13 +558,23 @@ def _axis_to_int(arr, axis):
     # This supports simple legacy arrays while avoiding dangerous silent
     # axis inference for higher-dimensional CMIP/E3SM datasets.
     #
-    # High-dimensional arrays without CF metadata must provide explicit
-    # axis/standard_name/units metadata.
-    if src is None and ndim > 3 and not ax_map:
-        raise ValueError(
+    # High-dimensional arrays without identifiable axis metadata are unsafe
+    # to interpret positionally. Respect STRICT_DIM_GUESS so legacy workflows
+    # can demote this to a warning when needed.
+    if not ax_map and ndim > 3:
+        msg = (
             f"Cannot infer axes for {ndim}-D array without CF axis metadata; "
             "attach axis types or pass an explicit integer axis."
         )
+
+        if STRICT_DIM_GUESS:
+            raise ValueError(msg)
+
+        warnings.warn(msg, stacklevel=2)
+
+        # Explicitly stop positional guessing for high-dimensional arrays.
+        return axis
+
     # Positional heuristics: only applied when *no* CF axis metadata was found
     # at all (ax_map is empty after the loop above).  Mixing positional guesses
     # with partial real metadata can silently reduce the wrong dimension on
@@ -699,8 +714,6 @@ def _ensure_time_encoding(ds: xr.Dataset, path: str = "") -> xr.Dataset:
             )
 
         try:
-            from .XarrayCompat import _get_time_coder
-
             coder = _get_time_coder()
             decoded = coder.decode(
                 xr.Variable("time", tc.values, {"units": units, "calendar": cal}),
@@ -1124,7 +1137,6 @@ def _fix_leap_seconds_in_raw(ds: xr.Dataset) -> xr.Dataset:
             continue
         fixed = flat.copy()
         changed = False
-        import cftime as _cft  # lazy — avoids module-level dependency
         for i, v in enumerate(flat):
             try:
                 dt = _cft.num2date(v, units, calendar)
@@ -1187,7 +1199,6 @@ def _to_sel_bound(raw_bound, t_dim: str, da: "xr.DataArray"):
     file.  Providing a ``cftime.datetime`` of the *correct calendar*
     prevents the cross-type comparison entirely.
     """
-    import cftime as _cft
     s = _sanitize_time_bound(raw_bound)
     coord = da.coords.get(t_dim) if t_dim in da.coords else None
     if coord is None or len(coord) == 0:
@@ -1237,13 +1248,12 @@ def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray
     - Dim without a coordinate: creates a minimal arange coord with CF attrs so
       da_to_cdat can attach the correct axis type to the resulting _Axis object.
     """
-    from .XarrayCompat import _dim_to_axis_type as _xc_dim_to_axis_type
     da = da.copy()
 
     for dim in da.dims:
         coord = da.coords.get(dim)
 
-        # --- Pre-classify before calling _xc_dim_to_axis_type ---
+        # --- Pre-classify before calling _dim_to_axis_type ---
         # Check CF attrs and value-based signals first so that we never reach
         # _detect_axis_type (which warns for time-named dims under
         # STRICT_AXIS_DETECTION=True) when the axis type is unambiguous.
@@ -1260,10 +1270,10 @@ def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray
                         or _is_datetime_like_time(coord)
                         or "since" in units_str):
                     ax_type = "T"
-        # Fall through to _xc_dim_to_axis_type for standard_name/units of
+        # Fall through to _dim_to_axis_type for standard_name/units of
         # Y/X/Z and name heuristics that don't risk a spurious warning.
         if ax_type == "-":
-            ax_type = _xc_dim_to_axis_type(dim, coord)
+            ax_type = _dim_to_axis_type(dim, coord)
 
         # Extra fallbacks when _dim_to_axis_type returns "-" (no CF metadata,
         # name heuristic also failed — e.g. STRICT_AXIS_DETECTION=True blocks
@@ -1493,9 +1503,12 @@ class _XcDatasetHandle:
 
     def close(self):
         if self._mode in ("w", "w+", "a") and self._write_vars:
-            import os as _os
-            _os.makedirs(_os.path.dirname(self._path) or ".", exist_ok=True)
-            ds_new = xr.Dataset(self._write_vars, attrs=_clean_attrs(self._global_attrs))
+            _os_sn.makedirs(_os_sn.path.dirname(self._path) or ".", exist_ok=True)
+
+            ds_new = xr.Dataset(
+                self._write_vars,
+                attrs=_clean_attrs(self._global_attrs),
+            )
             ds_new = ds_new.load()
 
             # Merge with any existing file so that variables written by previous
@@ -1503,29 +1516,48 @@ class _XcDatasetHandle:
             # silently overwrite same-named old ones.  The write goes to a
             # temporary file first, then is atomically renamed so a crash or
             # PermissionError never leaves a half-written output file.
-            if _os.path.exists(self._path):
+            if _os_sn.path.exists(self._path):
                 try:
-                    with xr.open_dataset(self._path, engine="netcdf4") as ds_old:
+                    with xr.open_dataset(self._path, engine="netcdf4",chunks={}) as ds_old:
                         ds_old = ds_old.load()
+
                     ds_merged = xr.merge(
-                        [ds_old.drop_vars(
-                             [v for v in ds_new.data_vars if v in ds_old],
-                             errors="ignore",
-                         ),
-                         ds_new],
+                        [
+                            ds_old.drop_vars(
+                                [v for v in ds_new.data_vars if v in ds_old],
+                                errors="ignore",
+                            ),
+                            ds_new,
+                        ],
                         compat="override",
                         join="outer",
                     )
+
                 except Exception:
                     # Existing file is corrupt or unreadable — overwrite cleanly.
                     ds_merged = ds_new
             else:
                 ds_merged = ds_new
 
-            tmpfile = self._path + ".tmp"
-            ds_merged.to_netcdf(tmpfile, mode="w", format="NETCDF4")
-            _os.replace(tmpfile, self._path)
-            ds_merged.close()
+            _fd, tmpfile = _tmp_sn.mkstemp(
+                prefix=ntpath.basename(self._path) + ".",
+                suffix=".tmp",
+                dir=ntpath.dirname(self._path) or ".",
+            )
+            _os_sn.close(_fd)
+
+            try:
+                ds_merged.to_netcdf(tmpfile, mode="w", format="NETCDF4")
+                _os_sn.replace(tmpfile, self._path)
+
+            except Exception:
+                if _os_sn.path.exists(tmpfile):
+                    _os_sn.remove(tmpfile)
+                raise
+
+            finally:
+                ds_merged.close()
+                ds_new.close()
 
         if self._ds is not None:
             self._ds.close()
@@ -2150,10 +2182,6 @@ def ArrayOnes(tab, id='new_variable_ones'):
     Description:
     Create a masked_array filled with ones with the same properties as tab (shape, axes, grid, mask)
     #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.ones)
     """
     tab = _to_cdat(tab)
     return create_variable(MV2ones(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=id)
@@ -2165,10 +2193,6 @@ def ArrayZeros(tab, id='new_variable_zeros'):
     Description:
     Create a masked_array filled with zeros with the same properties as tab (shape, axes, grid, mask)
     #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.zeros)
     """
     tab = _to_cdat(tab)
     return create_variable(MV2zeros(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=id)
@@ -2222,10 +2246,6 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
     Description:
     Averages along 'xy' axis
     #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.averager)
     """
     keyerror = None
     tab = _to_cdat(tab)
@@ -2285,10 +2305,6 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     Description:
     Averages along 'y' axis
     #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.averager)
     """
     keyerror = None
     lat_num = get_num_axis(tab, "latitude")
@@ -2392,10 +2408,6 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
     Description:
     Averages along 'x' axis
     #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.averager)
     """
     keyerror = None
     lat_num = get_num_axis(tab, "latitude")
@@ -2520,10 +2532,6 @@ def ComputeInterannualAnomalies(tab):
     Description:
     Computes interannual anomalies
     #################################################################################
-
-    for more information:
-    import cdutil
-    help(cdutil.ANNUALCYCLE.departures)
     """
     return cdutil.ANNUALCYCLE.departures(tab)
 
@@ -2534,10 +2542,6 @@ def Correlation(tab, ref, weights=None, axis=0, centered=1, biased=1):
     Description:
     Computes correlation
     #################################################################################
-
-    for more information:
-    import genutil
-    help(genutil.statistics.correlation)
     """
     return GENUTILcorrelation(tab, ref, weights=weights, axis=axis, centered=centered, biased=biased)
 
@@ -2549,10 +2553,6 @@ def OperationAdd(tab, number_or_tab):
     Adds every elements of 'tab' by 'number_or_tab'
     If 'number_or_tab' is an array it must have the same shape as tab
     #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.add)
     """
     if not isinstance(number_or_tab, int) and not isinstance(number_or_tab, float):
         if tab.shape != number_or_tab.shape:
@@ -2566,10 +2566,6 @@ def OperationDivide(tab, number_or_tab):
     Description:
     Divides every elements of 'tab' by 'number_or_tab'
     #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.divide)
     """
     if not isinstance(number_or_tab, int) and not isinstance(number_or_tab, float):
         if tab.shape != number_or_tab.shape:
@@ -2583,10 +2579,6 @@ def OperationMultiply(tab, number_or_tab):
     Description:
     Multiplies every elements of 'tab' by 'number_or_tab'
     #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.multiply)
     """
     tab = _to_cdat(tab)
     if not isinstance(number_or_tab, int) and not isinstance(number_or_tab, float):
@@ -2609,10 +2601,6 @@ def OperationSubtract(tab, number_or_tab):
     Description:
     Subtracts every elements of 'tab' by 'number_or_tab'
     #################################################################################
-
-    for more information:
-    import MV2
-    help(MV2.subtract)
     """
     if not isinstance(number_or_tab, int) and not isinstance(number_or_tab, float):
         if tab.shape != number_or_tab.shape:
@@ -2902,10 +2890,6 @@ def Std(tab, weights=None, axis=0, centered=1, biased=1):
     Description:
     Computes standard deviation
     #################################################################################
-
-    for more information:
-    import genutil
-    help(genutil.statistics.std)
     """
     tmp = GENUTILstd(tab, weights=weights, axis=axis, centered=centered, biased=biased)
     try:
@@ -4417,11 +4401,6 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
     Description:
     Regrids 'tab_to_regrid' to 'togrid'
     #################################################################################
-
-    for more information:
-    import cdms2
-    help(cdms2.avariable)
-
     :param tab_to_regrid: masked_array
         masked_array to regrid (must include a CDMS grid!)
     :param newgrid: CDMS grid
@@ -4581,103 +4560,140 @@ def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_ti
                var9_time_name=None, var10=None, var10_attributes={}, var10_name='', var10_time_name=None, var11=None,
                var11_attributes={}, var11_name='', var11_time_name=None, var12=None, var12_attributes={}, var12_name='',
                var12_time_name=None, frequency="monthly", global_attributes={}, **kwargs):
-    import os as _os_sn, ntpath as _ntp_sn
-    _out_dir = _ntp_sn.dirname(netcdf_name) or "."
-    _os_sn.makedirs(_out_dir, exist_ok=True)
-    # Always open in write mode — all variables are buffered in _write_vars
-    # and flushed atomically at close(), so append mode ('a') is never needed
-    # and causes xarray's LRU cache to raise KeyError on stale file handles.
-    o = open_file(netcdf_name, "w+")
-    if var1 is not None:
-        if var1_name == '':
-            var1_name = var1.id
-        if var1_time_name is not None:
-            var1 = TimeButNotTime(var1, var1_time_name, frequency)
-        o.write(var1, attributes=var1_attributes, dtype="float32", id=var1_name)
-    if var2 is not None:
-        if var2_name == '':
-            var2_name = var2.id
-        if var2_time_name is not None:
-            var2 = TimeButNotTime(var2, var2_time_name, frequency)
-        o.write(var2, attributes=var2_attributes, dtype="float32", id=var2_name)
-    if var3 is not None:
-        if var3_name == '':
-            var3_name = var3.id
-        if var3_time_name is not None:
-            var3 = TimeButNotTime(var3, var3_time_name, frequency)
-        o.write(var3, attributes=var3_attributes, dtype="float32", id=var3_name)
-    if var4 is not None:
-        if var4_name == '':
-            var4_name = var4.id
-        if var4_time_name is not None:
-            var4 = TimeButNotTime(var4, var4_time_name, frequency)
-        o.write(var4, attributes=var4_attributes, dtype="float32", id=var4_name)
-    if var5 is not None:
-        if var5_name == '':
-            var5_name = var5.id
-        if var5_time_name is not None:
-            var5 = TimeButNotTime(var5, var5_time_name, frequency)
-        o.write(var5, attributes=var5_attributes, dtype="float32", id=var5_name)
-    if var6 is not None:
-        if var6_name == '':
-            var6_name = var6.id
-        if var6_time_name is not None:
-            var6 = TimeButNotTime(var6, var6_time_name, frequency)
-        o.write(var6, attributes=var6_attributes, dtype="float32", id=var6_name)
-    if var7 is not None:
-        if var7_name == '':
-            var7_name = var7.id
-        if var7_time_name is not None:
-            var7 = TimeButNotTime(var7, var7_time_name, frequency)
-        o.write(var7, attributes=var7_attributes, dtype="float32", id=var7_name)
-    if var8 is not None:
-        if var8_name == '':
-            var8_name = var8.id
-        if var8_time_name is not None:
-            var8 = TimeButNotTime(var8, var8_time_name, frequency)
-        o.write(var8, attributes=var8_attributes, dtype="float32", id=var8_name)
-    if var9 is not None:
-        if var9_name == '':
-            var9_name = var9.id
-        if var9_time_name is not None:
-            var9 = TimeButNotTime(var9, var9_time_name, frequency)
-        o.write(var9, attributes=var9_attributes, dtype="float32", id=var9_name)
-    if var10 is not None:
-        if var10_name == '':
-            var10_name = var10.id
-        if var10_time_name is not None:
-            var10 = TimeButNotTime(var10, var10_time_name, frequency)
-        o.write(var10, attributes=var10_attributes, dtype="float32", id=var10_name)
-    if var11 is not None:
-        if var11_name == '':
-            var11_name = var11.id
-        if var11_time_name is not None:
-            var11 = TimeButNotTime(var11, var11_time_name, frequency)
-        o.write(var11, attributes=var11_attributes, dtype="float32", id=var11_name)
-    if var12 is not None:
-        if var12_name == '':
-            var12_name = var12.id
-        if var12_time_name is not None:
-            var12 = TimeButNotTime(var12, var12_time_name, frequency)
-        o.write(var12, attributes=var12_attributes, dtype="float32", id=var12_name)
-    my_keys = sorted([key for key in list(kwargs.keys())
-                      if "var" in key and str(key.replace("var", "")).isdigit() is True],
-                     key=lambda v: v.upper())
-    for key in my_keys:
-        if kwargs[key] is not None:
-            if key + "_name" not in list(kwargs.keys()) or \
-                    (key + "_name" in list(kwargs.keys()) and kwargs[key + "_name"] == ''):
-                kwargs[key + "_name"] = kwargs[key].id
-            if key + "_time_name" in list(kwargs.keys()) and kwargs[key + "_time_name"] is not None:
-                kwargs[key] = TimeButNotTime(kwargs[key], kwargs[key + "_time_name"], frequency)
-            if key + "_attributes" not in list(kwargs.keys()):
-                kwargs[key + "_attributes"] = {}
-            o.write(kwargs[key], attributes=kwargs[key + "_attributes"], dtype="float32", id=kwargs[key + "_name"])
-    for att in sorted(list(global_attributes.keys()), key=lambda v: v.upper()):
-        o.__setattr__(att, global_attributes[att])
-    o.close()
-    return
 
+    _out_dir = ntpath.dirname(netcdf_name) or "."
+    _os_sn.makedirs(_out_dir, exist_ok=True)
+
+    if OSpath__isfile(netcdf_name) is True:
+        o = open_file(netcdf_name, "a")
+    else:
+        o = open_file(netcdf_name, "w+")
+
+    try:
+        if var1 is not None:
+            if var1_name == '':
+                var1_name = var1.id
+            if var1_time_name is not None:
+                var1 = TimeButNotTime(var1, var1_time_name, frequency)
+            o.write(var1, attributes=var1_attributes, dtype="float32", id=var1_name)
+
+        if var2 is not None:
+            if var2_name == '':
+                var2_name = var2.id
+            if var2_time_name is not None:
+                var2 = TimeButNotTime(var2, var2_time_name, frequency)
+            o.write(var2, attributes=var2_attributes, dtype="float32", id=var2_name)
+
+        if var3 is not None:
+            if var3_name == '':
+                var3_name = var3.id
+            if var3_time_name is not None:
+                var3 = TimeButNotTime(var3, var3_time_name, frequency)
+            o.write(var3, attributes=var3_attributes, dtype="float32", id=var3_name)
+
+        if var4 is not None:
+            if var4_name == '':
+                var4_name = var4.id
+            if var4_time_name is not None:
+                var4 = TimeButNotTime(var4, var4_time_name, frequency)
+            o.write(var4, attributes=var4_attributes, dtype="float32", id=var4_name)
+
+        if var5 is not None:
+            if var5_name == '':
+                var5_name = var5.id
+            if var5_time_name is not None:
+                var5 = TimeButNotTime(var5, var5_time_name, frequency)
+            o.write(var5, attributes=var5_attributes, dtype="float32", id=var5_name)
+
+        if var6 is not None:
+            if var6_name == '':
+                var6_name = var6.id
+            if var6_time_name is not None:
+                var6 = TimeButNotTime(var6, var6_time_name, frequency)
+            o.write(var6, attributes=var6_attributes, dtype="float32", id=var6_name)
+
+        if var7 is not None:
+            if var7_name == '':
+                var7_name = var7.id
+            if var7_time_name is not None:
+                var7 = TimeButNotTime(var7, var7_time_name, frequency)
+            o.write(var7, attributes=var7_attributes, dtype="float32", id=var7_name)
+
+        if var8 is not None:
+            if var8_name == '':
+                var8_name = var8.id
+            if var8_time_name is not None:
+                var8 = TimeButNotTime(var8, var8_time_name, frequency)
+            o.write(var8, attributes=var8_attributes, dtype="float32", id=var8_name)
+
+        if var9 is not None:
+            if var9_name == '':
+                var9_name = var9.id
+            if var9_time_name is not None:
+                var9 = TimeButNotTime(var9, var9_time_name, frequency)
+            o.write(var9, attributes=var9_attributes, dtype="float32", id=var9_name)
+
+        if var10 is not None:
+            if var10_name == '':
+                var10_name = var10.id
+            if var10_time_name is not None:
+                var10 = TimeButNotTime(var10, var10_time_name, frequency)
+            o.write(var10, attributes=var10_attributes, dtype="float32", id=var10_name)
+
+        if var11 is not None:
+            if var11_name == '':
+                var11_name = var11.id
+            if var11_time_name is not None:
+                var11 = TimeButNotTime(var11, var11_time_name, frequency)
+            o.write(var11, attributes=var11_attributes, dtype="float32", id=var11_name)
+
+        if var12 is not None:
+            if var12_name == '':
+                var12_name = var12.id
+            if var12_time_name is not None:
+                var12 = TimeButNotTime(var12, var12_time_name, frequency)
+            o.write(var12, attributes=var12_attributes, dtype="float32", id=var12_name)
+
+        my_keys = sorted(
+            [
+                key for key in list(kwargs.keys())
+                if "var" in key and str(key.replace("var", "")).isdigit() is True
+            ],
+            key=lambda v: v.upper(),
+        )
+
+        for key in my_keys:
+            if kwargs[key] is not None:
+                if key + "_name" not in list(kwargs.keys()) or \
+                        (key + "_name" in list(kwargs.keys()) and kwargs[key + "_name"] == ''):
+                    kwargs[key + "_name"] = kwargs[key].id
+
+                if key + "_time_name" in list(kwargs.keys()) and kwargs[key + "_time_name"] is not None:
+                    kwargs[key] = TimeButNotTime(kwargs[key], kwargs[key + "_time_name"], frequency)
+
+                if key + "_attributes" not in list(kwargs.keys()):
+                    kwargs[key + "_attributes"] = {}
+
+                o.write(
+                    kwargs[key],
+                    attributes=kwargs[key + "_attributes"],
+                    dtype="float32",
+                    id=kwargs[key + "_name"],
+                )
+
+        for att in sorted(list(global_attributes.keys()), key=lambda v: v.upper()):
+            o.__setattr__(att, global_attributes[att])
+
+        o.close()
+
+    except Exception:
+        try:
+            o.close()
+        except Exception:
+            pass
+        raise
+
+    return
 
 def SkewnessTemporal(tab):
     """
@@ -6148,10 +6164,6 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
             '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
         default value = 'generic 1x1deg'
         for more information:
-        import cdms2
-        help(cdms2.createUniformLatitudeAxis)
-        help(cdms2.createUniformLongitudeAxis)
-        help(cdms2.createRectGrid)
     see EnsoUvcdatToolsLib.Regrid for regridding options
 
     :return: model, obs, info

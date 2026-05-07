@@ -1006,11 +1006,21 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         noerror = False if noerror is False or noerror2 is False else True
     if noerror is False:
         dict_metrics = {
-            "metric": {"value": None, "value_error": None}, "diagnostic": {"value": None, "value_error": None}}
+            "metric": {"value": None, "value_error": None},
+            "diagnostic": {"value": None, "value_error": None},
+        }
         dict_metadata = {
             "metric": {"name": metric, "method": None, "datasets": modelName, "units": None},
-            "diagnostic": {{modelName: {"method": None, "name": None, "ref": None, "time_frequency": None,
-                                        "units": None, "keyerror": tmperr}}},
+            "diagnostic": {
+                modelName: {
+                    "method": None,
+                    "name": None,
+                    "ref": None,
+                    "time_frequency": None,
+                    "units": None,
+                    "keyerror": tmperr,
+                }
+            },
         }
         dict_dive_down, dict_dive_down_metadata = {}, {}
     else:
@@ -1123,6 +1133,28 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             elif metric in list(dict_twoVar.keys()):
                 # computes diagnostic that needs two variables
                 print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + "\033[0m")
+                if debug:
+                    print("[DEBUG] Arguments for twoVarmetric {}: ".format(metric))
+                    print("  modelFile1:", modelFile1)
+                    print("  modelVarName1:", modelVarName1)
+                    print("  modelFileArea1:", modelFileArea1)
+                    print("  modelAreaName1:", modelAreaName1)
+                    print("  modelFileLandmask1:", modelFileLandmask1)
+                    print("  modelLandmaskName1:", modelLandmaskName1)
+                    print("  regionVar1:", regionVar1)
+                    print("  modelFile2:", modelFile2)
+                    print("  modelVarName2:", modelVarName2)
+                    print("  modelFileArea2:", modelFileArea2)
+                    print("  modelAreaName2:", modelAreaName2)
+                    print("  modelFileLandmask2:", modelFileLandmask2)
+                    print("  modelLandmaskName2:", modelLandmaskName2)
+                    print("  regionVar2:", regionVar2)
+                    print("  dataset:", modelName)
+                    print("  debug:", debug)
+                    print("  netcdf:", netcdf)
+                    print("  netcdf_name:", netcdf_name)
+                    print("  metname:", tmp_metric)
+                    print("  keyarg:", keyarg)
                 keyarg["project_interpreter_var2"] = keyarg["project_interpreter_mod_var2"]
                 diagnostic1 = dict_twoVar[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,

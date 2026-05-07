@@ -133,7 +133,7 @@ def math_metric_computation(model, model_err, obs=None, obs_err=None, keyword='d
                 metric = 100. * abs((model - obs) / float(obs))
         else:
             metric, description_metric = None, ''
-        if model_err is not None or obs_err is not None:
+        if model_err is not None and obs_err is not None:
             if keyword == 'difference':
                 # mathematical definition of the error on addition / subtraction
                 metric_err = model_err + obs_err
