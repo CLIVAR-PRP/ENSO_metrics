@@ -583,7 +583,7 @@ input_dataset_dictionary = {
 # e.g.:
 dict_o, _ = ComputeCollection(
     metric_collection, input_dataset_dictionary, dataset, netcdf=True, netcdf_name=ouput_netcdf_file,
-    observed_fyear=1980, observed_lyear=2014, modeled_fyear=1980, modeled_lyear=2014)
+    observed_fyear=1980, observed_lyear=2014, modeled_fyear=1980, modeled_lyear=2014, debug=False)
 # save as json file
 with open(ouput_json_file, "w") as outfile:
     json.dump({dataset: dict_o}, outfile, sort_keys=True)
