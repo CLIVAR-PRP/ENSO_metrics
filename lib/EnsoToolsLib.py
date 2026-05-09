@@ -197,19 +197,22 @@ def statistical_dispersion(tab, method='IQR'):
     """
     #################################################################################
     Description:
-    Computes the statistical dispersion of the distribution
+    Compute the statistical dispersion of a distribution.
     #################################################################################
 
-    :param tab: list or `cdms2` variable
-        A list or a `cdms2` variable containing the data to be analysed
+    :param tab: list, array-like, or CDATVariable
+        Input data to be analyzed. Missing or masked values are handled
+        according to the existing ENSO_metrics/numpy workflow.
+
     :param method: string, optional
-        method to compute the statistical dispersion
-        'IQR': interquartile range, IQR = Q3 - Q1
-        'MAD': median absolute deviation, MAD = median([Xi - median(tab)])
-        Default is 'IQR'
+        Method used to compute statistical dispersion:
+            ``"IQR"``: interquartile range, IQR = Q3 - Q1
+            ``"MAD"``: median absolute deviation,
+                       MAD = median(abs(Xi - median(tab)))
+        default value = ``"IQR"``
 
     :return stat_disp: float
-        statistical_dispersion
+        Statistical dispersion value.
     """
     known_methods = sorted(['IQR', 'MAD'])
     if method not in known_methods:

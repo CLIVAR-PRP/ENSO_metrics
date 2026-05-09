@@ -107,8 +107,8 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
         help(EnsoUvcdatToolsLib.Regrid)
         e.g.:
         user_regridding = {
-            'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                'newgrid_name': 'generic 1x1deg'},
+            'regridding': {'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                'newgrid_name': 'generic_1x1deg'},
         }
     :param debug: boolean, optional
         default value = False debug mode not activated
@@ -747,15 +747,17 @@ dict_twoVar = {
 }
 
 
-def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-                  regionVar1, modelFileArea1="", modelAreaName1="", modelFileLandmask1="", modelLandmaskName1="",
-                  modelInterpreter1=None, obsFileArea1="", obsAreaName1="", obsFileLandmask1="", obsLandmaskName1="",
-                  obsInterpreter1=None, modelFile2="", modelVarName2="", modelFileArea2="", modelAreaName2="",
-                  modelFileLandmask2="", modelLandmaskName2="", modelInterpreter2=None, obsNameVar2="", obsFile2="",
-                  obsVarName2="", obsFileArea2="", obsAreaName2="", obsFileLandmask2="", obsLandmaskName2="",
-                  regionVar2="", obsInterpreter2=None, user_regridding={}, debug=False, netcdf=False, netcdf_name="",
-                  observed_fyear=None, observed_lyear=None, modeled_fyear=None, modeled_lyear=None,
-                  obs_interpreter=None):
+def ComputeMetric(
+        metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
+        regionVar1, modelFileArea1="", modelAreaName1="", modelFileLandmask1="", modelLandmaskName1="",
+        modelInterpreter1=None, obsFileArea1="", obsAreaName1="", obsFileLandmask1="", obsLandmaskName1="",
+        obsInterpreter1=None, modelFile2="", modelVarName2="", modelFileArea2="", modelAreaName2="",
+        modelFileLandmask2="", modelLandmaskName2="", modelInterpreter2=None, obsNameVar2="", obsFile2="",
+        obsVarName2="", obsFileArea2="", obsAreaName2="", obsFileLandmask2="", obsLandmaskName2="",
+        regionVar2="", obsInterpreter2=None, user_regridding={}, debug=False, netcdf=False, netcdf_name="",
+        observed_fyear=None, observed_lyear=None, modeled_fyear=None, modeled_lyear=None,
+        obs_interpreter=None
+    ):
     """
     :param metricCollection: string
         name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
@@ -862,8 +864,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         help(EnsoUvcdatToolsLib.Regrid)
         e.g.:
         user_regridding = {
-            'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                'newgrid_name': 'generic 1x1deg'},
+            'regridding': {'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                'newgrid_name': 'generic_1x1deg'},
         }
     :param debug: boolean, optional
         default value = False debug mode not activated
@@ -1041,8 +1043,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         if "EnsoSstMap" in metric and output_name in sst_only:
                             pass
                         else:
-                            print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " +
-                                  modelName + " and " + output_name + "\033[0m")
+                            print(
+                                "\033[94m" + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " +
+                                modelName + " and " + output_name + "\033[0m"
+                            )
                             diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
                                 modelLandmaskName1, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii],
@@ -1058,8 +1062,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         keyarg["project_interpreter_obs_var2"] = "CMIP" if obs_interpreter == "CMIP" else deepcopy(
                             obs_int2)
                         if output_name != modelName:
-                            print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
-                                  modelName + " and " + output_name + "\033[0m")
+                            print(
+                                "\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
+                                modelName + " and " + output_name + "\033[0m"
+                            )
                             diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
                                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
                                 modelLandmaskName1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2,
@@ -1106,10 +1112,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     dict_dive_down_metadata[obs] = dict1
                     del dict1
                 # puts diagnostic metadata in its proper dictionary
-                dict_diagnostic_metadata[modelName] = {"name": modelName, "nyears": diagnostic1[obs]["nyears_model"],
-                                                       "time_period": diagnostic1[obs]["time_period_model"]}
-                dict_diagnostic_metadata[obs] = {"name": obs, "nyears": diagnostic1[obs]["nyears_observations"],
-                                                 "time_period": diagnostic1[obs]["time_period_observations"]}
+                dict_diagnostic_metadata[modelName] = {
+                    "name": modelName, "nyears": diagnostic1[obs]["nyears_model"],
+                    "time_period": diagnostic1[obs]["time_period_model"]
+                }
+                dict_diagnostic_metadata[obs] = {
+                    "name": obs, "nyears": diagnostic1[obs]["nyears_observations"],
+                    "time_period": diagnostic1[obs]["time_period_observations"]
+                }
                 if "events_model" in list(diagnostic1[obs].keys()):
                     dict_diagnostic_metadata[modelName]["events"] = diagnostic1[obs]["events_model"]
                     dict_diagnostic_metadata[obs]["events"] = diagnostic1[obs]["events_observations"]
@@ -1201,8 +1211,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 if metric in list(dict_oneVar.keys()):
                     output_name = deepcopy(obsNameVar1[ii])
                     if output_name != modelName:
-                        print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(output_name) +
-                              "\033[0m")
+                        print(
+                            "\033[94m" + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(output_name) +
+                            "\033[0m"
+                        )
                         diag_obs[output_name] = dict_oneVar[metric](
                             obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                             obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
@@ -1214,8 +1226,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         keyarg["project_interpreter_var2"] = \
                             "CMIP" if obs_interpreter == "CMIP" else deepcopy(obsInterpreter2[jj])
                         if output_name != modelName:
-                            print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
-                                  "\033[0m")
+                            print(
+                                "\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
+                                "\033[0m"
+                            )
                             diag_obs[output_name] = dict_twoVar[metric](
                                 obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                                 obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],

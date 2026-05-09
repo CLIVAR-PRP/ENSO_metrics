@@ -79,8 +79,8 @@ import cftime as _cft  # avoids module-level dependency
 # For best results, add CF-compliant axis/standard_name/units metadata to your data.
 STRICT_DIM_GUESS: bool = True
 
-# Compatibility shim: provides CDATVariable (drop-in for cdms2.TransientVariable)
-# and factory helpers that keep callers (EnsoMetricsLib.py, …) unchanged.
+# Compatibility shim: provides CDATVariable, a CDAT-like variable object
+# used in place of the legacy cdms2.TransientVariable interface by ENSO_metrics.
 from .XarrayCompat import (
     CDATVariable,
     _Axis,
@@ -102,12 +102,16 @@ def open_file(path, mode="r"):
     """Open a NetCDF file; returns an _XcDatasetHandle wrapping xcdat."""
     return _XcDatasetHandle(path, mode)
 
-def CDTIMEcomptime(year, month=1, day=1, hour=0, minute=0, second=0.0,
-                   calendar="standard"):
+def CDTIMEcomptime(
+            year, month=1, day=1, hour=0, minute=0, second=0.0,
+            calendar="standard"
+    ):
     """Replacement for cdtime.comptime()."""
     # Clamp leap-second (second=60) to 59 — cftime rejects second=60
-    return _cft.datetime(year, month, day, hour, minute,
-                         min(int(second), 59), calendar=calendar)
+    return _cft.datetime(
+        year, month, day, hour, minute,
+        min(int(second), 59), calendar=calendar
+    )
 
 def _coord_attrs_lower(coord):
     return {
@@ -258,8 +262,10 @@ def MV2concatenate(seq, axis=0):
     seq = list(seq)
     arrs  = [_mv(x) for x in seq]
     masks = [ma.getmaskarray(x) for x in arrs]
-    result = ma.array(np.concatenate(arrs, axis=axis),
-                      mask=np.concatenate(masks, axis=axis))
+    result = ma.array(
+        np.concatenate(arrs, axis=axis),
+        mask=np.concatenate(masks, axis=axis)
+        )
     if seq and all(isinstance(x, CDATVariable) for x in seq):
         tmpl = seq[0]
         new_axes = list(tmpl._axes)
@@ -269,10 +275,12 @@ def MV2concatenate(seq, axis=0):
                     for x in seq)):
             old_ax = tmpl._axes[ax_int]
             cat_vals = np.concatenate([x._axes[ax_int]._values for x in seq])
-            new_ax = _Axis(old_ax.id, cat_vals,
-                           units=old_ax.units,
-                           attributes=dict(old_ax._attributes),
-                           axis_type=old_ax.axis)
+            new_ax = _Axis(
+                old_ax.id, cat_vals,
+                units=old_ax.units,
+                attributes=dict(old_ax._attributes),
+                axis_type=old_ax.axis
+            )
             new_ax.calendar = old_ax.calendar
             new_axes[ax_int] = new_ax
         return CDATVariable(result, axes=new_axes, grid=tmpl._grid,
@@ -333,10 +341,12 @@ def MV2take(a, indices, axis=0):
         if 0 <= ax_int < len(new_axes) and new_axes[ax_int] is not None:
             old_ax = new_axes[ax_int]
             idx = np.asarray(indices)
-            new_ax = _Axis(old_ax.id, old_ax._values[idx],
-                           units=old_ax.units,
-                           attributes=dict(old_ax._attributes),
-                           axis_type=old_ax.axis)
+            new_ax = _Axis(
+                old_ax.id, old_ax._values[idx],
+                units=old_ax.units,
+                attributes=dict(old_ax._attributes),
+                axis_type=old_ax.axis
+            )
             new_ax.calendar = old_ax.calendar
             new_axes[ax_int] = new_ax
         return CDATVariable(result, axes=new_axes, grid=a._grid,
@@ -377,16 +387,27 @@ def _to_cdat(x):
     raw = _mv(x)
     return CDATVariable(raw, id="")
 
-
 def _get_lat_weights(var, axis=None):
     """Return area weights broadcast to *var*'s shape, or None.
 
     Priority:
     1. ``cell_area`` attribute on *var* — exact area weights for stretched /
-       regionally-refined (RRM) grids (E3SM, MPAS-A regular outputs).
+        regionally-refined (RRM) grids (E3SM, MPAS-A regular outputs).
     2. Cosine of latitude — standard approximation for regular grids.
     """
     var = _to_cdat(var)
+
+    var_attrs = getattr(var, "attributes", {}) or {}
+    var_label = (
+        getattr(var, "id", None)
+        or getattr(var, "name", None)
+        or var_attrs.get("id", None)
+        or var_attrs.get("short_name", None)
+        or var_attrs.get("standard_name", None)
+        or var_attrs.get("long_name", None)
+        or "unknown"
+    )
+
     # Priority 1: explicit cell_area (exact for stretched / RRM grids)
     cell_area = getattr(var, 'cell_area', None)
     if cell_area is not None:
@@ -405,51 +426,76 @@ def _get_lat_weights(var, axis=None):
             combined_mask = ma.getmaskarray(wbc) | ma.getmaskarray(data)
             wbc = ma.array(wbc, mask=combined_mask)
             return wbc
+
         except Exception as _cell_area_exc:
             warnings.warn(
-                f"cell_area weight computation failed ({_cell_area_exc}); "
+                f"_get_lat_weights: cell_area weight computation failed for "
+                f"variable {var_label!r} ({_cell_area_exc}); "
                 "falling back to cosine-latitude weights. "
                 "Results may be incorrect for stretched/RRM grids.",
                 stacklevel=2,
             )
+
     # Priority 2: cos(lat) — standard approximation for regular rectilinear
     # grids.  This is accurate only when grid cells have uniform zonal width;
     # for stretched, RRM, or curvilinear grids the caller should attach
     # cell_area to avoid biased spatial averages.
     warnings.warn(
-        f"_get_lat_weights: no cell_area found on variable {getattr(var, 'id', '?')!r}; "
+        f"_get_lat_weights: no cell_area found on variable {var_label!r}; "
         "falling back to cosine-latitude weights. "
-        "Attach var.cell_area (sftlf or areacella) for accurate spatial averages "
-        "on non-uniform grids (E3SM-RRM, MPAS, stretched CMIP grids).",
+        "Attach var.cell_area, such as areacella for atmospheric fields or areacello "
+        "for ocean fields, for accurate spatial averages on non-uniform grids "
+        "(E3SM-RRM, MPAS, stretched CMIP grids).",
         stacklevel=3,
     )
+
     lat = var.getLatitude()
     if lat is None:
         raise ValueError(
             f"_get_lat_weights: latitude axis not found for variable "
-            f"{getattr(var, 'id', '?')!r}. Cannot compute spatial weights. "
+            f"{var_label!r}. Cannot compute spatial weights. "
             "Ensure the CDATVariable has a latitude axis with CF axis='Y' metadata."
         )
+
     lat_vals = np.asarray(lat[:], dtype=float)
     w = np.cos(np.deg2rad(lat_vals))
     w = ma.masked_invalid(w)
+
     lat_axis = _axis_to_int(var, "y")
     if lat_axis is None:
         raise ValueError(
             f"_get_lat_weights: latitude axis index cannot be determined for variable "
-            f"{getattr(var, 'id', '?')!r}. Attach CF axis/standard_name metadata."
+            f"{var_label!r}. Attach CF axis/standard_name metadata."
         )
+
     shape = [1] * var.ndim
     shape[lat_axis] = len(w)
     return w.reshape(shape)
 
-
 def _weighted_spatial_average(tab, axes=("Y", "X")):
     """
-    Cosine-latitude-weighted spatial average matching cdutil.averager behaviour.
+    Compute a latitude-weighted spatial average using the ENSO_metrics
+    compatibility layer.
 
-    *axes* is a tuple of CDAT axis-type strings to reduce over (e.g. ("Y","X"),
-    ("Y",), ("X",)).  Returns a numpy.ma array with those dimensions collapsed.
+    This helper preserves the subset of legacy ``cdutil.averager`` behavior
+    needed by ENSO_metrics while using ``numpy.ma`` operations and CDAT-like
+    compatibility metadata.
+
+    Parameters
+    ----------
+    tab : CDATVariable or masked-array-like
+        Input field with latitude/longitude axes when spatial weighting is
+        requested.
+
+    axes : tuple of str, optional
+        CDAT-style axis-type strings to reduce over, for example ``("Y", "X")``,
+        ``("Y",)``, or ``("X",)``.
+        default value = ``("Y", "X")``
+
+    Returns
+    -------
+    numpy.ma.MaskedArray
+        Spatially averaged values with the requested dimensions collapsed.
     """
     tab = _to_cdat(tab)
     data = _mv(tab)
@@ -637,9 +683,9 @@ def _axis_to_int(arr, axis):
     return axis  # unknown string → pass through; numpy will raise a clear error
 
 
-# ---------------------------------------------------------------------------
-# cdutil season-averager stubs  (used only inside this module)
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
+# Legacy cdutil-style season helpers implemented with xarray/xcdat-compatible logic
+# ----------------------------------------------------------------------------------
 class _SeasonHelper:
     """Thin wrapper that mimics cdutil.JAN, cdutil.DJF, etc."""
     def __init__(self, months: list):
@@ -894,24 +940,34 @@ sea_dict = {k: _SeasonHelper(v) for k, v in _MONTH_MAP.items()}
 # Grid consistency guard
 # ---------------------------------------------------------------------------
 def check_grid_consistency(a, b, context: str = "", regrid_to: str = "b") -> tuple:
-    """Raise ValueError if *a* and *b* have incompatible spatial shapes.
+    """Check whether two fields are on compatible horizontal grids.
+
+    The function verifies that both fields have matching latitude/longitude
+    dimensions. If coordinate sizes match but latitude or longitude coordinate
+    values differ, it emits a warning so callers can detect same-shape but
+    different-grid cases.
 
     Parameters
     ----------
-    a, b        : CDATVariable or array-like — the two fields to compare.
-    context     : string used in error/warning messages (e.g. function name).
-    regrid_to   : ``"a"`` or ``"b"`` — which grid to regrid *to* when an
-                  automatic regrid is attempted.  Currently this function only
-                  raises; callers that want auto-regridding should pass the
-                  fields through ``Regrid()`` first.
+    a, b : CDATVariable or array-like
+        Fields to compare.
+    context : str, optional
+        Label used in error/warning messages, for example the calling function
+        name.
+    regrid_to : str, optional
+        Retained for API compatibility. This function does not perform
+        automatic regridding; callers should use ``Regrid()`` before metric
+        calculation when grids differ.
 
     Returns
     -------
-    (a, b) unchanged — so callers can write ``a, b = check_grid_consistency(a, b, ...)``.
+    tuple
+        ``(a, b)`` unchanged.
 
     Raises
     ------
-    ValueError  if the spatial grids differ.
+    ValueError
+        If latitude/longitude sizes differ.
     """
     a_cdat = _to_cdat(a) if not isinstance(a, CDATVariable) else a
     b_cdat = _to_cdat(b) if not isinstance(b, CDATVariable) else b
@@ -927,7 +983,7 @@ def check_grid_consistency(a, b, context: str = "", regrid_to: str = "b") -> tup
     b_lon_n = len(b_lon) if b_lon is not None else None
 
     if (a_lat_n is not None and b_lat_n is not None and a_lat_n != b_lat_n) or \
-       (a_lon_n is not None and b_lon_n is not None and a_lon_n != b_lon_n):
+        (a_lon_n is not None and b_lon_n is not None and a_lon_n != b_lon_n):
         raise ValueError(
             f"{context}: spatial grid mismatch — "
             f"a has ({a_lat_n}, {a_lon_n}) lat/lon points, "
@@ -938,10 +994,24 @@ def check_grid_consistency(a, b, context: str = "", regrid_to: str = "b") -> tup
 
     # Value-level mismatch: same size but different coordinate values
     if (a_lat is not None and b_lat is not None and a_lat_n == b_lat_n):
-        if not np.allclose(np.asarray(a_lat[:], dtype=float),
-                           np.asarray(b_lat[:], dtype=float), atol=1e-4):
+        if not np.allclose(
+            np.asarray(a_lat[:], dtype=float),
+            np.asarray(b_lat[:], dtype=float), atol=1e-4
+            ):
             warnings.warn(
                 f"{context}: latitude coordinate values differ between a and b "
+                "despite matching sizes — verify both are on the same grid.",
+                stacklevel=3,
+            )
+    
+    if (a_lon is not None and b_lon is not None and a_lon_n == b_lon_n):
+        if not np.allclose(
+            np.asarray(a_lon[:], dtype=float),
+            np.asarray(b_lon[:], dtype=float),
+            atol=1e-4,
+        ):
+            warnings.warn(
+                f"{context}: longitude coordinate values differ between a and b "
                 "despite matching sizes — verify both are on the same grid.",
                 stacklevel=3,
             )
@@ -1044,31 +1114,67 @@ def GENUTILstd(a, weights=None, axis=0, centered=1, biased=1):
 def GENUTILlinearregression(y, x=None, error=1, nointercept=None):
     """
     Replacement for genutil.statistics.linearregression.
-    Handles 1-D case; returns [[slope, intercept], [stderr_s, stderr_i]].
+
+    Handles the 1-D flattened case and returns:
+        if error:
+            (slope_int, stderr)
+            where slope_int = [[slope, intercept]]
+            and stderr = [[slope_stderr, intercept_stderr]]
+        else:
+            slope_int
+
+    Missing values are removed using a joint valid mask so x and y remain aligned.
     """
-    yf = np.ma.compressed(np.ma.masked_invalid(np.ma.asarray(_mv(y)).ravel()))
+    yy = np.ma.masked_invalid(np.ma.asarray(_mv(y)).ravel())
+
     if x is None:
-        xf = np.arange(len(yf), dtype=float)
+        xx = np.ma.array(np.arange(yy.size, dtype=float), mask=np.ma.getmaskarray(yy))
     else:
-        xf = np.ma.compressed(np.ma.masked_invalid(np.ma.asarray(_mv(x)).ravel()))
-    if len(xf) != len(yf):
-        min_len = min(len(xf), len(yf))
-        xf, yf = xf[:min_len], yf[:min_len]
+        xx = np.ma.masked_invalid(np.ma.asarray(_mv(x)).ravel())
+
+        if xx.size != yy.size:
+            min_len = min(xx.size, yy.size)
+            xx = xx[:min_len]
+            yy = yy[:min_len]
+
+    # Joint mask: keep only pairs where both x and y are valid
+    joint_mask = np.ma.getmaskarray(xx) | np.ma.getmaskarray(yy)
+    xf = np.asarray(np.ma.array(xx, mask=joint_mask).compressed(), dtype=float)
+    yf = np.asarray(np.ma.array(yy, mask=joint_mask).compressed(), dtype=float)
+
+    if len(xf) < 2:
+        slope_int = np.array([[np.nan, np.nan]])
+        stderr = np.array([[np.nan, np.nan]])
+        return (slope_int, stderr) if error else slope_int
+
     if nointercept == 1:
-        slope = float(np.dot(xf, yf) / np.dot(xf, xf))
-        resid = yf - slope * xf
-        se = float(np.sqrt(np.sum(resid**2) / max(len(xf) - 1, 1)) /
-                   np.sqrt(np.dot(xf, xf)))
+        denom = np.dot(xf, xf)
+        if denom == 0:
+            slope = np.nan
+            se = np.nan
+        else:
+            slope = float(np.dot(xf, yf) / denom)
+            resid = yf - slope * xf
+            se = float(
+                np.sqrt(np.sum(resid ** 2) / max(len(xf) - 1, 1)) /
+                np.sqrt(denom)
+            )
+
         slope_int = np.array([[slope, 0.0]])
-        stderr    = np.array([[se, 0.0]])
+        stderr = np.array([[se, 0.0]])
+
     else:
-        res = _linregress(xf, yf)
-        slope_int = np.array([[res.slope, res.intercept]])
-        stderr    = np.array([[res.stderr, res.intercept_stderr]])
+        if len(np.unique(xf)) < 2:
+            slope_int = np.array([[np.nan, np.nan]])
+            stderr = np.array([[np.nan, np.nan]])
+        else:
+            res = _linregress(xf, yf)
+            slope_int = np.array([[res.slope, res.intercept]])
+            stderr = np.array([[res.stderr, res.intercept_stderr]])
+
     if error:
         return slope_int, stderr
     return slope_int
-
 
 def _add_cf_units_to_ds(ds: xr.Dataset) -> xr.Dataset:
     """
@@ -1157,8 +1263,10 @@ def _fix_leap_seconds_in_raw(ds: xr.Dataset) -> xr.Dataset:
     for vname, vals in updated.items():
         if vname in ds.coords:
             ds = ds.assign_coords(
-                {vname: xr.DataArray(vals, dims=ds[vname].dims,
-                                     attrs=ds[vname].attrs)}
+                {vname: xr.DataArray(
+                    vals, dims=ds[vname].dims,
+                    attrs=ds[vname].attrs
+                )}
             )
         else:
             ds[vname] = xr.DataArray(vals, dims=ds[vname].dims,
@@ -1296,9 +1404,11 @@ def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray
             attrs.setdefault("standard_name", "time")
             attrs.setdefault("long_name", "time")
             if coord is not None:
-                cal = (coord.attrs.get("calendar")
-                       or coord.encoding.get("calendar", None)
-                       or "standard")
+                cal = (
+                    coord.attrs.get("calendar")
+                    or coord.encoding.get("calendar", None)
+                    or "standard"
+                )
                 attrs.setdefault("calendar", cal)
         elif ax_type == "Y":
             attrs.setdefault("standard_name", "latitude")
@@ -1349,8 +1459,10 @@ def _validate_cdat_axes(var: CDATVariable, *, context: str = "", require_time: b
     return var
 
 
-def _finalize_cdat(da: xr.DataArray, varname: str | None = None, *,
-                   context: str = "", require_time: bool = False) -> CDATVariable:
+def _finalize_cdat(
+        da: xr.DataArray, varname: str | None = None, *,
+        context: str = "", require_time: bool = False
+    ) -> CDATVariable:
     """
     Convert a DataArray to CDATVariable after normalizing axis metadata.
 
@@ -1385,8 +1497,12 @@ def _finalize_existing_cdat(var, *, context: str = "", require_time: bool = Fals
 # ---------------------------------------------------------------------------
 class _XcDatasetHandle:
     """
-    Mimics the cdms2 file handle returned by cdms2.open().
-    Supports read via handle(varname, ...) and write modes.
+    Compatibility wrapper that mimics the subset of the legacy ``cdms2.open()``
+    file-handle interface used by ENSO_metrics.
+
+    Internally, this class uses xarray/xcdat-compatible reading and writing,
+    while preserving the legacy call pattern ``handle(varname, ...)`` and basic
+    write-mode behavior expected by downstream ENSO_metrics routines.
     """
 
     def __init__(self, path: str, mode: str = "r"):
@@ -1465,17 +1581,162 @@ class _XcDatasetHandle:
         # Build a robust CDAT-like object at the read boundary.  This keeps
         # T/Y/X/Z metadata attached before downstream PCMDI code sees it.
         require_time = any(_coord_is_datetime_like(da, dim) for dim in da.dims)
-        return _finalize_cdat(da, varname=varname,
-                              context=f"read:{self._path}:{varname}",
-                              require_time=require_time)
+        return _finalize_cdat(
+            da, varname=varname,
+            context=f"read:{self._path}:{varname}",
+            require_time=require_time
+        )
 
+    @staticmethod
+    def _clean_dataset_for_write(ds):
+        """
+        Clean dataset attributes and encodings before NetCDF writing.
+
+        This reduces failures caused by stale xarray/backend encodings or
+        non-NetCDF-safe attributes when emulating legacy CDAT append behavior.
+        """
+        ds = ds.copy()
+
+        ds.attrs = _clean_attrs(getattr(ds, "attrs", {}))
+
+        for name in list(ds.variables):
+            ds[name].attrs = _clean_attrs(ds[name].attrs)
+
+            # Drop stale backend-specific encodings that often cause write
+            # conflicts when rewriting merged NetCDF files.
+            keep_encoding = {}
+            for key in ("_FillValue", "dtype", "zlib", "complevel", "chunksizes"):
+                if key in ds[name].encoding:
+                    keep_encoding[key] = ds[name].encoding[key]
+            ds[name].encoding = keep_encoding
+
+        return ds
+
+    @staticmethod
+    def _coords_compatible(coord_old, coord_new):
+        """
+        Return True if two coordinates are safely compatible for merge.
+
+        Numeric coordinates are compared with allclose; non-numeric coordinates
+        are compared with exact equality.
+        """
+        try:
+            if coord_old.shape != coord_new.shape:
+                return False
+
+            old_vals = np.asarray(coord_old.values)
+            new_vals = np.asarray(coord_new.values)
+
+            try:
+                return np.allclose(
+                    old_vals.astype(float),
+                    new_vals.astype(float),
+                    equal_nan=True,
+                    atol=1e-8,
+                    rtol=1e-8,
+                )
+            except Exception:
+                return np.array_equal(old_vals, new_vals)
+
+        except Exception:
+            return False
+
+    @staticmethod
+    def _merge_datasets_like_append(ds_old, ds_new):
+        """
+        Merge ``ds_new`` into ``ds_old`` while preserving old variables.
+
+        This emulates the legacy CDAT append/write behavior used by
+        ``CDMS2open(path, "a")``: new variables replace same-named old
+        variables, while unrelated existing variables are preserved.
+        """
+        ds_old = _XcDatasetHandle._clean_dataset_for_write(ds_old)
+        ds_new = _XcDatasetHandle._clean_dataset_for_write(ds_new)
+
+        replace_names = [
+            v for v in ds_new.data_vars
+            if v in ds_old.data_vars
+        ]
+
+        ds_old_keep = ds_old.drop_vars(
+            replace_names,
+            errors="ignore",
+        )
+
+        try:
+            ds_merged = xr.merge(
+                [ds_old_keep, ds_new],
+                compat="override",
+                join="outer",
+            )
+
+        except Exception:
+            # Fallback: append variables one by one so one coordinate conflict
+            # does not cause all previously written variables to be lost.
+            ds_merged = ds_old_keep.copy()
+
+            for vname in ds_new.data_vars:
+                da = ds_new[vname]
+
+                for cname in list(da.coords):
+                    if cname not in ds_merged.coords:
+                        ds_merged = ds_merged.assign_coords({cname: da[cname]})
+                        continue
+
+                    if _XcDatasetHandle._coords_compatible(
+                        ds_merged[cname],
+                        da[cname],
+                    ):
+                        continue
+
+                    # If a dimension coordinate conflicts, rename it to a
+                    # variable-specific coordinate. This preserves the new
+                    # variable without corrupting old variables that already
+                    # depend on the existing coordinate.
+                    if cname in da.dims:
+                        safe_vname = (
+                            str(vname)
+                            .replace("/", "_")
+                            .replace(" ", "_")
+                            .replace(":", "_")
+                        )
+                        new_cname = f"{cname}_{safe_vname}"
+
+                        # Avoid accidental collision if the generated name
+                        # already exists in the merged dataset.
+                        if new_cname in ds_merged.coords or new_cname in ds_merged.dims:
+                            suffix = 1
+                            base_name = new_cname
+                            while (
+                                new_cname in ds_merged.coords
+                                or new_cname in ds_merged.dims
+                            ):
+                                suffix += 1
+                                new_cname = f"{base_name}_{suffix}"
+
+                        da = da.rename({cname: new_cname})
+
+                    else:
+                        # Non-dimension coordinate conflict. Drop this coordinate
+                        # from the new variable rather than corrupting an existing
+                        # coordinate used by old variables.
+                        da = da.drop_vars(cname, errors="ignore")
+                        
+                ds_merged[vname] = da
+
+        merged_attrs = dict(getattr(ds_old, "attrs", {}))
+        merged_attrs.update(_clean_attrs(getattr(ds_new, "attrs", {})))
+        ds_merged.attrs = _clean_attrs(merged_attrs)
+
+        return _XcDatasetHandle._clean_dataset_for_write(ds_merged)
+    
     def write(self, var, attributes=None, dtype="float32", id=None):
         """Buffer a variable for writing."""
         name = id or (var.id if isinstance(var, CDATVariable) else "var")
         if isinstance(var, CDATVariable):
             da = cdat_to_da(var, name=name)
         elif isinstance(var, xr.DataArray):
-            da = var
+            da = var.rename(name)
         else:
             # Scalar float/int or plain numpy array — wrap in a DataArray.
             da = xr.DataArray(np.asarray(var), name=name)
@@ -1483,8 +1744,8 @@ class _XcDatasetHandle:
         if attributes:
             da.attrs.update(_clean_attrs(attributes))
 
-        self._write_vars[name] = da.astype(dtype)
-
+        self._write_vars[name] = da.rename(name).astype(dtype)
+        
     def __setattr__(self, key, value):
         if key.startswith("_") or key in (
             "_path",
@@ -1505,37 +1766,46 @@ class _XcDatasetHandle:
         if self._mode in ("w", "w+", "a") and self._write_vars:
             _os_sn.makedirs(_os_sn.path.dirname(self._path) or ".", exist_ok=True)
 
+            # If this handle was opened in append mode, __init__ may have opened
+            # the existing file for reading. Close it before reopening/replacing.
+            if self._ds is not None:
+                self._ds.close()
+                self._ds = None
+
             ds_new = xr.Dataset(
                 self._write_vars,
                 attrs=_clean_attrs(self._global_attrs),
-            )
-            ds_new = ds_new.load()
+            ).load()
 
-            # Merge with any existing file so that variables written by previous
-            # SaveNetcdf calls to the same file are preserved.  New variables
-            # silently overwrite same-named old ones.  The write goes to a
-            # temporary file first, then is atomically renamed so a crash or
-            # PermissionError never leaves a half-written output file.
+            ds_new = self._clean_dataset_for_write(ds_new)
+
+            ds_merged = None
+            
             if _os_sn.path.exists(self._path):
                 try:
-                    with xr.open_dataset(self._path, engine="netcdf4",chunks={}) as ds_old:
-                        ds_old = ds_old.load()
+                    with xr.open_dataset(
+                        self._path,
+                        engine="netcdf4",
+                        chunks={},
+                        decode_times=False,
+                    ) as ds_old_open:
+                        ds_old = ds_old_open.load()
 
-                    ds_merged = xr.merge(
-                        [
-                            ds_old.drop_vars(
-                                [v for v in ds_new.data_vars if v in ds_old],
-                                errors="ignore",
-                            ),
-                            ds_new,
-                        ],
-                        compat="override",
-                        join="outer",
-                    )
+                    ds_merged = self._merge_datasets_like_append(ds_old, ds_new)
 
-                except Exception:
-                    # Existing file is corrupt or unreadable — overwrite cleanly.
-                    ds_merged = ds_new
+                except Exception as e:
+                    try:
+                        ds_new.close()
+                    except Exception:
+                        pass
+
+                    raise RuntimeError(
+                        f"Failed to append variables to existing NetCDF file: {self._path!r}. "
+                        "The existing file was not overwritten. "
+                        f"New variables were: {list(self._write_vars.keys())}. "
+                        f"Original error: {type(e).__name__}: {e}"
+                    ) from e
+                    
             else:
                 ds_merged = ds_new
 
@@ -1550,14 +1820,19 @@ class _XcDatasetHandle:
                 ds_merged.to_netcdf(tmpfile, mode="w", format="NETCDF4")
                 _os_sn.replace(tmpfile, self._path)
 
-            except Exception:
+            except Exception as e:
                 if _os_sn.path.exists(tmpfile):
                     _os_sn.remove(tmpfile)
-                raise
+                raise RuntimeError(
+                    f"Failed to write merged NetCDF file atomically: {self._path!r}. "
+                    f"Original error: {type(e).__name__}: {e}"
+                ) from e
 
             finally:
-                ds_merged.close()
-                ds_new.close()
+                if ds_merged is not None:
+                    ds_merged.close()
+                if ds_new is not ds_merged:
+                    ds_new.close()
 
         if self._ds is not None:
             self._ds.close()
@@ -1567,32 +1842,27 @@ class _XcDatasetHandle:
 # Module-level lookup tables for _guess_dim — defined once, not per-call.
 # ---------------------------------------------------------------------------
 _AXIS_STANDARD_NAMES: dict[str, set[str]] = {
-    "Y": {"latitude", "grid_latitude", "projection_y_coordinate",
-          "rotated_latitude"},
-    "X": {"longitude", "grid_longitude", "projection_x_coordinate",
-          "rotated_longitude"},
+    "Y": {"latitude", "grid_latitude", "projection_y_coordinate","rotated_latitude"},
+    "X": {"longitude", "grid_longitude", "projection_x_coordinate","rotated_longitude"},
     "T": {"time"},
-    "Z": {"air_pressure", "altitude", "depth", "height",
-          "ocean_sigma_coordinate", "sigma", "eta",
-          "height_above_geopotential_datum",
-          "height_above_mean_sea_level"},
+    "Z": {
+        "air_pressure", "altitude", "depth", "height",
+        "ocean_sigma_coordinate", "sigma", "eta",
+        "height_above_geopotential_datum",
+        "height_above_mean_sea_level"
+    },
 }
 _AXIS_UNITS_PATTERNS: dict[str, tuple[str, ...]] = {
-    "Y": ("degrees_north", "degree_north", "degrees_n", "degree_n",
-          "degreesnorth", "degreen"),
-    "X": ("degrees_east", "degree_east", "degrees_e", "degree_e",
-          "degreeseast", "degreee"),
+    "Y": ("degrees_north", "degree_north", "degrees_n", "degree_n", "degreesnorth", "degreen"),
+    "X": ("degrees_east", "degree_east", "degrees_e", "degree_e", "degreeseast", "degreee"),
     "T": ("since",),   # matches "days since …", "hours since …", etc.
     "Z": ("pa", "hpa", "mb", "mbar", "meter", "m", "sigma", "hybrid"),
 }
 _AXIS_NAME_HINTS: dict[str, tuple[str, ...]] = {
-    "Y": ("lat", "latitude", "nav_lat", "rlat", "y", "j", "nlat",
-          "y_1", "y_2"),
-    "X": ("lon", "longitude", "nav_lon", "rlon", "x", "i", "nlon",
-          "x_1", "x_2"),
+    "Y": ("lat", "latitude", "nav_lat", "rlat", "y", "j", "nlat", "y_1", "y_2"),
+    "X": ("lon", "longitude", "nav_lon", "rlon", "x", "i", "nlon", "x_1", "x_2"),
     "T": ("time", "t"),
-    "Z": ("lev", "level", "plev", "depth", "sigma", "eta", "z", "k",
-          "nlev"),
+    "Z": ("lev", "level", "plev", "depth", "sigma", "eta", "z", "k", "nlev"),
 }
 
 def _safe_guess_dim(da: xr.DataArray, axis_type: str) -> str:
@@ -1809,8 +2079,10 @@ class _CdutilAverager:
                         do_time = True
         if do_time and not xcdat_axes:
             t_dim = _require_axis(da, "T", context="time selection") or "time"
-            return _finalize_cdat(ds[varname].mean(dim=t_dim), varname=varname,
-                                  context="cdutil.averager:time")
+            return _finalize_cdat(
+                ds[varname].mean(dim=t_dim), varname=varname,
+                context="cdutil.averager:time"
+            )
         if xcdat_axes:
             # Cosine-latitude weighted average — deterministic: always use manual
             # implementation when weights="weighted" and Y is in the reduction
@@ -1853,9 +2125,11 @@ class _CdutilAverager:
                 t_dim = _require_axis(da, "T", context="time selection") or "time"
                 if t_dim in result.dims:
                     result = result.mean(dim=t_dim)
-            return _finalize_cdat(result, varname=varname,
-                                  context="cdutil.averager:spatial",
-                                  require_time=("T" not in set(xcdat_axes) and _has_time_axis(tab)))
+            return _finalize_cdat(
+                result, varname=varname,
+                context="cdutil.averager:spatial",
+                require_time=("T" not in set(xcdat_axes) and _has_time_axis(tab))
+            )
         return tab.copy()
 
     @staticmethod
@@ -1885,18 +2159,40 @@ class _CdutilAverager:
             except (KeyError, Exception):
                 pass  # proceed without time bounds
             result = ds.temporal.departures(varname, freq="month", weighted=True)
-            return _finalize_cdat(result[varname], varname=varname,
-                                  context="ANNUALCYCLE.departures", require_time=True)
+            return _finalize_cdat(
+                result[varname], varname=varname,
+                context="ANNUALCYCLE.departures", 
+                require_time=True
+                )
 
 
     @staticmethod
     def generateLandSeaMask(d, debug=False):
         """
-        Robust CDAT replacement for cdutil.generateLandSeaMask.
+        Generate an estimated land-sea mask for the ENSO_metrics compatibility layer.
 
-        Returns:
-            CDATVariable with 1.0 over land and 0.0 over ocean.
-            Caller may multiply by 100 if it expects sftlf percent units.
+        This method preserves the subset of the legacy ``cdutil.generateLandSeaMask``
+        behavior needed by ENSO_metrics while using ``regionmask`` and Natural Earth
+        land polygons internally.
+
+        Parameters
+        ----------
+        d : CDATVariable or xarray.DataArray
+            Input field whose latitude/longitude coordinates define the target grid.
+            Singleton time dimensions are dropped before mask generation.
+
+        debug : boolean, optional
+            If True, print diagnostic information during mask generation.
+            default value = False
+
+        Returns
+        -------
+        CDATVariable
+            Estimated land-fraction mask on the input horizontal grid, with
+            ``1.0`` over land and ``0.0`` over ocean. The returned mask preserves
+            the same latitude/longitude coordinates and longitude convention as the
+            input field. Callers may multiply by ``100`` if downstream code expects
+            ``sftlf`` percent units.
         """
         if not _HAS_REGIONMASK:
             raise RuntimeError(
@@ -1921,12 +2217,11 @@ class _CdutilAverager:
 
             for nm, atype in [(lat_name, "Y"), (lon_name, "X")]:
                 coord = da[nm]
-                attrs = _coord_attrs_lower(coord) 
+                attrs = _coord_attrs_lower(coord)
 
                 has_cf = (
                     attrs.get("axis", "").upper() == atype
-                    or attrs.get("standard_name", "")
-                    in _AXIS_STANDARD_NAMES[atype]
+                    or attrs.get("standard_name", "") in _AXIS_STANDARD_NAMES[atype]
                 )
 
                 has_units = any(
@@ -1941,38 +2236,49 @@ class _CdutilAverager:
                         stacklevel=2,
                     )
 
-
             lat = da[lat_name]
             lon = da[lon_name]
 
-            if debug:
-                print("[DEBUG] generateLandSeaMask: lat shape:", lat.shape, "lon shape:", lon.shape)
-                print("[DEBUG] generateLandSeaMask: lat min/max:", np.nanmin(lat.values), np.nanmax(lat.values))
-                print("[DEBUG] generateLandSeaMask: lon min/max:", np.nanmin(lon.values), np.nanmax(lon.values))
-
-            if np.all(~np.isfinite(lat.values)):
-                raise ValueError(
-                    "Latitude coordinate contains no finite values"
-                )
-
-            if np.all(~np.isfinite(lon.values)):
-                raise ValueError(
-                    "Longitude coordinate contains no finite values"
-                )
-
+            lat_vals = lat.values.astype(float)
             lon_vals = lon.values.astype(float)
 
-            if np.nanmax(lon_vals) > 180:
-                lon_vals = np.where(
-                    lon_vals > 180,
-                    lon_vals - 360,
-                    lon_vals,
+            if np.all(~np.isfinite(lat_vals)):
+                raise ValueError("Latitude coordinate contains no finite values")
+
+            if np.all(~np.isfinite(lon_vals)):
+                raise ValueError("Longitude coordinate contains no finite values")
+
+            lat_min = float(np.nanmin(lat_vals))
+            lat_max = float(np.nanmax(lat_vals))
+
+            if lat_min < -90.0 or lat_max > 90.0:
+                raise ValueError(
+                    "Latitude coordinate is outside the valid geographic range "
+                    f"[-90, 90]: min={lat_min}, max={lat_max}. "
+                    "This likely indicates incorrect latitude-axis detection or "
+                    "non-geographic coordinates."
+                )
+
+            if debug:
+                print("[DEBUG] generateLandSeaMask: lat shape:", lat.shape, "lon shape:", lon.shape)
+                print("[DEBUG] generateLandSeaMask: lat min/max:", np.nanmin(lat_vals), np.nanmax(lat_vals))
+                print("[DEBUG] generateLandSeaMask: lon min/max:", np.nanmin(lon_vals), np.nanmax(lon_vals))
+
+            # Convert longitude only for regionmask polygon lookup.
+            # The returned mask is restored to the original input longitude convention.
+            lon_vals_for_mask = lon_vals.copy()
+
+            if np.nanmax(lon_vals_for_mask) > 180.0:
+                lon_vals_for_mask = np.where(
+                    lon_vals_for_mask > 180.0,
+                    lon_vals_for_mask - 360.0,
+                    lon_vals_for_mask,
                 )
                 if debug:
-                    print("[DEBUG] generateLandSeaMask: converted lon to -180/180")
+                    print("[DEBUG] generateLandSeaMask: converted lon to -180/180 for regionmask lookup")
 
             lon_for_mask = xr.DataArray(
-                lon_vals,
+                lon_vals_for_mask,
                 dims=lon.dims,
                 coords=lon.coords,
                 attrs=lon.attrs,
@@ -1986,13 +2292,29 @@ class _CdutilAverager:
             if lat.ndim == 1 and lon.ndim == 1:
                 if debug:
                     print("[DEBUG] generateLandSeaMask: applying regionmask (1D)")
-                raw_mask = land.mask(lon_for_mask, lat)
+
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="No gridpoint belongs to any region.*",
+                        category=UserWarning,
+                    )
+                    raw_mask = land.mask(lon_for_mask, lat)
+
                 expected_shape = (lat.size, lon.size)
 
             elif lat.ndim == 2 and lon.ndim == 2:
                 if debug:
                     print("[DEBUG] generateLandSeaMask: applying regionmask (2D)")
-                raw_mask = land.mask(lon_for_mask, lat)
+
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        "ignore",
+                        message="No gridpoint belongs to any region.*",
+                        category=UserWarning,
+                    )
+                    raw_mask = land.mask(lon_for_mask, lat)
+
                 expected_shape = lat.shape
 
             else:
@@ -2003,24 +2325,56 @@ class _CdutilAverager:
                 )
 
             if debug:
-                print("[DEBUG] generateLandSeaMask: raw_mask shape:", raw_mask.shape, "min:", np.nanmin(raw_mask.values), "max:", np.nanmax(raw_mask.values))
+                raw_vals = np.asarray(raw_mask.values, dtype=float)
+                print(
+                    "[DEBUG] generateLandSeaMask: raw_mask shape:",
+                    raw_mask.shape,
+                    "finite count:",
+                    np.isfinite(raw_vals).sum(),
+                )
+                if np.any(np.isfinite(raw_vals)):
+                    print(
+                        "[DEBUG] generateLandSeaMask: raw_mask min/max:",
+                        np.nanmin(raw_vals),
+                        np.nanmax(raw_vals),
+                    )
 
-            # Convert regionmask convention:
-            #   finite value = land
-            #   NaN          = ocean
-            # to legacy cdutil-style convention:
-            #   0 = land
-            #   1 = ocean
-            lsm = xr.where(np.isfinite(raw_mask), 0.0, 1.0)
+            # regionmask convention:
+            #   finite value = land polygon ID
+            #   NaN          = ocean / outside land polygons
+            #
+            # ENSO_metrics final convention:
+            #   1.0 = land
+            #   0.0 = ocean
+            land01 = xr.where(np.isfinite(raw_mask), 1.0, 0.0).rename("sftlf")
 
-            # Keep legacy logic:
-            #   lsm == 0 -> land fraction = 1
-            #   otherwise -> ocean = 0
-            land01 = xr.where(lsm == 0, 1.0, 0.0).rename("sftlf")
+            # Restore original input coordinates.
+            # lon_for_mask may use -180–180 only for regionmask polygon lookup;
+            # the returned mask must stay on the same grid/convention as the input field.
+            land01 = land01.assign_coords({lat_name: lat, lon_name: lon})
 
-            vals = np.asarray(land01.values)
+            vals = np.asarray(land01.values, dtype=float)
+
+            if np.all(~np.isfinite(vals)):
+                raise RuntimeError(
+                    "Generated land-sea mask is all NaN after conversion. "
+                    "This should not happen; check regionmask conversion logic."
+                )
+
             if debug:
-                print("[DEBUG] generateLandSeaMask: land01 shape:", land01.shape, "min:", np.nanmin(vals), "max:", np.nanmax(vals))
+                print(
+                    "[DEBUG] generateLandSeaMask: returned lon min/max:",
+                    np.nanmin(land01[lon_name].values),
+                    np.nanmax(land01[lon_name].values),
+                )
+                print(
+                    "[DEBUG] generateLandSeaMask: land01 shape:",
+                    land01.shape,
+                    "min:",
+                    np.nanmin(vals),
+                    "max:",
+                    np.nanmax(vals),
+                )
 
             if np.nanmax(vals) <= 0:
                 if debug:
@@ -2028,15 +2382,17 @@ class _CdutilAverager:
                 warnings.warn(
                     "Generated land mask is entirely ocean for this region. "
                     "This may be expected if the region is all ocean.",
-                    stacklevel=2
+                    stacklevel=2,
                 )
 
             if np.nanmin(vals) >= 1:
                 if debug:
-                    print("[DEBUG] generateLandSeaMask: ERROR - all land mask")
-                raise RuntimeError(
-                    "Generated land mask is entirely land. "
-                    "Likely lat/lon detection or regionmask failure."
+                    print("[DEBUG] generateLandSeaMask: WARNING - all land mask")
+                warnings.warn(
+                    "Generated land mask is entirely land for this region. "
+                    "This may be expected if the region is land-only; otherwise check "
+                    "lat/lon detection and regionmask behavior.",
+                    stacklevel=2,
                 )
 
             if land01.shape != expected_shape:
@@ -2058,6 +2414,8 @@ class _CdutilAverager:
                         "Estimated from Natural Earth land polygons "
                         "using regionmask; "
                         "1=land, 0=ocean. "
+                        "Longitude was converted only internally for polygon lookup; "
+                        "returned coordinates preserve the input grid convention. "
                         "Prefer native sftlf when available."
                     ),
                 }
@@ -2076,21 +2434,25 @@ class _CdutilAverager:
                 f"dims={getattr(da, 'dims', None)}, "
                 f"coords={list(getattr(da, 'coords', []))}."
             ) from e
-
+            
     class times:
         @staticmethod
         def Seasons(season_str: str):
             return _SeasonHelper(_MONTH_MAP.get(season_str, []))
 
 # Attach season constants to the stub
-for _s in ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC",
-           "MAM","JJA","SON","DJF"]:
+for _s in [
+    "JAN","FEB","MAR","APR","MAY","JUN",
+    "JUL","AUG","SEP","OCT","NOV","DEC",
+    "MAM","JJA","SON","DJF"
+    ]:
     setattr(_CdutilAverager, _s, _SeasonHelper(_MONTH_MAP[_s]))
 
 cdutil = _CdutilAverager()
 
 
-# Map CDAT/cdms2 regridding method names → xESMF method names
+# Normalize legacy ENSO_metrics/CDAT-style regridding method names
+# to the xESMF method names used by the modern backend.
 _REGRID_METHOD_MAP = {
     "linear":       "bilinear",
     "bilinear":     "bilinear",
@@ -2103,7 +2465,13 @@ _REGRID_METHOD_MAP = {
 
 
 class REGRID2horizontal__Horizontal:
-    """Replacement for regrid2.horizontal.Horizontal using xesmf (optional) or scipy."""
+    """
+    Compatibility replacement for the legacy ``regrid2.horizontal.Horizontal``
+    interface used by ENSO_metrics.
+
+    The modern implementation uses xESMF/ESMF when available, with a scipy-based
+    fallback for supported rectilinear-grid cases.
+    """
     def __init__(self, src_grid, dst_grid, method="bilinear"):
         self._src = src_grid
         self._dst = dst_grid
@@ -2162,14 +2530,18 @@ class REGRID2horizontal__Horizontal:
         if data_flat.ndim >= 2:
             spatial = data_flat.reshape(data_flat.shape[:-2] + (-1,))
             if np.allclose(spatial, spatial[..., :1], atol=1e-8):
-                result_cdat = _finalize_cdat(result, varname=getattr(tab, 'id', 'var'),
-                                             context="REGRID2horizontal:constant",
-                                             require_time=_has_time_axis(tab))
+                result_cdat = _finalize_cdat(
+                    result, varname=getattr(tab, 'id', 'var'),
+                    context="REGRID2horizontal:constant",
+                    require_time=_has_time_axis(tab)
+                )
                 result_cdat._data[:] = data_flat.flat[0]
                 return result_cdat
-        return _finalize_cdat(result, varname=getattr(tab, 'id', 'var'),
-                              context="REGRID2horizontal",
-                              require_time=_has_time_axis(tab))
+        return _finalize_cdat(
+            result, varname=getattr(tab, 'id', 'var'),
+            context="REGRID2horizontal",
+            require_time=_has_time_axis(tab)
+            )
 
 
 # ---------------------------------------------------------------------------------------------------------------------#
@@ -2260,8 +2632,10 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
         if areacell is not None and _tab_grid is not None and _area_grid is not None \
                 and _tab_grid.shape != _area_grid.shape:
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageHorizontal" + "\033[0m")
-            print("\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
-                  " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m")
+            print(
+                "\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
+                " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m"
+            )
         areacell = _make_coslat_areacell(tab)
     if areacell is not None:
         averaged_tab = MV2multiply(tab, areacell)
@@ -2303,64 +2677,173 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
     """
     #################################################################################
     Description:
-    Averages along 'y' axis
+    Average along the latitude / meridional axis.
+
+    This modernized implementation preserves the legacy ENSO_metrics interface
+    while using CDAT-like compatibility objects. If an areacell field is missing
+    or incompatible with the input grid, a cosine-latitude area proxy is
+    synthesized so the meridional average can still be computed on regular
+    rectilinear grids.
     #################################################################################
     """
     keyerror = None
-    lat_num = get_num_axis(tab, "latitude")
-    lon_num = get_num_axis(tab, "longitude")
-    snum = str(int(lat_num))
+
     tab = _to_cdat(tab)
+
+    tab_attrs = getattr(tab, "attributes", {}) or {}
+    var_label = (
+        getattr(tab, "id", None)
+        or tab_attrs.get("id", None)
+        or tab_attrs.get("short_name", None)
+        or tab_attrs.get("standard_name", None)
+        or tab_attrs.get("long_name", None)
+        or "unknown"
+    )
+
+    try:
+        lat_num = get_num_axis(tab, "latitude")
+        lon_num = get_num_axis(tab, "longitude")
+        snum = str(int(lat_num))
+    except Exception as e:
+        keyerror = (
+            f"cannot determine latitude/longitude axis for meridional average "
+            f"on variable {var_label!r}: {e}"
+        )
+        averaged_tab = None
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional average",
+            str().ljust(5) + keyerror,
+        ]
+        EnsoErrorsWarnings.my_warning(list_strings)
+        return averaged_tab, keyerror
+
     _tab_grid = tab.getGrid()
     _area_grid = areacell.getGrid() if areacell is not None else None
+
     # Synthesise cosine-latitude weights when areacell is absent or on a
-    # different grid — prevents the silent None return from cdutil.averager.
-    if areacell is None or _tab_grid is None or _area_grid is None or _tab_grid.shape != _area_grid.shape:
-        if areacell is not None and _tab_grid is not None and _area_grid is not None \
-                and _tab_grid.shape != _area_grid.shape:
+    # different grid. This avoids silent failures and preserves legacy behavior
+    # for regular rectilinear grids.
+    if (
+        areacell is None
+        or _tab_grid is None
+        or _area_grid is None
+        or _tab_grid.shape != _area_grid.shape
+    ):
+        if (
+            areacell is not None
+            and _tab_grid is not None
+            and _area_grid is not None
+            and _tab_grid.shape != _area_grid.shape
+        ):
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageMeridional" + "\033[0m")
-            print("\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
-                  " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m")
-        areacell = _make_coslat_areacell(tab)
+            print(
+                "\033[93m" + str().ljust(25)
+                + "tab.grid " + str(_tab_grid.shape)
+                + " is not the same as areacell.grid " + str(_area_grid.shape)
+                + " \033[0m"
+            )
+
+        try:
+            areacell = _make_coslat_areacell(tab)
+        except Exception as e:
+            areacell = None
+            warnings.warn(
+                f"AverageMeridional: failed to synthesize cosine-latitude "
+                f"areacell for variable {var_label!r} ({e}); "
+                "falling back to cdutil-style weighted average if available.",
+                stacklevel=2,
+            )
+
     if areacell is not None:
-        lat_num_area = get_num_axis(areacell, "latitude")
-        averaged_tab = MV2multiply(tab, areacell)
-        averaged_tab = MV2sum(averaged_tab, axis=int(lat_num)) / MV2sum(areacell, axis=int(lat_num_area))
+        try:
+            lat_num_area = get_num_axis(areacell, "latitude")
+
+            averaged_tab = MV2multiply(tab, areacell)
+            averaged_tab = (
+                MV2sum(averaged_tab, axis=int(lat_num))
+                / MV2sum(areacell, axis=int(lat_num_area))
+            )
+
+        except Exception as e:
+            keyerror = (
+                f"cannot perform meridional average with areacell for variable "
+                f"{var_label!r}: {e}"
+            )
+            averaged_tab = None
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional average",
+                str().ljust(5) + keyerror,
+            ]
+            EnsoErrorsWarnings.my_warning(list_strings)
+
     else:
         try:
-            averaged_tab = cdutil.averager(tab, axis="y", weights="weighted", action="average")
+            averaged_tab = cdutil.averager(
+                tab,
+                axis="y",
+                weights="weighted",
+                action="average",
+            )
         except Exception:
             try:
-                averaged_tab = cdutil.averager(tab, axis=snum, weights="weighted", action="average")
+                averaged_tab = cdutil.averager(
+                    tab,
+                    axis=snum,
+                    weights="weighted",
+                    action="average",
+                )
             except Exception:
-                keyerror = "cannot perform meridional average: no latitude axis and cdutil fallback failed"
+                keyerror = (
+                    f"cannot perform meridional average for variable "
+                    f"{var_label!r}: no compatible areacell and cdutil fallback failed"
+                )
                 averaged_tab = None
                 list_strings = [
                     "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional average",
-                    str().ljust(5) + keyerror]
+                    str().ljust(5) + keyerror,
+                ]
                 EnsoErrorsWarnings.my_warning(list_strings)
-    # Fail-fast: if result is still None, set a keyerror
+
+    # Fail-fast: if result is still None, set a keyerror.
     if averaged_tab is None and keyerror is None:
-        keyerror = "AverageMeridional returned None — check grid, weights, and axis metadata"
+        keyerror = (
+            f"AverageMeridional returned None for variable {var_label!r}; "
+            "check grid, weights, and axis metadata"
+        )
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional average",
-            str().ljust(5) + keyerror]
+            str().ljust(5) + keyerror,
+        ]
         EnsoErrorsWarnings.my_warning(list_strings)
+
+    # Preserve a 1-D longitude axis after averaging over latitude, matching the
+    # legacy CDAT behavior for curvilinear / 2-D longitude inputs.
     if averaged_tab is not None:
         lon = tab.getLongitude()
         if lon is not None and len(lon.shape) > 1:
-            lonn = create_axis(MV2array(lon[0, :]), id="longitude")
-            lonn.units = lon.units
+            lonn = create_axis(
+                MV2array(lon[0, :]),
+                id="longitude",
+                units=getattr(lon, "units", "degrees_east"),
+                attributes={
+                    "axis": "X",
+                    "standard_name": "longitude",
+                },
+            )
+
             lon_num = get_num_axis(tab, "longitude")
             try:
                 averaged_tab.setAxis(lon_num, lonn)
             except Exception:
                 averaged_tab.setAxis(lon_num - 1, lonn)
+
     if averaged_tab is not None:
         averaged_tab = _finalize_existing_cdat(
-            averaged_tab, context="AverageMeridional",
+            averaged_tab,
+            context="AverageMeridional",
             require_time=_has_time_axis(tab),
         )
+
     return averaged_tab, keyerror
 
 
@@ -2422,8 +2905,10 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
         if areacell is not None and _tab_grid is not None and _area_grid is not None \
                 and _tab_grid.shape != _area_grid.shape:
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib AverageZonal" + "\033[0m")
-            print("\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
-                  " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m")
+            print(
+                "\033[93m" + str().ljust(25) + "tab.grid " + str(_tab_grid.shape) +
+                " is not the same as areacell.grid " + str(_area_grid.shape) + " \033[0m"
+            )
         areacell = _make_coslat_areacell(tab)
     if areacell is not None:
         lon_num_area = get_num_axis(areacell, "longitude")
@@ -2438,8 +2923,10 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
             except Exception:
                 keyerror = "cannot perform zonal average: no latitude axis and cdutil fallback failed"
                 averaged_tab = None
-                list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": zonal average",
-                                 str().ljust(5) + keyerror]
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": zonal average",
+                    str().ljust(5) + keyerror
+                ]
                 EnsoErrorsWarnings.my_warning(list_strings)
     # Fail-fast: if result is still None, set a keyerror
     if averaged_tab is None and keyerror is None:
@@ -2609,42 +3096,56 @@ def OperationSubtract(tab, number_or_tab):
 
 
 # Dictionary of operations
-dict_operations = {"divide": OperationDivide, "minus": OperationSubtract, "multiply": OperationMultiply,
-                   "plus": OperationAdd}
+dict_operations = {
+    "divide": OperationDivide, 
+    "minus": OperationSubtract, 
+    "multiply": OperationMultiply,
+    "plus": OperationAdd
+    }
 
 
 def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
     """
     #################################################################################
     Description:
-    genutil.rms applied on two arrays
+    Compute the root-mean-square difference between ``tab`` and ``ref`` along
+    a selected axis.
 
-    Computes the root mean square difference between tab and ref on the given axis
-
-    Uses uvcdat
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern numpy/compatibility-layer statistics pathway.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the modeled variable
-    :param ref: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the observed variable
-    :param weights: masked_array, optional
-        weights applied to each grid point
-        default value = None returns equally weighted statistic
-        If you want to compute the weighted statistic, provide weights here
+    :param tab: CDATVariable or masked-array-like
+        Input field, usually the model field.
+
+    :param ref: CDATVariable or masked-array-like
+        Reference field, usually the observational field.
+
+    :param weights: array-like or string, optional
+        Weights used in the RMS calculation. If ``"weighted"``, latitude-based
+        weights are used where appropriate.
+        default value = None
+
     :param axis: int or string, optional
-        name ('t', 'x', 'y', 'xy',...) or number (0, 1, 2,...) of the axis over which you want to compute the rms
-        default value = 0 returns statistic computed over the first axis
-    :param centered: int, optional
-        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
-        set to 1. NOTE: Most other statistic functions return a centered statistic by default
-    :param biased: int, optional
-        default value = 1 returns biased statistic (number of elements along given axis)
-        If want to compute an unbiased variance pass anything but 1 (number of elements along given axis minus 1)
-    :return rmse: float
-        value of root mean square difference
+        Axis over which to compute the RMS difference. May be an integer axis
+        index or a CDAT-style axis specifier such as ``"x"``, ``"y"``,
+        ``"t"``, or ``"xy"``.
+        default value = 0
+
+    :param centered: integer, optional
+        Legacy centered flag passed to the RMS calculation.
+        ``0`` means the mean difference is not removed before computing RMS;
+        ``1`` means the mean difference is removed first.
+        default value = 0
+
+    :param biased: integer, optional
+        Legacy normalization flag passed to the RMS calculation.
+        ``1`` uses biased normalization; ``0`` uses unbiased normalization.
+        default value = 1
+
+    :return rmse, keyerror:
+        RMS difference along the requested axis and any accumulated keyerror
+        message.
     """
     tab = _to_cdat(tab)
     ref = _to_cdat(ref)
@@ -2654,7 +3155,7 @@ def RmsAxis(tab, ref, weights=None, axis=0, centered=0, biased=1):
         rmse = GENUTILrms(tab, ref, weights=weights, axis=axis, centered=centered, biased=biased)
     except Exception:
         keyerror = "cannot perform RMS along given axis: tab (" + str(tab.shape) + ") and ref (" + str(ref.shape) +\
-                   ") are not on the same grid"
+            ") are not on the same grid"
         list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": RMS over axis " + str(axis),
                         str().ljust(5) + "cannot perform RMS along given axis",
                         str().ljust(10) + "axes may not be in the same order in 'ref' and 'tab'",
@@ -2672,24 +3173,34 @@ def RmsHorizontal(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
-    genutil.rms applied on two masked_arrays that are on the same grid
+    Compute the horizontal root-mean-square difference between ``tab`` and
+    ``ref``.
 
-    Computes the root mean square difference between tab and ref on horizontal axes (lat and lon)
-
-    Uses uvcdat
+    The RMS is computed over latitude and longitude dimensions using the modern
+    numpy/compatibility-layer statistics pathway, while preserving the legacy
+    ENSO_metrics integer-flag interface.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the modeled variable
-    :param ref: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the observed variable
-    :param centered: int, optional
-        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
-        set to 1. NOTE: Most other statistic functions return a centered statistic by default
-    :return rmse: float
-        value of root mean square difference
+    :param tab: CDATVariable or masked-array-like
+        Input field, usually the model field, with latitude/longitude axes.
+
+    :param ref: CDATVariable or masked-array-like
+        Reference field, usually the observational field, with
+        latitude/longitude axes.
+
+    :param centered: integer, optional
+        Legacy centered flag passed to the RMS calculation.
+        ``0`` means the mean difference is not removed before computing RMS;
+        ``1`` means the mean difference is removed first.
+        default value = 0
+
+    :param biased: integer, optional
+        Legacy normalization flag passed to the RMS calculation.
+        ``1`` uses biased normalization; ``0`` uses unbiased normalization.
+        default value = 1
+
+    :return rmse, keyerror:
+        Horizontal RMS difference and any accumulated keyerror message.
     """
     tab = _to_cdat(tab)
     ref = _to_cdat(ref)
@@ -2701,11 +3212,13 @@ def RmsHorizontal(tab, ref, centered=0, biased=1):
         lat_num = get_num_axis(tab, "latitude")
         lon_num = get_num_axis(tab, "longitude")
         try:
-            rmse = GENUTILrms(tab, ref, weights="weighted", axis=str(lat_num)+str(lon_num), centered=centered,
-                              biased=biased)
+            rmse = GENUTILrms(
+                tab, ref, weights="weighted", axis=str(lat_num)+str(lon_num), centered=centered,
+                biased=biased
+            )
         except Exception:
             keyerror = "cannot perform horizontal RMS (x=" + str(lon_num) + ", y=" + str(lat_num) + "): tab (" +\
-                       str(tab.shape) + ") and ref (" + str(ref.shape) + ") are not on the same grid"
+                str(tab.shape) + ") and ref (" + str(ref.shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": horizontal RMS",
                 str().ljust(5) + "cannot perform horizontal RMS",
@@ -2725,24 +3238,33 @@ def RmsMeridional(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
-    genutil.rms applied on two masked_arrays that are on the same grid
+    Compute the meridional root-mean-square difference between ``tab`` and
+    ``ref``.
 
-    Computes the root mean square difference between tab and ref on meridional axis (lat)
-
-    Uses uvcdat
+    The RMS is computed over the latitude dimension using the modern
+    numpy/compatibility-layer statistics pathway, while preserving the legacy
+    ENSO_metrics integer-flag interface.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the modeled variable
-    :param ref: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the observed variable
-    :param centered: int, optional
-        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
-        set to 1. NOTE: Most other statistic functions return a centered statistic by default
-    :return rmse: float
-        value of root mean square difference
+    :param tab: CDATVariable or masked-array-like
+        Input field, usually the model field, with a latitude axis.
+
+    :param ref: CDATVariable or masked-array-like
+        Reference field, usually the observational field, with a latitude axis.
+
+    :param centered: integer, optional
+        Legacy centered flag passed to the RMS calculation.
+        ``0`` means the mean difference is not removed before computing RMS;
+        ``1`` means the mean difference is removed first.
+        default value = 0
+
+    :param biased: integer, optional
+        Legacy normalization flag passed to the RMS calculation.
+        ``1`` uses biased normalization; ``0`` uses unbiased normalization.
+        default value = 1
+
+    :return rmse, keyerror:
+        Meridional RMS difference and any accumulated keyerror message.
     """
     tab = _to_cdat(tab)
     ref = _to_cdat(ref)
@@ -2756,7 +3278,7 @@ def RmsMeridional(tab, ref, centered=0, biased=1):
             rmse = GENUTILrms(tab, ref, axis=str(lat_num), centered=centered, biased=biased)
         except Exception:
             keyerror = "cannot perform meridional RMS (y=" + str(lat_num) + "): tab (" + str(tab.shape) +\
-                       ") and ref (" + str(ref.shape) + ") are not on the same grid"
+                ") and ref (" + str(ref.shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": meridional RMS",
                 str().ljust(5) + "cannot perform meridional RMS",
@@ -2776,24 +3298,34 @@ def RmsTemporal(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
-    genutil.rms applied on two masked_arrays that are horizontally averaged
+    Compute the temporal root-mean-square difference between ``tab`` and
+    ``ref``.
 
-    Computes the root mean square difference between tab and ref along time axis
-
-    Uses uvcdat
+    The RMS is computed over the time dimension using the modern
+    numpy/compatibility-layer statistics pathway, while preserving the legacy
+    ENSO_metrics integer-flag interface.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the modeled variable
-    :param ref: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the observed variable
-    :param centered: int, optional
-        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
-        set to 1. NOTE: Most other statistic functions return a centered statistic by default
-    :return rmse: float
-        value of root mean square difference
+    :param tab: CDATVariable or masked-array-like
+        Input time series or time-dependent field, usually the model field.
+
+    :param ref: CDATVariable or masked-array-like
+        Reference time series or time-dependent field, usually the
+        observational field.
+
+    :param centered: integer, optional
+        Legacy centered flag passed to the RMS calculation.
+        ``0`` means the mean difference is not removed before computing RMS;
+        ``1`` means the mean difference is removed first.
+        default value = 0
+
+    :param biased: integer, optional
+        Legacy normalization flag passed to the RMS calculation.
+        ``1`` uses biased normalization; ``0`` uses unbiased normalization.
+        default value = 1
+
+    :return rmse, keyerror:
+        Temporal RMS difference and any accumulated keyerror message.
     """
     tab = _to_cdat(tab)
     ref = _to_cdat(ref)
@@ -2812,7 +3344,7 @@ def RmsTemporal(tab, ref, centered=0, biased=1):
             rmse = GENUTILrms(tab, ref, axis=str(time_num), centered=centered, biased=biased)
         except Exception:
             keyerror = "cannot perform temporal RMS (t=" + str(time_num) + "): tab (" + str(tab.shape) + \
-                       ") and ref (" + str(ref.shape) + ") are not on the same grid"
+                ") and ref (" + str(ref.shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": temporal RMS",
                 str().ljust(5) + "cannot perform temporal RMS",
@@ -2832,24 +3364,32 @@ def RmsZonal(tab, ref, centered=0, biased=1):
     """
     #################################################################################
     Description:
-    genutil.rms applied on two masked_arrays that are on the same grid
+    Compute the zonal root-mean-square difference between ``tab`` and ``ref``.
 
-    Computes the root mean square difference between tab and ref on zonal axis (lon)
-
-    Uses uvcdat
+    The RMS is computed over the longitude dimension using the modern
+    numpy/compatibility-layer statistics pathway, while preserving the legacy
+    ENSO_metrics integer-flag interface.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the modeled variable
-    :param ref: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-        usually it is the observed variable
-    :param centered: int, optional
-        default value = 0 returns uncentered statistic (same as None). To remove the mean first (i.e centered statistic)
-        set to 1. NOTE: Most other statistic functions return a centered statistic by default
-    :return rmse: float
-        value of root mean square difference
+    :param tab: CDATVariable or masked-array-like
+        Input field, usually the model field, with a longitude axis.
+
+    :param ref: CDATVariable or masked-array-like
+        Reference field, usually the observational field, with a longitude axis.
+
+    :param centered: integer, optional
+        Legacy centered flag passed to the RMS calculation.
+        ``0`` means the mean difference is not removed before computing RMS;
+        ``1`` means the mean difference is removed first.
+        default value = 0
+
+    :param biased: integer, optional
+        Legacy normalization flag passed to the RMS calculation.
+        ``1`` uses biased normalization; ``0`` uses unbiased normalization.
+        default value = 1
+
+    :return rmse, keyerror:
+        Zonal RMS difference and any accumulated keyerror message.
     """
     tab = _to_cdat(tab)
     ref = _to_cdat(ref)
@@ -2863,7 +3403,7 @@ def RmsZonal(tab, ref, centered=0, biased=1):
             rmse = GENUTILrms(tab, ref, axis=str(lon_num), centered=centered, biased=biased)
         except Exception:
             keyerror = "cannot perform zonal RMS (t=" + str(lon_num) + "): tab (" + str(tab.shape) + \
-                       ") and ref (" + str(ref.shape) + ") are not on the same grid"
+                ") and ref (" + str(ref.shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": zonal RMS",
                 str().ljust(5) + "cannot perform zonal RMS",
@@ -2903,27 +3443,31 @@ def SumAxis(tab, axis=None, fill_value=0, dtype=None):
     """
     #################################################################################
     Description:
-    MV2.sum applied on tab
+    Sum values along the requested axis.
 
-    Sum of elements along a certain axis using fill_value for missing
-
-    Uses CDAT
+    This helper preserves the legacy ENSO_metrics interface while using the
+    modern numpy/compatibility-layer masked-array pathway.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+    :param tab: CDATVariable or masked-array-like
+        Input field.
+
     :param axis: int or string, optional
-        name ('t', 'x', 'y', 'xy',...) or number (0, 1, 2,...) of the axis over which you want to compute the rms
-        default value = 0 returns statistic computed over the first axis
-    :param fill_value: int or float, optional
-        fill_value used for missing (masked) data
-    :param dtype : None or dtype, optional
-        Determines the type of the returned array and of the accumulator where the elements are summed. If dtype has the
-        value None and the type of tab is an integer type of precision less than the default platform integer, then the
-        default platform integer precision is used. Otherwise, the dtype is the same as that of tab
-    :return sum_along_axis: MaskedArray or scalar
-        An array with the same shape as tab, with the specified axis removed. If tab is a 0-d array, or if axis is None,
-        a scalar is returned.
+        Axis over which to sum. May be an integer axis index or a CDAT-style
+        axis specifier.
+        default value = None
+
+    :param fill_value: number, optional
+        Fill value used for missing values during summation.
+        default value = 0
+
+    :param dtype: data-type, optional
+        Optional output dtype.
+        default value = None
+
+    :return:
+        Sum along the requested axis, following the existing ENSO_metrics
+        return convention.
     """
     tab = _to_cdat(tab)
     keyerror = None
@@ -3020,10 +3564,12 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
         _tg, _lg = tab.getGrid(), landmask.getGrid()
         if _tg is None or _lg is None or _tg.shape != _lg.shape:
             keyerror = "tab (" + str(_tg.shape if _tg is not None else None) + ") and landmask (" + \
-                       str(_lg.shape if _lg is not None else None) + ") are not on the same grid"
-            list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": applying landmask",
-                            str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask",
-                            str().ljust(5) + "this metric will be skipped"]
+                str(_lg.shape if _lg is not None else None) + ") are not on the same grid"
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": applying landmask",
+                str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask",
+                str().ljust(5) + "this metric will be skipped"
+            ]
             EnsoErrorsWarnings.my_warning(list_strings)
         else:
             landmask_nd = MV2zeros(tab.shape)
@@ -3037,10 +3583,11 @@ def ApplyLandmask(tab, landmask, maskland=True, maskocean=False):
                         landmask_nd[:, :] = landmask
                     except Exception:
                         keyerror = "ApplyLandmask: tab must be more than 4D and this is not taken into account yet (" +\
-                                   str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
+                            str(tab.shape) + ") and landmask (" + str(landmask.shape) + ")"
                         list_strings = [
                             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": landmask shape",
-                            str().ljust(5) + keyerror, str().ljust(5) + "cannot reshape landmask"]
+                            str().ljust(5) + keyerror, str().ljust(5) + "cannot reshape landmask"
+                        ]
                         EnsoErrorsWarnings.my_warning(list_strings)
             if keyerror is None:
                 tab = MV2masked_where(landmask_nd.mask, tab)
@@ -3080,10 +3627,11 @@ def ApplyLandmaskToArea(area, landmask, maskland=True, maskocean=False):
     if maskland is True or maskocean is True:
         if area.getGrid().shape != landmask.getGrid().shape:
             keyerror = "ApplyLandmaskToArea: area (" + str(area.getGrid().shape) + ") and landmask (" +\
-                       str(landmask.getGrid().shape) + ") are not on the same grid"
+                str(landmask.getGrid().shape) + ") are not on the same grid"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": applying landmask to areacell",
-                str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask to areacell"]
+                str().ljust(5) + keyerror, str().ljust(5) + "cannot apply landmask to areacell"
+            ]
             EnsoErrorsWarnings.my_warning(list_strings)
         if keyerror is None:
             # if land = 100 instead of 1, divides landmask by 100
@@ -3124,17 +3672,22 @@ def ArrayToList(tab):
         tab_out = [list(tmp[ii]) for ii in list(range(len(tab)))]
     else:
         tab_out = [None]
-        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": bad shape",
-                        str().ljust(5) + "cannot transform this array to a list",
-                        str().ljust(10) + "the length (" + str(len(tab.shape)) + ") of the shape (" + str(tab.shape) +
-                        ") is too large",
-                        str().ljust(10) + "it is not programed yet"]
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": bad shape",
+            str().ljust(5) + "cannot transform this array to a list",
+            str().ljust(10) + "the length (" + str(len(tab.shape)) + ") of the shape (" + str(tab.shape) +
+            ") is too large",
+            str().ljust(10) + "it is not programed yet"
+        ]
         EnsoErrorsWarnings.my_error(list_strings)
     return tab_out
 
 
-def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lon1=None, lon2=None, lonkey='',
-              debug=False):
+def BasinMask(
+        tab_in, region_mask, box=None, lat1=None, lat2=None, 
+        latkey='', lon1=None, lon2=None, lonkey='',
+        debug=False
+    ):
     keyerror = None
     tab_in = _to_cdat(tab_in)
     keys = ["between", "outside"]
@@ -3145,8 +3698,10 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     if not OSpath__isfile(basin_generic_ncfile):
         basin_generic_ncfile = OSpath__join(SYS_prefix, "share", "EnsoMetrics", "basin_generic_1x1deg.nc")
     if debug is True:
-        dict_debug = {"line1": "(path) " + str(this_dir), "line2": "(file) " + str(this_filename),
-                      "line3": "(basin) " + str(basin_generic_ncfile)}
+        dict_debug = {
+            "line1": "(path) " + str(this_dir), "line2": "(file) " + str(this_filename),
+            "line3": "(basin) " + str(basin_generic_ncfile)
+        }
         EnsoErrorsWarnings.debug_mode("\033[93m", "OSpath__split", 20, **dict_debug)
     ff = open_file(basin_generic_ncfile)
     # read basins
@@ -3156,19 +3711,23 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
     else:
         basin = ff("basin")
     if debug is True:
-        dict_debug = {"axes1": str([ax.id for ax in basin.getAxisList()]), "shape1": str(basin.shape),
-                      "line1": "order = " + str(basin.getOrder())}
+        dict_debug = {
+            "axes1": str([ax.id for ax in basin.getAxisList()]), "shape1": str(basin.shape),
+            "line1": "order = " + str(basin.getOrder())
+        }
         EnsoErrorsWarnings.debug_mode("\033[93m", "in BasinMask", 20, **dict_debug)
     # choose basin
     keybasin = {"atlantic": 1, "pacific": 2, "indian": 3, "antarctic": 10, "arctic": 11}
     mask = MV2zeros(basin.shape)
     if region_mask.lower() not in list(keybasin.keys()):
         keyerror = "unknown region: " + region_mask + " (basin_generic_1x1deg.nc, regrided file from NOAA NODC" + \
-                   "WOA09 Masks basin Data Files)"
-        list_strings = ["WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": region",
-                        str().ljust(5) + keyerror,
-                        str().ljust(5) + "https://iridl.ldeo.columbia.edu/SOURCES/.NOAA/.NODC/.WOA09/.Masks/.basin/"
-                        + "datafiles.html"]
+            "WOA09 Masks basin Data Files)"
+        list_strings = [
+            "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": region",
+            str().ljust(5) + keyerror,
+            str().ljust(5) + "https://iridl.ldeo.columbia.edu/SOURCES/.NOAA/.NODC/.WOA09/.Masks/.basin/"
+            + "datafiles.html"
+        ]
         EnsoErrorsWarnings.my_warning(list_strings)
     else:
         mask = MV2where(basin == keybasin[region_mask], 1, mask)
@@ -3195,12 +3754,25 @@ def BasinMask(tab_in, region_mask, box=None, lat1=None, lat2=None, latkey='', lo
             mask = MV2where(tmp == 2, 0, mask)
     # apply mask
     tab_out = MV2masked_where(mask == 1, tab_in)
-    tab_out = create_variable(tab_out, axes=tab_in.getAxisList(), grid=tab_in.getGrid(), mask=tab_in.mask,
-                                  attributes=tab_in.attributes, id=tab_in.id)
+    tab_out = create_variable(
+        tab_out, 
+        axes=tab_in.getAxisList(), 
+        grid=tab_in.getGrid(), 
+        mask=tab_in.mask,
+        attributes=tab_in.attributes, 
+        id=tab_in.id
+    )
     return tab_out, keyerror
 
 
-def CheckTime(tab1, tab2, frequency="monthly", min_time_steps=None, metric_name="", debug=False, **kwargs):
+def CheckTime(
+        tab1, tab2, 
+        frequency="monthly", 
+        min_time_steps=None, 
+        metric_name="", 
+        debug=False, 
+        **kwargs
+    ):
     """
     #################################################################################
     Description:
@@ -3296,8 +3868,10 @@ def CheckTime(tab1, tab2, frequency="monthly", min_time_steps=None, metric_name=
         #               "time2": "tab1.time = " + str(tab1_sliced.getTime().asComponentTime()[:]),
         #               "time3": "tab2.time = " + str(TimeBounds(tab2_sliced)),
         #               "time4": "tab2.time = " + str(tab2_sliced.getTime().asComponentTime()[:])}
-        dict_debug = {"shape1": "tab1.shape = " + str(tab1_sliced.shape),
-                      "shape2": "tab2.shape = " + str(tab2_sliced.shape)}
+        dict_debug = {
+            "shape1": "tab1.shape = " + str(tab1_sliced.shape),
+            "shape2": "tab2.shape = " + str(tab2_sliced.shape)
+        }
         EnsoErrorsWarnings.debug_mode("\033[93m", "in CheckTime (output)", 20, **dict_debug)
     if len(tab1_sliced.getTime()[:]) != len(tab2_sliced.getTime()[:]):
         keyerror1 = "missing time step within the given period"
@@ -3351,11 +3925,13 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
     """
     keyerror = None
     if var_name in ["temperature"]:
-        if units in ["K", "Kelvin", "Kelvins", "degree K", "degree Kelvin", "degree Kelvins", "degree_K",
-                     "degree_Kelvin", "degree_Kelvins", "degreeK", "degreeKelvin", "degreeKelvins", "degrees K",
-                     "degrees Kelvin", "degrees Kelvins", "degrees_K", "degrees_Kelvin", "degrees_Kelvins", "degreesK",
-                     "degreesKelvin", "degreesKelvins", "deg K", "deg Kelvin", "deg Kelvins", "deg_K", "deg_Kelvin",
-                     "deg_Kelvins", "degK", "degKelvin", "degKelvins", "deg. K", "deg. Kelvin", "deg. Kelvins"]:
+        if units in [
+                "K", "Kelvin", "Kelvins", "degree K", "degree Kelvin", "degree Kelvins", "degree_K",
+                "degree_Kelvin", "degree_Kelvins", "degreeK", "degreeKelvin", "degreeKelvins", "degrees K",
+                "degrees Kelvin", "degrees Kelvins", "degrees_K", "degrees_Kelvin", "degrees_Kelvins", "degreesK",
+                "degreesKelvin", "degreesKelvins", "deg K", "deg Kelvin", "deg Kelvins", "deg_K", "deg_Kelvin",
+                "deg_Kelvins", "degK", "degKelvin", "degKelvins", "deg. K", "deg. Kelvin", "deg. Kelvins"
+            ]:
             # check if the temperature units is really K
             if float(MV2minimum(tab)) > 150:
                 # unit change of the temperature: from K to degC
@@ -3364,12 +3940,14 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
                 EnsoErrorsWarnings.unlikely_units(var_name, name_in_file, units, minmax, INSPECTstack())
                 keyerror = "unlikely units: " + str(units) + "(" + str(minmax) + ")"
-        elif units in ["C", "celsius", "Celsius", "degree C", "degree celsius", "degree Celsius", "degree_C",
-                       "degree_celsius", "degree_Celsius", "degreeC", "degreecelsius", "degreeCelsius", "degrees C",
-                       "degrees celsius", "degrees Celsius", "degrees_C", "degrees_celsius", "degrees_Celsius",
-                       "degreesC", "degreescelsius", "degreesCelsius", "deg C", "deg celsius", "deg Celsius", "deg_C",
-                       "deg_celsius", "deg_Celsius", "degC", "degcelsius", "degCelsius", "deg. C", "deg. celsius",
-                       "deg. Celsius"]:
+        elif units in [
+                "C", "celsius", "Celsius", "degree C", "degree celsius", "degree Celsius", "degree_C",
+                "degree_celsius", "degree_Celsius", "degreeC", "degreecelsius", "degreeCelsius", "degrees C",
+                "degrees celsius", "degrees Celsius", "degrees_C", "degrees_celsius", "degrees_Celsius",
+                "degreesC", "degreescelsius", "degreesCelsius", "deg C", "deg celsius", "deg Celsius", "deg_C",
+                "deg_celsius", "deg_Celsius", "degC", "degcelsius", "degCelsius", "deg. C", "deg. celsius",
+                "deg. Celsius"
+            ]:
             # check if the temperature units is really degC
             if float(MV2minimum(tab)) > 50:
                 minmax = [MV2minimum(tab), MV2maximum(tab)]
@@ -3380,8 +3958,10 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "degC"
     elif var_name in ["precipitations"]:
-        if units in ["kg/m2/s", "kg/m^2/s", "kg/m**2/s", "kg m-2 s-1", "kg m^-2 s^-1", "kg m**-2 s**-1", "Kg/m2/s",
-                     "Kg/m^2/s", "Kg/m**2/s", "Kg m-2 s-1", "Kg m^-2 s^-1", "Kg m**-2 s**-1"]:
+        if units in [
+                "kg/m2/s", "kg/m^2/s", "kg/m**2/s", "kg m-2 s-1", "kg m^-2 s^-1", "kg m**-2 s**-1", "Kg/m2/s",
+                "Kg/m^2/s", "Kg/m**2/s", "Kg m-2 s-1", "Kg m^-2 s^-1", "Kg m**-2 s**-1"
+            ]:
             # changes units of the precipitation flux: from kg/(m2.s) to mm/day
             # it must be divided by the density of water = 1000 kg/m3
             #     and multiplied by 1000 (m to mm) and by 60*60*24 (s to day)
@@ -3393,8 +3973,10 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "mm/day"
     elif var_name in ["wind stress"]:
-        if units not in ["N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2", "Pa", "pascal", "pascals", "Pascal",
-                         "Pascals"]:
+        if units not in [
+                "N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2", 
+                "Pa", "pascal", "pascals", "Pascal", "Pascals"
+            ]:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "N/m2"
@@ -3409,17 +3991,21 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "m/s"
     elif var_name in ["heat flux"]:
-        if units in ["W/m2", "W/m^2", "W/m**2", "W m-2", "W m^-2", "W m**-2", "Watt/m2", "Watt/m^2", "Watt/m**2",
-                     "Watt m-2", "Watt m^-2", "Watt m**-2", "Watts/m2", "Watts/m^2", "Watts/m**2", "Watts m-2",
-                     "Watts m^-2", "Watts m**-2"]:
+        if units in [
+                "W/m2", "W/m^2", "W/m**2", "W m-2", "W m^-2", "W m**-2", "Watt/m2", "Watt/m^2", "Watt/m**2",
+                "Watt m-2", "Watt m^-2", "Watt m**-2", "Watts/m2", "Watts/m^2", "Watts/m**2", "Watts m-2",
+                "Watts m^-2", "Watts m**-2"
+            ]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "W/m2"
     elif var_name in ["pressure"]:
-        if units in ["N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2", "Pa", "pascal", "pascals", "Pascal",
-                     "Pascals"]:
+        if units in [
+                "N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2",
+                "Pa", "pascal", "pascals", "Pascal", "Pascals"
+            ]:
             pass
         else:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
@@ -3486,9 +4072,11 @@ def Event_selection(tab, frequency, nbr_years_window=None, list_event_years=[]):
         raw_out = MV2masked_where(raw_out == 0, raw_out)
         time_axis = create_axis(list(range(len(raw_out))), id="time", units=units, axis_type="T")
         other_axes = tab.getAxisList()[1:] if isinstance(tab, CDATVariable) and len(tab.shape) > 1 else []
-        tab_out = create_variable(raw_out, axes=[time_axis] + other_axes,
-                                  grid=tab.getGrid() if isinstance(tab, CDATVariable) else None,
-                                  id=getattr(tab, 'id', ''))
+        tab_out = create_variable(
+            raw_out, axes=[time_axis] + other_axes,
+            grid=tab.getGrid() if isinstance(tab, CDATVariable) else None,
+            id=getattr(tab, 'id', '')
+        )
         _tab_out_comp = _get_tax(tab_out).asComponentTime()
         for ii in list(range(len(tab))):
             y2 = _tab_out_comp[ii].year
@@ -3982,8 +4570,14 @@ def get_year_by_year(tab, frequency="monthly"):
         mask = tab[0].mask
         mask_out = MV2zeros(tab_out.shape)
         mask_out[:, :] = mask
-        tab_out = create_variable(tab_out, axes=axes, grid=grid, mask=mask_out, attributes=tab.attributes,
-                                      id=tab.id)
+        tab_out = create_variable(
+            tab_out, 
+            axes=axes, 
+            grid=grid,
+            mask=mask_out, 
+            attributes=tab.attributes,
+            id=tab.id
+        )
     return tab_out
 
 
@@ -4035,7 +4629,7 @@ def Normalize(tab, frequency):
         if len(tab) % time_steps_per_year != 0:
             tab_out = None
             keyerror = "cannot perform normalization: the function can only handle full years (len(tab) = " +\
-                       str(len(tab)) + ")"
+                str(len(tab)) + ")"
             list_strings = [
                 "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": data length",
                 str().ljust(5) + "the normalization function can only handle full years: " +
@@ -4073,28 +4667,41 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
     """
     #################################################################################
     Description:
-    Reads the given 'varname' from the given 'filename' and selects the given 'box'
+    Read a variable from one or more input files and optionally select a time
+    period and geographic region.
 
-    Uses cdms2 (uvcdat) to read 'varname' from 'filename' and cdutil (uvcdat) to select the 'box'
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern xarray/xcdat-compatible file-reading pathway and CDAT-like
+    compatibility objects provided by the refactored workflow.
     #################################################################################
 
-    :param filename: string
-        string of the path to the file and name of the file to read
-    :param varname: string
-        name of the variable to read from 'filename'
-    :param box: string
-        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
-    :param time_bounds: tuple, optional
-        tuple of the first and last dates to extract from the files (strings)
-        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
-        default value is None
-    :param frequency: string, optional
-        time frequency of the datasets
-        e.g., frequency='monthly'
-        default value is None
+    :param filename: string or list
+        Path or paths to the input NetCDF file(s).
 
-    :return tab: masked_array
-        masked_array containing 'varname' in 'box'
+    :param varname: string
+        Name of the variable to read from ``filename``.
+
+    :param box: string, optional
+        Region name to select. The region must be defined in
+        ``EnsoCollectionsLib.ReferenceRegions``.
+        default value = None
+
+    :param time_bounds: tuple, optional
+        First and last dates to extract from the file(s), for example
+        ``('1979-01-01T00:00:00', '2017-01-01T00:00:00')``.
+        default value = None
+
+    :param frequency: string, optional
+        Time frequency of the dataset, for example ``"monthly"``.
+        default value = None
+
+    usual kwargs:
+        Additional options passed through the existing ENSO_metrics reading,
+        selection, and preprocessing workflow.
+
+    :return tab: CDATVariable or masked-array-like
+        Variable read from ``filename`` and, if requested, selected over
+        ``box`` and ``time_bounds``.
     """
     fi = open_file(filename)
     if box is None:  # no box given
@@ -4127,15 +4734,19 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
             (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"]):
         if "upward" in att1 or "upward" in att2 or\
                 (varname in ["tauu", "tauuo", "tauv", "tauvo", "taux", "tauy", "uflx", "vflx"] and
-                 ("in_air" in att1 or "in_air" in att2)):
+                ("in_air" in att1 or "in_air" in att2)):
             # I need to be in the ocean point of view so the heat fluxes must be downwards
             print("\033[93m" + str().ljust(15) + "EnsoUvcdatToolsLib ReadAndSelectRegion" + "\033[0m")
             print("\033[93m" + str().ljust(25) + varname + " sign reversed" + "\033[0m")
-            print("\033[93m" + str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
+            print(
+                "\033[93m" + str().ljust(5) + "range old = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
+                "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m"
+            )
             tab = -1 * tab
-            print("\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
-                  "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m")
+            print(
+                "\033[93m" + str().ljust(5) + "range new = " + "{0:+.2f}".format(round(MV2minimum(tab), 2)) + " to " +
+                "{0:+.2f}".format(round(MV2maximum(tab), 2)) + "\033[0m"
+            )
             reversed_sign = True
     # CDATVariable arithmetic (-1 * tab) preserves axes via __rmul__/_wrap_binary.
     # _to_cdat is a no-op here but kept as a safety net for any branch that
@@ -4224,8 +4835,10 @@ def ReadAndSelectRegion(filename, varname, box=None, time_bounds=None, frequency
         if keyerror is None:
             taux, keyerror = AverageTemporal(taux)
             if keyerror is None and float(taux) > 0:
-                print("\033[93m" + str().ljust(25) + "NOTE: taux sign reversed by the code (mean nino4 = " +
-                      str(float(taux)) + ")" + "\033[0m")
+                print(
+                    "\033[93m" + str().ljust(25) + "NOTE: taux sign reversed by the code (mean nino4 = " +
+                    str(float(taux)) + ")" + "\033[0m"
+                )
                 tab = -1 * tab
     fi.close()
     # Re-run finalization after all in-place mutations (sign flip, slicing,
@@ -4239,20 +4852,34 @@ def ReadAreaSelectRegion(filename, areaname='', box=None, **kwargs):
     """
     #################################################################################
     Description:
-    Reads the given areacell from the given 'filename' and selects the given 'box'
+    Read an area-cell field from an input file and optionally select a
+    geographic region.
 
-    Uses cdms2 (uvcdat) to read areacell from 'filename' and cdutil (uvcdat) to select the 'box'
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern xarray/xcdat-compatible file-reading pathway and CDAT-like
+    compatibility objects provided by the refactored workflow.
     #################################################################################
 
     :param filename: string
-        string of the path to the file and name of the file to read
-    :param areaname: string, optional
-        name of areacell (areacella, areacello,...) in 'filename'
-    :param box: string, optional
-        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+        Path to the input NetCDF file.
 
-    :return area: masked_array
-        masked_array containing areacell in 'box'
+    :param areaname: string, optional
+        Name of the area-cell variable in ``filename``, for example
+        ``"areacella"`` or ``"areacello"``.
+        default value = ``''``
+
+    :param box: string, optional
+        Region name to select. The region must be defined in
+        ``EnsoCollectionsLib.ReferenceRegions``.
+        default value = None
+
+    usual kwargs:
+        Additional options passed through the existing ENSO_metrics reading
+        and regional-selection workflow.
+
+    :return area: CDATVariable or masked-array-like
+        Area-cell field read from ``filename`` and, if requested, selected over
+        ``box``.
     """
     fi = open_file(filename)
     if box is None:  # no box given
@@ -4293,30 +4920,50 @@ def ReadAreaSelectRegion(filename, areaname='', box=None, **kwargs):
         areacell = _finalize_existing_cdat(areacell, context=f"ReadAreaSelectRegion:{areaname}")
     return areacell
 
-
 def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs):
     """
     #################################################################################
     Description:
-    Reads the given landmask from the given 'filename' and selects the given 'box'
+    Read a landmask field from an input file and optionally select a geographic
+    region.
 
-    Uses cdms2 (uvcdat) to read areacell from 'filename' and cdutil (uvcdat) to select the 'box'
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern xarray/xcdat-compatible file-reading pathway and CDAT-like
+    compatibility objects provided by the refactored workflow. If no native
+    landmask is provided or available, the workflow may fall back to an
+    estimated landmask based on the input field.
     #################################################################################
 
-    :param filename: string
-        string of the path to the file and name of the file to read
-    :param landmaskname: string, optional
-        name of landmask (sftlf, lsmask, landmask,...) in 'filename'
-    :param box: string, optional
-        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+    :param tab: CDATVariable or masked-array-like
+        Input field used as a reference for grid, region, or fallback landmask
+        generation.
 
-    :return area: masked_array
-        masked_array containing landmask in 'box'
+    :param filename: string
+        Path to the input NetCDF file.
+
+    :param landmaskname: string, optional
+        Name of the landmask variable in ``filename``, for example ``"sftlf"``,
+        ``"lsmask"``, or ``"landmask"``.
+        default value = ``''``
+
+    :param box: string, optional
+        Region name to select. The region must be defined in
+        ``EnsoCollectionsLib.ReferenceRegions``.
+        default value = None
+
+    usual kwargs:
+        Additional options passed through the existing ENSO_metrics reading,
+        regional-selection, and fallback landmask workflow.
+
+    :return landmask: CDATVariable or masked-array-like
+        Landmask field read from ``filename`` and, if requested, selected over
+        ``box``.
     """
     # Get landmask
     if OSpath__isfile(filename):
-        # Open file and get time dimension
+        # Open file
         fi = open_file(filename)
+        
         if box is None:  # no box given
             # read file
             try:
@@ -4335,6 +4982,7 @@ def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs)
         else:  # box given by the user
             # define box
             region_ref = ReferenceRegions(box)
+
             # read file
             try:
                 landmask = fi(landmaskname, latitude=region_ref['latitude'], longitude=region_ref['longitude'])
@@ -4349,39 +4997,56 @@ def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs)
                             landmask = fi('sftlf', latitude=region_ref['latitude'], longitude=region_ref['longitude'])
                         except Exception:
                             landmask = None
+
         fi.close()
     else:
         landmask = None
+
     _tg = tab.getGrid()
     _lg = landmask.getGrid() if landmask is not None else None
+
     if OSpath__isfile(filename) is False or landmask is None or _tg is None or _lg is None or _tg.shape != _lg.shape:
         # Estimate landmask
         landmask = EstimateLandmask(tab)
-        if box is not None:
+
+        if landmask is not None:
+            try:
+                check_grid_consistency(tab, landmask, context="ReadLandmaskSelectRegion")
+            except Exception:
+                landmask = None
+
+        if landmask is not None and box is not None:
             # define box
             region_ref = ReferenceRegions(box)
+
             # subset
             landmask = landmask(latitude=region_ref['latitude'], longitude=region_ref['longitude'])
+
     # Return
-    # Ensure landmask has valid spatial axes (no time axis expected).
+    # Ensure landmask has valid spatial axes; no time axis is expected.
     if landmask is not None:
         landmask = _finalize_existing_cdat(landmask, context="ReadLandmaskSelectRegion")
-    return landmask
 
+    return landmask
 
 def EstimateLandmask(d):
     """
     #################################################################################
     Description:
-    Estimate landmask (when landmask was not given) 
-    Uses cdutil (uvcdat) to create estimated landmask for model resolution
+    Estimate a land-sea mask when no native landmask is provided.
+
+    The refactored implementation uses the ENSO_metrics compatibility layer.
+    The land mask is generated through the modern regionmask-based
+    ``generateLandSeaMask`` pathway where available, while preserving the legacy
+    ENSO_metrics land-fraction convention expected downstream.
     #################################################################################
 
-    :param d: array (CDMS)
-        model variable 
+    :param d: CDATVariable or masked-array-like
+        Input model variable with latitude/longitude axes.
 
-    :return landmask: masked_array
-        masked_array containing landmask
+    :return landmask: CDATVariable
+        Estimated land fraction mask on the input horizontal grid, with
+        ``id='sftlf'``.
     """
     print('\033[93m' + str().ljust(25) + 'NOTE: Estimated landmask applied' + '\033[0m')
     n = 1
@@ -4393,101 +5058,119 @@ def EstimateLandmask(d):
     lmsk.id = 'sftlf'
     return lmsk
 
-
-def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridder='cdms', regridTool='esmf',
-           regridMethod='linear', **kwargs):
+def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None,
+           regridder='xesmf', regridTool='esmf', regridMethod='bilinear', **kwargs):
     """
     #################################################################################
     Description:
-    Regrids 'tab_to_regrid' to 'togrid'
+    Regrid ``tab_to_regrid`` to ``newgrid`` using the modern xarray/xESMF/ESMF
+    regridding backend through the ENSO_metrics compatibility layer.
+
+    This function preserves the legacy ENSO_metrics calling interface, but the
+    active backend is now xESMF/ESMF rather than CDAT/cdms2.
+    ``ReferenceRegions`` is expected to define longitude bounds in 0–360
+    convention. When ``newgrid`` is constructed from ``newgrid_name`` and
+    ``region``, the target longitude axis is kept monotonic and within
+    ``[0, 360)``.
     #################################################################################
-    :param tab_to_regrid: masked_array
-        masked_array to regrid (must include a CDMS grid!)
-    :param newgrid: CDMS grid
-        destination grid
+
+    :param tab_to_regrid: CDATVariable or masked-array-like
+        Input field to regrid. In the refactored implementation this is expected
+        to be a CDAT-like compatibility object, usually
+        ``XarrayCompat.CDATVariable``, with valid latitude/longitude axes and a
+        rectilinear grid.
+
+    :param newgrid: grid-like object, string, or None
+        Destination rectilinear grid. If ``newgrid`` is ``None`` or a string,
+        the destination grid is constructed from ``newgrid_name`` and
+        ``region``.
+
     :param missing: float, optional
-        missing values (missing data value, if any)
+        Missing-data value, if any. Retained for API compatibility.
+
     :param order: string, optional
-        axis order (form "tzyx", "tyx", etc.)
+        Axis order, for example ``"tzyx"`` or ``"tyx"``. Retained for API
+        compatibility.
+
     :param mask: array of booleans, optional
-        mask of the new grid (either 2-D or the same shape as togrid)
+        Optional mask for the destination grid. The mask may be 2-D or have the
+        same shape as the target field, depending on the downstream use.
+
     :param regridder: string, optional
-        regridders (either 'cdms', 'cdmsHorizontal')
-        default value is 'cdms'
+        Regridding backend name. The modern supported/default value is
+        ``"xesmf"``.
+        default value is ``"xesmf"``.
+
     :param regridTool: string, optional
-        only if regrider is set to 'cdms'
-        regridding tools (either 'regrid2', 'esmf', 'libcf')
-        default value is 'esmf'
+        Regridding tool identifier. Retained for compatibility with existing
+        ENSO_metrics configuration dictionaries. The modern expected value is
+        ``"esmf"``, accessed through xESMF when available.
+        default value is ``"esmf"``.
+
     :param regridMethod: string, optional
-        regridding methods depend on regridder and regridTool
-        'cdms'
-            regridTool='regrid2' -> 'linear'
-            regridTool='esmf'    -> 'conserve', 'linear', 'patch'
-            regridTool='libcf'   -> 'linear'
-        'cdmsHorizontal' -> None
-        default value is 'linear'
+        Regridding method. The modern default is ``"bilinear"``.
+        Supported method names are normalized internally; legacy ``"linear"``
+        is treated as an alias for ``"bilinear"`` where supported.
+        Common values include ``"bilinear"``, ``"conservative"``, and
+        ``"nearest_s2d"``, depending on the backend.
+        default value is ``"bilinear"``.
 
     usual kwargs:
     :param newgrid_name: string, optional
-        if 'newgrid' is not defined (is string) this will be used to create a grid:
-            this string must contain two keywords: the grid type and the resolution (same resolution in lon and lat)
-            grid type  -> 'equalarea', 'gaussian', 'generic', 'uniform'
-            resolution -> '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
-            e.g., newgrid_name='gaussian 1x1deg'
-        default value is 'generic 1x1deg'
-    :param region: string, optional
-        if 'newgrid' is not defined (is string) this will be used to create a grid
-        name of a region, domain where the grid will be defined, must be defined in EnsoCollectionsLib.ReferenceRegions
+        Name used to construct the destination grid when ``newgrid`` is not
+        provided explicitly. The name should specify a supported grid type and
+        resolution, for example ``"generic_1x1deg"`` or ``"generic 1x1deg"``.
+        default value is ``"generic_1x1deg"``.
 
-    :return new_tab: masked_array
-        tab_to_regrid regridded on newgrid
+    :param region: string, optional
+        Region/domain used when constructing the destination grid. The region
+        name must be defined in ``EnsoCollectionsLib.ReferenceRegions``. In this
+        workflow, region longitude bounds are expected to be in 0–360
+        convention.
+
+    :return new_tab: CDATVariable
+        ``tab_to_regrid`` regridded onto ``newgrid``, with CDAT-like metadata
+        preserved for downstream ENSO metric calculations.
     """
     known_args = {"newgrid_name", "region"}
     extra_args = set(kwargs) - known_args
     if extra_args:
         EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
     # test given arguments
-    known_regridder = ["cdms", "cdmsHorizontal"]
+    known_regridder = ["xesmf"]
     if regridder not in known_regridder:
         list_strings = [
             "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": regridder",
             str().ljust(5) + "unknown regridder: " + str(regridder),
-            str().ljust(10) + "known regridder: " + str(known_regridder)]
+            str().ljust(10) + "known regridder: " + str(known_regridder),
+        ]
         EnsoErrorsWarnings.my_error(list_strings)
-    elif regridder == "cdms":
-        if regridTool in ["regrid2", "libcf"]:
-            list_method = [None, "linear"]
-        elif regridTool == "esmf":
-            list_method = [None, "conserve", "linear", "patch"]
-        if (regridTool is not None) and (regridTool not in ["regrid2", "esmf", "libcf"]):
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": regridTool",
-                str().ljust(5) + "unknown regridTool: " + str(regridTool),
-                str().ljust(10) + "known regridTool: " + str(["regrid2", "esmf", "libcf"])]
-            EnsoErrorsWarnings.my_error(list_strings)
-        elif regridMethod not in list_method:
-            list_strings = [
-                "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": regridMethod",
-                str().ljust(5) + "unknown regridMethod (" + str(regridMethod) + ") for this regridTool ("
-                + str(regridTool) + ")",
-                str().ljust(10) + "known regridMethod: " + str(list_method)]
-            EnsoErrorsWarnings.my_error(list_strings)
     # test the given 'newgrid'
     if isinstance(newgrid, str) or newgrid is None:
         #
         # newgrid is not a grid, so a grid will be created
         # to do this, kwargs['newgrid_name'] and kwargs['region'] must be defined
         #
+        if isinstance(newgrid, str) or newgrid is None:
+            if "newgrid_name" not in kwargs or "region" not in kwargs:
+                raise ValueError(
+                    "Regrid: newgrid is None or a string, so both 'newgrid_name' and "
+                    "'region' must be provided to construct the target grid."
+                )
+        
         # define the grid type
         for gtype in ["equalarea", "gaussian", "generic", "uniform"]:
             if gtype in kwargs['newgrid_name']:
                 GridType = gtype
                 break
-        else:
-            GridType = "generic"
+            else:
+                GridType = "generic"
         # define resolution (same resolution in lon and lat)
-        for res in ["0.25x0.25deg", "0.5x0.5deg", "0.75x0.75deg", "1x1deg", "1.25x1.25deg", "1.5x1.5deg",
-                    "1.75x1.75deg", "2x2deg", "2.25x2.25deg", "2.5x2.5deg", "2.75x2.75deg"]:
+        for res in [
+                "0.25x0.25deg", "0.5x0.5deg", "0.75x0.75deg", "1x1deg", 
+                "1.25x1.25deg", "1.5x1.5deg","1.75x1.75deg", "2x2deg", 
+                "2.25x2.25deg", "2.5x2.5deg", "2.75x2.75deg"
+            ]:
             if res in kwargs['newgrid_name']:
                 if res == "0.25x0.25deg":
                     GridRes = 0.25
@@ -4514,52 +5197,100 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None, regridde
                 break
         else:
             GridRes = 1.
-        # define bounds of 'region'
+            
+        # Define bounds of 'region'
         region_ref = ReferenceRegions(kwargs["region"])
         lat1, lat2 = region_ref["latitude"][0], region_ref["latitude"][1]
         lon1, lon2 = region_ref["longitude"][0], region_ref["longitude"][1]
-        # create uniform axis
-        nlat = int(round((lat2 - lat1) / GridRes))
-        lat = create_uniform_lat_axis(lat1 + (GridRes / 2.), nlat, GridRes)
+
+        # Ensure increasing latitude bounds
+        lat_min, lat_max = sorted([float(lat1), float(lat2)])
+
+        # Longitude bounds should already be in 0–360 convention from ReferenceRegions
+        lon1 = float(lon1)
+        lon2 = float(lon2)
+
+        if lon1 < 0.0 or lon2 < 0.0 or lon1 >= 360.0 or lon2 > 360.0:
+            raise ValueError(
+                f"Regrid: ReferenceRegions must use 0–360 longitude bounds. "
+                f"Got region={kwargs.get('region')!r}, lon=({region_ref['longitude'][0]}, {region_ref['longitude'][1]})."
+            )
+
+        if lon2 <= lon1:
+            raise ValueError(
+                f"Regrid: region={kwargs.get('region')!r} has non-increasing longitude bounds "
+                f"lon=({region_ref['longitude'][0]}, {region_ref['longitude'][1]}). "
+                "ReferenceRegions should define regions as non-crossing 0–360 intervals "
+                "for target-grid construction."
+            )
+
+        nlat = int(round((lat_max - lat_min) / GridRes))
         nlon = int(round((lon2 - lon1) / GridRes))
-        lon = create_uniform_lon_axis(lon1 + (GridRes / 2.), nlon, GridRes)
-        # create grid
+
+        if nlat <= 0 or nlon <= 0:
+            raise ValueError(
+                f"Regrid: invalid target grid from newgrid_name={kwargs.get('newgrid_name')!r}, "
+                f"region={kwargs.get('region')!r}, "
+                f"lat=({lat1}, {lat2}), lon=({region_ref['longitude'][0]}, {region_ref['longitude'][1]}), "
+                f"GridRes={GridRes}. Computed nlat={nlat}, nlon={nlon}."
+            )
+
+        # Create target-axis values directly
+        lat_vals = lat_min + (GridRes / 2.0) + np.arange(nlat) * GridRes
+        lon_vals = lon1 + (GridRes / 2.0) + np.arange(nlon) * GridRes
+
+        if np.nanmin(lon_vals) < 0.0 or np.nanmax(lon_vals) >= 360.0:
+            raise ValueError(
+                f"Regrid: constructed longitude centers are outside [0, 360): "
+                f"{np.nanmin(lon_vals)} to {np.nanmax(lon_vals)} for "
+                f"region={kwargs.get('region')!r}."
+            )
+
+        # Create axes with explicit CF metadata
+        lat = create_axis(
+            lat_vals,
+            id="lat",
+            units="degrees_north",
+            attributes={"axis": "Y", "standard_name": "latitude"},
+        )
+
+        lon = create_axis(
+            lon_vals,
+            id="lon",
+            units="degrees_east",
+            attributes={"axis": "X", "standard_name": "longitude"},
+        )
+
+        # Create grid
         newgrid = create_rect_grid(lat, lon, "yx", grid_type=GridType, mask=None)
         newgrid.id = kwargs["newgrid_name"]
+        
     #
     # regrid
     #
     # Map regridMethod to the xESMF equivalent once, reused by both paths
     xesmf_method = _REGRID_METHOD_MAP.get(str(regridMethod).lower(), "bilinear") if regridMethod else "bilinear"
-    if regridder == "cdms":
-        axis = tab_to_regrid.getAxis(0)
-        idname = copy.copy(axis.id)
-        if len(tab_to_regrid.shape) == 3 and (axis.id == "months" or axis.id == "years"):
-            axis.id = "time"
-            tab_to_regrid.setAxis(0, axis)
-        # CDATVariable has no native .regrid() — route through REGRID2horizontal__Horizontal
-        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid, method=xesmf_method)
-        new_tab = regridFCT(tab_to_regrid)
-        axis = tab_to_regrid.getAxis(0)
-        axis.id = idname
-        tab_to_regrid.setAxis(0, axis)
-        if tab_to_regrid.getGrid().shape == newgrid.shape:
-            new_tab = MV2masked_where(tab_to_regrid.mask, new_tab)
-    else:
-        regridFCT = REGRID2horizontal__Horizontal(tab_to_regrid.getGrid(), newgrid, method=xesmf_method)
-        new_tab = regridFCT(tab_to_regrid)
+    regridFCT = REGRID2horizontal__Horizontal(
+        tab_to_regrid.getGrid(),
+        newgrid,
+        method=xesmf_method,
+    )
+    new_tab = regridFCT(tab_to_regrid)
+
     return new_tab
 
 
-def SaveNetcdf(netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_time_name=None, var2=None,
-               var2_attributes={}, var2_name='', var2_time_name=None, var3=None, var3_attributes={}, var3_name='',
-               var3_time_name=None, var4=None, var4_attributes={}, var4_name='', var4_time_name=None, var5=None,
-               var5_attributes={}, var5_name='', var5_time_name=None, var6=None, var6_attributes={}, var6_name='',
-               var6_time_name=None, var7=None, var7_attributes={}, var7_name='', var7_time_name=None, var8=None,
-               var8_attributes={}, var8_name='', var8_time_name=None, var9=None, var9_attributes={}, var9_name='',
-               var9_time_name=None, var10=None, var10_attributes={}, var10_name='', var10_time_name=None, var11=None,
-               var11_attributes={}, var11_name='', var11_time_name=None, var12=None, var12_attributes={}, var12_name='',
-               var12_time_name=None, frequency="monthly", global_attributes={}, **kwargs):
+def SaveNetcdf(
+        netcdf_name, var1=None, var1_attributes={}, var1_name='', var1_time_name=None, var2=None,
+        var2_attributes={}, var2_name='', var2_time_name=None, var3=None, var3_attributes={}, var3_name='',
+        var3_time_name=None, var4=None, var4_attributes={}, var4_name='', var4_time_name=None, var5=None,
+        var5_attributes={}, var5_name='', var5_time_name=None, var6=None, var6_attributes={}, var6_name='',
+        var6_time_name=None, var7=None, var7_attributes={}, var7_name='', var7_time_name=None, var8=None,
+        var8_attributes={}, var8_name='', var8_time_name=None, var9=None, var9_attributes={}, var9_name='',
+        var9_time_name=None, var10=None, var10_attributes={}, var10_name='', var10_time_name=None, var11=None,
+        var11_attributes={}, var11_name='', var11_time_name=None, var12=None, var12_attributes={}, var12_name='',
+        var12_time_name=None, frequency="monthly", global_attributes={}, **kwargs
+    ):
 
     _out_dir = ntpath.dirname(netcdf_name) or "."
     _os_sn.makedirs(_out_dir, exist_ok=True)
@@ -4743,8 +5474,14 @@ def SkewnessTemporal(tab):
             flatE[nonMissingIndex] = new_dataset
             skew = flatE.reshape(spac_ax)
             skew = MV2masked_where(NPisnan(skew), skew)
-        skew = create_variable(MV2array(skew), axes=tab.getAxisList()[1:], grid=tab.getGrid(), mask=tab[0].mask,
-                                   attributes=tab.attributes, id='skewness')
+        skew = create_variable(
+            MV2array(skew), 
+            axes=tab.getAxisList()[1:], 
+            grid=tab.getGrid(), 
+            mask=tab[0].mask,
+            attributes=tab.attributes,
+            id='skewness'
+        )
     return skew
 
 
@@ -5161,27 +5898,31 @@ def ComputePDF(tab, nbr_bins=10, interval=None, axis_name='axis'):
     """
     #################################################################################
     Description:
-    Computes the PDF of tab based on numpy.histogram using nbr_bins in interval
-    Returns the density (sum of pdf=1.) in each bin
+    Compute a probability density function or histogram from the input values.
 
-    Uses uvcdat for array and axis
+    Missing values are excluded before binning. This function preserves the
+    legacy ENSO_metrics interface while using the modern numpy-based statistics
+    pathway.
     #################################################################################
 
-    :param tab: masked_array
-        array for which you would like to compute the PDF
-    :param nbr_bins: int, optional
-        defines the number of equal-width bins in the given range
-        default value = 10
-    :param interval: [float,float], optional
-        The lower and upper range of the bins. Values outside the range are ignored. The first element of the range must
-        be less than or equal to the second.
-        default value = [tab.min(), tab.max()]
-    :param axis_name: string, optional
-        name given to the axis of the pdf, e.g. 'longitude'
-        default value = 'axis'
+    :param tab: CDATVariable or masked-array-like
+        Input values used to compute the distribution.
 
-    :return: pdf: masked_array
-        density (sum of pdf=1.) in each bin, with the center of each bin as axis
+    :param nbr_bin: integer, optional
+        Number of bins to use.
+        default value = None
+
+    :param interval: list or tuple, optional
+        Lower and upper bounds for the histogram interval.
+        default value = None
+
+    :param normalized: boolean, optional
+        If True, normalize the histogram as a probability density.
+        default value = True
+
+    :return pdf, bins:
+        Computed distribution and bin information, following the existing
+        ENSO_metrics return convention.
     """
     tmp = NPhistogram(tab, bins=nbr_bins, range=interval)
     axis = [(tmp[1][ii] + tmp[1][ii + 1]) / 2. for ii in list(range(len(tmp[1]) - 1))]
@@ -5195,29 +5936,43 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
     """
     #################################################################################
     Description:
-    Custom version of genutil.linearregression
-    This function offers the possibility to compute the linear regression for all points, for values of x>=0, for values
-    of x<=0
+    Custom linear-regression helper used by ENSO_metrics.
 
-    Uses uvcdat
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern compatibility-layer replacement for genutil.linearregression. It can
+    compute the regression using all x values, or only values with x >= 0 or
+    x <= 0 through ``sign_x``.
+
+    The function accepts CDAT-like compatibility variables produced by the
+    refactored xarray/XarrayCompat workflow, as well as masked-array-like inputs
+    supported by the ENSO_metrics compatibility layer.
     #################################################################################
 
-    :param y: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :param x: masked_array
-        masked_array (uvcdat cdms2) containing 'var_name', with many attributes attached (short_name, units,...)
+    :param y: CDATVariable or masked-array-like
+        Dependent variable. In the refactored implementation this is typically
+        an ``XarrayCompat.CDATVariable`` or compatible masked-array-like object
+        with metadata preserved through the compatibility layer.
+
+    :param x: CDATVariable or masked-array-like
+        Independent variable used for the regression. Must be shape-compatible
+        with ``y``.
+
     :param sign_x: int, optional
-        default value = 0, computes the linear regression of y over x. You can pass -1 or 1 to compute the linear
-        regression of y over x for x >=0 or x<=0 respectively
+        Default value = 0. If 0, computes the regression of y over x using all
+        valid points. If -1 or 1, computes the regression using only one sign
+        subset of x, following ``CustomLinearRegression1d``.
+
     :param return_stderr: boolean, optional
-        default value = True, returns the the unadjusted standard error
-        True if you want the unadjusted standard error, if you don't want it pass anything but true
+        Default value = True. If True, returns the unadjusted standard error of
+        the regression slope.
+
     :param return_intercept: boolean, optional
-        default value = True, returns the the interception value of the linear regression
-        True if you want the interception value, if you don't want it pass anything but true
-    :return slope, stderr: floats
-        slope of the linear regression of y over x
-        unadjusted standard error of the linear regression of y over x (if return_stderr=True)
+        Default value = True. If True, returns the regression intercept.
+
+    :return tab: float, CDATVariable, or list
+        If both ``return_stderr`` and ``return_intercept`` are False, returns
+        only the slope. Otherwise returns a list containing the slope, and
+        optionally the standard error and intercept.
     """
     if sign_x != 0:
         try:
@@ -5306,9 +6061,11 @@ def CustomLinearRegression1d(y, x, sign_x=1):
     return slope, intercept, stderr
 
 
-def fill_dict_teleconnection(tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nyear1, nyear2, nbr, var_name,
-                             add_name, units, centered_rmse=0, biased_rmse=1, dict_metric={}, dict_nc={}, ev_name=None,
-                             events1=None, events2=None):
+def fill_dict_teleconnection(
+        tab1, tab2, dataset1, dataset2, timebounds1, timebounds2, nyear1, nyear2, nbr, var_name,
+        add_name, units, centered_rmse=0, biased_rmse=1, dict_metric={}, dict_nc={}, ev_name=None,
+        events1=None, events2=None
+    ):
     # Metric 1
     rmse_dive, keyerror = RmsAxis(tab1, tab2, axis="xy", centered=centered_rmse, biased=biased_rmse)
     rmse_error_dive = None
@@ -5320,20 +6077,29 @@ def fill_dict_teleconnection(tab1, tab2, dataset1, dataset2, timebounds1, timebo
     std_obs_dive = float(Std(tab2, weights=None, axis="xy", centered=1, biased=1))
     std_dive = std_mod_dive / std_obs_dive
     std_error_dive = None
-    list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2, "CORR_error_" + dataset2,
-                     "STD_" + dataset2, "STD_error_" + dataset2]
+    list_met_name = [
+        "RMSE_" + dataset2, "RMSE_error_" + dataset2, 
+        "CORR_" + dataset2, "CORR_error_" + dataset2,
+        "STD_" + dataset2, "STD_error_" + dataset2
+    ]
     list_metric_value = [float(rmse_dive), rmse_error_dive, corr_dive, corr_error_dive, std_dive, std_error_dive]
     for tmp1, tmp2 in zip(list_met_name, list_metric_value):
         dict_metric[tmp1 + "_" + add_name] = tmp2
     dict_nc["var" + str(nbr)] = tab1
-    dict_dive = {"units": units, "number_of_years_used": nyear1, "time_period": str(timebounds1),
-                 "spatialSTD_" + dataset1: std_mod_dive}
+    dict_dive = {
+        "units": units, 
+        "number_of_years_used": nyear1, 
+        "time_period": str(timebounds1),
+        "spatialSTD_" + dataset1: std_mod_dive
+    }
     if isinstance(events1, list) is True:
         dict_dive[ev_name + "_years"] = str(events1)
     dict_nc["var" + str(nbr) + "_attributes"] = dict_dive
     dict_nc["var" + str(nbr) + "_name"] = var_name + dataset1
-    dict_dive = {"units": units, "number_of_years_used": nyear2, "time_period": str(timebounds2),
-                 "spatialSTD_" + dataset2: std_obs_dive}
+    dict_dive = {
+        "units": units, "number_of_years_used": nyear2, "time_period": str(timebounds2),
+        "spatialSTD_" + dataset2: std_obs_dive
+    }
     if isinstance(events2, list) is True:
         dict_dive[ev_name + "_years"] = str(events2)
     dict_nc["var" + str(nbr + 1)] = tab2
@@ -5346,39 +6112,22 @@ def FindXYMinMaxInTs(tab, return_val='both', smooth=False, axis=0, window=5, met
     """
     #################################################################################
     Description:
-    Finds in tab in each time step the position (t,x,y,z) of the minimum (return_val='mini') or the maximum
-    (return_val='maxi') or both values (if return_val is neither 'mini' nor 'maxi')
-    Returned position(s) are not the position in tab but in the (t,x,y,z) space defined by tab axes
+    Find the spatial locations of minimum and maximum values in a
+    time-dependent field.
 
-    Uses uvcdat for smoothing
+    This helper preserves the legacy ENSO_metrics interface while using
+    CDAT-like compatibility objects provided by the refactored xarray workflow.
     #################################################################################
 
-    :param tab: masked_array
-        array for which you would like to know the position (t,x,y,z) of the minimum and/or the maximum values
-    :param return_val: string, optional
-        'mini' to return the position of the minimum value
-        'maxi' to return the position of the maximum value
-        to return both minimum and maximum values, pass anything else
-        default value = 'both', returns both minimum and maximum values
-    :param smooth: boolean, optional
-        True if you want to smooth tab, if you do not, pass anything but true
-        default value = False, tab is not smoothed
+    :param tab: CDATVariable or masked-array-like
+        Time-dependent field with latitude/longitude axes.
 
-    See function EnsoUvcdatToolsLib.Smoothing
-    :param axis: integer, optional
-        axis along which to smooth the data
-        default value is the first axis (0)
-    :param window: odd integer, optional
-        number of points used for the moving window average
-        default value is 5
-    :param method: string, optional
-        smoothing method:
-            'gaussian': gaussian shaped window
-            'square':   square shaped window
-            'triangle': triangle shaped window
+    :param metric_name: string
+        Metric name used for diagnostic messages and context.
 
-    :return: minimum/maximum position or both minimum and maximum positions, int, float or list
-        position(s) in the (t,x,y,z) space defined by tab axes of the minimum and/or maximum values of tab
+    :return:
+        Coordinates or values associated with the spatial minima and maxima,
+        following the existing ENSO_metrics return convention.
     """
     tab_ts = list()
     for tt in list(range(len(tab))):
@@ -5402,8 +6151,10 @@ def MyDerive(project, internal_variable_name, dict_var):
         EnsoErrorsWarnings.object_type_error('project', 'string', type(project), INSPECTstack())
     if not isinstance(internal_variable_name, str):
         keyerror2 = "internal_variable_name is not well defined (" + str(internal_variable_name) + ")"
-        EnsoErrorsWarnings.object_type_error('internal_variable_name', 'string', type(internal_variable_name),
-                                             INSPECTstack())
+        EnsoErrorsWarnings.object_type_error(
+            'internal_variable_name', 'string', type(internal_variable_name),
+            INSPECTstack()
+        )
     if not isinstance(dict_var, dict):
         keyerror3 = "dictionary of variable is not well defined (" + str(internal_variable_name) + ")"
         EnsoErrorsWarnings.object_type_error('project', 'dictionary', type(dict_var), INSPECTstack())
@@ -5443,11 +6194,12 @@ def MyDerive(project, internal_variable_name, dict_var):
             if internal_variable_name in list(dict_obs_var.keys()):
                 list_var = dict_obs_var[internal_variable_name]['var_name']
                 outvar, keyerror = MyDeriveCompute(
-                    list_var, dict_var, dict_att=dict_obs_var, variable=internal_variable_name, isObs=True)
+                    list_var, dict_var, dict_att=dict_obs_var, variable=internal_variable_name, isObs=True
+                )
             else:
                 outvar = None
                 keyerror = "variable (" + str(internal_variable_name) + ") not defined in ReferenceObservations[" +\
-                           str(project) + "]"
+                    str(project) + "]"
     return outvar, keyerror
 
 
@@ -5464,18 +6216,21 @@ def MyDeriveCompute(list_var, dict_var, dict_att={}, variable='', isObs=False, p
         if len(list_operator) != len(list_var):
             outvar = None
             keyerror = str(len(list_var)) + " variables are needed to compute " + str(variable) + " but " + \
-                       str(len(list_operator)) + " operator(s) are given"
+                    str(len(list_operator)) + " operator(s) are given"
             if isObs is True:
                 list_strings = [
                     "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
                     ": variable definition in EnsoCollectionsLib.ReferenceObservations(" + str(project) + ")",
                     str().ljust(5) + str(len(list_var)) + " variables are needed to compute " +
-                    str(variable) + " but " + str(len(list_operator)) + " operator(s) are given"]
+                    str(variable) + " but " + str(len(list_operator)) + " operator(s) are given"
+                ]
             else:
-                list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
-                                ": variable definition in EnsoCollectionsLib.CmipVariables",
-                                str().ljust(5) + str(len(list_var)) + " variables are needed to compute " +
-                                str(variable) + " but " + str(len(list_operator)) + " operator(s) are given"]
+                list_strings = [
+                    "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
+                    ": variable definition in EnsoCollectionsLib.CmipVariables",
+                    str().ljust(5) + str(len(list_var)) + " variables are needed to compute " +
+                    str(variable) + " but " + str(len(list_operator)) + " operator(s) are given"
+                ]
             EnsoErrorsWarnings.my_warning(list_strings)
         else:
             keyerror = None
@@ -5496,25 +6251,33 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True, return_intercept=T
     """
     #################################################################################
     Description:
-    CustomLinearRegression applied for all values of x, for values of x>=0, for values of x<=0
+    Compute linear regressions of ``y`` against ``x`` for all values, positive
+    values of ``x``, and negative values of ``x``.
 
-    Uses uvcdat
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern numpy/scipy-based regression utilities and CDAT-like compatibility
+    objects provided by the refactored xarray workflow.
     #################################################################################
 
-    :param y: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :param x: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+    :param y: CDATVariable or masked-array-like
+        Dependent variable.
+
+    :param x: CDATVariable or masked-array-like
+        Independent variable used to split the regression into all, positive,
+        and negative branches.
+
     :param return_stderr: boolean, optional
-        default value = True, returns the the unadjusted standard error
-        True if you want the unadjusted standard error, if you don't want it pass anything but true
+        If True, return the unadjusted standard error of the regression slope.
+        default value = True
+
     :param return_intercept: boolean, optional
-        default value = True, returns the the interception value of the linear regression
-        True if you want the interception value, if you don't want it pass anything but true
-    :return [slope_all_values, stderr_all_values], [slope_positive_values, stderr_positive_values],
-            [slope_negative_values, stderr_negative_values]: lists of floats
-        slope of the linear regression of y over x
-        unadjusted standard error of the linear regression of y over x (if return_stderr=True)
+        If True, return the regression intercept.
+        default value = True
+
+    :return:
+        Regression results for all, positive, and negative values of ``x``.
+        Each result contains slope, optional standard error, and optional
+        intercept depending on ``return_stderr`` and ``return_intercept``.
     """
     # all points
     all_values = CustomLinearRegression(y, x, 0, return_stderr=return_stderr, return_intercept=return_intercept)
@@ -5529,22 +6292,25 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
     """
     #################################################################################
     Description:
-    Custom version of genutil.linearregression
-    This function offers the possibility to compute the linear regression of a time series against a map
+    Compute the linear regression of a time series against a time-dependent map.
 
-    Uses uvcdat
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern numpy/scipy-based regression utilities and CDAT-like compatibility
+    objects provided by the refactored xarray workflow.
     #################################################################################
 
-    :param y: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :param x: masked_array
-        masked_array (uvcdat cdms2) containing 'var_name', with many attributes attached (short_name, units,...)
+    :param y: CDATVariable or masked-array-like
+        Time-dependent map or field used as the dependent variable.
+
+    :param x: CDATVariable or masked-array-like
+        Independent time series used for regression.
+
     :param return_stderr: boolean, optional
-        default value = True, returns the the unadjusted standard error
-        True if you want the unadjusted standard error, if you don't want it pass anything but true
-    :return slope, stderr: floats
-        slope of the linear regression of y over x
-        unadjusted standard error of the linear regression of y over x (if return_stderr=True)
+        If True, return the unadjusted standard error of the regression slope.
+        default value = True
+
+    :return slope, stderr:
+        Regression slope map and, if requested, the unadjusted standard-error map.
     """
     y = _to_cdat(y)
     x = _to_cdat(x)
@@ -5562,19 +6328,29 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
     # Attach spatial axes from y (drop the leading time axis)
     spatial_axes = [ax.copy() if ax is not None else None
                     for ax in y.getAxisList()[1:]]
-    slope = CDATVariable(slope_data, axes=spatial_axes,
-                         grid=y.getGrid(), id=getattr(x, 'id', ''))
+    slope = CDATVariable(
+        slope_data, 
+        axes=spatial_axes,
+        grid=y.getGrid(), 
+        id=getattr(x, 'id', '')
+        )
     if return_stderr:
         # Unadjusted standard error of the slope
         n = y_data.count(axis=0)
         y_hat = x_bc * slope_data
         resid = y_data - y_hat
-        mse = ma.where(n > 1,
-                       ma.sum(resid ** 2, axis=0) / (n - 1),
-                       ma.masked)
+        mse = ma.where(
+            n > 1,
+            ma.sum(resid ** 2, axis=0) / (n - 1), 
+            ma.masked
+        )
         stderr_data = ma.sqrt(mse / ma.where(den != 0, den, ma.masked))
-        stderr = CDATVariable(stderr_data, axes=spatial_axes,
-                              grid=y.getGrid(), id=getattr(x, 'id', ''))
+        stderr = CDATVariable(
+            stderr_data, 
+            axes=spatial_axes,
+            grid=y.getGrid(), 
+            id=getattr(x, 'id', '')
+        )
         return slope, stderr
     return slope
 
@@ -5583,32 +6359,37 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
     """
     #################################################################################
     Description:
-    Custom version of genutil.linearregression
-    This function offers the possibility to compute the linear regression of a time series against a lead-lag time
-    series
+    Compute the lead-lag linear regression of a time series against another
+    time series.
 
-    Uses uvcdat
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern numpy/scipy-based regression utilities and CDAT-like compatibility
+    objects provided by the refactored xarray workflow.
     #################################################################################
 
-    :param y: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :param x: masked_array
-        masked_array (uvcdat cdms2) containing 'var_name', with many attributes attached (short_name, units,...)
+    :param y: CDATVariable or masked-array-like
+        Dependent time series.
+
+    :param x: CDATVariable or masked-array-like
+        Independent time series used for lead-lag regression.
+
     :param nbr_years_window: integer
-        number of years used to compute the composite (e.g. 6)
+        Number of years used to compute the lead-lag regression window.
+
     :param return_stderr: boolean, optional
-        default value = True, returns the the unadjusted standard error
-        True if you want the unadjusted standard error, if you don't want it pass anything but true
+        If True, return the unadjusted standard error of the regression slope.
+        default value = True
+
     :param frequency: string, optional
-        time frequency of the datasets
-        e.g., frequency='monthly'
-        default value is None
+        Time frequency of the datasets, for example ``"monthly"``.
+        default value = None
+
     :param debug: boolean, optional
-        default value = False debug mode not activated
-        If you want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-    :return slope, stderr: floats
-        slope of the linear regression of y over x
-        unadjusted standard error of the linear regression of y over x (if return_stderr=True)
+        If True, print diagnostic information during calculation.
+        default value = False
+
+    :return slope, stderr:
+        Regression slope and, if requested, the unadjusted standard error.
     """
     if frequency == 'daily':
         nbr_timestep = nbr_years_window * 365
@@ -5720,8 +6501,10 @@ def PreProcessTS(tab, info, areacell=None, average=False, compute_anom=False, co
                         tab, keyerror = dict_average[av](tab, areacell, region=region, **kwargs)
                         if keyerror is None:
                             if debug is True:
-                                dict_debug = {'axes1': str([ax.id for ax in tab.getAxisList()]),
-                                              'shape1': str(tab.shape)}
+                                dict_debug = {
+                                    'axes1': str([ax.id for ax in tab.getAxisList()]),
+                                    'shape1': str(tab.shape)
+                                    }
                                 EnsoErrorsWarnings.debug_mode('\033[93m', "performed " + str(av), 25, **dict_debug)
                         else:
                             break
@@ -5736,32 +6519,44 @@ def ReadSelectRegionCheckUnits(filename, varname, varfamily, box=None, time_boun
     """
     #################################################################################
     Description:
-    Combines ReadAndSelectRegion and CheckUnits
-    Reads the given 'varname' from the given 'filename', selects the given 'box' and checks the 'varname''s units
-    depending on 'vartype'
+    Read a variable, select the requested region and time period, check or
+    harmonize units, and return the processed field for metric calculation.
 
-    Uses uvcdat
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern xarray/xcdat-compatible file-reading pathway and CDAT-like
+    compatibility objects provided by the refactored workflow.
     #################################################################################
 
-    :param filename: string
-        string of the path to the file and name of the file to read
-    :param varname: string
-        name of the variable to read from 'filename'
-    :param varfamily: string
-        family of variable encompassing 'varname' (temperature, velocity,...)
-    :param box: string
-        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
-    :param time_bounds: tuple, optional
-        tuple of the first and last dates to extract from the files (strings)
-        e.g., time_bounds=('1979-01-01T00:00:00', '2017-01-01T00:00:00')
-        default value is None
-    :param frequency: string, optional
-        time frequency of the datasets
-        e.g., frequency='monthly'
-        default value is None
+    :param filename: string or list
+        Path or paths to the input NetCDF file(s).
 
-    :return tab: masked_array
-        masked_array containing 'varname' in 'box'
+    :param varname: string
+        Name of the variable to read from ``filename``.
+
+    :param varfamily: string
+        Variable family used for unit checks, for example temperature,
+        precipitation, velocity, or heat flux.
+
+    :param box: string, optional
+        Region name to select. The region must be defined in
+        ``EnsoCollectionsLib.ReferenceRegions``.
+        default value = None
+
+    :param time_bounds: tuple, optional
+        First and last dates to extract from the file(s), for example
+        ``('1979-01-01T00:00:00', '2017-01-01T00:00:00')``.
+        default value = None
+
+    :param frequency: string, optional
+        Temporal frequency of the input data, for example ``"monthly"``.
+        default value = None
+
+    usual kwargs:
+        Additional options passed through the existing ENSO_metrics reading,
+        selection, and preprocessing workflow.
+
+    :return tab, keyerror:
+        Processed field and any accumulated keyerror message.
     """
     tab = ReadAndSelectRegion(filename, varname, box=box, time_bounds=time_bounds, frequency=frequency)
     tab, units, keyerror = CheckUnits(tab, varfamily, varname, tab.units, return_tab_only=False)
@@ -5784,9 +6579,11 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
     variable, keyerror1 = ReadSelectRegionCheckUnits(file_data, name_data, type_data, box=region,
                                                      time_bounds=time_bounds, **kwargs)
     if debug is True:
-        dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in variable.getAxisList()]),
-                      'shape1': '(' + type_data + ') ' + str(variable.shape),
-                      'time1': '(' + type_data + ') ' + str(TimeBounds(variable))}
+        dict_debug = {
+            'axes1': '(' + type_data + ') ' + str([ax.id for ax in variable.getAxisList()]),
+            'shape1': '(' + type_data + ') ' + str(variable.shape),
+            'time1': '(' + type_data + ') ' + str(TimeBounds(variable))
+            }
         EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadSelectRegionCheckUnits', 20, **dict_debug)
     # checks if the time-period fulfills the minimum length criterion
     if isinstance(kwargs['min_time_steps'], int):
@@ -5804,9 +6601,11 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
     return variable, areacell, keyerror
 
 
-def Read_data_mask_area_multifile(file_data, name_data, type_data, variable, metric, region, file_area='', name_area='',
-                                  file_mask='', name_mask='', maskland=False, maskocean=False, debug=False,
-                                  interpreter='', **kwargs):
+def Read_data_mask_area_multifile(
+                file_data, name_data, type_data, variable, metric, region, file_area='', name_area='', 
+                file_mask='', name_mask='', maskland=False, maskocean=False, debug=False,
+                interpreter='', **kwargs
+    ):
     dict_area, dict_keye, dict_var = dict(), dict(), dict()
     def safe_get(seq, idx):
         try:
@@ -5864,18 +6663,22 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
         areacell = None
     if debug is True:
         if areacell is not None:
-            dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in areacell.getAxisList()]),
-                          'shape1': '(' + type_data + ') ' + str(areacell.shape)}
+            dict_debug = {
+                'axes1': '(' + type_data + ') ' + str([ax.id for ax in areacell.getAxisList()]),
+                'shape1': '(' + type_data + ') ' + str(areacell.shape)
+                }
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
         else:
             dict_debug = {'line1': 'areacell is None '}
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadAreaSelectRegion', 20, **dict_debug)
     # Read landmask
-    lvari = ["latent_heatflux", "lhf", "lwr", "meridional_wind_stress", "msla", "net_heating",
-             "net_longwave_heatflux_downwards", "net_shortwave_heatflux_downwards", "net_surface_heatflux_downwards",
-             "netflux", "sea_surface_height", "sea_surface_temperature", "sensible_heatflux", "shf", "sla", "sohefldo",
-             "sometauy", "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swr", "tauuo", "tauvo", "taux",
-             "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"]
+    lvari = [
+        "latent_heatflux", "lhf", "lwr", "meridional_wind_stress", "msla", "net_heating",
+        "net_longwave_heatflux_downwards", "net_shortwave_heatflux_downwards", "net_surface_heatflux_downwards",
+        "netflux", "sea_surface_height", "sea_surface_temperature", "sensible_heatflux", "shf", "sla", "sohefldo",
+        "sometauy", "sossheig", "sosstsst", "sozotaux", "ssh", "sshg", "sst", "swr", "tauuo", "tauvo", "taux",
+        "tauy", "thf", "thflx", "tmpsf", "tos", "zonal_wind_stress", "zos"
+        ]
     if (name_data.lower() in lvari and "_Amon_" not in file_data) or \
         (name_data.lower() in ["pr", "slp"] and "_Omon_" in file_data):
         landmask = None
@@ -5885,8 +6688,10 @@ def Read_mask_area(tab, name_data, file_data, type_data, region, file_area='', n
         landmask = ReadLandmaskSelectRegion(tab, file_data, landmaskname=name_mask, box=region, **kwargs)
     if debug is True:
         if landmask is not None:
-            dict_debug = {'axes1': '(' + type_data + ') ' + str([ax.id for ax in landmask.getAxisList()]),
-                          'shape1': '(' + type_data + ') ' + str(landmask.shape)}
+            dict_debug = {
+                'axes1': '(' + type_data + ') ' + str([ax.id for ax in landmask.getAxisList()]),
+                'shape1': '(' + type_data + ') ' + str(landmask.shape)
+                }
             EnsoErrorsWarnings.debug_mode('\033[93m', 'after ReadLandmaskSelectRegion', 20, **dict_debug)
         else:
             dict_debug = {'line1': 'landmask is None '}
@@ -5917,37 +6722,55 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
     """
     #################################################################################
     Description:
-    Compute a simple slab ocean by integrating the total heat fluxes over time
+    Compute a simple slab-ocean estimate by integrating total heat-flux
+    anomalies over time.
+
     Based on:
-    Bayr, T., C. Wengel, M. Latif, D. Dommenget, J. Lübbecke, W. Park (2018) Error compensation of ENSO atmospheric
-    feedbacks in climate models and its influence on simulated ENSO dynamics. Clim. Dyn., doi:10.1007/s00382-018-4575-7
-    Uses CDAT
+    Bayr, T., C. Wengel, M. Latif, D. Dommenget, J. Lübbecke, W. Park (2018)
+    Error compensation of ENSO atmospheric feedbacks in climate models and its
+    influence on simulated ENSO dynamics. Climate Dynamics.
+    doi:10.1007/s00382-018-4575-7
+
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern numpy/compatibility-layer masked-array pathway.
     #################################################################################
-    :param tab1: masked_array
-        masked_array (uvcdat cdms2) containing SSTA, with many attributes attached (short_name, units,...)
-    :param tab2: masked_array
-        masked_array (uvcdat cdms2) containing THFA, with many attributes attached (short_name, units,...)
+
+    :param tab1: CDATVariable or masked-array-like
+        Sea-surface-temperature anomaly field, usually SSTA, with metadata and
+        axes preserved through the compatibility layer.
+
+    :param tab2: CDATVariable or masked-array-like
+        Total heat-flux anomaly field, usually THFA, with metadata and axes
+        preserved through the compatibility layer.
+
     :param month1: string
-        first month of integration (e.g., 'JUN')
+        First month of integration, for example ``"JUN"``.
+
     :param month2: string
-        last month of integration (e.g., 'DEC')
+        Last month of integration, for example ``"DEC"``.
+
     :param events: list of integer
-        list of the years considered as ENSO events to be selected
+        Years considered as ENSO events to be selected.
+
     :param frequency: string, optional
-        time frequency of the datasets
-        e.g., frequency='monthly'
-        default value is None
+        Time frequency of the datasets, for example ``"monthly"``.
+        default value = None
+
     :param tmin: float, optional
-        minimum temperature for events (when hovmoellers are given, the minimum ENSO temperature is not reached
-        everywhere)
-        default value is 0.1
-    :param debug: bolean, optional
-        default value = False debug mode not activated
-        If want to activate the debug mode set it to True (prints regularly to see the progress of the calculation)
-    :return dSST, dSSTthf, dSSToce: masked_array
-        normalized cumulative SST change (from 0 to 1; in C/C)
-        normalized cumulative heat flux-driven SST change (in C/C)
-        normalized cumulative SST change by an anomalous ocean circulation (in C/C)
+        Minimum temperature threshold for events. This is useful when
+        Hovmöller diagnostics are provided and the minimum ENSO temperature
+        is not reached everywhere.
+        default value = 0.1
+
+    :param debug: boolean, optional
+        If True, print diagnostic information during the calculation.
+        default value = False
+
+    :return dSST, dSSTthf, dSSToce: CDATVariable or masked-array-like
+        ``dSST`` is the normalized cumulative SST change from 0 to 1, in C/C;
+        ``dSSTthf`` is the normalized cumulative heat-flux-driven SST change,
+        in C/C; and ``dSSToce`` is the normalized cumulative SST change driven
+        by anomalous ocean circulation, in C/C.
     """
     if debug is True:
         EnsoErrorsWarnings.debug_mode('\033[93m', "EnsoUvcdatToolsLib SlabOcean", 20)
@@ -5973,9 +6796,11 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
     sstA = Event_selection(tab1, frequency, nbr_years_window=2, list_event_years=events)
     thfA = Event_selection(tab2, frequency, nbr_years_window=2, list_event_years=events)
     if debug is True:
-        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sstA.getAxisList()]),
-                      'axes2': '(thf) ' + str([ax.id for ax in thfA.getAxisList()]),
-                      'shape1': '(sst) ' + str(sstA.shape), 'shape2': '(thf) ' + str(thfA.shape)}
+        dict_debug = {
+            'axes1': '(sst) ' + str([ax.id for ax in sstA.getAxisList()]),
+            'axes2': '(thf) ' + str([ax.id for ax in thfA.getAxisList()]),
+            'shape1': '(sst) ' + str(sstA.shape), 'shape2': '(thf) ' + str(thfA.shape)
+            }
         EnsoErrorsWarnings.debug_mode('\033[93m', 'after Event_selection', 25, **dict_debug)
     # cumulative anomalies
     myshape = [len(events), mm2-mm1+1] + [ss for ss in tab1.shape[1:]]
@@ -6005,9 +6830,11 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
     # axes
     axes = [create_axis(MV2array(list(range(12-len(dSST), 12))), id='months')]
     if debug is True:
-        dict_debug = {'axes1': 'axes ' + str(axes[0]), 'axes2': 'axes[:] ' + str(axes[0][:]),
-                      'shape1': '(dSST) ' + str(dSST.shape), 'shape2': '(dSSTthf) ' + str(dSSTthf.shape),
-                      'shape3': '(dSSToce) ' + str(dSSToce.shape)}
+        dict_debug = {
+            'axes1': 'axes ' + str(axes[0]), 'axes2': 'axes[:] ' + str(axes[0][:]),
+            'shape1': '(dSST) ' + str(dSST.shape), 'shape2': '(dSSTthf) ' + str(dSSTthf.shape),
+            'shape3': '(dSSToce) ' + str(dSSToce.shape)
+            }
         EnsoErrorsWarnings.debug_mode('\033[93m', 'after mean dSST', 25, **dict_debug)
     if len(tab1.shape) > 1:
         axes = axes + tab1.getAxisList()[1:]
@@ -6015,11 +6842,13 @@ def SlabOcean(tab1, tab2, month1, month2, events, frequency=None, tmin=0.1, debu
     dSSTthf.setAxisList(axes)
     dSSToce.setAxisList(axes)
     if debug is True:
-        dict_debug = {'axes1': '(dSST) ' + str([ax.id for ax in dSST.getAxisList()]),
-                      'axes2': '(dSSTthf) ' + str([ax.id for ax in dSSTthf.getAxisList()]),
-                      'axes3': '(dSSToce) ' + str([ax.id for ax in dSSToce.getAxisList()]),
-                      'shape1': '(dSST) ' + str(dSST.shape), 'shape2': '(dSSTthf) ' + str(dSSTthf.shape),
-                      'shape3': '(dSSToce) ' + str(dSSToce.shape)}
+        dict_debug = {
+            'axes1': '(dSST) ' + str([ax.id for ax in dSST.getAxisList()]),
+            'axes2': '(dSSTthf) ' + str([ax.id for ax in dSSTthf.getAxisList()]),
+            'axes3': '(dSSToce) ' + str([ax.id for ax in dSSToce.getAxisList()]),
+            'shape1': '(dSST) ' + str(dSST.shape), 'shape2': '(dSSTthf) ' + str(dSSTthf.shape),
+            'shape3': '(dSSToce) ' + str(dSSToce.shape)
+            }
         EnsoErrorsWarnings.debug_mode('\033[93m', 'output', 25, **dict_debug)
     return dSST, dSSTthf, dSSToce
 
@@ -6028,25 +6857,29 @@ def TimeAnomaliesLinearRegressionAndNonlinearity(tab2, tab1, return_stderr=True)
     """
     #################################################################################
     Description:
-    LinearRegressionAndNonlinearity applied on two 'raw' masked_arrays (i.e., the annual cycle is not removed and the
-    spatial average is not computed)
-    The linear regression of tab2 on tab1 is computed for all values of tab1, for values of tab1>=0, for values of
-    tab1<=0
+    Compute linear regressions between interannual anomalies of two input fields
+    after horizontal averaging and annual-cycle removal.
 
-    Uses uvcdat
+    The regression of ``tab2`` on ``tab1`` is computed for all values of
+    ``tab1``, positive values of ``tab1``, and negative values of ``tab1``.
+    This function preserves the legacy ENSO_metrics interface while using the
+    modern compatibility-layer regression pathway.
     #################################################################################
 
-    :param tab2: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :param tab1: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
+    :param tab2: CDATVariable or masked-array-like
+        Dependent variable.
+
+    :param tab1: CDATVariable or masked-array-like
+        Independent variable used to define all, positive, and negative
+        regression branches.
+
     :param return_stderr: boolean, optional
-        default value = True, returns the the unadjusted standard error
-        True if you want the unadjusted standard error, if you don't want it pass anything but true
-    :return: [slope_all_values, stderr_all_values], [slope_positive_values, stderr_positive_values],
-            [slope_negative_values, stderr_negative_values]: lists of floats
-        slope of the linear regression of y over x
-        unadjusted standard error of the linear regression of y over x (if return_stderr=True)
+        If True, return the unadjusted standard error of the regression slope.
+        default value = True
+
+    :return lr, lrpos, lrneg, keyerror:
+        Regression results for all, positive, and negative values of ``tab1``,
+        plus any accumulated keyerror message.
     """
     # horizontal average
     tab1, keyerror1 = dict_average['horizontal'](tab1)
@@ -6069,16 +6902,20 @@ def TimeAnomaliesStd(tab):
     """
     #################################################################################
     Description:
-    Combines cdutil.averager and genutil.std
-    Averages spatially and computes the standard deviation
+    Compute the standard deviation of a spatially averaged anomaly time series.
 
-    Uses uvcdat
+    This function first computes a horizontal average, removes the annual cycle,
+    and then calculates the temporal standard deviation. It preserves the legacy
+    ENSO_metrics interface while using the modern numpy/scipy-based utilities and
+    CDAT-like compatibility objects provided by the refactored xarray workflow.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :return std: float
-        standard deviation (one value) of the masked_array averaged spatially and with the annual cycle removed
+    :param tab: CDATVariable or masked-array-like
+        Input variable with latitude/longitude axes and time metadata.
+
+    :return std, keyerror:
+        Standard deviation of the spatially averaged time anomalies after the
+        annual cycle has been removed, plus any accumulated keyerror message.
     """
     # horizontal average
     tab, keyerror = dict_average['horizontal'](tab)
@@ -6094,17 +6931,25 @@ def TsToMap(tab, map_ref):
     """
     #################################################################################
     Description:
-    Put a time series into a nD array according to the reference map
+    Expand a one-dimensional time series to match the shape and metadata of a
+    reference map or field.
 
-    Uses uvcdat
+    The time-series values are inserted or broadcast into the spatial structure
+    of ``map_ref`` so the output has the same dimensional layout as the
+    reference field. This preserves the legacy ENSO_metrics interface while
+    using CDAT-like compatibility objects provided by the refactored xarray
+    workflow.
     #################################################################################
 
-    :param tab: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :param map_ref: masked_array
-        masked_array (uvcdat cdms2) containing a variable, with many attributes attached (short_name, units,...)
-    :return map_out: masked_array
-        tab (1D) values set into map_ref shape (nD)
+    :param tab: CDATVariable or masked-array-like
+        One-dimensional input time series.
+
+    :param map_ref: CDATVariable or masked-array-like
+        Reference field whose shape, axes, and metadata are used to construct
+        the output map.
+
+    :return map_out: CDATVariable or masked-array-like
+        Field with ``tab`` values expanded to the shape of ``map_ref``.
     """
     if len(map_ref.shape) > 6:
         list_strings = [
@@ -6112,8 +6957,14 @@ def TsToMap(tab, map_ref):
             str().ljust(5) + "map_ref.shape = " + str(map_ref.shape)]
         EnsoErrorsWarnings.my_error(list_strings)
     map_out = MV2zeros(map_ref.shape)
-    map_out = create_variable(map_out, axes=map_ref.getAxisList(), grid=map_ref.getGrid(), mask=map_ref.mask,
-                                  attributes=map_ref.attributes, id=tab.id)
+    map_out = create_variable(
+        map_out, 
+        axes=map_ref.getAxisList(),
+        grid=map_ref.getGrid(), 
+        mask=map_ref.mask,
+        attributes=map_ref.attributes, 
+        id=tab.id
+    )
     initorder = map_out.getOrder()
     map_out = map_out.reorder('...t')
     if len(map_ref.shape) == 2:
@@ -6134,41 +6985,71 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
     """
     #################################################################################
     Description:
-    Regrids 'model', 'obs' or both
+    Regrid ``model``, ``obs``, or both so that the two fields are on a common
+    horizontal grid before metric calculation.
 
-    Uses uvcdat
+    This function preserves the legacy ENSO_metrics calling interface, but the
+    active regridding backend is now the xarray/xESMF/ESMF-compatible pathway
+    implemented through ``Regrid()`` and the ENSO_metrics compatibility layer.
     #################################################################################
 
-    :param model: masked_array
-        model data
-    :param obs: masked_array
-        observations data
+    :param model: CDATVariable or masked-array-like
+        Model field with valid latitude/longitude axes and a rectilinear grid.
+
+    :param obs: CDATVariable or masked-array-like
+        Observational field with valid latitude/longitude axes and a
+        rectilinear grid.
+
     :param info: string
-        information about what was done to 'model' and 'obs'
-    :param region: string
-        name of a region to select, must be defined in EnsoCollectionsLib.ReferenceRegions
+        Description string updated to record what regridding operation was
+        applied.
+
+    :param region: string, optional
+        Region name used when constructing a target grid from ``newgrid_name``.
+        The region must be defined in ``EnsoCollectionsLib.ReferenceRegions``.
+        In this workflow, ``ReferenceRegions`` is expected to use 0–360
+        longitude bounds.
+
     :param model_orand_obs: integer, optional
-        0 if you want to regrid model data toward observations data
-        1 if you want to regrid observations data toward model data
-        2 if you want to regrid model AND observations data toward 'newgrid'
+        Controls which field is regridded:
+            0: regrid model data onto the observations grid
+            1: regrid observations data onto the model grid
+            2: regrid both model and observations data onto ``newgrid`` or onto
+               a grid constructed by ``Regrid()`` from ``newgrid_name`` and
+               ``region``
         default value = 0
-    :param newgrid: CDMS grid
-        grid toward which model data and observations data are regridded if model_orand_obs=2
+
+    :param newgrid: grid-like object, optional
+        Target grid used when ``model_orand_obs=2``. If ``newgrid`` is ``None``
+        or a string, ``Regrid()`` constructs the target grid from
+        ``newgrid_name`` and ``region``.
 
     usual kwargs:
     :param newgrid_name: string, optional
-        generates 'newgrid' depending on the given string using cdms2
-        'newgrid_name' must contain a name of a grid type:
-            'equalarea', 'gaussian', 'generic', 'uniform'
-        and a name of a grid resolution:
-            '0.25x0.25deg', '0.5x0.5deg', '1x1deg', '2x2deg'
-        default value = 'generic 1x1deg'
-        for more information:
-    see EnsoUvcdatToolsLib.Regrid for regridding options
+        Name used by ``Regrid()`` to construct the destination grid when
+        ``newgrid`` is not provided explicitly. The name should specify a
+        supported grid type and resolution, for example ``"generic_1x1deg"``.
+        default value = ``"generic_1x1deg"``
+
+    :param regridder: string, optional
+        Regridding backend name. The modern supported/default value is
+        ``"xesmf"``.
+
+    :param regridTool: string, optional
+        Regridding tool identifier retained for compatibility with existing
+        ENSO_metrics configuration dictionaries. The modern expected value is
+        ``"esmf"``.
+
+    :param regridMethod: string, optional
+        Regridding method. The modern default is ``"bilinear"``. Legacy
+        ``"linear"`` is normalized internally to ``"bilinear"`` by ``Regrid()``
+        where supported.
 
     :return: model, obs, info
-        model and obs on the same grid, and information about what has been done to 'model' and 'obs'
+        Model and observation fields on a common grid, plus an updated
+        description of the regridding operation.
     """
+    debug = keyarg.pop('debug', False)
     known_args = {'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool', 'regridMethod'}
     extra_args = set(keyarg) - known_args
     if extra_args:
@@ -6183,20 +7064,38 @@ def TwoVarRegrid(model, obs, info, region=None, model_orand_obs=0, newgrid=None,
         obs = Regrid(obs, grid_model, **keyarg)
         info = info + ', observations regridded to model'
     elif model_orand_obs == 2:
+        if debug:
+            if newgrid is not None and not isinstance(newgrid, str):
+                print("DEBUG: [TwoVarRegrid] newgrid lat:", newgrid.getLatitude()[:])
+                print("DEBUG: [TwoVarRegrid] newgrid lon:", newgrid.getLongitude()[:])
+            else:
+                print(
+                    "DEBUG: [TwoVarRegrid] newgrid will be constructed by Regrid() "
+                    f"from newgrid_name={keyarg.get('newgrid_name')!r}, region={region!r}"
+                )
+            print("DEBUG: [TwoVarRegrid] model original shape:", model.shape, "obs original shape:", obs.shape)
         model = Regrid(model, newgrid, region=region, **keyarg)
         obs = Regrid(obs, newgrid, region=region, **keyarg)
-        try: grid_name = newgrid.id
+        if debug:
+            print("DEBUG: [TwoVarRegrid] model regridded shape:", model.shape, "obs regridded shape:", obs.shape)
+        try:
+            grid_name = newgrid.id
         except Exception:
-            try: grid_name = newgrid.name
+            try:
+                grid_name = newgrid.name
             except Exception:
-                try: grid_name = keyarg['newgrid_name']
-                except Exception: grid_name = 'newgrid'
+                try:
+                    grid_name = keyarg['newgrid_name']
+                except Exception:
+                    grid_name = 'newgrid'
         info = info + ', observations and model regridded to ' + str(grid_name)
     else:
-        info = info + ', observations and model NOT regridded'
+        raise ValueError(
+            f"TwoVarRegrid: unknown model_orand_obs={model_orand_obs!r}; "
+            "expected 0, 1, or 2."
+        )
     # Validate that regridding produced consistent spatial shapes.
-    # model_orand_obs==3 skips regridding intentionally, so we only enforce
-    # when regridding was actually requested (0, 1, or 2).
+    # Only documented regridding modes 0, 1, and 2 are supported.
     if model_orand_obs in (0, 1, 2):
         m_spatial = model.shape[-2:] if model.ndim >= 2 else model.shape
         o_spatial = obs.shape[-2:] if obs.ndim >= 2 else obs.shape

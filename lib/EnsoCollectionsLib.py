@@ -17,172 +17,224 @@ def defCollection(mc=True):
                     'variables': ['pr'],
                     'regions': {'pr': 'nino3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasPrLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'BiasSshLatRmse': {
                 #     'variables': ['ssh'],
                 #     'regions': {'ssh': 'nino3_LatExt'},
                 #     'obs_name': {'ssh': ['AVISO']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #         'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #         'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #         },
                 # },
                 # 'BiasSshLonRmse': {
                 #     'variables': ['ssh'],
                 #     'regions': {'ssh': 'equatorial_pacific'},
                 #     'obs_name': {'ssh': ['AVISO']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #         'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #         'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #         },
                 # },
                 # 'BiasSstLatRmse': {
                 #     'variables': ['sst'],
                 #     'regions': {'sst': 'nino3_LatExt'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #          'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #          },
                 # },
                 'BiasSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'BiasTauxLatRmse': {
                 #     'variables': ['taux'],
                 #     'regions': {'taux': 'equatorial_pacific_LatExt'},
                 #     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #          'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #          },
                 # },
                 'BiasTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalPrLatRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'nino3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalPrLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'SeasonalSshLatRmse': {
                 #     'variables': ['ssh'],
                 #     'regions': {'ssh': 'nino3_LatExt'},
                 #     'obs_name': {'ssh': ['AVISO']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #          'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #          },
                 # },
                 # 'SeasonalSshLonRmse': {
                 #     'variables': ['ssh'],
                 #     'regions': {'ssh': 'equatorial_pacific'},
                 #     'obs_name': {'ssh': ['AVISO']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #          'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #          },
                 # },
                 # 'SeasonalSstLatRmse': {
                 #     'variables': ['sst'],
                 #     'regions': {'sst': 'nino3_LatExt'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #          'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #          },
                 # },
                 'SeasonalSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'SeasonalTauxLatRmse': {
                 #     'variables': ['taux'],
                 #     'regions': {'taux': 'equatorial_pacific_LatExt'},
                 #     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #          'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #          },
                 # },
                 'SeasonalTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoDuration': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'nbr_years_window': 6,
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSeasonality': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'EnsoSstDiversity_1': {
                 #     'variables': ['sst'],
                 #     'regions': {'sst': 'equatorial_pacific'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': False},
+                #     'event_definition': {
+                #         'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #         'normalization': False
+                #         },
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #          'newgrid_name': 'generic_1x1deg'
+                #          },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
                 'EnsoSstDiversity_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoSstSkew': {
@@ -190,62 +242,84 @@ def defCollection(mc=True):
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'EnsoPrTsRmse': {
                 #     'variables': ['sst', 'pr'],
                 #     'regions': {'sst': 'nino3.4', 'pr': 'nino3'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'pr': ['ERA-Interim', 'GPCPv2.3']},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': True},
+                #     'event_definition': {
+                #          'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #          'normalization': True
+                #          },
                 #     'nbr_years_window': 6,
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #          'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #          },
                 # },
                 'EnsoSstTsRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'nbr_years_window': 6,
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'EnsoTauxTsRmse': {
                 #     'variables': ['sst', 'taux'],
                 #     'regions': {'sst': 'nino3.4', 'taux': 'nino4'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': True},
+                #     'event_definition': {
+                #         'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #         'normalization': True
+                #         },
                 #     'nbr_years_window': 6,
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #         'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #         'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #         },
                 # },
                 # 'NinoSstDiversity_1': {
                 #     'variables': ['sst'],
                 #     'regions': {'sst': 'equatorial_pacific'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': False},
+                #     'event_definition': {
+                #         'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #         'normalization': False
+                #         },
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #         'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #         'newgrid_name': 'generic_1x1deg'
+                #         },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
                 # 'NinoSstDiversity_2': {
                 #     'variables': ['sst'],
                 #     'regions': {'sst': 'equatorial_pacific'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': True},
+                #     'event_definition': {
+                #         'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #         'normalization': True
+                #         },
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #         'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #         'newgrid_name': 'generic_1x1deg'
+                #         },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
             },
@@ -258,10 +332,12 @@ def defCollection(mc=True):
                 'observed_period': ("1850-01-01 00:00:00", "2018-12-31 23:59:60.0"),
                 'modeled_period': ("1850-01-01 00:00:00", "2015-12-31 23:59:60.0"),
             },
-            'plot_order': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse',
-                           'SeasonalPrLatRmse', 'SeasonalPrLonRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLonRmse',
-                           'EnsoSstLonRmse', 'EnsoSstTsRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew',
-                           'EnsoDuration', 'EnsoSstDiversity_2'],
+            'plot_order': [
+                'BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse',
+                'SeasonalPrLatRmse', 'SeasonalPrLonRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLonRmse',
+                'EnsoSstLonRmse', 'EnsoSstTsRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew',
+                'EnsoDuration', 'EnsoSstDiversity_2'
+                ],
             'description': 'Describe which science question this collection is about',
         },
         'ENSO_tel': {
@@ -278,77 +354,107 @@ def defCollection(mc=True):
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoPrMapDjf': {
                     'variables': ['sst', 'pr'],
                     'regions': {'pr': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoPrMapJja': {
                     'variables': ['sst', 'pr'],
                     'regions': {'pr': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 # 'EnsoSlpMapDjf': {
                 #     'variables': ['sst', 'slp'],
                 #     'regions': {'slp': 'global', 'sst': 'nino3.4'},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': False},
+                #     'event_definition': {
+                #         'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #         'normalization': False
+                #         },
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #         'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #         'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #         },
                 #     'obs_name': {'slp': ['AVISO'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 # },
                 # 'EnsoSlpMapJja': {
                 #     'variables': ['sst', 'slp'],
                 #     'regions': {'slp': 'global', 'sst': 'nino3.4'},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': False},
+                #     'event_definition': {
+                #         'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #         'normalization': False
+                #         },
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                #                    'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #         'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                #         'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                #         },
                 #     'obs_name': {'slp': ['AVISO'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 # },
                 'EnsoSstMapDjf': {
                     'variables': ['sst'],
                     'regions': {'sst': 'global'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSstMapJja': {
                     'variables': ['sst'],
                     'regions': {'sst': 'global'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
             },
@@ -361,8 +467,10 @@ def defCollection(mc=True):
                 'observed_period': ("1850-01-01 00:00:00", "2018-12-31 23:59:60.0"),
                 'modeled_period': ("1850-01-01 00:00:00", "2015-12-31 23:59:60.0"),
             },
-            'plot_order': ['EnsoSstLonRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoPrMapDjfRmse', 'EnsoPrMapJjaRmse',
-                           'EnsoSstMapDjfRmse', 'EnsoSstMapJjaRmse'],
+            'plot_order': [
+                'EnsoSstLonRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoPrMapDjfRmse', 'EnsoPrMapJjaRmse',
+                'EnsoSstMapDjfRmse', 'EnsoSstMapJjaRmse'
+                ],
             'description': 'Describe which science question this collection is about',
         },
         'ENSO_proc': {
@@ -372,15 +480,19 @@ def defCollection(mc=True):
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoAmpl': {
                     'variables': ['sst'],
@@ -392,112 +504,143 @@ def defCollection(mc=True):
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSeasonality': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSstSkew': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 # 'EnsodSstOce_1': {
                 #     'variables': ['sst', 'thf'],
                 #     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
-                #     'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                #                          'normalization': False},
+                #     'event_definition': {
+                #         'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                #         'normalization': False},
                 #     'smoothing': {'window': 5, 'method': 'triangle'},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #          'newgrid_name': 'generic_1x1deg'
+                #          },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
                 'EnsodSstOce_2': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSshSst': {
                     'variables': ['sst', 'ssh'],
                     'regions': {'sst': 'nino3', 'ssh': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'ssh': ['AVISO']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 # 'EnsoFbSstLhf': {
                 #     'variables': ['sst', 'lhf'],
                 #     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'lhf': ['ERA-Interim', 'Tropflux']},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #          'newgrid_name': 'generic_1x1deg'
+                #          },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
                 # 'EnsoFbSstLwr': {
                 #     'variables': ['sst', 'lwr'],
                 #     'regions': {'sst': 'nino3', 'lwr': 'nino3'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'lwr': ['ERA-Interim', 'Tropflux']},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #          'newgrid_name': 'generic_1x1deg'
+                #          },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
                 # 'EnsoFbSstShf': {
                 #     'variables': ['sst', 'shf'],
                 #     'regions': {'sst': 'nino3', 'shf': 'nino3'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'shf': ['ERA-Interim', 'Tropflux']},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #          'newgrid_name': 'generic_1x1deg'
+                #          },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
                 # 'EnsoFbSstSwr': {
                 #     'variables': ['sst', 'swr'],
                 #     'regions': {'sst': 'nino3', 'swr': 'nino3'},
                 #     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'swr': ['ERA-Interim', 'Tropflux']},
-                #     'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                #                    'newgrid_name': 'generic_1x1deg'},
+                #     'regridding': {
+                #          'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                #          'newgrid_name': 'generic_1x1deg'
+                #          },
                 #     'metric_computation': 'abs_relative_difference',
                 # },
                 'EnsoFbSstTaux': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstThf': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbTauxSsh': {
                     'variables': ['taux', 'ssh'],
                     'regions': {'ssh': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux'], 'ssh': ['AVISO']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
             },
@@ -510,9 +653,11 @@ def defCollection(mc=True):
                 'observed_period': ("1850-01-01 00:00:00", "2018-12-31 23:59:60.0"),
                 'modeled_period': ("1850-01-01 00:00:00", "2015-12-31 23:59:60.0"),
             },
-            'plot_order': ['BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoSstLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
-                           'EnsoSstSkew', 'EnsodSstOce_2', 'EnsoFbSstThf', 'EnsoFbSstTaux', 'EnsoFbTauxSsh',
-                           'EnsoFbSshSst'],
+            'plot_order': [
+                'BiasSstLonRmse', 'BiasTauxLonRmse', 'EnsoSstLonRmse', 'EnsoAmpl', 'EnsoSeasonality',
+                'EnsoSstSkew', 'EnsodSstOce_2', 'EnsoFbSstThf', 'EnsoFbSstTaux', 'EnsoFbTauxSsh',
+                'EnsoFbSshSst'
+                ],
             'description': 'Describe which science question this collection is about',
         },
         'all_metrics': {
@@ -522,182 +667,236 @@ def defCollection(mc=True):
                     'variables': ['pr'],
                     'regions': {'pr': 'nino3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasPrLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasSshLatRmse': {
                     'variables': ['ssh'],
                     'regions': {'ssh': 'nino3_LatExt'},
                     'obs_name': {'ssh': ['AVISO']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasSshLonRmse': {
                     'variables': ['ssh'],
                     'regions': {'ssh': 'equatorial_pacific'},
                     'obs_name': {'ssh': ['AVISO']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasSstLatRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasTauxLatRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific_LatExt'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoAmpl': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoDuration': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'nbr_years_window': 6,
                     'smoothing': {'window': 5, 'method': 'triangle'},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsodSstOce_1': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsodSstOce_2': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSshSst': {
                     'variables': ['sst', 'ssh'],
                     'regions': {'sst': 'nino3', 'ssh': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'ssh': ['AVISO']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstLhf': {
                     'variables': ['sst', 'lhf'],
                     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'lhf': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstLwr': {
                     'variables': ['sst', 'lwr'],
                     'regions': {'sst': 'nino3', 'lwr': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'lwr': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstShf': {
                     'variables': ['sst', 'shf'],
                     'regions': {'sst': 'nino3', 'shf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'shf': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstSwr': {
                     'variables': ['sst', 'swr'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'swr': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstTaux': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstThf': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'thf': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbTauxSsh': {
                     'variables': ['taux', 'ssh'],
                     'regions': {'ssh': 'nino3', 'taux': 'nino4'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux'], 'ssh': ['AVISO']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoPrMapDjf': {
                     'variables': ['sst', 'pr'],
                     'regions': {'pr': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoPrMapJja': {
                     'variables': ['sst', 'pr'],
                     'regions': {'pr': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSeasonality': {
@@ -705,79 +904,109 @@ def defCollection(mc=True):
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSlpMapDjf': {
                     'variables': ['sst', 'slp'],
                     'regions': {'slp': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'slp': ['AVISO'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSlpMapJja': {
                     'variables': ['sst', 'slp'],
                     'regions': {'slp': 'global', 'sst': 'nino3.4'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'slp': ['AVISO'], 'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSstDiversity_1': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoSstDiversity_2': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSstMapDjf': {
                     'variables': ['sst'],
                     'regions': {'sst': 'global'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSstMapJja': {
                     'variables': ['sst'],
                     'regions': {'sst': 'global'},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': False},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': False
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                 },
                 'EnsoSstSkew': {
@@ -785,75 +1014,97 @@ def defCollection(mc=True):
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
                     'metric_computation': 'abs_relative_difference',
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoSstTsRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3.4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'nbr_years_window': 6,
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalPrLatRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'nino3_LatExt'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalPrLonRmse': {
                     'variables': ['pr'],
                     'regions': {'pr': 'equatorial_pacific'},
                     'obs_name': {'pr': ['ERA-Interim', 'GPCPv2.3']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalSshLatRmse': {
                     'variables': ['ssh'],
                     'regions': {'ssh': 'nino3_LatExt'},
                     'obs_name': {'ssh': ['AVISO']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalSshLonRmse': {
                     'variables': ['ssh'],
                     'regions': {'ssh': 'equatorial_pacific'},
                     'obs_name': {'ssh': ['AVISO']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalSstLatRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'nino3_LatExt'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalSstLonRmse': {
                     'variables': ['sst'],
                     'regions': {'sst': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalTauxLatRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific_LatExt'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'SeasonalTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
             },
             'common_collection_parameters': {
@@ -865,10 +1116,12 @@ def defCollection(mc=True):
                 'observed_period': ("1850-01-01 00:00:00", "2018-12-31 23:59:60.0"),
                 'modeled_period': ("1850-01-01 00:00:00", "2015-12-31 23:59:60.0"),
             },
-            'plot_order': ['BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse',
-                           'SeasonalPrLatRmse', 'SeasonalPrLonRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLonRmse',
-                           'EnsoSstLonRmse', 'EnsoSstTsRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew',
-                           'EnsoDuration', 'EnsoSstDiversity_2'],
+            'plot_order': [
+                'BiasPrLatRmse', 'BiasPrLonRmse', 'BiasSstLonRmse', 'BiasTauxLonRmse',
+                'SeasonalPrLatRmse', 'SeasonalPrLonRmse', 'SeasonalSstLonRmse', 'SeasonalTauxLonRmse',
+                'EnsoSstLonRmse', 'EnsoSstTsRmse', 'EnsoAmpl', 'EnsoSeasonality', 'EnsoSstSkew',
+                'EnsoDuration', 'EnsoSstDiversity_2'
+                ],
             'description': 'Describe which science question this collection is about',
         },
         'ENSO_THF': {
@@ -878,41 +1131,53 @@ def defCollection(mc=True):
                     'variables': ['sst', 'lhf'],
                     'regions': {'sst': 'nino3', 'lhf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'lhf': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstLwr': {
                     'variables': ['sst', 'lwr'],
                     'regions': {'sst': 'nino3', 'lwr': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'lwr': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstShf': {
                     'variables': ['sst', 'shf'],
                     'regions': {'sst': 'nino3', 'shf': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'shf': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstSwr': {
                     'variables': ['sst', 'swr'],
                     'regions': {'sst': 'nino3', 'swr': 'nino3'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'swr': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
                 'EnsoFbSstThf': {
                     'variables': ['sst', 'thf'],
                     'regions': {'sst': 'nino3', 'thf': 'nino3'},
-                    'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'],
-                                 'thf': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                   'newgrid_name': 'generic_1x1deg'},
+                    'obs_name': {
+                        'sst': ['ERA-Interim', 'HadISST', 'Tropflux'],
+                        'thf': ['ERA-Interim', 'Tropflux']
+                        },
+                    'regridding': {
+                        'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                        'newgrid_name': 'generic_1x1deg'
+                        },
                     'metric_computation': 'abs_relative_difference',
                 },
             },
@@ -935,85 +1200,115 @@ def defCollection(mc=True):
                     'variables': ['mld'],
                     'regions': {'mld': 'equatorial_pacific'},
                     'obs_name': {'mld': ['Boyer', 'Sallee']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasTauxLonRmse': {
                     'variables': ['taux'],
                     'regions': {'taux': 'equatorial_pacific'},
                     'obs_name': {'taux': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'BiasTauyLonRmse': {
                     'variables': ['tauy'],
                     'regions': {'tauy': 'equatorial_pacific'},
                     'obs_name': {'tauy': ['ERA-Interim', 'Tropflux']},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoMldLonRmse': {
                     'variables': ['sst', 'mld'],
                     'regions': {'sst': 'equatorial_pacific', 'mld': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'mld': ['Boyer', 'Sallee']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoMldTsRmse': {
                     'variables': ['sst', 'mld'],
                     'regions': {'sst': 'nino3.4', 'mld': 'nino4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'mld': ['Boyer', 'Sallee']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'nbr_years_window': 6,
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoTauxLonRmse': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'equatorial_pacific', 'taux': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoTauxTsRmse': {
                     'variables': ['sst', 'taux'],
                     'regions': {'sst': 'nino3.4', 'taux': 'nino4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'taux': ['ERA-Interim', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'nbr_years_window': 6,
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoTauyLonRmse': {
                     'variables': ['sst', 'tauy'],
                     'regions': {'sst': 'equatorial_pacific', 'tauy': 'equatorial_pacific'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'tauy': ['ERA-Interim', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
                 'EnsoTauyTsRmse': {
                     'variables': ['sst', 'tauy'],
                     'regions': {'sst': 'nino3.4', 'tauy': 'nino4'},
                     'obs_name': {'sst': ['ERA-Interim', 'HadISST', 'Tropflux'], 'tauy': ['ERA-Interim', 'Tropflux']},
-                    'event_definition': {'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
-                                         'normalization': True},
+                    'event_definition': {
+                        'region_ev': 'nino3.4', 'season_ev': 'DEC', 'threshold': 0.75,
+                        'normalization': True
+                        },
                     'nbr_years_window': 6,
                     'smoothing': {'window': 5, 'method': 'triangle'},
-                    'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                   'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'},
+                    'regridding': {
+                        'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf',
+                        'regridMethod': 'bilinear', 'newgrid_name': 'generic_1x1deg'
+                        },
                 },
             },
             'common_collection_parameters': {
@@ -1025,10 +1320,12 @@ def defCollection(mc=True):
                 'observed_period': ("1850-01-01 00:00:00", "2018-12-31 23:59:60.0"),
                 'modeled_period': ("1850-01-01 00:00:00", "2015-12-31 23:59:60.0"),
             },
-            'plot_order': ['BiasMldLonRmse', 'BiasTauxLonRmse', 'BiasTauyLonRmse',
-                           'EnsoMldLonRmse', 'EnsoMldTsRmse',
-                           'EnsoTauxLonRmse', 'EnsoTauxTsRmse',
-                           'EnsoTauyLonRmse', 'EnsoTauyTsRmse'],
+            'plot_order': [
+                'BiasMldLonRmse', 'BiasTauxLonRmse', 'BiasTauyLonRmse',
+                'EnsoMldLonRmse', 'EnsoMldTsRmse',
+                'EnsoTauxLonRmse', 'EnsoTauxTsRmse',
+                'EnsoTauyLonRmse', 'EnsoTauyTsRmse'
+                ],
             'description': 'Describe which science question this collection is about',
         },
     }
@@ -1448,16 +1745,26 @@ def ReferenceRegions(region=True):
         'INO': {'long_name': 'Indian Ocean', 'latitude': (-25., 0.), 'longitude': (55., 95.), 'maskland': True,
                 'maskocean': False},
         # YYP regions
-        'africaSE': {'long_name': 'South and East Africa', 'latitude': (-40, 15.), 'longitude': (0., 55.),
-                     'maskland': False, 'maskocean': True},
-        'americaN': {'long_name': 'North America', 'latitude': (10., 60.), 'longitude': (235., 300.),
-                     'maskland': False, 'maskocean': True},
-        'americaS': {'long_name': 'South America', 'latitude': (-60., 15.), 'longitude': (275., 330.),
-                     'maskland': False, 'maskocean': True},
-        'asiaS': {'long_name': 'South Asia', 'latitude': (-10., 30.), 'longitude': (65., 130.),
-                  'maskland': False, 'maskocean': True},
-        'oceania': {'long_name': 'oceania', 'latitude': (-50., 0.), 'longitude': (110., 180.), 'maskland': False,
-                    'maskocean': True},
+        'africaSE': {
+            'long_name': 'South and East Africa', 'latitude': (-40, 15.), 'longitude': (0., 55.),
+            'maskland': False, 'maskocean': True
+            },
+        'americaN': {
+            'long_name': 'North America', 'latitude': (10., 60.), 'longitude': (235., 300.),
+            'maskland': False, 'maskocean': True
+            },
+        'americaS': {
+            'long_name': 'South America', 'latitude': (-60., 15.), 'longitude': (275., 330.),
+            'maskland': False, 'maskocean': True
+            },
+        'asiaS': {
+            'long_name': 'South Asia', 'latitude': (-10., 30.), 'longitude': (65., 130.),
+            'maskland': False, 'maskocean': True
+            },
+        'oceania': {
+            'long_name': 'oceania', 'latitude': (-50., 0.), 'longitude': (110., 180.), 'maskland': False,
+            'maskocean': True
+            },
     }
     if region is True:
         return dict_reference_regions

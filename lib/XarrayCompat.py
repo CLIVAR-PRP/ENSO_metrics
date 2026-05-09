@@ -2,39 +2,43 @@
 """
 XarrayCompat.py
 ===============
-Backward-compatible drop-in replacements for the retired CDAT/UV-CDAT
-``cdms2.TransientVariable`` and associated axis/grid objects.
+Compatibility-layer replacements for the retired CDAT/UV-CDAT
+``cdms2.TransientVariable`` interface and related axis/grid objects used by
+ENSO_metrics.
 
 This module is intended as a compatibility shim for CDAT-style diagnostic code.
 It is most reliable for decoded, rectilinear gridded fields such as common
-CMIP/ERA5/GPCP/E3SM post-processed data with dimensions like
+CMIP, ERA5, GPCP, and E3SM post-processed data with dimensions like
 ``(time, lat, lon)`` or ``(time, lev, lat, lon)``.
 
 Important scope note
 --------------------
-This is not a full replacement for xarray/xESMF/ESMPy for native unstructured
-or curvilinear grids. E3SM native ``ncol``/MPAS/ocean grids should usually be
-regridded or handled with grid-aware tools before conversion to this CDAT-style
-object.
+This is not a full replacement for xarray, xESMF, ESMPy, or native
+grid-aware analysis tools. Native unstructured or curvilinear grids, such as
+E3SM ``ncol`` grids, MPAS grids, and ocean-model grids, should usually be
+regridded or handled with grid-aware tools before conversion to this CDAT-like
+object model.
 
-All internal computation is done with ``numpy.ma``; coordinate metadata is
-stored alongside the data so callers that use CDAT-style introspection
-(``.getAxisList()``, ``.getGrid()``, ``.getTime().asComponentTime()``, ...)
-continue to work without modification.
+All internal numerical computation is done with ``numpy.ma``. Coordinate
+metadata are stored alongside the data so callers that use CDAT-style
+introspection methods such as ``.getAxisList()``, ``.getGrid()``,
+``.getTime().asComponentTime()``, and related accessors can continue to work
+with minimal changes.
 
 Exported public API
 -------------------
-CDATVariable   - replaces cdms2.TransientVariable
-_Axis          - replaces cdms2.Axis
-_TimeAxis      - replaces cdms2.Axis (time-specific)
-_Grid          - replaces cdms2.RectGrid
+CDATVariable   - CDAT-like variable object used in place of
+                 ``cdms2.TransientVariable`` within the refactored workflow
+_Axis          - CDAT-like coordinate axis object
+_TimeAxis      - CDAT-like time-axis object with component-time support
+_Grid          - CDAT-like rectilinear grid object
 
 Factory helpers
 ---------------
-create_axis(id, values, units='', attributes=None)
+create_axis(values, id='', units='', attributes=None, axis_type=None)
 create_uniform_lat_axis(start, n, delta)
 create_uniform_lon_axis(start, n, delta)
-create_rect_grid(lat_axis, lon_axis, order='yx', grid_type='generic')
+create_rect_grid(lat_axis, lon_axis, order='yx', grid_type='generic', mask=None)
 create_variable(data, axes=None, grid=None, mask=None, id='', attributes=None)
 
 Conversion helpers
@@ -803,12 +807,16 @@ class _Grid:
 
 class CDATVariable:
     """
-    Drop-in replacement for ``cdms2.TransientVariable``.
+    CDAT-like variable object used by the ENSO_metrics compatibility layer.
 
-    Data are stored as ``numpy.ma.MaskedArray`` and metadata are carried as a
-    list of ``_Axis`` objects plus an optional rectilinear ``_Grid``.
+    This class preserves the subset of the legacy ``cdms2.TransientVariable``
+    interface needed by ENSO_metrics while storing data internally as
+    ``numpy.ma.MaskedArray``. Coordinate metadata are carried as a list of
+    ``_Axis`` objects plus an optional rectilinear ``_Grid``.
+
+    It is intended for decoded rectilinear gridded fields and should not be
+    treated as a full replacement for the complete CDAT/UV-CDAT variable API.
     """
-
     def __init__(
         self,
         data,
@@ -1421,45 +1429,177 @@ class CDATVariable:
 # ---------------------------------------------------------------------------
 
 
-def create_axis(values, id: str = "", units: str = "", attributes: Optional[dict] = None,
+def create_axis(values, id: str = "", units: str = "", 
+                attributes: Optional[dict] = None,
                 axis_type: Optional[str] = None) -> _Axis:
-    """Replacement for ``cdms2.createAxis``.
+    """Create a CDAT-like axis object for the compatibility layer.
 
-    Matches the CDAT ``cdms2.createAxis(data, id='')`` calling convention:
-    values is the first positional argument and id is a keyword.
+    This helper preserves the subset of the legacy ``cdms2.createAxis`` calling
+    convention used by ENSO_metrics: ``values`` is the first positional
+    argument and ``id`` is an optional keyword argument.
 
     Parameters
     ----------
+    values : array-like
+        Axis coordinate values.
+
+    id : str, optional
+        Axis identifier, for example ``"time"``, ``"lat"``, ``"lon"``, or
+        ``"lev"``.
+
+    units : str, optional
+        Axis units. For CF-style spatial axes, typical values are
+        ``"degrees_north"`` for latitude and ``"degrees_east"`` for longitude.
+
+    attributes : dict, optional
+        Additional metadata attributes to attach to the axis.
+
     axis_type : str, optional
-        Explicit CF axis code ("T", "Y", "X", "Z").  Pass this when the axis
-        id or units alone would not be enough to detect the type under
-        ``STRICT_AXIS_DETECTION=True`` (e.g. a synthetic integer time axis
-        created with ``id="time"`` but no CF units yet).
+        Explicit CF axis code, one of ``"T"``, ``"Y"``, ``"X"``, or ``"Z"``.
+        Pass this when the axis id or units alone would not be enough to detect
+        the type under ``STRICT_AXIS_DETECTION=True``; for example, a synthetic
+        integer time axis created with ``id="time"`` but no CF time units yet.
+
+    Returns
+    -------
+    _Axis
+        CDAT-like axis object used by ``CDATVariable``.
     """
     return _Axis(id, values, units=units, attributes=attributes, axis_type=axis_type)
 
 
 def create_uniform_lat_axis(start: float, n: int, delta: float) -> _Axis:
-    """Replacement for ``cdms2.createUniformLatitudeAxis``."""
+    """Create a uniformly spaced CDAT-like latitude axis.
+
+    This helper preserves the subset of the legacy
+    ``cdms2.createUniformLatitudeAxis`` behavior used by ENSO_metrics while
+    returning an ``_Axis`` object for the xarray compatibility layer.
+
+    Parameters
+    ----------
+    start : float
+        First latitude coordinate value.
+
+    n : int
+        Number of latitude points.
+
+    delta : float
+        Latitude spacing in degrees.
+
+    Returns
+    -------
+    _Axis
+        Latitude axis with CF-style metadata, including ``axis="Y"``,
+        ``standard_name="latitude"``, and ``units="degrees_north"``.
+    """
     vals = np.array([start + i * delta for i in range(int(n))])
     return _Axis("lat", vals, units="degrees_north", axis_type="Y")
 
 
 def create_uniform_lon_axis(start: float, n: int, delta: float) -> _Axis:
-    """Replacement for ``cdms2.createUniformLongitudeAxis``."""
+    """Create a uniformly spaced CDAT-like longitude axis.
+
+    This helper preserves the subset of the legacy
+    ``cdms2.createUniformLongitudeAxis`` behavior used by ENSO_metrics while
+    returning an ``_Axis`` object for the xarray compatibility layer.
+
+    Parameters
+    ----------
+    start : float
+        First longitude coordinate value.
+
+    n : int
+        Number of longitude points.
+
+    delta : float
+        Longitude spacing in degrees.
+
+    Returns
+    -------
+    _Axis
+        Longitude axis with CF-style metadata, including ``axis="X"``,
+        ``standard_name="longitude"``, and ``units="degrees_east"``.
+    """
     vals = np.array([start + i * delta for i in range(int(n))])
     return _Axis("lon", vals, units="degrees_east", axis_type="X")
 
 
 def create_rect_grid(lat_axis: _Axis, lon_axis: _Axis, order: str = "yx", grid_type: str = "generic", mask=None) -> _Grid:
-    """Replacement for ``cdms2.createRectGrid``."""
+    """Create a CDAT-like rectilinear grid for the compatibility layer.
+
+    This helper preserves the subset of the legacy ``cdms2.createRectGrid``
+    behavior used by ENSO_metrics while returning an ``_Grid`` object backed by
+    the xarray compatibility layer.
+
+    Parameters
+    ----------
+    lat_axis : _Axis
+        Latitude axis.
+
+    lon_axis : _Axis
+        Longitude axis.
+
+    order : str, optional
+        Axis order for the grid. The default ``"yx"`` means latitude followed
+        by longitude.
+        default value = ``"yx"``
+
+    grid_type : str, optional
+        Descriptive grid type, for example ``"generic"``, ``"gaussian"``,
+        ``"uniform"``, or ``"equalarea"``.
+        default value = ``"generic"``
+
+    mask : array-like, optional
+        Optional grid mask to attach to the returned grid.
+        default value = None
+
+    Returns
+    -------
+    _Grid
+        CDAT-like rectilinear grid object used by ``CDATVariable``.
+    """
     g = _Grid(lat_axis, lon_axis)
     g.type = grid_type
     return g
 
 
 def create_variable(data, axes: Optional[list] = None, grid: Optional[_Grid] = None, mask=None, id: str = "", attributes: Optional[dict] = None) -> CDATVariable:
-    """Replacement for ``cdms2.createVariable``."""
+    """Create a CDAT-like variable for the xarray compatibility layer.
+
+    This helper preserves the subset of the legacy ``cdms2.createVariable``
+    behavior used by ENSO_metrics while returning a ``CDATVariable`` backed by
+    the modern compatibility layer.
+
+    Parameters
+    ----------
+    data : array-like
+        Input data values.
+
+    axes : list, optional
+        List of CDAT-like axes associated with the dimensions of ``data``.
+        default value = None
+
+    grid : _Grid, optional
+        CDAT-like rectilinear grid associated with the variable.
+        default value = None
+
+    mask : array-like, optional
+        Optional mask to apply to ``data``.
+        default value = None
+
+    id : str, optional
+        Variable identifier/name.
+        default value = ``""``
+
+    attributes : dict, optional
+        Metadata attributes to attach to the variable.
+        default value = None
+
+    Returns
+    -------
+    CDATVariable
+        CDAT-like variable object used by the refactored ENSO_metrics workflow.
+    """
     return CDATVariable(data, axes=axes, grid=grid, mask=mask, id=id, attributes=attributes)
 
 
