@@ -45,7 +45,10 @@ dict_label = {
 
 plot_parameters = {
     "BiasPrLatRmse": {
-        "netcdf_variables": ["pr_lat__", "pr_map__"],
+        "netcdf_variables": [
+            "pr_lat__", 
+            "pr_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -113,7 +116,10 @@ plot_parameters = {
         },
     },
     "BiasSshLatRmse": {
-        "netcdf_variables": ["ssh_lat__", "ssh_map__"],
+        "netcdf_variables": [
+            "ssh_lat__", 
+            "ssh_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -139,7 +145,10 @@ plot_parameters = {
         },
     },
     "BiasSshLonRmse": {
-        "netcdf_variables": ["ssh_lon__", "ssh_map__"],
+        "netcdf_variables": [
+            "ssh_lon__", 
+            "ssh_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -181,7 +190,10 @@ plot_parameters = {
         },
     },
     "BiasSstLatRmse": {
-        "netcdf_variables": ["sst_lat__", "sst_map__"],
+        "netcdf_variables": [
+            "sst_lat__", 
+            "sst_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -207,7 +219,10 @@ plot_parameters = {
         },
     },
     "BiasSstLonRmse": {
-        "netcdf_variables": ["sst_lon__", "sst_map__"],
+        "netcdf_variables": [
+            "sst_lon__", 
+            "sst_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -249,7 +264,10 @@ plot_parameters = {
         },
     },
     "BiasTauxLatRmse": {
-        "netcdf_variables": ["taux_lat__", "taux_map__"],
+        "netcdf_variables": [
+            "taux_lat__", 
+            "taux_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -275,7 +293,10 @@ plot_parameters = {
         },
     },
     "BiasTauxLonRmse": {
-        "netcdf_variables": ["taux_lon__", "taux_map__"],
+        "netcdf_variables": [
+            "taux_lon__",
+            "taux_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -317,7 +338,10 @@ plot_parameters = {
         },
     },
     "EnsoAmpl": {
-        "netcdf_variables": ["sstStd_lon__", "sstStd_map__"],
+        "netcdf_variables": [
+            "sstStd_lon__", 
+            "sstStd_map__"
+        ],
         "diagnostic": {
             "plot_type": "dot",
             "nbr_panel": 1,
@@ -354,8 +378,16 @@ plot_parameters = {
         },
     },
     "EnsodSstOce": {
-        "netcdf_variables": ["dSST_ts__", "dSSTthf_ts__", "dSSToce_ts__", "dSSTthf_lon__", "dSSToce_lon__",
-                             "dSST_hov__", "dSSTthf_hov__", "dSSToce_hov__"],
+        "netcdf_variables": [
+            "dSST_ts__", 
+            "dSSTthf_ts__", 
+            "dSSToce_ts__", 
+            "dSSTthf_lon__", 
+            "dSSToce_lon__",
+            "dSST_hov__", 
+            "dSSTthf_hov__", 
+            "dSSToce_hov__"
+        ],
         "diagnostic": {
             "plot_type": "dot",
             "nbr_panel": 1,
@@ -420,7 +452,12 @@ plot_parameters = {
 
     },
     "EnsoDuration": {
-        "netcdf_variables": ["sst_against_sst_ts__", "Nina_duration__", "Nino_duration__"],
+        #"netcdf_variables": ["sst_over_sst_ts__", "Nina_duration__", "Nino_duration__"],
+        "netcdf_variables": [
+            "sst_against_sst_ts__", 
+            "Nina_duration__", 
+            "Nino_duration__"
+        ],
         "diagnostic": {
             "plot_type": "dot",
             "nbr_panel": 1,
@@ -435,7 +472,8 @@ plot_parameters = {
             "plot_type": "curve",
             "nbr_panel": 1,
             "title": "ENSO life-cycle",
-            "varpattern": "sst_against_sst_ts__", #"sst_over_sst_ts__",
+            #"varpattern": "sst_over_sst_ts__", 
+            "varpattern": "sst_against_sst_ts__", 
             "xname": "months",
             "yname": "reg(SSTA, SSTA)",
             "method": "1) Seasonal cycle removed\n2) Linearly detrended\n3) 5-month triangular running ave.\n" +
@@ -453,8 +491,18 @@ plot_parameters = {
         },
     },
     "EnsoFbSshSst": {
-        "netcdf_variables": ["ssh__", "sst__", "ssh_over_sst_lon__", "sshPOS_over_sst_lon__", "sshNEG_over_sst_lon__",
-                             "ssh_over_sst_hov__", "sshPOS_over_sst_hov__", "sshNEG_over_sst_hov__"],
+        #"netcdf_variables": ["ssh__", "sst__", "ssh_over_sst_lon__", "sshPOS_over_sst_lon__", "sshNEG_over_sst_lon__",
+        #                     "ssh_over_sst_hov__", "sshPOS_over_sst_hov__", "sshNEG_over_sst_hov__"],
+        "netcdf_variables": [
+            "ssh__",
+            "sst__",
+            "reg_sst_over_ssh_lon__",
+            "reg_sst_over_POSssh_lon__",
+            "reg_sst_over_NEGssh_lon__",
+            "reg_sst_over_ssh_hov__",
+            "reg_sst_over_POSssh_hov__",
+            "reg_sst_over_NEGssh_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -507,8 +555,18 @@ plot_parameters = {
         },
     },
     "EnsoFbSstLhf": {
-        "netcdf_variables": ["sst__", "lhf__", "sst_over_lhf_lon__", "sstPOS_over_lhf_lon__", "sstNEG_over_lhf_lon__",
-                             "sst_over_lhf_hov__", "sstPOS_over_lhf_hov__", "sstNEG_over_lhf_hov__"],
+        #"netcdf_variables": ["sst__", "lhf__", "sst_over_lhf_lon__", "sstPOS_over_lhf_lon__", "sstNEG_over_lhf_lon__",
+        #                     "sst_over_lhf_hov__", "sstPOS_over_lhf_hov__", "sstNEG_over_lhf_hov__"],
+        "netcdf_variables": [
+            "sst__",
+            "lhf__",
+            "reg_lhf_over_sst_lon__",
+            "reg_lhf_over_POSsst_lon__",
+            "reg_lhf_over_NEGsst_lon__",
+            "reg_lhf_over_sst_hov__",
+            "reg_lhf_over_POSsst_hov__",
+            "reg_lhf_over_NEGsst_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -561,8 +619,18 @@ plot_parameters = {
         },
     },
     "EnsoFbSstLwr": {
-        "netcdf_variables": ["sst__", "lwr__", "sst_over_lwr_lon__", "sstPOS_over_lwr_lon__", "sstNEG_over_lwr_lon__",
-                             "sst_over_lwr_hov__", "sstPOS_over_lwr_hov__", "sstNEG_over_lwr_hov__"],
+        #"netcdf_variables": ["sst__", "lwr__", "sst_over_lwr_lon__", "sstPOS_over_lwr_lon__", "sstNEG_over_lwr_lon__",
+        #                     "sst_over_lwr_hov__", "sstPOS_over_lwr_hov__", "sstNEG_over_lwr_hov__"],
+        "netcdf_variables": [
+            "sst__",
+            "lwr__",
+            "reg_lwr_over_sst_lon__",
+            "reg_lwr_over_POSsst_lon__",
+            "reg_lwr_over_NEGsst_lon__",
+            "reg_lwr_over_sst_hov__",
+            "reg_lwr_over_POSsst_hov__",
+            "reg_lwr_over_NEGsst_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -615,8 +683,18 @@ plot_parameters = {
         },
     },
     "EnsoFbSstShf": {
-        "netcdf_variables": ["sst__", "shf__", "sst_over_shf_lon__", "sstPOS_over_shf_lon__", "sstNEG_over_shf_lon__",
-                             "sst_over_shf_hov__", "sstPOS_over_shf_hov__", "sstNEG_over_shf_hov__"],
+        #"netcdf_variables": ["sst__", "shf__", "sst_over_shf_lon__", "sstPOS_over_shf_lon__", "sstNEG_over_shf_lon__",
+        #                     "sst_over_shf_hov__", "sstPOS_over_shf_hov__", "sstNEG_over_shf_hov__"],
+        "netcdf_variables": [
+            "sst__",
+            "shf__",
+            "reg_shf_over_sst_lon__",
+            "reg_shf_over_POSsst_lon__",
+            "reg_shf_over_NEGsst_lon__",
+            "reg_shf_over_sst_hov__",
+            "reg_shf_over_POSsst_hov__",
+            "reg_shf_over_NEGsst_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -669,8 +747,18 @@ plot_parameters = {
         },
     },
     "EnsoFbSstSwr": {
-        "netcdf_variables": ["sst__", "swr__", "sst_over_swr_lon__", "sstPOS_over_swr_lon__", "sstNEG_over_swr_lon__",
-                             "sst_over_swr_hov__", "sstPOS_over_swr_hov__", "sstNEG_over_swr_hov__"],
+        #"netcdf_variables": ["sst__", "swr__", "sst_over_swr_lon__", "sstPOS_over_swr_lon__", "sstNEG_over_swr_lon__",
+        #                     "sst_over_swr_hov__", "sstPOS_over_swr_hov__", "sstNEG_over_swr_hov__"],
+        "netcdf_variables": [
+            "sst__",
+            "swr__",
+            "reg_swr_over_sst_lon__",
+            "reg_swr_over_POSsst_lon__",
+            "reg_swr_over_NEGsst_lon__",
+            "reg_swr_over_sst_hov__",
+            "reg_swr_over_POSsst_hov__",
+            "reg_swr_over_NEGsst_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -723,9 +811,19 @@ plot_parameters = {
         },
     },
     "EnsoFbSstTaux": {
+        #"netcdf_variables": [
+        #    "sst__", "taux__", "sst_over_taux_lon__", "sstPOS_over_taux_lon__", "sstNEG_over_taux_lon__",
+        #    "sst_over_taux_hov__", "sstPOS_over_taux_hov__", "sstNEG_over_taux_hov__"],
         "netcdf_variables": [
-            "sst__", "taux__", "sst_over_taux_lon__", "sstPOS_over_taux_lon__", "sstNEG_over_taux_lon__",
-            "sst_over_taux_hov__", "sstPOS_over_taux_hov__", "sstNEG_over_taux_hov__"],
+            "sst__",
+            "taux__",
+            "reg_taux_over_sst_lon__",
+            "reg_taux_over_POSsst_lon__",
+            "reg_taux_over_NEGsst_lon__",
+            "reg_taux_over_sst_hov__",
+            "reg_taux_over_POSsst_hov__",
+            "reg_taux_over_NEGsst_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -779,8 +877,18 @@ plot_parameters = {
         },
     },
     "EnsoFbSstThf": {
-        "netcdf_variables": ["sst__", "thf__", "sst_over_thf_lon__", "sstPOS_over_thf_lon__", "sstNEG_over_thf_lon__",
-                             "sst_over_thf_hov__", "sstPOS_over_thf_hov__", "sstNEG_over_thf_hov__"],
+        #"netcdf_variables": ["sst__", "thf__", "sst_over_thf_lon__", "sstPOS_over_thf_lon__", "sstNEG_over_thf_lon__",
+        #                     "sst_over_thf_hov__", "sstPOS_over_thf_hov__", "sstNEG_over_thf_hov__"],
+        "netcdf_variables": [
+            "sst__",
+            "thf__",
+            "reg_thf_over_sst_lon__",
+            "reg_thf_over_POSsst_lon__",
+            "reg_thf_over_NEGsst_lon__",
+            "reg_thf_over_sst_hov__",
+            "reg_thf_over_POSsst_hov__",
+            "reg_thf_over_NEGsst_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -833,9 +941,19 @@ plot_parameters = {
         },
     },
     "EnsoFbTauxSsh": {
+        #"netcdf_variables": [
+        #    "taux__", "ssh__", "taux_over_ssh_lon__", "tauxPOS_over_ssh_lon__", "tauxNEG_over_ssh_lon__",
+        #    "taux_over_ssh_hov__", "tauxPOS_over_ssh_hov__", "tauxNEG_over_ssh_hov__"],
         "netcdf_variables": [
-            "taux__", "ssh__", "taux_over_ssh_lon__", "tauxPOS_over_ssh_lon__", "tauxNEG_over_ssh_lon__",
-            "taux_over_ssh_hov__", "tauxPOS_over_ssh_hov__", "tauxNEG_over_ssh_hov__"],
+            "taux__",
+            "ssh__",
+            "reg_ssh_over_taux_lon__",
+            "reg_ssh_over_POStaux_lon__",
+            "reg_ssh_over_NEGtaux_lon__",
+            "reg_ssh_over_taux_hov__",
+            "reg_ssh_over_POStaux_hov__",
+            "reg_ssh_over_NEGtaux_hov__",
+        ],
         "diagnostic": {
             "plot_type": "scatterplot",
             "nbr_panel": 1,
@@ -889,7 +1007,15 @@ plot_parameters = {
         },
     },
     "EnsoPrMap": {
-        "netcdf_variables": ["reg_pr_over_sst_map__", "reg_pr_over_sst_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_pr_over_sst_map__",
+            "reg_pr_over_sst_map_africaSE__",
+            "reg_pr_over_sst_map_americaN__",
+            "reg_pr_over_sst_map_americaS__",
+            "reg_pr_over_sst_map_asiaS__",
+            "reg_pr_over_sst_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -989,7 +1115,27 @@ plot_parameters = {
         },
     },
     "EnsoPrMapDjf": {
-        "netcdf_variables": ["reg_pr_over_sst_djf_map__", "reg_pr_over_sst_djf_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"], 
+        "netcdf_variables": [
+            "reg_pr_over_sst_djf_map__",
+            "pr_nina_djf_map__",
+            "pr_nino_djf_map__",
+            "reg_pr_over_sst_djf_map_africaSE__",
+            "reg_pr_over_sst_djf_map_americaN__",
+            "reg_pr_over_sst_djf_map_americaS__",
+            "reg_pr_over_sst_djf_map_asiaS__",
+            "reg_pr_over_sst_djf_map_oceania__",
+            "pr_nina_djf_map_africaSE__",
+            "pr_nino_djf_map_africaSE__",
+            "pr_nina_djf_map_americaN__",
+            "pr_nino_djf_map_americaN__",
+            "pr_nina_djf_map_americaS__",
+            "pr_nino_djf_map_americaS__",
+            "pr_nina_djf_map_asiaS__",
+            "pr_nino_djf_map_asiaS__",
+            "pr_nina_djf_map_oceania__",
+            "pr_nino_djf_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -1180,7 +1326,27 @@ plot_parameters = {
         },
     },
     "EnsoPrMapJja": {
-        "netcdf_variables": ["reg_pr_over_sst_jja_map__", "reg_pr_over_sst_jja_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_pr_over_sst_jja_map__",
+            "pr_nina_jja_map__",
+            "pr_nino_jja_map__",
+            "reg_pr_over_sst_jja_map_africaSE__",
+            "reg_pr_over_sst_jja_map_americaN__",
+            "reg_pr_over_sst_jja_map_americaS__",
+            "reg_pr_over_sst_jja_map_asiaS__",
+            "reg_pr_over_sst_jja_map_oceania__",
+            "pr_nina_jja_map_africaSE__",
+            "pr_nino_jja_map_africaSE__",
+            "pr_nina_jja_map_americaN__",
+            "pr_nino_jja_map_americaN__",
+            "pr_nina_jja_map_americaS__",
+            "pr_nino_jja_map_americaS__",
+            "pr_nina_jja_map_asiaS__",
+            "pr_nino_jja_map_asiaS__",
+            "pr_nina_jja_map_oceania__",
+            "pr_nino_jja_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -1371,8 +1537,16 @@ plot_parameters = {
         },
     },
     "EnsoPrTsRmse": {
-        "netcdf_variables": ["pr_over_sst_ts__", "pr_over_sst_hov__", "Nina_pr_ts__", "Nino_pr_ts__", "Nina_pr_hov__",
-                             "Nino_pr_hov__"],
+        #"netcdf_variables": ["pr_over_sst_ts__", "pr_over_sst_hov__", "Nina_pr_ts__", "Nino_pr_ts__", "Nina_pr_hov__",
+        #                     "Nino_pr_hov__"],
+        "netcdf_variables": [
+            "sst_against_pr_ts__",
+            "sst_against_pr_hov__",
+            "Nina_pr_ts__",
+            "Nino_pr_ts__",
+            "Nina_pr_hov__",
+            "Nino_pr_hov__",
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -1430,7 +1604,15 @@ plot_parameters = {
         },
     },
     "EnsoSlpMap": {
-        "netcdf_variables": ["reg_slp_over_sst_map__", "reg_slp_over_sst_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_slp_over_sst_map__",
+            "reg_slp_over_sst_map_africaSE__",
+            "reg_slp_over_sst_map_americaN__",
+            "reg_slp_over_sst_map_americaS__",
+            "reg_slp_over_sst_map_asiaS__",
+            "reg_slp_over_sst_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -1438,6 +1620,7 @@ plot_parameters = {
             "label": dict_label["REG2"],
             "maskland": False,
             "title": ["reg(ENSO SSTA, SLPA)", "reg(ENSO SSTA, SLPA)"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "reg_slp_over_sst_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -1528,7 +1711,27 @@ plot_parameters = {
         },
     },
     "EnsoSlpMapDjf": {
-        "netcdf_variables": ["reg_slp_over_sst_djf_map__", "reg_slp_over_sst_djf_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_slp_over_sst_djf_map__",
+            "slp_nina_djf_map__",
+            "slp_nino_djf_map__",
+            "reg_slp_over_sst_djf_map_africaSE__",
+            "reg_slp_over_sst_djf_map_americaN__",
+            "reg_slp_over_sst_djf_map_americaS__",
+            "reg_slp_over_sst_djf_map_asiaS__",
+            "reg_slp_over_sst_djf_map_oceania__",
+            "slp_nina_djf_map_africaSE__",
+            "slp_nino_djf_map_africaSE__",
+            "slp_nina_djf_map_americaN__",
+            "slp_nino_djf_map_americaN__",
+            "slp_nina_djf_map_americaS__",
+            "slp_nino_djf_map_americaS__",
+            "slp_nina_djf_map_asiaS__",
+            "slp_nino_djf_map_asiaS__",
+            "slp_nina_djf_map_oceania__",
+            "slp_nino_djf_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -1719,7 +1922,27 @@ plot_parameters = {
         },
     },
     "EnsoSlpMapJja": {
-        "netcdf_variables": ["reg_slp_over_sst_jja_map__", "reg_slp_over_sst_jja_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_slp_over_sst_jja_map__",
+            "slp_nina_jja_map__",
+            "slp_nino_jja_map__",
+            "reg_slp_over_sst_jja_map_africaSE__",
+            "reg_slp_over_sst_jja_map_americaN__",
+            "reg_slp_over_sst_jja_map_americaS__",
+            "reg_slp_over_sst_jja_map_asiaS__",
+            "reg_slp_over_sst_jja_map_oceania__",
+            "slp_nina_jja_map_africaSE__",
+            "slp_nino_jja_map_africaSE__",
+            "slp_nina_jja_map_americaN__",
+            "slp_nino_jja_map_americaN__",
+            "slp_nina_jja_map_americaS__",
+            "slp_nino_jja_map_americaS__",
+            "slp_nina_jja_map_asiaS__",
+            "slp_nino_jja_map_asiaS__",
+            "slp_nina_jja_map_oceania__",
+            "slp_nino_jja_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -1910,8 +2133,16 @@ plot_parameters = {
         },
     },
     "EnsoSstLonRmse": {
-        "netcdf_variables": ["sst_over_sst_lon__", "sst_over_sst_map__", "Nina_sst_lon__", "Nino_sst_lon__",
-                             "Nina_sst_map__", "Nino_sst_map__"],
+        #"netcdf_variables": ["sst_over_sst_lon__", "sst_over_sst_map__", "Nina_sst_lon__", "Nino_sst_lon__",
+        #                     "Nina_sst_map__", "Nino_sst_map__"],
+        "netcdf_variables": [
+            "sst_against_sst_lon__",
+            "sst_against_sst_map__",
+            "Nina_sst_lon__",
+            "Nino_sst_lon__",
+            "Nina_sst_map__",
+            "Nino_sst_map__",
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -1971,7 +2202,15 @@ plot_parameters = {
         },
     },
     "EnsoSstMap": {
-        "netcdf_variables": ["reg_ts_over_sst_map__", "reg_ts_over_sst_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_ts_over_sst_map__",
+            "reg_ts_over_sst_map_africaSE__",
+            "reg_ts_over_sst_map_americaN__",
+            "reg_ts_over_sst_map_americaS__",
+            "reg_ts_over_sst_map_asiaS__",
+            "reg_ts_over_sst_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -1979,6 +2218,7 @@ plot_parameters = {
             "label": dict_label["PRA"],
             "maskland": False,
             "title": ["reg(ENSO SSTA, TSA)", "reg(ENSO SSTA, TSA)"],
+            #"varpattern": "sst_over_sst_map__",
             "varpattern": "reg_ts_over_sst_map__",
             "xname": "longitude",
             "yname": "latitude",
@@ -2069,7 +2309,27 @@ plot_parameters = {
         },
     },
     "EnsoSstMapDjf": {
-        "netcdf_variables": ["reg_ts_over_sst_djf_map__", "reg_ts_over_sst_djf_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_ts_over_sst_djf_map__",
+            "ts_nina_djf_map__",
+            "ts_nino_djf_map__",
+            "reg_ts_over_sst_djf_map_africaSE__",
+            "reg_ts_over_sst_djf_map_americaN__",
+            "reg_ts_over_sst_djf_map_americaS__",
+            "reg_ts_over_sst_djf_map_asiaS__",
+            "reg_ts_over_sst_djf_map_oceania__",
+            "ts_nina_djf_map_africaSE__",
+            "ts_nino_djf_map_africaSE__",
+            "ts_nina_djf_map_americaN__",
+            "ts_nino_djf_map_americaN__",
+            "ts_nina_djf_map_americaS__",
+            "ts_nino_djf_map_americaS__",
+            "ts_nina_djf_map_asiaS__",
+            "ts_nino_djf_map_asiaS__",
+            "ts_nina_djf_map_oceania__",
+            "ts_nino_djf_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2260,7 +2520,27 @@ plot_parameters = {
         },
     },
     "EnsoSstMapJja": {
-        "netcdf_variables": ["reg_ts_over_sst_jja_map__", "reg_ts_over_sst_jja_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": [
+            "reg_ts_over_sst_jja_map__",
+            "ts_nina_jja_map__",
+            "ts_nino_jja_map__",
+            "reg_ts_over_sst_jja_map_africaSE__",
+            "reg_ts_over_sst_jja_map_americaN__",
+            "reg_ts_over_sst_jja_map_americaS__",
+            "reg_ts_over_sst_jja_map_asiaS__",
+            "reg_ts_over_sst_jja_map_oceania__",
+            "ts_nina_jja_map_africaSE__",
+            "ts_nino_jja_map_africaSE__",
+            "ts_nina_jja_map_americaN__",
+            "ts_nino_jja_map_americaN__",
+            "ts_nina_jja_map_americaS__",
+            "ts_nino_jja_map_americaS__",
+            "ts_nina_jja_map_asiaS__",
+            "ts_nino_jja_map_asiaS__",
+            "ts_nina_jja_map_oceania__",
+            "ts_nino_jja_map_oceania__",
+        ],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2450,8 +2730,16 @@ plot_parameters = {
         },
     },
     "EnsoSstTsRmse": {
-        "netcdf_variables": ["sst_over_sst_ts__", "sst_over_sst_hov__", "Nina_sst_ts__", "Nino_sst_ts__",
-                             "Nina_sst_hov__", "Nino_sst_hov__"],
+        #"netcdf_variables": ["sst_over_sst_ts__", "sst_over_sst_hov__", "Nina_sst_ts__", "Nino_sst_ts__",
+        #                     "Nina_sst_hov__", "Nino_sst_hov__"],
+        "netcdf_variables": [
+            "sst_against_sst_ts__",
+            "sst_against_sst_hov__", 
+            "Nina_sst_ts__", 
+            "Nino_sst_ts__",
+            "Nina_sst_hov__", 
+            "Nino_sst_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -2509,8 +2797,16 @@ plot_parameters = {
         },
     },
     "EnsoTauxTsRmse": {
-        "netcdf_variables": ["taux_over_sst_ts__", "taux_over_sst_hov__", "Nina_taux_ts__", "Nino_taux_ts__",
-                             "Nina_taux_hov__", "Nino_taux_hov__"],
+        #"netcdf_variables": ["taux_over_sst_ts__", "taux_over_sst_hov__", "Nina_taux_ts__", "Nino_taux_ts__",
+        #                     "Nina_taux_hov__", "Nino_taux_hov__"],
+        "netcdf_variables": [
+            "sst_against_taux_ts__",
+            "sst_against_taux_hov__", 
+            "Nina_taux_ts__", 
+            "Nino_taux_ts__",
+            "Nina_taux_hov__", 
+            "Nino_taux_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -2568,8 +2864,14 @@ plot_parameters = {
         },
     },
     "EnsoSeasonality": {
-        "netcdf_variables": ["sstStd_monthly__", "sstStd_hov__", "sstStd_NDJ_lon__", "sstStd_MAM_lon__",
-                             "sstStd_NDJ_map__", "sstStd_MAM_map__"],
+        "netcdf_variables": [
+            "sstStd_monthly__", 
+            "sstStd_hov__", 
+            "sstStd_NDJ_lon__", 
+            "sstStd_MAM_lon__",
+            "sstStd_NDJ_map__", 
+            "sstStd_MAM_map__"
+        ],
         "diagnostic": {
             "plot_type": "dot",
             "nbr_panel": 1,
@@ -2634,7 +2936,11 @@ plot_parameters = {
         },
     },
     "EnsoSstDiversity": {
-        "netcdf_variables": ["Enso_lon_pos_maxSSTA__", "Nina_lon_pos_minSSTA__", "Nino_lon_pos_maxSSTA__"],
+        "netcdf_variables": [
+            "Enso_lon_pos_maxSSTA__", 
+            "Nina_lon_pos_minSSTA__", 
+            "Nino_lon_pos_maxSSTA__"
+        ],
         "diagnostic": {
             "plot_type": "dot",
             "nbr_panel": 1,
@@ -2664,7 +2970,10 @@ plot_parameters = {
         },
     },
     "EnsoSstSkew": {
-        "netcdf_variables": ["sstSke_lon__", "sstSke_map__"],
+        "netcdf_variables": [
+            "sstSke_lon__", 
+            "sstSke_map__"
+        ],
         "diagnostic": {
             "plot_type": "dot",
             "nbr_panel": 1,
@@ -2699,7 +3008,8 @@ plot_parameters = {
         },
     },
     "NinaPrMap": {
-        "netcdf_variables": ["prComp_map__", "prComp_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": ["prComp_map__"],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2718,7 +3028,8 @@ plot_parameters = {
         },
     },
     "NinaSlpMap": {
-        "netcdf_variables": ["slp_map__", "slp_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": ["slp_map__"],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2737,7 +3048,8 @@ plot_parameters = {
         },
     },
     "NinaSstMap": {
-        "netcdf_variables": ["ts_map__", "ts_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": ["ts_map__"],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2780,7 +3092,10 @@ plot_parameters = {
         },
     },
     "NinaSstLonRmse": {
-        "netcdf_variables": ["sst_lon__", "sst_map__"],
+        "netcdf_variables": [
+            "sst_lon__", 
+            "sst_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -2810,7 +3125,10 @@ plot_parameters = {
         },
     },
     "NinaSstTsRmse": {
-        "netcdf_variables": ["sst_ts__", "sst_hov__"],
+        "netcdf_variables": [
+            "sst_ts__", 
+            "sst_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -2838,7 +3156,8 @@ plot_parameters = {
         },
     },
     "NinoPrMap": {
-        "netcdf_variables": ["pr_map__", "pr_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": ["pr_map__"],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2857,7 +3176,8 @@ plot_parameters = {
         },
     },
     "NinoSlpMap": {
-        "netcdf_variables": ["slp_map__", "slp_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": ["slp_map__"],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2876,7 +3196,8 @@ plot_parameters = {
         },
     },
     "NinoSstMap": {
-        "netcdf_variables": ["ts_map__", "ts_map__"],
+        #"netcdf_variables": ["sst_over_sst_map__"],
+        "netcdf_variables": ["ts_map__"],
         "diagnostic": {
             "plot_type": "map",
             "nbr_panel": 2,
@@ -2895,7 +3216,10 @@ plot_parameters = {
         },
     },
     "NinoSstDiversity": {
-        "netcdf_variables": ["Nina_lon_pos_minSSTA__", "Nino_lon_pos_maxSSTA__"],
+        "netcdf_variables": [
+            "Nina_lon_pos_minSSTA__", 
+            "Nino_lon_pos_maxSSTA__"
+        ],
         "diagnostic": {
             "plot_type": "dot",
             "nbr_panel": 1,
@@ -2946,7 +3270,10 @@ plot_parameters = {
         },
     },
     "NinoSstLonRmse": {
-        "netcdf_variables": ["sst_lon__", "sst_map__"],
+        "netcdf_variables": [
+            "sst_lon__", 
+            "sst_map__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -2975,7 +3302,10 @@ plot_parameters = {
         },
     },
     "NinoSstTsRmse": {
-        "netcdf_variables": ["sst_ts__", "sst_hov__"],
+        "netcdf_variables": [
+            "sst_ts__", 
+            "sst_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3003,7 +3333,11 @@ plot_parameters = {
         },
     },
     "SeasonalPrLatRmse": {
-        "netcdf_variables": ["pr_lat__", "pr_map__", "prMac_hov__"],
+        "netcdf_variables": [
+            "pr_lat__", 
+            "pr_map__", 
+            "prMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3043,7 +3377,11 @@ plot_parameters = {
         },
     },
     "SeasonalPrLonRmse": {
-        "netcdf_variables": ["pr_lon__", "pr_map__", "prMac_hov__"],
+        "netcdf_variables": [
+            "pr_lon__", 
+            "pr_map__", 
+            "prMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3083,7 +3421,11 @@ plot_parameters = {
         },
     },
     "SeasonalSshLatRmse": {
-        "netcdf_variables": ["ssh_lat__", "ssh_map__", "sshMac_hov__"],
+        "netcdf_variables": [
+            "ssh_lat__", 
+            "ssh_map__", 
+            "sshMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3123,7 +3465,11 @@ plot_parameters = {
         },
     },
     "SeasonalSshLonRmse": {
-        "netcdf_variables": ["ssh_lon__", "ssh_map__", "sshMac_hov__"],
+        "netcdf_variables": [
+            "ssh_lon__", 
+            "ssh_map__", 
+            "sshMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3163,7 +3509,11 @@ plot_parameters = {
         },
     },
     "SeasonalSstLatRmse": {
-        "netcdf_variables": ["sst_lat__", "sst_map__", "sstMac_hov__"],
+        "netcdf_variables": [
+            "sst_lat__", 
+            "sst_map__", 
+            "sstMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3203,7 +3553,11 @@ plot_parameters = {
         },
     },
     "SeasonalSstLonRmse": {
-        "netcdf_variables": ["sst_lon__", "sst_map__", "sstMac_hov__"],
+        "netcdf_variables": [
+            "sst_lon__", 
+            "sst_map__", 
+            "sstMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3243,7 +3597,11 @@ plot_parameters = {
         },
     },
     "SeasonalTauxLatRmse": {
-        "netcdf_variables": ["taux_lat__", "taux_map__", "tauxMac_hov__"],
+        "netcdf_variables": [
+            "taux_lat__", 
+            "taux_map__", 
+            "tauxMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
@@ -3284,7 +3642,11 @@ plot_parameters = {
         },
     },
     "SeasonalTauxLonRmse": {
-        "netcdf_variables": ["taux_lon__", "taux_map__", "tauxMac_hov__"],
+        "netcdf_variables": [
+            "taux_lon__", 
+            "taux_map__", 
+            "tauxMac_hov__"
+        ],
         "diagnostic": {
             "plot_type": "curve",
             "nbr_panel": 1,
