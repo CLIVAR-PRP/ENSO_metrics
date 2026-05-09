@@ -1113,17 +1113,18 @@ def GENUTILstd(a, weights=None, axis=0, centered=1, biased=1):
 
 def GENUTILlinearregression(y, x=None, error=1, nointercept=None):
     """
-    Replacement for genutil.statistics.linearregression.
+    Flattened replacement for genutil.statistics.linearregression.
 
-    Handles the 1-D flattened case and returns:
-        if error:
-            (slope_int, stderr)
-            where slope_int = [[slope, intercept]]
-            and stderr = [[slope_stderr, intercept_stderr]]
-        else:
-            slope_int
+    This helper collapses all dimensions with ravel() before regression and
+    therefore returns one global scalar slope/intercept pair. It is appropriate
+    for scalar/global regressions, but it should not be used when the caller
+    expects axis-preserving regression fields such as:
 
-    Missing values are removed using a joint valid mask so x and y remain aligned.
+        (time, lon)        -> (lon)
+        (year, month, lon) -> (month, lon)
+
+    For axis-preserving regression, use CustomLinearRegression(), which applies
+    CustomLinearRegression1d pointwise along the first axis.
     """
     yy = np.ma.masked_invalid(np.ma.asarray(_mv(y)).ravel())
 
@@ -5943,6 +5944,9 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
     compute the regression using all x values, or only values with x >= 0 or
     x <= 0 through ``sign_x``.
 
+    Regression is applied along the first axis. All remaining axes are
+    preserved, which is required for longitude-profile and Hovmoeller outputs.
+
     The function accepts CDAT-like compatibility variables produced by the
     refactored xarray/XarrayCompat workflow, as well as masked-array-like inputs
     supported by the ENSO_metrics compatibility layer.
@@ -5959,8 +5963,8 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
 
     :param sign_x: int, optional
         Default value = 0. If 0, computes the regression of y over x using all
-        valid points. If -1 or 1, computes the regression using only one sign
-        subset of x, following ``CustomLinearRegression1d``.
+        valid points. If 1, computes the regression using x > 0. If -1,
+        computes the regression using x < 0, following ``CustomLinearRegression1d``.
 
     :param return_stderr: boolean, optional
         Default value = True. If True, returns the unadjusted standard error of
@@ -5974,65 +5978,116 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
         only the slope. Otherwise returns a list containing the slope, and
         optionally the standard error and intercept.
     """
-    if sign_x != 0:
-        try:
-            len(y[0])
-        except Exception:
-            slope, intercept, stderr = CustomLinearRegression1d(y, x, sign_x=sign_x)
-        else:
-            if x.shape != y.shape:
-                list_strings = [
-                    "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": array shape",
-                    str().ljust(5) + "different array shape for x " + str(x.shape) + " and y " + str(y.shape)]
-                EnsoErrorsWarnings.my_error(list_strings)
-            slope, intercept, stderr = MV2zeros(y[0].shape), MV2zeros(y[0].shape), MV2zeros(y[0].shape)
-            for ii in list(range(len(y[0]))):
-                try:
-                    len(y[0, ii])
-                except Exception:
-                    slope[ii], intercept[ii], stderr[ii] = CustomLinearRegression1d(y[:, ii], x[:, ii], sign_x=sign_x)
-                else:
-                    for jj in list(range(len(y[0, ii]))):
-                        try:
-                            len(y[0, ii, jj])
-                        except Exception:
-                            slope[ii, jj], intercept[ii, jj], stderr[ii, jj] = \
-                                CustomLinearRegression1d(y[:, ii, jj], x[:, ii, jj], sign_x=sign_x)
-                        else:
-                            for kk in list(range(len(y[0, ii, jj]))):
-                                try:
-                                    len(y[0, ii, jj, kk])
-                                except Exception:
-                                    slope[ii, jj, kk], intercept[ii, jj, kk], stderr[ii, jj, kk] = \
-                                        CustomLinearRegression1d(y[:, ii, jj, kk], x[:, ii, jj, kk], sign_x=sign_x)
-                                else:
-                                    list_strings = [
-                                        "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
-                                        ": array shape",
-                                        str().ljust(5) + str(x.shape) + " too many dimensions (not programmed)",
-                                        str().ljust(5) + "Please ckeck and modify the program if needed"]
-                                    EnsoErrorsWarnings.my_error(list_strings)
+    if sign_x not in [-1, 0, 1]:
+        list_strings = [
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": sign_x",
+            str().ljust(5) + "unknown sign_x " + str(sign_x),
+            str().ljust(5) + "known values are -1, 0, 1",
+        ]
+        EnsoErrorsWarnings.my_error(list_strings)
+
+    try:
+        len(y[0])
+    except Exception:
+        # 1-D input: direct regression.
+        slope, intercept, stderr = CustomLinearRegression1d(
+            y,
+            x,
+            sign_x=sign_x,
+        )
 
     else:
-        results = GENUTILlinearregression(y, x=x, error=1, nointercept=None)
-        # results = (slope_int, stderr) where slope_int = [[slope, intercept]]
-        # and stderr = [[se_slope, se_intercept]]  (shape (1,2) each)
-        slope, intercept, stderr = results[0][0][0], results[0][0][1], results[1][0][0]
-        try:
-            slope[0]
-        except Exception:
-            slope, intercept, stderr = float(slope), float(intercept), float(stderr)
+        # Multi-dimensional input: perform pointwise regression along the first
+        # axis and preserve all remaining axes.
+        if x.shape != y.shape:
+            list_strings = [
+                "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": array shape",
+                str().ljust(5) + "different array shape for x " + str(x.shape) + " and y " + str(y.shape),
+            ]
+            EnsoErrorsWarnings.my_error(list_strings)
+
+        slope = MV2zeros(y[0].shape)
+        intercept = MV2zeros(y[0].shape)
+        stderr = MV2zeros(y[0].shape)
+
+        for ii in list(range(len(y[0]))):
+            try:
+                len(y[0, ii])
+            except Exception:
+                slope[ii], intercept[ii], stderr[ii] = CustomLinearRegression1d(
+                    y[:, ii],
+                    x[:, ii],
+                    sign_x=sign_x,
+                )
+
+            else:
+                for jj in list(range(len(y[0, ii]))):
+                    try:
+                        len(y[0, ii, jj])
+                    except Exception:
+                        slope[ii, jj], intercept[ii, jj], stderr[ii, jj] = CustomLinearRegression1d(
+                            y[:, ii, jj],
+                            x[:, ii, jj],
+                            sign_x=sign_x,
+                        )
+
+                    else:
+                        for kk in list(range(len(y[0, ii, jj]))):
+                            try:
+                                len(y[0, ii, jj, kk])
+                            except Exception:
+                                slope[ii, jj, kk], intercept[ii, jj, kk], stderr[ii, jj, kk] = (
+                                    CustomLinearRegression1d(
+                                        y[:, ii, jj, kk],
+                                        x[:, ii, jj, kk],
+                                        sign_x=sign_x,
+                                    )
+                                )
+
+                            else:
+                                list_strings = [
+                                    "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
+                                    ": array shape",
+                                    str().ljust(5) + str(x.shape) + " too many dimensions (not programmed)",
+                                    str().ljust(5) + "Please check and modify the program if needed",
+                                ]
+                                EnsoErrorsWarnings.my_error(list_strings)
+
     try:
         len(slope)
     except Exception:
+        # Scalar result: keep legacy scalar behavior.
         pass
+
     else:
-        axes = _to_cdat(y[0]).getAxisList()
-        grid = _to_cdat(y[0]).getGrid()
-        mask = _to_cdat(y[0]).mask
-        slope = create_variable(MV2array(slope), mask=mask, grid=grid, axes=axes, id='slope')
-        stderr = create_variable(MV2array(stderr), mask=mask, grid=grid, axes=axes, id='standart_error')
-        intercept = create_variable(MV2array(intercept), mask=mask, grid=grid, axes=axes, id='intercept')
+        # Preserve the axes/grid/mask of y after removing the regression axis.       
+        y0 = _to_cdat(y[0])
+        axes = y0.getAxisList()
+        grid = y0.getGrid()
+        mask = ma.getmaskarray(_mv(y0))
+
+        slope = create_variable(
+            _mv(slope),
+            mask=mask,
+            grid=grid,
+            axes=axes,
+            id='slope',
+        )
+        stderr = create_variable(
+            _mv(stderr),
+            mask=mask,
+            grid=grid,
+            axes=axes,
+            id='standard_error',
+        )
+        intercept = create_variable(
+            _mv(intercept),
+            mask=mask,
+            grid=grid,
+            axes=axes,
+            id='intercept',
+        )
+        
     if return_stderr is False and return_intercept is False:
         tab = copy.copy(slope)
     else:
@@ -6041,8 +6096,8 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
             tab.append(stderr)
         if return_intercept is True:
             tab.append(intercept)
-    return tab
 
+    return tab
 
 def CustomLinearRegression1d(y, x, sign_x=1):
     x = np.ma.masked_invalid(NParray(x))
@@ -6054,7 +6109,7 @@ def CustomLinearRegression1d(y, x, sign_x=1):
     else:
         idx = NPnonzero(~np.ma.getmaskarray(x) & ~np.ma.getmaskarray(y))
     if len(idx[0]) == 0:
-        slope, intercept, stderr = 0, 0, 0
+        slope, intercept, stderr = np.nan, np.nan, np.nan
     else:
         results = GENUTILlinearregression(y[idx], x=x[idx], error=1, nointercept=None)
         slope, intercept, stderr = float(results[0][0][0]), float(results[0][0][1]), float(results[1][0][0])

@@ -8251,7 +8251,6 @@ def EnsoFbSstTaux(
                                 print("DEBUG sst_map is None:", sst_map is None)
                                 print("DEBUG taux_map is None:", taux_map is None)
                                 print("DEBUG curMu is None:", curMu is None)
-
                                 if sst is not None:
                                     print("DEBUG sst shape:", getattr(sst, "shape", None))
                                 if taux is not None:
@@ -8264,16 +8263,17 @@ def EnsoFbSstTaux(
                                     print("DEBUG curMu shape:", getattr(curMu, "shape", None))
                                     
                             SaveNetcdf(
-                                file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                                var1_time_name='months_' + dataset, var2=taux, var2_attributes=dict2,
-                                var2_name='taux__' + dataset, var2_time_name='months_' + dataset, var3=curMu,
-                                var3_attributes=dict3, var3_name='reg_taux_over_sst_lon__' + dataset, var4=curMuPos,
-                                var4_attributes=dict4, var4_name='reg_taux_over_POSsst_lon__' + dataset, var5=curMuNeg,
-                                var5_attributes=dict5, var5_name='reg_taux_over_NEGsst_lon__' + dataset, var6=hovMu,
-                                var6_attributes=dict6, var6_name='reg_taux_over_sst_hov__' + dataset, var7=hovMuPos,
-                                var7_attributes=dict7, var7_name='reg_taux_over_POSsst_hov__' + dataset, var8=hovMuNeg,
-                                var8_attributes=dict8, var8_name='reg_taux_over_NEGsst_hov__' + dataset,
-                                frequency=kwargs['frequency'], global_attributes=dict9
+                                file_name, 
+                                var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset, 
+                                var2=taux, var2_attributes=dict2, var2_name='taux__' + dataset, var2_time_name='months_' + dataset, 
+                                var3=curMu, var3_attributes=dict3, var3_name='reg_taux_over_sst_lon__' + dataset, 
+                                var4=curMuPos, var4_attributes=dict4, var4_name='reg_taux_over_POSsst_lon__' + dataset, 
+                                var5=curMuNeg, var5_attributes=dict5, var5_name='reg_taux_over_NEGsst_lon__' + dataset, 
+                                var6=hovMu, var6_attributes=dict6, var6_name='reg_taux_over_sst_hov__' + dataset,
+                                var7=hovMuPos, var7_attributes=dict7, var7_name='reg_taux_over_POSsst_hov__' + dataset, 
+                                var8=hovMuNeg, var8_attributes=dict8, var8_name='reg_taux_over_NEGsst_hov__' + dataset,
+                                frequency=kwargs['frequency'], 
+                                global_attributes=dict9
                             )
                             del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
     # Create output
