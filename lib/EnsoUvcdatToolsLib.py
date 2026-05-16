@@ -2571,6 +2571,27 @@ def ArrayZeros(tab, id='new_variable_zeros'):
     return create_variable(MV2zeros(tab.shape), axes=tab.getAxisList(), grid=tab.getGrid(), mask=tab.mask, id=id)
 
 
+def _variable_label(tab):
+    attrs = getattr(tab, "attributes", {}) or {}
+    for candidate in [
+        getattr(tab, "name", None),
+        getattr(tab, "id", None),
+        attrs.get("id"),
+        attrs.get("name"),
+        attrs.get("variable_id"),
+        attrs.get("short_name"),
+        attrs.get("standard_name"),
+        attrs.get("long_name"),
+        attrs.get("source_id"),
+    ]:
+        if candidate is None:
+            continue
+        candidate = str(candidate)
+        if candidate and candidate not in ["?", "var", "variable"]:
+            return candidate
+    return "unknown"
+
+
 def _make_coslat_areacell(tab):
     """Build a cosine-latitude area-weight CDATVariable matching *tab*'s grid.
 
@@ -2597,9 +2618,7 @@ def _make_coslat_areacell(tab):
     else:
         w_2d = w_lat
         axes = [lat_ax]
-    _var_name = (
-        getattr(tab, 'name', None) or getattr(tab, 'id', None) or '?'
-    )
+    _var_name = _variable_label(tab)
     warnings.warn(
         f"areacell is None for variable {_var_name!r}; "
         "synthesising cosine-latitude weights. "
@@ -2691,15 +2710,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
 
     tab = _to_cdat(tab)
 
-    tab_attrs = getattr(tab, "attributes", {}) or {}
-    var_label = (
-        getattr(tab, "id", None)
-        or tab_attrs.get("id", None)
-        or tab_attrs.get("short_name", None)
-        or tab_attrs.get("standard_name", None)
-        or tab_attrs.get("long_name", None)
-        or "unknown"
-    )
+    var_label = _variable_label(tab)
 
     try:
         lat_num = get_num_axis(tab, "latitude")

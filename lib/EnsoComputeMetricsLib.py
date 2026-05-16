@@ -328,30 +328,67 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 arg_var2["obsFileLandmask2"] = obsFileLandmask2
                 arg_var2["obsLandmaskName2"] = obsLandmaskName2
                 arg_var2["obsInterpreter2"] = obsInterpreter2
+
+            def _file_missing(path):
+                if path is None or path == "":
+                    return True
+                if isinstance(path, list):
+                    return len(path) == 0 or any(_file_missing(item) for item in path)
+                return False
+
+            def _filter_obs_entries(
+                    names, files, varnames, area_files, area_names,
+                    landmask_files, landmask_names, interpreters):
+                keep = [ii for ii, path in enumerate(files) if not _file_missing(path)]
+                return (
+                    [names[ii] for ii in keep],
+                    [files[ii] for ii in keep],
+                    [varnames[ii] for ii in keep],
+                    [area_files[ii] for ii in keep],
+                    [area_names[ii] for ii in keep],
+                    [landmask_files[ii] for ii in keep],
+                    [landmask_names[ii] for ii in keep],
+                    [interpreters[ii] for ii in keep],
+                )
+
+            (
+                obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1,
+                obsFileLandmask1, obsLandmaskName1, obsInterpreter1,
+            ) = _filter_obs_entries(
+                obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1,
+                obsFileLandmask1, obsLandmaskName1, obsInterpreter1,
+            )
+            arg_var2["obsFileArea1"] = obsFileArea1
+            arg_var2["obsAreaName1"] = obsAreaName1
+            arg_var2["obsFileLandmask1"] = obsFileLandmask1
+            arg_var2["obsLandmaskName1"] = obsLandmaskName1
+            arg_var2["obsInterpreter1"] = obsInterpreter1
+
+            if len(list_variables) > 1:
+                (
+                    obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2,
+                    obsFileLandmask2, obsLandmaskName2, obsInterpreter2,
+                ) = _filter_obs_entries(
+                    obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2,
+                    obsFileLandmask2, obsLandmaskName2, obsInterpreter2,
+                )
+                arg_var2["obsNameVar2"] = obsNameVar2
+                arg_var2["obsFile2"] = obsFile2
+                arg_var2["obsVarName2"] = obsVarName2
+                arg_var2["obsFileArea2"] = obsFileArea2
+                arg_var2["obsAreaName2"] = obsAreaName2
+                arg_var2["obsFileLandmask2"] = obsFileLandmask2
+                arg_var2["obsLandmaskName2"] = obsLandmaskName2
+                arg_var2["obsInterpreter2"] = obsInterpreter2
+
             # Determine data availability
-            _model_var1_missing = (
-                modelFile1 is None or len(modelFile1) == 0
-                or (isinstance(modelFile1, list) and None in modelFile1)
-            )
+            _model_var1_missing = _file_missing(modelFile1)
             _model_var2_missing = (
-                len(list_variables) > 1
-                and (
-                    arg_var2.get("modelFile2") is None
-                    or len(arg_var2.get("modelFile2", "")) == 0
-                    or (isinstance(arg_var2.get("modelFile2"), list) and None in arg_var2["modelFile2"])
-                )
+                len(list_variables) > 1 and _file_missing(arg_var2.get("modelFile2"))
             )
-            _obs_var1_missing = (
-                obsFile1 is None or len(obsFile1) == 0
-                or (isinstance(obsFile1, list) and None in obsFile1)
-            )
+            _obs_var1_missing = len(obsFile1) == 0
             _obs_var2_missing = (
-                len(list_variables) > 1
-                and (
-                    arg_var2.get("obsFile2") is None
-                    or len(arg_var2.get("obsFile2", [])) == 0
-                    or (isinstance(arg_var2.get("obsFile2"), list) and None in arg_var2["obsFile2"])
-                )
+                len(list_variables) > 1 and len(arg_var2.get("obsFile2", [])) == 0
             )
             # For _modelAndObs metrics, obs is required inside the computation function itself.
             # For dict_oneVar / dict_twoVar metrics, the model diagnostic is computed independently
@@ -438,7 +475,18 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
         except Exception as e:
             import traceback
             traceback.print_exc()
-            pass
+            keyerror_msg = type(e).__name__ + ": " + str(e)
+            dict_col_valu[metric] = {
+                "metric": {},
+                "diagnostic": {modelName: {"value": None, "value_error": None, "keyerror": keyerror_msg}},
+                "keyerror": keyerror_msg,
+            }
+            dict_col_meta["metrics"][metric] = {
+                "metric": {"name": metric, "method": None, "datasets": modelName, "units": None},
+                "diagnostic": {modelName: {"name": modelName, "keyerror": keyerror_msg}},
+            }
+            dict_col_dd_valu[metric] = {}
+            dict_col_dd_meta["metrics"][metric] = {}
     if dive_down is True:
         return {"value": dict_col_valu, "metadata": dict_col_meta}, \
                {"value": dict_col_dd_valu, "metadata": dict_col_dd_meta}

@@ -1370,7 +1370,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         if isinstance(filename_nc, dict):
             if "EnsoFbSstSwr" in figure_name and article_fig is True:
                 tmp_let = ["b) ", "c) ", "d) ", "e) "]
-                title = [tmp_let[0] + "ref: Tropflux"]
+                title = [tmp_let[0] + "ref: " + obsname]
                 if isinstance(member, list) is True and len(member) == len(model):
                     title += [tmp_let[ii+1] + mod.upper() + mem + " (" + str(len(models2[mod])) + ")"
                               for ii, (mod, mem) in enumerate(zip(model, member))]
