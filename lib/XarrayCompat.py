@@ -601,10 +601,10 @@ class _Axis:
         if values is None:
             self._values = np.array([])
         elif isinstance(values, np.ndarray):
-            self._values = values
+            self._values = np.array(values, copy=True)
         else:
             try:
-                self._values = np.asarray(values)
+                self._values = np.array(values, copy=True)
             except Exception:
                 self._values = np.array(list(values), dtype=object)
 
@@ -671,6 +671,8 @@ class _Axis:
         return self._values[key]
 
     def __setitem__(self, key, value):
+        if not self._values.flags.writeable:
+            self._values = np.array(self._values, copy=True)
         self._values[key] = value
 
     def __array__(self, dtype=None):
