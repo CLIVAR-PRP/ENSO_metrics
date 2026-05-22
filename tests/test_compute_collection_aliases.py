@@ -1,4 +1,6 @@
 from lib.EnsoComputeMetricsLib import _dataset_variable_entry
+from lib.EnsoUvcdatToolsLib import MyDerive
+from lib.XarrayCompat import create_axis, create_variable
 import lib.EnsoComputeMetricsLib as compute_lib
 
 
@@ -34,6 +36,26 @@ def test_sst_dataset_entry_can_use_ts_alias():
     dataset = {"ts": ts_entry}
 
     assert _dataset_variable_entry(dataset, "sst") is ts_entry
+
+
+def test_thf_dataset_entry_can_use_precomputed_netflux_alias():
+    netflux_entry = {
+        "path + filename": "/tmp/netflux.nc",
+        "varname": "netflux",
+    }
+    dataset = {"netflux": netflux_entry}
+
+    assert _dataset_variable_entry(dataset, "thf") is netflux_entry
+
+
+def test_myderive_accepts_precomputed_thf_alias():
+    time = create_axis([0, 1], id="time", units="days since 2000-01-01", axis_type="T")
+    netflux = create_variable([1.0, 2.0], axes=[time], id="netflux")
+
+    out, err = MyDerive("CMIP", "thf", {"netflux": netflux})
+
+    assert err is None
+    assert out is netflux
 
 
 def test_compute_collection_passes_zos_alias_downstream(monkeypatch):

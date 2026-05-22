@@ -59,6 +59,7 @@ sst_only = [
 _VARIABLE_ALIASES = {
     "ssh": ["zos", "sla", "sshg", "sossheig"],
     "sst": ["ts", "tos", "skt", "sst", "sosstsst"],
+    "thf": ["netflux", "hfds", "thflx", "sohefldo"],
 }
 
 

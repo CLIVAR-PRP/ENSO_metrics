@@ -6436,6 +6436,14 @@ def MyDerive(project, internal_variable_name, dict_var):
                 sorted(list(dict_obs.keys()), key=lambda v: v.upper()))]
         EnsoErrorsWarnings.my_warning(list_strings)
 
+    precomputed_aliases = {
+        "thf": ["thf", "netflux", "hfds", "thflx", "sohefldo"],
+    }
+    if internal_variable_name in precomputed_aliases and isinstance(dict_var, dict):
+        for alias in precomputed_aliases[internal_variable_name]:
+            if alias in dict_var:
+                return dict_var[alias], None
+
     if (keyerror1 is not None or keyerror2 is not None or keyerror3 is not None or keyerror4 is not None):
         outvar = None
         keyerror = add_up_errors([keyerror1, keyerror2, keyerror3, keyerror4])
