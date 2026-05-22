@@ -7,6 +7,7 @@ from lib.EnsoUvcdatToolsLib import (
     AverageZonal,
     Correlation,
     GENUTILlinearregression,
+    LinearRegressionTsAgainstMap,
     SaveNetcdf,
 )
 from lib.XarrayCompat import create_axis, create_rect_grid, create_variable
@@ -61,6 +62,25 @@ def test_same_series_correlation_and_regression_are_exact_one():
     assert float(corr) == 1.0
     assert float(slope[0, 0]) == 1.0
     assert float(stderr[0, 0]) == 0.0
+
+
+def test_map_regression_uses_only_jointly_valid_pairs():
+    time = _axis([0, 1, 2], "T", "time", "days since 2000-01-01")
+    lon = _axis([10.0, 11.0], "X", "lon", "degrees_east")
+    x = create_variable([1.0, 2.0, 3.0], axes=[time], id="nino")
+    y = create_variable(
+        ma.array(
+            [[2.0, 3.0], [4.0, 6.0], [6.0, 9.0]],
+            mask=[[False, False], [False, False], [True, False]],
+        ),
+        axes=[time, lon],
+        id="sst",
+    )
+
+    slope, stderr = LinearRegressionTsAgainstMap(y, x)
+
+    assert np.allclose(slope._data, [2.0, 3.0])
+    assert np.allclose(stderr._data, [0.0, 0.0])
 
 
 def test_save_netcdf_preserves_variables_with_different_same_named_dims(tmp_path):

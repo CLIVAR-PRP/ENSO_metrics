@@ -27,6 +27,14 @@ from .EnsoPlotToolsLib import create_labels, create_levels, format_metric, minim
 colors_sup = ["r", "lime", "peru", "gold", "forestgreen", "sienna", "gold"]
 dict_col = {"REF": "k", "CMIP": "forestgreen", "CMIP3": "orange", "CMIP5": "dodgerblue", "CMIP6": "r"}
 
+
+def _panel_grid(nbr_panel, three_columns=False):
+    if nbr_panel == 1:
+        return 1, 1
+    nbrc = 3 if three_columns else 2
+    return int(MATHceil(float(nbr_panel) / float(nbrc))), nbrc
+
+
 met_names = {
     "BiasPrLatRmse": "double_ITCZ_bias", "BiasPrLonRmse": "eq_PR_bias",
     "BiasSshLatRmse": "lat_SSH_bias", "BiasSshLonRmse": "eq_SSH_bias",
@@ -240,8 +248,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         custom_label = dict_param["custom_label"]
     else:
         custom_label = None
-    nbrl = nbr_panel // 2
-    nbrc = 1 if nbr_panel == 1 else 2
+    nbrl, nbrc = _panel_grid(nbr_panel)
     fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     legco = ["k", "dodgerblue"]
     if isinstance(model, list) is True:
@@ -469,8 +476,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             nbrc = 1
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(8, 4 * nbrl), sharex="col", sharey="row")
         else:
-            nbrl = nbr_val // 2
-            nbrc = 1 if nbr_val == 1 else 2
+            nbrl, nbrc = _panel_grid(nbr_val)
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
         old_leg = deepcopy(legend)
         for kk in range(len(tab_obs)):
@@ -761,11 +767,9 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     colorbar = "cmo." + dict_param["colorbar"]
     labelbar = dict_param["label"]
     if shading is True and len(model) + 1 == 3:
-        nbrl = nbr_panel // 3
-        nbrc = 1 if nbr_panel == 1 else 3
+        nbrl, nbrc = _panel_grid(nbr_panel, three_columns=True)
     else:
-        nbrl = nbr_panel // 2
-        nbrc = 1 if nbr_panel == 1 else 2
+        nbrl, nbrc = _panel_grid(nbr_panel)
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
         nbrc = 1
@@ -1008,11 +1012,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     else:
         maskocean = False
     if shading is True and len(model) + 1 == 3:
-        nbrl = nbr_panel // 3
-        nbrc = 1 if nbr_panel == 1 else 3
+        nbrl, nbrc = _panel_grid(nbr_panel, three_columns=True)
     else:
-        nbrl = nbr_panel // 2
-        nbrc = 1 if nbr_panel == 1 else 2
+        nbrl, nbrc = _panel_grid(nbr_panel)
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
         nbrc = 1
@@ -1444,11 +1446,9 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     lines = [Line2D([0], [0], marker=markers[kk], c="w", markerfacecolor=mcolors[kk], markersize=12)
              for kk in range(len(mcolors))]
     if shading is True and nbr_panel == 3:
-        nbrl = nbr_panel // 3
-        nbrc = 1 if nbr_panel == 1 else 3
+        nbrl, nbrc = _panel_grid(nbr_panel, three_columns=True)
     else:
-        nbrl = 1 if nbr_panel == 1 else nbr_panel // 2
-        nbrc = 1 if nbr_panel == 1 else 2
+        nbrl, nbrc = _panel_grid(nbr_panel)
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
         nbrc = 1

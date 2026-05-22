@@ -6554,6 +6554,36 @@ def LinearRegressionAndNonlinearity(y, x, return_stderr=True, return_intercept=T
     return all_values, positive_values, negative_values
 
 
+def _linear_regression_nointercept_axis0(y, x):
+    y_data = ma.masked_invalid(ma.asarray(_mv(y)))
+    x_data = ma.masked_invalid(ma.asarray(_mv(x)))
+    if x_data.shape != y_data.shape:
+        x_data = ma.array(
+            np.broadcast_to(ma.getdata(x_data), y_data.shape),
+            mask=np.broadcast_to(ma.getmaskarray(x_data), y_data.shape),
+        )
+    joint_mask = ma.getmaskarray(y_data) | ma.getmaskarray(x_data)
+    y_data = ma.array(y_data, mask=joint_mask)
+    x_data = ma.array(x_data, mask=joint_mask)
+
+    n = y_data.count(axis=0)
+    den = ma.sum(x_data ** 2, axis=0)
+    num = ma.sum(x_data * y_data, axis=0)
+    valid = (n >= 2) & ~ma.getmaskarray(den) & (ma.filled(den, 0) != 0)
+    slope_data = ma.masked_where(~valid, ma.divide(num, den))
+
+    same_series = ma.max(ma.abs(y_data - x_data), axis=0) <= 1e-12
+    same_series = ma.filled(same_series, False) & valid
+    slope_data = ma.where(same_series, 1.0, slope_data)
+
+    y_hat = x_data * slope_data
+    resid = y_data - y_hat
+    mse = ma.masked_where(~valid, ma.divide(ma.sum(resid ** 2, axis=0), n - 1))
+    stderr_data = ma.sqrt(ma.divide(mse, den))
+    stderr_data = ma.where(same_series, 0.0, stderr_data)
+    return slope_data, stderr_data
+
+
 def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
     """
     #################################################################################
@@ -6580,17 +6610,11 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
     """
     y = _to_cdat(y)
     x = _to_cdat(x)
-    y_data = ma.masked_invalid(_mv(y))   # shape (time, ...) e.g. (9, 120)
-    x_data = ma.masked_invalid(_mv(x))   # shape (time,)    e.g. (9,)
-    # Flatten x to 1-D and expand for broadcasting against y's spatial dims
-    x_1d = x_data.ravel()                # (time,)
-    expand = (slice(None),) + (np.newaxis,) * (y_data.ndim - 1)
-    x_bc = x_1d[expand]                  # (time, 1, ...)
-    # No-intercept ordinary least squares at every spatial point:
-    #   slope[...] = sum_t(x[t] * y[t,...]) / sum_t(x[t]^2)
-    num = ma.sum(x_bc * y_data, axis=0)  # spatial shape, e.g. (120,)
-    den = ma.sum(x_bc ** 2, axis=0)      # spatial shape
-    slope_data = ma.where(den != 0, num / den, ma.masked)
+    x_data = ma.masked_invalid(_mv(x))
+    x_1d = x_data.ravel()
+    expand = (slice(None),) + (np.newaxis,) * (ma.asarray(_mv(y)).ndim - 1)
+    x_bc = x_1d[expand]
+    slope_data, stderr_data = _linear_regression_nointercept_axis0(y, x_bc)
     # Attach spatial axes from y (drop the leading time axis)
     spatial_axes = [ax.copy() if ax is not None else None
                     for ax in y.getAxisList()[1:]]
@@ -6601,16 +6625,6 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
         id=getattr(x, 'id', '')
         )
     if return_stderr:
-        # Unadjusted standard error of the slope
-        n = y_data.count(axis=0)
-        y_hat = x_bc * slope_data
-        resid = y_data - y_hat
-        mse = ma.where(
-            n > 1,
-            ma.sum(resid ** 2, axis=0) / (n - 1), 
-            ma.masked
-        )
-        stderr_data = ma.sqrt(mse / ma.where(den != 0, den, ma.masked))
         stderr = CDATVariable(
             stderr_data, 
             axes=spatial_axes,
@@ -6703,11 +6717,12 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
             tmp3 = MV2zeros(tmp1.shape)
             for jj in list(range(len(tmp3))):
                 tmp3[jj].fill(tmp2[jj])
-        tmp3 = create_variable(tmp3, mask=tmp1.mask, grid=tmp1.getGrid(), axes=tmp1.getAxisList(), id=x.id)
-        slope, stderr = GENUTILlinearregression(tmp1, x=tmp3, error=1, nointercept=1)
-        slope_out[ii] = float(slope.flat[0])
-        stderr_out[ii] = float(stderr.flat[0])
-        del slope, stderr, tmp1, tmp2, tmp3, yy1, yy2
+        tmp3_mask = ma.getmaskarray(_mv(tmp3)) | ma.getmaskarray(_mv(tmp1))
+        tmp3 = create_variable(tmp3, mask=tmp3_mask, grid=tmp1.getGrid(), axes=tmp1.getAxisList(), id=x.id)
+        slope, stderr = _linear_regression_nointercept_axis0(tmp1, tmp3)
+        slope_out[ii] = slope
+        stderr_out[ii] = stderr
+        del slope, stderr, tmp1, tmp2, tmp3, tmp3_mask, yy1, yy2
     if return_stderr:
         return slope_out, stderr_out
     else:
