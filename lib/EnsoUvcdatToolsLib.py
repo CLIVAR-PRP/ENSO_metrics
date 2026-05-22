@@ -1790,6 +1790,18 @@ class _XcDatasetHandle:
                 ds_new_safe = ds_new_safe.drop_vars(vname)
                 ds_new_safe[vname] = da.rename(rename_dims)
 
+        used_dims = {
+            dim
+            for da in ds_new_safe.data_vars.values()
+            for dim in da.dims
+        }
+        unused_dim_coords = [
+            cname for cname in ds_new_safe.coords
+            if cname in ds_new_safe.dims and cname not in used_dims
+        ]
+        if unused_dim_coords:
+            ds_new_safe = ds_new_safe.drop_vars(unused_dim_coords, errors="ignore")
+
         ds_new = ds_new_safe
 
         try:
