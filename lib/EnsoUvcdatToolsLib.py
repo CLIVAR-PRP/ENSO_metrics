@@ -1805,6 +1805,7 @@ def _regrid_curvilinear_to_rectilinear(
                     "lon": target_ds["lon"],
                 }
             )
+            result.attrs.update(dict(da.attrs))
             for dim in da.dims:
                 if dim in (ydim, xdim, "lat", "lon"):
                     continue
@@ -4607,6 +4608,13 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
         array with new units (if applicable)
     """
     keyerror = None
+    units = "" if units is None else str(units).strip()
+    name_in_file_l = str(name_in_file).lower()
+    name_tokens = [
+        token
+        for token in name_in_file_l.replace("-", "_").replace(".", "_").split("_")
+        if token
+    ]
     if var_name in ["temperature"]:
         if units in [
                 "K", "Kelvin", "Kelvins", "degree K", "degree Kelvin", "degree Kelvins", "degree_K",
@@ -4695,6 +4703,15 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
             keyerror = "unknown units: " + str(units) + "(as " + str(var_name) + ")"
         units = "Pa"
     elif var_name in ["depth", "sea surface height"]:
+        ssh_aliases = {"zos", "ssh", "sshg", "sla", "sossheig"}
+        if units == "" and (name_in_file_l in ssh_aliases or bool(ssh_aliases & set(name_tokens))):
+            warnings.warn(
+                f"Missing units for sea surface height variable {name_in_file!r}; "
+                "inferring meters because the variable name matches a known SSH alias. "
+                "For best accuracy and reproducibility, define units explicitly in the input file.",
+                stacklevel=2,
+            )
+            units = "m"
         if units in ["cm", "centimeter", "centimeters"]:
             # unit change of the sea surface height: from cm to m
             tab = dict_operations["multiply"](tab, 1e-2)

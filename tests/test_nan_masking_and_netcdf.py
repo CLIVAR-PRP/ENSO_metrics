@@ -1,10 +1,12 @@
 import numpy as np
 import numpy.ma as ma
+import pytest
 import xarray as xr
 
 from lib.EnsoUvcdatToolsLib import (
     AverageTemporal,
     AverageZonal,
+    CheckUnits,
     Correlation,
     GENUTILlinearregression,
     LinearRegressionTsAgainstMap,
@@ -247,3 +249,54 @@ def test_open_file_regrids_mpas_like_unstructured_cells(tmp_path):
     assert np.allclose(var.getLatitude()[:], [-1.5, -0.5, 0.5, 1.5])
     assert np.allclose(var.getLongitude()[:], [220.5, 221.5, 222.5, 223.5])
     assert np.isfinite(var.filled(np.nan)).any()
+
+
+def test_check_units_infers_zos_meters_when_units_missing():
+    time = _axis([0], "T", "time", "days since 2000-01-01")
+    lat = _axis([0.5], "Y", "lat", "degrees_north")
+    lon = _axis([220.5], "X", "lon", "degrees_east")
+    var = create_variable(
+        np.ones((1, 1, 1)),
+        axes=[time, lat, lon],
+        grid=create_rect_grid(lat, lon),
+        id="zos",
+        attributes={"standard_name": "sea_surface_height_above_geoid"},
+    )
+
+    with pytest.warns(UserWarning, match="Missing units.*zos.*inferring meters"):
+        out, units, keyerror = CheckUnits(
+            var,
+            "sea surface height",
+            "zos",
+            "",
+            return_tab_only=False,
+        )
+
+    assert out is var
+    assert units == "m"
+    assert keyerror is None
+
+
+def test_check_units_infers_ssh_map_meters_when_units_missing():
+    time = _axis([0], "T", "time", "days since 2000-01-01")
+    lat = _axis([0.5], "Y", "lat", "degrees_north")
+    lon = _axis([220.5], "X", "lon", "degrees_east")
+    var = create_variable(
+        np.ones((1, 1, 1)),
+        axes=[time, lat, lon],
+        grid=create_rect_grid(lat, lon),
+        id="ssh_map__ACCESS1-0_r1i1p1",
+        attributes={"standard_name": "sea_surface_height_above_geoid"},
+    )
+
+    with pytest.warns(UserWarning, match="Missing units.*ssh_map.*inferring meters"):
+        _, units, keyerror = CheckUnits(
+            var,
+            "sea surface height",
+            "ssh_map__ACCESS1-0_r1i1p1",
+            "",
+            return_tab_only=False,
+        )
+
+    assert units == "m"
+    assert keyerror is None
