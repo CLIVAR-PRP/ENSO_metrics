@@ -56,6 +56,20 @@ sst_only = [
 #
 # Computation of the metric collection
 #
+_VARIABLE_ALIASES = {
+    "ssh": ["zos", "sla", "sshg", "sossheig"],
+}
+
+
+def _dataset_variable_entry(dataset, variable):
+    if variable in dataset:
+        return dataset[variable]
+    for alias in _VARIABLE_ALIASES.get(variable, []):
+        if alias in dataset:
+            return dataset[alias]
+    return None
+
+
 def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding={}, debug=False, dive_down=False,
                       netcdf=False, netcdf_name="", observed_fyear=None, observed_lyear=None, modeled_fyear=None,
                       modeled_lyear=None, obs_interpreter=None):
@@ -200,27 +214,29 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
             # sets arguments for this metric
             list_variables = dict_m[metric]["variables"]
             dict_regions = dict_m[metric]["regions"]
+            model_dataset = dictDatasets["model"][modelName]
+            model_entry1 = _dataset_variable_entry(model_dataset, list_variables[0])
             # model name, file, variable name in file
             try:
-                modelFile1 = dictDatasets["model"][modelName][list_variables[0]]["path + filename"]
+                modelFile1 = model_entry1["path + filename"]
             except Exception:
                 modelFile1 = ""
             try:
-                modelVarName1 = dictDatasets["model"][modelName][list_variables[0]]["varname"]
+                modelVarName1 = model_entry1["varname"]
             except Exception:
                 modelVarName1 = ""
             try:
-                modelFileArea1 = dictDatasets["model"][modelName][list_variables[0]]["path + filename_area"]
+                modelFileArea1 = model_entry1["path + filename_area"]
             except Exception:
                 modelFileArea1, modelAreaName1 = None, None
             else:
-                modelAreaName1 = dictDatasets["model"][modelName][list_variables[0]]["areaname"]
+                modelAreaName1 = model_entry1["areaname"]
             try:
-                modelFileLandmask1 = dictDatasets["model"][modelName][list_variables[0]]["path + filename_landmask"]
+                modelFileLandmask1 = model_entry1["path + filename_landmask"]
             except Exception:
                 modelFileLandmask1, modelLandmaskName1 = None, None
             else:
-                modelLandmaskName1 = dictDatasets["model"][modelName][list_variables[0]]["landmaskname"]
+                modelLandmaskName1 = model_entry1["landmaskname"]
             # observations name(s), file(s), variable(s) name in file(s)
             obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1 = list(), list(), list(), list(), list()
             obsFileLandmask1, obsLandmaskName1, obsInterpreter1 = list(), list(), list()
@@ -264,29 +280,28 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 "observed_lyear": observed_lyear, "modeled_fyear": modeled_fyear, "modeled_lyear": modeled_lyear,
                 "obsInterpreter1": obsInterpreter1}
             if len(list_variables) > 1:
+                model_entry2 = _dataset_variable_entry(model_dataset, list_variables[1])
                 try:
-                    arg_var2["modelFile2"] = dictDatasets["model"][modelName][list_variables[1]]["path + filename"]
+                    arg_var2["modelFile2"] = model_entry2["path + filename"]
                 except Exception:
                     arg_var2["modelFile2"] = ""
                 try:
-                    arg_var2["modelVarName2"] = dictDatasets["model"][modelName][list_variables[1]]["varname"]
+                    arg_var2["modelVarName2"] = model_entry2["varname"]
                 except Exception:
                     arg_var2["modelVarName2"] = ""
                 arg_var2["regionVar2"] = dict_regions[list_variables[1]]
                 try:
-                    arg_var2["modelFileArea2"] = \
-                        dictDatasets["model"][modelName][list_variables[1]]["path + filename_area"]
+                    arg_var2["modelFileArea2"] = model_entry2["path + filename_area"]
                 except Exception:
                     arg_var2["modelFileArea2"], arg_var2["modelAreaName2"] = None, None
                 else:
-                    arg_var2["modelAreaName2"] = dictDatasets["model"][modelName][list_variables[1]]["areaname"]
+                    arg_var2["modelAreaName2"] = model_entry2["areaname"]
                 try:
-                    arg_var2["modelFileLandmask2"] = \
-                        dictDatasets["model"][modelName][list_variables[1]]["path + filename_landmask"]
+                    arg_var2["modelFileLandmask2"] = model_entry2["path + filename_landmask"]
                 except Exception:
                     arg_var2["modelFileLandmask2"], arg_var2["modelLandmaskName2"] = None, None
                 else:
-                    arg_var2["modelLandmaskName2"] = dictDatasets["model"][modelName][list_variables[1]]["landmaskname"]
+                    arg_var2["modelLandmaskName2"] = model_entry2["landmaskname"]
                 obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2 = list(), list(), list(), list(), list()
                 obsFileLandmask2, obsLandmaskName2, obsInterpreter2 = list(), list(), list()
                 for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
