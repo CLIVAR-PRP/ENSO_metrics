@@ -373,6 +373,34 @@ def _mv_wrap(result, template):
                             attributes=dict(template._attributes))
     return result
 
+def _nan_majority_mask(data, axis):
+    """
+    Return True where a reduction should be masked because at least half of the
+    contributing cells are missing.
+    """
+    arr = ma.masked_invalid(ma.asarray(data))
+    mask = ma.getmaskarray(arr)
+    axis = tuple(axis) if isinstance(axis, (tuple, list)) else axis
+    invalid = np.sum(mask, axis=axis)
+    total = np.sum(np.ones(mask.shape, dtype=np.int64), axis=axis)
+    return np.asarray(invalid * 2 >= total)
+
+def _apply_nan_majority_policy(result, source, axis):
+    """Mask *result* wherever *source* has >=50% invalid values along *axis*."""
+    src = _to_cdat(source)
+    ax = _axis_to_int(src, axis)
+    bad = _nan_majority_mask(_mv(src), ax)
+    res_data = ma.array(_mv(result), copy=True)
+    res_data = ma.array(
+        res_data,
+        mask=ma.getmaskarray(res_data) | np.broadcast_to(bad, res_data.shape),
+    )
+    if isinstance(result, CDATVariable):
+        result = result.copy()
+        result._data = res_data
+        return result
+    return res_data
+
 def _to_cdat(x):
     """
     Ensure *x* is a CDATVariable.
@@ -520,7 +548,12 @@ def _weighted_spatial_average(tab, axes=("Y", "X")):
                     f"_weighted_spatial_average: cannot determine X averaging axis "
                     f"for axes={axes!r}; attach CF axis metadata."
                 )
-            return ma.mean(data, axis=ax_int)
+            result = ma.mean(data, axis=ax_int)
+            result = ma.array(
+                result,
+                mask=ma.getmaskarray(result) | _nan_majority_mask(data, ax_int),
+            )
+            return result
         return data  # nothing to reduce
     mask = ma.getmaskarray(data)
     wm = ma.array(np.broadcast_to(lat_w, data.shape), mask=mask)
@@ -541,7 +574,12 @@ def _weighted_spatial_average(tab, axes=("Y", "X")):
     den = ma.sum(wm, axis=ax_int)
     # Guard against fully-masked latitude bands: use clean masked division
     den_safe = ma.where(den == 0, ma.masked, den)
-    return num / den_safe
+    result = num / den_safe
+    result = ma.array(
+        result,
+        mask=ma.getmaskarray(result) | _nan_majority_mask(data, ax_int),
+    )
+    return result
 
 
 def _is_unstructured_grid(da):
@@ -1026,6 +1064,21 @@ def GENUTILcorrelation(a, b, weights=None, axis=0, centered=1, biased=1):
     x = ma.masked_invalid(_mv(a))
     y = ma.masked_invalid(_mv(b))
     axis = _axis_to_int(a, axis)
+    if (
+        x.shape == y.shape
+        and np.array_equal(ma.getmaskarray(x), ma.getmaskarray(y))
+        and np.allclose(
+            x.astype(float).filled(np.nan),
+            y.astype(float).filled(np.nan),
+            equal_nan=True,
+            atol=1e-12,
+            rtol=1e-12,
+        )
+    ):
+        valid_count = x.count(axis=axis)
+        result = ma.array(np.ones(np.shape(valid_count), dtype=float))
+        result.mask = (np.asarray(valid_count) < 2) | _nan_majority_mask(x, axis)
+        return result
     if centered:
         x = x - ma.mean(x, axis=axis, keepdims=True)
         y = y - ma.mean(y, axis=axis, keepdims=True)
@@ -1148,11 +1201,16 @@ def GENUTILlinearregression(y, x=None, error=1, nointercept=None):
         stderr = np.array([[np.nan, np.nan]])
         return (slope_int, stderr) if error else slope_int
 
+    same_series = np.allclose(xf, yf, equal_nan=True, atol=1e-12, rtol=1e-12)
+
     if nointercept == 1:
         denom = np.dot(xf, xf)
         if denom == 0:
             slope = np.nan
             se = np.nan
+        elif same_series:
+            slope = 1.0
+            se = 0.0
         else:
             slope = float(np.dot(xf, yf) / denom)
             resid = yf - slope * xf
@@ -1168,6 +1226,9 @@ def GENUTILlinearregression(y, x=None, error=1, nointercept=None):
         if len(np.unique(xf)) < 2:
             slope_int = np.array([[np.nan, np.nan]])
             stderr = np.array([[np.nan, np.nan]])
+        elif same_series:
+            slope_int = np.array([[1.0, 0.0]])
+            stderr = np.array([[0.0, 0.0]])
         else:
             res = _linregress(xf, yf)
             slope_int = np.array([[res.slope, res.intercept]])
@@ -1664,6 +1725,44 @@ class _XcDatasetHandle:
             errors="ignore",
         )
 
+        ds_new_safe = ds_new.copy()
+        for vname in list(ds_new_safe.data_vars):
+            da = ds_new_safe[vname]
+            rename_dims = {}
+            safe_vname = (
+                str(vname)
+                .replace("/", "_")
+                .replace(" ", "_")
+                .replace(":", "_")
+            )
+
+            for cname in da.dims:
+                if cname not in da.coords or cname not in ds_old_keep.coords:
+                    continue
+                if _XcDatasetHandle._coords_compatible(ds_old_keep[cname], da[cname]):
+                    continue
+
+                new_cname = f"{cname}_{safe_vname}"
+                if new_cname in ds_old_keep.coords or new_cname in ds_old_keep.dims:
+                    suffix = 1
+                    base_name = new_cname
+                    while (
+                        new_cname in ds_old_keep.coords
+                        or new_cname in ds_old_keep.dims
+                        or new_cname in ds_new_safe.coords
+                        or new_cname in ds_new_safe.dims
+                    ):
+                        suffix += 1
+                        new_cname = f"{base_name}_{suffix}"
+
+                rename_dims[cname] = new_cname
+
+            if rename_dims:
+                ds_new_safe = ds_new_safe.drop_vars(vname)
+                ds_new_safe[vname] = da.rename(rename_dims)
+
+        ds_new = ds_new_safe
+
         try:
             ds_merged = xr.merge(
                 [ds_old_keep, ds_new],
@@ -1745,7 +1844,32 @@ class _XcDatasetHandle:
         if attributes:
             da.attrs.update(_clean_attrs(attributes))
 
-        self._write_vars[name] = da.rename(name).astype(dtype)
+        da = da.rename(name).astype(dtype)
+        rename_dims = {}
+        safe_name = str(name).replace("/", "_").replace(" ", "_").replace(":", "_")
+        for existing in self._write_vars.values():
+            for cname in da.dims:
+                if cname in rename_dims:
+                    continue
+                if cname not in da.coords or cname not in existing.coords:
+                    continue
+                if self._coords_compatible(existing[cname], da[cname]):
+                    continue
+                new_cname = f"{cname}_{safe_name}"
+                suffix = 1
+                base_name = new_cname
+                used = set(da.coords) | set(da.dims)
+                for old_da in self._write_vars.values():
+                    used |= set(old_da.coords) | set(old_da.dims)
+                while new_cname in used:
+                    suffix += 1
+                    new_cname = f"{base_name}_{suffix}"
+                rename_dims[cname] = new_cname
+
+        if rename_dims:
+            da = da.rename(rename_dims)
+
+        self._write_vars[name] = da
         
     def __setattr__(self, key, value):
         if key.startswith("_") or key in (
@@ -2080,10 +2204,11 @@ class _CdutilAverager:
                         do_time = True
         if do_time and not xcdat_axes:
             t_dim = _require_axis(da, "T", context="time selection") or "time"
-            return _finalize_cdat(
+            result = _finalize_cdat(
                 ds[varname].mean(dim=t_dim), varname=varname,
                 context="cdutil.averager:time"
             )
+            return _apply_nan_majority_policy(result, tab, "t")
         if xcdat_axes:
             # Cosine-latitude weighted average — deterministic: always use manual
             # implementation when weights="weighted" and Y is in the reduction
@@ -2093,7 +2218,15 @@ class _CdutilAverager:
                 try:
                     result_raw = _weighted_spatial_average(tab, axes=tuple(xcdat_axes))
                     if do_time:
+                        spatial_result = ma.array(result_raw, copy=True)
                         result_raw = ma.mean(result_raw, axis=0)
+                        result_raw = ma.array(
+                            result_raw,
+                            mask=(
+                                ma.getmaskarray(result_raw)
+                                | _nan_majority_mask(spatial_result, 0)
+                            ),
+                        )
                     if isinstance(tab, CDATVariable) and isinstance(result_raw, (np.ndarray, ma.MaskedArray)):
                         reduce_types = set(xcdat_axes) | ({"T"} if do_time else set())
                         surviving = [
@@ -2126,11 +2259,15 @@ class _CdutilAverager:
                 t_dim = _require_axis(da, "T", context="time selection") or "time"
                 if t_dim in result.dims:
                     result = result.mean(dim=t_dim)
-            return _finalize_cdat(
+            result_cdat = _finalize_cdat(
                 result, varname=varname,
                 context="cdutil.averager:spatial",
                 require_time=("T" not in set(xcdat_axes) and _has_time_axis(tab))
             )
+            reduce_axis = "".join([ax.lower() for ax in xcdat_axes])
+            if do_time:
+                reduce_axis += "t"
+            return _apply_nan_majority_policy(result_cdat, tab, reduce_axis)
         return tab.copy()
 
     @staticmethod
@@ -2513,6 +2650,15 @@ class REGRID2horizontal__Horizontal:
             reuse_weights=False,
         )
         result = regridder(da)
+        valid_src = xr.where(np.isfinite(src_da), 1.0, 0.0)
+        valid_regridder = _xesmf.Regridder(
+            valid_src.to_dataset(name='valid'),
+            target_ds,
+            method=self._method,
+            reuse_weights=False,
+        )
+        valid_fraction = valid_regridder(valid_src)
+        result = result.where(np.isfinite(valid_fraction) & (valid_fraction >= 1.0 - 1e-12))
         # xESMF strips coordinate attributes from non-spatial dimensions (time, lev,
         # etc.).  Restore them from the source DataArray so that _finalize_cdat /
         # da_to_cdat can still detect axis types.
@@ -2528,7 +2674,7 @@ class REGRID2horizontal__Horizontal:
         # Constant-field preservation: if source is spatially uniform, fill result to
         # that constant to avoid interpolation artefacts / numerical drift
         data_flat = _mv(tab)
-        if data_flat.ndim >= 2:
+        if data_flat.ndim >= 2 and not np.any(ma.getmaskarray(data_flat)):
             spatial = data_flat.reshape(data_flat.shape[:-2] + (-1,))
             if np.allclose(spatial, spatial[..., :1], atol=1e-8):
                 result_cdat = _finalize_cdat(
@@ -2664,6 +2810,7 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
         for ax in sorted([int(lat_num), int(lon_num)], reverse=True):
             averaged_tab = MV2sum(averaged_tab, axis=ax)
         averaged_tab = averaged_tab / float(MV2sum(areacell))
+        averaged_tab = _apply_nan_majority_policy(averaged_tab, tab, (int(lat_num), int(lon_num)))
     else:
         # No latitude axis at all — last resort fallback
         try:
@@ -2775,6 +2922,7 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
                 MV2sum(averaged_tab, axis=int(lat_num))
                 / MV2sum(areacell, axis=int(lat_num_area))
             )
+            averaged_tab = _apply_nan_majority_policy(averaged_tab, tab, int(lat_num))
 
         except Exception as e:
             keyerror = (
@@ -2892,6 +3040,7 @@ def AverageTemporal(tab, areacell=None, **kwargs):
             EnsoErrorsWarnings.my_warning(list_strings)
 
     if averaged_tab is not None:
+        averaged_tab = _apply_nan_majority_policy(averaged_tab, tab, "t")
         # Temporal averaging intentionally removes time, so do not require T.
         averaged_tab = _finalize_existing_cdat(averaged_tab, context="AverageTemporal")
     return averaged_tab, keyerror
@@ -2926,6 +3075,7 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
         lon_num_area = get_num_axis(areacell, "longitude")
         averaged_tab = MV2multiply(tab, areacell)
         averaged_tab = MV2sum(averaged_tab, axis=int(lon_num)) / MV2sum(areacell, axis=int(lon_num_area))
+        averaged_tab = _apply_nan_majority_policy(averaged_tab, tab, int(lon_num))
     else:
         try:
             averaged_tab = cdutil.averager(tab, axis="x", weights="weighted", action="average")
@@ -5288,6 +5438,14 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None,
         method=xesmf_method,
     )
     new_tab = regridFCT(tab_to_regrid)
+    if mask is not None:
+        target_mask = np.asarray(mask, dtype=bool)
+        new_data = ma.array(_mv(new_tab), copy=True)
+        if target_mask.shape != new_data.shape:
+            target_mask = np.broadcast_to(target_mask, new_data.shape)
+        new_data = ma.array(new_data, mask=ma.getmaskarray(new_data) | target_mask)
+        new_tab = new_tab.copy()
+        new_tab._data = new_data
 
     return new_tab
 
