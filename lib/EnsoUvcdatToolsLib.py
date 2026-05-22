@@ -401,6 +401,35 @@ def _apply_nan_majority_policy(result, source, axis):
         return result
     return res_data
 
+def _valid_weight_sum(source, weights, axis):
+    """Sum weights over *axis*, excluding cells where *source* is missing."""
+    src = _to_cdat(source)
+    weights = _to_cdat(weights)
+    data = ma.masked_invalid(_mv(src))
+    area = ma.masked_invalid(_mv(weights))
+    ax = _axis_to_int(src, axis)
+
+    if area.shape != data.shape:
+        shape = [1] * data.ndim
+        for ii, area_axis in enumerate(weights.getAxisList()):
+            axis_type = getattr(area_axis, "axis", None)
+            if axis_type == "Y":
+                shape[_axis_to_int(src, "y")] = area.shape[ii]
+            elif axis_type == "X":
+                shape[_axis_to_int(src, "x")] = area.shape[ii]
+            elif axis_type == "T":
+                shape[_axis_to_int(src, "t")] = area.shape[ii]
+            elif ii < data.ndim and area.shape[ii] == data.shape[ii]:
+                shape[ii] = area.shape[ii]
+        area = area.reshape(shape)
+
+    area = ma.array(
+        np.broadcast_to(area, data.shape),
+        mask=np.broadcast_to(ma.getmaskarray(area), data.shape),
+    )
+    area = ma.array(area, mask=ma.getmaskarray(area) | ma.getmaskarray(data))
+    return ma.sum(area, axis=ax)
+
 def _to_cdat(x):
     """
     Ensure *x* is a CDATVariable.
@@ -2809,7 +2838,9 @@ def AverageHorizontal(tab, areacell=None, region=None, **kwargs):
         # does not shift the remaining lower index before it is used.
         for ax in sorted([int(lat_num), int(lon_num)], reverse=True):
             averaged_tab = MV2sum(averaged_tab, axis=ax)
-        averaged_tab = averaged_tab / float(MV2sum(areacell))
+        averaged_tab = averaged_tab / _valid_weight_sum(
+            tab, areacell, (int(lat_num), int(lon_num))
+        )
         averaged_tab = _apply_nan_majority_policy(averaged_tab, tab, (int(lat_num), int(lon_num)))
     else:
         # No latitude axis at all — last resort fallback
@@ -2915,12 +2946,10 @@ def AverageMeridional(tab, areacell=None, region=None, **kwargs):
 
     if areacell is not None:
         try:
-            lat_num_area = get_num_axis(areacell, "latitude")
-
             averaged_tab = MV2multiply(tab, areacell)
             averaged_tab = (
                 MV2sum(averaged_tab, axis=int(lat_num))
-                / MV2sum(areacell, axis=int(lat_num_area))
+                / _valid_weight_sum(tab, areacell, int(lat_num))
             )
             averaged_tab = _apply_nan_majority_policy(averaged_tab, tab, int(lat_num))
 
@@ -3072,9 +3101,10 @@ def AverageZonal(tab, areacell=None, region=None, **kwargs):
             )
         areacell = _make_coslat_areacell(tab)
     if areacell is not None:
-        lon_num_area = get_num_axis(areacell, "longitude")
         averaged_tab = MV2multiply(tab, areacell)
-        averaged_tab = MV2sum(averaged_tab, axis=int(lon_num)) / MV2sum(areacell, axis=int(lon_num_area))
+        averaged_tab = MV2sum(averaged_tab, axis=int(lon_num)) / _valid_weight_sum(
+            tab, areacell, int(lon_num)
+        )
         averaged_tab = _apply_nan_majority_policy(averaged_tab, tab, int(lon_num))
     else:
         try:
