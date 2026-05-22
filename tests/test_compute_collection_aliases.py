@@ -26,6 +26,16 @@ def test_canonical_dataset_entry_takes_precedence_over_alias():
     assert _dataset_variable_entry(dataset, "ssh") is ssh_entry
 
 
+def test_sst_dataset_entry_can_use_ts_alias():
+    ts_entry = {
+        "path + filename": "/tmp/ts.nc",
+        "varname": "ts",
+    }
+    dataset = {"ts": ts_entry}
+
+    assert _dataset_variable_entry(dataset, "sst") is ts_entry
+
+
 def test_compute_collection_passes_zos_alias_downstream(monkeypatch):
     calls = []
 
@@ -87,3 +97,74 @@ def test_compute_collection_passes_zos_alias_downstream(monkeypatch):
     assert args[4] == "tauu"
     assert kwargs["modelFile2"] == "/tmp/zos.nc"
     assert kwargs["modelVarName2"] == "zos"
+
+
+def test_compute_collection_passes_ts_alias_downstream_for_model_and_obs(monkeypatch):
+    calls = []
+
+    def fake_collection(_):
+        return {
+            "long_name": "test",
+            "description": "test",
+            "metrics_list": {
+                "BiasSstLonRmse": {
+                    "variables": ["sst"],
+                    "regions": {"sst": "equatorial_pacific"},
+                }
+            },
+        }
+
+    def fake_compute_metric(*args, **kwargs):
+        calls.append((args, kwargs))
+        return (
+            {"metric": {"OBS": {"value": 1.0, "value_error": None}}, "diagnostic": {"MODEL": {}, "OBS": {}}},
+            {
+                "metric": {"name": "BiasSstLonRmse", "units": "degC"},
+                "diagnostic": {
+                    "MODEL": {"name": "MODEL", "nyears": 1, "time_period": "model"},
+                    "OBS": {"name": "OBS", "nyears": 1, "time_period": "obs"},
+                },
+            },
+            {},
+            {},
+        )
+
+    monkeypatch.setattr(compute_lib, "defCollection", fake_collection)
+    monkeypatch.setattr(compute_lib, "ComputeMetric", fake_compute_metric)
+
+    dict_datasets = {
+        "model": {
+            "MODEL": {
+                "ts": {
+                    "path + filename": "/tmp/model_ts.nc",
+                    "varname": "ts",
+                    "path + filename_area": None,
+                    "areaname": None,
+                    "path + filename_landmask": None,
+                    "landmaskname": None,
+                }
+            }
+        },
+        "observations": {
+            "OBS": {
+                "tos": {
+                    "path + filename": "/tmp/obs_tos.nc",
+                    "varname": "tos",
+                    "path + filename_area": None,
+                    "areaname": None,
+                    "path + filename_landmask": None,
+                    "landmaskname": None,
+                }
+            }
+        },
+    }
+
+    compute_lib.ComputeCollection("test", dict_datasets, "MODEL")
+
+    assert calls
+    args, _ = calls[0]
+    assert args[3] == "/tmp/model_ts.nc"
+    assert args[4] == "ts"
+    assert args[5] == ["OBS"]
+    assert args[6] == ["/tmp/obs_tos.nc"]
+    assert args[7] == ["tos"]

@@ -58,6 +58,7 @@ sst_only = [
 #
 _VARIABLE_ALIASES = {
     "ssh": ["zos", "sla", "sshg", "sossheig"],
+    "sst": ["ts", "tos", "skt", "sst", "sosstsst"],
 }
 
 
@@ -241,33 +242,29 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
             obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1 = list(), list(), list(), list(), list()
             obsFileLandmask1, obsLandmaskName1, obsInterpreter1 = list(), list(), list()
             for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
-                try:
-                    dictDatasets["observations"][obs][list_variables[0]]
-                except Exception:
+                obs_entry1 = _dataset_variable_entry(dictDatasets["observations"][obs], list_variables[0])
+                if obs_entry1 is None:
                     pass
                 else:
                     obsNameVar1.append(obs)
-                    obsFile1.append(dictDatasets["observations"][obs][list_variables[0]]["path + filename"])
-                    obsVarName1.append(dictDatasets["observations"][obs][list_variables[0]]["varname"])
+                    obsFile1.append(obs_entry1["path + filename"])
+                    obsVarName1.append(obs_entry1["varname"])
                     try:
-                        obsFileArea1.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["path + filename_area"])
+                        obsFileArea1.append(obs_entry1["path + filename_area"])
                     except Exception:
                         obsFileArea1.append(None)
                         obsAreaName1.append(None)
                     else:
-                        obsAreaName1.append(dictDatasets["observations"][obs][list_variables[0]]["areaname"])
+                        obsAreaName1.append(obs_entry1["areaname"])
                     try:
-                        obsFileLandmask1.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["path + filename_landmask"])
+                        obsFileLandmask1.append(obs_entry1["path + filename_landmask"])
                     except Exception:
                         obsFileLandmask1.append(None)
                         obsLandmaskName1.append(None)
                     else:
-                        obsLandmaskName1.append(dictDatasets["observations"][obs][list_variables[0]]["landmaskname"])
+                        obsLandmaskName1.append(obs_entry1["landmaskname"])
                     try:
-                        obsInterpreter1.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
+                        obsInterpreter1.append(obs_entry1["obs_interpreter"])
                     except Exception:
                         obsInterpreter1.append(obs)
             # same if a second variable is needed
@@ -305,34 +302,29 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2 = list(), list(), list(), list(), list()
                 obsFileLandmask2, obsLandmaskName2, obsInterpreter2 = list(), list(), list()
                 for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
-                    try:
-                        dictDatasets["observations"][obs][list_variables[1]]
-                    except Exception:
+                    obs_entry2 = _dataset_variable_entry(dictDatasets["observations"][obs], list_variables[1])
+                    if obs_entry2 is None:
                         pass
                     else:
                         obsNameVar2.append(obs)
-                        obsFile2.append(dictDatasets["observations"][obs][list_variables[1]]["path + filename"])
-                        obsVarName2.append(dictDatasets["observations"][obs][list_variables[1]]["varname"])
+                        obsFile2.append(obs_entry2["path + filename"])
+                        obsVarName2.append(obs_entry2["varname"])
                         try:
-                            obsFileArea2.append(
-                                dictDatasets["observations"][obs][list_variables[1]]["path + filename_area"])
+                            obsFileArea2.append(obs_entry2["path + filename_area"])
                         except Exception:
                             obsFileArea2.append(None)
                             obsAreaName2.append(None)
                         else:
-                            obsAreaName2.append(dictDatasets["observations"][obs][list_variables[1]]["areaname"])
+                            obsAreaName2.append(obs_entry2["areaname"])
                         try:
-                            obsFileLandmask2.append(
-                                dictDatasets["observations"][obs][list_variables[1]]["path + filename_landmask"])
+                            obsFileLandmask2.append(obs_entry2["path + filename_landmask"])
                         except Exception:
                             obsFileLandmask2.append(None)
                             obsLandmaskName2.append(None)
                         else:
-                            obsLandmaskName2.append(
-                                dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
+                            obsLandmaskName2.append(obs_entry2["landmaskname"])
                         try:
-                            obsInterpreter2.append(
-                                dictDatasets["observations"][obs][list_variables[1]]["obs_interpreter"])
+                            obsInterpreter2.append(obs_entry2["obs_interpreter"])
                         except Exception:
                             obsInterpreter2.append(obs)
                 arg_var2["obsNameVar2"] = obsNameVar2
