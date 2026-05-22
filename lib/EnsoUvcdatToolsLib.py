@@ -623,6 +623,71 @@ def _is_unstructured_grid(da):
     return bool(dims & _unstructured_dims)
 
 
+def _coord_values_degrees(coord):
+    """Return coordinate values in degrees, accepting common MPAS radian coords."""
+    vals = np.asarray(coord.values, dtype=float)
+    units = str(coord.attrs.get("units", "")).lower()
+    if units in {"radian", "radians", "rad"}:
+        vals = np.rad2deg(vals)
+    return vals
+
+
+def _unstructured_lat_lon_coords(da: xr.DataArray, ds: xr.Dataset | None = None):
+    """Return MPAS-like 1-D lat/lon coordinate arrays and their shared cell dim."""
+    candidates = [
+        ("latCell", "lonCell"),
+        ("lat_cell", "lon_cell"),
+        ("latitude", "longitude"),
+        ("lat", "lon"),
+    ]
+    for lat_name, lon_name in candidates:
+        lat = da.coords.get(lat_name)
+        lon = da.coords.get(lon_name)
+        if (lat is None or lon is None) and ds is not None:
+            lat = ds[lat_name] if lat_name in ds else lat
+            lon = ds[lon_name] if lon_name in ds else lon
+        if lat is None or lon is None or lat.ndim != 1 or lon.ndim != 1:
+            continue
+        if lat.dims != lon.dims:
+            continue
+        cell_dim = lat.dims[0]
+        if cell_dim in da.dims:
+            return lat_name, lon_name, cell_dim, lat, lon
+    return None, None, None, None, None
+
+
+def _subset_unstructured_lat_lon(da: xr.DataArray, ds: xr.Dataset | None = None, latitude=None, longitude=None):
+    """Subset MPAS-like unstructured cell data using 1-D cell lat/lon coords."""
+    lat_name, lon_name, cell_dim, lat, lon = _unstructured_lat_lon_coords(da, ds)
+    if cell_dim is None:
+        return da, False
+    lat_vals = _coord_values_degrees(lat)
+    lon_vals = np.mod(_coord_values_degrees(lon), 360.0)
+    mask = np.ones(lat_vals.shape, dtype=bool)
+    if latitude is not None:
+        lo, hi = sorted([float(v) for v in latitude])
+        mask &= (lat_vals >= lo) & (lat_vals <= hi)
+    if longitude is not None:
+        mask &= _longitude_mask(lon_vals, longitude)
+    keep = xr.DataArray(mask, dims=cell_dim)
+    out = da.where(keep, drop=True)
+    out = out.assign_coords(
+        {
+            lat_name: xr.DataArray(
+                lat_vals[mask],
+                dims=cell_dim,
+                attrs={"axis": "Y", "standard_name": "latitude", "units": "degrees_north"},
+            ),
+            lon_name: xr.DataArray(
+                lon_vals[mask],
+                dims=cell_dim,
+                attrs={"axis": "X", "standard_name": "longitude", "units": "degrees_east"},
+            ),
+        }
+    )
+    return out, True
+
+
 def _axis_to_int(arr, axis):
     """
     Convert a CDAT-style axis spec to an integer or tuple of integers
@@ -1583,6 +1648,386 @@ def _finalize_existing_cdat(var, *, context: str = "", require_time: bool = Fals
     return _validate_cdat_axes(out, context=context, require_time=require_time)
 
 
+def _curvilinear_lat_lon_coords(da: xr.DataArray):
+    """Return 2-D latitude/longitude coordinate names for logically rectangular grids."""
+    lat_name = None
+    lon_name = None
+    for cname, coord in da.coords.items():
+        if coord.ndim != 2:
+            continue
+        ax_type = _dim_to_axis_type(cname, coord)
+        if ax_type == "Y" and lat_name is None:
+            lat_name = cname
+        elif ax_type == "X" and lon_name is None:
+            lon_name = cname
+    if lat_name is None or lon_name is None:
+        return None, None
+    lat = da.coords[lat_name]
+    lon = da.coords[lon_name]
+    if lat.dims != lon.dims:
+        return None, None
+    if not all(dim in da.dims for dim in lat.dims):
+        return None, None
+    return lat_name, lon_name
+
+
+def _longitude_mask(lon_values, lon_bounds):
+    """Build a longitude mask after normalizing both data and bounds to 0..360."""
+    lon = np.mod(np.asarray(lon_values, dtype=float), 360.0)
+    lo, hi = [float(v) for v in lon_bounds]
+    lo = lo % 360.0
+    hi = hi % 360.0
+    if lo <= hi:
+        return (lon >= lo) & (lon <= hi)
+    return (lon >= lo) | (lon <= hi)
+
+
+def _subset_curvilinear_lat_lon(da: xr.DataArray, latitude=None, longitude=None):
+    """
+    Apply lat/lon region selection for 2-D curvilinear coordinates.
+
+    xarray cannot use ``.sel(lat=slice(...), lon=slice(...))`` when latitude
+    and longitude are auxiliary 2-D coordinates.  This masks by coordinate
+    values and drops fully outside rows/columns, preserving a compact logical
+    rectangle for downstream legacy operations.
+    """
+    lat_name, lon_name = _curvilinear_lat_lon_coords(da)
+    if lat_name is None or lon_name is None:
+        return da, False
+
+    lat = da.coords[lat_name]
+    lon = da.coords[lon_name]
+    mask = xr.DataArray(
+        np.ones(lat.shape, dtype=bool),
+        dims=lat.dims,
+        coords={dim: da.coords[dim] for dim in lat.dims if dim in da.coords},
+    )
+    if latitude is not None:
+        lo, hi = min(latitude), max(latitude)
+        mask = mask & ((lat >= lo) & (lat <= hi))
+    if longitude is not None:
+        mask = mask & xr.DataArray(
+            _longitude_mask(lon.values, longitude),
+            dims=lon.dims,
+            coords={dim: da.coords[dim] for dim in lon.dims if dim in da.coords},
+        )
+    return da.where(mask, drop=True), True
+
+
+def _target_axis_values(bounds, resolution=1.0, *, longitude=False):
+    """Create regular target cell centers inside the requested bounds."""
+    if bounds is None:
+        return None
+    lo, hi = [float(v) for v in bounds]
+    if longitude:
+        lo = lo % 360.0
+        hi = hi % 360.0
+        if hi <= lo:
+            hi += 360.0
+    else:
+        lo, hi = sorted([lo, hi])
+    npts = int(round((hi - lo) / resolution))
+    if npts <= 0:
+        npts = 1
+    vals = lo + resolution / 2.0 + np.arange(npts) * resolution
+    if longitude:
+        vals = np.mod(vals, 360.0)
+    return vals
+
+
+def _regrid_curvilinear_to_rectilinear(
+    da: xr.DataArray,
+    *,
+    latitude=None,
+    longitude=None,
+    resolution=1.0,
+) -> xr.DataArray:
+    """
+    Regrid 2-D curvilinear lat/lon data to a regular lat-lon grid.
+
+    This is used at the file-read boundary before converting to the CDAT-like
+    compatibility object.  It handles logically rectangular ocean variables such
+    as ``zos(time, j, i)`` with auxiliary ``lat(j, i)`` / ``lon(j, i)`` coords.
+    """
+    lat_name, lon_name = _curvilinear_lat_lon_coords(da)
+    if lat_name is None or lon_name is None:
+        return da
+
+    lat = da.coords[lat_name]
+    lon = da.coords[lon_name]
+    ydim, xdim = lat.dims
+    lat_vals_src = np.asarray(lat.values, dtype=float)
+    lon_vals_src = np.mod(np.asarray(lon.values, dtype=float), 360.0)
+
+    target_lat = _target_axis_values(
+        latitude
+        if latitude is not None
+        else (np.nanmin(lat_vals_src), np.nanmax(lat_vals_src)),
+        resolution,
+    )
+    target_lon = _target_axis_values(
+        longitude
+        if longitude is not None
+        else (np.nanmin(lon_vals_src), np.nanmax(lon_vals_src)),
+        resolution,
+        longitude=True,
+    )
+
+    lat_attrs = dict(lat.attrs)
+    lat_attrs["axis"] = "Y"
+    lat_attrs.setdefault("standard_name", "latitude")
+    lat_attrs.setdefault("units", "degrees_north")
+    lon_attrs = dict(lon.attrs)
+    lon_attrs["axis"] = "X"
+    lon_attrs.setdefault("standard_name", "longitude")
+    lon_attrs.setdefault("units", "degrees_east")
+
+    target_ds = xr.Dataset(
+        coords={
+            "lat": xr.DataArray(target_lat, dims="lat", attrs=lat_attrs),
+            "lon": xr.DataArray(target_lon, dims="lon", attrs=lon_attrs),
+        }
+    )
+
+    if _HAS_XESMF:
+        try:
+            regridder = _xesmf.Regridder(
+                da.to_dataset(name=da.name or "var"),
+                target_ds,
+                method="bilinear",
+                extrap_method="nearest_s2d",
+                reuse_weights=False,
+            )
+            result = regridder(da)
+            result = result.assign_coords(
+                {
+                    "lat": target_ds["lat"],
+                    "lon": target_ds["lon"],
+                }
+            )
+            for dim in da.dims:
+                if dim in (ydim, xdim, "lat", "lon"):
+                    continue
+                if dim in result.coords and dim in da.coords:
+                    result = result.assign_coords({dim: da.coords[dim]})
+            return result
+        except Exception as e:
+            warnings.warn(
+                "xESMF curvilinear regridding failed; falling back to "
+                f"scipy.interpolate.griddata. Original error: {type(e).__name__}: {e}",
+                stacklevel=2,
+            )
+
+    target_lon_for_interp = target_lon.astype(float)
+    source_lon_for_interp = lon_vals_src.copy()
+    if longitude is not None:
+        lo, hi = [float(v) % 360.0 for v in longitude]
+        if hi <= lo:
+            source_lon_for_interp = np.where(
+                source_lon_for_interp < lo,
+                source_lon_for_interp + 360.0,
+                source_lon_for_interp,
+            )
+            target_lon_for_interp = np.where(
+                target_lon_for_interp < lo,
+                target_lon_for_interp + 360.0,
+                target_lon_for_interp,
+            )
+
+    try:
+        from scipy.interpolate import griddata as _scipy_griddata
+    except ImportError as e:
+        raise ImportError(
+            "scipy is required to regrid curvilinear ocean variables "
+            "to a regular lat-lon grid before ENSO metric calculation."
+        ) from e
+
+    src_points = np.column_stack(
+        [source_lon_for_interp.ravel(), lat_vals_src.ravel()]
+    )
+    dst_lon2d, dst_lat2d = np.meshgrid(target_lon_for_interp, target_lat)
+    dst_points = (dst_lon2d, dst_lat2d)
+
+    data = np.asarray(da.values, dtype=float)
+    spatial_shape = lat_vals_src.shape
+    if data.shape[-2:] != spatial_shape:
+        axis_order = [dim for dim in da.dims if dim not in (ydim, xdim)] + [ydim, xdim]
+        da = da.transpose(*axis_order)
+        data = np.asarray(da.values, dtype=float)
+
+    leading_shape = data.shape[:-2]
+    flat_data = data.reshape((-1,) + spatial_shape)
+    out = np.full((flat_data.shape[0], len(target_lat), len(target_lon)), np.nan, dtype=float)
+    finite_points = np.isfinite(src_points).all(axis=1)
+
+    for idx, field in enumerate(flat_data):
+        values = field.ravel()
+        valid = finite_points & np.isfinite(values)
+        if np.count_nonzero(valid) < 3:
+            continue
+        out_field = _scipy_griddata(
+            src_points[valid],
+            values[valid],
+            dst_points,
+            method="linear",
+        )
+        missing = ~np.isfinite(out_field)
+        if np.any(missing):
+            nearest = _scipy_griddata(
+                src_points[valid],
+                values[valid],
+                dst_points,
+                method="nearest",
+            )
+            out_field = np.where(missing, nearest, out_field)
+        out[idx] = out_field
+
+    out = out.reshape(leading_shape + (len(target_lat), len(target_lon)))
+
+    drop_names = [name for name in (lat_name, lon_name) if name not in da.dims]
+    if drop_names:
+        da = da.drop_vars(drop_names)
+
+    dims = tuple([dim for dim in da.dims if dim not in (ydim, xdim)] + ["lat", "lon"])
+    coords = {}
+    for dim in dims:
+        if dim == "lat":
+            coords[dim] = xr.DataArray(target_lat, dims=dim, attrs=lat_attrs)
+        elif dim == "lon":
+            coords[dim] = xr.DataArray(target_lon, dims=dim, attrs=lon_attrs)
+        elif dim in da.coords:
+            coords[dim] = da.coords[dim]
+
+    return xr.DataArray(
+        out,
+        dims=dims,
+        coords=coords,
+        attrs=dict(da.attrs),
+        name=da.name,
+    )
+
+
+def _regrid_unstructured_to_rectilinear(
+    da: xr.DataArray,
+    ds: xr.Dataset | None = None,
+    *,
+    latitude=None,
+    longitude=None,
+    resolution=1.0,
+) -> xr.DataArray:
+    """
+    Regrid MPAS-like unstructured cell data to a regular lat-lon grid.
+
+    This handles variables such as ``tos(time, nCells)`` or ``zos(time, nCells)``
+    with 1-D ``latCell(nCells)`` / ``lonCell(nCells)`` coordinates.
+    """
+    lat_name, lon_name, cell_dim, lat, lon = _unstructured_lat_lon_coords(da, ds)
+    if cell_dim is None:
+        raise NotImplementedError(
+            "Unstructured/MPAS-like data were detected, but no 1-D cell "
+            "latitude/longitude coordinates were found. Expected coordinates "
+            "such as latCell/lonCell on the same nCells dimension. Remap to "
+            "regular lat-lon before running ENSO_metrics, or provide CF-style "
+            "cell latitude/longitude coordinates."
+        )
+
+    lat_vals_src = _coord_values_degrees(lat)
+    lon_vals_src = np.mod(_coord_values_degrees(lon), 360.0)
+
+    target_lat = _target_axis_values(
+        latitude
+        if latitude is not None
+        else (np.nanmin(lat_vals_src), np.nanmax(lat_vals_src)),
+        resolution,
+    )
+    target_lon = _target_axis_values(
+        longitude
+        if longitude is not None
+        else (np.nanmin(lon_vals_src), np.nanmax(lon_vals_src)),
+        resolution,
+        longitude=True,
+    )
+
+    target_lon_for_interp = target_lon.astype(float)
+    source_lon_for_interp = lon_vals_src.copy()
+    if longitude is not None:
+        lo, hi = [float(v) % 360.0 for v in longitude]
+        if hi <= lo:
+            source_lon_for_interp = np.where(
+                source_lon_for_interp < lo,
+                source_lon_for_interp + 360.0,
+                source_lon_for_interp,
+            )
+            target_lon_for_interp = np.where(
+                target_lon_for_interp < lo,
+                target_lon_for_interp + 360.0,
+                target_lon_for_interp,
+            )
+
+    try:
+        from scipy.interpolate import griddata as _scipy_griddata
+    except ImportError as e:
+        raise ImportError(
+            "scipy is required to regrid MPAS-like unstructured ocean variables "
+            "to a regular lat-lon grid before ENSO metric calculation."
+        ) from e
+
+    src_points = np.column_stack([source_lon_for_interp, lat_vals_src])
+    dst_lon2d, dst_lat2d = np.meshgrid(target_lon_for_interp, target_lat)
+    dst_points = (dst_lon2d, dst_lat2d)
+
+    if da.dims[-1] != cell_dim:
+        axis_order = [dim for dim in da.dims if dim != cell_dim] + [cell_dim]
+        da = da.transpose(*axis_order)
+    data = np.asarray(da.values, dtype=float)
+    leading_shape = data.shape[:-1]
+    flat_data = data.reshape((-1, data.shape[-1]))
+    out = np.full((flat_data.shape[0], len(target_lat), len(target_lon)), np.nan, dtype=float)
+    finite_points = np.isfinite(src_points).all(axis=1)
+
+    for idx, field in enumerate(flat_data):
+        valid = finite_points & np.isfinite(field)
+        if np.count_nonzero(valid) < 3:
+            continue
+        out_field = _scipy_griddata(
+            src_points[valid],
+            field[valid],
+            dst_points,
+            method="linear",
+        )
+        missing = ~np.isfinite(out_field)
+        if np.any(missing):
+            nearest = _scipy_griddata(
+                src_points[valid],
+                field[valid],
+                dst_points,
+                method="nearest",
+            )
+            out_field = np.where(missing, nearest, out_field)
+        out[idx] = out_field
+
+    out = out.reshape(leading_shape + (len(target_lat), len(target_lon)))
+    lat_attrs = {"axis": "Y", "standard_name": "latitude", "units": "degrees_north"}
+    lon_attrs = {"axis": "X", "standard_name": "longitude", "units": "degrees_east"}
+    dims = tuple([dim for dim in da.dims if dim != cell_dim] + ["lat", "lon"])
+    coords = {}
+    for dim in dims:
+        if dim == "lat":
+            coords[dim] = xr.DataArray(target_lat, dims=dim, attrs=lat_attrs)
+        elif dim == "lon":
+            coords[dim] = xr.DataArray(target_lon, dims=dim, attrs=lon_attrs)
+        elif dim in da.coords:
+            coords[dim] = da.coords[dim]
+
+    return xr.DataArray(
+        out,
+        dims=dims,
+        coords=coords,
+        attrs=dict(da.attrs),
+        name=da.name,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Revised file handle
 # ---------------------------------------------------------------------------
@@ -1634,15 +2079,35 @@ class _XcDatasetHandle:
             )
 
         da = self._ds[varname]
+        curvilinear_latlon = False
+        unstructured_latlon = False
 
-        if "latitude" in kwargs:
+        if _is_unstructured_grid(da):
+            da, unstructured_latlon = _subset_unstructured_lat_lon(
+                da,
+                self._ds,
+                latitude=kwargs.get("latitude"),
+                longitude=kwargs.get("longitude"),
+            )
+
+        if "latitude" in kwargs and not unstructured_latlon:
             lat_bnds = kwargs["latitude"]
-            lo, hi = min(lat_bnds), max(lat_bnds)
-            lat_dim = _validate_axis(da, "Y", context="latitude selection")
-            if lat_dim:
-                da = da.sel({lat_dim: slice(lo, hi)})
+            da, curvilinear_latlon = _subset_curvilinear_lat_lon(
+                da, latitude=lat_bnds, longitude=kwargs.get("longitude")
+            )
+            if not curvilinear_latlon:
+                lo, hi = min(lat_bnds), max(lat_bnds)
+                lat_dim = _validate_axis(da, "Y", context="latitude selection")
+                if lat_dim:
+                    da = da.sel({lat_dim: slice(lo, hi)})
 
-        if "longitude" in kwargs:
+        if "longitude" in kwargs and "latitude" not in kwargs and not unstructured_latlon:
+            lon_bnds = kwargs["longitude"]
+            da, curvilinear_latlon = _subset_curvilinear_lat_lon(
+                da, longitude=lon_bnds
+            )
+
+        if "longitude" in kwargs and not curvilinear_latlon and not unstructured_latlon:
             lon_bnds = kwargs["longitude"]
             lo, hi = min(lon_bnds), max(lon_bnds)
             lon_dim = _validate_axis(da, "X", context="longitude selection")
@@ -1668,6 +2133,20 @@ class _XcDatasetHandle:
 
         if kwargs.get("squeeze"):
             da = da.squeeze()
+
+        if unstructured_latlon or _is_unstructured_grid(da):
+            da = _regrid_unstructured_to_rectilinear(
+                da,
+                self._ds,
+                latitude=kwargs.get("latitude"),
+                longitude=kwargs.get("longitude"),
+            )
+        elif curvilinear_latlon or _curvilinear_lat_lon_coords(da) != (None, None):
+            da = _regrid_curvilinear_to_rectilinear(
+                da,
+                latitude=kwargs.get("latitude"),
+                longitude=kwargs.get("longitude"),
+            )
 
         # Build a robust CDAT-like object at the read boundary.  This keeps
         # T/Y/X/Z metadata attached before downstream PCMDI code sees it.

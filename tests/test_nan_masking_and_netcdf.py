@@ -9,6 +9,7 @@ from lib.EnsoUvcdatToolsLib import (
     GENUTILlinearregression,
     LinearRegressionTsAgainstMap,
     SaveNetcdf,
+    open_file,
 )
 from lib.XarrayCompat import create_axis, create_rect_grid, create_variable
 
@@ -144,3 +145,105 @@ def test_append_netcdf_preserves_variables_with_different_same_named_dims(tmp_pa
         assert ds["b"].shape == (3, 1, 3)
         assert ds["a"].dims == ("time", "lat", "lon")
         assert ds["b"].dims == ("time_b", "lat_b", "lon_b")
+
+
+def test_open_file_accepts_region_subset_on_curvilinear_lat_lon(tmp_path):
+    time = np.array([0.0, 30.0])
+    j = np.arange(4)
+    i = np.arange(5)
+    lat2d = np.array(
+        [
+            [-8.0, -8.0, -8.0, -8.0, -8.0],
+            [-3.0, -3.0, -3.0, -3.0, -3.0],
+            [3.0, 3.0, 3.0, 3.0, 3.0],
+            [8.0, 8.0, 8.0, 8.0, 8.0],
+        ]
+    )
+    lon2d = np.array(
+        [
+            [200.0, 220.0, 240.0, 260.0, 280.0],
+            [200.0, 220.0, 240.0, 260.0, 280.0],
+            [200.0, 220.0, 240.0, 260.0, 280.0],
+            [200.0, 220.0, 240.0, 260.0, 280.0],
+        ]
+    )
+    data = np.arange(2 * 4 * 5, dtype=float).reshape(2, 4, 5)
+    ds = xr.Dataset(
+        {
+            "zos": (
+                ("time", "j", "i"),
+                data,
+                {"units": "m", "standard_name": "sea_surface_height_above_geoid"},
+            )
+        },
+        coords={
+            "time": (
+                "time",
+                time,
+                {"units": "days since 2000-01-01", "calendar": "standard"},
+            ),
+            "j": j,
+            "i": i,
+            "lat": (("j", "i"), lat2d, {"units": "degrees_north"}),
+            "lon": (("j", "i"), lon2d, {"units": "degrees_east"}),
+        },
+    )
+    path = tmp_path / "curvilinear_zos.nc"
+    ds.to_netcdf(path)
+
+    var = open_file(str(path))("zos", latitude=(-5.0, 5.0), longitude=(210.0, 270.0))
+
+    assert var.shape == (2, 10, 60)
+    assert [ax.axis for ax in var.getAxisList()] == ["T", "Y", "X"]
+    assert np.allclose(var.getLatitude()[:], np.arange(-4.5, 5.0, 1.0))
+    assert np.allclose(var.getLongitude()[:], np.arange(210.5, 270.0, 1.0))
+    assert np.isfinite(var.filled(np.nan)).any()
+
+
+def test_open_file_regrids_mpas_like_unstructured_cells(tmp_path):
+    time = np.array([0.0, 30.0])
+    lat_deg = np.repeat(np.array([-2.0, 0.0, 2.0]), 3)
+    lon_deg = np.tile(np.array([220.0, 222.0, 224.0]), 3)
+    data = np.stack(
+        [
+            lat_deg + lon_deg / 100.0,
+            lat_deg + lon_deg / 100.0 + 1.0,
+        ]
+    )
+    ds = xr.Dataset(
+        {
+            "zos": (
+                ("time", "nCells"),
+                data,
+                {"units": "m", "standard_name": "sea_surface_height_above_geoid"},
+            ),
+            "latCell": (
+                "nCells",
+                np.deg2rad(lat_deg),
+                {"units": "radians", "standard_name": "latitude"},
+            ),
+            "lonCell": (
+                "nCells",
+                np.deg2rad(lon_deg),
+                {"units": "radians", "standard_name": "longitude"},
+            ),
+        },
+        coords={
+            "time": (
+                "time",
+                time,
+                {"units": "days since 2000-01-01", "calendar": "standard"},
+            ),
+            "nCells": np.arange(lat_deg.size),
+        },
+    )
+    path = tmp_path / "mpas_like_zos.nc"
+    ds.to_netcdf(path)
+
+    var = open_file(str(path))("zos", latitude=(-2.0, 2.0), longitude=(220.0, 224.0))
+
+    assert var.shape == (2, 4, 4)
+    assert [ax.axis for ax in var.getAxisList()] == ["T", "Y", "X"]
+    assert np.allclose(var.getLatitude()[:], [-1.5, -0.5, 0.5, 1.5])
+    assert np.allclose(var.getLongitude()[:], [220.5, 221.5, 222.5, 223.5])
+    assert np.isfinite(var.filled(np.nan)).any()
