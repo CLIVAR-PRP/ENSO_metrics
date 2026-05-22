@@ -3,6 +3,8 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^(\.idea/|\.vscode/)
       - id: end-of-file-fixer
+        exclude: ^(\.idea/|\.vscode/)
       - id: check-yaml
-        exclude: ^conda/.*\.ya?ml$
+        exclude: ^(conda/.*\.ya?ml|\.idea/|\.vscode/)
