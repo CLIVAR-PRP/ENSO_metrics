@@ -105,7 +105,7 @@ input_dataset_dictionary = {
                     path_i + "/" + "_".join([project, model, experiment, member]) + "_rlus.xml"],
                 "varname": ["rlds", "rlus"],
                 # the CF standard_name is: cell_area
-                # rlds and rlus could be on different grids so you need to give areacell/landmask for each variables 
+                # rlds and rlus could be on different grids so you need to give areacell/landmask for each variables
                 "path + filename_area": [
                     path_i + "/" + "_".join([project, model, experiment, member]) + "_areacella.xml",
                     path_i + "/" + "_".join([project, model, experiment, member]) + "_areacella.xml"],

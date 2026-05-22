@@ -36,3 +36,7 @@ htmlcov/
 # Temporary / local
 *.bak
 *.tmp
+
+# Local IDE settings
+.idea/
+.vscode/

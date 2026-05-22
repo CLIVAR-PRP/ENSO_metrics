@@ -8033,7 +8033,7 @@ def EnsoFbSstTaux(
     for arg in needed_kwarg:
         if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
-    
+
     # Define metric attributes
     Name = 'Taux-Sst feedback (mu)'
     Units = '1e-3 N/m2/C'
@@ -8192,7 +8192,7 @@ def EnsoFbSstTaux(
                             }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                                'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox + 
+                                'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox +
                                         " tauxA over sstA",
                                 'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0],
                                 'intercept': mu[2], 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2],
@@ -8242,7 +8242,7 @@ def EnsoFbSstTaux(
                                 'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
                                 'frequency': kwargs['frequency']
                             }
-                            
+
                             if debug is True:
                                 print("DEBUG EnsoFbSstTaux before SaveNetcdf:", dataset)
                                 print("DEBUG keyerror:", keyerror)
@@ -8261,18 +8261,18 @@ def EnsoFbSstTaux(
                                     print("DEBUG taux_map shape:", getattr(taux_map, "shape", None))
                                 if curMu is not None:
                                     print("DEBUG curMu shape:", getattr(curMu, "shape", None))
-                                    
+
                             SaveNetcdf(
-                                file_name, 
-                                var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset, 
-                                var2=taux, var2_attributes=dict2, var2_name='taux__' + dataset, var2_time_name='months_' + dataset, 
-                                var3=curMu, var3_attributes=dict3, var3_name='reg_taux_over_sst_lon__' + dataset, 
-                                var4=curMuPos, var4_attributes=dict4, var4_name='reg_taux_over_POSsst_lon__' + dataset, 
-                                var5=curMuNeg, var5_attributes=dict5, var5_name='reg_taux_over_NEGsst_lon__' + dataset, 
+                                file_name,
+                                var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                                var2=taux, var2_attributes=dict2, var2_name='taux__' + dataset, var2_time_name='months_' + dataset,
+                                var3=curMu, var3_attributes=dict3, var3_name='reg_taux_over_sst_lon__' + dataset,
+                                var4=curMuPos, var4_attributes=dict4, var4_name='reg_taux_over_POSsst_lon__' + dataset,
+                                var5=curMuNeg, var5_attributes=dict5, var5_name='reg_taux_over_NEGsst_lon__' + dataset,
                                 var6=hovMu, var6_attributes=dict6, var6_name='reg_taux_over_sst_hov__' + dataset,
-                                var7=hovMuPos, var7_attributes=dict7, var7_name='reg_taux_over_POSsst_hov__' + dataset, 
+                                var7=hovMuPos, var7_attributes=dict7, var7_name='reg_taux_over_POSsst_hov__' + dataset,
                                 var8=hovMuNeg, var8_attributes=dict8, var8_name='reg_taux_over_NEGsst_hov__' + dataset,
-                                frequency=kwargs['frequency'], 
+                                frequency=kwargs['frequency'],
                                 global_attributes=dict9
                             )
                             del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
@@ -8899,7 +8899,7 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                             }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                                'description': dataset + "'s zonal equatorial_pacific regression of sshA over " + 
+                                'description': dataset + "'s zonal equatorial_pacific regression of sshA over " +
                                     tauxbox + " tauxA",
                                 'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0],
                                 'intercept': fb[2], 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2],
@@ -13933,7 +13933,7 @@ def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'time1': '(mod) ' + str(TimeBounds(enso_mod)),
                               'time2': '(obs) ' + str(TimeBounds(enso_obs))}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
-            
+
             # ------------------------------------------------
             # 2. spatial MldA
             # ------------------------------------------------
@@ -17677,7 +17677,7 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                               'time1': '(mod) ' + str(TimeBounds(enso_mod)),
                               'time2': '(obs) ' + str(TimeBounds(enso_obs))}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
-            
+
             # ------------------------------------------------
             # 2. spatial TauxA
             # ------------------------------------------------
@@ -18657,7 +18657,7 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                               'time1': '(mod) ' + str(TimeBounds(enso_mod)),
                               'time2': '(obs) ' + str(TimeBounds(enso_obs))}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
-            
+
             # ------------------------------------------------
             # 2. spatial TauyA
             # ------------------------------------------------
@@ -24877,13 +24877,13 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                                 kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
-                                    kwargs['regridding'] = { 
+                                    kwargs['regridding'] = {
                                         'model_orand_obs': 2,
                                         'regridder': 'xesmf',
                                         'regridTool': 'esmf',
                                         'regridMethod': 'bilinear',
                                         'newgrid_name': 'generic_1x1deg'
-                                    }   
+                                    }
                             prMap_mod, prMap_obs, _ = TwoVarRegrid(
                                 prMap_mod, prMap_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                             pr_mod, pr_obs, _ = TwoVarRegrid(pr_mod, pr_obs, '', region=box, **kwargs['regridding'])
@@ -26551,10 +26551,10 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 
-                                        'regridder': 'xesmf', 
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
                                         'regridTool': 'esmf',
-                                        'regridMethod': 'bilinear', 
+                                        'regridMethod': 'bilinear',
                                         'newgrid_name': 'generic_1x1deg'
                                     }
                             sstMap_mod, sstMap_obs, _ = TwoVarRegrid(

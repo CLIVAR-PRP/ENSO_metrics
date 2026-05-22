@@ -95,7 +95,7 @@ from .XarrayCompat import (
     create_variable,
     da_to_cdat,
     cdat_to_da,
-    validate_cdat_variable,    
+    validate_cdat_variable,
 )
 
 def open_file(path, mode="r"):
@@ -1070,7 +1070,7 @@ def check_grid_consistency(a, b, context: str = "", regrid_to: str = "b") -> tup
                 "despite matching sizes — verify both are on the same grid.",
                 stacklevel=3,
             )
-    
+
     if (a_lon is not None and b_lon is not None and a_lon_n == b_lon_n):
         if not np.allclose(
             np.asarray(a_lon[:], dtype=float),
@@ -1479,7 +1479,7 @@ def _standardize_da_axes(da: xr.DataArray, *, context: str = "") -> xr.DataArray
         # time-by-name detection in _detect_axis_type).
         if ax_type == "-":
             if coord is not None:
-                attrs = _coord_attrs_lower(coord) 
+                attrs = _coord_attrs_lower(coord)
                 if _is_datetime_like_time(coord):
                     ax_type = "T"
                 elif "since" in attrs.get("units", ""):
@@ -1862,7 +1862,7 @@ class _XcDatasetHandle:
                         # from the new variable rather than corrupting an existing
                         # coordinate used by old variables.
                         da = da.drop_vars(cname, errors="ignore")
-                        
+
                 ds_merged[vname] = da
 
         merged_attrs = dict(getattr(ds_old, "attrs", {}))
@@ -1870,7 +1870,7 @@ class _XcDatasetHandle:
         ds_merged.attrs = _clean_attrs(merged_attrs)
 
         return _XcDatasetHandle._clean_dataset_for_write(ds_merged)
-    
+
     def write(self, var, attributes=None, dtype="float32", id=None):
         """Buffer a variable for writing."""
         name = id or (var.id if isinstance(var, CDATVariable) else "var")
@@ -1911,7 +1911,7 @@ class _XcDatasetHandle:
             da = da.rename(rename_dims)
 
         self._write_vars[name] = da
-        
+
     def __setattr__(self, key, value):
         if key.startswith("_") or key in (
             "_path",
@@ -1946,7 +1946,7 @@ class _XcDatasetHandle:
             ds_new = self._clean_dataset_for_write(ds_new)
 
             ds_merged = None
-            
+
             if _os_sn.path.exists(self._path):
                 try:
                     with xr.open_dataset(
@@ -1971,7 +1971,7 @@ class _XcDatasetHandle:
                         f"New variables were: {list(self._write_vars.keys())}. "
                         f"Original error: {type(e).__name__}: {e}"
                     ) from e
-                    
+
             else:
                 ds_merged = ds_new
 
@@ -2340,7 +2340,7 @@ class _CdutilAverager:
             result = ds.temporal.departures(varname, freq="month", weighted=True)
             return _finalize_cdat(
                 result[varname], varname=varname,
-                context="ANNUALCYCLE.departures", 
+                context="ANNUALCYCLE.departures",
                 require_time=True
                 )
 
@@ -2613,7 +2613,7 @@ class _CdutilAverager:
                 f"dims={getattr(da, 'dims', None)}, "
                 f"coords={list(getattr(da, 'coords', []))}."
             ) from e
-            
+
     class times:
         @staticmethod
         def Seasons(season_str: str):
@@ -3301,8 +3301,8 @@ def OperationSubtract(tab, number_or_tab):
 
 # Dictionary of operations
 dict_operations = {
-    "divide": OperationDivide, 
-    "minus": OperationSubtract, 
+    "divide": OperationDivide,
+    "minus": OperationSubtract,
     "multiply": OperationMultiply,
     "plus": OperationAdd
     }
@@ -3888,7 +3888,7 @@ def ArrayToList(tab):
 
 
 def BasinMask(
-        tab_in, region_mask, box=None, lat1=None, lat2=None, 
+        tab_in, region_mask, box=None, lat1=None, lat2=None,
         latkey='', lon1=None, lon2=None, lonkey='',
         debug=False
     ):
@@ -3959,22 +3959,22 @@ def BasinMask(
     # apply mask
     tab_out = MV2masked_where(mask == 1, tab_in)
     tab_out = create_variable(
-        tab_out, 
-        axes=tab_in.getAxisList(), 
-        grid=tab_in.getGrid(), 
+        tab_out,
+        axes=tab_in.getAxisList(),
+        grid=tab_in.getGrid(),
         mask=tab_in.mask,
-        attributes=tab_in.attributes, 
+        attributes=tab_in.attributes,
         id=tab_in.id
     )
     return tab_out, keyerror
 
 
 def CheckTime(
-        tab1, tab2, 
-        frequency="monthly", 
-        min_time_steps=None, 
-        metric_name="", 
-        debug=False, 
+        tab1, tab2,
+        frequency="monthly",
+        min_time_steps=None,
+        metric_name="",
+        debug=False,
         **kwargs
     ):
     """
@@ -4178,7 +4178,7 @@ def CheckUnits(tab, var_name, name_in_file, units, return_tab_only=True, **kwarg
         units = "mm/day"
     elif var_name in ["wind stress"]:
         if units not in [
-                "N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2", 
+                "N/m2", "N/m^2", "N/m**2", "N m-2", "N m^-2", "N m**-2",
                 "Pa", "pascal", "pascals", "Pascal", "Pascals"
             ]:
             EnsoErrorsWarnings.unknown_units(var_name, name_in_file, units, INSPECTstack())
@@ -4775,10 +4775,10 @@ def get_year_by_year(tab, frequency="monthly"):
         mask_out = MV2zeros(tab_out.shape)
         mask_out[:, :] = mask
         tab_out = create_variable(
-            tab_out, 
-            axes=axes, 
+            tab_out,
+            axes=axes,
             grid=grid,
-            mask=mask_out, 
+            mask=mask_out,
             attributes=tab.attributes,
             id=tab.id
         )
@@ -5167,7 +5167,7 @@ def ReadLandmaskSelectRegion(tab, filename, landmaskname='', box=None, **kwargs)
     if OSpath__isfile(filename):
         # Open file
         fi = open_file(filename)
-        
+
         if box is None:  # no box given
             # read file
             try:
@@ -5361,7 +5361,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None,
                     "Regrid: newgrid is None or a string, so both 'newgrid_name' and "
                     "'region' must be provided to construct the target grid."
                 )
-        
+
         # define the grid type
         for gtype in ["equalarea", "gaussian", "generic", "uniform"]:
             if gtype in kwargs['newgrid_name']:
@@ -5371,8 +5371,8 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None,
                 GridType = "generic"
         # define resolution (same resolution in lon and lat)
         for res in [
-                "0.25x0.25deg", "0.5x0.5deg", "0.75x0.75deg", "1x1deg", 
-                "1.25x1.25deg", "1.5x1.5deg","1.75x1.75deg", "2x2deg", 
+                "0.25x0.25deg", "0.5x0.5deg", "0.75x0.75deg", "1x1deg",
+                "1.25x1.25deg", "1.5x1.5deg","1.75x1.75deg", "2x2deg",
                 "2.25x2.25deg", "2.5x2.5deg", "2.75x2.75deg"
             ]:
             if res in kwargs['newgrid_name']:
@@ -5401,7 +5401,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None,
                 break
         else:
             GridRes = 1.
-            
+
         # Define bounds of 'region'
         region_ref = ReferenceRegions(kwargs["region"])
         lat1, lat2 = region_ref["latitude"][0], region_ref["latitude"][1]
@@ -5468,7 +5468,7 @@ def Regrid(tab_to_regrid, newgrid, missing=None, order=None, mask=None,
         # Create grid
         newgrid = create_rect_grid(lat, lon, "yx", grid_type=GridType, mask=None)
         newgrid.id = kwargs["newgrid_name"]
-        
+
     #
     # regrid
     #
@@ -5687,9 +5687,9 @@ def SkewnessTemporal(tab):
             skew = flatE.reshape(spac_ax)
             skew = MV2masked_where(NPisnan(skew), skew)
         skew = create_variable(
-            MV2array(skew), 
-            axes=tab.getAxisList()[1:], 
-            grid=tab.getGrid(), 
+            MV2array(skew),
+            axes=tab.getAxisList()[1:],
+            grid=tab.getGrid(),
             mask=tab[0].mask,
             attributes=tab.attributes,
             id='skewness'
@@ -6271,7 +6271,7 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
         pass
 
     else:
-        # Preserve the axes/grid/mask of y after removing the regression axis.       
+        # Preserve the axes/grid/mask of y after removing the regression axis.
         y0 = _to_cdat(y[0])
         axes = y0.getAxisList()
         grid = y0.getGrid()
@@ -6298,7 +6298,7 @@ def CustomLinearRegression(y, x, sign_x=0, return_stderr=True, return_intercept=
             axes=axes,
             id='intercept',
         )
-        
+
     if return_stderr is False and return_intercept is False:
         tab = copy.copy(slope)
     else:
@@ -6344,7 +6344,7 @@ def fill_dict_teleconnection(
     std_dive = std_mod_dive / std_obs_dive
     std_error_dive = None
     list_met_name = [
-        "RMSE_" + dataset2, "RMSE_error_" + dataset2, 
+        "RMSE_" + dataset2, "RMSE_error_" + dataset2,
         "CORR_" + dataset2, "CORR_error_" + dataset2,
         "STD_" + dataset2, "STD_error_" + dataset2
     ]
@@ -6353,8 +6353,8 @@ def fill_dict_teleconnection(
         dict_metric[tmp1 + "_" + add_name] = tmp2
     dict_nc["var" + str(nbr)] = tab1
     dict_dive = {
-        "units": units, 
-        "number_of_years_used": nyear1, 
+        "units": units,
+        "number_of_years_used": nyear1,
         "time_period": str(timebounds1),
         "spatialSTD_" + dataset1: std_mod_dive
     }
@@ -6619,16 +6619,16 @@ def LinearRegressionTsAgainstMap(y, x, return_stderr=True):
     spatial_axes = [ax.copy() if ax is not None else None
                     for ax in y.getAxisList()[1:]]
     slope = CDATVariable(
-        slope_data, 
+        slope_data,
         axes=spatial_axes,
-        grid=y.getGrid(), 
+        grid=y.getGrid(),
         id=getattr(x, 'id', '')
         )
     if return_stderr:
         stderr = CDATVariable(
-            stderr_data, 
+            stderr_data,
             axes=spatial_axes,
-            grid=y.getGrid(), 
+            grid=y.getGrid(),
             id=getattr(x, 'id', '')
         )
         return slope, stderr
@@ -6883,7 +6883,7 @@ def Read_data_mask_area(file_data, name_data, type_data, metric, region, file_ar
 
 
 def Read_data_mask_area_multifile(
-                file_data, name_data, type_data, variable, metric, region, file_area='', name_area='', 
+                file_data, name_data, type_data, variable, metric, region, file_area='', name_area='',
                 file_mask='', name_mask='', maskland=False, maskocean=False, debug=False,
                 interpreter='', **kwargs
     ):
@@ -7239,11 +7239,11 @@ def TsToMap(tab, map_ref):
         EnsoErrorsWarnings.my_error(list_strings)
     map_out = MV2zeros(map_ref.shape)
     map_out = create_variable(
-        map_out, 
+        map_out,
         axes=map_ref.getAxisList(),
-        grid=map_ref.getGrid(), 
+        grid=map_ref.getGrid(),
         mask=map_ref.mask,
-        attributes=map_ref.attributes, 
+        attributes=map_ref.attributes,
         id=tab.id
     )
     initorder = map_out.getOrder()

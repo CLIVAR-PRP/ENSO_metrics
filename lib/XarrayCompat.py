@@ -1431,7 +1431,7 @@ class CDATVariable:
 # ---------------------------------------------------------------------------
 
 
-def create_axis(values, id: str = "", units: str = "", 
+def create_axis(values, id: str = "", units: str = "",
                 attributes: Optional[dict] = None,
                 axis_type: Optional[str] = None) -> _Axis:
     """Create a CDAT-like axis object for the compatibility layer.

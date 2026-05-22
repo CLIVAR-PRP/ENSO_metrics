@@ -142,4 +142,3 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
         dt = datetime.now() - t1
         dt = str(int(round(dt.seconds / 60.)))
         print(str().ljust(30) + "took " + dt + " minute(s)")
-

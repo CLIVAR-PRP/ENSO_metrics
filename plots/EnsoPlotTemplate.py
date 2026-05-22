@@ -1229,7 +1229,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         gl.ylabel_style = {'size': 12}
         # contour plot
         levels = create_levels(labelbar)
-        cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar, transform=ccrs.PlateCarree())  
+        cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar, transform=ccrs.PlateCarree())
         # my text
         if (ii > 0 and plot_metric is True and isinstance(variables, list) is False) or\
                 (isinstance(variables, list) is True and "nina" in variables[0] and "nino" in variables[1] and

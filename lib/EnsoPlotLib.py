@@ -46,7 +46,7 @@ dict_label = {
 plot_parameters = {
     "BiasPrLatRmse": {
         "netcdf_variables": [
-            "pr_lat__", 
+            "pr_lat__",
             "pr_map__"
         ],
         "diagnostic": {
@@ -117,7 +117,7 @@ plot_parameters = {
     },
     "BiasSshLatRmse": {
         "netcdf_variables": [
-            "ssh_lat__", 
+            "ssh_lat__",
             "ssh_map__"
         ],
         "diagnostic": {
@@ -146,7 +146,7 @@ plot_parameters = {
     },
     "BiasSshLonRmse": {
         "netcdf_variables": [
-            "ssh_lon__", 
+            "ssh_lon__",
             "ssh_map__"
         ],
         "diagnostic": {
@@ -191,7 +191,7 @@ plot_parameters = {
     },
     "BiasSstLatRmse": {
         "netcdf_variables": [
-            "sst_lat__", 
+            "sst_lat__",
             "sst_map__"
         ],
         "diagnostic": {
@@ -220,7 +220,7 @@ plot_parameters = {
     },
     "BiasSstLonRmse": {
         "netcdf_variables": [
-            "sst_lon__", 
+            "sst_lon__",
             "sst_map__"
         ],
         "diagnostic": {
@@ -265,7 +265,7 @@ plot_parameters = {
     },
     "BiasTauxLatRmse": {
         "netcdf_variables": [
-            "taux_lat__", 
+            "taux_lat__",
             "taux_map__"
         ],
         "diagnostic": {
@@ -339,7 +339,7 @@ plot_parameters = {
     },
     "EnsoAmpl": {
         "netcdf_variables": [
-            "sstStd_lon__", 
+            "sstStd_lon__",
             "sstStd_map__"
         ],
         "diagnostic": {
@@ -379,13 +379,13 @@ plot_parameters = {
     },
     "EnsodSstOce": {
         "netcdf_variables": [
-            "dSST_ts__", 
-            "dSSTthf_ts__", 
-            "dSSToce_ts__", 
-            "dSSTthf_lon__", 
+            "dSST_ts__",
+            "dSSTthf_ts__",
+            "dSSToce_ts__",
+            "dSSTthf_lon__",
             "dSSToce_lon__",
-            "dSST_hov__", 
-            "dSSTthf_hov__", 
+            "dSST_hov__",
+            "dSSTthf_hov__",
             "dSSToce_hov__"
         ],
         "diagnostic": {
@@ -454,8 +454,8 @@ plot_parameters = {
     "EnsoDuration": {
         #"netcdf_variables": ["sst_over_sst_ts__", "Nina_duration__", "Nino_duration__"],
         "netcdf_variables": [
-            "sst_against_sst_ts__", 
-            "Nina_duration__", 
+            "sst_against_sst_ts__",
+            "Nina_duration__",
             "Nino_duration__"
         ],
         "diagnostic": {
@@ -472,8 +472,8 @@ plot_parameters = {
             "plot_type": "curve",
             "nbr_panel": 1,
             "title": "ENSO life-cycle",
-            #"varpattern": "sst_over_sst_ts__", 
-            "varpattern": "sst_against_sst_ts__", 
+            #"varpattern": "sst_over_sst_ts__",
+            "varpattern": "sst_against_sst_ts__",
             "xname": "months",
             "yname": "reg(SSTA, SSTA)",
             "method": "1) Seasonal cycle removed\n2) Linearly detrended\n3) 5-month triangular running ave.\n" +
@@ -1115,7 +1115,7 @@ plot_parameters = {
         },
     },
     "EnsoPrMapDjf": {
-        #"netcdf_variables": ["sst_over_sst_map__"], 
+        #"netcdf_variables": ["sst_over_sst_map__"],
         "netcdf_variables": [
             "reg_pr_over_sst_djf_map__",
             "pr_nina_djf_map__",
@@ -2734,10 +2734,10 @@ plot_parameters = {
         #                     "Nina_sst_hov__", "Nino_sst_hov__"],
         "netcdf_variables": [
             "sst_against_sst_ts__",
-            "sst_against_sst_hov__", 
-            "Nina_sst_ts__", 
+            "sst_against_sst_hov__",
+            "Nina_sst_ts__",
             "Nino_sst_ts__",
-            "Nina_sst_hov__", 
+            "Nina_sst_hov__",
             "Nino_sst_hov__"
         ],
         "diagnostic": {
@@ -2801,10 +2801,10 @@ plot_parameters = {
         #                     "Nina_taux_hov__", "Nino_taux_hov__"],
         "netcdf_variables": [
             "sst_against_taux_ts__",
-            "sst_against_taux_hov__", 
-            "Nina_taux_ts__", 
+            "sst_against_taux_hov__",
+            "Nina_taux_ts__",
             "Nino_taux_ts__",
-            "Nina_taux_hov__", 
+            "Nina_taux_hov__",
             "Nino_taux_hov__"
         ],
         "diagnostic": {
@@ -2865,11 +2865,11 @@ plot_parameters = {
     },
     "EnsoSeasonality": {
         "netcdf_variables": [
-            "sstStd_monthly__", 
-            "sstStd_hov__", 
-            "sstStd_NDJ_lon__", 
+            "sstStd_monthly__",
+            "sstStd_hov__",
+            "sstStd_NDJ_lon__",
             "sstStd_MAM_lon__",
-            "sstStd_NDJ_map__", 
+            "sstStd_NDJ_map__",
             "sstStd_MAM_map__"
         ],
         "diagnostic": {
@@ -2937,8 +2937,8 @@ plot_parameters = {
     },
     "EnsoSstDiversity": {
         "netcdf_variables": [
-            "Enso_lon_pos_maxSSTA__", 
-            "Nina_lon_pos_minSSTA__", 
+            "Enso_lon_pos_maxSSTA__",
+            "Nina_lon_pos_minSSTA__",
             "Nino_lon_pos_maxSSTA__"
         ],
         "diagnostic": {
@@ -2971,7 +2971,7 @@ plot_parameters = {
     },
     "EnsoSstSkew": {
         "netcdf_variables": [
-            "sstSke_lon__", 
+            "sstSke_lon__",
             "sstSke_map__"
         ],
         "diagnostic": {
@@ -3093,7 +3093,7 @@ plot_parameters = {
     },
     "NinaSstLonRmse": {
         "netcdf_variables": [
-            "sst_lon__", 
+            "sst_lon__",
             "sst_map__"
         ],
         "diagnostic": {
@@ -3126,7 +3126,7 @@ plot_parameters = {
     },
     "NinaSstTsRmse": {
         "netcdf_variables": [
-            "sst_ts__", 
+            "sst_ts__",
             "sst_hov__"
         ],
         "diagnostic": {
@@ -3217,7 +3217,7 @@ plot_parameters = {
     },
     "NinoSstDiversity": {
         "netcdf_variables": [
-            "Nina_lon_pos_minSSTA__", 
+            "Nina_lon_pos_minSSTA__",
             "Nino_lon_pos_maxSSTA__"
         ],
         "diagnostic": {
@@ -3271,7 +3271,7 @@ plot_parameters = {
     },
     "NinoSstLonRmse": {
         "netcdf_variables": [
-            "sst_lon__", 
+            "sst_lon__",
             "sst_map__"
         ],
         "diagnostic": {
@@ -3303,7 +3303,7 @@ plot_parameters = {
     },
     "NinoSstTsRmse": {
         "netcdf_variables": [
-            "sst_ts__", 
+            "sst_ts__",
             "sst_hov__"
         ],
         "diagnostic": {
@@ -3334,8 +3334,8 @@ plot_parameters = {
     },
     "SeasonalPrLatRmse": {
         "netcdf_variables": [
-            "pr_lat__", 
-            "pr_map__", 
+            "pr_lat__",
+            "pr_map__",
             "prMac_hov__"
         ],
         "diagnostic": {
@@ -3378,8 +3378,8 @@ plot_parameters = {
     },
     "SeasonalPrLonRmse": {
         "netcdf_variables": [
-            "pr_lon__", 
-            "pr_map__", 
+            "pr_lon__",
+            "pr_map__",
             "prMac_hov__"
         ],
         "diagnostic": {
@@ -3422,8 +3422,8 @@ plot_parameters = {
     },
     "SeasonalSshLatRmse": {
         "netcdf_variables": [
-            "ssh_lat__", 
-            "ssh_map__", 
+            "ssh_lat__",
+            "ssh_map__",
             "sshMac_hov__"
         ],
         "diagnostic": {
@@ -3466,8 +3466,8 @@ plot_parameters = {
     },
     "SeasonalSshLonRmse": {
         "netcdf_variables": [
-            "ssh_lon__", 
-            "ssh_map__", 
+            "ssh_lon__",
+            "ssh_map__",
             "sshMac_hov__"
         ],
         "diagnostic": {
@@ -3510,8 +3510,8 @@ plot_parameters = {
     },
     "SeasonalSstLatRmse": {
         "netcdf_variables": [
-            "sst_lat__", 
-            "sst_map__", 
+            "sst_lat__",
+            "sst_map__",
             "sstMac_hov__"
         ],
         "diagnostic": {
@@ -3554,8 +3554,8 @@ plot_parameters = {
     },
     "SeasonalSstLonRmse": {
         "netcdf_variables": [
-            "sst_lon__", 
-            "sst_map__", 
+            "sst_lon__",
+            "sst_map__",
             "sstMac_hov__"
         ],
         "diagnostic": {
@@ -3598,8 +3598,8 @@ plot_parameters = {
     },
     "SeasonalTauxLatRmse": {
         "netcdf_variables": [
-            "taux_lat__", 
-            "taux_map__", 
+            "taux_lat__",
+            "taux_map__",
             "tauxMac_hov__"
         ],
         "diagnostic": {
@@ -3643,8 +3643,8 @@ plot_parameters = {
     },
     "SeasonalTauxLonRmse": {
         "netcdf_variables": [
-            "taux_lon__", 
-            "taux_map__", 
+            "taux_lon__",
+            "taux_map__",
             "tauxMac_hov__"
         ],
         "diagnostic": {
