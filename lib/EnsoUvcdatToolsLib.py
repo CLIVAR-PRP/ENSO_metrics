@@ -7220,9 +7220,17 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
         if tmp2.shape == tmp1.shape:
             tmp3 = copy.copy(tmp2)
         else:
-            tmp3 = MV2zeros(tmp1.shape)
-            for jj in list(range(len(tmp3))):
-                tmp3[jj].fill(tmp2[jj])
+            tmp2_data = ma.masked_invalid(ma.asarray(_mv(tmp2)))
+            expand = (slice(None),) + (np.newaxis,) * (ma.asarray(_mv(tmp1)).ndim - 1)
+            tmp3 = create_variable(
+                ma.array(
+                    np.broadcast_to(ma.getdata(tmp2_data)[expand], tmp1.shape),
+                    mask=np.broadcast_to(ma.getmaskarray(tmp2_data)[expand], tmp1.shape),
+                ),
+                grid=tmp1.getGrid(),
+                axes=tmp1.getAxisList(),
+                id=x.id,
+            )
         tmp3_mask = ma.getmaskarray(_mv(tmp3)) | ma.getmaskarray(_mv(tmp1))
         tmp3 = create_variable(tmp3, mask=tmp3_mask, grid=tmp1.getGrid(), axes=tmp1.getAxisList(), id=x.id)
         slope, stderr = _linear_regression_nointercept_axis0(tmp1, tmp3)

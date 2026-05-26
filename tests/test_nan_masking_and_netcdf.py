@@ -102,6 +102,27 @@ def test_ts_regression_aligns_when_index_starts_before_field():
     assert not np.allclose(slope._data, 0.0)
 
 
+def test_ts_regression_broadcasts_index_against_hovmoeller_field():
+    months = [np.datetime64(f"{year}-{month:02d}-15") for year in range(2002, 2012) for month in range(1, 13)]
+    time = _axis(months, "T", "time", "")
+    lon = _axis([150.0, 170.0], "X", "lon", "degrees_east")
+    years = _axis([np.datetime64(f"{year}-12-15") for year in range(2000, 2012)], "T", "time", "")
+    x_all = np.linspace(-2.0, 2.0, 12)
+    base = np.repeat(x_all[2:], 12)
+    y = create_variable(
+        np.column_stack([2.0 * base, -1.5 * base]),
+        axes=[time, lon],
+        id="sst",
+    )
+    x = create_variable(x_all, axes=[years], id="enso")
+
+    slope = LinearRegressionTsAgainstTs(y, x, 2, return_stderr=False, frequency="monthly")
+
+    assert slope.shape == (24, 2)
+    assert ma.count(slope._data) == slope.size
+    assert not np.allclose(slope._data, 0.0)
+
+
 def test_save_netcdf_preserves_variables_with_different_same_named_dims(tmp_path):
     time_a = _axis([0, 1], "T", "time", "days since 2000-01-01")
     lat_a = _axis([-0.5, 0.5], "Y", "lat", "degrees_north")
