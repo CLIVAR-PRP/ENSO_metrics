@@ -21,8 +21,9 @@ from numpy.ma import masked_where as NUMPYmasked_where
 
 # ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
-from .EnsoPlotToolsLib import create_labels, create_levels, format_metric, minimaxi, minmax_plot, my_average,\
-    my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, return_metrics_type, shading_levels
+from .EnsoPlotToolsLib import create_labels, create_levels, format_metric, has_valid_data, minimaxi, minmax_plot, \
+    my_average, my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, return_metrics_type, \
+    shading_levels
 
 colors_sup = ["r", "lime", "peru", "gold", "forestgreen", "sienna", "gold"]
 dict_col = {"REF": "k", "CMIP": "forestgreen", "CMIP3": "orange", "CMIP5": "dodgerblue", "CMIP6": "r"}
@@ -866,7 +867,12 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         # hovmoeller
         levels = create_levels(labelbar)
         xx, yy = NUMPYmeshgrid(lon, tim)
-        cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar)
+        if has_valid_data(tab[ii]):
+            cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar)
+        else:
+            ax.text(0.5, 0.5, "No valid data", fontsize=12, color="k", ha="center", va="center",
+                    transform=ax.transAxes)
+            cs = None
         if ii == 0 and plot_ref is True:
             tx1, tx2 = ax.get_xlim()
             dx = (tx2 - tx1) / 100.
@@ -877,6 +883,9 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         if ii == nbr_panel - 1:
             x2 = ax.get_position().x1
             y1 = ax.get_position().y0
+    if cs is None:
+        levels = create_levels(labelbar)
+        cs = plt.cm.ScalarMappable(norm=BoundaryNorm(levels, plt.get_cmap(colorbar).N), cmap=colorbar)
     # add colorbar
     if nbr_years == 1 and nbrl == 1:
         cax = plt.axes([x1, -0.1, x2 - x1, 0.04])
@@ -1752,8 +1761,12 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
         lw = 4  # 2  #
     else:
         lw = 4
+    missing = list()
     if plot_ref is False:
         for ii, tab in enumerate(tab_mod):
+            label = "model"
+            if ii < len(legend):
+                label += " " + legend[ii]
             if shading is True:
                 tab_sh = shading_levels(tab, axis=0)
                 # # !!!!! temporary: start !!!!!
@@ -1765,16 +1778,34 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
                 # # !!!!! temporary: end !!!!!
                 # ax.fill_between(axis, list(tab_sh[0]), list(tab_sh[3]), facecolor=linecolors["model"][ii], alpha=0.3)
                 # ax.fill_between(axis, list(tab_sh[1]), list(tab_sh[2]), facecolor=linecolors["model"][ii], alpha=0.4)
-                ax.plot(axis, list(tab_sh[4]), lw=lw, color=linecolors["model"][ii], ls=linestyles["model"][ii])
-            else:
+                if has_valid_data(tab_sh[4]):
+                    ax.plot(axis, list(tab_sh[4]), lw=lw, color=linecolors["model"][ii], ls=linestyles["model"][ii])
+                else:
+                    missing.append(label)
+            elif has_valid_data(tab):
                 ax.plot(axis, list(tab), c=linecolors["model"][ii], lw=lw, ls=linestyles["model"][ii])
+            else:
+                missing.append(label)
     for ii, tab in enumerate(tab_obs):
-        ax.plot(axis, list(tab), c=linecolors["reference"][ii], lw=lw, ls=linestyles["reference"][ii])
+        label = "reference"
+        if ii < len(legend):
+            label += " " + legend[ii]
+        if has_valid_data(tab):
+            ax.plot(axis, list(tab), c=linecolors["reference"][ii], lw=lw, ls=linestyles["reference"][ii])
+        else:
+            missing.append(label)
     # relative space
     x1, x2 = ax.get_xlim()
     dx = (x2 - x1) / 100.
     y1, y2 = ax.get_ylim()
     dy = (y2 - y1) / 100.
+    if len(missing) > 0:
+        if len(missing) > 3:
+            missing_text = ", ".join(missing[:3]) + ", ..."
+        else:
+            missing_text = ", ".join(missing)
+        ax.text(x1 + 2 * dx, y1 + 5 * dy, "No valid data: " + missing_text, fontsize=10, color="k", ha="left",
+                va="bottom")
     if multimodel is False:
         # legend
         if len(linecolors["model"]) == 1 and len(linecolors["reference"]) == 1:

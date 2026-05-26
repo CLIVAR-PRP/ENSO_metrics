@@ -152,6 +152,9 @@ def get_reference(metric_collection, metric):
 
 def minimaxi(tab):
     tmp = [my_mask(tmp, remove_masked=True) for tmp in tab]
+    tmp = [tt for tt in tmp if len(tt) > 0]
+    if len(tmp) == 0:
+        return 0., 0.
     tmp = [tt.min() for tt in tmp] + [tt.max() for tt in tmp]
     return min(tmp), max(tmp)
 
@@ -302,6 +305,10 @@ def my_mask(tab, remove_masked=False):
         # tmp = tmp[~tmp.mask]
         tmp = tmp.compressed()
     return tmp
+
+
+def has_valid_data(tab):
+    return len(my_mask(tab, remove_masked=True)) > 0
 
 
 def my_mask_map(tab_ref, tab_mod):

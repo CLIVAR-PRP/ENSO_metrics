@@ -27,6 +27,8 @@ requirements:
     - xcdat
     - cftime
     - matplotlib
+    - cartopy
+    - cmocean
     - regionmask
     - xesmf
 
