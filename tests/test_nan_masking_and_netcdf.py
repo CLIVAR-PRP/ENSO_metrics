@@ -10,6 +10,7 @@ from lib.EnsoUvcdatToolsLib import (
     Correlation,
     GENUTILlinearregression,
     LinearRegressionTsAgainstMap,
+    LinearRegressionTsAgainstTs,
     SaveNetcdf,
     open_file,
 )
@@ -84,6 +85,21 @@ def test_map_regression_uses_only_jointly_valid_pairs():
 
     assert np.allclose(slope._data, [2.0, 3.0])
     assert np.allclose(stderr._data, [0.0, 0.0])
+
+
+def test_ts_regression_aligns_when_index_starts_before_field():
+    months = [np.datetime64(f"{year}-{month:02d}-15") for year in range(2002, 2012) for month in range(1, 13)]
+    time = _axis(months, "T", "time", "")
+    years = _axis([np.datetime64(f"{year}-12-15") for year in range(2000, 2012)], "T", "time", "")
+    x_all = np.linspace(-2.0, 2.0, 12)
+    y = create_variable(np.repeat(3.0 * x_all[2:], 12), axes=[time], id="sst")
+    x = create_variable(x_all, axes=[years], id="enso")
+
+    slope = LinearRegressionTsAgainstTs(y, x, 2, return_stderr=False, frequency="monthly")
+
+    assert slope.shape == (24,)
+    assert ma.count(slope._data) == 24
+    assert not np.allclose(slope._data, 0.0)
 
 
 def test_save_netcdf_preserves_variables_with_different_same_named_dims(tmp_path):

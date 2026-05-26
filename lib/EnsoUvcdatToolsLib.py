@@ -7189,23 +7189,25 @@ def LinearRegressionTsAgainstTs(y, x, nbr_years_window, return_stderr=True, freq
     myshape = [nbr_timestep] + [ss for ss in y.shape[1:]]
     tmp_ax = create_axis(list(range(nbr_timestep)), id='months')
     slope_out = MV2zeros(myshape)
+    slope_out = MV2masked_where(slope_out == 0, slope_out)
     slope_out.setAxisList([tmp_ax] + y.getAxisList()[1:])
     stderr_out = MV2zeros(myshape)
+    stderr_out = MV2masked_where(stderr_out == 0, stderr_out)
     stderr_out.setAxisList([tmp_ax] + y.getAxisList()[1:])
     for ii in list(range(nbr_timestep)):
         tmp1 = tab_yy_mm[:, ii]
         tmp2 = copy.copy(x)
         yy1 = tab_yy_mm.getAxis(0)[0]
         yy2 = _require_time_axis(tmp2, 'LinearRegressionAndNonlinearity').asComponentTime()[0].year
-        if yy1 == yy2:
-            tmp1 = tmp1[:len(tmp2)]
-        elif yy1 < yy2:
-            tmp1 = tmp1[yy2 - yy1:len(tmp2)]
+        start_y = max(0, yy2 - yy1)
+        start_x = max(0, yy1 - yy2)
+        nbr_years = min(len(tmp1) - start_y, len(tmp2) - start_x)
+        if nbr_years <= 0:
+            tmp1 = tmp1[:0]
+            tmp2 = tmp2[:0]
         else:
-            tmp2 = tmp2[yy2 - yy1:]
-            tmp1 = tmp1[:len(x)]
-        if len(tmp2) > len(tmp1):
-            tmp2 = tmp2[:len(tmp1)]
+            tmp1 = tmp1[start_y:start_y + nbr_years]
+            tmp2 = tmp2[start_x:start_x + nbr_years]
         # if debug is True:
         #     yy1 = tmp1.getAxis(0)[0]
         #     yy2 = tmp2.getTime().asComponentTime()[0].year
