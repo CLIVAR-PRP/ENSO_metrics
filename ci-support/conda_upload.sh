@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-PKG_NAME=ensometrics
-USER=uvcdat
-VERSION="0.1"
+PKG_NAME=enso_metrics
+USER=conda-forge
+VERSION="1.2.0"
 echo "Trying to upload conda"
 if [ `uname` == "Linux" ]; then
     OS=linux-64
@@ -17,5 +17,5 @@ mkdir ~/conda-bld
 conda config --set anaconda_upload no
 export CONDA_BLD_PATH=${HOME}/conda-bld
 cd conda
-conda build . -c conda-forge -c uvcdat 
+conda build . -c conda-forge
 anaconda -t $CONDA_UPLOAD_TOKEN upload -u $USER -l nightly $CONDA_BLD_PATH/$OS/$PKG_NAME-$VERSION.`date +%Y*`0.tar.bz2 --force

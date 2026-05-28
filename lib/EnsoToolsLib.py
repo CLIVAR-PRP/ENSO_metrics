@@ -1,9 +1,9 @@
 # -*- coding:UTF-8 -*-
 from inspect import stack as INSPECTstack
 from numpy import array as NUMPYarray
+from numpy import percentile as NUMPYpercentile
 from numpy import square as NUMPYsquare
 from numpy import unravel_index as NUMPYunravel_index
-from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 # ENSO_metrics package functions:
 from . import EnsoErrorsWarnings
 
@@ -133,7 +133,7 @@ def math_metric_computation(model, model_err, obs=None, obs_err=None, keyword='d
                 metric = 100. * abs((model - obs) / float(obs))
         else:
             metric, description_metric = None, ''
-        if model_err is not None or obs_err is not None:
+        if model_err is not None and obs_err is not None:
             if keyword == 'difference':
                 # mathematical definition of the error on addition / subtraction
                 metric_err = model_err + obs_err
@@ -197,19 +197,22 @@ def statistical_dispersion(tab, method='IQR'):
     """
     #################################################################################
     Description:
-    Computes the statistical dispersion of the distribution
+    Compute the statistical dispersion of a distribution.
     #################################################################################
 
-    :param tab: list or `cdms2` variable
-        A list or a `cdms2` variable containing the data to be analysed
+    :param tab: list, array-like, or CDATVariable
+        Input data to be analyzed. Missing or masked values are handled
+        according to the existing ENSO_metrics/numpy workflow.
+
     :param method: string, optional
-        method to compute the statistical dispersion
-        'IQR': interquartile range, IQR = Q3 - Q1
-        'MAD': median absolute deviation, MAD = median([Xi - median(tab)])
-        Default is 'IQR'
+        Method used to compute statistical dispersion:
+            ``"IQR"``: interquartile range, IQR = Q3 - Q1
+            ``"MAD"``: median absolute deviation,
+                       MAD = median(abs(Xi - median(tab)))
+        default value = ``"IQR"``
 
     :return stat_disp: float
-        statistical_dispersion
+        Statistical dispersion value.
     """
     known_methods = sorted(['IQR', 'MAD'])
     if method not in known_methods:
@@ -221,10 +224,10 @@ def statistical_dispersion(tab, method='IQR'):
         ]
         EnsoErrorsWarnings.my_error(list_strings)
     if method == 'IQR':
-        stat_disp = abs(float(SCIPYstats__scoreatpercentile(tab, 75) - SCIPYstats__scoreatpercentile(tab, 25)))
+        stat_disp = abs(float(NUMPYpercentile(tab, 75) - NUMPYpercentile(tab, 25)))
     else:
-        med = float(SCIPYstats__scoreatpercentile(tab, 50))
-        stat_disp = float(SCIPYstats__scoreatpercentile([abs(ii - med) for ii in tab], 50))
+        med = float(NUMPYpercentile(tab, 50))
+        stat_disp = float(NUMPYpercentile([abs(ii - med) for ii in tab], 50))
     return stat_disp
 
 

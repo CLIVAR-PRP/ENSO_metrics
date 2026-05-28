@@ -150,9 +150,9 @@ def mismatch_shapes_error(tab1, tab2, inspect_stack):
     :return:
     """
     try: name1 = tab1.name
-    except: name1 = 'no_name'
+    except Exception: name1 = 'no_name'
     try: name2 = tab2.name
-    except: name2 = 'no_name'
+    except Exception: name2 = 'no_name'
     list_strings = ["ERROR " + message_formating(inspect_stack) + ": array shape",
                     str().ljust(5) + "arrays shapes mismatch: " + str(name1) + " = " + str(tab1.shape) + "', and "
                     + str(name2) + " = " + str(tab2.shape)]

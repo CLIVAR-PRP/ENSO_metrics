@@ -18,6 +18,12 @@ from .EnsoUvcdatToolsLib import ArrayListAx, ArrayToList, AverageMeridional, Ave
     StdMonthly, TimeBounds, TsToMap, TwoVarRegrid
 from .KeyArgLib import default_arg_values
 
+DEFAULT_REGRIDDING = {
+    'regridder': 'xesmf',
+    'regridTool': 'esmf',
+    'regridMethod': 'bilinear',
+    'newgrid_name': 'generic_1x1deg',
+}
 
 # ---------------------------------------------------------------------------------------------------------------------#
 #
@@ -126,7 +132,9 @@ def BiasMldRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandm
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -137,14 +145,13 @@ def BiasMldRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldlandm
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'mld RMSE'
     Units = 'm'
     Method = 'Spatial root mean square error of ' + box + ' mld'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasMldRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -348,7 +355,9 @@ def BiasMldLatRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -359,14 +368,13 @@ def BiasMldLatRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'mld Meridional RMSE'
     Units = 'm'
     Method = 'Meridional root mean square error of ' + box + ' mld'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasMldLatRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -624,7 +632,9 @@ def BiasMldLonRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -635,14 +645,13 @@ def BiasMldLonRmse(mldfilemod, mldnamemod, mldareafilemod, mldareanamemod, mldla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'mld Zonal RMSE'
     Units = 'm'
     Method = 'Zonal root mean square error of ' + box + ' mld'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasMldLonRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -898,7 +907,9 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -909,14 +920,13 @@ def BiasPrRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmaskfil
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr RMSE'
     Units = 'mm/day'
     Method = 'Spatial root mean square error of ' + box + ' pr'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasPrRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -1118,7 +1128,9 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -1129,14 +1141,13 @@ def BiasPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr Meridional RMSE'
     Units = 'mm/day'
     Method = 'Meridional root mean square error of ' + box + ' pr'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasPrLatRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -1396,7 +1407,9 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -1407,14 +1420,13 @@ def BiasPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prlandmask
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr Zonal RMSE'
     Units = 'mm/day'
     Method = 'Zonal root mean square error of ' + box + ' pr'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasPrLonRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -1674,7 +1686,9 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -1685,14 +1699,13 @@ def BiasSshRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshlandm
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh RMSE'
     Units = 'cm'
     Method = 'Spatial root mean square error of ' + box + ' ssh'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasSshRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -1900,7 +1913,9 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -1911,14 +1926,13 @@ def BiasSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh Meridional RMSE'
     Units = 'cm'
     Method = 'Meridional root mean square error of ' + box + ' ssh'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasSshLatRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -2184,7 +2198,9 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -2195,14 +2211,13 @@ def BiasSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, sshla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh Zonal RMSE'
     Units = 'cm'
     Method = 'Zonal root mean square error of ' + box + ' ssh'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasSshLonRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -2465,7 +2480,9 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -2476,14 +2493,13 @@ def BiasSstRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandm
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst RMSE'
     Units = 'C'
     Method = 'Spatial root mean square error of ' + box + ' sst'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -2687,7 +2703,9 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -2698,14 +2716,13 @@ def BiasSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst Meridional RMSE'
     Units = 'C'
     Method = 'Meridional root mean square error of ' + box + ' sst'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstLatRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -2963,7 +2980,9 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -2974,14 +2993,13 @@ def BiasSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst Zonal RMSE'
     Units = 'C'
     Method = 'Zonal root mean square error of ' + box + ' sst'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstLonRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -3237,7 +3255,9 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -3248,8 +3268,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sstA Skewness Zonal RMSE'
@@ -3258,7 +3277,7 @@ def BiasSstSkLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sst
     else:
         Units = 'C'
     Method = 'Zonal root mean square error of ' + box + ' sstA skewness'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasSstSkLonRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -3547,7 +3566,9 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -3558,14 +3579,13 @@ def BiasTauxRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, tau
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux RMSE'
     Units = '1e-3 N/m2'
     Method = 'Spatial root mean square error of ' + box + ' taux'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauxRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -3772,7 +3792,9 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -3783,14 +3805,13 @@ def BiasTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux Meridional RMSE'
     Units = '1e-3 N/m2'
     Method = 'Meridional root mean square error of ' + box + ' taux'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauxLatRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -4051,7 +4072,9 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -4062,14 +4085,13 @@ def BiasTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux Zonal RMSE'
     Units = '1e-3 N/m2'
     Method = 'Zonal root mean square error of ' + box + ' taux'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauxLonRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -4330,7 +4352,9 @@ def BiasTauyRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tau
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -4341,14 +4365,13 @@ def BiasTauyRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, tau
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'tauy RMSE'
     Units = '1e-3 N/m2'
     Method = 'Spatial root mean square error of ' + box + ' tauy'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauyRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -4555,8 +4578,10 @@ def BiasTauyLatRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, 
 
     Method:
     -------
-        uses tools from uvcdat library
-
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
+i
     Notes:
     -----
         TODO: add error calculation to rmse (function of nyears)
@@ -4566,14 +4591,13 @@ def BiasTauyLatRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'tauy Meridional RMSE'
     Units = '1e-3 N/m2'
     Method = 'Meridional root mean square error of ' + box + ' tauy'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauyLatRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -4834,7 +4858,9 @@ def BiasTauyLonRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, 
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -4845,14 +4871,13 @@ def BiasTauyLonRmse(tauyfilemod, tauynamemod, tauyareafilemod, tauyareanamemod, 
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'tauy Zonal RMSE'
     Units = '1e-3 N/m2'
     Method = 'Zonal root mean square error of ' + box + ' tauy'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = "BiasTauyLonRmse"
     if metname == '':
         metname = deepcopy(metric)
@@ -5099,15 +5124,15 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -5157,10 +5182,12 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             keyerror = add_up_errors([keyerror1, keyerror2])
         else:
             if debug is True:
-                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                              'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
-                              'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
-                              'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lhf) ' + str(TimeBounds(lhf))}
+                dict_debug = {
+                    'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                    'axes2': '(lhf) ' + str([ax.id for ax in lhf.getAxisList()]),
+                    'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lhf) ' + str(lhf.shape),
+                    'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lhf) ' + str(TimeBounds(lhf))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
@@ -5198,19 +5225,19 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                     else:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         lhf_map = Regrid(lhf_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                          'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst_map.shape),
-                                          'shape2': '(lhf) ' + str(lhf_map.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst_map.shape),
+                                'shape2': '(lhf) ' + str(lhf_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         sst_map, keyerror1 = AverageMeridional(sst_map)
@@ -5219,28 +5246,34 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             keyerror = add_up_errors([keyerror1, keyerror2])
                         else:
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(lhf) ' + str(lhf_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(lhf) ' + str(lhf_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
                             # Zonal smoothing
                             sst_map, _ = Smoothing(sst_map, '', axis=1, window=31, method='square')
                             lhf_map, _ = Smoothing(lhf_map, '', axis=1, window=31, method='square')
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(lhf) ' + str(lhf_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(lhf) ' + str([ax.id for ax in lhf_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(lhf) ' + str(lhf_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
                             # Array year by year
                             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
                             lhf_yby = get_year_by_year(lhf_map, frequency=kwargs['frequency'])
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(lhf) ' + str([ax.id for ax in lhf_yby.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(lhf) ' + str(lhf_yby.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(lhf) ' + str([ax.id for ax in lhf_yby.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(lhf) ' + str(lhf_yby.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
                             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
                             curAlpha, curAlphaPos, curAlphaNeg = LinearRegressionAndNonlinearity(
@@ -5248,79 +5281,99 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             hovAlpha, hovAlphaPos, hovAlphaNeg = LinearRegressionAndNonlinearity(
                                 lhf_yby, sst_yby, return_stderr=False, return_intercept=False)
                             if debug is True:
-                                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
-                                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
-                                              'shape1': '(zonal alpha) ' + str(curAlpha.shape),
-                                              'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
+                                dict_debug = {
+                                    'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
+                                    'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
+                                    'shape1': '(zonal alpha) ' + str(curAlpha.shape),
+                                    'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode(
                                     '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
                             if ".nc" in netcdf_name:
                                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                             else:
                                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                                     'description': dataset + "'s " + sstbox + " sstA", 'diagnostic_value': alphaLhf[0],
-                                     'diagnostic_value_error': alphaLhf[1], 'slope': alphaLhf[0],
-                                     'intercept': alphaLhf[2],
-                                     'slope_neg': alphaLhfNeg[0], 'intercept_neg': alphaLhfNeg[2],
-                                     'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
-                            dict2 = {'units': 'W/m2', 'number_of_years_used': yearN,
-                                     'time_period': str(actualtimebounds),
-                                     'description': dataset + "'s " + lhfbox + " lhfA", 'diagnostic_value': alphaLhf[0],
-                                     'diagnostic_value_error': alphaLhf[1], 'slope': alphaLhf[0],
-                                     'intercept': alphaLhf[2],
-                                     'slope_neg': alphaLhfNeg[0], 'intercept_neg': alphaLhfNeg[2],
-                                     'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]}
-                            dict3 = {'units': Units, 'number_of_years_used': yearN,
-                                     'time_period': str(actualtimebounds),
-                                     'description':
-                                         dataset + "'s zonal equatorial_pacific regression of lhfA over sstA",
-                                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
-                                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
-                                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
-                                     'intercept_pos': alphaLhfPos[2]}
-                            dict4 = {'units': Units, 'number_of_years_used': yearN,
-                                     'time_period': str(actualtimebounds),
-                                     'description':
-                                         dataset + "'s zonal equatorial_pacific regression of lhfA over sstA>0",
-                                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
-                                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
-                                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
-                                     'intercept_pos': alphaLhfPos[2]}
-                            dict5 = {'units': Units, 'number_of_years_used': yearN,
-                                     'time_period': str(actualtimebounds),
-                                     'description':
-                                         dataset + "'s zonal equatorial_pacific regression of lhfA over sstA<0",
-                                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
-                                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
-                                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
-                                     'intercept_pos': alphaLhfPos[2]}
-                            dict6 = {'units': Units, 'number_of_years_used': yearN,
-                                     'time_period': str(actualtimebounds),
-                                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
-                                                    "lhfA over sstA",
-                                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
-                                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
-                                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
-                                     'intercept_pos': alphaLhfPos[2]}
-                            dict7 = {'units': Units, 'number_of_years_used': yearN,
-                                     'time_period': str(actualtimebounds),
-                                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
-                                                    "lhfA over sstA>0",
-                                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
-                                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
-                                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
-                                     'intercept_pos': alphaLhfPos[2]}
-                            dict8 = {'units': Units, 'number_of_years_used': yearN,
-                                     'time_period': str(actualtimebounds),
-                                     'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
-                                                    "lhfA over sstA<0",
-                                     'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
-                                     'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
-                                     'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
-                                     'intercept_pos': alphaLhfPos[2]}
-                            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
+                            dict1 = {
+                                'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                                'description': dataset + "'s " + sstbox + " sstA", 'diagnostic_value': alphaLhf[0],
+                                'diagnostic_value_error': alphaLhf[1], 'slope': alphaLhf[0],
+                                'intercept': alphaLhf[2],
+                                'slope_neg': alphaLhfNeg[0], 'intercept_neg': alphaLhfNeg[2],
+                                'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict2 = {
+                                'units': 'W/m2', 'number_of_years_used': yearN,
+                                'time_period': str(actualtimebounds),
+                                'description': dataset + "'s " + lhfbox + " lhfA", 'diagnostic_value': alphaLhf[0],
+                                'diagnostic_value_error': alphaLhf[1], 'slope': alphaLhf[0],
+                                'intercept': alphaLhf[2],
+                                'slope_neg': alphaLhfNeg[0], 'intercept_neg': alphaLhfNeg[2],
+                                'slope_pos': alphaLhfPos[0], 'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict3 = {
+                                'units': Units, 'number_of_years_used': yearN,
+                                'time_period': str(actualtimebounds),
+                                'description':
+                                    dataset + "'s zonal equatorial_pacific regression of lhfA over sstA",
+                                'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                                'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                                'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
+                                'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict4 = {
+                                'units': Units, 'number_of_years_used': yearN,
+                                'time_period': str(actualtimebounds),
+                                'description':
+                                    dataset + "'s zonal equatorial_pacific regression of lhfA over sstA>0",
+                                'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                                'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                                'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
+                                'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict5 = {
+                                'units': Units, 'number_of_years_used': yearN,
+                                'time_period': str(actualtimebounds),
+                                'description':
+                                    dataset + "'s zonal equatorial_pacific regression of lhfA over sstA<0",
+                                'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                                'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                                'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
+                                'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict6 = {
+                                'units': Units, 'number_of_years_used': yearN,
+                                'time_period': str(actualtimebounds),
+                                'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
+                                        "lhfA over sstA",
+                                'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                                'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                                'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
+                                'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict7 = {
+                                'units': Units, 'number_of_years_used': yearN,
+                                'time_period': str(actualtimebounds),
+                                'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
+                                        "lhfA over sstA>0",
+                                'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                                'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                                'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
+                                'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict8 = {
+                                'units': Units, 'number_of_years_used': yearN,
+                                'time_period': str(actualtimebounds),
+                                'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
+                                        "lhfA over sstA<0",
+                                'diagnostic_value': alphaLhf[0], 'diagnostic_value_error': alphaLhf[1],
+                                'slope': alphaLhf[0], 'intercept': alphaLhf[2], 'slope_neg': alphaLhfNeg[0],
+                                'intercept_neg': alphaLhfNeg[2], 'slope_pos': alphaLhfPos[0],
+                                'intercept_pos': alphaLhfPos[2]
+                            }
+                            dict9 = {
+                                'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                'frequency': kwargs['frequency']
+                            }
                             SaveNetcdf(
                                 file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
                                 var1_time_name='months_' + dataset, var2=lhf, var2_attributes=dict2,
@@ -5333,7 +5386,8 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                 var7_attributes=dict7, var7_name='reg_lhf_over_POSsst_hov__' + dataset,
                                 var8=hovAlphaNeg, var8_attributes=dict8,
                                 var8_name='reg_lhf_over_NEGsst_hov__' + dataset, frequency=kwargs['frequency'],
-                                global_attributes=dict9)
+                                global_attributes=dict9
+                            )
                             del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
     # Create output
     alphaLhfMetric = {
@@ -5344,9 +5398,11 @@ def EnsoFbSstLhf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     return alphaLhfMetric
 
 
-def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
-                 lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', metname='', **kwargs):
+def EnsoFbSstLwr(
+        sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, lwrfile, lwrname,
+        lwrareafile, lwrareaname, lwrlandmaskfile, lwrlandmaskname, lwrbox, dataset='', debug=False,
+        netcdf=False, netcdf_name='', metname='', **kwargs
+    ):
     """
     The EnsoFbSstLwr() function computes the regression of 'lwrbox' lwrA (net surface longwave radiation anomalies) over
     'sstbox' sstA (usually the regression of nino3 lwrA over nino3 sstA)
@@ -5432,15 +5488,15 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -5491,10 +5547,12 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
             keyerror = add_up_errors([keyerror1, keyerror2])
         else:
             if debug is True:
-                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                              'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
-                              'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
-                              'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lwr) ' + str(TimeBounds(lwr))}
+                dict_debug = {
+                    'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                    'axes2': '(lwr) ' + str([ax.id for ax in lwr.getAxisList()]),
+                    'shape1': '(sst) ' + str(sst.shape), 'shape2': '(lwr) ' + str(lwr.shape),
+                    'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(lwr) ' + str(TimeBounds(lwr))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
@@ -5532,19 +5590,19 @@ def EnsoFbSstLwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                     else:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         lwr_map = Regrid(lwr_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                          'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst_map.shape),
-                                          'shape2': '(lwr) ' + str(lwr_map.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                'axes2': '(lwr) ' + str([ax.id for ax in lwr_map.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst_map.shape),
+                                'shape2': '(lwr) ' + str(lwr_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         sst_map, keyerror1 = AverageMeridional(sst_map)
@@ -5766,15 +5824,15 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -5865,19 +5923,19 @@ def EnsoFbSstShf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                     else:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         shf_map = Regrid(shf_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                          'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst_map.shape),
-                                          'shape2': '(shf) ' + str(shf_map.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                'axes2': '(shf) ' + str([ax.id for ax in shf_map.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst_map.shape),
+                                'shape2': '(shf) ' + str(shf_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         sst_map, keyerror1 = AverageMeridional(sst_map)
@@ -6095,15 +6153,15 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6195,19 +6253,19 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                     else:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         swr_map = Regrid(swr_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                          'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst_map.shape),
-                                          'shape2': '(swr) ' + str(swr_map.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst_map.shape),
+                                'shape2': '(swr) ' + str(swr_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         sst_map, keyerror1 = AverageMeridional(sst_map)
@@ -6216,28 +6274,34 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             keyerror = add_up_errors([keyerror1, keyerror2])
                         else:
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(swr) ' + str(swr_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(swr) ' + str(swr_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
                             # Zonal smoothing
                             sst_map, _ = Smoothing(sst_map, '', axis=1, window=31, method='square')
                             swr_map, _ = Smoothing(swr_map, '', axis=1, window=31, method='square')
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(swr) ' + str(swr_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(swr) ' + str([ax.id for ax in swr_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(swr) ' + str(swr_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
                             # Array year by year
                             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
                             swr_yby = get_year_by_year(swr_map, frequency=kwargs['frequency'])
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(swr) ' + str([ax.id for ax in swr_yby.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(swr) ' + str(swr_yby.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(swr) ' + str([ax.id for ax in swr_yby.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(swr) ' + str(swr_yby.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
                             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
                             curAlpha, curAlphaPos, curAlphaNeg = LinearRegressionAndNonlinearity(
@@ -6245,12 +6309,15 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             hovAlpha, hovAlphaPos, hovAlphaNeg = LinearRegressionAndNonlinearity(
                                 swr_yby, sst_yby, return_stderr=False, return_intercept=False)
                             if debug is True:
-                                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
-                                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
-                                              'shape1': '(zonal alpha) ' + str(curAlpha.shape),
-                                              'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
+                                dict_debug = {
+                                    'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
+                                    'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
+                                    'shape1': '(zonal alpha) ' + str(curAlpha.shape),
+                                    'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode(
-                                    '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                                    '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug
+                                )
                             if ".nc" in netcdf_name:
                                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                             else:
@@ -6260,60 +6327,70 @@ def EnsoFbSstSwr(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                 'description': dataset + "'s " + sstbox + " sstA", 'diagnostic_value': alphaSwr[0],
                                 'diagnostic_value_error': alphaSwr[1], 'slope': alphaSwr[0], 'intercept': alphaSwr[2],
                                 'slope_neg': alphaSwrNeg[0], 'intercept_neg': alphaSwrNeg[2],
-                                'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+                                'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]
+                            }
                             dict2 = {
                                 'units': 'W/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s " + swrbox + " swrA", 'diagnostic_value': alphaSwr[0],
                                 'diagnostic_value_error': alphaSwr[1], 'slope': alphaSwr[0], 'intercept': alphaSwr[2],
                                 'slope_neg': alphaSwrNeg[0], 'intercept_neg': alphaSwrNeg[2],
-                                'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]}
+                                'slope_pos': alphaSwrPos[0], 'intercept_pos': alphaSwrPos[2]
+                            }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of swrA over sstA",
                                 'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                                 'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                                 'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0],
-                                'intercept_pos': alphaSwrPos[2]}
+                                'intercept_pos': alphaSwrPos[2]
+                            }
                             dict4 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of swrA over sstA>0",
                                 'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                                 'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                                 'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0],
-                                'intercept_pos': alphaSwrPos[2]}
+                                'intercept_pos': alphaSwrPos[2]
+                            }
                             dict5 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of swrA over sstA<0",
                                 'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                                 'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                                 'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0],
-                                'intercept_pos': alphaSwrPos[2]}
+                                'intercept_pos': alphaSwrPos[2]
+                            }
                             dict6 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of swrA over sstA",
+                                        "'s zonal monthly of equatorial_pacific regression of swrA over sstA",
                                 'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                                 'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                                 'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0],
-                                'intercept_pos': alphaSwrPos[2]}
+                                'intercept_pos': alphaSwrPos[2]
+                            }
                             dict7 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of swrA over sstA>0",
+                                        "'s zonal monthly of equatorial_pacific regression of swrA over sstA>0",
                                 'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                                 'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                                 'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0],
-                                'intercept_pos': alphaSwrPos[2]}
+                                'intercept_pos': alphaSwrPos[2]
+                            }
                             dict8 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of swrA over sstA<0",
+                                        "'s zonal monthly of equatorial_pacific regression of swrA over sstA<0",
                                 'diagnostic_value': alphaSwr[0], 'diagnostic_value_error': alphaSwr[1],
                                 'slope': alphaSwr[0], 'intercept': alphaSwr[2], 'slope_neg': alphaSwrNeg[0],
                                 'intercept_neg': alphaSwrNeg[2], 'slope_pos': alphaSwrPos[0],
-                                'intercept_pos': alphaSwrPos[2]}
-                            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
+                                'intercept_pos': alphaSwrPos[2]
+                            }
+                            dict9 = {
+                                    'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                    'frequency': kwargs['frequency']
+                            }
                             SaveNetcdf(
                                 file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
                                 var1_time_name='months_' + dataset, var2=swr, var2_attributes=dict2,
@@ -6434,15 +6511,15 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6534,19 +6611,19 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                     else:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         thf_map = Regrid(thf_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                          'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst_map.shape),
-                                          'shape2': '(thf) ' + str(thf_map.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst_map.shape),
+                                'shape2': '(thf) ' + str(thf_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         sst_map, keyerror1 = AverageMeridional(sst_map)
@@ -6555,28 +6632,34 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             keyerror = add_up_errors([keyerror1, keyerror2])
                         else:
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(thf) ' + str(thf_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(thf) ' + str(thf_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
                             # Zonal smoothing
                             sst_map, _ = Smoothing(sst_map, '', axis=1, window=31, method='square')
                             thf_map, _ = Smoothing(thf_map, '', axis=1, window=31, method='square')
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(thf) ' + str(thf_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(thf) ' + str(thf_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
                             # Array year by year
                             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
                             thf_yby = get_year_by_year(thf_map, frequency=kwargs['frequency'])
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(thf) ' + str([ax.id for ax in thf_yby.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(thf) ' + str(thf_yby.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(thf) ' + str([ax.id for ax in thf_yby.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(thf) ' + str(thf_yby.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
                             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
                             curAlpha, curAlphaPos, curAlphaNeg = LinearRegressionAndNonlinearity(
@@ -6584,12 +6667,15 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             hovAlpha, hovAlphaPos, hovAlphaNeg = LinearRegressionAndNonlinearity(
                                 thf_yby, sst_yby, return_stderr=False, return_intercept=False)
                             if debug is True:
-                                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
-                                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
-                                              'shape1': '(zonal alpha) ' + str(curAlpha.shape),
-                                              'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)}
+                                dict_debug = {
+                                    'axes1': '(zonal alpha) ' + str([ax.id for ax in curAlpha.getAxisList()]),
+                                    'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovAlpha.getAxisList()]),
+                                    'shape1': '(zonal alpha) ' + str(curAlpha.shape),
+                                    'shape2': '(hovtx alpha) ' + str(hovAlpha.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode(
-                                    '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                                    '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug
+                                )
                             if ".nc" in netcdf_name:
                                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                             else:
@@ -6599,60 +6685,70 @@ def EnsoFbSstThf(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                 'description': dataset + "'s " + sstbox + " sstA", 'diagnostic_value': alphaThf[0],
                                 'diagnostic_value_error': alphaThf[1], 'slope': alphaThf[0], 'intercept': alphaThf[2],
                                 'slope_neg': alphaThfNeg[0], 'intercept_neg': alphaThfNeg[2],
-                                'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+                                'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]
+                            }
                             dict2 = {
                                 'units': 'W/m2', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s " + thfbox + " thfA", 'diagnostic_value': alphaThf[0],
                                 'diagnostic_value_error': alphaThf[1], 'slope': alphaThf[0], 'intercept': alphaThf[2],
                                 'slope_neg': alphaThfNeg[0], 'intercept_neg': alphaThfNeg[2],
-                                'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]}
+                                'slope_pos': alphaThfPos[0], 'intercept_pos': alphaThfPos[2]
+                            }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of thfA over sstA",
                                 'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                                 'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                                 'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0],
-                                'intercept_pos': alphaThfPos[2]}
+                                'intercept_pos': alphaThfPos[2]
+                            }
                             dict4 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of thfA over sstA>0",
                                 'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                                 'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                                 'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0],
-                                'intercept_pos': alphaThfPos[2]}
+                                'intercept_pos': alphaThfPos[2]
+                            }
                             dict5 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of thfA over sstA<0",
                                 'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                                 'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                                 'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0],
-                                'intercept_pos': alphaThfPos[2]}
+                                'intercept_pos': alphaThfPos[2]
+                            }
                             dict6 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of thfA over sstA",
+                                        "'s zonal monthly of equatorial_pacific regression of thfA over sstA",
                                 'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                                 'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                                 'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0],
-                                'intercept_pos': alphaThfPos[2]}
+                                'intercept_pos': alphaThfPos[2]
+                            }
                             dict7 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of thfA over sstA>0",
+                                        "'s zonal monthly of equatorial_pacific regression of thfA over sstA>0",
                                 'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                                 'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                                 'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0],
-                                'intercept_pos': alphaThfPos[2]}
+                                'intercept_pos': alphaThfPos[2]
+                            }
                             dict8 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of thfA over sstA<0",
+                                        "'s zonal monthly of equatorial_pacific regression of thfA over sstA<0",
                                 'diagnostic_value': alphaThf[0], 'diagnostic_value_error': alphaThf[1],
                                 'slope': alphaThf[0], 'intercept': alphaThf[2], 'slope_neg': alphaThfNeg[0],
                                 'intercept_neg': alphaThfNeg[2], 'slope_pos': alphaThfPos[0],
-                                'intercept_pos': alphaThfPos[2]}
-                            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
+                                'intercept_pos': alphaThfPos[2]
+                            }
+                            dict9 = {
+                                'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                'frequency': kwargs['frequency']
+                            }
                             SaveNetcdf(
                                 file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
                                 var1_time_name='months_' + dataset, var2=thf, var2_attributes=dict2,
@@ -6750,15 +6846,15 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6792,8 +6888,10 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
             sstStd, sstStdErr, dive_down_diag = None, None, {'value': None, 'axis': None}
         else:
             if debug is True:
-                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                              'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
+                dict_debug = {
+                    'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                    'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
             # Computes the standard deviation
@@ -6829,23 +6927,23 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         if debug is True:
-                            dict_debug = {'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
-                                          'axes2': '(sst2) ' + str([ax.id for ax in sst2.getAxisList()]),
-                                          'shape1': '(sst1) ' + str(sst1.shape), 'shape2': '(sst2) ' + str(sst2.shape),
-                                          'time1': '(sst1) ' + str(TimeBounds(sst1)),
-                                          'time2': '(sst2) ' + str(TimeBounds(sst2))}
+                            dict_debug = {
+                                'axes1': '(sst1) ' + str([ax.id for ax in sst1.getAxisList()]),
+                                'axes2': '(sst2) ' + str([ax.id for ax in sst2.getAxisList()]),
+                                'shape1': '(sst1) ' + str(sst1.shape), 'shape2': '(sst2) ' + str(sst2.shape),
+                                'time1': '(sst1) ' + str(TimeBounds(sst1)),
+                                'time2': '(sst2) ' + str(TimeBounds(sst2))
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 10, **dict_debug)
                         # std
                         sst1 = Std(sst1)
                         sst2 = Std(sst2)
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst1 = Regrid(sst1, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                         sst2 = Regrid(sst2, None, region='equatorial_pacific', **kwargs['regridding'])
                         # Meridional average
@@ -6862,15 +6960,21 @@ def EnsoAmpl(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlan
                             dict1 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': "zonal standard deviation of equatorial_pacific sstA",
-                                'diagnostic_value': sstStd, 'diagnostic_value_error': sstStdErr}
+                                'diagnostic_value': sstStd, 'diagnostic_value_error': sstStdErr
+                            }
                             dict2 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                                'description': "standard deviation of equatorial_pacific sstA"}
-                            dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
-                            SaveNetcdf(file_name, var1=sst2, var1_attributes=dict1, var1_name='sstStd_lon__' + dataset,
-                                       var2=sst1, var2_attributes=dict2, var2_name='sstStd_map__' + dataset,
-                                       global_attributes=dict3)
+                                'description': "standard deviation of equatorial_pacific sstA"
+                            }
+                            dict3 = {
+                                'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                'frequency': kwargs['frequency']
+                            }
+                            SaveNetcdf(
+                                file_name, var1=sst2, var1_attributes=dict1, var1_name='sstStd_lon__' + dataset,
+                                var2=sst1, var2_attributes=dict2, var2_name='sstStd_map__' + dataset,
+                                global_attributes=dict3
+                            )
                             del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -6970,7 +7074,9 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -6982,9 +7088,7 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -6992,10 +7096,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     lat = ReferenceRegions(box)['latitude']
     lon = ReferenceRegions(box)['longitude']
     Method = 'Nino (Nina) events = ' + region_ev + ' sstA > (<) ' + str(threshold) + ' during ' + season_ev +\
-             ', zonal SSTA ' + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) +\
-             ']), westward boundary of EP events ' + str(kwargs['treshold_ep_ev']) + 'E'
+        ', zonal SSTA ' + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) +\
+        ']), westward boundary of EP events ' + str(kwargs['treshold_ep_ev']) + 'E'
     Units = '%'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoDiversity'
     if metname == '':
         metname = deepcopy(metric)
@@ -7030,8 +7134,11 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             dive_down_diag = {'value': None, 'axis': None}
         else:
             if debug is True:
-                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                              'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
+                dict_debug = {
+                    'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                    'shape1': '(sst) ' + str(sst.shape),
+                    'time1': '(sst) ' + str(TimeBounds(sst))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
             # 1.2 SSTA > (<) 'threshold' during 'season' are considered as El Nino (La Nina) events
@@ -7039,8 +7146,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             nino_years = DetectEvents(sst, season_ev, threshold, normalization=normalize, nino=True)
             nina_years = DetectEvents(sst, season_ev, -threshold, normalization=normalize, nino=False)
             if debug is True:
-                dict_debug = {'nino1': 'nbr(' + str(len(nino_years)) + '): ' + str(nino_years),
-                              'nina1': 'nbr(' + str(len(nina_years)) + '): ' + str(nina_years)}
+                dict_debug = {
+                    'nino1': 'nbr(' + str(len(nino_years)) + '): ' + str(nino_years),
+                    'nina1': 'nbr(' + str(len(nina_years)) + '): ' + str(nina_years)
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
             # ------------------------------------------------
@@ -7065,28 +7174,37 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                     dive_down_diag = {'value': None, 'axis': None}
                 else:
                     if debug is True:
-                        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                                      'shape1': '(sst) ' + str(sst.shape), 'time1': '(sst) ' + str(TimeBounds(sst))}
+                        dict_debug = {
+                            'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                            'shape1': '(sst) ' + str(sst.shape),
+                            'time1': '(sst) ' + str(TimeBounds(sst))
+                        }
                         EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
                     # Seasonal mean
                     sst = SeasonalMean(sst, season_ev, compute_anom=True)
                     if debug is True:
-                        dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                                      'shape1': '(sst) ' + str(sst.shape)}
+                        dict_debug = {
+                            'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                            'shape1': '(sst) ' + str(sst.shape)
+                        }
                         EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
                     # Regridding
                     if isinstance(kwargs['regridding'], dict):
-                        known_args = {'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool',
-                                      'regridMethod'}
+                        known_args = {
+                            'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder', 'regridTool',
+                            'regridMethod'
+                        }
                         extra_args = set(kwargs['regridding']) - known_args
                         if extra_args:
                             EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                         sst = Regrid(sst, None, region=box, **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
                     # Meridional average
@@ -7095,8 +7213,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                         ratioEP, StdErr, dive_down_diag = None, None, {'value': None, 'axis': None}
                     else:
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
 
                         # samples
@@ -7109,8 +7229,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                         lon_sstmin = FindXYMinMaxInTs(
                             sample_nina, return_val='mini', smooth=True, axis=0, window=5, method='triangle')
                         if debug is True:
-                            dict_debug = {'line1': 'longitude of the maximum SSTA (nino): ' + str(lon_sstmax),
-                                          'line2': 'longitude of the minimum SSTA (nina): ' + str(lon_sstmin)}
+                            dict_debug = {
+                                'line1': 'longitude of the maximum SSTA (nino): ' + str(lon_sstmax),
+                                'line2': 'longitude of the minimum SSTA (nina): ' + str(lon_sstmin)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after FindXYMinMaxInTs', 15, **dict_debug)
 
                         # 2.3 compute the percentage of EP events (maximum/minimum SSTA eastward of the given threshold)
@@ -7124,8 +7246,10 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                             keyerror = add_up_errors([keyerror_nino, keyerror_nina])
                         else:
                             if debug is True:
-                                dict_debug = {'nino1': 'percentage of EP event + ' + str(ep_event_nino),
-                                              'nina1': 'percentage of EP event + ' + str(ep_event_nina)}
+                                dict_debug = {
+                                    'nino1': 'percentage of EP event + ' + str(ep_event_nino),
+                                    'nina1': 'percentage of EP event + ' + str(ep_event_nina)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after DetectEvents', 15, **dict_debug)
 
                             # 2.4 compute the ratio EP events during La Nina divided by EP events during El Nino
@@ -7140,20 +7264,28 @@ def EnsoDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                                     file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                                 else:
                                     file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                                dict1 = {'units': 'longitude (E)', 'number_of_years_used': yearN,
-                                         'time_period': str(actualtimebounds), 'nino_years': str(nino_years),
-                                         'diagnostic_value_' + dataset: ratioEP,
-                                         'diagnostic_value_error_' + dataset: StdErr}
-                                dict2 = {'units': 'longitude (E)', 'number_of_years_used': yearN,
-                                         'time_period': str(actualtimebounds), 'nina_years': str(nina_years),
-                                         'diagnostic_value_' + dataset: ratioEP,
-                                         'diagnostic_value_error_' + dataset: StdErr}
-                                dict3 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                         'frequency': kwargs['frequency']}
-                                SaveNetcdf(file_name, var1=lon_sstmax, var1_attributes=dict1,
-                                           var1_name='Nino_lon_pos_maxSSTA__' + dataset, var2=lon_sstmin,
-                                           var2_attributes=dict2, var2_name='Nina_lon_pos_minSSTA__' + dataset,
-                                           global_attributes=dict3)
+                                dict1 = {
+                                    'units': 'longitude (E)', 'number_of_years_used': yearN,
+                                    'time_period': str(actualtimebounds), 'nino_years': str(nino_years),
+                                    'diagnostic_value_' + dataset: ratioEP,
+                                    'diagnostic_value_error_' + dataset: StdErr
+                                }
+                                dict2 = {
+                                    'units': 'longitude (E)', 'number_of_years_used': yearN,
+                                    'time_period': str(actualtimebounds), 'nina_years': str(nina_years),
+                                    'diagnostic_value_' + dataset: ratioEP,
+                                    'diagnostic_value_error_' + dataset: StdErr
+                                }
+                                dict3 = {
+                                    'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                    'frequency': kwargs['frequency']
+                                }
+                                SaveNetcdf(
+                                    file_name, var1=lon_sstmax, var1_attributes=dict1,
+                                    var1_name='Nino_lon_pos_maxSSTA__' + dataset, var2=lon_sstmin,
+                                    var2_attributes=dict2, var2_name='Nina_lon_pos_minSSTA__' + dataset,
+                                    global_attributes=dict3
+                                )
                                 del dict1, dict2, dict3
     # metric value
     if debug is True:
@@ -7253,9 +7385,7 @@ def EnsoDuration(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -7548,7 +7678,9 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -7560,9 +7692,7 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -7673,18 +7803,18 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                     else:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         thf_map = Regrid(thf_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                  'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
-                                  'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst_map.shape), 'shape2': '(thf) ' + str(thf_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         sst_map, keyerror1 = AverageMeridional(sst_map)
@@ -7693,19 +7823,23 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                             keyerror = add_up_errors([keyerror1, keyerror2])
                         else:
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(thf) ' + str(thf_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(thf) ' + str(thf_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
                             # Zonal smoothing
                             sst_map, _ = Smoothing(sst_map, '', axis=1, window=51, method='square')
                             thf_map, _ = Smoothing(thf_map, '', axis=1, window=51, method='square')
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(thf) ' + str(thf_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(thf) ' + str([ax.id for ax in thf_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(thf) ' + str(thf_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
                             # SST change
                             hovdSST, hovdSSTthf, hovdSSToce = SlabOcean(
@@ -7727,46 +7861,55 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s SST change in " + sstbox, 'diagnostic_value': metric,
                                 'diagnostic_value_error': metricErr, 'nina_years': str(nina_years),
-                                'nino_years': str(nino_years)}
+                                'nino_years': str(nino_years)
+                            }
                             dict2 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s heat flux-driven SST change in " + thfbox,
                                 'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
-                                'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+                                'nina_years': str(nina_years), 'nino_years': str(nino_years)
+                            }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                                'description': dataset + "'s SST change caused by an anomalous ocean circulation in " +
-                                               thfbox,
+                                'description': dataset + "'s SST change caused by an anomalous ocean circulation in " + thfbox,
                                 'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
-                                'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+                                'nina_years': str(nina_years), 'nino_years': str(nino_years)
+                            }
                             dict4 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal heat flux-driven SST change",
                                 'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
-                                'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+                                'nina_years': str(nina_years), 'nino_years': str(nino_years)
+                            }
                             dict5 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal SST change caused by an anomalous ocean circulation",
                                 'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
-                                'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+                                'nina_years': str(nina_years), 'nino_years': str(nino_years)
+                            }
                             dict6 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal monthly SST change", 'diagnostic_value': metric,
                                 'diagnostic_value_error': metricErr, 'nina_years': str(nina_years),
-                                'nino_years': str(nino_years)}
+                                'nino_years': str(nino_years)
+                            }
                             dict7 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal monthly heat flux-driven SST change",
                                 'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
-                                'nina_years': str(nina_years), 'nino_years': str(nino_years)}
+                                'nina_years': str(nina_years), 'nino_years': str(nino_years)
+                            }
                             dict8 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly SST change caused by an anomalous ocean circulation",
+                                        "'s zonal monthly SST change caused by an anomalous ocean circulation",
                                 'diagnostic_value': metric, 'diagnostic_value_error': metricErr,
-                                'nina_years': str(nina_years), 'nino_years': str(nino_years)}
-                            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
+                                'nina_years': str(nina_years), 'nino_years': str(nino_years)
+                            }
+                            dict9 = {
+                                'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                'frequency': kwargs['frequency']
+                            }
                             SaveNetcdf(
                                 file_name, var1=dSST, var1_attributes=dict1, var1_name='dSST_ts__' + dataset,
                                 var2=dSSTthf, var2_attributes=dict2, var2_name='dSSTthf_ts__' + dataset, var3=dSSToce,
@@ -7776,7 +7919,8 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                                 var6_attributes=dict6, var6_name='dSST_hov__' + dataset, var7=hovdSSTthf,
                                 var7_attributes=dict7, var7_name='dSSTthf_hov__' + dataset, var8=hovdSSToce,
                                 var8_attributes=dict8, var8_name='dSSToce_hov__' + dataset,
-                                frequency=kwargs['frequency'], global_attributes=dict9)
+                                frequency=kwargs['frequency'], global_attributes=dict9
+                            )
                             del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
         # if 'smoothing' in kwargs.keys():
         #     kwargs['smoothing'] = smooth
@@ -7789,9 +7933,11 @@ def EnsodSstOce(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
     return SlabOceanMetric
 
 
-def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile,
-                  tauxname, tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, dataset='',
-                  debug=False, netcdf=False, netcdf_name='', metname='', **kwargs):
+def EnsoFbSstTaux(
+        sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, tauxfile,
+        tauxname, tauxareafile, tauxareaname, tauxlandmaskfile, tauxlandmaskname, tauxbox, dataset='',
+        debug=False, netcdf=False, netcdf_name='', metname='', **kwargs
+    ):
     """
     The EnsoFbSstTaux() function computes the regression of 'tauxbox' tauxA (surface downward zonal stress anomalies)
     over 'sstbox' sstA (usually the regression of nino4 tauxA over nino3 sstA)
@@ -7877,15 +8023,15 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -7934,10 +8080,12 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
             keyerror = add_up_errors([keyerror1, keyerror2])
         else:
             if debug is True:
-                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
-                              'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
-                              'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
-                              'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(taux) ' + str(TimeBounds(taux))}
+                dict_debug = {
+                    'axes1': '(sst) ' + str([ax.id for ax in sst.getAxisList()]),
+                    'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
+                    'shape1': '(sst) ' + str(sst.shape), 'shape2': '(taux) ' + str(taux.shape),
+                    'time1': '(sst) ' + str(TimeBounds(sst)), 'time2': '(taux) ' + str(TimeBounds(taux))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Change units
             taux = taux * 1e3
@@ -7966,29 +8114,33 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                     if keyerror is None:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         taux_map = Regrid(taux_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
-                                          'shape1': '(taux) ' + str(taux_map.shape)}
+                            dict_debug = {
+                                'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
+                                'shape1': '(taux) ' + str(taux_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         taux_map, keyerror = AverageMeridional(taux_map)
                         if keyerror is None:
                             if debug is True:
-                                dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
-                                              'shape2': '(taux) ' + str(taux_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
+                                    'shape2': '(taux) ' + str(taux_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
                             # Zonal smoothing
                             taux_map, _ = Smoothing(taux_map, '', axis=1, window=31, method='square')
                             if debug is True:
-                                dict_debug = {'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
-                                              'shape1': '(taux) ' + str(taux_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(taux) ' + str([ax.id for ax in taux_map.getAxisList()]),
+                                    'shape1': '(taux) ' + str(taux_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
                             # Change units
                             taux_map = taux_map * 1e3
@@ -7998,10 +8150,12 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
                             taux_yby = get_year_by_year(taux_map, frequency=kwargs['frequency'])
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(taux) ' + str(taux_yby.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(taux) ' + str(taux_yby.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
                             # Computes the linear regression for all points, for SSTA >=0 and for SSTA<=0
                             curMu, curMuPos, curMuNeg = LinearRegressionAndNonlinearity(
@@ -8009,10 +8163,12 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                             hovMu, hovMuPos, hovMuNeg = LinearRegressionAndNonlinearity(
                                 taux_yby, sst_yby, return_stderr=False, return_intercept=False)
                             if debug is True:
-                                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curMuPos.getAxisList()]),
-                                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovMuPos.getAxisList()]),
-                                              'shape1': '(zonal alpha) ' + str(curMuPos.shape),
-                                              'shape2': '(hovtx alpha) ' + str(hovMuPos.shape)}
+                                dict_debug = {
+                                    'axes1': '(zonal alpha) ' + str([ax.id for ax in curMuPos.getAxisList()]),
+                                    'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovMuPos.getAxisList()]),
+                                    'shape1': '(zonal alpha) ' + str(curMuPos.shape),
+                                    'shape2': '(hovtx alpha) ' + str(hovMuPos.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode(
                                     '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
                             if ".nc" in netcdf_name:
@@ -8024,69 +8180,101 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
                                 'description': dataset + "'s " + sstbox + " sstA", 'diagnostic_value': mu[0],
                                 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
                                 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0],
-                                'intercept_pos': muPos[2]}
+                                'intercept_pos': muPos[2]
+                            }
                             dict2 = {
                                 'units': '1e-3 N/m2', 'number_of_years_used': yearN,
                                 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s " + tauxbox + " tauxA", 'diagnostic_value': mu[0],
                                 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
                                 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0],
-                                'intercept_pos': muPos[2]}
+                                'intercept_pos': muPos[2]
+                            }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox +
-                                               " tauxA over sstA",
+                                        " tauxA over sstA",
                                 'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0],
                                 'intercept': mu[2], 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2],
-                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]
+                            }
                             dict4 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox +
-                                               " tauxA over sstA>0",
+                                        " tauxA over sstA>0",
                                 'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0],
                                 'intercept': mu[2], 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2],
-                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]
+                            }
                             dict5 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of " + tauxbox +
-                                               " tauxA over sstA<0",
+                                        " tauxA over sstA<0",
                                 'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0],
                                 'intercept': mu[2], 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2],
-                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
+                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]
+                            }
                             dict6 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
-                                               tauxbox + " tauxA over sstA", 'diagnostic_value': mu[0],
+                                        tauxbox + " tauxA over sstA", 'diagnostic_value': mu[0],
                                 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
                                 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0],
-                                'intercept_pos': muPos[2]}
+                                'intercept_pos': muPos[2]
+                            }
                             dict7 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
-                                               tauxbox + " tauxA over sstA>0", 'diagnostic_value': mu[0],
+                                        tauxbox + " tauxA over sstA>0", 'diagnostic_value': mu[0],
                                 'diagnostic_value_error': mu[1], 'slope': mu[0], 'intercept': mu[2],
                                 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2], 'slope_pos': muPos[0],
-                                'intercept_pos': muPos[2]}
+                                'intercept_pos': muPos[2]
+                            }
                             dict8 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal monthly of equatorial_pacific regression of " +
-                                               tauxbox + " tauxA over sstA<0",
+                                        tauxbox + " tauxA over sstA<0",
                                 'diagnostic_value': mu[0], 'diagnostic_value_error': mu[1], 'slope': mu[0],
                                 'intercept': mu[2], 'slope_neg': muNeg[0], 'intercept_neg': muNeg[2],
-                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]}
-                            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
+                                'slope_pos': muPos[0], 'intercept_pos': muPos[2]
+                            }
+                            dict9 = {
+                                'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                'frequency': kwargs['frequency']
+                            }
+
+                            if debug is True:
+                                print("DEBUG EnsoFbSstTaux before SaveNetcdf:", dataset)
+                                print("DEBUG keyerror:", keyerror)
+                                print("DEBUG sst is None:", sst is None)
+                                print("DEBUG taux is None:", taux is None)
+                                print("DEBUG sst_map is None:", sst_map is None)
+                                print("DEBUG taux_map is None:", taux_map is None)
+                                print("DEBUG curMu is None:", curMu is None)
+                                if sst is not None:
+                                    print("DEBUG sst shape:", getattr(sst, "shape", None))
+                                if taux is not None:
+                                    print("DEBUG taux shape:", getattr(taux, "shape", None))
+                                if sst_map is not None:
+                                    print("DEBUG sst_map shape:", getattr(sst_map, "shape", None))
+                                if taux_map is not None:
+                                    print("DEBUG taux_map shape:", getattr(taux_map, "shape", None))
+                                if curMu is not None:
+                                    print("DEBUG curMu shape:", getattr(curMu, "shape", None))
+
                             SaveNetcdf(
-                                file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
-                                var1_time_name='months_' + dataset, var2=taux, var2_attributes=dict2,
-                                var2_name='taux__' + dataset, var2_time_name='months_' + dataset, var3=curMu,
-                                var3_attributes=dict3, var3_name='reg_taux_over_sst_lon__' + dataset, var4=curMuPos,
-                                var4_attributes=dict4, var4_name='reg_taux_over_POSsst_lon__' + dataset, var5=curMuNeg,
-                                var5_attributes=dict5, var5_name='reg_taux_over_NEGsst_lon__' + dataset, var6=hovMu,
-                                var6_attributes=dict6, var6_name='reg_taux_over_sst_hov__' + dataset, var7=hovMuPos,
-                                var7_attributes=dict7, var7_name='reg_taux_over_POSsst_hov__' + dataset, var8=hovMuNeg,
-                                var8_attributes=dict8, var8_name='reg_taux_over_NEGsst_hov__' + dataset,
-                                frequency=kwargs['frequency'], global_attributes=dict9)
+                                file_name,
+                                var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset, var1_time_name='months_' + dataset,
+                                var2=taux, var2_attributes=dict2, var2_name='taux__' + dataset, var2_time_name='months_' + dataset,
+                                var3=curMu, var3_attributes=dict3, var3_name='reg_taux_over_sst_lon__' + dataset,
+                                var4=curMuPos, var4_attributes=dict4, var4_name='reg_taux_over_POSsst_lon__' + dataset,
+                                var5=curMuNeg, var5_attributes=dict5, var5_name='reg_taux_over_NEGsst_lon__' + dataset,
+                                var6=hovMu, var6_attributes=dict6, var6_name='reg_taux_over_sst_hov__' + dataset,
+                                var7=hovMuPos, var7_attributes=dict7, var7_name='reg_taux_over_POSsst_hov__' + dataset,
+                                var8=hovMuNeg, var8_attributes=dict8, var8_name='reg_taux_over_NEGsst_hov__' + dataset,
+                                frequency=kwargs['frequency'],
+                                global_attributes=dict9
+                            )
                             del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
     # Create output
     muMetric = {
@@ -8097,9 +8285,11 @@ def EnsoFbSstTaux(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, s
     return muMetric
 
 
-def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, sshfile, sshname,
-                 sshareafile, sshareaname, sshlandmaskfile, sshlandmaskname, sshbox, dataset='', debug=False,
-                 netcdf=False, netcdf_name='', metname='', **kwargs):
+def EnsoFbSshSst(
+        sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstlandmaskname, sstbox, sshfile, sshname,
+        sshareafile, sshareaname, sshlandmaskfile, sshlandmaskname, sshbox, dataset='', debug=False,
+        netcdf=False, netcdf_name='', metname='', **kwargs
+    ):
     """
     The EnsoFbSshSst() function computes the regression of 'sstbox' sstA over 'sshbox' sshA (sea surface height
     anomalies) (usually the regression of nino3 sstA over nino3 sshA)
@@ -8185,15 +8375,15 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -8274,29 +8464,31 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                     # Preprocess variables (computes anomalies, normalizes, detrends TS, smooths TS, ...)
                     sst_map, _, keyerror1 = PreProcessTS(
                         sst_map, '', areacell=sst_map_areacell, average=False, compute_anom=True,
-                        region="equatorial_pacific", **kwargs)
+                        region="equatorial_pacific", **kwargs
+                    )
                     ssh_map, _, keyerror2 = PreProcessTS(
                         ssh_map, '', areacell=ssh_map_areacell, average=False, compute_anom=True,
-                        region="equatorial_pacific", **kwargs)
+                        region="equatorial_pacific", **kwargs
+                    )
                     del ssh_map_areacell, sst_map_areacell
                     if keyerror1 is not None or keyerror2 is not None:
                         keyerror = add_up_errors([keyerror1, keyerror2])
                     else:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_map = Regrid(sst_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         ssh_map = Regrid(ssh_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                          'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
-                                          'shape1': '(sst) ' + str(sst_map.shape),
-                                          'shape2': '(ssh) ' + str(ssh_map.shape)}
+                            dict_debug = {
+                                'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                                'shape1': '(sst) ' + str(sst_map.shape),
+                                'shape2': '(ssh) ' + str(ssh_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         sst_map, keyerror1 = AverageMeridional(sst_map)
@@ -8305,19 +8497,23 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             keyerror = add_up_errors([keyerror1, keyerror2])
                         else:
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(ssh) ' + str(ssh_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(ssh) ' + str(ssh_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
                             # Zonal smoothing
                             sst_map, _ = Smoothing(sst_map, '', axis=1, window=31, method='square')
                             ssh_map, _ = Smoothing(ssh_map, '', axis=1, window=31, method='square')
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(ssh) ' + str(ssh_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(ssh) ' + str(ssh_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
                             # Change units
                             ssh_map = ssh_map * 1e2
@@ -8325,10 +8521,12 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                             sst_yby = get_year_by_year(sst_map, frequency=kwargs['frequency'])
                             ssh_yby = get_year_by_year(ssh_map, frequency=kwargs['frequency'])
                             if debug is True:
-                                dict_debug = {'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
-                                              'axes2': '(ssh) ' + str([ax.id for ax in ssh_yby.getAxisList()]),
-                                              'shape1': '(sst) ' + str(sst_map.shape),
-                                              'shape2': '(ssh) ' + str(ssh_yby.shape)}
+                                dict_debug = {
+                                    'axes1': '(sst) ' + str([ax.id for ax in sst_map.getAxisList()]),
+                                    'axes2': '(ssh) ' + str([ax.id for ax in ssh_yby.getAxisList()]),
+                                    'shape1': '(sst) ' + str(sst_map.shape),
+                                    'shape2': '(ssh) ' + str(ssh_yby.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
                             # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
                             curThermoFb, curThermoFbPos, curThermoFbNeg = LinearRegressionAndNonlinearity(
@@ -8347,65 +8545,77 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                 file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                             else:
                                 file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                            dict1 = {'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                                     'description': dataset + "'s " + sstbox + " sstA",
-                                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
-                                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
-                                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                     'intercept_pos': ThermoFbPos[2]}
-                            dict2 = {'units': 'cm', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
-                                     'description': dataset + "'s " + sshbox + " sshA",
-                                     'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
-                                     'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
-                                     'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                     'intercept_pos': ThermoFbPos[2]}
+                            dict1 = {
+                                'units': 'C', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                                'description': dataset + "'s " + sstbox + " sstA",
+                                'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                                'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                                'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
+                                'intercept_pos': ThermoFbPos[2]
+                            }
+                            dict2 = {
+                                'units': 'cm', 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
+                                'description': dataset + "'s " + sshbox + " sshA",
+                                'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
+                                'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
+                                'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
+                                'intercept_pos': ThermoFbPos[2]
+                            }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of sstA over sshA",
                                 'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
                                 'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
                                 'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                'intercept_pos': ThermoFbPos[2]}
+                                'intercept_pos': ThermoFbPos[2]
+                            }
                             dict4 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of sstA over sshA>0",
                                 'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
                                 'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
                                 'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                'intercept_pos': ThermoFbPos[2]}
+                                'intercept_pos': ThermoFbPos[2]
+                            }
                             dict5 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of sstA over sshA<0",
                                 'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
                                 'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
                                 'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                'intercept_pos': ThermoFbPos[2]}
+                                'intercept_pos': ThermoFbPos[2]
+                            }
                             dict6 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of sstA over sshA",
+                                    "'s zonal monthly of equatorial_pacific regression of sstA over sshA",
                                 'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
                                 'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
                                 'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                'intercept_pos': ThermoFbPos[2]}
+                                'intercept_pos': ThermoFbPos[2]
+                            }
                             dict7 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of sstA over sshA>0",
+                                    "'s zonal monthly of equatorial_pacific regression of sstA over sshA>0",
                                 'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
                                 'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
                                 'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                'intercept_pos': ThermoFbPos[2]}
+                                'intercept_pos': ThermoFbPos[2]
+                            }
                             dict8 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of sstA over sshA<0",
+                                    "'s zonal monthly of equatorial_pacific regression of sstA over sshA<0",
                                 'diagnostic_value': ThermoFb[0], 'diagnostic_value_error': ThermoFb[1],
                                 'slope': ThermoFb[0], 'intercept': ThermoFb[2], 'slope_neg': ThermoFbNeg[0],
                                 'intercept_neg': ThermoFbNeg[2], 'slope_pos': ThermoFbPos[0],
-                                'intercept_pos': ThermoFbPos[2]}
-                            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
+                                'intercept_pos': ThermoFbPos[2]
+                            }
+                            dict9 = {
+                                'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                'frequency': kwargs['frequency']
+                            }
                             SaveNetcdf(
                                 file_name, var1=sst, var1_attributes=dict1, var1_name='sst__' + dataset,
                                 var1_time_name='months_' + dataset, var2=ssh, var2_attributes=dict2,
@@ -8418,7 +8628,8 @@ def EnsoFbSshSst(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, ss
                                 var7=hovThermoFbPos, var7_attributes=dict7,
                                 var7_name='reg_sst_over_POSssh_hov__' + dataset, var8=hovThermoFbNeg,
                                 var8_attributes=dict8, var8_name='reg_sst_over_NEGssh_hov__' + dataset,
-                                frequency=kwargs['frequency'], global_attributes=dict9)
+                                frequency=kwargs['frequency'], global_attributes=dict9
+                            )
                             del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
     # Create output
     SshMetric = {
@@ -8517,15 +8728,15 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -8574,10 +8785,12 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
             keyerror = add_up_errors([keyerror1, keyerror2])
         else:
             if debug is True:
-                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh.getAxisList()]),
-                              'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
-                              'shape1': '(ssh) ' + str(ssh.shape), 'shape2': '(taux) ' + str(taux.shape),
-                              'time1': '(ssh) ' + str(TimeBounds(ssh)), 'time2': '(taux) ' + str(TimeBounds(taux))}
+                dict_debug = {
+                    'axes1': '(ssh) ' + str([ax.id for ax in ssh.getAxisList()]),
+                    'axes2': '(taux) ' + str([ax.id for ax in taux.getAxisList()]),
+                    'shape1': '(ssh) ' + str(ssh.shape), 'shape2': '(taux) ' + str(taux.shape),
+                    'time1': '(ssh) ' + str(TimeBounds(ssh)), 'time2': '(taux) ' + str(TimeBounds(taux))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
             # Change units
             ssh = ssh * 1e2
@@ -8607,29 +8820,33 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                     if keyerror is None:
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         ssh_map = Regrid(ssh_map, None, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
-                            dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
-                                          'shape1': '(ssh) ' + str(ssh_map.shape)}
+                            dict_debug = {
+                                'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                                'shape1': '(ssh) ' + str(ssh_map.shape)
+                            }
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after Regrid', 15, **dict_debug)
                         # Meridional average
                         ssh_map, keyerror = AverageMeridional(ssh_map)
                         if keyerror is None:
                             if debug is True:
-                                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
-                                              'shape2': '(ssh) ' + str(ssh_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                                    'shape2': '(ssh) ' + str(ssh_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after AverageMeridional', 15, **dict_debug)
                             # Zonal smoothing
                             ssh_map, _ = Smoothing(ssh_map, '', axis=1, window=31, method='square')
                             if debug is True:
-                                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
-                                              'shape1': '(ssh) ' + str(ssh_map.shape)}
+                                dict_debug = {
+                                    'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                                    'shape1': '(ssh) ' + str(ssh_map.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after Smoothing', 15, **dict_debug)
                             # Change units
                             ssh_map = ssh_map * 1e2
@@ -8639,10 +8856,12 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                             ssh_yby = get_year_by_year(ssh_map, frequency=kwargs['frequency'])
                             taux_yby = get_year_by_year(taux_map, frequency=kwargs['frequency'])
                             if debug is True:
-                                dict_debug = {'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
-                                              'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
-                                              'shape1': '(ssh) ' + str(ssh_map.shape),
-                                              'shape2': '(taux) ' + str(taux_yby.shape)}
+                                dict_debug = {
+                                    'axes1': '(ssh) ' + str([ax.id for ax in ssh_map.getAxisList()]),
+                                    'axes2': '(taux) ' + str([ax.id for ax in taux_yby.getAxisList()]),
+                                    'shape1': '(ssh) ' + str(ssh_map.shape),
+                                    'shape2': '(taux) ' + str(taux_yby.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after get_year_by_year', 15, **dict_debug)
                             # Computes the linear regression for all points, for SSHA >=0 and for SSHA<=0
                             curFb, curFbPos, curFbNeg = LinearRegressionAndNonlinearity(
@@ -8650,12 +8869,15 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                             hovFb, hovFbPos, hovFbNeg = LinearRegressionAndNonlinearity(
                                 ssh_yby, taux_yby, return_stderr=False, return_intercept=False)
                             if debug is True:
-                                dict_debug = {'axes1': '(zonal alpha) ' + str([ax.id for ax in curFbPos.getAxisList()]),
-                                              'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovFbPos.getAxisList()]),
-                                              'shape1': '(zonal alpha) ' + str(curFbPos.shape),
-                                              'shape2': '(hovtx alpha) ' + str(hovFbPos.shape)}
+                                dict_debug = {
+                                    'axes1': '(zonal alpha) ' + str([ax.id for ax in curFbPos.getAxisList()]),
+                                    'axes2': '(hovtx alpha) ' + str([ax.id for ax in hovFbPos.getAxisList()]),
+                                    'shape1': '(zonal alpha) ' + str(curFbPos.shape),
+                                    'shape2': '(hovtx alpha) ' + str(hovFbPos.shape)
+                                }
                                 EnsoErrorsWarnings.debug_mode(
-                                    '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug)
+                                    '\033[92m', 'after LinearRegressionAndNonlinearity', 15, **dict_debug
+                                )
                             if ".nc" in netcdf_name:
                                     file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                             else:
@@ -8665,61 +8887,68 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                                 'description': dataset + "'s " + sshbox + " sshA", 'diagnostic_value': fb[0],
                                 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
                                 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0],
-                                'intercept_pos': fbPos[2]}
+                                'intercept_pos': fbPos[2]
+                            }
                             dict2 = {
                                 'units': '1e-3 N/m2', 'number_of_years_used': yearN,
                                 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s " + tauxbox + " tauxA", 'diagnostic_value': fb[0],
                                 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
                                 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0],
-                                'intercept_pos': fbPos[2]}
+                                'intercept_pos': fbPos[2]
+                            }
                             dict3 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of sshA over " +
-                                               tauxbox + " tauxA",
+                                    tauxbox + " tauxA",
                                 'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0],
                                 'intercept': fb[2], 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2],
-                                'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+                                'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]
+                            }
                             dict4 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of sshA over " +
-                                               tauxbox + " tauxA>0", 'diagnostic_value': fb[0],
+                                    tauxbox + " tauxA>0", 'diagnostic_value': fb[0],
                                 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
                                 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0],
-                                'intercept_pos': fbPos[2]}
+                                'intercept_pos': fbPos[2]
+                            }
                             dict5 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset + "'s zonal equatorial_pacific regression of sshA over " +
-                                               tauxbox + " tauxA<0",
+                                    tauxbox + " tauxA<0",
                                 'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0],
                                 'intercept': fb[2], 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2],
-                                'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
+                                'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]
+                            }
                             dict6 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of sshA over " +
-                                               tauxbox + " tauxA",
+                                    "'s zonal monthly of equatorial_pacific regression of sshA over " +
+                                    tauxbox + " tauxA",
                                 'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0],
                                 'intercept': fb[2], 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2],
                                 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
                             dict7 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of sshA over " +
-                                               tauxbox + " tauxA>0",
+                                    "'s zonal monthly of equatorial_pacific regression of sshA over " +
+                                    tauxbox + " tauxA>0",
                                 'diagnostic_value': fb[0], 'diagnostic_value_error': fb[1], 'slope': fb[0],
                                 'intercept': fb[2], 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2],
                                 'slope_pos': fbPos[0], 'intercept_pos': fbPos[2]}
                             dict8 = {
                                 'units': Units, 'number_of_years_used': yearN, 'time_period': str(actualtimebounds),
                                 'description': dataset +
-                                               "'s zonal monthly of equatorial_pacific regression of sshA over " +
-                                               tauxbox + " tauxA<0", 'diagnostic_value': fb[0],
+                                    "'s zonal monthly of equatorial_pacific regression of sshA over " +
+                                    tauxbox + " tauxA<0", 'diagnostic_value': fb[0],
                                 'diagnostic_value_error': fb[1], 'slope': fb[0], 'intercept': fb[2],
                                 'slope_neg': fbNeg[0], 'intercept_neg': fbNeg[2], 'slope_pos': fbPos[0],
                                 'intercept_pos': fbPos[2]}
-                            dict9 = {'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
-                                     'frequency': kwargs['frequency']}
+                            dict9 = {
+                                'metric_name': Name, 'metric_method': Method, 'metric_reference': Ref,
+                                'frequency': kwargs['frequency']
+                            }
                             SaveNetcdf(
                                 file_name, var1=ssh, var1_attributes=dict1, var1_name='ssh__' + dataset,
                                 var1_time_name='months_' + dataset, var2=taux, var2_attributes=dict2,
@@ -8730,7 +8959,8 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
                                 var6_attributes=dict6, var6_name='reg_ssh_over_taux_hov__' + dataset, var7=hovFbPos,
                                 var7_attributes=dict7, var7_name='reg_ssh_over_POStaux_hov__' + dataset, var8=hovFbNeg,
                                 var8_attributes=dict8, var8_name='reg_ssh_over_NEGtaux_hov__' + dataset,
-                                frequency=kwargs['frequency'], global_attributes=dict9)
+                                frequency=kwargs['frequency'], global_attributes=dict9
+                            )
                             del dict1, dict2, dict3, dict4, dict5, dict6, dict7, dict8, dict9
     # Create output
     fbMetric = {
@@ -8741,12 +8971,14 @@ def EnsoFbTauxSsh(tauxfile, tauxname, tauxareafile, tauxareaname, tauxlandmaskfi
     return fbMetric
 
 
-def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod, prfilemod,
-              prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs, sstnameobs,
-              sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
-              prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
-              centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
-              metname='', **kwargs):
+def EnsoPrMap(
+        sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmaskfilemod, sstlandmasknamemod, prfilemod,
+        prnamemod, prareafilemod, prareanamemod, prlandmaskfilemod, prlandmasknamemod, sstfileobs, sstnameobs,
+        sstareafileobs, sstareanameobs, sstlandmaskfileobs, sstlandmasknameobs, prfileobs, prnameobs,
+        prareafileobs, prareanameobs, prlandmaskfileobs, prlandmasknameobs, sstbox, prbox, event_definition,
+        centered_rmse=0, biased_rmse=1, dataset1='', dataset2='', debug=False, netcdf=False, netcdf_name='',
+        metname='', **kwargs
+    ):
     """
     The EnsoPrMap() function computes precipitation anomalies pattern associated with ENSO on the globe.
     First metric: rmse(observations vs model).
@@ -8872,7 +9104,9 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -8882,9 +9116,7 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -8953,22 +9185,28 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
             keyerror = add_up_errors([keyerror_mod, keyerror_obs])
         else:
             if debug is True:
-                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in sst_mod.getAxisList()]),
-                              'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                              'shape1': '(mod) ' + str(sst_mod.shape), 'shape2': '(obs) ' + str(sst_obs.shape),
-                              'time1': '(mod) ' + str(TimeBounds(sst_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(sst_obs))}
+                dict_debug = {
+                    'axes1': '(mod) ' + str([ax.id for ax in sst_mod.getAxisList()]),
+                    'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
+                    'shape1': '(mod) ' + str(sst_mod.shape),
+                    'shape2': '(obs) ' + str(sst_obs.shape),
+                    'time1': '(mod) ' + str(TimeBounds(sst_mod)),
+                    'time2': '(obs) ' + str(TimeBounds(sst_obs))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
             # 1.2 Seasonal mean and anomalies
             enso_mod = SeasonalMean(sst_mod, season_ev, compute_anom=True)
             enso_obs = SeasonalMean(sst_obs, season_ev, compute_anom=True)
             if debug is True:
-                dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in enso_mod.getAxisList()]),
-                              'axes2': '(obs) ' + str([ax.id for ax in sst_obs.getAxisList()]),
-                              'shape1': '(mod) ' + str(enso_mod.shape), 'shape2': '(obs) ' + str(enso_obs.shape),
-                              'time1': '(mod) ' + str(TimeBounds(enso_mod)),
-                              'time2': '(obs) ' + str(TimeBounds(enso_obs))}
+                dict_debug = {
+                    'axes1': '(mod) ' + str([ax.id for ax in enso_mod.getAxisList()]),
+                    'axes2': '(obs) ' + str([ax.id for ax in enso_obs.getAxisList()]),
+                    'shape1': '(mod) ' + str(enso_mod.shape),
+                    'shape2': '(obs) ' + str(enso_obs.shape),
+                    'time1': '(mod) ' + str(TimeBounds(enso_mod)),
+                    'time2': '(obs) ' + str(TimeBounds(enso_obs))
+                }
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
             # ------------------------------------------------
@@ -8987,22 +9225,28 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                 keyerror = add_up_errors([keyerror_mod, keyerror_obs])
             else:
                 if debug is True:
-                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
-                                  'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                                  'shape1': '(mod) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
-                                  'time1': '(mod) ' + str(TimeBounds(pr_mod)),
-                                  'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+                    dict_debug = {
+                        'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                        'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                        'shape1': '(mod) ' + str(pr_mod.shape),
+                        'shape2': '(obs) ' + str(pr_obs.shape),
+                        'time1': '(mod) ' + str(TimeBounds(pr_mod)),
+                        'time2': '(obs) ' + str(TimeBounds(pr_obs))
+                    }
                     EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
 
                 # 2.2 Seasonal mean and anomalies
                 pr_mod = SeasonalMean(pr_mod, season_ev, compute_anom=True)
                 pr_obs = SeasonalMean(pr_obs, season_ev, compute_anom=True)
                 if debug is True:
-                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
-                                  'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                                  'shape1': '(mod) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape),
-                                  'time1': '(mod) ' + str(TimeBounds(pr_mod)),
-                                  'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+                    dict_debug = {
+                        'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                        'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                        'shape1': '(mod) ' + str(pr_mod.shape),
+                        'shape2': '(obs) ' + str(pr_obs.shape),
+                        'time1': '(mod) ' + str(TimeBounds(pr_mod)),
+                        'time2': '(obs) ' + str(TimeBounds(pr_obs))
+                    }
                     EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
 
                 # ------------------------------------------------
@@ -9010,26 +9254,33 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                 # ------------------------------------------------
                 # Regridding
                 if isinstance(kwargs['regridding'], dict):
-                    known_args = {'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
-                                  'regridTool', 'regridMethod'}
+                    known_args = {
+                        'model_orand_obs', 'newgrid', 'missing', 'order', 'mask', 'newgrid_name', 'regridder',
+                        'regridTool', 'regridMethod'
+                    }
                     extra_args = set(kwargs['regridding']) - known_args
                     if extra_args:
                         EnsoErrorsWarnings.unknown_key_arg(extra_args, INSPECTstack())
                     pr_mod, pr_obs, Method = TwoVarRegrid(pr_mod, pr_obs, Method, region=prbox, **kwargs['regridding'])
                     if debug is True:
-                        dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
-                                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                                      'shape1': '(mod) ' + str(pr_mod.shape), 'shape2': '(obs) ' + str(pr_obs.shape)}
+                        dict_debug = {
+                            'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                            'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                            'shape1': '(mod) ' + str(pr_mod.shape),
+                            'shape2': '(obs) ' + str(pr_obs.shape)
+                        }
                         EnsoErrorsWarnings.debug_mode('\033[92m', 'after TwoVarRegrid', 15, **dict_debug)
 
                 # regression
                 pr_mod_slope = LinearRegressionTsAgainstMap(pr_mod, enso_mod, return_stderr=False)
                 pr_obs_slope = LinearRegressionTsAgainstMap(pr_obs, enso_obs, return_stderr=False)
                 if debug is True:
-                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
-                                  'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
-                                  'shape1': '(mod) ' + str(pr_mod_slope.shape),
-                                  'shape2': '(obs) ' + str(pr_obs_slope.shape)}
+                    dict_debug = {
+                        'axes1': '(mod) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
+                        'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
+                        'shape1': '(mod) ' + str(pr_mod_slope.shape),
+                        'shape2': '(obs) ' + str(pr_obs_slope.shape)
+                    }
                     EnsoErrorsWarnings.debug_mode('\033[92m', 'after LinearRegressionTsAgainstMap', 15, **dict_debug)
 
                 # mask Pacific
@@ -9043,10 +9294,12 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                     keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                 else:
                     if debug is True:
-                        dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
-                                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
-                                      'shape1': '(mod) ' + str(pr_mod_slope.shape),
-                                      'shape2': '(obs) ' + str(pr_obs_slope.shape)}
+                        dict_debug = {
+                            'axes1': '(mod) ' + str([ax.id for ax in pr_mod_slope.getAxisList()]),
+                            'axes2': '(obs) ' + str([ax.id for ax in pr_obs_slope.getAxisList()]),
+                            'shape1': '(mod) ' + str(pr_mod_slope.shape),
+                            'shape2': '(obs) ' + str(pr_obs_slope.shape)
+                        }
                         EnsoErrorsWarnings.debug_mode('\033[92m', 'after BasinMask', 15, **dict_debug)
 
                     # Metric 1
@@ -9095,24 +9348,28 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                 keyerror = add_up_errors([keyerror_mod, keyerror_obs])
                             else:
                                 if debug is True:
-                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
-                                                  'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                                                  'shape1': '(mod) ' + str(pr_mod.shape),
-                                                  'shape2': '(obs) ' + str(pr_obs.shape),
-                                                  'time1': '(mod) ' + str(TimeBounds(pr_mod)),
-                                                  'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+                                    dict_debug = {
+                                        'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                                        'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                                        'shape1': '(mod) ' + str(pr_mod.shape),
+                                        'shape2': '(obs) ' + str(pr_obs.shape),
+                                        'time1': '(mod) ' + str(TimeBounds(pr_mod)),
+                                        'time2': '(obs) ' + str(TimeBounds(pr_obs))
+                                    }
                                     EnsoErrorsWarnings.debug_mode(
                                         '\033[92m', 'divedown after PreProcessTS', 15, **dict_debug)
                                 # anomalies
                                 pr_mod = SeasonalMean(pr_mod, season_ev, compute_anom=True)
                                 pr_obs = SeasonalMean(pr_obs, season_ev, compute_anom=True)
                                 if debug is True:
-                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
-                                                  'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                                                  'shape1': '(mod) ' + str(pr_mod.shape),
-                                                  'shape2': '(obs) ' + str(pr_obs.shape),
-                                                  'time1': '(mod) ' + str(TimeBounds(pr_mod)),
-                                                  'time2': '(obs) ' + str(TimeBounds(pr_obs))}
+                                    dict_debug = {
+                                        'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                                        'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                                        'shape1': '(mod) ' + str(pr_mod.shape),
+                                        'shape2': '(obs) ' + str(pr_obs.shape),
+                                        'time1': '(mod) ' + str(TimeBounds(pr_mod)),
+                                        'time2': '(obs) ' + str(TimeBounds(pr_obs))
+                                    }
                                     EnsoErrorsWarnings.debug_mode(
                                         '\033[92m', 'divedown after SeasonalMean', 15, **dict_debug)
                                 # regridding
@@ -9120,25 +9377,31 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                     pr_mod, pr_obs, _ = TwoVarRegrid(
                                         pr_mod, pr_obs, '', region=prbox, **kwargs['regridding'])
                                     if debug is True:
-                                        dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
-                                                      'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                                                      'shape1': '(mod) ' + str(pr_mod.shape),
-                                                      'shape2': '(obs) ' + str(pr_obs.shape)}
+                                        dict_debug = {
+                                            'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                                            'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                                            'shape1': '(mod) ' + str(pr_mod.shape),
+                                            'shape2': '(obs) ' + str(pr_obs.shape)
+                                        }
                                         EnsoErrorsWarnings.debug_mode(
                                             '\033[92m', 'divedown after TwoVarRegrid', 15, **dict_debug)
                                 # regression
                                 pr_mod = LinearRegressionTsAgainstMap(pr_mod, enso_mod, return_stderr=False)
                                 pr_obs = LinearRegressionTsAgainstMap(pr_obs, enso_obs, return_stderr=False)
                                 if debug is True:
-                                    dict_debug = {'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
-                                                  'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
-                                                  'shape1': '(mod) ' + str(pr_mod.shape),
-                                                  'shape2': '(obs) ' + str(pr_obs.shape)}
+                                    dict_debug = {
+                                        'axes1': '(mod) ' + str([ax.id for ax in pr_mod.getAxisList()]),
+                                        'axes2': '(obs) ' + str([ax.id for ax in pr_obs.getAxisList()]),
+                                        'shape1': '(mod) ' + str(pr_mod.shape),
+                                        'shape2': '(obs) ' + str(pr_obs.shape)
+                                    }
                                     EnsoErrorsWarnings.debug_mode(
                                         '\033[92m', 'divedown after LinearRegressionTsAgainstMap', 15, **dict_debug)
                                 list_region = ["africaSE", "americaN", "americaS", "asiaS", "oceania"]
-                                list_met_name = ["RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2,
-                                                 "CORR_error_" + dataset2, "STD_" + dataset2, "STD_error_" + dataset2]
+                                list_met_name = [
+                                    "RMSE_" + dataset2, "RMSE_error_" + dataset2, "CORR_" + dataset2,
+                                    "CORR_error_" + dataset2, "STD_" + dataset2, "STD_error_" + dataset2
+                                ]
                                 # Metrics ENSO regression regional
                                 dict_metric, dict_nc = dict(), dict()
                                 nbr = 3
@@ -9158,17 +9421,23 @@ def EnsoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
                                     file_name = deepcopy(netcdf_name).replace(".nc", "_" + metname + ".nc")
                                 else:
                                     file_name = deepcopy(netcdf_name) + "_" + metname + ".nc"
-                                dict1 = {'units': Units, 'number_of_years_used': yearN_mod,
-                                         'time_period': str(actualtimebounds_mod), 'spatialSTD_' + dataset1: std_mod}
-                                dict2 = {'units': Units, 'number_of_years_used': yearN_obs,
-                                         'time_period': str(actualtimebounds_obs), 'spatialSTD_' + dataset2: std_obs}
-                                dict3 = {'metric_name': Name, 'metric_valueRMSE_' + dataset2: prRmse,
-                                         'metric_valueRMSE_error_' + dataset2: prRmseErr,
-                                         'metric_valueCORR_' + dataset2: prCorr,
-                                         'metric_valueCORR_error_' + dataset2: prCorrErr,
-                                         'metric_valueSTD_' + dataset2: prStd,
-                                         'metric_valueSTD_error_' + dataset2: prStdErr, 'metric_method': Method,
-                                         'metric_reference': Ref, 'frequency': kwargs['frequency']}
+                                dict1 = {
+                                    'units': Units, 'number_of_years_used': yearN_mod,
+                                    'time_period': str(actualtimebounds_mod), 'spatialSTD_' + dataset1: std_mod
+                                }
+                                dict2 = {
+                                    'units': Units, 'number_of_years_used': yearN_obs,
+                                    'time_period': str(actualtimebounds_obs), 'spatialSTD_' + dataset2: std_obs
+                                }
+                                dict3 = {
+                                    'metric_name': Name, 'metric_valueRMSE_' + dataset2: prRmse,
+                                    'metric_valueRMSE_error_' + dataset2: prRmseErr,
+                                    'metric_valueCORR_' + dataset2: prCorr,
+                                    'metric_valueCORR_error_' + dataset2: prCorrErr,
+                                    'metric_valueSTD_' + dataset2: prStd,
+                                    'metric_valueSTD_error_' + dataset2: prStdErr, 'metric_method': Method,
+                                    'metric_reference': Ref, 'frequency': kwargs['frequency']
+                                    }
                                 dict3.update(dict_metric)
                                 SaveNetcdf(
                                     file_name, var1=pr_mod_slope, var1_attributes=dict1,
@@ -9320,7 +9589,9 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -9332,9 +9603,7 @@ def EnsoPrMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -9877,7 +10146,9 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -9889,9 +10160,7 @@ def EnsoPrMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -10429,7 +10698,9 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -10441,9 +10712,7 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -10456,7 +10725,7 @@ def EnsoPrDjfTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = ''
     else:
         Units = 'mm/day'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoPrDjfTel'
     if metname == '':
         metname = deepcopy(metric)
@@ -10802,7 +11071,9 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -10814,9 +11085,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -10829,7 +11098,7 @@ def EnsoPrJjaTel(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
         Units = ''
     else:
         Units = 'mm/day'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoPrJjaTel'
     if metname == '':
         metname = deepcopy(metric)
@@ -11116,15 +11385,15 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -11250,12 +11519,10 @@ def EnsoSeasonality(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile,
                         sst3_MAM = Std(sst3_MAM)
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst1_NDJ = Regrid(sst1_NDJ, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                         sst1_MAM = Regrid(sst1_MAM, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                         sst2 = Regrid(sst2, None, region='equatorial_pacific', **kwargs['regridding'])
@@ -11398,7 +11665,9 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -11411,9 +11680,7 @@ def EnsoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -11747,15 +12014,15 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -11839,12 +12106,10 @@ def EnsoSstSkew(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sst
                         sst2 = SkewnessTemporal(sst2)
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst1 = Regrid(sst1, None, region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                         sst2 = Regrid(sst2, None, region='equatorial_pacific', **kwargs['regridding'])
                         # Meridional average
@@ -12012,7 +12277,9 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -12022,9 +12289,7 @@ def EnsoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -12456,7 +12721,9 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -12468,9 +12735,7 @@ def EnsoSlpMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -13012,7 +13277,9 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -13024,9 +13291,7 @@ def EnsoSlpMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -13558,7 +13823,9 @@ def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -13570,16 +13837,14 @@ def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO Zonal MLDA pattern"
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + mldbox + " MLDA"
     Units = '' if kwargs['normalization'] else 'm/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoMldLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -13668,7 +13933,7 @@ def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                               'time1': '(mod) ' + str(TimeBounds(enso_mod)),
                               'time2': '(obs) ' + str(TimeBounds(enso_obs))}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
-            
+
             # ------------------------------------------------
             # 2. spatial MldA
             # ------------------------------------------------
@@ -13895,8 +14160,8 @@ def EnsoMldLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
                                      'description':
                                          "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
                                          " during " + season_ev + ", this is the composite of MldA during El Nino events"}
-                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
-                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: mldRmse,
+                                     'metric_value_error_' + dataset2: mldRmseErr, 'metric_method': Method,
                                      'metric_reference': Ref, 'frequency': kwargs['frequency']}
                             SaveNetcdf(
                                 file_name, var1=mld_mod_slope, var1_attributes=dict1,
@@ -14054,7 +14319,9 @@ def EnsoMldTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -14066,9 +14333,7 @@ def EnsoMldTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -14076,7 +14341,7 @@ def EnsoMldTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + mldbox + " MLDA during " + \
              str(nbr_years_window) + " years (centered on ENSO)"
     Units = '' if kwargs['normalization'] else 'm/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoMldTsRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -14496,7 +14761,9 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -14508,16 +14775,14 @@ def EnsoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO Zonal SSTA pattern"
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + box + " SSTA"
     Units = '' if kwargs['normalization'] else 'C/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoSstLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -14963,7 +15228,9 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -14973,9 +15240,7 @@ def EnsoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -15369,7 +15634,9 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -15381,9 +15648,7 @@ def EnsoSstMapDjf(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -15878,7 +16143,9 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -15890,9 +16157,7 @@ def EnsoSstMapJja(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -16414,7 +16679,9 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -16426,9 +16693,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -16436,7 +16701,7 @@ def EnsoPrTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstland
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + prbox + " PRA during " + \
              str(nbr_years_window) + " years (centered on ENSO)"
     Units = '' if kwargs['normalization'] else 'mm/day/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoPrTsRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -16849,7 +17114,9 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -16861,9 +17128,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -16871,7 +17136,7 @@ def EnsoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + region_ev + " SSTA during " +\
              str(nbr_years_window) + " years (centered on ENSO)"
     Units = '' if kwargs['normalization'] else 'C/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoSstTsRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -17302,7 +17567,9 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -17314,16 +17581,14 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO Zonal TAUXA pattern"
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauxbox + " TAUXA"
     Units = '' if kwargs['normalization'] else '1e-3 N/m2/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoTauxLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -17412,7 +17677,7 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                               'time1': '(mod) ' + str(TimeBounds(enso_mod)),
                               'time2': '(obs) ' + str(TimeBounds(enso_obs))}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
-            
+
             # ------------------------------------------------
             # 2. spatial TauxA
             # ------------------------------------------------
@@ -17646,8 +17911,8 @@ def EnsoTauxLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                                      'description':
                                          "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
                                          " during " + season_ev + ", this is the composite of TauxA during El Nino events"}
-                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
-                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: tauxRmse,
+                                     'metric_value_error_' + dataset2: tauxRmseErr, 'metric_method': Method,
                                      'metric_reference': Ref, 'frequency': kwargs['frequency']}
                             SaveNetcdf(
                                 file_name, var1=taux_mod_slope, var1_attributes=dict1,
@@ -17805,7 +18070,9 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -17817,9 +18084,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -17827,7 +18092,7 @@ def EnsoTauxTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauxbox + " TAUXA during " + \
              str(nbr_years_window) + " years (centered on ENSO)"
     Units = '' if kwargs['normalization'] else '1e-3 N/m2/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoTauxTsRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -18282,7 +18547,9 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -18294,16 +18561,14 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = "ENSO Zonal TAUYA pattern"
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauybox + " TAUYA"
     Units = '' if kwargs['normalization'] else '1e-3 N/m2/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoTauyLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -18392,7 +18657,7 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                               'time1': '(mod) ' + str(TimeBounds(enso_mod)),
                               'time2': '(obs) ' + str(TimeBounds(enso_obs))}
                 EnsoErrorsWarnings.debug_mode('\033[92m', 'after SeasonalMean', 15, **dict_debug)
-            
+
             # ------------------------------------------------
             # 2. spatial TauyA
             # ------------------------------------------------
@@ -18626,8 +18891,8 @@ def EnsoTauyLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstl
                                      'description':
                                          "Nino events = " + region_ev + " SSTA > " + str(threshold) + my_thresh +
                                          " during " + season_ev + ", this is the composite of TauyA during El Nino events"}
-                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: sstRmse,
-                                     'metric_value_error_' + dataset2: sstRmseErr, 'metric_method': Method,
+                            dict9 = {'metric_name': Name, 'metric_value_' + dataset2: tauyRmse,
+                                     'metric_value_error_' + dataset2: tauyRmseErr, 'metric_method': Method,
                                      'metric_reference': Ref, 'frequency': kwargs['frequency']}
                             SaveNetcdf(
                                 file_name, var1=tauy_mod_slope, var1_attributes=dict1,
@@ -18785,7 +19050,9 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -18797,9 +19064,7 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -18807,7 +19072,7 @@ def EnsoTauyTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = region_ev + " SSTA during " + season_ev + " regressed against " + tauybox + " TAUYA during " + \
              str(nbr_years_window) + " years (centered on ENSO)"
     Units = '' if kwargs['normalization'] else '1e-3 N/m2/C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'EnsoTauyTsRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -19269,7 +19534,9 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -19281,9 +19548,7 @@ def NinaPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -19562,7 +19827,9 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -19574,9 +19841,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -19587,7 +19852,7 @@ def NinaSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
              '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']), westward boundary of EP events' +\
              str(kwargs['treshold_ep_ev']) + 'E'
     Units = '%'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstDiv'
     if metname == '':
         metname = deepcopy(metric)
@@ -19835,7 +20100,9 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -19847,9 +20114,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -19859,7 +20124,7 @@ def NinaSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = 'Nina events = ' + region_ev + ' sstA < ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA '\
              + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']'
     Units = 'density'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstDivRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -20142,7 +20407,9 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -20153,9 +20420,7 @@ def NinaSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -20353,7 +20618,9 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -20365,9 +20632,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -20376,7 +20641,7 @@ def NinaSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = 'Nina events = ' + region_ev + ' sstA < ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA '\
              + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']'
     Units = '' if kwargs['normalization'] else 'C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'NinaSstLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -20759,7 +21024,9 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -20771,9 +21038,7 @@ def NinaSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -21073,7 +21338,9 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -21085,9 +21352,7 @@ def NinaSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -21382,8 +21647,10 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
         time_frequency, time_period_model, time_period_observations, ref, keyerror, dive_down_diag
 
     Method:
-    -------
-        uses tools from uvcdat library
+    ------
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -21395,9 +21662,7 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -21523,12 +21788,10 @@ def NinaSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_hov_mod, sst_hov_obs, Method = TwoVarRegrid(
                             sst_hov_mod, sst_hov_obs, Method, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
@@ -21734,7 +21997,9 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -21746,9 +22011,7 @@ def NinoPrMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandmas
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22027,7 +22290,9 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -22039,9 +22304,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22052,7 +22315,7 @@ def NinoSstDiv(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
              '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']), westward boundary of EP events' +\
              str(kwargs['treshold_ep_ev']) + 'E'
     Units = '%'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstDiv'
     if metname == '':
         metname = deepcopy(metric)
@@ -22300,7 +22563,9 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -22312,9 +22577,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22324,7 +22587,7 @@ def NinoSstDivRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA '\
              + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']'
     Units = 'density'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstDivRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -22607,7 +22870,9 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -22618,9 +22883,7 @@ def NinoSstDur(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile, sstl
     # test given kwargs
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22818,7 +23081,9 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -22830,9 +23095,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -22841,7 +23104,7 @@ def NinoSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstla
     Method = 'Nino events = ' + region_ev + ' sstA > ' + str(threshold) + ' during ' + season_ev + ', zonal SSTA '\
              + '(meridional averaged [' + str(lat[0]) + ' ; ' + str(lat[1]) + ']'
     Units = '' if kwargs['normalization'] else 'C'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'NinoSstLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -23224,7 +23487,9 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -23236,9 +23501,7 @@ def NinoSlpMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -23514,8 +23777,10 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
         dive_down_diag
 
     Method:
-    -------
-        uses tools from uvcdat library
+    ------
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -23528,9 +23793,7 @@ def NinoSstDiversity(sstfile, sstname, sstareafile, sstareaname, sstlandmaskfile
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'treshold_ep_ev',
                     'time_bounds']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -23837,7 +24100,9 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -23849,9 +24114,7 @@ def NinoSstMap(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlandma
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -24147,7 +24410,9 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     """
     # setting variables
@@ -24159,9 +24424,7 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'smoothing', 'time_bounds_mod',
                     'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
@@ -24287,12 +24550,10 @@ def NinoSstTsRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, sstlan
                             EnsoErrorsWarnings.debug_mode('\033[92m', 'after PreProcessTS', 15, **dict_debug)
                         # Regridding
                         if 'regridding' not in list(kwargs.keys()):
-                            kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                                                    'newgrid_name': 'generic_1x1deg'}
+                            kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         else:
                             if not isinstance(kwargs['regridding'], dict):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                         sst_hov_mod, sst_hov_obs, Method = TwoVarRegrid(
                             sst_hov_mod, sst_hov_obs, Method, region='equatorial_pacific', **kwargs['regridding'])
                         if debug is True:
@@ -24466,7 +24727,9 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -24477,14 +24740,13 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr meridional seasonality RMSE'
     Units = 'mm/day'
     Method = 'Meridional root mean square error of ' + box + ' climatological pr STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalPrLatRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -24612,13 +24874,16 @@ def SeasonalPrLatRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                             prMap_obs = Std(prMap_obs)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             prMap_mod, prMap_obs, _ = TwoVarRegrid(
                                 prMap_mod, prMap_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                             pr_mod, pr_obs, _ = TwoVarRegrid(pr_mod, pr_obs, '', region=box, **kwargs['regridding'])
@@ -24793,7 +25058,9 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -24804,16 +25071,14 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'pr zonal seasonality RMSE'
     Units = 'mm/day'
     Method = 'Zonal root mean square error of ' + box + ' climatological pr STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalPrLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -24940,13 +25205,16 @@ def SeasonalPrLonRmse(prfilemod, prnamemod, prareafilemod, prareanamemod, prland
                             prMap_obs = Std(prMap_obs)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             prMap_mod, prMap_obs, _ = TwoVarRegrid(
                                 prMap_mod, prMap_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                             pr_mod, pr_obs, _ = TwoVarRegrid(pr_mod, pr_obs, '', region=box, **kwargs['regridding'])
@@ -25124,7 +25392,9 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -25135,14 +25405,13 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh meridional seasonality RMSE'
     Units = 'cm'
     Method = 'Meridional root mean square error of ' + box + ' climatological ssh STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalSshLatRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -25274,13 +25543,16 @@ def SeasonalSshLatRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                             sshMap_obs = OperationMultiply(sshMap_obs, 1e2)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             sshMap_mod, sshMap_obs, _ = TwoVarRegrid(
                                 sshMap_mod, sshMap_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                             ssh_mod, ssh_obs, _ = TwoVarRegrid(ssh_mod, ssh_obs, '', region=box, **kwargs['regridding'])
@@ -25457,7 +25729,9 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -25468,16 +25742,14 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'ssh zonal seasonality RMSE'
     Units = 'cm'
     Method = 'Zonal root mean square error of ' + box + ' climatological ssh STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalSshLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -25608,13 +25880,16 @@ def SeasonalSshLonRmse(sshfilemod, sshnamemod, sshareafilemod, sshareanamemod, s
                             sshMap_obs = OperationMultiply(sshMap_obs, 1e2)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             sshMap_mod, sshMap_obs, _ = TwoVarRegrid(
                                 sshMap_mod, sshMap_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                             ssh_mod, ssh_obs, _ = TwoVarRegrid(ssh_mod, ssh_obs, '', region=box, **kwargs['regridding'])
@@ -25794,7 +26069,9 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -25805,14 +26082,13 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst meridional seasonality RMSE'
     Units = 'C'
     Method = 'Meridional root mean square error of ' + box + ' climatological sst STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalSstLatRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -25940,13 +26216,16 @@ def SeasonalSstLatRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                             sstMap_obs = Std(sstMap_obs)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             sstMap_mod, sstMap_obs, _ = TwoVarRegrid(
                                 sstMap_mod, sstMap_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                             sst_mod, sst_obs, _ = TwoVarRegrid(sst_mod, sst_obs, '', region=box, **kwargs['regridding'])
@@ -26121,7 +26400,9 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -26132,16 +26413,14 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'sst zonal seasonality RMSE'
     Units = 'C'
     Method = 'Zonal root mean square error of ' + box + ' climatological sst STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalSstLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -26268,13 +26547,16 @@ def SeasonalSstLonRmse(sstfilemod, sstnamemod, sstareafilemod, sstareanamemod, s
                             sstMap_obs = Std(sstMap_obs)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             sstMap_mod, sstMap_obs, _ = TwoVarRegrid(
                                 sstMap_mod, sstMap_obs, '', region='equatorial_pacific_LatExt2', **kwargs['regridding'])
                             sst_mod, sst_obs, _ = TwoVarRegrid(sst_mod, sst_obs, '', region=box, **kwargs['regridding'])
@@ -26452,7 +26734,9 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -26463,14 +26747,13 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try: kwargs[arg]
-        except: kwargs[arg] = default_arg_values(arg)
+        if arg not in kwargs: kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux meridional seasonality RMSE'
     Units = '1e-3 N/m2'
     Method = 'Meridional root mean square error of ' + box + ' climatological taux STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalTauxLatRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -26602,13 +26885,16 @@ def SeasonalTauxLatRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                             tauxMap_obs = OperationMultiply(tauxMap_obs, 1e3)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             tauxMap_mod, tauxMap_obs, _ = TwoVarRegrid(
                                 tauxMap_mod, tauxMap_obs, '', region='equatorial_pacific_LatExt2',
                                 **kwargs['regridding'])
@@ -26787,7 +27073,9 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
 
     Method:
     -------
-        uses tools from uvcdat library
+        Uses the ENSO_metrics xarray/xESMF compatibility layer for regridding,
+        preprocessing, and statistics while preserving the legacy ENSO_metrics
+        metric interface.
 
     Notes:
     -----
@@ -26798,16 +27086,14 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
     needed_kwarg = ['detrending', 'frequency', 'min_time_steps', 'normalization', 'regridding', 'smoothing',
                     'time_bounds_mod', 'time_bounds_obs']
     for arg in needed_kwarg:
-        try:
-            kwargs[arg]
-        except:
+        if arg not in kwargs:
             kwargs[arg] = default_arg_values(arg)
 
     # Define metric attributes
     Name = 'taux zonal seasonality RMSE'
     Units = '1e-3 N/m2'
     Method = 'Zonal root mean square error of ' + box + ' climatological taux STD'
-    Ref = 'Using CDAT regridding and rms (uncentered and biased) calculation'
+    Ref = 'Using xarray/xESMF-compatible regridding and rms (uncentered and biased) calculation'
     metric = 'SeasonalTauxLonRmse'
     if metname == '':
         metname = deepcopy(metric)
@@ -26939,13 +27225,16 @@ def SeasonalTauxLonRmse(tauxfilemod, tauxnamemod, tauxareafilemod, tauxareanamem
                             tauxMap_obs = OperationMultiply(tauxMap_obs, 1e3)
                             # Regridding
                             if 'regridding' not in list(kwargs.keys()):
-                                kwargs['regridding'] = {'regridder': 'cdms', 'regridTool': 'esmf',
-                                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                kwargs['regridding'] = DEFAULT_REGRIDDING.copy()
                             else:
                                 if not isinstance(kwargs['regridding'], dict):
                                     kwargs['regridding'] = {
-                                        'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf',
-                                        'regridMethod': 'linear', 'newgrid_name': 'generic_1x1deg'}
+                                        'model_orand_obs': 2,
+                                        'regridder': 'xesmf',
+                                        'regridTool': 'esmf',
+                                        'regridMethod': 'bilinear',
+                                        'newgrid_name': 'generic_1x1deg'
+                                    }
                             tauxMap_mod, tauxMap_obs, _ = TwoVarRegrid(
                                 tauxMap_mod, tauxMap_obs, '', region='equatorial_pacific_LatExt2',
                                 **kwargs['regridding'])

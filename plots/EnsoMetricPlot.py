@@ -48,8 +48,8 @@ def cmip_plotter(metric_collection, metric, experiment, diagnostic_values, diagn
     dict_param = plot_param(metric_collection, lmet)
     my_param = dict_param["diagnostic"]
     reference = dict_param["metric_reference"]
-    diagnostic_units = diagnostic_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
-    metric_units = metric_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+    diagnostic_units = diagnostic_units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$long")
+    metric_units = metric_units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$long")
     if multi_member_ave is True:
         info = "ensemble-mean\n" + experiment + " simulations"
     else:
@@ -72,15 +72,15 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
         reference = dict_param['metric_reference']
     dict_reg = dict_param['metric_regions']
     if isinstance(diagnostic_units, str) is True:
-        diagnostic_units = diagnostic_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+        diagnostic_units = diagnostic_units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$long")
     elif isinstance(diagnostic_units, list) is True:
         for ii, uni in enumerate(diagnostic_units):
-            diagnostic_units[ii] = uni.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+            diagnostic_units[ii] = uni.replace("C", r"$^\circ$C").replace("long", r"$^\circ$long")
     if isinstance(metric_units, str) is True:
-        metric_units = metric_units.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+        metric_units = metric_units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$long")
     elif isinstance(metric_units, list) is True:
         for ii, uni in enumerate(metric_units):
-            metric_units[ii] = uni.replace("C", "$^\circ$C").replace("long", "$^\circ$long")
+            metric_units[ii] = uni.replace("C", r"$^\circ$C").replace("long", r"$^\circ$long")
     if isinstance(name_png, str) is False:
         name_png = metric_collection + "_" + metric + "_" + experiment + "_"
         if isinstance(model, str):
@@ -142,4 +142,3 @@ def main_plotter(metric_collection, metric, model, experiment, filename_nc, diag
         dt = datetime.now() - t1
         dt = str(int(round(dt.seconds / 60.)))
         print(str().ljust(30) + "took " + dt + " minute(s)")
-

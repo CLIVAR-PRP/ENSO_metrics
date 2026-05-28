@@ -10,10 +10,10 @@ from numpy import isnan as NUMPYisnan
 from numpy import mean as NUMPYmean
 from numpy import nan as NUMPYnan
 from numpy import sort as NUMPYsort
+from numpy import percentile as NUMPYpercentile
 from numpy import where as NUMPYwhere
 from numpy.ma import masked_invalid as NUMPYma__masked_invalid
 from numpy.random import randint as NUMPYrandom__randint
-from scipy.stats import scoreatpercentile as SCIPYstats__scoreatpercentile
 
 # xarray based functions
 from xarray import open_dataset
@@ -93,7 +93,7 @@ def create_labels(label_name, label_ticks):
             label_ticks = NUMPYarray(label_ticks)
             while 0 not in label_ticks:
                 label_ticks = label_ticks + 1
-        label = [str(abs(int(ii))) + '$^\circ$S' if ii < 0 else (str(abs(int(ii))) + '$^\circ$N' if ii > 0 else 'eq')
+        label = [str(abs(int(ii))) + r'$^\circ$S' if ii < 0 else (str(abs(int(ii))) + r'$^\circ$N' if ii > 0 else 'eq')
                  for ii in label_ticks]
     elif label_name == "longitude":
         if len(label_ticks) < 200:
@@ -105,8 +105,8 @@ def create_labels(label_name, label_ticks):
             label_ticks = NUMPYarray(label_ticks)
             while 180 not in label_ticks:
                 label_ticks = label_ticks + 10
-        label = [str(int(ii)) + "$^\circ$E" if ii < 180 else (
-            str(abs(int(ii) - 360)) + "$^\circ$W" if ii > 180 else "180$^\circ$") for ii in label_ticks]
+        label = [str(int(ii)) + r"$^\circ$E" if ii < 180 else (
+            str(abs(int(ii) - 360)) + r"$^\circ$W" if ii > 180 else r"180$^\circ$") for ii in label_ticks]
     return label_ticks, label
 
 
@@ -152,6 +152,9 @@ def get_reference(metric_collection, metric):
 
 def minimaxi(tab):
     tmp = [my_mask(tmp, remove_masked=True) for tmp in tab]
+    tmp = [tt for tt in tmp if len(tt) > 0]
+    if len(tmp) == 0:
+        return 0., 0.
     tmp = [tt.min() for tt in tmp] + [tt.max() for tt in tmp]
     return min(tmp), max(tmp)
 
@@ -296,12 +299,16 @@ def my_legend(modname, obsname, filename_nc, models2=None, member=None, plot_met
 
 def my_mask(tab, remove_masked=False):
     tmp = NUMPYarray(tab, dtype=float)
-    tmp = NUMPYwhere(tmp == None, NUMPYnan, tmp)
+    # None entries are cast to nan by dtype=float; masked_invalid catches both nan and inf
     tmp = NUMPYma__masked_invalid(tmp)
     if remove_masked is True:
         # tmp = tmp[~tmp.mask]
         tmp = tmp.compressed()
     return tmp
+
+
+def has_valid_data(tab):
+    return len(my_mask(tab, remove_masked=True)) > 0
 
 
 def my_mask_map(tab_ref, tab_mod):
@@ -323,61 +330,190 @@ def read_diag(dict_diag, dict_metric, model, reference, metric_variables, shadin
             diag_mod = [dict_diag[mod] for mod in modelKeyName]
     if shading is True:
         my_ref = list(dict_diag["obs"].keys())
+        obs_mapping = dict_diag["obs"]
     else:
         my_ref = list(dict_diag.keys())
-    if reference in my_ref:
-        obs = deepcopy(reference)
+        obs_mapping = dict_diag
+
+    obs = _match_key_by_normalized_name(obs_mapping, reference)
+    if obs is not None:
+        obs = deepcopy(obs)
+    elif len(my_ref) == 1:
+        obs = my_ref[0]
     else:
+        obs = None
         if len(metric_variables) == 1:
             for obs1 in observations:
-                if obs1 in my_ref:
-                    obs = deepcopy(obs1)
+                obs = _match_key_by_normalized_name(obs_mapping, obs1)
+                if obs is not None:
                     break
         else:
             for obs1 in observations:
                 for obs2 in observations:
                     obs3 = obs1 + "_" + obs2
-                    if obs3 in my_ref:
-                        obs = deepcopy(obs3)
+                    obs = _match_key_by_normalized_name(obs_mapping, obs3)
+                    if obs is not None:
                         break
-        try: obs
-        except: obs = sorted(my_ref)[0]
+                if obs is not None:
+                    break
+        if obs is None:
+            obs = sorted(my_ref)[0]
     if shading is True:
         diag_obs = dict_diag["obs"][obs]
     else:
         diag_obs = dict_diag[obs]
     if isinstance(model, str):
-        metric_value = dict_metric[obs][model]
+        metric_value = _get_metric_value(dict_metric, obs, model)
     else:
         if shading is True:
-            metric_value = [
-                my_average([dict_metric[mod][obs][mm]
-                            for mm in sorted(list(dict_metric[mod][obs].keys()), key=lambda v: v.upper())],
-                           remove_masked=True)
-                for mod in model]
+            metric_value = list()
+            for mod in model:
+                obs_key = _match_key_by_normalized_name(dict_metric[mod], obs)
+                if obs_key is None and len(dict_metric[mod]) == 1:
+                    obs_key = list(dict_metric[mod].keys())[0]
+                metric_value.append(
+                    my_average([dict_metric[mod][obs_key][mm]
+                                for mm in sorted(list(dict_metric[mod][obs_key].keys()), key=lambda v: v.upper())],
+                               remove_masked=True)
+                )
         else:
-            metric_value = [dict_metric[obs][mod] for mod in model]
+            metric_value = [_get_metric_value(dict_metric, obs, mod) for mod in model]
     # metric_value = dict_metric[obs]  # ["ref_" + obs]
     return diag_mod, diag_obs, metric_value, obs
 
 
+def _normalize_dataset_name(name):
+    return "".join([char.lower() for char in str(name) if char.isalnum()])
+
+
+def _match_obs_varname(variables_in_xml, varname, dict_metric, model):
+    candidates = [var for var in variables_in_xml if var.startswith(varname)]
+    expected_obs = list(dict_metric.keys()) if isinstance(dict_metric, dict) else []
+
+    normalized_model = _normalize_dataset_name(model)
+    non_model_candidates = [
+        candidate for candidate in candidates
+        if not _normalize_dataset_name(candidate[len(varname):]).startswith(normalized_model)
+    ]
+
+    for obs in expected_obs:
+        normalized_obs = _normalize_dataset_name(obs)
+        for candidate in non_model_candidates:
+            suffix = candidate[len(varname):]
+            if _normalize_dataset_name(suffix) == normalized_obs:
+                return candidate, obs
+
+    if len(non_model_candidates) == 1:
+        candidate = non_model_candidates[0]
+        return candidate, candidate[len(varname):]
+
+    for obs in observations:
+        normalized_obs = _normalize_dataset_name(obs)
+        for candidate in non_model_candidates:
+            suffix = candidate[len(varname):]
+            if _normalize_dataset_name(suffix) == normalized_obs:
+                return candidate, obs
+
+    message = (
+        "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
+        ": observation variable not found"
+    )
+    list_strings = [message,
+                    str().ljust(5) + "varname = " + str(varname),
+                    str().ljust(5) + "expected observations = " + str(expected_obs),
+                    str().ljust(5) + "available candidates = " + str(candidates)]
+    EnsoErrorsWarnings.my_error(list_strings)
+
+
+def _match_model_varname(variables_in_xml, varname, model, member=None):
+    expected_suffix = model
+    if member is not None:
+        expected_suffix += "_" + member
+    expected_var = varname + expected_suffix
+    if expected_var in variables_in_xml:
+        return expected_var
+
+    normalized_expected = _normalize_dataset_name(expected_suffix)
+    candidates = [
+        var for var in variables_in_xml
+        if var.startswith(varname) and
+        _normalize_dataset_name(var[len(varname):]) == normalized_expected
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+
+    list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": model variable not found",
+                    str().ljust(5) + "varname = " + str(varname),
+                    str().ljust(5) + "model = " + str(model),
+                    str().ljust(5) + "member = " + str(member),
+                    str().ljust(5) + "available candidates = " +
+                    str([var for var in variables_in_xml if var.startswith(varname)])]
+    EnsoErrorsWarnings.my_error(list_strings)
+
+
+def _match_key_by_normalized_name(mapping, key):
+    if not isinstance(mapping, dict):
+        return None
+    if key in mapping:
+        return key
+
+    normalized_key = _normalize_dataset_name(key)
+    matches = [
+        candidate for candidate in mapping.keys()
+        if _normalize_dataset_name(candidate) == normalized_key
+    ]
+    if len(matches) == 1:
+        return matches[0]
+
+    return None
+
+
+def _get_metric_value(dict_metric, obs, model):
+    obs_key = _match_key_by_normalized_name(dict_metric, obs)
+    if obs_key is None and isinstance(dict_metric, dict) and len(dict_metric) == 1:
+        obs_key = list(dict_metric.keys())[0]
+
+    if obs_key is None:
+        message = (
+            "ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) +
+            ": metric observation not found"
+        )
+        list_strings = [message,
+                        str().ljust(5) + "obs = " + str(obs),
+                        str().ljust(5) + "available observations = " + str(list(dict_metric.keys()))]
+        EnsoErrorsWarnings.my_error(list_strings)
+
+    model_values = dict_metric[obs_key]
+    model_key = _match_key_by_normalized_name(model_values, model)
+    if model_key is None and isinstance(model_values, dict) and len(model_values) == 1:
+        model_key = list(model_values.keys())[0]
+
+    if model_key is None:
+        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": metric model not found",
+                        str().ljust(5) + "model = " + str(model),
+                        str().ljust(5) + "available models = " + str(list(model_values.keys()))]
+        EnsoErrorsWarnings.my_error(list_strings)
+
+    return model_values[model_key]
+
+
+def _get_netcdf_attr(attrs, key):
+    if key in attrs:
+        return attrs[key]
+
+    normalized_key = _normalize_dataset_name(key)
+    matches = [
+        attr_key for attr_key in attrs.keys()
+        if _normalize_dataset_name(attr_key) == normalized_key
+    ]
+    if len(matches) == 1:
+        return attrs[matches[0]]
+
+    return None
+
+
 def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, model):
-    if len(metric_variables) == 1:
-        for obs in observations:
-            newvar = varname + obs
-            if newvar in variables_in_xml:
-                break
-    else:
-        my_break = False
-        for obs1 in observations:
-            for obs2 in observations:
-                obs = obs1 + "_" + obs2
-                newvar = varname + obs
-                if newvar in variables_in_xml:
-                    my_break = True
-                    break
-            if my_break is True:
-                break
+    newvar, obs = _match_obs_varname(variables_in_xml, varname, dict_metric, model)
     # if "_lon__" in newvar or "_hov__" in newvar:
     #     list_strings = [
     #         "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": reader",
@@ -389,7 +525,7 @@ def read_obs(xml, variables_in_xml, metric_variables, varname, dict_metric, mode
     # else:
     #     tab_out = xml[newvar]
     tab_out = xml[newvar]
-    metric_value = dict_metric[obs][model]#["ref_" + obs]
+    metric_value = _get_metric_value(dict_metric, obs, model)
     return tab_out, metric_value, obs
 
 
@@ -410,50 +546,41 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
         #     tab_mod.append(ff[var + model].sel(longitude=slice(140, 264)))
         # else:
         #     tab_mod.append(ff[var + model])
-        varName_in_nc = var + model
-        if member is not None:
-            varName_in_nc += "_" + member 
-        #tab_mod.append(ff[var + model])
+        varName_in_nc = _match_model_varname(variables_in_file, var, model, member=member)
         tab_mod.append(ff[varName_in_nc])
     # reab obs
     tab_obs = list()
+    obs_names = list()
     for var in var_to_read:
-        varobs = var + reference
-        if varobs in variables_in_file:
-            # if "_lon__" in varobs or "_hov__" in varobs:
-            #     list_strings = [
-            #         "WARNING" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": reader",
-            #         str().ljust(5) + str(varobs) + " trick: read only between 140E and 96W",
-            #         str().ljust(5) + "this should not stay like that!!!"
-            #     ]
-            #     EnsoErrorsWarnings.my_warning(list_strings)
-            #     tab = ff[varobs].sel(longitude=slice(140, 264))
-            # else:
-            #     tab = ff[varobs]
-            tab = ff[varobs]
-            metval = dict_metric[reference][model]  # ["ref_" + reference]
-            obs = deepcopy(reference)
-        else:
-            tab, metval, obs = read_obs(ff, variables_in_file, metric_variables, var, dict_metric, model)
+        tab, metval, obs = read_obs(ff, variables_in_file, metric_variables, var, dict_metric, model)
         tab_obs.append(tab)
+        obs_names.append(obs)
+    obs_names = sorted(list(set(obs_names)), key=lambda v: v.upper())
+    if len(obs_names) > 1:
+        list_strings = ["ERROR" + EnsoErrorsWarnings.message_formating(INSPECTstack()) + ": too many obs",
+                        str().ljust(5) + "var_to_read = " + str(var_to_read),
+                        str().ljust(5) + "filename_nc = " + str(filename_nc),
+                        str().ljust(5) + "model = " + str(model),
+                        str().ljust(5) + "obs = " + str(obs_names)]
+        EnsoErrorsWarnings.my_error(list_strings)
+    else:
+        obs = obs_names[0]
     if isinstance(var_to_read, list) is True and len(var_to_read) == 1:
         if met_in_file is True:
             if isinstance(met_type, str):
-                for key in list(ff.attrs.keys()):
-                    if met_type + "_" + obs + "_" + met_pattern == key:
-                        val = ff.attrs[key]
-                try: val
-                except: val = None
+                val = None
+                key = met_type + "_" + obs + "_" + met_pattern
+                val = _get_netcdf_attr(ff.attrs, key)
                 metval = deepcopy(val)
                 del val
             elif isinstance(met_type, list):
                 metval = list()
                 for mety in met_type:
-                    for key in list(ff.attrs.keys()):
-                        if mety + "_" + obs + "_" + met_pattern == key or (met_pattern == "" and mety + "_" + obs == key):
-                            val = ff.attrs[key]
-                    try: val
-                    except: val = None
+                    val = None
+                    key = mety + "_" + obs + "_" + met_pattern
+                    val = _get_netcdf_attr(ff.attrs, key)
+                    if val is None and met_pattern == "":
+                        val = _get_netcdf_attr(ff.attrs, mety + "_" + obs)
                     metval.append(val)
                     del val
     elif isinstance(var_to_read, list) is True and len(var_to_read) == 2 and\
@@ -463,22 +590,19 @@ def reader(filename_nc, model, reference, var_to_read, metric_variables, dict_me
             add = "nina" if "nina" in var else "nino"
             if met_in_file is True:
                 if isinstance(met_type, str):
-                    for key in list(ff.attrs.keys()):
-                        if met_type + "_" + obs + "_" + add + "_" + met_pattern == key:
-                            val = ff.attrs[key]
-                    try:    val
-                    except: val = None
+                    val = None
+                    key = met_type + "_" + obs + "_" + add + "_" + met_pattern
+                    val = _get_netcdf_attr(ff.attrs, key)
                     metval.append(val)
                     del val
                 elif isinstance(met_type, list):
                     tmpval = list()
                     for mety in met_type:
-                        for key in list(ff.attrs.keys()):
-                            if mety + "_" + obs + "_" + add + "_" + met_pattern == key or (
-                                    met_pattern == "" and mety + "_" + obs + "_" + add == key):
-                                val = ff.attrs[key]
-                        try: val
-                        except: val = None
+                        val = None
+                        key = mety + "_" + obs + "_" + add + "_" + met_pattern
+                        val = _get_netcdf_attr(ff.attrs, key)
+                        if val is None and met_pattern == "":
+                            val = _get_netcdf_attr(ff.attrs, mety + "_" + obs + "_" + add)
                         tmpval.append(val)
                         del val
                     metval.append(tmpval)
@@ -531,7 +655,7 @@ def read_var(var_to_read, filename_nc, model, reference, metric_variables, dict_
 
 
 def shading_levels(tab, lev=[5, 25, 75, 95], axis=None):
-    return [SCIPYstats__scoreatpercentile(tab, ll, axis=axis) for ll in lev] + [my_average(tab, axis=axis)]
+    return [NUMPYpercentile(tab, ll, axis=axis) for ll in lev] + [my_average(tab, axis=axis)]
 
 
 def remove_metrics(metrics_in, metric_collection, reduced_set=False, portraitplot=False):
@@ -574,7 +698,8 @@ def remove_metrics(metrics_in, metric_collection, reduced_set=False, portraitplo
                     "SeasonalSshLatRmse", "SeasonalSshLonRmse", "SeasonalSstLatRmse", "SeasonalTauxLatRmse"]
             elif metric_collection == "ENSO_proc":
                 to_remove = [
-                    'BiasSshLonRmse', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf', 'EnsoFbSstSwr']
+                    'BiasSshLonRmse', 'EnsodSstOce_1', 'EnsoFbSstLhf', 'EnsoFbSstLwr', 'EnsoFbSstShf',
+                    'EnsoFbSstSwr']
             else:
                 to_remove = [
                     'EnsoPrMapCorr', 'EnsoPrMapRmse', 'EnsoPrMapStd',

@@ -179,7 +179,7 @@ if ' ':
             del tab
         tab1, tab2 = list(), list()
         for ii in range(len(tab_tmp)):
-            tab1.append(float(NUMPYmean(tab_tmp[ii])))
+            tab1.append(float(NUMPYmean(tab_tmp[ii])) if len(tab_tmp[ii]) > 0 else float('nan'))
             nbr = nbr = len(tab_tmp[1]) if ii==0 else len(tab_tmp[0])
             bst = bootstrap(tab_tmp[ii], nech=nbr)
             tab2.append(bst)

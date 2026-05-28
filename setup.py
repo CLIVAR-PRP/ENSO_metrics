@@ -1,41 +1,12 @@
-from distutils.core import setup
-import subprocess
+from setuptools import setup
 import glob
+import re
 
-Version = "1.1.5"
-
-p = subprocess.Popen(
-    ("git",
-     "describe",
-     "--tags"),
-    stdin=subprocess.PIPE,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE)
-try:
-    descr = p.stdout.readlines()[0].strip()
-    Version = "-".join(descr.split("-")[:-2])
-    if Version == "":
-        Version = descr
-except:
-    descr = Version
-
-p = subprocess.Popen(
-    ("git",
-     "log",
-     "-n1",
-     "--pretty=short"),
-    stdin=subprocess.PIPE,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE)
-try:
-    commit = str(p.stdout.readlines()[0].split()[1])
-except:
-    commit = "unknown"
-f = open("lib/version.py", "w")
-print("__version__ = '%s'" % Version, file=f)
-print("__git_tag_describe__ = '%s'" % descr, file=f)
-print("__git_sha1__ = %s" % commit, file=f)
-f.close()
+# Read the version from lib/version.py — that file is the single source of
+# truth and is tracked by git.  setup.py no longer writes it.
+with open("lib/version.py") as _vf:
+    _src = _vf.read()
+Version = re.search(r"__version__\s*=\s*'([^']+)'", _src).group(1)
 
 # data_files = (
 #               ('share/EnsoMetrics', ['share/EnsoMetrics/basin_generic_1x1deg.nc']),
@@ -66,4 +37,17 @@ setup(name="EnsoMetrics",
       packages=['EnsoMetrics', 'EnsoPlots'],
       package_dir={'EnsoMetrics': 'lib', 'EnsoPlots': 'plots'},
       scripts=glob.glob("scripts/*.py"),
-      data_files=data_files, requires=['numpy'])
+      data_files=data_files,
+      install_requires=[
+          'numpy',
+          'scipy',
+          'packaging',
+          'xarray',
+          'xcdat',
+          'cftime',
+          'matplotlib',
+          'cartopy',
+          'cmocean',
+          'regionmask',
+          'xesmf',
+      ])

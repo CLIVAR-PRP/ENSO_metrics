@@ -1,5 +1,5 @@
 {% set name = "enso_metrics" %}
-{% set version = "1.1.3" %}
+{% set version = "1.2.0" %}
 
 package:
     name: {{ name|lower }}
@@ -7,10 +7,10 @@ package:
 
 source:
     url: https://github.com/CLIVAR-PRP/ENSO_metrics/archive/refs/tags/v{{ version }}.tar.gz
-    sha256: abc17f7f48669becc7ae38aed056fbf1f9d5b92fa2788c2d772c485eaca9297e    
+    sha256: abc17f7f48669becc7ae38aed056fbf1f9d5b92fa2788c2d772c485eaca9297e
 
 build:
-  number: 1
+  number: 0
   skip: True  # [win]
   script: {{ PYTHON }} -m pip install . -vv
 
@@ -20,13 +20,17 @@ requirements:
     - pip
   run:
     - python
-    - cdms2
-    - cdutil
-    - genutil
-    - numpy < 2.1.0
+    - numpy
     - scipy
-    - udunits2
+    - packaging
+    - xarray
+    - xcdat
+    - cftime
     - matplotlib
+    - cartopy
+    - cmocean
+    - regionmask
+    - xesmf
 
 test:
   imports:
@@ -36,6 +40,7 @@ test:
     - pip check
   requires:
     - pip
+    - pytest
 
 about:
     home: https://github.com/CLIVAR-PRP/ENSO_metrics

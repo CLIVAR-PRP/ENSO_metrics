@@ -56,6 +56,22 @@ sst_only = [
 #
 # Computation of the metric collection
 #
+_VARIABLE_ALIASES = {
+    "ssh": ["zos", "sla", "sshg", "sossheig"],
+    "sst": ["ts", "tos", "skt", "sst", "sosstsst"],
+    "thf": ["netflux", "hfds", "thflx", "sohefldo"],
+}
+
+
+def _dataset_variable_entry(dataset, variable):
+    if variable in dataset:
+        return dataset[variable]
+    for alias in _VARIABLE_ALIASES.get(variable, []):
+        if alias in dataset:
+            return dataset[alias]
+    return None
+
+
 def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding={}, debug=False, dive_down=False,
                       netcdf=False, netcdf_name="", observed_fyear=None, observed_lyear=None, modeled_fyear=None,
                       modeled_lyear=None, obs_interpreter=None):
@@ -107,8 +123,8 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
         help(EnsoUvcdatToolsLib.Regrid)
         e.g.:
         user_regridding = {
-            'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                'newgrid_name': 'generic 1x1deg'},
+            'regridding': {'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                'newgrid_name': 'generic_1x1deg'},
         }
     :param debug: boolean, optional
         default value = False debug mode not activated
@@ -200,59 +216,57 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
             # sets arguments for this metric
             list_variables = dict_m[metric]["variables"]
             dict_regions = dict_m[metric]["regions"]
+            model_dataset = dictDatasets["model"][modelName]
+            model_entry1 = _dataset_variable_entry(model_dataset, list_variables[0])
             # model name, file, variable name in file
             try:
-                modelFile1 = dictDatasets["model"][modelName][list_variables[0]]["path + filename"]
-            except:
+                modelFile1 = model_entry1["path + filename"]
+            except Exception:
                 modelFile1 = ""
             try:
-                modelVarName1 = dictDatasets["model"][modelName][list_variables[0]]["varname"]
-            except:
+                modelVarName1 = model_entry1["varname"]
+            except Exception:
                 modelVarName1 = ""
             try:
-                modelFileArea1 = dictDatasets["model"][modelName][list_variables[0]]["path + filename_area"]
-            except:
+                modelFileArea1 = model_entry1["path + filename_area"]
+            except Exception:
                 modelFileArea1, modelAreaName1 = None, None
             else:
-                modelAreaName1 = dictDatasets["model"][modelName][list_variables[0]]["areaname"]
+                modelAreaName1 = model_entry1["areaname"]
             try:
-                modelFileLandmask1 = dictDatasets["model"][modelName][list_variables[0]]["path + filename_landmask"]
-            except:
+                modelFileLandmask1 = model_entry1["path + filename_landmask"]
+            except Exception:
                 modelFileLandmask1, modelLandmaskName1 = None, None
             else:
-                modelLandmaskName1 = dictDatasets["model"][modelName][list_variables[0]]["landmaskname"]
+                modelLandmaskName1 = model_entry1["landmaskname"]
             # observations name(s), file(s), variable(s) name in file(s)
             obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1 = list(), list(), list(), list(), list()
             obsFileLandmask1, obsLandmaskName1, obsInterpreter1 = list(), list(), list()
             for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
-                try:
-                    dictDatasets["observations"][obs][list_variables[0]]
-                except:
+                obs_entry1 = _dataset_variable_entry(dictDatasets["observations"][obs], list_variables[0])
+                if obs_entry1 is None:
                     pass
                 else:
                     obsNameVar1.append(obs)
-                    obsFile1.append(dictDatasets["observations"][obs][list_variables[0]]["path + filename"])
-                    obsVarName1.append(dictDatasets["observations"][obs][list_variables[0]]["varname"])
+                    obsFile1.append(obs_entry1["path + filename"])
+                    obsVarName1.append(obs_entry1["varname"])
                     try:
-                        obsFileArea1.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["path + filename_area"])
-                    except:
+                        obsFileArea1.append(obs_entry1["path + filename_area"])
+                    except Exception:
                         obsFileArea1.append(None)
                         obsAreaName1.append(None)
                     else:
-                        obsAreaName1.append(dictDatasets["observations"][obs][list_variables[0]]["areaname"])
+                        obsAreaName1.append(obs_entry1["areaname"])
                     try:
-                        obsFileLandmask1.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["path + filename_landmask"])
-                    except:
+                        obsFileLandmask1.append(obs_entry1["path + filename_landmask"])
+                    except Exception:
                         obsFileLandmask1.append(None)
                         obsLandmaskName1.append(None)
                     else:
-                        obsLandmaskName1.append(dictDatasets["observations"][obs][list_variables[0]]["landmaskname"])
+                        obsLandmaskName1.append(obs_entry1["landmaskname"])
                     try:
-                        obsInterpreter1.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
-                    except:
+                        obsInterpreter1.append(obs_entry1["obs_interpreter"])
+                    except Exception:
                         obsInterpreter1.append(obs)
             # same if a second variable is needed
             # this time in the form of a keyarg dictionary
@@ -264,61 +278,55 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 "observed_lyear": observed_lyear, "modeled_fyear": modeled_fyear, "modeled_lyear": modeled_lyear,
                 "obsInterpreter1": obsInterpreter1}
             if len(list_variables) > 1:
+                model_entry2 = _dataset_variable_entry(model_dataset, list_variables[1])
                 try:
-                    arg_var2["modelFile2"] = dictDatasets["model"][modelName][list_variables[1]]["path + filename"]
-                except:
+                    arg_var2["modelFile2"] = model_entry2["path + filename"]
+                except Exception:
                     arg_var2["modelFile2"] = ""
                 try:
-                    arg_var2["modelVarName2"] = dictDatasets["model"][modelName][list_variables[1]]["varname"]
-                except:
+                    arg_var2["modelVarName2"] = model_entry2["varname"]
+                except Exception:
                     arg_var2["modelVarName2"] = ""
                 arg_var2["regionVar2"] = dict_regions[list_variables[1]]
                 try:
-                    arg_var2["modelFileArea2"] = \
-                        dictDatasets["model"][modelName][list_variables[1]]["path + filename_area"]
-                except:
+                    arg_var2["modelFileArea2"] = model_entry2["path + filename_area"]
+                except Exception:
                     arg_var2["modelFileArea2"], arg_var2["modelAreaName2"] = None, None
                 else:
-                    arg_var2["modelAreaName2"] = dictDatasets["model"][modelName][list_variables[1]]["areaname"]
+                    arg_var2["modelAreaName2"] = model_entry2["areaname"]
                 try:
-                    arg_var2["modelFileLandmask2"] = \
-                        dictDatasets["model"][modelName][list_variables[1]]["path + filename_landmask"]
-                except:
+                    arg_var2["modelFileLandmask2"] = model_entry2["path + filename_landmask"]
+                except Exception:
                     arg_var2["modelFileLandmask2"], arg_var2["modelLandmaskName2"] = None, None
                 else:
-                    arg_var2["modelLandmaskName2"] = dictDatasets["model"][modelName][list_variables[1]]["landmaskname"]
+                    arg_var2["modelLandmaskName2"] = model_entry2["landmaskname"]
                 obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2 = list(), list(), list(), list(), list()
                 obsFileLandmask2, obsLandmaskName2, obsInterpreter2 = list(), list(), list()
                 for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
-                    try:
-                        dictDatasets["observations"][obs][list_variables[1]]
-                    except:
+                    obs_entry2 = _dataset_variable_entry(dictDatasets["observations"][obs], list_variables[1])
+                    if obs_entry2 is None:
                         pass
                     else:
                         obsNameVar2.append(obs)
-                        obsFile2.append(dictDatasets["observations"][obs][list_variables[1]]["path + filename"])
-                        obsVarName2.append(dictDatasets["observations"][obs][list_variables[1]]["varname"])
+                        obsFile2.append(obs_entry2["path + filename"])
+                        obsVarName2.append(obs_entry2["varname"])
                         try:
-                            obsFileArea2.append(
-                                dictDatasets["observations"][obs][list_variables[1]]["path + filename_area"])
-                        except:
+                            obsFileArea2.append(obs_entry2["path + filename_area"])
+                        except Exception:
                             obsFileArea2.append(None)
                             obsAreaName2.append(None)
                         else:
-                            obsAreaName2.append(dictDatasets["observations"][obs][list_variables[1]]["areaname"])
+                            obsAreaName2.append(obs_entry2["areaname"])
                         try:
-                            obsFileLandmask2.append(
-                                dictDatasets["observations"][obs][list_variables[1]]["path + filename_landmask"])
-                        except:
+                            obsFileLandmask2.append(obs_entry2["path + filename_landmask"])
+                        except Exception:
                             obsFileLandmask2.append(None)
                             obsLandmaskName2.append(None)
                         else:
-                            obsLandmaskName2.append(
-                                dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
+                            obsLandmaskName2.append(obs_entry2["landmaskname"])
                         try:
-                            obsInterpreter2.append(
-                                dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
-                        except:
+                            obsInterpreter2.append(obs_entry2["obs_interpreter"])
+                        except Exception:
                             obsInterpreter2.append(obs)
                 arg_var2["obsNameVar2"] = obsNameVar2
                 arg_var2["obsFile2"] = obsFile2
@@ -328,48 +336,123 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                 arg_var2["obsFileLandmask2"] = obsFileLandmask2
                 arg_var2["obsLandmaskName2"] = obsLandmaskName2
                 arg_var2["obsInterpreter2"] = obsInterpreter2
+
+            def _file_missing(path):
+                if path is None or path == "":
+                    return True
+                if isinstance(path, list):
+                    return len(path) == 0 or any(_file_missing(item) for item in path)
+                return False
+
+            def _filter_obs_entries(
+                    names, files, varnames, area_files, area_names,
+                    landmask_files, landmask_names, interpreters):
+                keep = [ii for ii, path in enumerate(files) if not _file_missing(path)]
+                return (
+                    [names[ii] for ii in keep],
+                    [files[ii] for ii in keep],
+                    [varnames[ii] for ii in keep],
+                    [area_files[ii] for ii in keep],
+                    [area_names[ii] for ii in keep],
+                    [landmask_files[ii] for ii in keep],
+                    [landmask_names[ii] for ii in keep],
+                    [interpreters[ii] for ii in keep],
+                )
+
+            (
+                obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1,
+                obsFileLandmask1, obsLandmaskName1, obsInterpreter1,
+            ) = _filter_obs_entries(
+                obsNameVar1, obsFile1, obsVarName1, obsFileArea1, obsAreaName1,
+                obsFileLandmask1, obsLandmaskName1, obsInterpreter1,
+            )
+            arg_var2["obsFileArea1"] = obsFileArea1
+            arg_var2["obsAreaName1"] = obsAreaName1
+            arg_var2["obsFileLandmask1"] = obsFileLandmask1
+            arg_var2["obsLandmaskName1"] = obsLandmaskName1
+            arg_var2["obsInterpreter1"] = obsInterpreter1
+
+            if len(list_variables) > 1:
+                (
+                    obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2,
+                    obsFileLandmask2, obsLandmaskName2, obsInterpreter2,
+                ) = _filter_obs_entries(
+                    obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2,
+                    obsFileLandmask2, obsLandmaskName2, obsInterpreter2,
+                )
+                arg_var2["obsNameVar2"] = obsNameVar2
+                arg_var2["obsFile2"] = obsFile2
+                arg_var2["obsVarName2"] = obsVarName2
+                arg_var2["obsFileArea2"] = obsFileArea2
+                arg_var2["obsAreaName2"] = obsAreaName2
+                arg_var2["obsFileLandmask2"] = obsFileLandmask2
+                arg_var2["obsLandmaskName2"] = obsLandmaskName2
+                arg_var2["obsInterpreter2"] = obsInterpreter2
+
+            # Determine data availability
+            _model_var1_missing = _file_missing(modelFile1)
+            _model_var2_missing = (
+                len(list_variables) > 1 and _file_missing(arg_var2.get("modelFile2"))
+            )
+            _obs_var1_missing = len(obsFile1) == 0
+            _obs_var2_missing = (
+                len(list_variables) > 1 and len(arg_var2.get("obsFile2", [])) == 0
+            )
+            # For _modelAndObs metrics, obs is required inside the computation function itself.
+            # For dict_oneVar / dict_twoVar metrics, the model diagnostic is computed independently
+            # from obs, so we can proceed with empty obs lists and still get model diagnostic values.
+            _metric_clean = (
+                metric.replace("_1", "").replace("_2", "").replace("_3", "").replace("_4", "").replace("_5", "")
+            )
+            if _metric_clean.split("_")[-1] in list(ReferenceRegions().keys()):
+                _metric_clean = _metric_clean.replace("_" + _metric_clean.split("_")[-1], "")
+            _needs_obs = (
+                _metric_clean in dict_oneVar_modelAndObs or _metric_clean in dict_twoVar_modelAndObs
+            )
+
+            def _store_fill_value(keyerror_msg):
+                """Store fill-value entries when a metric cannot be computed."""
+                dict_col_valu[metric] = {
+                    "metric": {},
+                    "diagnostic": {modelName: {"value": None, "value_error": None, "keyerror": keyerror_msg}},
+                    "keyerror": keyerror_msg,
+                }
+                dict_col_meta["metrics"][metric] = {
+                    "metric": {"name": metric, "method": None, "datasets": modelName, "units": None},
+                    "diagnostic": {modelName: {"name": modelName, "keyerror": keyerror_msg}},
+                }
+                dict_col_dd_valu[metric] = {}
+                dict_col_dd_meta["metrics"][metric] = {}
+
             # computes the metric
-            if modelFile1 is None or len(modelFile1) == 0 or (isinstance(modelFile1, list) and None in modelFile1) or \
-                    (len(list_variables) > 1 and
-                     (arg_var2["modelFile2"] is None or len(arg_var2["modelFile2"]) == 0 or
-                      (isinstance(arg_var2["modelFile2"], list) and None in arg_var2["modelFile2"]))):
+            if _model_var1_missing or _model_var2_missing:
+                # Cannot compute at all — missing required model variable(s)
+                missing = []
+                if _model_var1_missing:
+                    missing.append(list_variables[0])
+                if _model_var2_missing:
+                    missing.append(list_variables[1])
+                keyerror_msg = "no model data for: " + ", ".join(missing)
                 print("\033[94m" + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric "
-                      + str(metric) + " not computed" + "\033[0m")
-                print("\033[94m" + str().ljust(10) + "reason(s):" + "\033[0m")
-                if modelFile1 is None or len(modelFile1) == 0:
-                    print("\033[94m" + str().ljust(11) + "no modeled " + list_variables[0] + " given" + "\033[0m")
-                if isinstance(modelFile1, list) and None in modelFile1:
-                    for ff, vv in zip(modelFile1, modelVarName1):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no modeled " + str(vv) + " given" + "\033[0m")
-                if (len(list_variables) > 1 and arg_var2["modelFile2"] is None) or \
-                        (len(list_variables) > 1 and len(arg_var2["modelFile2"]) == 0):
-                    print("\033[94m" + str().ljust(11) + "no modeled " + list_variables[1] + " given" + "\033[0m")
-                if isinstance(arg_var2["modelFile2"], list) and None in arg_var2["modelFile2"]:
-                    for ff, vv in zip(arg_var2["modelFile2"], arg_var2["modelVarName2"]):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no modeled " + str(vv) + " given" + "\033[0m")
-            elif obsFile1 is None or len(obsFile1) == 0 or (isinstance(obsFile1, list) and None in obsFile1) or \
-                    (len(list_variables) > 1 and
-                     (arg_var2["obsFile2"] is None or len(arg_var2["obsFile2"]) == 0 or
-                      (isinstance(arg_var2["obsFile2"], list) and None in arg_var2["obsFile2"]))):
+                      + str(metric) + " not computed (" + keyerror_msg + ")" + "\033[0m")
+                _store_fill_value(keyerror_msg)
+            elif _needs_obs and (_obs_var1_missing or _obs_var2_missing):
+                # Metric requires obs inside the computation function but obs variable(s) are missing.
+                # Store fill values so the metric still appears in the output with a keyerror note.
+                missing = []
+                if _obs_var1_missing:
+                    missing.append(list_variables[0])
+                if _obs_var2_missing:
+                    missing.append(list_variables[1])
+                keyerror_msg = "no obs data for: " + ", ".join(missing)
                 print("\033[94m" + str().ljust(5) + "ComputeCollection: " + str(metricCollection) + ", metric "
-                      + str(metric) + " not computed" + "\033[0m")
-                print("\033[94m" + str().ljust(10) + "reason(s):" + "\033[0m")
-                if obsFile1 is None or len(obsFile1) == 0:
-                    print("\033[94m" + str().ljust(11) + "no observed " + list_variables[0] + " given" + "\033[0m")
-                if isinstance(obsFile1, list) and None in obsFile1:
-                    for ff, vv in zip(obsFile1, obsVarName1):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no observed " + str(vv) + " given" + "\033[0m")
-                if (len(list_variables) > 1 and arg_var2["obsFile2"] is None) or \
-                        (len(list_variables) > 1 and len(arg_var2["obsFile2"]) == 0):
-                    print("\033[94m" + str().ljust(11) + "no observed " + list_variables[1] + " given" + "\033[0m")
-                if isinstance(arg_var2["obsFile2"], list) and None in arg_var2["obsFile2"]:
-                    for ff, vv in zip(arg_var2["obsFile2"], arg_var2["obsVarName2"]):
-                        if ff is None or vv is None:
-                            print("\033[94m" + str().ljust(11) + "no observed " + str(vv) + " given" + "\033[0m")
+                      + str(metric) + " not computed (" + keyerror_msg + ")" + "\033[0m")
+                _store_fill_value(keyerror_msg)
             else:
+                # Either obs is fully available, or this is a dict_oneVar/dict_twoVar metric whose
+                # model diagnostic can be computed independently of obs.  For the latter case the obs
+                # loop inside ComputeMetric will simply be empty, leaving metric comparison values
+                # absent but preserving the model diagnostic value.
                 valu, vame, dive, dime = ComputeMetric(
                     metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
                     dict_regions[list_variables[0]], user_regridding=user_regridding, debug=debug, netcdf=netcdf,
@@ -398,8 +481,20 @@ def ComputeCollection(metricCollection, dictDatasets, modelName, user_regridding
                     dict_col_valu[metric], dict_col_meta["metrics"][metric] = valu, vame
                     dict_col_dd_valu[metric], dict_col_dd_meta["metrics"][metric] = dive, dime
         except Exception as e:
-            print(e)
-            pass
+            import traceback
+            traceback.print_exc()
+            keyerror_msg = type(e).__name__ + ": " + str(e)
+            dict_col_valu[metric] = {
+                "metric": {},
+                "diagnostic": {modelName: {"value": None, "value_error": None, "keyerror": keyerror_msg}},
+                "keyerror": keyerror_msg,
+            }
+            dict_col_meta["metrics"][metric] = {
+                "metric": {"name": metric, "method": None, "datasets": modelName, "units": None},
+                "diagnostic": {modelName: {"name": modelName, "keyerror": keyerror_msg}},
+            }
+            dict_col_dd_valu[metric] = {}
+            dict_col_dd_meta["metrics"][metric] = {}
     if dive_down is True:
         return {"value": dict_col_valu, "metadata": dict_col_meta}, \
                {"value": dict_col_dd_valu, "metadata": dict_col_dd_meta}
@@ -417,7 +512,7 @@ def group_json_obs(pattern, json_name_out, metric_name):
         for dataset in sorted(list(data.keys()), key=lambda v: v.upper()):
             try:
                 dict_out
-            except:
+            except Exception:
                 dict_out = deepcopy(data)
             else:
                 if dataset in list(dict_out.keys()):
@@ -472,7 +567,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
         for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
             try:
                 dictDatasets["observations"][obs][list_variables[0]]
-            except:
+            except Exception:
                 pass
             else:
                 obsNameVar1.append(obs)
@@ -480,7 +575,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                 obsVarName1.append(dictDatasets["observations"][obs][list_variables[0]]["varname"])
                 try:
                     obsFileArea1.append(dictDatasets["observations"][obs][list_variables[0]]["path + filename_area"])
-                except:
+                except Exception:
                     obsFileArea1.append(None)
                     obsAreaName1.append(None)
                 else:
@@ -488,14 +583,14 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                 try:
                     obsFileLandmask1.append(
                         dictDatasets["observations"][obs][list_variables[0]]["path + filename_landmask"])
-                except:
+                except Exception:
                     obsFileLandmask1.append(None)
                     obsLandmaskName1.append(None)
                 else:
                     obsLandmaskName1.append(dictDatasets["observations"][obs][list_variables[0]]["landmaskname"])
                 try:
                     obsInterpreter1.append(dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
-                except:
+                except Exception:
                     obsInterpreter1.append(obs)
         # same if a second variable is needed
         obsNameVar2, obsFile2, obsVarName2, obsFileArea2, obsAreaName2 = list(), list(), list(), list(), list()
@@ -504,7 +599,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
             for obs in sorted(list(dictDatasets["observations"].keys()), key=lambda v: v.upper()):
                 try:
                     dictDatasets["observations"][obs][list_variables[1]]
-                except:
+                except Exception:
                     pass
                 else:
                     obsNameVar2.append(obs)
@@ -513,7 +608,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     try:
                         obsFileArea2.append(
                             dictDatasets["observations"][obs][list_variables[1]]["path + filename_area"])
-                    except:
+                    except Exception:
                         obsFileArea2.append(None)
                         obsAreaName2.append(None)
                     else:
@@ -521,7 +616,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     try:
                         obsFileLandmask2.append(
                             dictDatasets["observations"][obs][list_variables[1]]["path + filename_landmask"])
-                    except:
+                    except Exception:
                         obsFileLandmask2.append(None)
                         obsLandmaskName2.append(None)
                     else:
@@ -529,12 +624,10 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                             dictDatasets["observations"][obs][list_variables[1]]["landmaskname"])
                     try:
                         obsInterpreter2.append(
-                            dictDatasets["observations"][obs][list_variables[0]]["obs_interpreter"])
-                    except:
+                            dictDatasets["observations"][obs][list_variables[1]]["obs_interpreter"])
+                    except Exception:
                         obsInterpreter2.append(obs)
         # observations as model
-        print(obsNameVar1)
-        print(obsNameVar2)
         for ii in range(len(obsFileArea1)):
             modelName = obsNameVar1[ii]
             modelFile1 = obsFile1[ii]
@@ -558,7 +651,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
             for jj in range(nbr):
                 try:
                     obsNameVar2[jj]
-                except:
+                except Exception:
                     modelName2 = deepcopy(modelName)
                 else:
                     modelName2 = modelName + "_" + obsNameVar2[jj]
@@ -614,7 +707,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                             dict2 = {"metric": mm2, "diagnostic": vame["diagnostic"]}
                             try:
                                 dict_col_valu[modelName2]
-                            except:
+                            except Exception:
                                 dict_col_valu[modelName2] = {metric + kk: dict1}
                                 dict_col_meta[modelName2] = {"metrics": {metric + kk: dict2}}
                                 dict_col_dd_valu[modelName2] = {metric + kk: dive}
@@ -628,7 +721,7 @@ def ComputeCollection_ObsOnly(metricCollection, dictDatasets, user_regridding={}
                     else:
                         try:
                             dict_col_valu[modelName2]
-                        except:
+                        except Exception:
                             dict_col_valu[modelName2] = {metric: valu}
                             dict_col_meta[modelName2] = {"metrics": {metric: vame}}
                             dict_col_dd_valu[modelName2] = {metric: dive}
@@ -710,15 +803,17 @@ dict_twoVar = {
 }
 
 
-def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
-                  regionVar1, modelFileArea1="", modelAreaName1="", modelFileLandmask1="", modelLandmaskName1="",
-                  modelInterpreter1=None, obsFileArea1="", obsAreaName1="", obsFileLandmask1="", obsLandmaskName1="",
-                  obsInterpreter1=None, modelFile2="", modelVarName2="", modelFileArea2="", modelAreaName2="",
-                  modelFileLandmask2="", modelLandmaskName2="", modelInterpreter2=None, obsNameVar2="", obsFile2="",
-                  obsVarName2="", obsFileArea2="", obsAreaName2="", obsFileLandmask2="", obsLandmaskName2="",
-                  regionVar2="", obsInterpreter2=None, user_regridding={}, debug=False, netcdf=False, netcdf_name="",
-                  observed_fyear=None, observed_lyear=None, modeled_fyear=None, modeled_lyear=None,
-                  obs_interpreter=None):
+def ComputeMetric(
+        metricCollection, metric, modelName, modelFile1, modelVarName1, obsNameVar1, obsFile1, obsVarName1,
+        regionVar1, modelFileArea1="", modelAreaName1="", modelFileLandmask1="", modelLandmaskName1="",
+        modelInterpreter1=None, obsFileArea1="", obsAreaName1="", obsFileLandmask1="", obsLandmaskName1="",
+        obsInterpreter1=None, modelFile2="", modelVarName2="", modelFileArea2="", modelAreaName2="",
+        modelFileLandmask2="", modelLandmaskName2="", modelInterpreter2=None, obsNameVar2="", obsFile2="",
+        obsVarName2="", obsFileArea2="", obsAreaName2="", obsFileLandmask2="", obsLandmaskName2="",
+        regionVar2="", obsInterpreter2=None, user_regridding={}, debug=False, netcdf=False, netcdf_name="",
+        observed_fyear=None, observed_lyear=None, modeled_fyear=None, modeled_lyear=None,
+        obs_interpreter=None
+    ):
     """
     :param metricCollection: string
         name of a Metric Collection, must be defined in EnsoCollectionsLib.defCollection()
@@ -825,8 +920,8 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
         help(EnsoUvcdatToolsLib.Regrid)
         e.g.:
         user_regridding = {
-            'regridding': {'model_orand_obs': 2, 'regridder': 'cdms', 'regridTool': 'esmf', 'regridMethod': 'linear',
-                'newgrid_name': 'generic 1x1deg'},
+            'regridding': {'model_orand_obs': 2, 'regridder': 'xesmf', 'regridTool': 'esmf', 'regridMethod': 'bilinear',
+                'newgrid_name': 'generic_1x1deg'},
         }
     :param debug: boolean, optional
         default value = False debug mode not activated
@@ -876,13 +971,13 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     # default value
     try:
         keyarg["metric_computation"]
-    except:
+    except Exception:
         keyarg["metric_computation"] = default_arg_values("metric_computation")
     # if "modeled_period" is not defined for this metric (in EnsoCollectionsLib.defCollection), sets it to its default
     # value
     try:
         keyarg["time_bounds_mod"] = keyarg["modeled_period"]
-    except:
+    except Exception:
         keyarg["time_bounds_mod"] = default_arg_values("time_bounds_mod")
     # YYP !!! experimental period defined bt user !!!
     if isinstance(modeled_fyear, int) is True and isinstance(modeled_lyear, int) is True:
@@ -891,7 +986,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
     # value
     try:
         keyarg["time_bounds_obs"] = keyarg["observed_period"]
-    except:
+    except Exception:
         keyarg["time_bounds_obs"] = default_arg_values("time_bounds_obs")
     # YYP !!! experimental period defined bt user !!!
     if isinstance(observed_fyear, int) is True and isinstance(observed_lyear, int) is True:
@@ -962,18 +1057,28 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 tmp = str(modelVarName2)
             try:
                 tmperr
-            except:
+            except Exception:
                 tmperr = "model var2(" + tmp + ") not given"
             else:
                 tmperr = tmperr + " ; model var2(" + tmp + ") not given"
         noerror = False if noerror is False or noerror2 is False else True
     if noerror is False:
         dict_metrics = {
-            "metric": {"value": None, "value_error": None}, "diagnostic": {"value": None, "value_error": None}}
+            "metric": {"value": None, "value_error": None},
+            "diagnostic": {"value": None, "value_error": None},
+        }
         dict_metadata = {
             "metric": {"name": metric, "method": None, "datasets": modelName, "units": None},
-            "diagnostic": {{modelName: {"method": None, "name": None, "ref": None, "time_frequency": None,
-                                        "units": None, "keyerror": tmperr}}},
+            "diagnostic": {
+                modelName: {
+                    "method": None,
+                    "name": None,
+                    "ref": None,
+                    "time_frequency": None,
+                    "units": None,
+                    "keyerror": tmperr,
+                }
+            },
         }
         dict_dive_down, dict_dive_down_metadata = {}, {}
     else:
@@ -994,8 +1099,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         if "EnsoSstMap" in metric and output_name in sst_only:
                             pass
                         else:
-                            print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " +
-                                  modelName + " and " + output_name + "\033[0m")
+                            print(
+                                "\033[94m" + str().ljust(5) + "ComputeMetric: oneVarRMSmetric, " + metric + " = " +
+                                modelName + " and " + output_name + "\033[0m"
+                            )
                             diagnostic1[output_name] = dict_oneVar_modelAndObs[metric](
                                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
                                 modelLandmaskName1, obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii],
@@ -1011,8 +1118,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         keyarg["project_interpreter_obs_var2"] = "CMIP" if obs_interpreter == "CMIP" else deepcopy(
                             obs_int2)
                         if output_name != modelName:
-                            print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
-                                  modelName + " and " + output_name + "\033[0m")
+                            print(
+                                "\033[94m" + str().ljust(5) + "ComputeMetric: twoVarRMSmetric, " + metric + " = " +
+                                modelName + " and " + output_name + "\033[0m"
+                            )
                             diagnostic1[output_name] = dict_twoVar_modelAndObs[metric](
                                 modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1,
                                 modelLandmaskName1, modelFile2, modelVarName2, modelFileArea2, modelAreaName2,
@@ -1037,7 +1146,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     for key in lkeys:
                         try:
                             dict_metric_val[obs]
-                        except:
+                        except Exception:
                             dict_metric_val[obs] = {key + "__value": diagnostic1[obs][key + "__value"],
                                                     key + "__value_error": diagnostic1[obs][key + "__value_error"]}
                             dict_diagnostic[modelName] = {key + "__value": None, key + "__value_error": None}
@@ -1059,10 +1168,14 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     dict_dive_down_metadata[obs] = dict1
                     del dict1
                 # puts diagnostic metadata in its proper dictionary
-                dict_diagnostic_metadata[modelName] = {"name": modelName, "nyears": diagnostic1[obs]["nyears_model"],
-                                                       "time_period": diagnostic1[obs]["time_period_model"]}
-                dict_diagnostic_metadata[obs] = {"name": obs, "nyears": diagnostic1[obs]["nyears_observations"],
-                                                 "time_period": diagnostic1[obs]["time_period_observations"]}
+                dict_diagnostic_metadata[modelName] = {
+                    "name": modelName, "nyears": diagnostic1[obs]["nyears_model"],
+                    "time_period": diagnostic1[obs]["time_period_model"]
+                }
+                dict_diagnostic_metadata[obs] = {
+                    "name": obs, "nyears": diagnostic1[obs]["nyears_observations"],
+                    "time_period": diagnostic1[obs]["time_period_observations"]
+                }
                 if "events_model" in list(diagnostic1[obs].keys()):
                     dict_diagnostic_metadata[modelName]["events"] = diagnostic1[obs]["events_model"]
                     dict_diagnostic_metadata[obs]["events"] = diagnostic1[obs]["events_observations"]
@@ -1086,6 +1199,28 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
             elif metric in list(dict_twoVar.keys()):
                 # computes diagnostic that needs two variables
                 print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(modelName) + "\033[0m")
+                if debug:
+                    print("[DEBUG] Arguments for twoVarmetric {}: ".format(metric))
+                    print("  modelFile1:", modelFile1)
+                    print("  modelVarName1:", modelVarName1)
+                    print("  modelFileArea1:", modelFileArea1)
+                    print("  modelAreaName1:", modelAreaName1)
+                    print("  modelFileLandmask1:", modelFileLandmask1)
+                    print("  modelLandmaskName1:", modelLandmaskName1)
+                    print("  regionVar1:", regionVar1)
+                    print("  modelFile2:", modelFile2)
+                    print("  modelVarName2:", modelVarName2)
+                    print("  modelFileArea2:", modelFileArea2)
+                    print("  modelAreaName2:", modelAreaName2)
+                    print("  modelFileLandmask2:", modelFileLandmask2)
+                    print("  modelLandmaskName2:", modelLandmaskName2)
+                    print("  regionVar2:", regionVar2)
+                    print("  dataset:", modelName)
+                    print("  debug:", debug)
+                    print("  netcdf:", netcdf)
+                    print("  netcdf_name:", netcdf_name)
+                    print("  metname:", tmp_metric)
+                    print("  keyarg:", keyarg)
                 keyarg["project_interpreter_var2"] = keyarg["project_interpreter_mod_var2"]
                 diagnostic1 = dict_twoVar[metric](
                     modelFile1, modelVarName1, modelFileArea1, modelAreaName1, modelFileLandmask1, modelLandmaskName1,
@@ -1108,7 +1243,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                     if elt not in ["value"]:
                         try:
                             dict_dive_down_metadata[modelName]
-                        except:
+                        except Exception:
                             dict_dive_down_metadata[modelName] = {elt: diagnostic1["dive_down_diag"][elt]}
                         else:
                             dict_dive_down_metadata[modelName][elt] = diagnostic1["dive_down_diag"][elt]
@@ -1132,8 +1267,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 if metric in list(dict_oneVar.keys()):
                     output_name = deepcopy(obsNameVar1[ii])
                     if output_name != modelName:
-                        print("\033[94m" + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(output_name) +
-                              "\033[0m")
+                        print(
+                            "\033[94m" + str().ljust(5) + "ComputeMetric: oneVarmetric = " + str(output_name) +
+                            "\033[0m"
+                        )
                         diag_obs[output_name] = dict_oneVar[metric](
                             obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                             obsLandmaskName1[ii], regionVar1, dataset=output_name, debug=debug, netcdf=netcdf,
@@ -1145,8 +1282,10 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         keyarg["project_interpreter_var2"] = \
                             "CMIP" if obs_interpreter == "CMIP" else deepcopy(obsInterpreter2[jj])
                         if output_name != modelName:
-                            print("\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
-                                  "\033[0m")
+                            print(
+                                "\033[94m" + str().ljust(5) + "ComputeMetric: twoVarmetric = " + str(output_name) +
+                                "\033[0m"
+                            )
                             diag_obs[output_name] = dict_twoVar[metric](
                                 obsFile1[ii], obsVarName1[ii], obsFileArea1[ii], obsAreaName1[ii], obsFileLandmask1[ii],
                                 obsLandmaskName1[ii], regionVar1, obsFile2[jj], obsVarName2[jj], obsFileArea2[jj],
@@ -1173,7 +1312,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                         if elt not in ["value"]:
                             try:
                                 dict_dive_down_metadata[obs]
-                            except:
+                            except Exception:
                                 dict_dive_down_metadata[obs] = {elt: diag_obs[obs]["dive_down_diag"][elt]}
                             else:
                                 dict_dive_down_metadata[obs][elt] = diag_obs[obs]["dive_down_diag"][elt]
@@ -1193,7 +1332,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 units = diagnostic1["units"]
             try:
                 del keyarg["time_bounds"]
-            except:
+            except Exception:
                 pass
         # finishes to fill the diagnostic dictionary
         list_keys = ["method", "name", "ref", "time_frequency", "units"]
@@ -1203,7 +1342,7 @@ def ComputeMetric(metricCollection, metric, modelName, modelFile1, modelVarName1
                 dict_dive_down_metadata[key] = diagnostic1["method"]
                 try:
                     diagnostic1["nonlinearity"]
-                except:
+                except Exception:
                     pass
                 else:
                     dict_diagnostic_metadata["method_nonlinearity"] = diagnostic1["method_nonlinearity"]

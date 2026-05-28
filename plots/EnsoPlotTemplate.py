@@ -21,11 +21,20 @@ from numpy.ma import masked_where as NUMPYmasked_where
 
 # ENSO_metrics functions
 from EnsoMetrics.EnsoCollectionsLib import ReferenceRegions
-from .EnsoPlotToolsLib import create_labels, create_levels, format_metric, minimaxi, minmax_plot, my_average,\
-    my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, return_metrics_type, shading_levels
+from .EnsoPlotToolsLib import create_labels, create_levels, format_metric, has_valid_data, minimaxi, minmax_plot, \
+    my_average, my_bootstrap, my_legend, my_mask, my_mask_map, read_diag, read_var, return_metrics_type, \
+    shading_levels
 
 colors_sup = ["r", "lime", "peru", "gold", "forestgreen", "sienna", "gold"]
 dict_col = {"REF": "k", "CMIP": "forestgreen", "CMIP3": "orange", "CMIP5": "dodgerblue", "CMIP6": "r"}
+
+
+def _panel_grid(nbr_panel, three_columns=False):
+    if nbr_panel == 1:
+        return 1, 1
+    nbrc = 3 if three_columns else 2
+    return int(MATHceil(float(nbr_panel) / float(nbrc))), nbrc
+
 
 met_names = {
     "BiasPrLatRmse": "double_ITCZ_bias", "BiasPrLonRmse": "eq_PR_bias",
@@ -46,10 +55,12 @@ met_names = {
     "EnsoPrMapDjfCorr": "DJF_PR_teleconnection_CORR", "EnsoPrMapDjfRmse": "DJF_PR_teleconnection",
     "EnsoPrMapDjfStd": "DJF_PR_teleconnection_STD", "EnsoPrMapJjaCorr": "JJA_PR_teleconnection_CORR",
     "EnsoPrMapJjaRmse": "JJA_PR_teleconnection", "EnsoPrMapJjaStd": "JJA_PR_teleconnection_STD",
+    "EnsoSlpMapCorr": "Dec_SLP_teleconnection_CORR",
     "EnsoSlpMapRmse": "Dec_SLP_teleconnection", "EnsoSlpMapStd": "Dec_SLP_teleconnection_STD",
     "EnsoSlpMapDjfCorr": "DJF_SLP_teleconnection_CORR", "EnsoSlpMapDjfRmse": "DJF_SLP_teleconnection",
     "EnsoSlpMapDjfStd": "DJF_SLP_teleconnection_STD", "EnsoSlpMapJjaCorr": "JJA_SLP_teleconnection_CORR",
     "EnsoSlpMapJjaRmse": "JJA_SLP_teleconnection", "EnsoSlpMapJjaStd": "JJA_SLP_teleconnection_STD",
+    "EnsoSstMapCorr": "Dec_TS_teleconnection_CORR",
     "EnsoSstMapRmse": "Dec_TS_teleconnection", "EnsoSstMapStd": "Dec_TS_teleconnection_STD",
     "EnsoSstMapDjfCorr": "DJF_TS_teleconnection_CORR", "EnsoSstMapDjfRmse": "DJF_TS_teleconnection",
     "EnsoSstMapDjfStd": "DJF_TS_teleconnection_STD", "EnsoSstMapJjaCorr": "JJA_TS_teleconnection_CORR",
@@ -217,11 +228,11 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
     else:
         one_yaxis = False
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if "legend" in list(dict_param.keys()):
         legend = dict_param["legend"]
     else:
@@ -238,8 +249,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
         custom_label = dict_param["custom_label"]
     else:
         custom_label = None
-    nbrl = nbr_panel // 2
-    nbrc = 1 if nbr_panel == 1 else 2
+    nbrl, nbrc = _panel_grid(nbr_panel)
     fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
     legco = ["k", "dodgerblue"]
     if isinstance(model, list) is True:
@@ -416,11 +426,11 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
     xname = dict_param["xname"]
     yname = dict_param["yname"]
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if units != "":
         yname = yname + " (" + units + ")"
     if "colors" in list(dict_param.keys()):
@@ -467,8 +477,7 @@ def my_curve(model, filename_nc, dict_param, reference, metric_variables, figure
             nbrc = 1
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(8, 4 * nbrl), sharex="col", sharey="row")
         else:
-            nbrl = nbr_val // 2
-            nbrc = 1 if nbr_val == 1 else 2
+            nbrl, nbrc = _panel_grid(nbr_val)
             fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row")
         old_leg = deepcopy(legend)
         for kk in range(len(tab_obs)):
@@ -749,21 +758,19 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
     yname = dict_param["yname"]
     zname = dict_param["zname"]
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if units != "":
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
     labelbar = dict_param["label"]
     if shading is True and len(model) + 1 == 3:
-        nbrl = nbr_panel // 3
-        nbrc = 1 if nbr_panel == 1 else 3
+        nbrl, nbrc = _panel_grid(nbr_panel, three_columns=True)
     else:
-        nbrl = nbr_panel // 2
-        nbrc = 1 if nbr_panel == 1 else 2
+        nbrl, nbrc = _panel_grid(nbr_panel)
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
         nbrc = 1
@@ -860,7 +867,12 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         # hovmoeller
         levels = create_levels(labelbar)
         xx, yy = NUMPYmeshgrid(lon, tim)
-        cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar)
+        if has_valid_data(tab[ii]):
+            cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar)
+        else:
+            ax.text(0.5, 0.5, "No valid data", fontsize=12, color="k", ha="center", va="center",
+                    transform=ax.transAxes)
+            cs = None
         if ii == 0 and plot_ref is True:
             tx1, tx2 = ax.get_xlim()
             dx = (tx2 - tx1) / 100.
@@ -871,6 +883,9 @@ def my_hovmoeller(model, filename_nc, dict_param, reference, metric_variables, f
         if ii == nbr_panel - 1:
             x2 = ax.get_position().x1
             y1 = ax.get_position().y0
+    if cs is None:
+        levels = create_levels(labelbar)
+        cs = plt.cm.ScalarMappable(norm=BoundaryNorm(levels, plt.get_cmap(colorbar).N), cmap=colorbar)
     # add colorbar
     if nbr_years == 1 and nbrl == 1:
         cax = plt.axes([x1, -0.1, x2 - x1, 0.04])
@@ -988,11 +1003,11 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         if nbr_val > 1:
             title = title * nbr_val
     if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-        units = tab_mod[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     elif isinstance(filename_nc, dict) is True and shading is True:
-        units = tab_mod[0][0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     else:
-        units = tab_mod[0][0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+        units = tab_mod[0][0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
     if units != "":
         zname = zname + " (" + units + ")"
     colorbar = "cmo." + dict_param["colorbar"]
@@ -1006,11 +1021,9 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
     else:
         maskocean = False
     if shading is True and len(model) + 1 == 3:
-        nbrl = nbr_panel // 3
-        nbrc = 1 if nbr_panel == 1 else 3
+        nbrl, nbrc = _panel_grid(nbr_panel, three_columns=True)
     else:
-        nbrl = nbr_panel // 2
-        nbrc = 1 if nbr_panel == 1 else 2
+        nbrl, nbrc = _panel_grid(nbr_panel)
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
         nbrc = 1
@@ -1018,15 +1031,28 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         if "EnsoPrMap" not in figure_name:
             nbrc = 1
             nbrl = 3
+    # Regional maps need central_longitude=0 so cartopy can place meridian labels correctly.
+    # With central_longitude=180 the label-placement algorithm fails for western-hemisphere extents.
+    _regional_regs = ["africaSE", "americaN", "americaS", "asiaS", "oceania"]
+    _map_proj = ccrs.PlateCarree(central_longitude=0) \
+        if my_reg in _regional_regs else ccrs.PlateCarree(central_longitude=180)
     if (isinstance(variables, str) is True and (
             "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or
             "reg_ts_over_sst_map" in variables or "djf_map__" in variables or "jja_map__" in variables)) or\
         (isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0])):
-        fig, axes = plt.subplots(nbrl, nbrc, figsize=(6 * nbrc, 6 * nbrl), sharex="col", sharey="row", 
-                                 subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+        if my_reg in _regional_regs:
+            # Fit the figure width to the region's geographic aspect so maps fill the subplots
+            _reg_b = ReferenceRegions(my_reg)
+            _lon_sp = _reg_b['longitude'][1] - _reg_b['longitude'][0]
+            _lat_sp = _reg_b['latitude'][1] - _reg_b['latitude'][0]
+            _fw = min(6 * nbrc, max(3 * nbrc, int(round(6 * nbrc * _lon_sp / _lat_sp))))
+        else:
+            _fw = 6 * nbrc
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(_fw, 6 * nbrl), sharex="col", sharey="row",
+                                 subplot_kw={'projection': _map_proj})
     else:
-        fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row", 
-                                 subplot_kw={'projection': ccrs.PlateCarree(central_longitude=180)})
+        fig, axes = plt.subplots(nbrl, nbrc, figsize=(4 * nbrc, 4 * nbrl), sharex="col", sharey="row",
+                                 subplot_kw={'projection': _map_proj})
     hspa1 = 0.1
     hspa2 = 0.01
     if ((nbrc == 2 and nbrl == 2) or (nbrc == 1 and plot_ref is True)) and isinstance(variables, list) is True and\
@@ -1036,7 +1062,7 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         elif my_reg == "americaN":
             hspace = 0.1
         elif my_reg == "americaS":
-            hspace = 0.4
+            hspace = 0.2
         elif my_reg == "asiaS":
             hspace = 0.1
         else:
@@ -1149,10 +1175,20 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
         # map
         xx, yy = NUMPYmeshgrid(lon, lat)
         # set extent
-        if lat[-1] - lat[0] < 40:
+        if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
+            reg_bounds = ReferenceRegions(my_reg)
+            reg_lon0 = reg_bounds['longitude'][0]
+            reg_lon1 = reg_bounds['longitude'][1]
+            reg_lat0 = reg_bounds['latitude'][0]
+            reg_lat1 = reg_bounds['latitude'][1]
+            # convert 0-360 longitudes to -180-180 for PlateCarree() set_extent
+            reg_lon0 = reg_lon0 if reg_lon0 <= 180 else reg_lon0 - 360
+            reg_lon1 = reg_lon1 if reg_lon1 <= 180 else reg_lon1 - 360
+            ax.set_extent([reg_lon0, reg_lon1, reg_lat0, reg_lat1], crs=ccrs.PlateCarree())
+        elif lat[-1] - lat[0] < 40:
             ax.set_extent([lon[0], lon[-1], lat[0] - 5, lat[-1] + 5], crs=ccrs.PlateCarree())
         else:
-            ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())  
+            ax.set_extent([lon[0], lon[-1], lat[0], lat[-1]], crs=ccrs.PlateCarree())
         # draw coastlines
         ax.coastlines()
         # fill continents
@@ -1160,21 +1196,49 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             ax.add_feature(cfeature.LAND, color="gainsboro")
         if maskocean:
             ax.add_feature(cfeature.OCEAN, color="white")
-        # adjust the yticks to convert longitude over 180 to negative to properly add gridlines
-        xlabel_ticks_adjusted = [i if i < 180 else i - 360 for i in xlabel_ticks]
+        # For regional maps compute gridline ticks from region bounds to give appropriate density.
+        # For global maps convert 0-360 longitudes to -180..180 for PlateCarree gridlines.
+        if my_reg in _regional_regs:
+            _reg_b = ReferenceRegions(my_reg)
+            _lon0_r = _reg_b['longitude'][0]
+            _lon1_r = _reg_b['longitude'][1]
+            _lat0_r = _reg_b['latitude'][0]
+            _lat1_r = _reg_b['latitude'][1]
+            _lon_sp = _lon1_r - _lon0_r
+            _lat_sp = _lat1_r - _lat0_r
+            _lon_step = 10 if _lon_sp <= 30 else (20 if _lon_sp <= 60 else (30 if _lon_sp <= 120 else 40))
+            _lat_step = 10 if _lat_sp <= 30 else (20 if _lat_sp <= 60 else 30)
+            _lon0_adj = _lon0_r if _lon0_r <= 180 else _lon0_r - 360
+            _lon1_adj = _lon1_r if _lon1_r <= 180 else _lon1_r - 360
+            xlabel_ticks_adjusted = list(range(
+                int(MATHceil(_lon0_adj / _lon_step)) * _lon_step,
+                int(MATHfloor(_lon1_adj / _lon_step)) * _lon_step + 1,
+                _lon_step
+            ))
+            ylabel_ticks = list(range(
+                int(MATHceil(_lat0_r / _lat_step)) * _lat_step,
+                int(MATHfloor(_lat1_r / _lat_step)) * _lat_step + 1,
+                _lat_step
+            ))
+        else:
+            xlabel_ticks_adjusted = [i if i < 180 else i - 360 for i in xlabel_ticks]
         # draw parallels and meridians by adding grid lines only at specified ticks
         gl = ax.gridlines(draw_labels=True, crs=ccrs.PlateCarree(), linestyle='--', color='k')
         gl.xlocator = mticker.FixedLocator(xlabel_ticks_adjusted)
         gl.ylocator = mticker.FixedLocator(ylabel_ticks)
         gl.xformatter = LongitudeFormatter()
-        gl.yformatter = LatitudeFormatter()        
+        gl.yformatter = LatitudeFormatter()
         gl.top_labels = False
         gl.right_labels = False
+        # Only draw bottom longitude labels on the bottom row and left latitude labels on the left column.
+        # This prevents duplicate/overlapping labels when sharex/sharey is active.
+        gl.bottom_labels = (ii // nbrc == nbrl - 1)
+        gl.left_labels = (ii % nbrc == 0)
         gl.xlabel_style = {'size': 12}
         gl.ylabel_style = {'size': 12}
         # contour plot
         levels = create_levels(labelbar)
-        cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar, transform=ccrs.PlateCarree())  
+        cs = ax.contourf(xx, yy, tab[ii], levels=levels, extend="both", cmap=colorbar, transform=ccrs.PlateCarree())
         # my text
         if (ii > 0 and plot_metric is True and isinstance(variables, list) is False) or\
                 (isinstance(variables, list) is True and "nina" in variables[0] and "nino" in variables[1] and
@@ -1195,16 +1259,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                             tmp = metval[jj]
                     txt = format_metric(metric_type[jj], tmp, metric_units[jj])
                     if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
-                        if my_reg in ["africaSE"]:
-                            xxx, yyy = 0.00, -0.05 - jj * 0.07
-                        elif my_reg in ["americaN"]:
-                            xxx, yyy = 0.00, -0.14 - jj * 0.10
-                        elif my_reg in ["americaS"]:
-                            xxx, yyy = 0.00, -0.12 - jj * 0.06
-                        elif my_reg in ["asiaS"]:
-                            xxx, yyy = 0.00, -0.13 - jj * 0.09
-                        else:
-                            xxx, yyy = 0.00, -0.15 - jj * 0.10
+                        # Place metric text inside the lower-left corner of the panel to avoid
+                        # overlapping cartopy x-axis tick labels and adjacent subplot titles.
+                        xxx = 0.02
+                        yyy = 0.03 + (len(metric_type) - 1 - jj) * 0.09
                     elif "reg_pr_over_sst_map" in variables or "reg_slp_over_sst_map" in variables or\
                             "reg_ts_over_sst_map" in variables or "reg_pr_over_sst_djf_map" in variables or\
                             "reg_slp_over_sst_djf_map" in variables or "reg_ts_over_sst_djf_map" in variables or\
@@ -1214,8 +1272,10 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
                         xxx, yyy = 0.00, -0.30 - jj * 0.18
                     else:
                         xxx, yyy = -0.12, 1.26 - jj * 0.16
+                    _bbox = dict(facecolor="white", alpha=0.7, edgecolor="none", pad=1) \
+                        if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"] else None
                     ax.text(xxx, yyy, txt, fontsize=11, color="k", horizontalalignment="left",
-                            verticalalignment="center", transform=ax.transAxes)
+                            verticalalignment="bottom", transform=ax.transAxes, bbox=_bbox)
         if ii == 0 and plot_ref is True:
             tx1, tx2 = ax.get_xlim()
             dx = (tx2 - tx1) / 100.
@@ -1251,31 +1311,11 @@ def my_map(model, filename_nc, dict_param, reference, metric_variables, figure_n
             y1 = ax.get_position().y0
     # add colorbar
     if my_reg in ["africaSE", "americaN", "americaS", "asiaS", "oceania"]:
-        if my_reg in ["africaSE"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.08, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.15, x2 - x1, 0.04])
-        elif my_reg in ["americaN"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.22, x2 - x1, 0.05])
-        elif my_reg in ["americaS"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.025])
-            else:
-                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.035])
-        elif my_reg in ["asiaS"]:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
+        # composite (list variables) = 4-panel; single = 2-panel regression map
+        if isinstance(variables, list) is True:
+            cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
         else:
-            if isinstance(variables, list) is True:
-                cax = plt.axes([x1, y1 - 0.10, x2 - x1, 0.02])
-            else:
-                cax = plt.axes([x1, y1 - 0.2, x2 - x1, 0.05])
+            cax = plt.axes([x1, y1 - 0.12, x2 - x1, 0.04])
     elif nbrl == 2:
         if isinstance(variables, list) is True and ("djf_map__" in variables[0] or "jja_map__" in variables[0]):
             cax = plt.axes([x1, y1 - 0.09, x2 - x1, 0.018])
@@ -1341,7 +1381,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
         if isinstance(filename_nc, dict):
             if "EnsoFbSstSwr" in figure_name and article_fig is True:
                 tmp_let = ["b) ", "c) ", "d) ", "e) "]
-                title = [tmp_let[0] + "ref: Tropflux"]
+                title = [tmp_let[0] + "ref: " + obsname]
                 if isinstance(member, list) is True and len(member) == len(model):
                     title += [tmp_let[ii+1] + mod.upper() + mem + " (" + str(len(models2[mod])) + ")"
                               for ii, (mod, mem) in enumerate(zip(model, member))]
@@ -1415,11 +1455,9 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
     lines = [Line2D([0], [0], marker=markers[kk], c="w", markerfacecolor=mcolors[kk], markersize=12)
              for kk in range(len(mcolors))]
     if shading is True and nbr_panel == 3:
-        nbrl = nbr_panel // 3
-        nbrc = 1 if nbr_panel == 1 else 3
+        nbrl, nbrc = _panel_grid(nbr_panel, three_columns=True)
     else:
-        nbrl = 1 if nbr_panel == 1 else nbr_panel // 2
-        nbrc = 1 if nbr_panel == 1 else 2
+        nbrl, nbrc = _panel_grid(nbr_panel)
     if plot_ref is True:
         nbrl = deepcopy(nbr_panel)
         nbrc = 1
@@ -1498,7 +1536,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             for kk in list(regions.keys()):
                 if kk in xlabel.lower():
                     xlabel = regions[kk] + " " + xlabel
-            units = tab_obs[0].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+            units = tab_obs[0].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
             if units != "":
                 xlabel = xlabel + " (" + units + ")"
             ax.set_xlabel(xlabel, fontsize=15)
@@ -1536,7 +1574,7 @@ def my_scatterplot(model, filename_nc, dict_param, reference, metric_variables, 
             for kk in list(regions.keys()):
                 if kk in ylabel.lower():
                     ylabel = regions[kk] + " " + ylabel
-            units = tab_obs[1].units.replace("C", "$^\circ$C").replace("long", "$^\circ$lon")
+            units = tab_obs[1].units.replace("C", r"$^\circ$C").replace("long", r"$^\circ$lon")
             if units != "":
                 ylabel = ylabel + " (" + units + ")"
             ax.set_ylabel(ylabel, fontsize=15)
@@ -1723,8 +1761,12 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
         lw = 4  # 2  #
     else:
         lw = 4
+    missing = list()
     if plot_ref is False:
         for ii, tab in enumerate(tab_mod):
+            label = "model"
+            if ii < len(legend):
+                label += " " + legend[ii]
             if shading is True:
                 tab_sh = shading_levels(tab, axis=0)
                 # # !!!!! temporary: start !!!!!
@@ -1736,16 +1778,34 @@ def plot_curve(tab_mod, tab_obs, ax, title, axis, xname, yname, ytick_labels, li
                 # # !!!!! temporary: end !!!!!
                 # ax.fill_between(axis, list(tab_sh[0]), list(tab_sh[3]), facecolor=linecolors["model"][ii], alpha=0.3)
                 # ax.fill_between(axis, list(tab_sh[1]), list(tab_sh[2]), facecolor=linecolors["model"][ii], alpha=0.4)
-                ax.plot(axis, list(tab_sh[4]), lw=lw, color=linecolors["model"][ii], ls=linestyles["model"][ii])
-            else:
+                if has_valid_data(tab_sh[4]):
+                    ax.plot(axis, list(tab_sh[4]), lw=lw, color=linecolors["model"][ii], ls=linestyles["model"][ii])
+                else:
+                    missing.append(label)
+            elif has_valid_data(tab):
                 ax.plot(axis, list(tab), c=linecolors["model"][ii], lw=lw, ls=linestyles["model"][ii])
+            else:
+                missing.append(label)
     for ii, tab in enumerate(tab_obs):
-        ax.plot(axis, list(tab), c=linecolors["reference"][ii], lw=lw, ls=linestyles["reference"][ii])
+        label = "reference"
+        if ii < len(legend):
+            label += " " + legend[ii]
+        if has_valid_data(tab):
+            ax.plot(axis, list(tab), c=linecolors["reference"][ii], lw=lw, ls=linestyles["reference"][ii])
+        else:
+            missing.append(label)
     # relative space
     x1, x2 = ax.get_xlim()
     dx = (x2 - x1) / 100.
     y1, y2 = ax.get_ylim()
     dy = (y2 - y1) / 100.
+    if len(missing) > 0:
+        if len(missing) > 3:
+            missing_text = ", ".join(missing[:3]) + ", ..."
+        else:
+            missing_text = ", ".join(missing)
+        ax.text(x1 + 2 * dx, y1 + 5 * dy, "No valid data: " + missing_text, fontsize=10, color="k", ha="left",
+                va="bottom")
     if multimodel is False:
         # legend
         if len(linecolors["model"]) == 1 and len(linecolors["reference"]) == 1:
@@ -2075,7 +2135,7 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
         yy1, yy2 = ax.get_ylim()
         dy = 0.5 / (yy2 - yy1)
         try: ax.set_title(title[kk], fontdict=fontdict, y=1+dy, loc="center")
-        except: pass
+        except Exception: pass
         # x axis
         ticks = [ii + 0.5 for ii in range(len(tmp[0]))]
         ax.set_xticks(ticks)
@@ -2163,7 +2223,7 @@ def plot_portraitplot(tab, figure_name, xticklabel=[], yticklabel=[], title=[], 
     # color bar
     cax = plt.axes([x2 + 0.03, y1, 0.02, y2 - y1])
     cbar = plt.colorbar(cs, cax=cax, orientation="vertical", ticks=levels, pad=0.05, extend="both", aspect=40)
-    cbar.ax.set_yticklabels(["-2 $\sigma$", "-1", "MMV", "1", "2 $\sigma$"], fontdict=fontdict)
+    cbar.ax.set_yticklabels([r"-2 $\sigma$", "-1", "MMV", "1", r"2 $\sigma$"], fontdict=fontdict)
     dict_arrow = dict(facecolor="k", width=8, headwidth=40, headlength=40, shrink=0.0)
     dict_txt = dict(fontsize=40, rotation="vertical", ha="center", weight="bold")
     cax.annotate("", xy=(3.7, 0.06), xycoords="axes fraction", xytext=(3.7, 0.45), arrowprops=dict_arrow)

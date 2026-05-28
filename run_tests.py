@@ -5,17 +5,15 @@ import os
 import argparse
 import multiprocessing
 import subprocess
-import image_compare
 import codecs
 import time
 import webbrowser
 import shlex
-import cdat_info
 
 root = os.getcwd()
 cpus = multiprocessing.cpu_count()
 
-parser = argparse.ArgumentParser(description="Run VCS tests",
+parser = argparse.ArgumentParser(description="Run ENSO metrics tests",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-H", "--html", action="store_true",
                     help="create and show html result page")
@@ -49,7 +47,7 @@ parser.add_argument(
     default=False,
     help="runs only tests that failed last time and are in the list you provide")
 parser.add_argument(
-    "-A","--attributes",
+    "-A", "--attributes",
     default=[],
     action="append",
     help="attribute-based runs")
@@ -63,10 +61,10 @@ def abspath(path, name, prefix):
     full_path = os.path.abspath(os.path.join(os.getcwd(), "..", path))
     if not os.path.exists(name):
         os.makedirs(name)
-    new = os.path.join(nm, prefix + "_" + os.path.basename(full_path))
+    new = os.path.join(name, prefix + "_" + os.path.basename(full_path))
     try:
         shutil.copy(full_path, new)
-    except:
+    except Exception:
         pass
     return new
 
@@ -91,20 +89,19 @@ def findDiffFiles(log):
                         k -= 1
                     try:
                         file2 = log[k].split()[2]
-                    except:
-                        file2 = log[k].split()[1][:-1]+log[j].split()[0]
-                        print "+++++++++++++++++++++++++",file2
+                    except Exception:
+                        file2 = log[k].split()[1][:-1] + log[j].split()[0]
+                        print("+++++++++++++++++++++++++", file2)
             if log[j].find("Saving image diff") > -1:
                 diff = log[j].split()[-1]
-                # break
     return file1, file2, diff
 
 
 def run_command(command, join_stderr=True):
-    if isinstance(command, basestring):
+    if isinstance(command, str):
         command = shlex.split(command)
     if args.verbosity > 0:
-        print "Executing %s in %s" % (" ".join(command), os.getcwd())
+        print("Executing %s in %s" % (" ".join(command), os.getcwd()))
     if join_stderr:
         stderr = subprocess.STDOUT
     else:
@@ -117,20 +114,18 @@ def run_command(command, join_stderr=True):
         cwd=os.getcwd())
     out = []
     while P.poll() is None:
-        read = P.stdout.readline().rstrip()
+        read = P.stdout.readline().rstrip().decode("utf-8", errors="replace")
         out.append(read)
         if args.verbosity > 1 and len(read) != 0:
-            print read
+            print(read)
     return P, out
 
 
-def run_nose(test_name):
+def run_pytest(test_name):
     opts = []
     if args.coverage:
-        opts += ["--with-coverage"]
-    for att in args.attributes:
-        opts += ["-A", att]
-    command = ["nosetests", ] + opts + ["-s", test_name]
+        opts += ["--cov"]
+    command = [sys.executable, "-m", "pytest"] + opts + ["-s", test_name]
     start = time.time()
     P, out = run_command(command)
     end = time.time()
@@ -146,61 +141,50 @@ sys.path.append(
 if len(args.tests) == 0:
     names = glob.glob("tests/test_*.py")
 else:
-    names = set(args.tests)
+    names = list(args.tests)
 
-if args.failed_only and os.path.exists(os.path.join("tests",".last_failure")):
-    f = open(os.path.join("tests",".last_failure"))
-    failed = set(eval(f.read().strip()))
-    f.close()
-    new_names = []
-    for fnm in failed:
-        if fnm in names:
-            new_names.append(fnm)
-    names = new_names
+if args.failed_only and os.path.exists(os.path.join("tests", ".last_failure")):
+    with open(os.path.join("tests", ".last_failure")) as f:
+        failed = set(eval(f.read().strip()))
+    names = [fnm for fnm in names if fnm in failed]
 
 if args.verbosity > 1:
     print("Names:", names)
 
-if len(names)==0:
-    print "No tests to run"
+if len(names) == 0:
+    print("No tests to run")
     sys.exit(0)
-
-# Make sure we have sample data
-#cdat_info.download_sample_data_files(os.path.join(sys.prefix,"share","EnsoMetrics","test_data_files.txt"),cdat_info.get_sampledata_path())
 
 p = multiprocessing.Pool(args.cpus)
 try:
-    outs = p.map_async(run_nose, names).get(3600)
+    outs = p.map_async(run_pytest, names).get(3600)
 except KeyboardInterrupt:
     sys.exit(1)
 results = {}
 failed = []
 for d in outs:
     results.update(d)
-    nm = d.keys()[0]
+    nm = next(iter(d))
     if d[nm]["result"] != 0:
         failed.append(nm)
-f = open(os.path.join("tests",".last_failure"),"w")
-f.write(repr(failed))
-f.close()
+with open(os.path.join("tests", ".last_failure"), "w") as f:
+    f.write(repr(failed))
 
 if args.verbosity > 0:
-    print "Ran %i tests, %i failed (%.2f%% success)" %\
-        (len(outs), len(failed), 100. - float(len(failed)) / len(outs) * 100.)
+    print("Ran %i tests, %i failed (%.2f%% success)" %
+          (len(outs), len(failed), 100. - float(len(failed)) / len(outs) * 100.))
     if len(failed) > 0:
-        print "Failed tests:"
+        print("Failed tests:")
         for f in failed:
-            print "\t", f
+            print("\t", f)
 if args.html or args.package:
     if not os.path.exists("tests_html"):
         os.makedirs("tests_html")
     os.chdir("tests_html")
 
-    js = image_compare.script_data()
-
     fi = open("index.html", "w")
-    print>>fi, "<!DOCTYPE html>"
-    print>>fi, """<html><head><title>VCS Test Results %s</title>
+    fi.write("<!DOCTYPE html>\n")
+    fi.write("""<html><head><title>ENSO Metrics Test Results %s</title>
     <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.13/css/jquery.dataTables.css">
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.12.4.js"></script>
     <script type="text/javascript" charset="utf8"
@@ -213,47 +197,38 @@ if args.html or args.package:
             });
                 } );
     </script>
-    </head>""" % time.asctime()
-    print>>fi, "<body><h1>VCS Test results: %s</h1>" % time.asctime()
-    print>>fi, "<table id='table_id' class='display'>"
-    print>>fi, "<thead><tr><th>Test</th><th>Result</th><th>Start Time</th><th>End Time</th><th>Time</th></tr></thead>"
-    print>>fi, "<tfoot><tr><th>Test</th><th>Result</th><th>Start Time</th><th>End Time</th><th>Time</th></tr></tfoot>"
+    </head>\n""" % time.asctime())
+    fi.write("<body><h1>ENSO Metrics Test results: %s</h1>\n" % time.asctime())
+    fi.write("<table id='table_id' class='display'>\n")
+    fi.write("<thead><tr><th>Test</th><th>Result</th><th>Start Time</th><th>End Time</th><th>Time</th></tr></thead>\n")
+    fi.write("<tfoot><tr><th>Test</th><th>Result</th><th>Start Time</th><th>End Time</th><th>Time</th></tr></tfoot>\n")
 
     for t in sorted(results.keys()):
         result = results[t]
         nm = t.split("/")[-1][:-3]
-        print>>fi, "<tr><td>%s</td>" % nm,
+        fi.write("<tr><td>%s</td>" % nm)
         fe = codecs.open("%s.html" % nm, "w", encoding="utf-8")
-        print>>fe, "<!DOCTYPE html>"
-        print>>fe, "<html><head><title>%s</title>" % nm
+        fe.write("<!DOCTYPE html>\n")
+        fe.write("<html><head><title>%s</title>" % nm)
         if result["result"] == 0:
-            print>>fi, "<td><a href='%s.html'>OK</a></td>" % nm,
-            print>>fe, "</head><body>"
-            print>>fe, "<a href='index.html'>Back To Results List</a>"
+            fi.write("<td><a href='%s.html'>OK</a></td>" % nm)
+            fe.write("</head><body>")
+            fe.write("<a href='index.html'>Back To Results List</a>")
         else:
-            print>>fi, "<td><a href='%s.html'>Fail</a></td>" % nm,
-            print>>fe, "<script type='text/javascript'>%s</script></head><body>" % js
-            print>>fe, "<a href='index.html'>Back To Results List</a>"
-            print>>fe, "<h1>Failed test: %s on %s</h1>" % (nm, time.asctime())
-            file1, file2, diff = findDiffFiles(result["log"])
-            if file1 != "":
-                print>>fe, '<div id="comparison"></div><script type="text/javascript"> ImageCompare.compare(' +\
-                    'document.getElementById("comparison"), "%s", "%s"); </script>' % (
-                        abspath(file2, nm, "test"), abspath(file1, nm, "source"))
-                print>>fe, "<div><a href='index.html'>Back To Results List</a></div>"
-                print>>fe, "<div id='diff'><img src='%s' alt='diff file'></div>" % abspath(
-                    diff, nm, "diff")
-                print>>fe, "<div><a href='index.html'>Back To Results List</a></div>"
-        print>>fe, '<div id="output"><h1>Log</h1><pre>%s</pre></div>' % "\n".join(result[
-                                                                                  "log"])
-        print>>fe, "<a href='index.html'>Back To Results List</a>"
-        print>>fe, "</body></html>"
+            fi.write("<td><a href='%s.html'>Fail</a></td>" % nm)
+            fe.write("</head><body>")
+            fe.write("<a href='index.html'>Back To Results List</a>")
+            fe.write("<h1>Failed test: %s on %s</h1>" % (nm, time.asctime()))
+        fe.write('<div id="output"><h1>Log</h1><pre>%s</pre></div>' % "\n".join(result["log"]))
+        fe.write("<a href='index.html'>Back To Results List</a>")
+        fe.write("</body></html>")
         fe.close()
-        t = result["times"]
-        print>>fi, "<td>%s</td><td>%s</td><td>%s</td></tr>" % (
-            time.ctime(t["start"]), time.ctime(t["end"]), t["end"] - t["start"])
+        t_times = result["times"]
+        fi.write("<td>%s</td><td>%s</td><td>%s</td></tr>\n" % (
+            time.ctime(t_times["start"]), time.ctime(t_times["end"]),
+            t_times["end"] - t_times["start"]))
 
-    print>>fi, "</table></body></html>"
+    fi.write("</table></body></html>\n")
     fi.close()
     if args.html:
         webbrowser.open("file://%s/index.html" % os.getcwd())
@@ -261,12 +236,11 @@ if args.html or args.package:
 
 if args.package:
     import tarfile
-    tnm = "results_%s_%s_%s.tar.bz2" % (os.uname()[0],os.uname()[1],time.strftime("%Y-%m-%d_%H:%M"))
-    t = tarfile.open(tnm, "w:bz2")
-    t.add("tests_html")
-    t.add("tests_html")
-    t.close()
+    tnm = "results_%s_%s_%s.tar.bz2" % (
+        os.uname()[0], os.uname()[1], time.strftime("%Y-%m-%d_%H:%M"))
+    with tarfile.open(tnm, "w:bz2") as t:
+        t.add("tests_html")
     if args.verbosity > 0:
-        print "Packaged Result Info in:", tnm
+        print("Packaged Result Info in:", tnm)
 
 sys.exit(len(failed))
