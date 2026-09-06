@@ -267,22 +267,28 @@ def MV2concatenate(seq, axis=0):
         mask=np.concatenate(masks, axis=axis)
         )
     if seq and all(isinstance(x, CDATVariable) for x in seq):
-        tmpl = seq[0]
+        # Take the metadata from the first input that carries axes, so a bare
+        # padding array (e.g. from MV2zeros) can sit on either side.
+        tmpl = next((x for x in seq if x._axes), seq[0])
         new_axes = list(tmpl._axes)
         ax_int = axis if isinstance(axis, (int, np.integer)) else 0
-        if (0 <= ax_int < len(new_axes) and
-                all(ax_int < len(x._axes) and x._axes[ax_int] is not None
-                    for x in seq)):
-            old_ax = tmpl._axes[ax_int]
-            cat_vals = np.concatenate([x._axes[ax_int]._values for x in seq])
-            new_ax = _Axis(
-                old_ax.id, cat_vals,
-                units=old_ax.units,
-                attributes=dict(old_ax._attributes),
-                axis_type=old_ax.axis
-            )
-            new_ax.calendar = old_ax.calendar
-            new_axes[ax_int] = new_ax
+        if 0 <= ax_int < len(new_axes):
+            if all(ax_int < len(x._axes) and x._axes[ax_int] is not None
+                   for x in seq):
+                old_ax = tmpl._axes[ax_int]
+                cat_vals = np.concatenate([x._axes[ax_int]._values for x in seq])
+                new_ax = _Axis(
+                    old_ax.id, cat_vals,
+                    units=old_ax.units,
+                    attributes=dict(old_ax._attributes),
+                    axis_type=old_ax.axis
+                )
+                new_ax.calendar = old_ax.calendar
+                new_axes[ax_int] = new_ax
+            else:
+                # Some input has no coordinates along the joined axis, so the
+                # template axis would be shorter than the data: drop it.
+                new_axes[ax_int] = None
         return CDATVariable(result, axes=new_axes, grid=tmpl._grid,
                             id=tmpl.id, attributes=dict(tmpl._attributes))
     return result
