@@ -269,7 +269,7 @@ def MV2concatenate(seq, axis=0):
     if seq and all(isinstance(x, CDATVariable) for x in seq):
         # Take the metadata from the first input that carries axes, so a bare
         # padding array (e.g. from MV2zeros) can sit on either side.
-        tmpl = next((x for x in seq if x._axes), seq[0])
+        tmpl = next((x for x in seq if any(ax is not None for ax in x._axes)), seq[0])
         new_axes = list(tmpl._axes)
         ax_int = axis if isinstance(axis, (int, np.integer)) else 0
         if 0 <= ax_int < len(new_axes):
