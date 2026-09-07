@@ -19,14 +19,14 @@ def _time_axis(start_year, start_month, n_months):
 
 def _monthly_series(start_year, start_month, n_months):
     time = _time_axis(start_year, start_month, n_months)
-    return create_variable(ma.arange(n_months, dtype=float) + 1, axes=[time], id="sst")
+    return create_variable(ma.arange(1, n_months + 1, dtype=float), axes=[time], id="sst")
 
 
 def _monthly_map(start_year, start_month, n_months):
     time = _time_axis(start_year, start_month, n_months)
     lat = create_axis([-0.5, 0.5], id="lat", units="degrees_north", attributes={"axis": "Y"})
     lon = create_axis([10.0, 11.0, 12.0], id="lon", units="degrees_east", attributes={"axis": "X"})
-    data = np.arange(n_months, dtype=float)[:, None, None] + 1 + np.zeros((n_months, 2, 3))
+    data = np.tile(np.arange(1, n_months + 1, dtype=float)[:, None, None], (1, 2, 3))
     mask = np.zeros(data.shape, dtype=bool)
     mask[:, 0, 0] = True
     return create_variable(
