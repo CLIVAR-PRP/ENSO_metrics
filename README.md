@@ -27,6 +27,8 @@ Documentation for ENSO metrics: https://github.com/CLIVAR-PRP/ENSO_metrics/wiki
 
 | <div style="width:300%">[Versions]</div> | Update summary   |
 | ------------| ------------------------------------- |
+| [v2.0.1]    | Technical update: bug fix
+| [v2.0.0]    | Convert to xCDAT/xarray-based from the legacy CDAT
 | [v1.1.5]    | Technical update: bug fix
 | [v1.1.4]    | Technical update: map plotting library changed to cartopy to comply w/ newer numpy versions
 | [v1.1.3]    | Technical update: resolve conflict with newer matplotlib versions
@@ -37,6 +39,8 @@ Documentation for ENSO metrics: https://github.com/CLIVAR-PRP/ENSO_metrics/wiki
 
 
 [Versions]: https://github.com/PCMDI/pcmdi_metrics/releases
+[v2.0.1]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v2.0.1
+[v2.0.0]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v2.0.0
 [v1.1.5]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.5
 [v1.1.4]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.4
 [v1.1.3]: https://github.com/CLIVAR-PRP/ENSO_metrics/releases/tag/v1.1.3
