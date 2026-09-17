@@ -29,6 +29,21 @@ colors_sup = ["r", "lime", "peru", "gold", "forestgreen", "sienna", "gold"]
 dict_col = {"REF": "k", "CMIP": "forestgreen", "CMIP3": "orange", "CMIP5": "dodgerblue", "CMIP6": "r"}
 
 
+def _ax_boxplot(ax, *args, **kwargs):
+    """Call ax.boxplot compatibly across Matplotlib versions."""
+    if "labels" not in kwargs:
+        return ax.boxplot(*args, **kwargs)
+
+    labels = kwargs.pop("labels")
+
+    try:
+        return ax.boxplot(*args, tick_labels=labels, **kwargs)
+    except TypeError as exc:
+        if "tick_labels" not in str(exc):
+            raise
+        return ax.boxplot(*args, labels=labels, **kwargs)
+
+
 def _panel_grid(nbr_panel, three_columns=False):
     if nbr_panel == 1:
         return 1, 1
@@ -125,7 +140,7 @@ def cmip_boxplot(dict_param, dict_values, units, reference, val_type, my_text, f
                 "medianprops": dict(linestyle="-", linewidth=2, color=cc),
                 "whiskerprops": dict(linestyle="-", linewidth=2, color=cc)}
             tmp = [[1e20, 1e20]] * ii + [tab] + [[1e20, 1e20]] * (nbrc-1-ii)
-            ax.boxplot(tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=True, **boxproperties)
+            _ax_boxplot(ax, tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=True, **boxproperties)
             del boxproperties, tmp
         # bootstrap
         x1, x2 = ax.get_xlim()
@@ -320,8 +335,8 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
             "medianprops": dict(linestyle="-", linewidth=2, color=legco[0]),
             "whiskerprops": dict(linestyle="-", linewidth=2, color=legco[0])}
         if isinstance(filename_nc, str) is True or isinstance(filename_nc, str) is True:
-            ax.boxplot([tab_obs[ii], [1e20, 1e20]], whis=[5, 95], labels=["", ""], showmeans=True, showfliers=False,
-                       **boxproperties)
+            _ax_boxplot(ax, [tab_obs[ii], [1e20, 1e20]], whis=[5, 95], labels=["", ""], showmeans=True, showfliers=False,
+                        **boxproperties)
             boxproperties = {
                 "boxprops": dict(linestyle="-", linewidth=2, color=legco[1]),
                 "capprops": dict(linestyle="-", linewidth=2, color=legco[1]),
@@ -333,8 +348,8 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                 "whiskerprops": dict(linestyle="-", linewidth=2, color=legco[1]),
             }
             if plot_ref is False:
-                ax.boxplot([[1e20, 1e20], tab_mod[ii]], whis=[5, 95], labels=["", ""], showmeans=True, showfliers=False,
-                           **boxproperties)
+                _ax_boxplot(ax, [[1e20, 1e20], tab_mod[ii]], whis=[5, 95], labels=["", ""], showmeans=True, showfliers=False,
+                            **boxproperties)
             # my text
             if plot_metric is True:
                 # relative space
@@ -350,7 +365,7 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                 ax.legend(lines, legend, bbox_to_anchor=(1, 1), loc="upper left", ncol=1)
         else:
             tmp = [tab_obs[ii]] + [1e20, 1e20] * len(tab_mod)
-            ax.boxplot(tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=False, **boxproperties)
+            _ax_boxplot(ax, tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=False, **boxproperties)
             if plot_ref is False:
                 for kk in range(len(tab_mod)):
                     boxproperties = {
@@ -363,8 +378,8 @@ def my_boxplot(model, filename_nc, dict_param, reference, metric_variables, figu
                         "medianprops": dict(linestyle="-", linewidth=2, color=legco[kk+1]),
                         "whiskerprops": dict(linestyle="-", linewidth=2, color=legco[kk+1])}
                     tmp = [[1e20, 1e20]] * (kk + 1) + [tab_mod[kk][ii]] + [[1e20, 1e20]] * (len(tab_mod) - 1 - kk)
-                    ax.boxplot(tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=False,
-                               **boxproperties)
+                    _ax_boxplot(ax, tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=False,
+                                **boxproperties)
             # legend
             if (nbr_panel == 1 and ii == 0) or (nbr_panel != 1 and ii == 1):
                 if plot_metric is True:
@@ -689,7 +704,7 @@ def my_dot_to_box(model, filename_nc, dict_param, reference, metric_variables, f
             "whiskerprops": dict(linestyle="-", linewidth=2, color=mcolors[ii+1]),
         }
         tmp = [[1e20, 1e20]] * ii + [my_mask(tab[ii], remove_masked=True)] + [[1e20, 1e20]] * (len(tab) - 1 - ii)
-        ax.boxplot(tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=True, **boxproperties)
+        _ax_boxplot(ax, tmp, whis=[5, 95], labels=[""] * len(tmp), showmeans=True, showfliers=True, **boxproperties)
     # legend
     if plot_metric is True:
         for jj in range(1, len(legend)):
