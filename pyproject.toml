@@ -1,0 +1,110 @@
+###############################################
+# Build system and project metadata (PEP 621) #
+###############################################
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+# Use an in-tree backend wrapper so we can run a pre-build step
+build-backend = "backend"
+backend-path = ["_custom_build"]
+
+[project]
+name = "enso_metrics"
+version = "2.0.0"
+description = "Library to compute ENSO metrics"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "CLIVAR" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/CLIVAR-PRP/ENSO_metrics"
+
+dependencies = [
+  "numpy",
+  "scipy",
+  "packaging",
+  "xarray",
+  "xcdat",
+  "cftime",
+  "matplotlib",
+  "cartopy",
+  "cmocean",
+  "regionmask",
+  "xesmf",
+]
+
+[tool.setuptools]
+packages = ["EnsoMetrics", "EnsoPlots"]
+
+[tool.setuptools.package-dir]
+EnsoMetrics = "lib"
+EnsoPlots = "plots"
+
+[tool.setuptools.package-data]
+EnsoMetrics = [
+  "share/EnsoMetrics/basin_generic_1x1deg.nc",
+  "share/EnsoMetrics/cmip5_historical_ENSO_perf_v20200427_allModels_allRuns.json",
+  "share/EnsoMetrics/cmip5_historical_ENSO_proc_v20200427_allModels_allRuns.json",
+  "share/EnsoMetrics/cmip5_historical_ENSO_tel_v20200427_allModels_allRuns.json",
+  "share/EnsoMetrics/cmip6_historical_ENSO_perf_v20200427_allModels_allRuns.json",
+  "share/EnsoMetrics/cmip6_historical_ENSO_proc_v20200427_allModels_allRuns.json",
+  "share/EnsoMetrics/cmip6_historical_ENSO_tel_v20200427_allModels_allRuns.json",
+  "share/EnsoMetrics/obs2obs_historical_ENSO_perf_v20201231_allObservations.json",
+  "share/EnsoMetrics/obs2obs_historical_ENSO_proc_v20201231_allObservations.json",
+  "share/EnsoMetrics/obs2obs_historical_ENSO_tel_v20201231_allObservations.json",
+]
+
+[tool.setuptools.dynamic]
+
+#########################
+# Lint/Test configuration
+#########################
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312', 'py313']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.idea
+    | venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | docs
+    | config
+  )/
+)
+'''
+
+[tool.isort]
+# Docs: https://pycqa.github.io/isort/docs/configuration/options.html#example-pyprojecttoml_4
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 88
+
+[tool.pytest.ini_options]
+# Docs: https://docs.pytest.org/en/7.2.x/reference/customize.html#configuration
+junit_family = "xunit2"
+addopts = "--cov=pcmdi_metrics --cov-report term --cov-report html:tests_coverage_reports/htmlcov --cov-report xml:tests_coverage_reports/coverage.xml -s --ignore tests/deprecated"
+python_files = ["tests.py", "test_*.py"]
